@@ -1,0 +1,7 @@
+*.o
+*.so
+*.py
+*.pyc
+*_wrap.c
+snippets/
+notes

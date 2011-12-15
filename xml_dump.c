@@ -3,6 +3,9 @@
 #include <string.h>
 #include "xml_dump.h"
 
+//#define DEBUG
+#undef DEBUG
+
 //xmlCharEncodingHandlerPtr handler = NULL;
 
 xmlChar *
@@ -19,7 +22,6 @@ ConvertInput(const char *in, xmlCharEncodingHandlerPtr handler)
     }
 
     if (!handler) {
-//        printf("Nic neprevadim\n");
         return (xmlChar*) in;
     }
 
@@ -33,9 +35,7 @@ ConvertInput(const char *in, xmlCharEncodingHandlerPtr handler)
     if (out != NULL) {
 
         temp = size - 1;
-//        printf("JDU PREVADET\n");
         ret = handler->input(out, &out_size, (const xmlChar *) in, &temp);
-//        printf("JDU PREVADET\n");
         if ((ret < 0) || (temp - size + 1)) {
             if (ret < 0) {
                 printf("ConvertInput: conversion wasn't successful.\n");
@@ -87,7 +87,6 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
 
     GSList *element = NULL;
     for(element = package->files; element; element=element->next) {
-
         PackageFile *entry = (PackageFile*) element->data;
 
         if (primary) {
@@ -117,7 +116,7 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
         }
 
         // Write type
-        if (entry->type && strlen(entry->type)) {
+        if (entry->type && strlen(entry->type) && strcmp(entry->type, "file")) {
             tmp = ConvertInput(entry->type, handler);
             rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "type", tmp);
             if (rc < 0) {
@@ -129,8 +128,10 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
 
         // Write text (file path)
         tmp = ConvertInput(entry->name, handler);
-        xmlTextWriterWriteString(writer, BAD_CAST tmp);
-        if (handler && tmp != NULL) xmlFree(tmp);
+        if (tmp) {
+            xmlTextWriterWriteString(writer, BAD_CAST tmp);
+            if (handler && tmp != NULL) xmlFree(tmp);
+        }
 
         // Close file element
         rc = xmlTextWriterEndElement(writer);

@@ -1,6 +1,9 @@
 %module xml_dump
 
+%include <typemaps.i>
+
 %{
+#include "package.h"
 #include "xml_dump.h"
 %}
 

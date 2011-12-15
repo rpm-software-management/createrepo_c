@@ -29,6 +29,7 @@ void
 dump_filelists_items(xmlTextWriterPtr writer, Package *package, xmlCharEncodingHandlerPtr handler)
 {
     int rc;
+    char n[] = "";
     xmlChar *tmp  = NULL;
     gchar   *tmp2 = NULL;
 
@@ -54,28 +55,31 @@ dump_filelists_items(xmlTextWriterPtr writer, Package *package, xmlCharEncodingH
 
     /* Add an attribute to package */
     tmp = ConvertInput(package->pkgId, handler);
+    if (!tmp) tmp = n;
     rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "pkgid", tmp);
     if (rc < 0) {
          printf("Error at xmlTextWriterWriteAttribute\n");
          return;
     }
-    if (handler && tmp != NULL) xmlFree(tmp);
+    if (handler && tmp != NULL && tmp != n) xmlFree(tmp);
 
     tmp = ConvertInput(package->name, handler);
-    rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "pkgid", tmp);
+    if (!tmp) tmp = n;
+    rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "name", tmp);
     if (rc < 0) {
          printf("Error at xmlTextWriterWriteAttribute\n");
          return;
     }
-    if (handler && tmp != NULL) xmlFree(tmp);
+    if (handler && tmp != NULL && tmp != n) xmlFree(tmp);
 
     tmp = ConvertInput(package->arch, handler);
-    rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "pkgid", tmp);
+    if (!tmp) tmp = n;
+    rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "arch", tmp);
     if (rc < 0) {
          printf("Error at xmlTextWriterWriteAttribute\n");
          return;
     }
-    if (handler && tmp != NULL) xmlFree(tmp);
+    if (handler && tmp != NULL && tmp != n) xmlFree(tmp);
 
     /***********************************
     Element: version
@@ -88,30 +92,33 @@ dump_filelists_items(xmlTextWriterPtr writer, Package *package, xmlCharEncodingH
 
     /* Write version attribute epoch */
     tmp = ConvertInput(package->epoch, handler);
+    if (!tmp) tmp = n;
     rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "epoch", tmp);
     if (rc < 0) {
          printf("Error at xmlTextWriterWriteAttribute\n");
          return;
     }
-    if (handler && tmp != NULL) xmlFree(tmp);
+    if (handler && tmp != NULL && tmp != n) xmlFree(tmp);
 
     /* Write version attribute ver */
     tmp = ConvertInput(package->version, handler);
+    if (!tmp) tmp = n;
     rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "ver", tmp);
     if (rc < 0) {
          printf("Error at xmlTextWriterWriteAttribute\n");
          return;
     }
-    if (handler && tmp != NULL) xmlFree(tmp);
+    if (handler && tmp != NULL && tmp != n) xmlFree(tmp);
 
     /* Write version attribute rel */
     tmp = ConvertInput(package->release, handler);
+    if (!tmp) tmp = n;
     rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "rel", tmp);
     if (rc < 0) {
          printf("Error at xmlTextWriterWriteAttribute\n");
          return;
     }
-    if (handler && tmp != NULL) xmlFree(tmp);
+    if (handler && tmp != NULL && tmp != n) xmlFree(tmp);
 
     /* Close version element */
     rc = xmlTextWriterEndElement(writer);

@@ -90,11 +90,6 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
         PackageFile *entry = (PackageFile*) element->data;
 
         if (primary) {
-            // Only files or dirs could be primary - sorry ghost files :(
-            if (entry->type[0] != '\0' && strcmp(entry->type, "file") && strcmp(entry->type, "dir")) {
-                continue;
-            }
-
             // Check if file name match pattern for primary files
             if (!g_regex_match(pri_re_1, entry->name, 0, NULL)
                && !g_regex_match(pri_re_2, entry->name, 0, NULL)

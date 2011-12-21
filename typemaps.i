@@ -355,5 +355,19 @@
     $1 = pkg;
 }
 
+
+%typemap(in) Header {
+    struct hdrObject_s {
+        PyObject_HEAD
+        Header h;
+        HeaderIterator hi;
+    };
+
+    //$input
+    Header h;
+    h = headerLink(((struct hdrObject_s *) $input)->h);
+    $1 = h;
+}
+
 #endif
 

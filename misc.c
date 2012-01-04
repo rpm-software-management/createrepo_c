@@ -54,8 +54,8 @@ struct VersionStruct string_to_version(const char *string)
     if (ptr) {
         // Check if epoch str is a number
         char *p = NULL;
-        strtol(ver.epoch, &p, 10);
-        if (p != ptr) { // epoch str seems to be a number
+        strtol(string, &p, 10);
+        if (p == ptr) { // epoch str seems to be a number
             size_t len = ptr - string;
             ver.epoch = malloc(sizeof(char) * (len + 1));
             strncpy(ver.epoch, string, len);
@@ -65,6 +65,7 @@ struct VersionStruct string_to_version(const char *string)
         }
     } else {
         ver.epoch = NULL;
+        ptr = string-1;
     }
 
     // Version + release
@@ -83,8 +84,9 @@ struct VersionStruct string_to_version(const char *string)
 
     // Malloc empty strings instead of NULL
     if (!ver.epoch) {
-        ver.epoch = malloc(sizeof(char));
-        ver.epoch[0] = '\0';
+        ver.epoch = malloc(sizeof(char) * 2);
+        ver.epoch[0] = '0';
+        ver.epoch[1] = '\0';
     } else if (!ver.version) {
         ver.version = malloc(sizeof(char));
         ver.version[0] = '\0';

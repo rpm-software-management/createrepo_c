@@ -365,7 +365,7 @@
 
     //$input
     Header h;
-    h = headerLink(((struct hdrObject_s *) $input)->h);
+    h = ((struct hdrObject_s *) $input)->h;
     $1 = h;
 }
 

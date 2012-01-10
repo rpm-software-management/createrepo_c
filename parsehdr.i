@@ -7,6 +7,7 @@
 #include "parsehdr.h"
 %}
 
+%include "xml_dump.h"
 %include "parsehdr.h"
 
 /*

@@ -5,6 +5,12 @@
 #include <libxml/xmlwriter.h>
 #include "package.h"
 
+struct XmlStruct{
+    char *primary;
+    char *filelists;
+    char *other;
+};
+
 /**
  * ConvertInput:
  * @in: string in a given encoding
@@ -21,5 +27,6 @@ void dump_files(xmlTextWriterPtr, Package *, int, xmlCharEncodingHandlerPtr);
 char *xml_dump_primary(Package *, const char *);
 char *xml_dump_filelists(Package *, const char *);
 char *xml_dump_other(Package *, const char *);
+//struct XmlStruct xml_dump_all(Package *, const char *);
 
 #endif /* __XML_DUMP__ */

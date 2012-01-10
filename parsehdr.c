@@ -6,7 +6,7 @@
 
 
 Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksum, const char *checksum_type,
-                      const char *location_href, const char *location_base,
+                      const char *location_href, const char *location_base, int changelog_limit,
                       gint64 hdr_start, gint64 hdr_end)
 {
     Package *pkg = NULL;
@@ -173,7 +173,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                     }
 
                     // Skip duplicate files
-                    gpointer *value;
+                    gpointer value;
                     if (g_hash_table_lookup_extended(ap_hashtable, filename, NULL, &value)) {
                         struct ap_value_struct *ap_value = value;
                         if (!strcmp(ap_value->flags, flags) &&
@@ -244,13 +244,63 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
     g_hash_table_remove_all(provided_hashtable);
     g_hash_table_remove_all(ap_hashtable);
 
+    rpmtdFree(filenames);
+    rpmtdFree(fileflags);
+    rpmtdFree(fileversions);
+
+
+    //
+    // Changelogs
+    //
+
+    rpmtd changelogtimes = rpmtdNew();
+    rpmtd changelognames = rpmtdNew();
+    rpmtd changelogtexts = rpmtdNew();
+
+    if (headerGet(hdr, RPMTAG_CHANGELOGTIME, changelogtimes, flags) &&
+        headerGet(hdr, RPMTAG_CHANGELOGNAME, changelognames, flags) &&
+        headerGet(hdr, RPMTAG_CHANGELOGTEXT, changelogtexts, flags))
+    {
+        gint64 last_time = 0;
+        gint64 time_offset = 1;
+        while ((rpmtdNext(changelogtimes) != -1) &&
+               (rpmtdNext(changelognames) != -1) &&
+               (rpmtdNext(changelogtexts) != -1) &&
+               (changelog_limit > 0))
+        {
+            gint64 time = rpmtdGetNumber(changelogtimes);
+            if (last_time == time) {
+                time += time_offset;
+                time_offset++;
+            } else {
+                last_time = time;
+                time_offset = 1;
+            }
+
+            ChangelogEntry *changelog = changelog_entry_new();
+            changelog->author    = rpmtdGetString(changelognames);
+            changelog->date      = time;
+            changelog->changelog = rpmtdGetString(changelogtexts);
+
+            pkg->changelogs = g_slist_append(pkg->changelogs, changelog);
+            changelog_limit--;
+        }
+    }
+
+    rpmtdFree(changelogtimes);
+    rpmtdFree(changelognames);
+    rpmtdFree(changelogtexts);
+
+
     return pkg;
 }
 
 struct XmlStruct xml_from_header(Header hdr, gint64 mtime, gint64 size, const char *checksum, const char *checksum_type,
-                      const char *location_href, const char *location_base, gint64 hdr_start, gint64 hdr_end)
+                      const char *location_href, const char *location_base,
+                      int changelog_limit, gint64 hdr_start, gint64 hdr_end)
 {
-    Package *pkg = parse_header(hdr, mtime, size, checksum, checksum_type, location_href, location_base, hdr_start, hdr_end);
+    Package *pkg = parse_header(hdr, mtime, size, checksum, checksum_type, location_href,
+                                location_base, changelog_limit, hdr_start, hdr_end);
 
     struct XmlStruct result;
     result.primary = xml_dump_primary(pkg, NULL);

@@ -3,7 +3,7 @@ SWIG=/usr/bin/swig
 CFLAGS=-DDEBUG -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags`
 LINKFLAGS=`pkg-config --libs glib-2.0` `xml2-config --libs` -lrpm
 
-all: package.so xml_dump.so parsehdr.so
+all: package.so xml_dump.so parsehdr.so parsepkg.so
 
 test: main
 
@@ -24,6 +24,10 @@ xml_dump_wrap.o: xml_dump.i xml_dump.c xml_dump.h
 parsehdr.o parsehdr_wrap.o: parsehdr.c parsehdr.h
 	$(SWIG) -python -Wall parsehdr.i
 	gcc $(CFLAGS) -c parsehdr.c parsehdr_wrap.c
+
+parsepkg.o parsepkg_wrap.o: parsepkg.c parsepkg.h
+	$(SWIG) -python -Wall parsepkg.i
+	gcc $(CFLAGS) -c parsepkg.c parsepkg_wrap.c
 
 # Object files
 
@@ -47,6 +51,9 @@ xml_dump.so: package.o xml_dump_wrap.o xml_dump.o xml_dump_primary.o xml_dump_fi
 
 parsehdr.so: parsehdr_wrap.o parsehdr.o package.o xml_dump.o misc.o
 	ld $(LINKFLAGS) -shared misc.o parsehdr_wrap.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o -o _parsehdr.so
+
+parsepkg.so: parsepkg_wrap.o parsepkg.o parsehdr.o package.o xml_dump.o misc.o
+	ld $(LINKFLAGS) -shared misc.o parsepkg_wrap.o parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o -o _parsepkg.so
 
 # Main
 

@@ -42,8 +42,8 @@ xml_dump_other.o: xml_dump_other.c xml_dump.h
 package.so: package_wrap.o package.o
 	ld $(LINKFLAGS) -shared package.o package_wrap.o -o _package.so
 
-xml_dump.so: package.o xml_dump_wrap.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o
-	ld $(LINKFLAGS) -shared package.o xml_dump_wrap.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o -o _xml_dump.so
+xml_dump.so: package.o xml_dump_wrap.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o
+	ld $(LINKFLAGS) -shared package.o xml_dump_wrap.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o -o _xml_dump.so
 
 parsehdr.so: parsehdr_wrap.o parsehdr.o package.o xml_dump.o misc.o
 	ld $(LINKFLAGS) -shared misc.o parsehdr_wrap.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o -o _parsehdr.so

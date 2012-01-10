@@ -1,6 +1,7 @@
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
 #include <string.h>
+#include "misc.h"
 #include "xml_dump.h"
 
 //#define DEBUG
@@ -59,25 +60,13 @@ ConvertInput(const char *in, xmlCharEncodingHandlerPtr handler)
 }
 
 
-GRegex *pri_re_1 = NULL;
-GRegex *pri_re_2 = NULL;
-GRegex *pri_re_3 = NULL;
-
 void
-dump_files(xmlTextWriterPtr writer, Package *package, int primary, 
+dump_files(xmlTextWriterPtr writer, Package *package, int primary,
            xmlCharEncodingHandlerPtr handler)
 {
 #ifdef DEBUG
     printf("CALLED dump_files\n");
 #endif
-
-    // Regex compilation
-    if (!pri_re_1) {
-        GRegexMatchFlags compile_flags = G_REGEX_OPTIMIZE|G_REGEX_MATCH_ANCHORED;
-        pri_re_1 = g_regex_new(".*bin/.*", compile_flags, 0, NULL);
-        pri_re_2 = g_regex_new("/etc/.*", compile_flags, 0, NULL);
-        pri_re_3 = g_regex_new("/usr/lib/sendmail$", compile_flags, 0, NULL);
-    }
 
     xmlChar *tmp = NULL;
 
@@ -89,13 +78,8 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
     for(element = package->files; element; element=element->next) {
         PackageFile *entry = (PackageFile*) element->data;
 
-        if (primary) {
-            // Check if file name match pattern for primary files
-            if (!g_regex_match(pri_re_1, entry->name, 0, NULL)
-               && !g_regex_match(pri_re_2, entry->name, 0, NULL)
-               && !g_regex_match(pri_re_3, entry->name, 0, NULL)) {
-                continue;
-            }
+        if (primary && !is_primary(entry->name)) {
+            continue;
         }
 
 

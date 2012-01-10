@@ -16,6 +16,7 @@ struct VersionStruct {
  * BE CAREFULL! Returned structure had all strings malloced!!!
  * Be so kind and don't forget use free() for all its element, before end of structure lifecycle.
  */
-struct VersionStruct string_to_version(const char *string);
+struct VersionStruct string_to_version(const char *string, GStringChunk *chunk);
+int is_primary(const char *filename);
 
 #endif /* __MISC__ */

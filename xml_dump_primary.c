@@ -140,7 +140,7 @@ dump_pco(xmlTextWriterPtr writer, Package *package, int pcotype,
             if (entry->pre) {
                 rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "pre", "1");
             } else {
-                rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "pre", "0");
+                ; //rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "pre", "0");
             }
             if (rc < 0) {
                  printf("Error at xmlTextWriterWriteAttribute\n");

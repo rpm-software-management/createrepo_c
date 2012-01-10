@@ -37,12 +37,6 @@ struct VersionStruct string_to_version(const char *string)
     ver.release = NULL;
 
     if (!string || !(strlen(string))) {
-        ver.epoch = malloc(sizeof(char));
-        ver.version = malloc(sizeof(char));
-        ver.release = malloc(sizeof(char));
-        ver.epoch[0] = '\0';
-        ver.version[0] = '\0';
-        ver.release[0] = '\0';
         return ver;
     }
 
@@ -60,11 +54,11 @@ struct VersionStruct string_to_version(const char *string)
             ver.epoch = malloc(sizeof(char) * (len + 1));
             strncpy(ver.epoch, string, len);
             ver.epoch[len] = '\0';
-        } else { // epoch is not a number
-            ver.epoch = NULL;
-        }
+        } //else { // epoch is not a number
+            //ver.epoch = NULL;
+        //}
     } else {
-        ver.epoch = NULL;
+        //ver.epoch = NULL;
         ptr = string-1;
     }
 
@@ -82,18 +76,17 @@ struct VersionStruct string_to_version(const char *string)
         strcpy(ver.version, ptr+1);
     }
 
-    // Malloc empty strings instead of NULL
     if (!ver.epoch) {
         ver.epoch = malloc(sizeof(char) * 2);
         ver.epoch[0] = '0';
         ver.epoch[1] = '\0';
-    } else if (!ver.version) {
-        ver.version = malloc(sizeof(char));
-        ver.version[0] = '\0';
-    } else if (!ver.release) {
-        ver.release = malloc(sizeof(char));
-        ver.release[0] = '\0';
-    }
+    } //else if (!ver.version) {
+//        ver.version = malloc(sizeof(char));
+//        ver.version[0] = '\0';
+//    } else if (!ver.release) {
+//        ver.release = malloc(sizeof(char));
+//        ver.release[0] = '\0';
+//    }
 
     return ver;
 }

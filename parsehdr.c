@@ -1,3 +1,4 @@
+#include <glib.h>
 #include <rpm/rpmfi.h>
 #include "parsehdr.h"
 #include "xml_dump.h"
@@ -48,10 +49,16 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
 
     rpmtdFree(td);
 
+
+    //
     // Files
+    //
+
     rpmtd filenames = rpmtdNew();
     rpmtd fileflags = rpmtdNew();
     rpmtd filemodes = rpmtdNew();
+
+    GHashTable *filenames_hashtable = g_hash_table_new(g_str_hash, g_str_equal);
 
     if (headerGet(hdr, RPMTAG_FILENAMES, filenames, flags) &&
         headerGet(hdr, RPMTAG_FILEFLAGS, fileflags, flags) &&
@@ -75,15 +82,18 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                 packagefile->type = "";
             }
 
+            g_hash_table_insert(filenames_hashtable, packagefile->name, packagefile->name);
             pkg->files = g_slist_append(pkg->files, packagefile);
         }
     }
 
-    //rpmtdFree(filenames);
-    //rpmtdFree(fileflags);
     rpmtdFree(filemodes);
 
+
+    //
     // PCOR (provides, conflicts, obsoletes, requires)
+    //
+
     rpmtd fileversions = rpmtdNew();
 
     enum pcor {PROVIDES, CONFLICTS, OBSOLETES, REQUIRES};
@@ -106,28 +116,133 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                                     RPMTAG_REQUIREVERSION
                                    };
 
-    int x;
-    for (x=0; x <= REQUIRES; x++) {
-        printf("### %d | %d | %d | %d\n", x, file_tags[x], flag_tags[x], version_tags[x]);
-        if (headerGet(hdr, file_tags[x], filenames, flags) &&
-            headerGet(hdr, flag_tags[x], fileflags, flags) &&
-            headerGet(hdr, version_tags[x], fileversions, flags))
+    // Struct used as value in ap_hashtable
+    struct ap_value_struct {
+        char *flags;
+        char *version;
+        int pre;
+    };
+
+    // Hastable with filenames from provided
+    GHashTable *provided_hashtable = g_hash_table_new(g_str_hash, g_str_equal);
+
+    // Hashtable with already processed files from requires
+    GHashTable *ap_hashtable = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, free);
+
+    int pcor_type;
+    for (pcor_type=0; pcor_type <= REQUIRES; pcor_type++) {
+        if (headerGet(hdr, file_tags[pcor_type], filenames, flags) &&
+            headerGet(hdr, flag_tags[pcor_type], fileflags, flags) &&
+            headerGet(hdr, version_tags[pcor_type], fileversions, flags))
         {
             while ((rpmtdNext(filenames) != -1) &&
                    (rpmtdNext(fileflags) != -1) &&
                    (rpmtdNext(fileversions) != -1))
             {
-                printf("%s\n", rpmtdGetString(filenames));
-                printf("%d\n", rpmtdGetNumber(fileflags));
-                printf("%s\n", flag_to_string(rpmtdGetNumber(fileflags)));
-                printf("%s\n", rpmtdGetString(fileversions));
-                struct VersionStruct ver = string_to_version(rpmtdGetString(fileversions));
-                printf("%s | %s | %s\n", ver.epoch, ver.version, ver.release);
+                int pre = 0;
+                char *filename = rpmtdGetString(filenames);
+                guint64 num_flags = rpmtdGetNumber(fileflags);
+                char *flags = flag_to_string(num_flags);
+                char *full_version = rpmtdGetString(fileversions);
+
+                // Requires specific stuff
+                if (pcor_type == REQUIRES) {
+                    // Skip requires which start with "rpmlib("
+                    if (!strncmp("rpmlib(", filename, 7)) {
+                        continue;
+                    }
+
+                    // Skip package primary files
+                    if (g_hash_table_lookup_extended(filenames_hashtable, filename, NULL, NULL)) {
+                        if (is_primary(filename)) {
+                            continue;
+                        }
+                    }
+
+                    // Skip files which are provided
+                    if (g_hash_table_lookup_extended(provided_hashtable, filename, NULL, NULL)) {
+                        continue;
+                    }
+
+                    // Calculate pre value
+                    if (num_flags & (RPMSENSE_PREREQ |
+                                     RPMSENSE_SCRIPT_PRE |
+                                     RPMSENSE_SCRIPT_POST))
+                    {
+                        pre = 1;
+                    }
+
+                    // Skip duplicate files
+                    gpointer *value;
+                    if (g_hash_table_lookup_extended(ap_hashtable, filename, NULL, &value)) {
+                        struct ap_value_struct *ap_value = value;
+                        if (!strcmp(ap_value->flags, flags) &&
+                            !strcmp(ap_value->version, full_version) &&
+                            (ap_value->pre == pre))
+                        {
+                            continue;
+                        }
+                    }
+                }
+
+                // Create dynamic dependency object
+                Dependency *dependency = dependency_new();
+                dependency->name = filename;
+                dependency->flags = flags;
+                struct VersionStruct ver = string_to_version(full_version, pkg->chunk);
+                dependency->epoch = ver.epoch;
+                dependency->version = ver.version;
+                dependency->release = ver.release;
+
+/*
+#ifdef DEBUG
+                printf("%s\n", filename);
+                printf("%d\n", num_flags);
+                printf("%s\n", flags);
+                printf("%s\n", full_version);
+                if (ver.epoch)
+                    printf("%s", ver.epoch);
+                printf(" | ");
+                if (ver.version)
+                    printf("%s", ver.version);
+                printf(" | ");
+                if (ver.release)
+                    printf("%s", ver.release);
+                printf("\n");
+                printf("-------------------\n");
+#endif
+*/
+
+                switch (pcor_type) {
+                    case PROVIDES:
+                        g_hash_table_insert(provided_hashtable, dependency->name, dependency->name);
+                        pkg->provides = g_slist_append(pkg->provides, dependency);
+                        break;
+                    case CONFLICTS:
+                        pkg->conflicts = g_slist_append(pkg->conflicts, dependency);
+                        break;
+                    case OBSOLETES:
+                        pkg->obsoletes = g_slist_append(pkg->obsoletes, dependency);
+                        break;
+                    case REQUIRES:
+                        dependency->pre = pre;
+                        pkg->requires = g_slist_append(pkg->requires, dependency);
+
+                        // Add file into ap_hashtable
+                        struct ap_value_struct *value = malloc(sizeof(struct ap_value_struct));
+                        value->flags = dependency->flags;
+                        value->version = full_version;
+                        value->pre = dependency->pre;
+                        g_hash_table_insert(ap_hashtable, dependency->name, value);
+                        break;
+                }
             }
         }
     }
 
-
+    g_hash_table_remove_all(filenames_hashtable);
+    g_hash_table_remove_all(provided_hashtable);
+    g_hash_table_remove_all(ap_hashtable);
 
     return pkg;
 }

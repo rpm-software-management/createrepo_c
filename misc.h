@@ -2,9 +2,9 @@
 #define __MISC__
 
 #include <glib.h>
+#include "constants.h"
 
 const char *flag_to_string(gint64 flags);
-
 
 struct VersionStruct {
     char *epoch;
@@ -18,5 +18,13 @@ struct VersionStruct {
  */
 struct VersionStruct string_to_version(const char *string, GStringChunk *chunk);
 int is_primary(const char *filename);
+char *compute_file_checksum(const char *filename, ChecksumType type);
+
+struct HeaderRangeStruct {
+    unsigned int start;
+    unsigned int end;
+};
+struct HeaderRangeStruct get_header_byte_range(const char *filename);
+
 
 #endif /* __MISC__ */

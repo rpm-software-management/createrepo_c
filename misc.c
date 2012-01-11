@@ -1,7 +1,12 @@
 #include <glib.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <arpa/inet.h>
+#include "constants.h"
 #include "misc.h"
+
+#define BUFFER_SIZE     4096
 
 
 const char *flag_to_string(gint64 flags)
@@ -141,3 +146,111 @@ int is_primary(const char *filename)
     return 0;
 }
 
+
+
+char *compute_file_checksum(const char *filename, ChecksumType type)
+{
+    GChecksumType gchecksumtype;
+
+    // Check if file exists and if it is a regular file (not a directory)
+
+    if (!g_file_test(filename, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR))) {
+        return NULL;
+    }
+
+    // Convert our checksum type into glib type
+
+    switch (type) {
+        case PKG_CHECKSUM_MD5:
+            gchecksumtype = G_CHECKSUM_MD5;
+            break;
+        case PKG_CHECKSUM_SHA1:
+            gchecksumtype = G_CHECKSUM_SHA1;
+            break;
+        case PKG_CHECKSUM_SHA256:
+            gchecksumtype = G_CHECKSUM_SHA256;
+            break;
+    };
+
+    // Open file and initialize checksum structure
+
+    FILE *fp = fopen(filename, "rb");
+    if (!fp) {
+        return NULL;
+    }
+
+    // Calculate checksum
+
+    GChecksum *checksum = g_checksum_new(gchecksumtype);
+    unsigned char buffer[BUFFER_SIZE];
+
+    while (1) {
+        size_t input_len;
+        input_len = fread((void *) buffer, sizeof(unsigned char), BUFFER_SIZE, fp);
+        g_checksum_update(checksum, (const guchar *) buffer, input_len);
+        if (input_len < BUFFER_SIZE) {
+            break;
+        }
+    }
+
+    fclose(fp);
+
+    // Malloc space and get checksum
+
+    const char *checksum_tmp_str = g_checksum_get_string(checksum);
+    size_t checksum_len = strlen(checksum_tmp_str);
+    char *checksum_str = (char *) malloc(sizeof(char) * (checksum_len + 1));
+    if (!checksum_str) {
+        g_checksum_free(checksum);
+        return NULL;
+    }
+    strcpy(checksum_str, checksum_tmp_str);
+
+    // Clean up
+
+    g_checksum_free(checksum);
+
+    return checksum_str;
+}
+
+
+#define VAL_LEN         4       // Len of numeric values in rpm
+
+struct HeaderRangeStruct get_header_byte_range(const char *filename)
+{
+    /* Values readed by fread are 4 bytes long and stored as big-endian.
+     * So there is htonl function to convert this big-endian number into host byte order.
+     */
+    FILE *fp = fopen(filename, "rb");
+    fseek(fp, 104, SEEK_SET);
+    unsigned int sigindex = 0;
+    unsigned int sigdata  = 0;
+    fread(&sigindex, VAL_LEN, 1, fp);
+    sigindex = htonl(sigindex);
+    fread(&sigdata, VAL_LEN, 1, fp);
+    sigdata = htonl(sigdata);
+    unsigned int sigindexsize = sigindex * 16;
+    unsigned int sigsize = sigdata + sigindexsize;
+    unsigned int disttoboundary = sigsize % 8;
+    if (disttoboundary) {
+        disttoboundary = 8 - disttoboundary;
+    }
+    unsigned int hdrstart = 112 + sigsize + disttoboundary;
+
+    fseek(fp, hdrstart, SEEK_SET);
+    fseek(fp, 8, SEEK_CUR);
+
+    unsigned int hdrindex = 0;
+    unsigned int hdrdata  = 0;
+    fread(&hdrindex, VAL_LEN, 1, fp);
+    hdrindex = htonl(hdrindex);
+    fread(&hdrdata, VAL_LEN, 1, fp);
+    hdrdata = htonl(hdrdata);
+    unsigned int hdrindexsize = hdrindex * 16;
+    unsigned int hdrsize = hdrdata + hdrindexsize + 16;
+    unsigned int hdrend = hdrstart + hdrsize;
+
+    fclose(fp);
+
+    return (struct HeaderRangeStruct) {hdrstart, hdrend};
+}

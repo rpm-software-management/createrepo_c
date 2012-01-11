@@ -5,9 +5,10 @@
 #include "misc.h"
 
 
-Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksum, const char *checksum_type,
-                      const char *location_href, const char *location_base, int changelog_limit,
-                      gint64 hdr_start, gint64 hdr_end)
+Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksum,
+                        const char *checksum_type, const char *location_href,
+                        const char *location_base, int changelog_limit,
+                        gint64 hdr_start, gint64 hdr_end)
 {
     Package *pkg = NULL;
     pkg = package_new();
@@ -297,9 +298,10 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
 
 
 
-struct XmlStruct xml_from_header(Header hdr, gint64 mtime, gint64 size, const char *checksum, const char *checksum_type,
-                      const char *location_href, const char *location_base,
-                      int changelog_limit, gint64 hdr_start, gint64 hdr_end)
+struct XmlStruct xml_from_header(Header hdr, gint64 mtime, gint64 size,
+                        const char *checksum, const char *checksum_type,
+                        const char *location_href, const char *location_base,
+                        int changelog_limit, gint64 hdr_start, gint64 hdr_end)
 {
     Package *pkg = parse_header(hdr, mtime, size, checksum, checksum_type, location_href,
                                 location_base, changelog_limit, hdr_start, hdr_end);

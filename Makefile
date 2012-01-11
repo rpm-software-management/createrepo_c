@@ -1,9 +1,14 @@
 SWIG=/usr/bin/swig
 
-CFLAGS=-DDEBUG -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags`
-LINKFLAGS=`pkg-config --libs glib-2.0` `xml2-config --libs` -lrpm
+# FIXME: There must be -O option in cflags or we get: _parsepkg.so: undefined symbol: stat
+#        link option -lc should solves this problem but it seems to be doesn't working
+
+CFLAGS=-O -DDEBUG -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags`
+LINKFLAGS=`pkg-config --libs glib-2.0` `xml2-config --libs` -lrpm -lrpmio -lc
 
 all: package.so xml_dump.so parsehdr.so parsepkg.so
+ 
+ctests: parsepkg_test_01
 
 test: main
 
@@ -25,7 +30,7 @@ parsehdr.o parsehdr_wrap.o: parsehdr.c parsehdr.h
 	$(SWIG) -python -Wall parsehdr.i
 	gcc $(CFLAGS) -c parsehdr.c parsehdr_wrap.c
 
-parsepkg.o parsepkg_wrap.o: parsepkg.c parsepkg.h
+parsepkg.o parsepkg_wrap.o: parsepkg.c parsepkg.h constants.h
 	$(SWIG) -python -Wall parsepkg.i
 	gcc $(CFLAGS) -c parsepkg.c parsepkg_wrap.c
 
@@ -54,6 +59,11 @@ parsehdr.so: parsehdr_wrap.o parsehdr.o package.o xml_dump.o misc.o
 
 parsepkg.so: parsepkg_wrap.o parsepkg.o parsehdr.o package.o xml_dump.o misc.o
 	ld $(LINKFLAGS) -shared misc.o parsepkg_wrap.o parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o -o _parsepkg.so
+
+# Tests
+
+parsepkg_test_01: parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o
+	gcc $(LINKFLAGS) $(CFLAGS) parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o ctests/parsepkg_test_01.c -o ctests/parsepkg_test_01
 
 # Main
 

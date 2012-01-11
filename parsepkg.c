@@ -1,4 +1,7 @@
 #include <glib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include <rpm/rpmfi.h>
 #include "parsehdr.h"
 #include "xml_dump.h"
@@ -49,28 +52,39 @@ struct XmlStruct xml_from_package_file(const char *filename, const char *checksu
         }
     }
 
+    // Cleanup
+    rpmtsFree(ts);
+    Fclose(fd);
+
     //
     // Get file stat
     //
 
-    gint64 mtime = 0;
-    gint64 size = 0;
+    gint64 mtime  = 0;
+    gint64 size   = 0;
+
+    struct stat stat_buf;
+    if (stat(filename, &stat_buf) == -1) {
+        perror("stat");
+        return result;
+    }
+    mtime  = stat_buf.st_mtime;
+    size   = stat_buf.st_size;
+
+    //
+    // Compute checksum
+    //
+
     char *checksum = "abcdefghijklmnop";
-    //char *location_href = NULL;
-    //char *location_base = NULL;
-    //int changelog_limit = 5;
-    //gint64 hdr_start = 10;
-    //gint64 hdr_end   = 22;
 
     //
     // Gen XML
     //
 
-    Package *pkg = parse_header(hdr, mtime, size, checksum, checksum_type, location_href,
+    result = xml_from_header(hdr, mtime, size, checksum, checksum_type, location_href,
                                 location_base, changelog_limit, hdr_start, hdr_end);
 
-    result.primary = xml_dump_primary(pkg, NULL);
-    result.filelists = xml_dump_filelists(pkg, NULL);
-    result.other = xml_dump_other(pkg, NULL);
+    headerFree(hdr);   // ???
+
     return result;
 }

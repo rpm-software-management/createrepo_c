@@ -68,7 +68,7 @@ struct VersionStruct string_to_version(const char *string, GStringChunk *chunk)
             }
         }
     } else { // There is no epoch
-        ptr = string-1;
+        ptr = (char*) string-1;
     }
 
     if (!ver.epoch) {

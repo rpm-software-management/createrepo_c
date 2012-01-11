@@ -97,13 +97,3 @@ package_free (Package *package)
 
     g_free (package);
 }
-
-void
-package_add_changelog (Package *package, ChangelogEntry *entry)
-{
-    ChangelogEntry *f = changelog_entry_new();
-    f->author = g_string_chunk_insert(package->chunk, entry->author);
-    f->date = entry->date;
-    f->changelog = g_string_chunk_insert(package->chunk, entry->changelog);
-    package->changelogs = g_slist_append (package->changelogs, f);
-}

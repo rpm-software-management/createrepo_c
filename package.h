@@ -69,6 +69,5 @@ PackageFile    *package_file_new    (void);
 ChangelogEntry *changelog_entry_new (void);
 Package        *package_new         (void);
 void            package_free        (Package *package);
-void            package_add_changelog (Package *, ChangelogEntry *);
 
 #endif /* __YUM_PACKAGE_H__ */

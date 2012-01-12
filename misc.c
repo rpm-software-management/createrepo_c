@@ -122,28 +122,56 @@ struct VersionStruct string_to_version(const char *string, GStringChunk *chunk)
 }
 
 
-GRegex *pri_re_1 = NULL;
-GRegex *pri_re_2 = NULL;
-GRegex *pri_re_3 = NULL;
 
-int is_primary(const char *filename)
+struct PrimaryReStruct new_optimalized_primary_files_re()
 {
-    // Regex compilation
-    if (!pri_re_1) {
-        GRegexMatchFlags compile_flags = G_REGEX_OPTIMIZE|G_REGEX_MATCH_ANCHORED;
+    struct PrimaryReStruct res;
+    GRegexMatchFlags compile_flags = G_REGEX_OPTIMIZE|G_REGEX_MATCH_ANCHORED;
+    res.pri_re_1 = g_regex_new(".*bin/.*", compile_flags, 0, NULL);
+    res.pri_re_2 = g_regex_new("/etc/.*", compile_flags, 0, NULL);
+    res.pri_re_3 = g_regex_new("/usr/lib/sendmail$", compile_flags, 0, NULL);
+    return res;
+}
+
+void free_optimalized_primary_files_re(struct PrimaryReStruct in) {
+    g_regex_unref(in.pri_re_1);
+    g_regex_unref(in.pri_re_2);
+    g_regex_unref(in.pri_re_3);
+}
+
+int is_primary(const char *filename, struct PrimaryReStruct *user_re)
+{
+
+    GRegex *pri_re_1 = NULL;
+    GRegex *pri_re_2 = NULL;
+    GRegex *pri_re_3 = NULL;
+
+    if (!user_re) {
+        GRegexMatchFlags compile_flags = G_REGEX_MATCH_ANCHORED;
         pri_re_1 = g_regex_new(".*bin/.*", compile_flags, 0, NULL);
         pri_re_2 = g_regex_new("/etc/.*", compile_flags, 0, NULL);
         pri_re_3 = g_regex_new("/usr/lib/sendmail$", compile_flags, 0, NULL);
+    } else {
+        pri_re_1 = user_re->pri_re_1;
+        pri_re_2 = user_re->pri_re_2;
+        pri_re_3 = user_re->pri_re_3;
     }
 
+    int ret = 0;
     if (g_regex_match(pri_re_1, filename, 0, NULL)
         || g_regex_match(pri_re_2, filename, 0, NULL)
         || g_regex_match(pri_re_3, filename, 0, NULL))
     {
-        return 1;
+        ret = 1;
     }
 
-    return 0;
+    if (!user_re) {
+        g_regex_unref(pri_re_1);
+        g_regex_unref(pri_re_2);
+        g_regex_unref(pri_re_3);
+    }
+
+    return ret;
 }
 
 

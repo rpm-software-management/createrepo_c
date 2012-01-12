@@ -17,7 +17,15 @@ struct VersionStruct {
  * Be so kind and don't forget use free() for all its element, before end of structure lifecycle.
  */
 struct VersionStruct string_to_version(const char *string, GStringChunk *chunk);
-int is_primary(const char *filename);
+
+struct PrimaryReStruct {
+    GRegex *pri_re_1;
+    GRegex *pri_re_2;
+    GRegex *pri_re_3;
+};
+struct PrimaryReStruct new_optimalized_primary_files_re();
+void free_optimalized_primary_files_re(struct PrimaryReStruct in);
+int is_primary(const char *filename, struct PrimaryReStruct *user_re);
 char *compute_file_checksum(const char *filename, ChecksumType type);
 
 struct HeaderRangeStruct {

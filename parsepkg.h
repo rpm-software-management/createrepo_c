@@ -3,6 +3,7 @@
 
 #include <rpm/rpmlib.h>
 #include <glib.h>
+#include "constants.h"
 #include "package.h"
 #include "xml_dump.h"
 

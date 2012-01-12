@@ -65,6 +65,9 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
         headerGet(hdr, RPMTAG_FILEFLAGS, fileflags, flags) &&
         headerGet(hdr, RPMTAG_FILEMODES, filemodes, flags))
     {
+        rpmtdInit(filenames);
+        rpmtdInit(fileflags);
+        rpmtdInit(filemodes);
         while ((rpmtdNext(filenames) != -1) &&
                (rpmtdNext(fileflags) != -1) &&
                (rpmtdNext(filemodes) != -1))
@@ -130,12 +133,18 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
     // Hashtable with already processed files from requires
     GHashTable *ap_hashtable = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, free);
 
+    // Get oprimalized regexps for primary filename matching
+    struct PrimaryReStruct re = new_optimalized_primary_files_re();
+
     int pcor_type;
     for (pcor_type=0; pcor_type <= REQUIRES; pcor_type++) {
         if (headerGet(hdr, file_tags[pcor_type], filenames, flags) &&
             headerGet(hdr, flag_tags[pcor_type], fileflags, flags) &&
             headerGet(hdr, version_tags[pcor_type], fileversions, flags))
         {
+            rpmtdInit(filenames);
+            rpmtdInit(fileflags);
+            rpmtdInit(fileversions);
             while ((rpmtdNext(filenames) != -1) &&
                    (rpmtdNext(fileflags) != -1) &&
                    (rpmtdNext(fileversions) != -1))
@@ -155,7 +164,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
 
                     // Skip package primary files
                     if (g_hash_table_lookup_extended(filenames_hashtable, filename, NULL, NULL)) {
-                        if (is_primary(filename)) {
+                        if (is_primary(filename, &re)) {
                             continue;
                         }
                     }
@@ -195,25 +204,6 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                 dependency->version = ver.version;
                 dependency->release = ver.release;
 
-/*
-#ifdef DEBUG
-                printf("%s\n", filename);
-                printf("%d\n", num_flags);
-                printf("%s\n", flags);
-                printf("%s\n", full_version);
-                if (ver.epoch)
-                    printf("%s", ver.epoch);
-                printf(" | ");
-                if (ver.version)
-                    printf("%s", ver.version);
-                printf(" | ");
-                if (ver.release)
-                    printf("%s", ver.release);
-                printf("\n");
-                printf("-------------------\n");
-#endif
-*/
-
                 switch (pcor_type) {
                     case PROVIDES:
                         g_hash_table_insert(provided_hashtable, dependency->name, dependency->name);
@@ -241,6 +231,8 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
         }
     }
 
+    free_optimalized_primary_files_re(re);
+
     g_hash_table_remove_all(filenames_hashtable);
     g_hash_table_remove_all(provided_hashtable);
     g_hash_table_remove_all(ap_hashtable);
@@ -264,6 +256,9 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
     {
         gint64 last_time = 0;
         gint64 time_offset = 1;
+        rpmtdInit(changelogtimes);
+        rpmtdInit(changelognames);
+        rpmtdInit(changelogtexts);
         while ((rpmtdNext(changelogtimes) != -1) &&
                (rpmtdNext(changelognames) != -1) &&
                (rpmtdNext(changelogtexts) != -1) &&
@@ -310,5 +305,9 @@ struct XmlStruct xml_from_header(Header hdr, gint64 mtime, gint64 size,
     result.primary = xml_dump_primary(pkg, NULL);
     result.filelists = xml_dump_filelists(pkg, NULL);
     result.other = xml_dump_other(pkg, NULL);
+
+    // Cleanup
+    package_free(pkg);
+
     return result;
 }

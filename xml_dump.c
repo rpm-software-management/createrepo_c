@@ -74,11 +74,17 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
         return;
     }
 
+    struct PrimaryReStruct re;
+    if (primary) {
+        // Get optimalized regexps for primary filenames matching
+        re = new_optimalized_primary_files_re();
+    }
+
     GSList *element = NULL;
     for(element = package->files; element; element=element->next) {
         PackageFile *entry = (PackageFile*) element->data;
 
-        if (primary && !is_primary(entry->name)) {
+        if (primary && !is_primary(entry->name, &re)) {
             continue;
         }
 
@@ -118,6 +124,10 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
             printf("Error at xmlTextWriterEndElement\n");
             return;
         }
+    }
+
+    if (primary) {
+        free_optimalized_primary_files_re(re);
     }
 }
 

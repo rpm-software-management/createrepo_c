@@ -87,8 +87,9 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
             }
 
             g_hash_table_insert(filenames_hashtable, packagefile->name, packagefile->name);
-            pkg->files = g_slist_append(pkg->files, packagefile);
+            pkg->files = g_slist_prepend(pkg->files, packagefile);
         }
+        pkg->files = g_slist_reverse (pkg->files);
     }
 
     rpmtdFree(filemodes);
@@ -207,17 +208,17 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                 switch (pcor_type) {
                     case PROVIDES:
                         g_hash_table_insert(provided_hashtable, dependency->name, dependency->name);
-                        pkg->provides = g_slist_append(pkg->provides, dependency);
+                        pkg->provides = g_slist_prepend(pkg->provides, dependency);
                         break;
                     case CONFLICTS:
-                        pkg->conflicts = g_slist_append(pkg->conflicts, dependency);
+                        pkg->conflicts = g_slist_prepend(pkg->conflicts, dependency);
                         break;
                     case OBSOLETES:
-                        pkg->obsoletes = g_slist_append(pkg->obsoletes, dependency);
+                        pkg->obsoletes = g_slist_prepend(pkg->obsoletes, dependency);
                         break;
                     case REQUIRES:
                         dependency->pre = pre;
-                        pkg->requires = g_slist_append(pkg->requires, dependency);
+                        pkg->requires = g_slist_prepend(pkg->requires, dependency);
 
                         // Add file into ap_hashtable
                         struct ap_value_struct *value = malloc(sizeof(struct ap_value_struct));
@@ -230,6 +231,11 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
             }
         }
     }
+
+    pkg->provides  = g_slist_reverse (pkg->provides);
+    pkg->conflicts = g_slist_reverse (pkg->conflicts);
+    pkg->obsoletes = g_slist_reverse (pkg->obsoletes);
+    pkg->requires  = g_slist_reverse (pkg->requires);
 
     free_optimalized_primary_files_re(re);
 
@@ -278,9 +284,11 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
             changelog->date      = time;
             changelog->changelog = rpmtdGetString(changelogtexts);
 
-            pkg->changelogs = g_slist_append(pkg->changelogs, changelog);
+            pkg->changelogs = g_slist_prepend(pkg->changelogs, changelog);
             changelog_limit--;
         }
+
+        pkg->changelogs = g_slist_reverse (pkg->changelogs);
     }
 
     rpmtdFree(changelogtimes);

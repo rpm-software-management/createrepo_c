@@ -86,8 +86,9 @@
         printf("OK\n");
         ChangelogEntry *item = (ChangelogEntry*) PyList_GetItem($input, i);
         printf("item: %s\n", item->author);
-        g_slist_append (list, item);
+        g_slist_prepend (list, item);
     }
+    list = g_slist_reverse(list);
     $1 = list;
 }
 
@@ -249,10 +250,11 @@
                     PackageFile *pkg_f = package_file_new();
                     pkg_f->name = g_string_chunk_insert(pkg->chunk, PyString_AsString(name));
                     pkg_f->type = g_string_chunk_insert(pkg->chunk, PyString_AsString(type));
-                    pkg->files = g_slist_append(pkg->files, pkg_f);
+                    pkg->files = g_slist_prepend(pkg->files, pkg_f);
                 }
             }
         }
+        pkg->files = g_slist_reverse(pkg->files);
     }
 
 
@@ -321,9 +323,10 @@
                         pkg_d->release = g_string_chunk_insert(pkg->chunk, PyString_AsString(release));
                     }
 
-                    *dep_list = g_slist_append(*dep_list, pkg_d);
+                    *dep_list = g_slist_prepend(*dep_list, pkg_d);
                 } // end if
             } // end for
+            *dep_list = g_slist_reverse(*dep_list);
         } // end if
     } // end for
 
@@ -346,10 +349,11 @@
                     pkg_ch->date = PyLong_AsLong(date);
                     pkg_ch->author = g_string_chunk_insert(pkg->chunk, PyString_AsString(author));
                     pkg_ch->changelog = g_string_chunk_insert(pkg->chunk, PyString_AsString(changelog));
-                    pkg->changelogs = g_slist_append(pkg->changelogs, pkg_ch);
+                    pkg->changelogs = g_slist_prepend(pkg->changelogs, pkg_ch);
                 }
             }
         }
+        pkg->changelogs = g_slist_reverse(pkg->changelogs);
     }
 
     $1 = pkg;

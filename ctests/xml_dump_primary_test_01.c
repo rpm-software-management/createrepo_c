@@ -1,6 +1,6 @@
 #include <stdio.h>
-#include "package.h"
-#include "xml_dump.h"
+#include "../package.h"
+#include "../xml_dump.h"
 
 int main() {
     Package *package = package_new();
@@ -33,6 +33,40 @@ int main() {
     package->checksum_type = "sha256";
 
 
+    int x;
+    for (x=0; x<4; x++) {
+        Dependency *file = dependency_new();
+        file->name = "soubor";
+        file->flags = "A";
+        file->epoch = "1";
+        file->version = "2";
+        file->release = "3";
+        file->pre = 1;
+        package->requires = g_slist_append(package->requires, file);
+    }
+
+    for (x=0; x<3; x++) {
+        Dependency *file = dependency_new();
+        file->name = "soubor";
+        file->flags = "A";
+        file->epoch = "1";
+        file->version = "2";
+        file->release = "3";
+        file->pre = 1;
+        package->provides = g_slist_append(package->provides, file);
+    }
+
+    for (x=0; x<2; x++) {
+        Dependency *file = dependency_new();
+        file->name = "soubor";
+        file->flags = "A";
+        file->epoch = "1";
+        file->version = "2";
+        file->release = "3";
+        file->pre = 1;
+        package->conflicts = g_slist_append(package->conflicts, file);
+    }
+
     Dependency *file = dependency_new();
     file->name = "soubor";
     file->flags = "A";
@@ -40,19 +74,6 @@ int main() {
     file->version = "2";
     file->release = "3";
     file->pre = 1;
-
-    package->requires = g_slist_append(package->requires, file);
-    package->requires = g_slist_append(package->requires, file);
-    package->requires = g_slist_append(package->requires, file);
-    package->requires = g_slist_append(package->requires, file);
-
-    package->provides = g_slist_append(package->provides, file);
-    package->provides = g_slist_append(package->provides, file);
-    package->provides = g_slist_append(package->provides, file);
-
-    package->conflicts = g_slist_append(package->conflicts, file);
-    package->conflicts = g_slist_append(package->conflicts, file);
-
     package->obsoletes = g_slist_append(package->obsoletes, file);
 
 
@@ -93,6 +114,7 @@ int main() {
     package->files = g_slist_append(package->files, pkgfile7);
 
 
+/*
     ChangelogEntry *chlog = changelog_entry_new();
     chlog->author = "foobar";
     chlog->date = 1234567;
@@ -105,17 +127,14 @@ int main() {
 
     package->changelogs = g_slist_append(package->changelogs, chlog);
     package->changelogs = g_slist_append(package->changelogs, chlog2);
-
+*/
 
     //printf("Jde se dumpovat\n");
     char *ret = xml_dump_primary(package, NULL);
     printf("%s\n\n", ret);
 
-    ret = xml_dump_filelists(package, NULL);
-    printf("%s\n\n", ret);
-
-    ret = xml_dump_other(package, NULL);
-    printf("%s\n\n", ret);
+    package_free(package);
+    free(ret);
 
     return 0;
 }

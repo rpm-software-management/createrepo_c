@@ -1,14 +1,10 @@
 SWIG=/usr/bin/swig
-
-# FIXME: There must be -O option in cflags or we get: _parsepkg.so: undefined symbol: stat
-#        link option -lc should solves this problem but it seems to be doesn't working
-
-CFLAGS=-O -DDEBUG -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags`
-LINKFLAGS=`pkg-config --libs glib-2.0` `xml2-config --libs` -lrpm -lrpmio -lc
+CFLAGS=-O -fPIC -DDEBUG -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags`
+LINKFLAGS=`pkg-config --libs glib-2.0` `xml2-config --libs` -lrpm -lrpmio
 
 all: package.so xml_dump.so parsehdr.so parsepkg.so
- 
-ctests: parsepkg_test_01
+
+ctests: parsepkg_test_01 xml_dump_primary_test_01 xml_dump_filelists_test_01 xml_dump_other_test_01
 
 test: main
 
@@ -49,26 +45,31 @@ xml_dump_other.o: xml_dump_other.c xml_dump.h
 	gcc $(CFLAGS) -c xml_dump_other.c
 
 package.so: package_wrap.o package.o
-	ld $(LINKFLAGS) -shared package.o package_wrap.o -o _package.so
+	ld $(LINKFLAGS) -shared package.o package_wrap.o -o _package.so -lc
 
 xml_dump.so: package.o xml_dump_wrap.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o
-	ld $(LINKFLAGS) -shared package.o xml_dump_wrap.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o -o _xml_dump.so
+	ld $(LINKFLAGS) -shared package.o xml_dump_wrap.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o -o _xml_dump.so -lc
 
 parsehdr.so: parsehdr_wrap.o parsehdr.o package.o xml_dump.o misc.o
-	ld $(LINKFLAGS) -shared misc.o parsehdr_wrap.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o -o _parsehdr.so
+	ld $(LINKFLAGS) -shared misc.o parsehdr_wrap.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o -o _parsehdr.so -lc
 
 parsepkg.so: parsepkg_wrap.o parsepkg.o parsehdr.o package.o xml_dump.o misc.o
-	ld $(LINKFLAGS) -shared misc.o parsepkg_wrap.o parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o -o _parsepkg.so
+	ld $(LINKFLAGS) -shared misc.o parsepkg_wrap.o parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o -o _parsepkg.so -lc
 
 # Tests
 
 parsepkg_test_01: parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o
 	gcc $(LINKFLAGS) $(CFLAGS) parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o ctests/parsepkg_test_01.c -o ctests/parsepkg_test_01
 
-# Main
+xml_dump_primary_test_01: package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o
+	gcc $(LINKFLAGS) $(CFLAGS) package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o ctests/xml_dump_primary_test_01.c -o ctests/xml_dump_primary_test_01
 
-main: package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o
-	gcc $(LINKFLAGS) $(CFLAGS) package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o main.c -o main
+xml_dump_filelists_test_01: package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o
+	gcc $(LINKFLAGS) $(CFLAGS) package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o ctests/xml_dump_filelists_test_01.c -o ctests/xml_dump_filelists_test_01
+
+xml_dump_other_test_01: package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o
+	gcc $(LINKFLAGS) $(CFLAGS) package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o ctests/xml_dump_other_test_01.c -o ctests/xml_dump_other_test_01
+
 
 clean:
-	rm -f *.o *.so package_wrap.* main
+	rm -f *.o *.so *_wrap.* main *.pyc

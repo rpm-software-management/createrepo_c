@@ -78,31 +78,38 @@ int main() {
 
 
     PackageFile *pkgfile = package_file_new();
-    pkgfile->name = "/bin/neco";
+    pkgfile->path = "/bin/";
+    pkgfile->name = "neco";
     pkgfile->type = "";
 
     PackageFile *pkgfile2 = package_file_new();
-    pkgfile2->name = "/usr/addresar";
+    pkgfile2->path = "/usr/";
+    pkgfile2->name = "addresar";
     pkgfile2->type = "dir";
 
     PackageFile *pkgfile3 = package_file_new();
-    pkgfile3->name = "/etc/neco.conf";
+    pkgfile3->path = "/etc/";
+    pkgfile3->name = "neco.conf";
     pkgfile3->type = "";
 
     PackageFile *pkgfile4 = package_file_new();
-    pkgfile4->name = "/usr/lib/sendmail";
+    pkgfile4->path = "/usr/lib/";
+    pkgfile4->name = "sendmail";
     pkgfile4->type = "";
 
     PackageFile *pkgfile5 = package_file_new();
-    pkgfile5->name = "/etc/neco.dir";
+    pkgfile5->path = "/etc/";
+    pkgfile5->name = "neco.dir";
     pkgfile5->type = "dir";
 
     PackageFile *pkgfile6 = package_file_new();
-    pkgfile6->name = "/bin/neco.dir";
+    pkgfile6->path = "/bin/";
+    pkgfile6->name = "neco.dir";
     pkgfile6->type = "dir";
 
     PackageFile *pkgfile7 = package_file_new();
-    pkgfile7->name = "/usr/lib/sendmail";
+    pkgfile7->path = "/usr/lib/";
+    pkgfile7->name = "sendmail";
     pkgfile7->type = "dir";
 
     package->files = g_slist_append(package->files, pkgfile);

@@ -94,5 +94,8 @@ struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checks
     free(checksum);
     headerFree(hdr);
 
+    rpmFreeMacros(NULL);
+    rpmFreeRpmrc();
+
     return result;
 }

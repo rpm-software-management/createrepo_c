@@ -48,6 +48,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
     pkg->location_base = location_base;
     pkg->checksum_type = checksum_type;
 
+    rpmtdFreeData(td);
     rpmtdFree(td);
 
 
@@ -55,25 +56,51 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
     // Files
     //
 
+    rpmtd full_filenames = rpmtdNew(); // Only for filenames_hashtable
+    rpmtd indexes   = rpmtdNew();
     rpmtd filenames = rpmtdNew();
     rpmtd fileflags = rpmtdNew();
     rpmtd filemodes = rpmtdNew();
 
     GHashTable *filenames_hashtable = g_hash_table_new(g_str_hash, g_str_equal);
 
-    if (headerGet(hdr, RPMTAG_FILENAMES, filenames, flags) &&
-        headerGet(hdr, RPMTAG_FILEFLAGS, fileflags, flags) &&
-        headerGet(hdr, RPMTAG_FILEMODES, filemodes, flags))
+    rpmtd dirnames = rpmtdNew();
+    int path_index = -1;
+    headerGet(hdr, RPMTAG_DIRNAMES, dirnames,  flags);
+
+    if (headerGet(hdr, RPMTAG_FILENAMES,  full_filenames,  flags) &&
+        headerGet(hdr, RPMTAG_DIRINDEXES, indexes,  flags) &&
+        headerGet(hdr, RPMTAG_BASENAMES,  filenames, flags) &&
+        headerGet(hdr, RPMTAG_FILEFLAGS,  fileflags, flags) &&
+        headerGet(hdr, RPMTAG_FILEMODES,  filemodes, flags))
     {
+        rpmtdInit(full_filenames);
+        rpmtdInit(indexes);
         rpmtdInit(filenames);
         rpmtdInit(fileflags);
         rpmtdInit(filemodes);
-        while ((rpmtdNext(filenames) != -1) &&
+        while ((rpmtdNext(full_filenames) != -1)   &&
+               (rpmtdNext(indexes) != -1)   &&
+               (rpmtdNext(filenames) != -1) &&
                (rpmtdNext(fileflags) != -1) &&
                (rpmtdNext(filemodes) != -1))
         {
+            while ((int) rpmtdGetNumber(indexes) > path_index) {
+                path_index++;
+                rpmtdNext(dirnames);
+            }
+
             PackageFile *packagefile = package_file_new();
             packagefile->name = rpmtdGetString(filenames);
+            packagefile->path = rpmtdGetString(dirnames);
+
+            printf("%s | %s\n", packagefile->path, packagefile->name);
+
+            // TODO:
+            // na zaklade toho, ze se zmenila struktura package...
+            // upravit hashovaci tabulku - OK
+            // upravit generovani xmlka - OK
+            // upravit swigovsky bindingy
 
             if (S_ISDIR(rpmtdGetNumber(filemodes))) {
                 // Directory
@@ -86,12 +113,20 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                 packagefile->type = "";
             }
 
-            g_hash_table_insert(filenames_hashtable, packagefile->name, packagefile->name);
+            g_hash_table_insert(filenames_hashtable, rpmtdGetString(full_filenames), rpmtdGetString(full_filenames));
             pkg->files = g_slist_prepend(pkg->files, packagefile);
         }
         pkg->files = g_slist_reverse (pkg->files);
+
+        rpmtdFreeData(dirnames);
+        rpmtdFreeData(indexes);
+        rpmtdFreeData(filenames);
+        rpmtdFreeData(fileflags);
+        rpmtdFreeData(filemodes);
     }
 
+    rpmtdFree(dirnames);
+    rpmtdFree(indexes);
     rpmtdFree(filemodes);
 
 
@@ -230,6 +265,10 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                 }
             }
         }
+
+        rpmtdFreeData(filenames);
+        rpmtdFreeData(fileflags);
+        rpmtdFreeData(fileversions);
     }
 
     pkg->provides  = g_slist_reverse (pkg->provides);
@@ -243,10 +282,16 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
     g_hash_table_remove_all(provided_hashtable);
     g_hash_table_remove_all(ap_hashtable);
 
+    g_hash_table_unref(filenames_hashtable);
+    g_hash_table_unref(provided_hashtable);
+    g_hash_table_unref(ap_hashtable);
+
     rpmtdFree(filenames);
     rpmtdFree(fileflags);
     rpmtdFree(fileversions);
 
+    rpmtdFreeData(full_filenames);
+    rpmtdFree(full_filenames);
 
     //
     // Changelogs
@@ -291,10 +336,13 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
         pkg->changelogs = g_slist_reverse (pkg->changelogs);
     }
 
+    rpmtdFreeData(changelogtimes);
+    rpmtdFreeData(changelognames);
+    rpmtdFreeData(changelogtexts);
+
     rpmtdFree(changelogtimes);
     rpmtdFree(changelognames);
     rpmtdFree(changelogtexts);
-
 
     return pkg;
 }

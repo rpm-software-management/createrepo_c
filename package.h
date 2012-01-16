@@ -14,6 +14,7 @@ typedef struct {
 
 typedef struct {
     char *type;
+    char *path;
     char *name;
 } PackageFile;
 

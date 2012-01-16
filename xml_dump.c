@@ -4,6 +4,8 @@
 #include "misc.h"
 #include "xml_dump.h"
 
+#define NAMEBUFF_LEN  1024
+
 //#define DEBUG
 #undef DEBUG
 
@@ -84,7 +86,23 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
     for(element = package->files; element; element=element->next) {
         PackageFile *entry = (PackageFile*) element->data;
 
-        if (primary && !is_primary(entry->name, &re)) {
+        // String concatenation (path + basename)
+        char fullname_buffer[NAMEBUFF_LEN];
+        int path_len = strlen(entry->path);
+        int name_len = strlen(entry->name);
+        if ( (path_len + name_len) > (NAMEBUFF_LEN - 1) ) {
+            printf("XML FILE DUMP - ERROR: Pathname + basename is too long: %s%s\n", entry->path, entry->name);
+            if (path_len >= NAMEBUFF_LEN) {
+                path_len = NAMEBUFF_LEN - 1;
+            }
+            name_len = (NAMEBUFF_LEN - 1) - path_len;
+        }
+        strncpy(fullname_buffer, entry->path, path_len);
+        strncpy(fullname_buffer+path_len, entry->name, name_len);
+        fullname_buffer[path_len+name_len] = '\0';
+
+
+        if (primary && !is_primary(fullname_buffer, &re)) {
             continue;
         }
 
@@ -112,7 +130,7 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
         }
 
         // Write text (file path)
-        tmp = ConvertInput(entry->name, handler);
+        tmp = ConvertInput(fullname_buffer, handler);
         if (tmp) {
             xmlTextWriterWriteString(writer, BAD_CAST tmp);
             if (handler && tmp != NULL) xmlFree(tmp);

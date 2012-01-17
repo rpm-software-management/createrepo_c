@@ -76,20 +76,26 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
         return;
     }
 
-    struct PrimaryReStruct re;
-    if (primary) {
-        // Get optimalized regexps for primary filenames matching
-        re = new_optimalized_primary_files_re();
-    }
 
     GSList *element = NULL;
     for(element = package->files; element; element=element->next) {
         PackageFile *entry = (PackageFile*) element->data;
 
+        // File withou name or path is suspicious => Skip it
+        if (!(entry->path)) {
+            continue;
+        }
+
+        if (!(entry->name)) {
+            continue;
+        }
+
         // String concatenation (path + basename)
         char fullname_buffer[NAMEBUFF_LEN];
         int path_len = strlen(entry->path);
         int name_len = strlen(entry->name);
+
+
         if ( (path_len + name_len) > (NAMEBUFF_LEN - 1) ) {
             printf("XML FILE DUMP - ERROR: Pathname + basename is too long: %s%s\n", entry->path, entry->name);
             if (path_len >= NAMEBUFF_LEN) {
@@ -102,11 +108,15 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
         fullname_buffer[path_len+name_len] = '\0';
 
 
-        if (primary && !is_primary(fullname_buffer, &re)) {
+        if (primary && !is_primary(fullname_buffer)) {
             continue;
         }
 
-
+/*
+        if (primary && !is_primary(entry->path, &re)) {
+            continue;
+        }
+*/
         // ***********************************
         // Element: file
         // ************************************
@@ -130,7 +140,8 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
         }
 
         // Write text (file path)
-        tmp = ConvertInput(fullname_buffer, handler);
+        //tmp = ConvertInput(fullname_buffer, handler);
+        tmp = ConvertInput(entry->name, handler);
         if (tmp) {
             xmlTextWriterWriteString(writer, BAD_CAST tmp);
             if (handler && tmp != NULL) xmlFree(tmp);
@@ -142,10 +153,6 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
             printf("Error at xmlTextWriterEndElement\n");
             return;
         }
-    }
-
-    if (primary) {
-        free_optimalized_primary_files_re(re);
     }
 }
 

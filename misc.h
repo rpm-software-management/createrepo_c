@@ -18,14 +18,7 @@ struct VersionStruct {
  */
 struct VersionStruct string_to_version(const char *string, GStringChunk *chunk);
 
-struct PrimaryReStruct {
-    GRegex *pri_re_1;
-    GRegex *pri_re_2;
-    GRegex *pri_re_3;
-};
-struct PrimaryReStruct new_optimalized_primary_files_re();
-void free_optimalized_primary_files_re(struct PrimaryReStruct in);
-int is_primary(const char *filename, struct PrimaryReStruct *user_re);
+int is_primary(const char *filename);
 char *compute_file_checksum(const char *filename, ChecksumType type);
 
 struct HeaderRangeStruct {

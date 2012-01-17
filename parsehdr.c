@@ -94,8 +94,6 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
             packagefile->name = rpmtdGetString(filenames);
             packagefile->path = rpmtdGetString(dirnames);
 
-            printf("%s | %s\n", packagefile->path, packagefile->name);
-
             // TODO:
             // na zaklade toho, ze se zmenila struktura package...
             // upravit hashovaci tabulku - OK
@@ -169,9 +167,6 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
     // Hashtable with already processed files from requires
     GHashTable *ap_hashtable = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, free);
 
-    // Get oprimalized regexps for primary filename matching
-    struct PrimaryReStruct re = new_optimalized_primary_files_re();
-
     int pcor_type;
     for (pcor_type=0; pcor_type <= REQUIRES; pcor_type++) {
         if (headerGet(hdr, file_tags[pcor_type], filenames, flags) &&
@@ -200,7 +195,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
 
                     // Skip package primary files
                     if (g_hash_table_lookup_extended(filenames_hashtable, filename, NULL, NULL)) {
-                        if (is_primary(filename, &re)) {
+                        if (is_primary(filename)) {
                             continue;
                         }
                     }
@@ -275,8 +270,6 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
     pkg->conflicts = g_slist_reverse (pkg->conflicts);
     pkg->obsoletes = g_slist_reverse (pkg->obsoletes);
     pkg->requires  = g_slist_reverse (pkg->requires);
-
-    free_optimalized_primary_files_re(re);
 
     g_hash_table_remove_all(filenames_hashtable);
     g_hash_table_remove_all(provided_hashtable);

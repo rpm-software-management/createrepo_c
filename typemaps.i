@@ -99,57 +99,48 @@
     Package *pkg = package_new();
 
     val = PyDict_GetItemString($input, "checksum");
-    if (val) str = PyString_AsString(val);
-    if (val && str) {
-        pkg->pkgId = g_string_chunk_insert(pkg->chunk, str);
+    if (val) {
+        pkg->pkgId = PyString_AsString(val);
     }
 
     val = PyDict_GetItemString($input, "name");
-    if (val) str = PyString_AsString(val);
-    if (val && str) {
-        pkg->name = g_string_chunk_insert(pkg->chunk, str);
+    if (val) {
+        pkg->name = PyString_AsString(val);
     }
 
     val = PyDict_GetItemString($input, "arch");
-    if (val) str = PyString_AsString(val);
-    if (val && str) {
-        pkg->arch = g_string_chunk_insert(pkg->chunk, str);
+    if (val) {
+        pkg->arch = PyString_AsString(val);
     }
 
     val = PyDict_GetItemString($input, "version");
-    if (val) str = PyString_AsString(val);
-    if (val && str) {
-        pkg->version = g_string_chunk_insert(pkg->chunk, str);
+    if (val) {
+        pkg->version = PyString_AsString(val);
     }
 
     val = PyDict_GetItemString($input, "epoch");
-    if (val) str = PyString_AsString(val);
-    if (val && str) {
-        pkg->epoch = g_string_chunk_insert(pkg->chunk, str);
+    if (val) {
+        pkg->epoch = PyString_AsString(val);
     }
 
     val = PyDict_GetItemString($input, "release");
-    if (val) str = PyString_AsString(val);
-    if (val && str) {
-        pkg->release = g_string_chunk_insert(pkg->chunk, str);
+    if (val) {
+        pkg->release = PyString_AsString(val);
     }
 
     val = PyDict_GetItemString($input, "summary");
-    if (val) str = PyString_AsString(val);
-    if (val && str) {
-        pkg->summary = g_string_chunk_insert(pkg->chunk, str);
+    if (val) {
+        pkg->summary = PyString_AsString(val);
     }
 
     val = PyDict_GetItemString($input, "description");
-    if (val) str = PyString_AsString(val);
-    if (val && str) {
-        pkg->description = g_string_chunk_insert(pkg->chunk, str);
+    if (val) {
+        pkg->description = PyString_AsString(val);
     }
 
     val = PyDict_GetItemString($input, "url");
-    if (val) str = PyString_AsString(val);
-    if (val && str) {
-        pkg->url = g_string_chunk_insert(pkg->chunk, str);
+    if (val) {
+        pkg->url = PyString_AsString(val);
     }
 
     val = PyDict_GetItemString($input, "time_file");
@@ -161,33 +152,28 @@
     pkg->time_build = num;
 
     val = PyDict_GetItemString($input, "rpm_license");
-    if (val) str = PyString_AsString(val);
-    if (val && str) {
-        pkg->rpm_license = g_string_chunk_insert(pkg->chunk, str);
+    if (val) {
+        pkg->rpm_license = PyString_AsString(val);
     }
 
     val = PyDict_GetItemString($input, "rpm_vendor");
-    if (val) str = PyString_AsString(val);
-    if (val && str) {
-        pkg->rpm_vendor = g_string_chunk_insert(pkg->chunk, str);
+    if (val) {
+        pkg->rpm_vendor = PyString_AsString(val);
     }
 
     val = PyDict_GetItemString($input, "rpm_group");
-    if (val) str = PyString_AsString(val);
-    if (val && str) {
-        pkg->rpm_group = g_string_chunk_insert(pkg->chunk, str);
+    if (val) {
+        pkg->rpm_group = PyString_AsString(val);
     }
 
     val = PyDict_GetItemString($input, "rpm_buildhost");
-    if (val) str = PyString_AsString(val);
-    if (val && str) {
-        pkg->rpm_buildhost = g_string_chunk_insert(pkg->chunk, str);
+    if (val) {
+        pkg->rpm_buildhost = PyString_AsString(val);
     }
 
     val = PyDict_GetItemString($input, "rpm_sourcerpm");
-    if (val) str = PyString_AsString(val);
-    if (val && str) {
-        pkg->rpm_sourcerpm = g_string_chunk_insert(pkg->chunk, str);
+    if (val) {
+        pkg->rpm_sourcerpm = PyString_AsString(val);
     }
 
     val = PyDict_GetItemString($input, "rpm_header_start");
@@ -199,9 +185,8 @@
     pkg->rpm_header_end = num;
 
     val = PyDict_GetItemString($input, "rpm_packager");
-    if (val) str = PyString_AsString(val);
-    if (val && str) {
-        pkg->rpm_packager = g_string_chunk_insert(pkg->chunk, str);
+    if (val) {
+        pkg->rpm_packager = PyString_AsString(val);
     }
 
     val = PyDict_GetItemString($input, "size_package");
@@ -217,21 +202,18 @@
     pkg->size_archive = num;
 
     val = PyDict_GetItemString($input, "location_href");
-    if (val) str = PyString_AsString(val);
-    if (val && str) {
-        pkg->location_href = g_string_chunk_insert(pkg->chunk, str);
+    if (val) {
+        pkg->location_href = PyString_AsString(val);
     }
 
     val = PyDict_GetItemString($input, "location_base");
-    if (val) str = PyString_AsString(val);
-    if (val && str) {
-        pkg->location_base = g_string_chunk_insert(pkg->chunk, str);
+    if (val) {
+        pkg->location_base = PyString_AsString(val);
     }
 
     val = PyDict_GetItemString($input, "checksum_type");
-    if (val) str = PyString_AsString(val);
-    if (val && str) {
-        pkg->checksum_type = g_string_chunk_insert(pkg->chunk, str);
+    if (val) {
+        pkg->checksum_type = PyString_AsString(val);
     }
 
 
@@ -249,9 +231,9 @@
                 PyObject *type = PyTuple_GetItem(file_tuple, 2);
                 if (name && type && PyString_Check(name), PyString_Check(type)) {
                     PackageFile *pkg_f = package_file_new();
-                    pkg_f->name = g_string_chunk_insert(pkg->chunk, PyString_AsString(name));
-                    pkg_f->path = g_string_chunk_insert(pkg->chunk, PyString_AsString(path));
-                    pkg_f->type = g_string_chunk_insert(pkg->chunk, PyString_AsString(type));
+                    pkg_f->name = PyString_AsString(name);
+                    pkg_f->path = PyString_AsString(path);
+                    pkg_f->type = PyString_AsString(type);
                     pkg->files = g_slist_prepend(pkg->files, pkg_f);
                 }
             }
@@ -304,7 +286,7 @@
                         continue;
                     }
                     Dependency *pkg_d = dependency_new();
-                    pkg_d->name = g_string_chunk_insert(pkg->chunk, PyString_AsString(name));
+                    pkg_d->name = PyString_AsString(name);
 
                     if (pre && PyInt_Check(pre)) {
                         pkg_d->pre = PyInt_AsLong(pre);
@@ -313,16 +295,16 @@
                     if (!flags || !PyString_Check(flags)) {
                         continue;
                     }
-                    pkg_d->flags = g_string_chunk_insert(pkg->chunk, PyString_AsString(flags));
+                    pkg_d->flags = PyString_AsString(flags);
 
                     if (epoch && PyString_Check(epoch)) {
-                        pkg_d->epoch = g_string_chunk_insert(pkg->chunk, PyString_AsString(epoch));
+                        pkg_d->epoch = PyString_AsString(epoch);
                     }
                     if (version && PyString_Check(version)) {
-                        pkg_d->version = g_string_chunk_insert(pkg->chunk, PyString_AsString(version));
+                        pkg_d->version = PyString_AsString(version);
                     }
                     if (release && PyString_Check(release)) {
-                        pkg_d->release = g_string_chunk_insert(pkg->chunk, PyString_AsString(release));
+                        pkg_d->release = PyString_AsString(release);
                     }
 
                     *dep_list = g_slist_prepend(*dep_list, pkg_d);
@@ -349,8 +331,8 @@
                    && PyString_Check(author) && PyString_Check(changelog)) {
                     ChangelogEntry *pkg_ch = changelog_entry_new();
                     pkg_ch->date = PyLong_AsLong(date);
-                    pkg_ch->author = g_string_chunk_insert(pkg->chunk, PyString_AsString(author));
-                    pkg_ch->changelog = g_string_chunk_insert(pkg->chunk, PyString_AsString(changelog));
+                    pkg_ch->author = PyString_AsString(author);
+                    pkg_ch->changelog = PyString_AsString(changelog);
                     pkg->changelogs = g_slist_prepend(pkg->changelogs, pkg_ch);
                 }
             }

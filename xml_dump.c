@@ -152,3 +152,15 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
     }
 }
 
+
+
+struct XmlStruct xml_dump(Package *pkg, const char *encoding)
+{
+    struct XmlStruct result;
+    result.primary = xml_dump_primary(pkg, encoding);
+    result.filelists = xml_dump_filelists(pkg, encoding);
+    result.other = xml_dump_other(pkg, encoding);
+
+    return result;
+}
+

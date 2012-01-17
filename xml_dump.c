@@ -92,31 +92,29 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
 
         // String concatenation (path + basename)
         char fullname_buffer[NAMEBUFF_LEN];
-        int path_len = strlen(entry->path);
-        int name_len = strlen(entry->name);
-
-
-        if ( (path_len + name_len) > (NAMEBUFF_LEN - 1) ) {
-            printf("XML FILE DUMP - ERROR: Pathname + basename is too long: %s%s\n", entry->path, entry->name);
-            if (path_len >= NAMEBUFF_LEN) {
-                path_len = NAMEBUFF_LEN - 1;
+        int fullname_i, str_i=0;
+        char *astring = entry->path;
+        for (fullname_i=0; fullname_i<(NAMEBUFF_LEN-1); fullname_i++) {
+            if (astring[str_i] != '\0') {
+                fullname_buffer[fullname_i] = astring[str_i];
+            } else {
+                if (astring = entry->name) {
+                    // entry->name string just ends
+                    break;
+                }
+                astring = entry->name;
+                str_i = 0;
+                fullname_buffer[fullname_i] = astring[str_i];
             }
-            name_len = (NAMEBUFF_LEN - 1) - path_len;
+            str_i++;
         }
-        strncpy(fullname_buffer, entry->path, path_len);
-        strncpy(fullname_buffer+path_len, entry->name, name_len);
-        fullname_buffer[path_len+name_len] = '\0';
+        fullname_buffer[fullname_i] = '\0';
 
-
+        // Skip a file if we want primary files and the file is not one
         if (primary && !is_primary(fullname_buffer)) {
             continue;
         }
 
-/*
-        if (primary && !is_primary(entry->path, &re)) {
-            continue;
-        }
-*/
         // ***********************************
         // Element: file
         // ************************************
@@ -141,7 +139,7 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
 
         // Write text (file path)
         //tmp = ConvertInput(fullname_buffer, handler);
-        tmp = ConvertInput(entry->name, handler);
+        tmp = ConvertInput(fullname_buffer, handler);
         if (tmp) {
             xmlTextWriterWriteString(writer, BAD_CAST tmp);
             if (handler && tmp != NULL) xmlFree(tmp);

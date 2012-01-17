@@ -6,7 +6,20 @@
 
 int main() {
     struct XmlStruct res;
+
+    init_package_parser();
+
+    int x;
+    for (x=0; x<1000; x++) {
+        res = xml_from_package_file("icedax-1.1.10-2.fc14.i686.rpm", PKG_CHECKSUM_SHA256, "", "", 4);
+        free(res.primary);
+        free(res.filelists);
+        free(res.other);
+    }
+
     res = xml_from_package_file("icedax-1.1.10-2.fc14.i686.rpm", PKG_CHECKSUM_SHA256, "", "", 4);
+
+    free_package_parser();
 
     printf("Test - Start\n");
     printf("%s\n\n%s\n\n%s\n", res.primary, res.filelists, res.other);

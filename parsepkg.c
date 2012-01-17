@@ -9,6 +9,29 @@
 #include "misc.h"
 #include "parsehdr.h"
 
+short initialized = 0;
+rpmts ts = NULL;
+
+void init_package_parser()
+{
+    initialized = 1;
+    rpmReadConfigFiles(NULL, NULL);
+    ts = rpmtsCreate();
+}
+
+
+
+void free_package_parser()
+{
+    if (ts) {
+        rpmtsFree(ts);
+    }
+
+    rpmFreeMacros(NULL);
+    rpmFreeRpmrc();
+}
+
+
 
 struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checksum_type,
                 const char *location_href, const char *location_base, int changelog_limit)
@@ -17,13 +40,6 @@ struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checks
     result.primary   = NULL;
     result.filelists = NULL;
     result.other     = NULL;
-
-    // Get header
-
-    // Create transaction
-    rpmts ts = NULL;
-    rpmReadConfigFiles(NULL, NULL);
-    ts = rpmtsCreate();
 
     // Open rpm file
     FD_t fd = NULL;
@@ -51,7 +67,6 @@ struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checks
     }
 
     // Cleanup
-    rpmtsFree(ts);
     Fclose(fd);
 
     // Get file stat
@@ -93,9 +108,6 @@ struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checks
     // Cleanup
     free(checksum);
     headerFree(hdr);
-
-    rpmFreeMacros(NULL);
-    rpmFreeRpmrc();
 
     return result;
 }

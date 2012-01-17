@@ -14,20 +14,17 @@
 xmlChar *
 ConvertInput(const char *in, xmlCharEncodingHandlerPtr handler)
 {
+    return (xmlChar*) in;
+/*
     xmlChar *out;
     int ret;
     int size;
     int out_size;
     int temp;
 
-    if (in == 0) {
-        return NULL;
-    }
-
-    if (!handler) {
+    if (!in || !handler) {
         return (xmlChar*) in;
     }
-
 
     size = (int) strlen(in) + 1;
     out_size = size * 2 - 1;
@@ -52,13 +49,14 @@ ConvertInput(const char *in, xmlCharEncodingHandlerPtr handler)
             out = 0;
         } else {
             out = (unsigned char *) xmlRealloc(out, out_size + 1);
-            out[out_size] = 0;  /*null terminating out */
+            out[out_size] = 0;  // null terminating out
         }
     } else {
         printf("ConvertInput: no mem\n");
     }
 
     return out;
+*/
 }
 
 
@@ -81,7 +79,7 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
     for(element = package->files; element; element=element->next) {
         PackageFile *entry = (PackageFile*) element->data;
 
-        // File withou name or path is suspicious => Skip it
+        // File without name or path is suspicious => Skip it
         if (!(entry->path)) {
             continue;
         }

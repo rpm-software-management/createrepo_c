@@ -37,7 +37,8 @@ dump_filelists_items(xmlTextWriterPtr writer, Package *package, xmlCharEncodingH
     printf("CALLED dump_filelists_items\n");
 #endif
 
-    rc = xmlTextWriterStartDocument(writer, NULL, MY_ENCODING, NULL);
+    //rc = xmlTextWriterStartDocument(writer, NULL, MY_ENCODING, NULL);
+    rc = xmlTextWriterStartDocument(writer, NULL, NULL, NULL);
     if (rc < 0) {
         printf ("Error at xmlTextWriterStartDocument\n");
         return;

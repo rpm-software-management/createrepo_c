@@ -243,12 +243,14 @@
         Py_ssize_t len = PyList_Size(files);
         for (x=0; x < len; x++) {
             PyObject *file_tuple = PyList_GetItem(files, x);
-            if (file_tuple && PyTuple_Check(file_tuple) && PyTuple_Size(file_tuple) == 2) {
+            if (file_tuple && PyTuple_Check(file_tuple) && PyTuple_Size(file_tuple) == 3) {
                 PyObject *name = PyTuple_GetItem(file_tuple, 0);
-                PyObject *type = PyTuple_GetItem(file_tuple, 1);
+                PyObject *path = PyTuple_GetItem(file_tuple, 1);
+                PyObject *type = PyTuple_GetItem(file_tuple, 2);
                 if (name && type && PyString_Check(name), PyString_Check(type)) {
                     PackageFile *pkg_f = package_file_new();
                     pkg_f->name = g_string_chunk_insert(pkg->chunk, PyString_AsString(name));
+                    pkg_f->path = g_string_chunk_insert(pkg->chunk, PyString_AsString(path));
                     pkg_f->type = g_string_chunk_insert(pkg->chunk, PyString_AsString(type));
                     pkg->files = g_slist_prepend(pkg->files, pkg_f);
                 }

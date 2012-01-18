@@ -69,6 +69,32 @@
     }
 }
 
+%typemap(out) GHashTable *load_metadata {
+    PyObject *dict = PyDict_New();
+
+    GHashTable *hash_table = $1;
+    GHashTableIter iter;
+    gpointer key, value;
+
+    g_hash_table_iter_init (&iter, hash_table);
+    while (g_hash_table_iter_next (&iter, &key, &value))
+    {
+        struct package_metadata *md = (struct package_metadata *) value;
+        PyObject *py_value = PyTuple_New(6);
+        PyTuple_SetItem(py_value, 0, PyLong_FromLong(md->time_file));
+        PyTuple_SetItem(py_value, 1, PyLong_FromLong(md->size_package));
+        PyTuple_SetItem(py_value, 2, PyString_FromString(md->checksum_type));
+        PyTuple_SetItem(py_value, 3, PyString_FromString(md->primary_xml));
+        PyTuple_SetItem(py_value, 4, PyString_FromString(md->filelists_xml));
+        PyTuple_SetItem(py_value, 5, PyString_FromString(md->other_xml));
+        PyDict_SetItemString(dict, key, py_value);
+    }
+    g_hash_table_destroy (hash_table);
+
+    $result = dict;
+}
+
+/*
 %typemap(out) GSList *changelogs {
     PyObject *list = PyList_New(0);
     GSList *element = NULL;
@@ -91,6 +117,7 @@
     list = g_slist_reverse(list);
     $1 = list;
 }
+*/
 
 %typemap(in) Package * {
     char *str = NULL;

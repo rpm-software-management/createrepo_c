@@ -1,12 +1,21 @@
 SWIG=/usr/bin/swig
 CFLAGS=-O -fPIC -DDEBUG -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags`
 LINKFLAGS=`pkg-config --libs glib-2.0` `xml2-config --libs` -lrpm -lrpmio
+LC=-lc
 
-all: package.so xml_dump.so parsehdr.so parsepkg.so
+# Profiling
+CFLAGS=-pg -O -fPIC -DDEBUG -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags`
+#LINKFLAGS=/lib/gcrt0.o `pkg-config --libs glib-2.0` `xml2-config --libs` -lrpm -lrpmio
+LC=-lc
 
-ctests: parsepkg_test_01 xml_dump_primary_test_01 xml_dump_filelists_test_01 xml_dump_other_test_01
+
+all: package.so xml_dump.so parsehdr.so parsepkg.so load_metadata.so
+
+ctests: parsepkg_test_01 parsehdr_test_01 parsehdr_test_02 xml_dump_primary_test_01 \
+        xml_dump_filelists_test_01 xml_dump_other_test_01 load_metadata_test_01
 
 test: main
+
 
 # Object files + Swit object files
 
@@ -30,6 +39,11 @@ parsepkg.o parsepkg_wrap.o: parsepkg.c parsepkg.h constants.h
 	$(SWIG) -python -Wall parsepkg.i
 	gcc $(CFLAGS) -c parsepkg.c parsepkg_wrap.c
 
+load_metadata.o load_metadata_wrap.o: load_metadata.c load_metadata.h constants.h
+	$(SWIG) -python -Wall load_metadata.i
+	gcc $(CFLAGS) -c load_metadata.c load_metadata_wrap.c
+
+
 # Object files
 
 misc.o: misc.c misc.h
@@ -45,21 +59,31 @@ xml_dump_other.o: xml_dump_other.c xml_dump.h
 	gcc $(CFLAGS) -c xml_dump_other.c
 
 package.so: package_wrap.o package.o
-	ld $(LINKFLAGS) -shared package.o package_wrap.o -o _package.so -lc
+	ld $(LINKFLAGS) -shared package.o package_wrap.o -o _package.so $(LC)
 
 xml_dump.so: package.o xml_dump_wrap.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o
-	ld $(LINKFLAGS) -shared package.o xml_dump_wrap.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o -o _xml_dump.so -lc
+	ld $(LINKFLAGS) -shared package.o xml_dump_wrap.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o -o _xml_dump.so $(LC)
 
 parsehdr.so: parsehdr_wrap.o parsehdr.o package.o xml_dump.o misc.o
-	ld $(LINKFLAGS) -shared misc.o parsehdr_wrap.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o -o _parsehdr.so -lc
+	ld $(LINKFLAGS) -shared misc.o parsehdr_wrap.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o -o _parsehdr.so $(LC)
 
 parsepkg.so: parsepkg_wrap.o parsepkg.o parsehdr.o package.o xml_dump.o misc.o
-	ld $(LINKFLAGS) -shared misc.o parsepkg_wrap.o parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o -o _parsepkg.so -lc
+	ld $(LINKFLAGS) -shared misc.o parsepkg_wrap.o parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o -o _parsepkg.so $(LC)
+
+load_metadata.so: load_metadata_wrap.o load_metadata.o
+	ld $(LINKFLAGS) -shared load_metadata_wrap.o load_metadata.o -o _load_metadata.so $(LC)
+
 
 # Tests
 
 parsepkg_test_01: parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o
 	gcc $(LINKFLAGS) $(CFLAGS) parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o ctests/parsepkg_test_01.c -o ctests/parsepkg_test_01
+
+parsehdr_test_01: parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o
+	gcc $(LINKFLAGS) $(CFLAGS) parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o ctests/parsehdr_test_01.c -o ctests/parsehdr_test_01
+
+parsehdr_test_02: parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o
+	gcc $(LINKFLAGS) $(CFLAGS) parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o ctests/parsehdr_test_02.c -o ctests/parsehdr_test_02
 
 xml_dump_primary_test_01: package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o
 	gcc $(LINKFLAGS) $(CFLAGS) package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o ctests/xml_dump_primary_test_01.c -o ctests/xml_dump_primary_test_01
@@ -69,6 +93,9 @@ xml_dump_filelists_test_01: package.o xml_dump.o xml_dump_primary.o xml_dump_fil
 
 xml_dump_other_test_01: package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o
 	gcc $(LINKFLAGS) $(CFLAGS) package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o ctests/xml_dump_other_test_01.c -o ctests/xml_dump_other_test_01
+
+load_metadata_test_01: load_metadata.o
+	gcc $(LINKFLAGS) $(CFLAGS) load_metadata.o ctests/load_metadata_test_01.c -o ctests/load_metadata_test_01
 
 
 clean:

@@ -96,12 +96,12 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
             if (astring[str_i] != '\0') {
                 fullname_buffer[fullname_i] = astring[str_i];
             } else {
-                if (astring = entry->name) {
+                if (astring == entry->name) {
                     // entry->name string just ends
                     break;
                 }
-                astring = entry->name;
                 str_i = 0;
+                astring = entry->name;
                 fullname_buffer[fullname_i] = astring[str_i];
             }
             str_i++;

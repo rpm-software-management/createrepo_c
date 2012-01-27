@@ -1,20 +1,18 @@
 SWIG=/usr/bin/swig
-CFLAGS=-O -fPIC -DDEBUG -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags`
-LINKFLAGS=`pkg-config --libs glib-2.0` `xml2-config --libs` -lrpm -lrpmio
+CFLAGS=-O2 -fPIC -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags` -pthread
+LINKFLAGS=`pkg-config --libs glib-2.0 --libs-only-l gthread-2.0` `xml2-config --libs` -lrpm -lrpmio
 LC=-lc
 
 # Profiling
-CFLAGS=-pg -O -fPIC -DDEBUG -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags`
+#CFLAGS=-pg -O -fPIC -DDEBUG -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags` -pthread
 #LINKFLAGS=/lib/gcrt0.o `pkg-config --libs glib-2.0` `xml2-config --libs` -lrpm -lrpmio
 LC=-lc
 
 
-all: package.so xml_dump.so parsehdr.so parsepkg.so load_metadata.so
+all: package.so xml_dump.so parsehdr.so parsepkg.so load_metadata.so main
 
 ctests: parsepkg_test_01 parsehdr_test_01 parsehdr_test_02 xml_dump_primary_test_01 \
         xml_dump_filelists_test_01 xml_dump_other_test_01 load_metadata_test_01
-
-test: main
 
 
 # Object files + Swit object files
@@ -96,6 +94,12 @@ xml_dump_other_test_01: package.o xml_dump.o xml_dump_primary.o xml_dump_filelis
 
 load_metadata_test_01: load_metadata.o
 	gcc $(LINKFLAGS) $(CFLAGS) load_metadata.o ctests/load_metadata_test_01.c -o ctests/load_metadata_test_01
+
+
+# Main
+
+main: parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o
+	gcc $(LINKFLAGS) $(CFLAGS) parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o main.c -o main
 
 
 clean:

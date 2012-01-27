@@ -179,6 +179,7 @@ dump_base_items(xmlTextWriterPtr writer, Package *package, xmlCharEncodingHandle
 {
     int rc;
     char n[] = "";
+    char zero[] = "0";
     xmlChar *tmp  = NULL;
     gchar   *tmp2 = NULL;
 
@@ -244,13 +245,13 @@ dump_base_items(xmlTextWriterPtr writer, Package *package, xmlCharEncodingHandle
 
     /* Write version attribute epoch */
     tmp = ConvertInput(package->epoch, handler);
-    if (!tmp) tmp = n;
+    if (!tmp) tmp = zero;
     rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "epoch", tmp);
     if (rc < 0) {
          printf("Error at xmlTextWriterWriteAttribute\n");
          return;
     }
-    if (handler && tmp != NULL && tmp != n) xmlFree(tmp);
+    if (handler && tmp != NULL && tmp != zero) xmlFree(tmp);
 
     /* Write version attribute ver */
     tmp = ConvertInput(package->version, handler);

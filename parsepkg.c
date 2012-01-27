@@ -2,6 +2,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <rpm/rpmts.h>
 #include <rpm/rpmfi.h>
 #include "constants.h"
 #include "parsehdr.h"
@@ -17,6 +18,12 @@ void init_package_parser()
     initialized = 1;
     rpmReadConfigFiles(NULL, NULL);
     ts = rpmtsCreate();
+
+    rpmVSFlags vsflags = 0;
+    vsflags |= _RPMVSF_NODIGESTS;
+    vsflags |= _RPMVSF_NOSIGNATURES;
+    vsflags |= RPMVSF_NOHDRCHK;
+    rpmtsSetVSFlags(ts, vsflags);
 }
 
 

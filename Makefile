@@ -1,6 +1,6 @@
 SWIG=/usr/bin/swig
 CFLAGS=-O2 -fPIC -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags` -pthread
-LINKFLAGS=`pkg-config --libs glib-2.0 --libs-only-l gthread-2.0` `xml2-config --libs` -lrpm -lrpmio
+LINKFLAGS=-lz `pkg-config --libs glib-2.0 --libs-only-l gthread-2.0` `xml2-config --libs` -lrpm -lrpmio
 LC=-lc
 
 # Profiling

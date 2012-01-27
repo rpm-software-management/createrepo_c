@@ -5,12 +5,13 @@
 #include <dirent.h>
 #include "constants.h"
 #include "parsepkg.h"
+#include <zlib.h>
 
 
 struct pool_user_data {
-    FILE *pri_f;
-    FILE *fil_f;
-    FILE *oth_f;
+    gzFile *pri_f;
+    gzFile *fil_f;
+    gzFile *oth_f;
     int changelog_limit;
 //  char *repo_path;
     char *location_base;
@@ -35,6 +36,15 @@ int check_file(char *filename) {
 }
 
 
+#define LOCK_PRI        0
+#define LOCK_FIL        1
+#define LOCK_OTH        2
+
+G_LOCK_DEFINE (LOCK_PRI);
+G_LOCK_DEFINE (LOCK_FIL);
+G_LOCK_DEFINE (LOCK_OTH);
+
+
 void dumper_thread(gpointer data, gpointer user_data) {
     struct pool_user_data *udata = (struct pool_user_data *) user_data;
 
@@ -50,19 +60,19 @@ void dumper_thread(gpointer data, gpointer user_data) {
                                 udata->location_base, udata->changelog_limit, NULL);
 
     // Write primary data
-    flockfile(udata->pri_f);
-    fputs(res.primary, udata->pri_f);
-    funlockfile(udata->pri_f);
+    G_LOCK(LOCK_PRI);
+    gzputs(udata->pri_f, (char *) res.primary);
+    G_UNLOCK(LOCK_PRI);
 
     // Write fielists data
-    flockfile(udata->fil_f);
-    fputs(res.filelists, udata->fil_f);
-    funlockfile(udata->fil_f);
+    G_LOCK(LOCK_FIL);
+    gzputs(udata->fil_f, (char *) res.filelists);
+    G_UNLOCK(LOCK_FIL);
 
     // Write other data
-    flockfile(udata->oth_f);
-    fputs(res.other, udata->oth_f);
-    funlockfile(udata->oth_f);
+    G_LOCK(LOCK_OTH);
+    gzputs(udata->oth_f, (char *) res.other);
+    G_UNLOCK(LOCK_OTH);
 
     // Clean up
     free(res.primary);
@@ -75,6 +85,7 @@ void dumper_thread(gpointer data, gpointer user_data) {
 
 
 #define MAX_THREADS     5
+#define GZ_BUFFER_SIZE  8192
 
 #define XML_COMMON_NS           "http://linux.duke.edu/metadata/common"
 #define XML_FILELISTS_NS        "http://linux.duke.edu/metadata/filelists"
@@ -93,9 +104,15 @@ int main(int argc, char **argv) {
 
     // Thread pool
     struct pool_user_data user_data;
-    user_data.pri_f = fopen("aaa_pri.xml", "w");
-    user_data.fil_f = fopen("aaa_fil.xml", "w");
-    user_data.oth_f = fopen("aaa_oth.xml", "w");
+    user_data.pri_f = gzopen("aaa_pri.xml.gz", "wb");
+    gzbuffer(user_data.pri_f, GZ_BUFFER_SIZE);
+    gzsetparams(user_data.pri_f, Z_BEST_SPEED, Z_DEFAULT_STRATEGY);
+    user_data.fil_f = gzopen("aaa_fil.xml.gz", "wb");
+    gzbuffer(user_data.fil_f, GZ_BUFFER_SIZE);
+    gzsetparams(user_data.fil_f, Z_BEST_SPEED, Z_DEFAULT_STRATEGY);
+    user_data.oth_f = gzopen("aaa_oth.xml.gz", "wb");
+    gzbuffer(user_data.oth_f, GZ_BUFFER_SIZE);
+    gzsetparams(user_data.oth_f, Z_BEST_SPEED, Z_DEFAULT_STRATEGY);
     user_data.changelog_limit = 5;
     user_data.location_base = "";
     user_data.checksum_type = PKG_CHECKSUM_SHA256;
@@ -107,15 +124,12 @@ int main(int argc, char **argv) {
     GThreadPool *pool = g_thread_pool_new(dumper_thread, &user_data, MAX_THREADS, TRUE, NULL);
 
     // Write XML header
-    fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-          "<metadata xmlns=\""XML_COMMON_NS"\" xmlns:rpm=\""XML_RPM_NS"\" packages=\"@@@@@@@@@@\">\n",
-          user_data.pri_f);
-    fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-          "<filelists xmlns=\""XML_FILELISTS_NS"\" packages=\"@@@@@@@@@@\">\n",
-          user_data.fil_f);
-    fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-          "<otherdata xmlns=\""XML_OTHER_NS"\" packages=\"@@@@@@@@@@\">\n",
-          user_data.oth_f);
+    gzputs(user_data.pri_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+          "<metadata xmlns=\""XML_COMMON_NS"\" xmlns:rpm=\""XML_RPM_NS"\" packages=\"@@@@@@@@@@\">\n");
+    gzputs(user_data.fil_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+          "<filelists xmlns=\""XML_FILELISTS_NS"\" packages=\"@@@@@@@@@@\">\n");
+    gzputs(user_data.oth_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+          "<otherdata xmlns=\""XML_OTHER_NS"\" packages=\"@@@@@@@@@@\">\n");
 
     // Recursivqe walk
     int package_count = 0;
@@ -181,21 +195,22 @@ int main(int argc, char **argv) {
     // Wait until pool is finished
     g_thread_pool_free(pool, FALSE, TRUE);
 
-    fputs("</metadata>\n",  user_data.pri_f);
-    fputs("</filelists>\n", user_data.fil_f);
-    fputs("</otherdata>\n", user_data.oth_f);
+    gzputs(user_data.pri_f, "</metadata>\n");
+    gzputs(user_data.fil_f, "</filelists>\n");
+    gzputs(user_data.oth_f, "</otherdata>\n");
 
     // TODO: PREDELAT!!!!
-    fseek(user_data.pri_f, 152, SEEK_SET);
-    fprintf(user_data.pri_f, "%010d", package_count);
-    fseek(user_data.fil_f, 109, SEEK_SET);
-    fprintf(user_data.fil_f, "%010d", package_count);
-    fseek(user_data.oth_f, 105, SEEK_SET);
-    fprintf(user_data.oth_f, "%010d", package_count);
+/*    gzseek(user_data.pri_f, 152, SEEK_SET);
+    gzprintf(user_data.pri_f, "%010d", package_count);
+    gzseek(user_data.fil_f, 109, SEEK_SET);
+    gzprintf(user_data.fil_f, "%010d", package_count);
+    gzseek(user_data.oth_f, 105, SEEK_SET);
+    gzprintf(user_data.oth_f, "%010d", package_count);
+*/
 
-    fclose(user_data.pri_f);
-    fclose(user_data.fil_f);
-    fclose(user_data.oth_f);
+    gzclose_w(user_data.pri_f);
+    gzclose_w(user_data.fil_f);
+    gzclose_w(user_data.oth_f);
 
     free_package_parser();
 

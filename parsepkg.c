@@ -34,7 +34,8 @@ void free_package_parser()
 
 
 struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checksum_type,
-                const char *location_href, const char *location_base, int changelog_limit)
+                const char *location_href, const char *location_base, int changelog_limit,
+                struct stat *stat_buf)
 {
     struct XmlStruct result;
     result.primary   = NULL;
@@ -71,13 +72,21 @@ struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checks
 
     // Get file stat
 
-    struct stat stat_buf;
-    if (stat(filename, &stat_buf) == -1) {
-        perror("stat");
-        return result;
+    gint64 mtime;
+    gint64 size;
+
+    if (!stat_buf) {
+        struct stat stat_buf_own;
+        if (stat(filename, &stat_buf_own) == -1) {
+            perror("stat");
+            return result;
+        }
+        mtime  = stat_buf_own.st_mtime;
+        size   = stat_buf_own.st_size;
+    } else {
+        mtime  = stat_buf->st_mtime;
+        size   = stat_buf->st_size;
     }
-    gint64 mtime  = stat_buf.st_mtime;
-    gint64 size   = stat_buf.st_size;
 
     // Compute checksum
 

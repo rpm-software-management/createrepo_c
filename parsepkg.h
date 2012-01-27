@@ -17,8 +17,12 @@ extern short initialized;
 void init_package_parser();
 void free_package_parser();
 
+
+// TODO: swig map for struct stat stat_buf
+
+// stat_buf can be NULL
 struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checksum_type,
                         const char *location_href, const char *location_base,
-                        int changelog_limit);
+                        int changelog_limit, struct stat *stat_buf);
 
 #endif /* __PARSEPKG__ */

@@ -11,13 +11,13 @@ int main() {
 
     int x;
     for (x=0; x<1000; x++) {
-        res = xml_from_package_file("icedax-1.1.10-2.fc14.i686.rpm", PKG_CHECKSUM_SHA256, "", "", 4);
+        res = xml_from_package_file("icedax-1.1.10-2.fc14.i686.rpm", PKG_CHECKSUM_SHA256, "", "", 5, NULL);
         free(res.primary);
         free(res.filelists);
         free(res.other);
     }
 
-    res = xml_from_package_file("icedax-1.1.10-2.fc14.i686.rpm", PKG_CHECKSUM_SHA256, "", "", 4);
+    res = xml_from_package_file("icedax-1.1.10-2.fc14.i686.rpm", PKG_CHECKSUM_SHA256, "", "", 5, NULL);
 
     free_package_parser();
 

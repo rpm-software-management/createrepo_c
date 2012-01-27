@@ -309,13 +309,6 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                (changelog_limit > 0))
         {
             gint64 time = rpmtdGetNumber(changelogtimes);
-            if (last_time == time) {
-                time += time_offset;
-                time_offset++;
-            } else {
-                last_time = time;
-                time_offset = 1;
-            }
 
             ChangelogEntry *changelog = changelog_entry_new();
             changelog->author    = rpmtdGetString(changelognames);
@@ -324,8 +317,23 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
 
             pkg->changelogs = g_slist_prepend(pkg->changelogs, changelog);
             changelog_limit--;
-        }
 
+            // If a previous entry has the same time, increment time of the previous
+            // entry by one. Ugly but works!
+            if (last_time == time) {
+                int tmp_time = time;
+                GSList *previous = pkg->changelogs;
+                while ((previous = g_slist_next(previous)) != NULL &&
+                       ((ChangelogEntry *) (previous->data))->date == tmp_time) {
+                    ((ChangelogEntry *) (previous->data))->date++;
+                    tmp_time++;
+                }
+            } else {
+                last_time = time;
+            }
+
+
+        }
         //pkg->changelogs = g_slist_reverse (pkg->changelogs);
     }
 

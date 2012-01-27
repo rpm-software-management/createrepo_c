@@ -111,7 +111,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                 packagefile->type = "";
             }
 
-            g_hash_table_insert(filenames_hashtable, rpmtdGetString(full_filenames), rpmtdGetString(full_filenames));
+            g_hash_table_insert(filenames_hashtable, (gpointer) rpmtdGetString(full_filenames), (gpointer) rpmtdGetString(full_filenames));
             pkg->files = g_slist_prepend(pkg->files, packagefile);
         }
         pkg->files = g_slist_reverse (pkg->files);
@@ -326,7 +326,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
             changelog_limit--;
         }
 
-        pkg->changelogs = g_slist_reverse (pkg->changelogs);
+        //pkg->changelogs = g_slist_reverse (pkg->changelogs);
     }
 
     rpmtdFreeData(changelogtimes);

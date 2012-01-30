@@ -13,10 +13,8 @@ struct pool_user_data {
     gzFile *fil_f;
     gzFile *oth_f;
     int changelog_limit;
-//  char *repo_path;
     char *location_base;
     int repodir_name_len;
-//  char *location_href; // Dostaneme pri pushu nove ulohy
     ChecksumType checksum_type;
     gboolean verbose;
 
@@ -104,16 +102,16 @@ int main(int argc, char **argv) {
 
     // Thread pool
     struct pool_user_data user_data;
-    user_data.pri_f = gzopen("aaa_pri.xml.gz", "wb");
+    user_data.pri_f = gzopen("repodata_out/my/primary.xml.gz", "wb");
     gzbuffer(user_data.pri_f, GZ_BUFFER_SIZE);
     gzsetparams(user_data.pri_f, Z_BEST_SPEED, Z_DEFAULT_STRATEGY);
-    user_data.fil_f = gzopen("aaa_fil.xml.gz", "wb");
+    user_data.fil_f = gzopen("repodata_out/my/filelists.xml.gz", "wb");
     gzbuffer(user_data.fil_f, GZ_BUFFER_SIZE);
     gzsetparams(user_data.fil_f, Z_BEST_SPEED, Z_DEFAULT_STRATEGY);
-    user_data.oth_f = gzopen("aaa_oth.xml.gz", "wb");
+    user_data.oth_f = gzopen("repodata_out/my/other.xml.gz", "wb");
     gzbuffer(user_data.oth_f, GZ_BUFFER_SIZE);
     gzsetparams(user_data.oth_f, Z_BEST_SPEED, Z_DEFAULT_STRATEGY);
-    user_data.changelog_limit = 5;
+    user_data.changelog_limit = 10;
     user_data.location_base = "";
     user_data.checksum_type = PKG_CHECKSUM_SHA256;
     user_data.verbose = TRUE;
@@ -121,15 +119,7 @@ int main(int argc, char **argv) {
     user_data.old_metadata = NULL;
 
     g_thread_init(NULL);
-    GThreadPool *pool = g_thread_pool_new(dumper_thread, &user_data, MAX_THREADS, TRUE, NULL);
-
-    // Write XML header
-    gzputs(user_data.pri_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-          "<metadata xmlns=\""XML_COMMON_NS"\" xmlns:rpm=\""XML_RPM_NS"\" packages=\"@@@@@@@@@@\">\n");
-    gzputs(user_data.fil_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-          "<filelists xmlns=\""XML_FILELISTS_NS"\" packages=\"@@@@@@@@@@\">\n");
-    gzputs(user_data.oth_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-          "<otherdata xmlns=\""XML_OTHER_NS"\" packages=\"@@@@@@@@@@\">\n");
+    GThreadPool *pool = g_thread_pool_new(dumper_thread, &user_data, 0, TRUE, NULL);
 
     // Recursivqe walk
     int package_count = 0;
@@ -192,21 +182,23 @@ int main(int argc, char **argv) {
     g_string_chunk_free (sub_dirs_chunk);
     g_queue_free(sub_dirs);
 
+    // Write XML header
+    gzprintf(user_data.pri_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+          "<metadata xmlns=\""XML_COMMON_NS"\" xmlns:rpm=\""XML_RPM_NS"\" packages=\"%d\">\n", package_count);
+    gzprintf(user_data.fil_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+          "<filelists xmlns=\""XML_FILELISTS_NS"\" packages=\"%d\">\n", package_count);
+    gzprintf(user_data.oth_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+          "<otherdata xmlns=\""XML_OTHER_NS"\" packages=\"%d\">\n", package_count);
+
+    // Start pool
+    g_thread_pool_set_max_threads(pool, MAX_THREADS, NULL);
+
     // Wait until pool is finished
     g_thread_pool_free(pool, FALSE, TRUE);
 
     gzputs(user_data.pri_f, "</metadata>\n");
     gzputs(user_data.fil_f, "</filelists>\n");
     gzputs(user_data.oth_f, "</otherdata>\n");
-
-    // TODO: PREDELAT!!!!
-/*    gzseek(user_data.pri_f, 152, SEEK_SET);
-    gzprintf(user_data.pri_f, "%010d", package_count);
-    gzseek(user_data.fil_f, 109, SEEK_SET);
-    gzprintf(user_data.fil_f, "%010d", package_count);
-    gzseek(user_data.oth_f, 105, SEEK_SET);
-    gzprintf(user_data.oth_f, "%010d", package_count);
-*/
 
     gzclose_w(user_data.pri_f);
     gzclose_w(user_data.fil_f);

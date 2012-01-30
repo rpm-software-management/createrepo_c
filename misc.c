@@ -133,6 +133,10 @@ int is_primary(const char *filename)
         return 1;
     }
 
+    if (!strncmp(filename, "/etc/", 5)) {
+        return 1;
+    }
+
     if (!strncmp(filename, "/usr/", 5)) {
         if (!strncmp(filename+5, "bin/", 4)) {
             return 1;

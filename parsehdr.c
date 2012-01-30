@@ -1,4 +1,5 @@
 #include <glib.h>
+#include <assert.h>
 #include <rpm/rpmfi.h>
 #include "parsehdr.h"
 #include "xml_dump.h"
@@ -66,7 +67,20 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
 
     rpmtd dirnames = rpmtdNew();
     int path_index = -1;
-    headerGet(hdr, RPMTAG_DIRNAMES, dirnames,  flags);
+
+    // Create list of pointer to directory names
+    int dir_count;
+    char **dir_list = NULL;
+    if (headerGet(hdr, RPMTAG_DIRNAMES, dirnames,  flags)) {
+        int x = 0;
+        dir_count = rpmtdCount(dirnames);
+        dir_list = malloc(sizeof(char *) * dir_count);
+        while (rpmtdNext(dirnames) != -1) {
+            dir_list[x] = rpmtdGetString(dirnames);
+            x++;
+        }
+        assert(x == dir_count);
+    }
 
     if (headerGet(hdr, RPMTAG_FILENAMES,  full_filenames,  flags) &&
         headerGet(hdr, RPMTAG_DIRINDEXES, indexes,  flags) &&
@@ -85,20 +99,9 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                (rpmtdNext(fileflags) != -1) &&
                (rpmtdNext(filemodes) != -1))
         {
-            while ((int) rpmtdGetNumber(indexes) > path_index) {
-                path_index++;
-                rpmtdNext(dirnames);
-            }
-
             PackageFile *packagefile = package_file_new();
             packagefile->name = rpmtdGetString(filenames);
-            packagefile->path = rpmtdGetString(dirnames);
-
-            // TODO:
-            // na zaklade toho, ze se zmenila struktura package...
-            // upravit hashovaci tabulku - OK
-            // upravit generovani xmlka - OK
-            // upravit swigovsky bindingy
+            packagefile->path = dir_list[(int) rpmtdGetNumber(indexes)];
 
             if (S_ISDIR(rpmtdGetNumber(filemodes))) {
                 // Directory
@@ -126,6 +129,10 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
     rpmtdFree(dirnames);
     rpmtdFree(indexes);
     rpmtdFree(filemodes);
+
+    if (dir_list) {
+        free((void *) dir_list);
+    }
 
 
     //

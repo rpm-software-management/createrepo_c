@@ -20,7 +20,12 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
 
     pkg->pkgId = checksum;
     pkg->name = headerGetString(hdr, RPMTAG_NAME);
-    pkg->arch = headerGetString(hdr, RPMTAG_ARCH);
+    gint64 is_src = headerGetNumber(hdr, RPMTAG_SOURCEPACKAGE);
+    if (is_src) {
+        pkg->arch = "src";
+    } else {
+        pkg->arch = headerGetString(hdr, RPMTAG_ARCH);
+    }
     pkg->version = headerGetString(hdr, RPMTAG_VERSION);
 #define MAX_STR_INT_LEN 24
     char tmp_epoch[MAX_STR_INT_LEN];

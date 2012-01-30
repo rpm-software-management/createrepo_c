@@ -1,6 +1,7 @@
 #include <glib.h>
 #include <assert.h>
 #include <rpm/rpmfi.h>
+#include <stdlib.h>
 #include "parsehdr.h"
 #include "xml_dump.h"
 #include "misc.h"
@@ -21,7 +22,12 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
     pkg->name = headerGetString(hdr, RPMTAG_NAME);
     pkg->arch = headerGetString(hdr, RPMTAG_ARCH);
     pkg->version = headerGetString(hdr, RPMTAG_VERSION);
-    pkg->epoch = headerGetString(hdr, RPMTAG_EPOCH);
+#define MAX_STR_INT_LEN 24
+    char tmp_epoch[MAX_STR_INT_LEN];
+    if (sprintf(tmp_epoch, "%d", headerGetNumber(hdr, RPMTAG_EPOCH)) <= 0) {
+        tmp_epoch[0] = '\0';
+    }
+    pkg->epoch = g_string_chunk_insert_len(pkg->chunk, tmp_epoch, MAX_STR_INT_LEN);
     pkg->release = headerGetString(hdr, RPMTAG_RELEASE);
     pkg->summary = headerGetString(hdr, RPMTAG_SUMMARY);
     pkg->description = headerGetString(hdr, RPMTAG_DESCRIPTION);

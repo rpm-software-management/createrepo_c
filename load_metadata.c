@@ -1,5 +1,8 @@
 #include <glib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <fcntl.h>
+#include <zlib.h>
 #include "load_metadata.h"
 
 
@@ -14,25 +17,9 @@ void free_values(gpointer data)
 }
 
 
-GHashTable *load_metadata(const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
+GHashTable *parse_xml_metadata(const char *pri_cont, const char *fil_cont, const char *oth_cont)
 {
-    GFileTest flags = G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR;
-    if (!g_file_test(primary_xml_path, flags) ||
-        !g_file_test(filelists_xml_path, flags) ||
-        !g_file_test(other_xml_path, flags))
-    {
-        return NULL;
-    }
-
     GHashTable *metadata = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_values);
-
-    // Map file into memmory
-    char *pri_cont, *fil_cont, *oth_cont;
-    int pri_len, fil_len, oth_len;
-
-    g_file_get_contents(primary_xml_path, &pri_cont, &pri_len, NULL);
-    g_file_get_contents(filelists_xml_path, &fil_cont, &fil_len, NULL);
-    g_file_get_contents(other_xml_path, &oth_cont, &oth_len, NULL);
 
     GRegexCompileFlags c_flags = G_REGEX_DOTALL | G_REGEX_OPTIMIZE;
     GRegexMatchFlags   m_flags = 0;
@@ -117,9 +104,142 @@ GHashTable *load_metadata(const char *primary_xml_path, const char *filelists_xm
     g_regex_unref(filetime_re);
     g_regex_unref(size_re);
 
+    return metadata;
+}
+
+
+#define GZ_BUFFER_SIZE   131072  // 1024*128
+
+GHashTable *load_gz_compressed_xml_metadata(const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
+{
+    GFileTest flags = G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR;
+    if (!g_file_test(primary_xml_path, flags) ||
+        !g_file_test(filelists_xml_path, flags) ||
+        !g_file_test(other_xml_path, flags))
+    {
+        return NULL;
+    }
+
+    // Open files and get file descriptors
+    int pri_xml_fd = open(primary_xml_path, O_RDONLY);
+    int fil_xml_fd = open(filelists_xml_path, O_RDONLY);
+    int oth_xml_fd = open(other_xml_path, O_RDONLY);
+
+    // Get sizes of files
+    int pri_xml_size = lseek(pri_xml_fd, 0, SEEK_END);
+    lseek(pri_xml_fd, 0L, SEEK_SET);
+    int fil_xml_size = lseek(fil_xml_fd, 0, SEEK_END);
+    lseek(fil_xml_fd, 0L, SEEK_SET);
+    int oth_xml_size = lseek(oth_xml_fd, 0, SEEK_END);
+    lseek(oth_xml_fd, 0L, SEEK_SET);
+
+    // Malloc space for store file contents in memmory
+    const int compression_ratio = 10; // 15;  // Just my personal estimation
+
+    size_t pri_cont_len = sizeof(char) * pri_xml_size * compression_ratio;
+    char *pri_cont = malloc(pri_cont_len);
+    size_t fil_cont_len = sizeof(char) * fil_xml_size * compression_ratio;
+    char *fil_cont = malloc(fil_cont_len);
+    size_t oth_cont_len = sizeof(char) * oth_xml_size * compression_ratio;
+    char *oth_cont = malloc(oth_cont_len);
+
+    // Load file content into memory
+    gzFile pri_xml_gzfile = gzdopen(pri_xml_fd, "rb");
+    gzbuffer(pri_xml_gzfile, GZ_BUFFER_SIZE);
+    gzFile fil_xml_gzfile = gzdopen(fil_xml_fd, "rb");
+    gzbuffer(fil_xml_gzfile, GZ_BUFFER_SIZE);
+    gzFile oth_xml_gzfile = gzdopen(oth_xml_fd, "rb");
+    gzbuffer(oth_xml_gzfile, GZ_BUFFER_SIZE);
+
+    size_t read;
+
+    // TODO: This 3 read function merge into 1
+
+    read = gzread(pri_xml_gzfile, pri_cont, pri_cont_len);
+    if (read == -1) {
+        printf("Cannot read %s\n", pri_xml_gzfile);
+        return NULL;
+    }
+    if (read == pri_cont_len) {
+        // Estimation of compress ratio failed.. Realloc
+        int ext_len = (sizeof(char) * pri_xml_size * 2);  // This magic 2 is just magic, have no special meaning
+        while (read == pri_cont_len) {
+            pri_cont = realloc(pri_cont, (pri_cont_len+ext_len));
+            read += gzread(pri_xml_gzfile, (pri_cont+pri_cont_len), ext_len);
+            pri_cont_len += ext_len;
+        }
+    }
+    pri_cont[pri_cont_len] = '\0';
+
+    read = gzread(fil_xml_gzfile, fil_cont, fil_cont_len);
+    if (read == -1) {
+        printf("Cannot read %s\n", fil_xml_gzfile);
+        return NULL;
+    }
+    if (read == fil_cont_len) {
+        // Estimation of compress ratio failed.. Realloc
+        int ext_len = (sizeof(char) * fil_xml_size * 2);  // This magic 2 is just magic, have no special meaning
+        while (read == fil_cont_len) {
+            fil_cont = realloc(fil_cont, (fil_cont_len+ext_len));
+            read += gzread(fil_xml_gzfile, (fil_cont+fil_cont_len), ext_len);
+            fil_cont_len += ext_len;
+        }
+    }
+    fil_cont[fil_cont_len] = '\0';
+
+    read = gzread(oth_xml_gzfile, oth_cont, oth_cont_len);
+    if (read == -1) {
+        printf("Cannot read %s\n", oth_xml_gzfile);
+        return NULL;
+    }
+    if (read == oth_cont_len) {
+        // Estimation of compress ratio failed.. Realloc
+        int ext_len = (sizeof(char) * oth_xml_size * 2);  // This magic 2 is just magic, have no special meaning
+        while (read == oth_cont_len) {
+            oth_cont = realloc(oth_cont, (oth_cont_len+ext_len));
+            read += gzread(oth_xml_gzfile, (oth_cont+oth_cont_len), ext_len);
+            oth_cont_len += ext_len;
+        }
+    }
+    oth_cont[oth_cont_len] = '\0';
+
+    gzclose(pri_xml_gzfile);
+    gzclose(fil_xml_gzfile);
+    gzclose(oth_xml_gzfile);
+
+    GHashTable *result = parse_xml_metadata(pri_cont, fil_cont, oth_cont);
+
     g_free(pri_cont);
     g_free(fil_cont);
     g_free(oth_cont);
 
-    return metadata;
+    return result;
 }
+
+
+GHashTable *load_xml_metadata(const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
+{
+    GFileTest flags = G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR;
+    if (!g_file_test(primary_xml_path, flags) ||
+        !g_file_test(filelists_xml_path, flags) ||
+        !g_file_test(other_xml_path, flags))
+    {
+        return NULL;
+    }
+
+    // Map file into memmory
+    char *pri_cont, *fil_cont, *oth_cont;
+    g_file_get_contents(primary_xml_path, &pri_cont, NULL, NULL);
+    g_file_get_contents(filelists_xml_path, &fil_cont, NULL, NULL);
+    g_file_get_contents(other_xml_path, &oth_cont, NULL, NULL);
+
+    GHashTable *result = parse_xml_metadata(pri_cont, fil_cont, oth_cont);
+
+    g_free(pri_cont);
+    g_free(fil_cont);
+    g_free(oth_cont);
+
+    return result;
+}
+
+

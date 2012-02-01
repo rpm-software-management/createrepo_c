@@ -15,6 +15,7 @@ struct package_metadata {
 };
 
 
-GHashTable *load_metadata(const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path);
+GHashTable *load_gz_compressed_xml_metadata(const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path);
+GHashTable *load_xml_metadata(const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path);
 
 #endif /* __LOAD_METADATA__ */

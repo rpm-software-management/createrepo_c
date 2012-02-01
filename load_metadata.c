@@ -19,6 +19,10 @@ void free_values(gpointer data)
 
 GHashTable *parse_xml_metadata(const char *pri_cont, const char *fil_cont, const char *oth_cont)
 {
+    if (!pri_cont || !fil_cont || !oth_cont) {
+        return NULL;
+    }
+
     GHashTable *metadata = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, free_values);
 
     GRegexCompileFlags c_flags = G_REGEX_DOTALL | G_REGEX_OPTIMIZE;
@@ -242,4 +246,61 @@ GHashTable *load_xml_metadata(const char *primary_xml_path, const char *filelist
     return result;
 }
 
+
+GHashTable *locate_and_load_xml_metadata(const char *repopath)
+{
+    // TODO: First try get info from repomd.xml
+
+    if (!repopath || !g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
+        return NULL;
+    }
+
+    gchar *pri_gz_xml = NULL;
+    gchar *fil_gz_xml = NULL;
+    gchar *oth_gz_xml = NULL;
+    gchar *pri_xml = NULL;
+    gchar *fil_xml = NULL;
+    gchar *oth_xml = NULL;
+
+    GDir *repodir = g_dir_open(repopath, 0, NULL);
+    if (!repodir) {
+        return NULL;
+    }
+
+    gchar *file;
+    while (file = g_dir_read_name (repodir)) {
+        if (g_str_has_suffix(file, "primary.xml.gz")) {
+            pri_gz_xml = g_strconcat (repopath, file, NULL);
+        } else if (g_str_has_suffix(file, "filelists.xml.gz")) {
+            fil_gz_xml = g_strconcat (repopath, file, NULL);
+        } else if (g_str_has_suffix(file, "other.xml.gz")) {
+            oth_gz_xml = g_strconcat (repopath, file, NULL);
+        } else if (g_str_has_suffix(file, "primary.xml")) {
+            pri_xml = g_strconcat (repopath, file, NULL);
+        } else if (g_str_has_suffix(file, "filelists.xml")) {
+            fil_xml = g_strconcat (repopath, file, NULL);
+        } else if (g_str_has_suffix(file, "other.xml")) {
+            oth_xml = g_strconcat (repopath, file, NULL);
+        }
+    }
+
+    g_dir_close(repodir);
+
+    GHashTable *result = NULL;
+
+    if (pri_gz_xml && fil_gz_xml && oth_gz_xml) {
+        result = load_gz_compressed_xml_metadata(pri_gz_xml, fil_gz_xml, oth_gz_xml);
+    } else if (pri_xml && fil_xml && oth_xml) {
+        result = load_xml_metadata(pri_xml, fil_xml, oth_xml);
+    }
+
+    g_free(pri_gz_xml);
+    g_free(fil_gz_xml);
+    g_free(oth_gz_xml);
+    g_free(pri_xml);
+    g_free(fil_xml);
+    g_free(oth_xml);
+
+    return result;
+}
 

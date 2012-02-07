@@ -137,6 +137,14 @@ GHashTable *load_gz_compressed_xml_metadata(const char *primary_xml_path, const 
     int oth_xml_size = lseek(oth_xml_fd, 0, SEEK_END);
     lseek(oth_xml_fd, 0L, SEEK_SET);
 
+    if (!pri_xml_size || !fil_xml_size || !oth_xml_size) {
+        // One or more archives are empty
+        close(pri_xml_fd);
+        close(fil_xml_fd);
+        close(oth_xml_fd);
+        return NULL;
+    }
+
     // Malloc space for store file contents in memmory
     const int compression_ratio = 10; // 15;  // Just my personal estimation
 
@@ -147,12 +155,32 @@ GHashTable *load_gz_compressed_xml_metadata(const char *primary_xml_path, const 
     size_t oth_cont_len = sizeof(char) * oth_xml_size * compression_ratio;
     char *oth_cont = malloc(oth_cont_len);
 
-    // Load file content into memory
-    gzFile pri_xml_gzfile = gzdopen(pri_xml_fd, "rb");
+    // Open gziped file
+    gzFile pri_xml_gzfile;
+    gzFile fil_xml_gzfile;
+    gzFile oth_xml_gzfile;
+
+    if (!(pri_xml_gzfile = gzdopen(pri_xml_fd, "rb"))) {
+//    if (!(pri_xml_gzfile = gzopen(primary_xml_path, "rb"))) {
+        return NULL;
+    }
+
+    if (!(fil_xml_gzfile = gzdopen(fil_xml_fd, "rb"))) {
+//    if (!(fil_xml_gzfile = gzopen(filelists_xml_path, "rb"))) {
+        gzclose(pri_xml_gzfile);
+        return NULL;
+    }
+
+    if (!(oth_xml_gzfile = gzdopen(oth_xml_fd, "rb"))) {
+//    if (!(oth_xml_gzfile = gzopen(other_xml_path, "rb"))) {
+        gzclose(pri_xml_gzfile);
+        gzclose(fil_xml_gzfile);
+        return NULL;
+    }
+
+    // Set buffers
     gzbuffer(pri_xml_gzfile, GZ_BUFFER_SIZE);
-    gzFile fil_xml_gzfile = gzdopen(fil_xml_fd, "rb");
     gzbuffer(fil_xml_gzfile, GZ_BUFFER_SIZE);
-    gzFile oth_xml_gzfile = gzdopen(oth_xml_fd, "rb");
     gzbuffer(oth_xml_gzfile, GZ_BUFFER_SIZE);
 
     size_t read;
@@ -165,6 +193,7 @@ GHashTable *load_gz_compressed_xml_metadata(const char *primary_xml_path, const 
         return NULL;
     }
     if (read == pri_cont_len) {
+        fflush(stdout);
         // Estimation of compress ratio failed.. Realloc
         int ext_len = (sizeof(char) * pri_xml_size * 2);  // This magic 2 is just magic, have no special meaning
         while (read == pri_cont_len) {
@@ -172,8 +201,10 @@ GHashTable *load_gz_compressed_xml_metadata(const char *primary_xml_path, const 
             read += gzread(pri_xml_gzfile, (pri_cont+pri_cont_len), ext_len);
             pri_cont_len += ext_len;
         }
+        fil_cont[fil_cont_len-ext_len+read] = '\0';
+    } else {
+        pri_cont[read] = '\0';
     }
-    pri_cont[pri_cont_len] = '\0';
 
     read = gzread(fil_xml_gzfile, fil_cont, fil_cont_len);
     if (read == -1) {
@@ -188,8 +219,10 @@ GHashTable *load_gz_compressed_xml_metadata(const char *primary_xml_path, const 
             read += gzread(fil_xml_gzfile, (fil_cont+fil_cont_len), ext_len);
             fil_cont_len += ext_len;
         }
+        fil_cont[fil_cont_len-ext_len+read] = '\0';
+    } else {
+        fil_cont[read] = '\0';
     }
-    fil_cont[fil_cont_len] = '\0';
 
     read = gzread(oth_xml_gzfile, oth_cont, oth_cont_len);
     if (read == -1) {
@@ -204,8 +237,10 @@ GHashTable *load_gz_compressed_xml_metadata(const char *primary_xml_path, const 
             read += gzread(oth_xml_gzfile, (oth_cont+oth_cont_len), ext_len);
             oth_cont_len += ext_len;
         }
+        fil_cont[fil_cont_len-ext_len+read] = '\0';
+    } else {
+        oth_cont[read] = '\0';
     }
-    oth_cont[oth_cont_len] = '\0';
 
     gzclose(pri_xml_gzfile);
     gzclose(fil_xml_gzfile);
@@ -213,9 +248,9 @@ GHashTable *load_gz_compressed_xml_metadata(const char *primary_xml_path, const 
 
     GHashTable *result = parse_xml_metadata(pri_cont, fil_cont, oth_cont);
 
-    g_free(pri_cont);
-    g_free(fil_cont);
-    g_free(oth_cont);
+    free(pri_cont);
+    free(fil_cont);
+    free(oth_cont);
 
     return result;
 }

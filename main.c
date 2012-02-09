@@ -2,11 +2,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <dirent.h>
 #include "constants.h"
 #include "parsepkg.h"
 #include <zlib.h>
 #include <fcntl.h>
+#include "load_metadata.h"
 
 
 #define DEFAULT_CHANGELOG_LIMIT         10
@@ -57,6 +59,7 @@ struct UserData {
     int changelog_limit;
     char *location_base;
     int repodir_name_len;
+    char *checksum_type_str;
     ChecksumType checksum_type;
     gboolean quiet;
     gboolean verbose;
@@ -68,7 +71,14 @@ struct UserData {
 };
 
 
-int allowed_file(char *filename, struct CmdOptions *options) {
+struct PoolTask {
+    char* full_path;
+    char* filename;
+    char* path;
+};
+
+
+int allowed_file(const gchar *filename, struct CmdOptions *options) {
 
     // Check file against exclude glob masks
     if (options->exclude_masks) {
@@ -116,12 +126,49 @@ void dumper_thread(gpointer data, gpointer user_data) {
 //        printf("Processing: %s\n", data);
 //    }
 
+    struct PoolTask *task = (struct PoolTask *) data;
+
     // location_href without leading part of path (path to repo)
-    char *location_href =  (gchar *) data + udata->repodir_name_len + 1;
+    char *location_href =  (gchar *) task->full_path + udata->repodir_name_len + 1;
+
+    // Get stat info about file
+    struct stat stat_buf;
+    if (!(udata->old_metadata) || !(udata->skip_stat)) {
+        if (stat(task->full_path, &stat_buf) == -1) {
+            perror("Stat");
+            return;
+        }
+    }
 
     struct XmlStruct res;
-    res = xml_from_package_file(data, udata->checksum_type, location_href,
-                                udata->location_base, udata->changelog_limit, NULL);
+
+    // Update stuff
+    gboolean old_used = FALSE;
+    struct package_metadata *md;
+
+    if (udata->old_metadata) {
+        md = (struct package_metadata *) g_hash_table_lookup (udata->old_metadata, location_href);
+        if (md) {
+//            printf ("HASH TABLE HIT\n");
+            if (udata->skip_stat) {
+                old_used = TRUE;
+            } else if (stat_buf.st_mtime == md->time_file
+                       && stat_buf.st_size == md->size_package
+                       && !strcmp(udata->checksum_type_str, md->checksum_type))
+            {
+                old_used = TRUE;
+            }
+        }
+    }
+
+    if (!old_used) {
+        res = xml_from_package_file(task->full_path, udata->checksum_type, location_href,
+                                    udata->location_base, udata->changelog_limit, NULL);
+    } else {
+        res.primary = md->primary_xml;
+        res.filelists = md->filelists_xml;
+        res.other = md->other_xml;
+    }
 
     // Write primary data
     G_LOCK(LOCK_PRI);
@@ -139,10 +186,16 @@ void dumper_thread(gpointer data, gpointer user_data) {
     G_UNLOCK(LOCK_OTH);
 
     // Clean up
-    free(res.primary);
-    free(res.filelists);
-    free(res.other);
-    g_free(data);
+    if (!old_used) {
+        free(res.primary);
+        free(res.filelists);
+        free(res.other);
+    }
+
+    g_free(task->full_path);
+    g_free(task->filename);
+    g_free(task->path);
+    g_free(task);
 
     return;
 }
@@ -238,6 +291,7 @@ gboolean check_arguments(struct CmdOptions *options)
         }
         g_string_free(checksum_str, TRUE);
     } else {
+        options->checksum = g_strdup("sha256");
         options->checksum_type = PKG_CHECKSUM_SHA256;
     }
 
@@ -385,7 +439,7 @@ int main(int argc, char **argv) {
 // ---------- DEBUG STUFF END */
 
 
-    // Process parsed arguments
+    // Check parsed arguments
 
     if (!check_arguments(&cmd_options)) {
         free_options(&cmd_options);
@@ -402,16 +456,22 @@ int main(int argc, char **argv) {
     }
 
 
-    // Prepare dirs
+    // Set paths of input and output repos
 
-    gchar *in_repo = argv[1];
+    gchar *in_dir   = argv[1];
+    gchar *in_repo  = NULL;
     gchar *out_repo = NULL;
+
+    in_repo = g_strconcat(in_dir, "/repodata/", NULL);
 
     if (cmd_options.outputdir) {
         out_repo = g_strconcat(cmd_options.outputdir, "/repodata/", NULL);
     } else {
-        out_repo = g_strconcat(in_repo, "/repodata/", NULL);
+        out_repo = g_strdup(in_repo);
     }
+
+
+    // Create out_repo dir if doesn't exists
 
     if (!g_file_test(out_repo, G_FILE_TEST_EXISTS)) {
         if (g_mkdir (out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
@@ -426,7 +486,17 @@ int main(int argc, char **argv) {
     }
 
 
-    // Prepare new xml files in temp
+    // Load old metadata if --update
+
+    GHashTable *old_metadata = NULL;
+    if (cmd_options.update) {
+        old_metadata = locate_and_load_xml_metadata_2(in_repo);
+        if (old_metadata) {
+            printf("Old metadata loaded\n");
+        }
+    }
+
+    // Create and open new xml.gz files
 
     gchar *pri_xml_filename = g_strconcat(out_repo, "/_primary.xml.gz");
     //int fd_pri_xml = g_file_open_tmp("XXXXXX", &pri_xml_filename, NULL);
@@ -450,16 +520,6 @@ int main(int argc, char **argv) {
     gzbuffer(oth_gz_file, GZ_BUFFER_SIZE);
 
 
-
-    puts("Using tmp files:");
-    puts(pri_xml_filename);
-    puts(fil_xml_filename);
-    puts(oth_xml_filename);
-
-    // Load old metadata if --update
-
-    // TODO
-
     // Init package parser
 
     init_package_parser();
@@ -468,17 +528,18 @@ int main(int argc, char **argv) {
     // Thread pool - User data initialization
 
     struct UserData user_data;
-    user_data.pri_f           = pri_gz_file;
-    user_data.fil_f           = fil_gz_file;
-    user_data.oth_f           = oth_gz_file;
-    user_data.changelog_limit = cmd_options.changelog_limit;
-    user_data.location_base   = cmd_options.location_base;
-    user_data.checksum_type   = cmd_options.checksum_type;
-    user_data.quiet           = cmd_options.quiet;
-    user_data.verbose         = cmd_options.verbose;
-    user_data.skip_symlinks   = cmd_options.skip_symlinks;
-    user_data.skip_stat       = cmd_options.skip_stat;
-    user_data.old_metadata    = NULL;
+    user_data.pri_f             = pri_gz_file;
+    user_data.fil_f             = fil_gz_file;
+    user_data.oth_f             = oth_gz_file;
+    user_data.changelog_limit   = cmd_options.changelog_limit;
+    user_data.location_base     = cmd_options.location_base;
+    user_data.checksum_type_str = cmd_options.checksum;
+    user_data.checksum_type     = cmd_options.checksum_type;
+    user_data.quiet             = cmd_options.quiet;
+    user_data.verbose           = cmd_options.verbose;
+    user_data.skip_symlinks     = cmd_options.skip_symlinks;
+    user_data.skip_stat         = cmd_options.skip_stat;
+    user_data.old_metadata      = old_metadata;
 
     puts("Thread pool user data ready");
 
@@ -497,14 +558,14 @@ int main(int argc, char **argv) {
     GQueue *sub_dirs = g_queue_new();
 
     // Get dir param without trailing "/"
-    int arg_len = strlen(in_repo);
+    int arg_len = strlen(in_dir);
     int x;
     for (x=(arg_len-1); x >= 0; x--) {
-        if (in_repo[x] != '/') {
+        if (in_dir[x] != '/') {
             break;
         }
     }
-    gchar *input_dir_stripped = g_string_chunk_insert_len(sub_dirs_chunk, in_repo, (x+1));
+    gchar *input_dir_stripped = g_string_chunk_insert_len(sub_dirs_chunk, in_dir, (x+1));
     user_data.repodir_name_len = (x+1);
 
     g_queue_push_head(sub_dirs, input_dir_stripped);
@@ -540,9 +601,13 @@ int main(int argc, char **argv) {
             }
 
             // Check filename against exclude glob masks, pkglist and includepkg values
-            if (allowed_file, &cmd_options) {
+            if (allowed_file(filename, &cmd_options)) {
                 // FINALLY! Add file into pool
-                g_thread_pool_push(pool, full_path, NULL);
+                struct PoolTask *task = g_malloc(sizeof(struct PoolTask));
+                task->full_path = full_path;
+                task->filename = g_strdup(filename);
+                task-> path = g_strdup(dirname);  // TODO: One common path for all tasks with same path??
+                g_thread_pool_push(pool, task, NULL);
                 package_count++;
             }
         }
@@ -592,7 +657,11 @@ int main(int argc, char **argv) {
 */
 
     // Clean up
+    if (old_metadata) {
+        g_hash_table_remove_all (old_metadata);
+    }
 
+    g_free(in_repo);
     g_free(out_repo);
     g_free(pri_xml_filename);
     g_free(fil_xml_filename);

@@ -123,7 +123,7 @@ struct VersionStruct string_to_version(const char *string, GStringChunk *chunk)
 
 
 
-int is_primary(const char *filename)
+inline int is_primary(const char *filename)
 {
 /*
     This optimal piece of code cannot be used because of yum...

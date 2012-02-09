@@ -18,7 +18,7 @@ struct VersionStruct {
  */
 struct VersionStruct string_to_version(const char *string, GStringChunk *chunk);
 
-int is_primary(const char *filename);
+inline int is_primary(const char *filename);
 char *compute_file_checksum(const char *filename, ChecksumType type);
 
 struct HeaderRangeStruct {

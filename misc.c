@@ -125,6 +125,22 @@ struct VersionStruct string_to_version(const char *string, GStringChunk *chunk)
 
 int is_primary(const char *filename)
 {
+/*
+    This optimal piece of code cannot be used because of yum...
+    We must match any string that contains "bin/" in dirname
+
+    Response to my question from packaging team:
+    ....
+    It must still contain that. Atm. it's defined as taking anything
+    with 'bin/' in the path. The idea was that it'd match /usr/kerberos/bin/
+    and /opt/blah/sbin. So that is what all versions of createrepo generate,
+    and what yum all versions of yum expect to be generated.
+    We can't change one side, without breaking the expectation of the
+    other.
+    There have been plans to change the repodata, and one of the changes
+    would almost certainly be in how files are represented ... likely via.
+    lists of "known" paths, that can be computed at createrepo time.
+
     if (!strncmp(filename, "/bin/", 5)) {
         return 1;
     }
@@ -149,6 +165,19 @@ int is_primary(const char *filename)
         if (!strcmp(filename+5, "lib/sendmail")) {
             return 1;
         }
+    }
+*/
+
+    if (!strncmp(filename, "/etc/", 5)) {
+        return 1;
+    }
+
+    if (!strcmp(filename, "/usr/lib/sendmail")) {
+        return 1;
+    }
+
+    if (strstr(filename, "bin/")) {
+        return 1;
     }
 
     return 0;

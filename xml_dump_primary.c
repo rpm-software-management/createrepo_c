@@ -474,7 +474,7 @@ dump_base_items(xmlTextWriterPtr writer, Package *package, xmlCharEncodingHandle
     tmp = ConvertInput(package->location_base, handler);
     if (!tmp) tmp = n;
     if (package->location_base && strlen(package->location_base)) {
-        rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "base", tmp);
+        rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "xml:base", tmp);
         if (rc < 0) {
              printf("Error at xmlTextWriterWriteAttribute\n");
              return;

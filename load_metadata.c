@@ -29,7 +29,7 @@ GHashTable *parse_xml_metadata(const char *pri_cont, const char *fil_cont, const
     GRegexMatchFlags   m_flags = 0;
 
     GRegex *package_re       = g_regex_new("<package.*?</package>", c_flags, m_flags, NULL);
-    GRegex *filename_re      = g_regex_new("<location href=\"([^\"]*)", c_flags, m_flags, NULL);
+    GRegex *filename_re      = g_regex_new("<location [^>]*href=\"([^\"]*)", c_flags, m_flags, NULL);
     GRegex *checksum_type_re = g_regex_new("<checksum .*?type=\"([a-zA-Z0-9]+)\"", c_flags, m_flags, NULL);
     GRegex *filetime_re      = g_regex_new("<time .*?file=\"([0-9]+)\"", c_flags, m_flags, NULL);
     GRegex *size_re          = g_regex_new("<size .*?package=\"([0-9]+)\"", c_flags, m_flags, NULL);
@@ -55,6 +55,10 @@ GHashTable *parse_xml_metadata(const char *pri_cont, const char *fil_cont, const
         GMatchInfo *mi_location;
         g_regex_match(filename_re, pkg_pri, m_flags, &mi_location);
         char *location = g_match_info_fetch(mi_location, 1);
+        if (!location) {
+            puts("Warning: package location cannot be parsed");
+            continue;
+        }
 
         // Get Checksum type
         GMatchInfo *mi_checksum;
@@ -196,12 +200,12 @@ GHashTable *load_gz_compressed_xml_metadata(const char *primary_xml_path, const 
         fflush(stdout);
         // Estimation of compress ratio failed.. Realloc
         int ext_len = (sizeof(char) * pri_xml_size * 2);  // This magic 2 is just magic, have no special meaning
-        while (read == pri_cont_len) {
+        do {
             pri_cont = realloc(pri_cont, (pri_cont_len+ext_len));
             read += gzread(pri_xml_gzfile, (pri_cont+pri_cont_len), ext_len);
             pri_cont_len += ext_len;
-        }
-        fil_cont[fil_cont_len-ext_len+read] = '\0';
+        } while (read == ext_len);
+        pri_cont[fil_cont_len-ext_len+read] = '\0';
     } else {
         pri_cont[read] = '\0';
     }
@@ -214,11 +218,12 @@ GHashTable *load_gz_compressed_xml_metadata(const char *primary_xml_path, const 
     if (read == fil_cont_len) {
         // Estimation of compress ratio failed.. Realloc
         int ext_len = (sizeof(char) * fil_xml_size * 2);  // This magic 2 is just magic, have no special meaning
-        while (read == fil_cont_len) {
-            fil_cont = realloc(fil_cont, (fil_cont_len+ext_len));
-            read += gzread(fil_xml_gzfile, (fil_cont+fil_cont_len), ext_len);
+        do {
+            fil_cont = realloc(fil_cont, fil_cont_len+ext_len);
+            read = gzread(fil_xml_gzfile, (fil_cont+fil_cont_len), ext_len);
             fil_cont_len += ext_len;
-        }
+        } while (read == ext_len);
+
         fil_cont[fil_cont_len-ext_len+read] = '\0';
     } else {
         fil_cont[read] = '\0';
@@ -232,12 +237,12 @@ GHashTable *load_gz_compressed_xml_metadata(const char *primary_xml_path, const 
     if (read == oth_cont_len) {
         // Estimation of compress ratio failed.. Realloc
         int ext_len = (sizeof(char) * oth_xml_size * 2);  // This magic 2 is just magic, have no special meaning
-        while (read == oth_cont_len) {
+        do {
             oth_cont = realloc(oth_cont, (oth_cont_len+ext_len));
             read += gzread(oth_xml_gzfile, (oth_cont+oth_cont_len), ext_len);
             oth_cont_len += ext_len;
-        }
-        fil_cont[fil_cont_len-ext_len+read] = '\0';
+        } while (read == ext_len);
+        oth_cont[oth_cont_len-ext_len+read] = '\0';
     } else {
         oth_cont[read] = '\0';
     }

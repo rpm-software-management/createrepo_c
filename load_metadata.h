@@ -19,4 +19,8 @@ GHashTable *load_gz_compressed_xml_metadata(const char *primary_xml_path, const 
 GHashTable *load_xml_metadata(const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path);
 GHashTable *locate_and_load_xml_metadata(const char *repopath);
 
+GHashTable *load_gz_compressed_xml_metadata_2(const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path);
+GHashTable *load_xml_metadata_2(const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path);
+GHashTable *locate_and_load_xml_metadata_2(const char *repopath);
+
 #endif /* __LOAD_METADATA__ */

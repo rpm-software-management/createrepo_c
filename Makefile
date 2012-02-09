@@ -1,5 +1,6 @@
 SWIG=/usr/bin/swig
-CFLAGS=-O2 -fPIC -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags` -pthread
+# TODO: add -O2
+CFLAGS=-fPIC -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags` -pthread
 LINKFLAGS=-lz `pkg-config --libs glib-2.0 --libs-only-l gthread-2.0` `xml2-config --libs` -lrpm -lrpmio
 LC=-lc
 
@@ -12,7 +13,9 @@ LC=-lc
 all: package.so xml_dump.so parsehdr.so parsepkg.so load_metadata.so main
 
 ctests: parsepkg_test_01 parsehdr_test_01 parsehdr_test_02 xml_dump_primary_test_01 \
-        xml_dump_filelists_test_01 xml_dump_other_test_01 load_metadata_test_01
+        xml_dump_filelists_test_01 xml_dump_other_test_01 load_metadata_test_01 \
+        load_metadata_test_02 load_metadata_test_03 load_metadata_test_04 \
+        load_metadata_2_test_01 load_metadata_2_test_02 load_metadata_2_test_03 load_metadata_2_test_04
 
 
 # Object files + Swit object files
@@ -40,6 +43,12 @@ parsepkg.o parsepkg_wrap.o: parsepkg.c parsepkg.h constants.h
 load_metadata.o load_metadata_wrap.o: load_metadata.c load_metadata.h constants.h
 	$(SWIG) -python -Wall load_metadata.i
 	gcc $(CFLAGS) -c load_metadata.c load_metadata_wrap.c
+
+# TODO
+load_metadata_2.o load_metadata_2_wrap.o: load_metadata_2.c load_metadata.h constants.h
+#	$(SWIG) -python -Wall load_metadata_2.i
+#	gcc $(CFLAGS) -c load_metadata_2.c load_metadata_2_wrap.c
+	gcc $(CFLAGS) -c load_metadata_2.c
 
 
 # Object files
@@ -71,6 +80,10 @@ parsepkg.so: parsepkg_wrap.o parsepkg.o parsehdr.o package.o xml_dump.o misc.o
 load_metadata.so: load_metadata_wrap.o load_metadata.o
 	ld $(LINKFLAGS) -shared load_metadata_wrap.o load_metadata.o -o _load_metadata.so $(LC)
 
+# TODO
+#load_metadata_2.so: load_metadata_wrap.o load_metadata_2.o
+#	ld $(LINKFLAGS) -shared load_metadata_2_wrap.o load_metadata_2.o -o _load_metadata_2.so $(LC)
+
 
 # Tests
 
@@ -92,14 +105,37 @@ xml_dump_filelists_test_01: package.o xml_dump.o xml_dump_primary.o xml_dump_fil
 xml_dump_other_test_01: package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o
 	gcc $(LINKFLAGS) $(CFLAGS) package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o ctests/xml_dump_other_test_01.c -o ctests/xml_dump_other_test_01
 
+
 load_metadata_test_01: load_metadata.o
 	gcc $(LINKFLAGS) $(CFLAGS) load_metadata.o ctests/load_metadata_test_01.c -o ctests/load_metadata_test_01
+
+load_metadata_test_02: load_metadata.o
+	gcc $(LINKFLAGS) $(CFLAGS) load_metadata.o ctests/load_metadata_test_02.c -o ctests/load_metadata_test_02
+
+load_metadata_test_03: load_metadata.o
+	gcc $(LINKFLAGS) $(CFLAGS) load_metadata.o ctests/load_metadata_test_03.c -o ctests/load_metadata_test_03
+
+load_metadata_test_04: load_metadata.o
+	gcc $(LINKFLAGS) $(CFLAGS) load_metadata.o ctests/load_metadata_test_04_big.c -o ctests/load_metadata_test_04_big
+
+
+load_metadata_2_test_01: load_metadata_2.o
+	gcc $(LINKFLAGS) $(CFLAGS) load_metadata_2.o ctests/load_metadata_2_test_01.c -o ctests/load_metadata_2_test_01
+
+load_metadata_2_test_02: load_metadata_2.o
+	gcc $(LINKFLAGS) $(CFLAGS) load_metadata_2.o ctests/load_metadata_2_test_02.c -o ctests/load_metadata_2_test_02
+
+load_metadata_2_test_03: load_metadata_2.o
+	gcc $(LINKFLAGS) $(CFLAGS) load_metadata_2.o ctests/load_metadata_2_test_03.c -o ctests/load_metadata_2_test_03
+
+load_metadata_2_test_04: load_metadata_2.o
+	gcc $(LINKFLAGS) $(CFLAGS) load_metadata_2.o ctests/load_metadata_2_test_04_big.c -o ctests/load_metadata_2_test_04_big
 
 
 # Main
 
-main: parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o
-	gcc $(LINKFLAGS) $(CFLAGS) parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o main.c -o main
+main: parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o load_metadata.o
+	gcc $(LINKFLAGS) $(CFLAGS) parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o load_metadata_2.o main.c -o main
 
 
 clean:

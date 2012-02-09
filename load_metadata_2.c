@@ -11,6 +11,10 @@
 void free_values(gpointer data)
 {
     struct package_metadata *md = (struct package_metadata *) data;
+    //xmlFree(md->location_href);
+    if (md->location_base) {
+        xmlFree(md->location_base);
+    }
     xmlFree(md->checksum_type);
     g_free(md->primary_xml);
     g_free(md->filelists_xml);
@@ -107,7 +111,8 @@ void processNode(GHashTable *metadata, xmlTextReaderPtr pri_reader,
 
     // Get some info about package
 //    char *name = NULL;
-    char *location = NULL;
+    char *location_href = NULL;
+    char *location_base = NULL;
     char *checksum_type = NULL;
     long time_file;
     long size;
@@ -125,7 +130,8 @@ void processNode(GHashTable *metadata, xmlTextReaderPtr pri_reader,
 //            puts(name);
 //        }
         if (!strcmp(node->name, "location")) {
-            location = xmlGetProp(node, "href");
+            location_href = xmlGetProp(node, "href");
+            location_base = xmlGetProp(node, "base");
             counter++;
         } else if (!strcmp(node->name, "checksum")) {
             checksum_type = xmlGetProp(node, "type");
@@ -150,26 +156,40 @@ void processNode(GHashTable *metadata, xmlTextReaderPtr pri_reader,
         node = xmlNextElementSibling(node);
     }
 
-    if ( !location || !checksum_type) {
+    if ( !location_href || !checksum_type) {
         puts("Warning: Bad xml data");
         g_free(pri_pkg_xml);
         g_free(fil_pkg_xml);
         g_free(oth_pkg_xml);
-        xmlFree(location);
+        xmlFree(location_href);
+        if (location_base) {
+            xmlFree(location_base);
+        }
         xmlFree(checksum_type);
         return;
+    }
+
+    // Key is filename only and it is only pointer into location_href
+    gchar *key;
+    key = g_strrstr(location_href, "/");
+    if (!key) {
+        key = location_href;
+    } else {
+        key++;
     }
 
     struct package_metadata *pkg_md = g_malloc(sizeof(struct package_metadata));
     pkg_md->time_file = time_file;
     pkg_md->size_package = size;
+    pkg_md->location_href = location_href;
+    pkg_md->location_base = location_base;
     pkg_md->checksum_type = checksum_type;
     pkg_md->primary_xml = pri_pkg_xml;
     pkg_md->filelists_xml = fil_pkg_xml;
     pkg_md->other_xml = oth_pkg_xml;
-    g_hash_table_insert(metadata, location, pkg_md);
+    g_hash_table_insert(metadata, key, pkg_md);
 
-//    printf("%s | %s | %s | %d | %d\n", name, location, checksum_type, time_file, size);
+//    printf("%s | %s | %s | %d | %d\n", location_href, location_base, checksum_type, time_file, size);
 //    printf("PRIMARY:\n%s\nFILELISTS:\n%s\nOTHER:\n%s\n", pri_pkg_xml, fil_pkg_xml, oth_pkg_xml);
 }
 
@@ -243,7 +263,7 @@ GHashTable *parse_xml_metadata(xmlTextReaderPtr pri_reader, xmlTextReaderPtr fil
     }
     xmlFree(name);
 
-    GHashTable *metadata = g_hash_table_new_full(g_str_hash, g_str_equal, xmlFree, free_values);
+    GHashTable *metadata = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, free_values);
 
     while (pri_ret && fil_ret && oth_ret) {
         processNode(metadata, pri_reader, fil_reader, oth_reader);

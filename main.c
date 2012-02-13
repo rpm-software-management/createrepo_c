@@ -129,7 +129,8 @@ void dumper_thread(gpointer data, gpointer user_data) {
     struct PoolTask *task = (struct PoolTask *) data;
 
     // location_href without leading part of path (path to repo)
-    char *location_href =  (gchar *) task->full_path + udata->repodir_name_len + 1;
+    char *location_href = (gchar *) task->full_path + udata->repodir_name_len + 1;
+    char *location_base = udata->location_base;
 
     // Get stat info about file
     struct stat stat_buf;
@@ -143,13 +144,20 @@ void dumper_thread(gpointer data, gpointer user_data) {
     struct XmlStruct res;
 
     // Update stuff
+    gboolean modified_primary_xml_used = FALSE;
+    gchar *modified_primary_xml = NULL;
+
     gboolean old_used = FALSE;
     struct package_metadata *md;
 
     if (udata->old_metadata) {
-        md = (struct package_metadata *) g_hash_table_lookup (udata->old_metadata, location_href);
+        // We have old metadata
+        md = (struct package_metadata *) g_hash_table_lookup (udata->old_metadata, task->filename);
         if (md) {
-//            printf ("HASH TABLE HIT\n");
+            // CACHE HIT!
+
+//            puts("CACHE HIT");
+
             if (udata->skip_stat) {
                 old_used = TRUE;
             } else if (stat_buf.st_mtime == md->time_file
@@ -159,13 +167,65 @@ void dumper_thread(gpointer data, gpointer user_data) {
                 old_used = TRUE;
             }
         }
+
+        if (old_used) {
+            // We have usable old data, but we have to check locations (href and base)
+
+//            puts("> Pouzijeme stare metadata");
+
+            modified_primary_xml = md->primary_xml;
+
+            gboolean href_changed = FALSE;
+            gboolean base_changed = FALSE;
+
+            if (g_strcmp0(md->location_href, location_href)) {
+                href_changed = TRUE;
+//                puts("> href ZMENEN");
+//                printf("> %s | %s\n", md->location_href, location_href);
+            }
+
+            if (g_strcmp0(md->location_base, location_base)) {
+                base_changed = TRUE;
+//                puts("> base ZMENEN");
+//                printf("> %s | %s\n", md->location_base, location_base);
+            }
+
+            if (href_changed || base_changed) {
+                gchar *replacement;
+
+                if (!location_base) {
+                    replacement = g_strconcat("<location href=\"", location_href, "\"/>", NULL);
+                } else {
+                    replacement = g_strconcat("<location xml:base=\"", location_base, "\" href=\"", location_href, "\"/>", NULL);
+                }
+
+//                puts(replacement);
+
+                GRegexCompileFlags re_compile_f = G_REGEX_DOTALL | G_REGEX_OPTIMIZE;
+                GRegexMatchFlags re_match_f = 0;
+                GRegex *location_subs_re;
+                location_subs_re = g_regex_new("<location[^>]*>", re_compile_f, re_match_f, NULL);
+
+                modified_primary_xml_used = TRUE;
+                modified_primary_xml = g_regex_replace_literal(location_subs_re,
+                                                                modified_primary_xml,
+                                                                -1,
+                                                                0,
+                                                                replacement,
+                                                                re_match_f,
+                                                                NULL);
+
+                g_free(replacement);
+                g_regex_unref(location_subs_re);
+            }
+        }
     }
 
     if (!old_used) {
         res = xml_from_package_file(task->full_path, udata->checksum_type, location_href,
                                     udata->location_base, udata->changelog_limit, NULL);
     } else {
-        res.primary = md->primary_xml;
+        res.primary = modified_primary_xml;
         res.filelists = md->filelists_xml;
         res.other = md->other_xml;
     }
@@ -190,6 +250,10 @@ void dumper_thread(gpointer data, gpointer user_data) {
         free(res.primary);
         free(res.filelists);
         free(res.other);
+    }
+
+    if (modified_primary_xml_used) {
+        g_free(modified_primary_xml);
     }
 
     g_free(task->full_path);

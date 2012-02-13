@@ -83,7 +83,15 @@ struct PoolTask {
 };
 
 
-int allowed_file(const gchar *filename, struct CmdOptions *options) {
+int allowed_file(const gchar *filename, const gchar *fullpath, int repodir_name_len, struct CmdOptions *options) {
+
+    const gchar *relative_path = fullpath+repodir_name_len; // Relative path in repo
+    while (relative_path[0] != '\0' && relative_path[0] == '/') {
+        // skip trailing '/'
+        relative_path++;
+    }
+
+    printf("Filename: %s (%s)\n", filename, relative_path);
 
     // Check file against exclude glob masks
     if (options->exclude_masks) {
@@ -103,9 +111,11 @@ int allowed_file(const gchar *filename, struct CmdOptions *options) {
     // TODO: Hash table could be more effective
     // Check file against include_pkgs filenames
     if (options->include_pkgs) {
+        puts("pkglist - check");
         GSList *element;
         for (element=options->include_pkgs; element; element=g_slist_next(element)) {
-            if (g_strcmp0(filename, (char *) element->data)) {
+//            printf("REL:  %s\nLIST: %s\n\n", relative_path, (char *) element->data);
+            if (!g_strcmp0(relative_path, (char *) element->data)) {
                 return TRUE;
             }
         }
@@ -134,7 +144,7 @@ void dumper_thread(gpointer data, gpointer user_data) {
     struct PoolTask *task = (struct PoolTask *) data;
 
     // location_href without leading part of path (path to repo)
-    char *location_href = (gchar *) task->full_path + udata->repodir_name_len + 1;
+    char *location_href = (gchar *) task->full_path + udata->repodir_name_len;
     char *location_base = udata->location_base;
 
     // Get stat info about file
@@ -406,7 +416,7 @@ gboolean check_arguments(struct CmdOptions *options)
         char *path = options->update_md_paths[x];
         if (g_file_test(path, G_FILE_TEST_IS_DIR|G_FILE_TEST_EXISTS)) {
             printf("Pridavam md path: %s\n", path);
-            path = g_strconcat(path, "/repodata/", NULL);
+            //path = g_strconcat(path, "/repodata/", NULL);
             options->l_update_md_paths = g_slist_prepend(options->l_update_md_paths, (gpointer) path);
         } else {
             printf("Warning: update md path %s doesn't exists\n", path);
@@ -666,8 +676,9 @@ int main(int argc, char **argv) {
             break;
         }
     }
-    gchar *input_dir_stripped = g_string_chunk_insert_len(sub_dirs_chunk, in_dir, (x+1));
-    user_data.repodir_name_len = (x+1);
+    int repodir_name_len = x+1;  // len of path to a directory to index
+    gchar *input_dir_stripped = g_string_chunk_insert_len(sub_dirs_chunk, in_dir, repodir_name_len);
+    user_data.repodir_name_len = repodir_name_len;
 
     g_queue_push_head(sub_dirs, input_dir_stripped);
 
@@ -702,7 +713,7 @@ int main(int argc, char **argv) {
             }
 
             // Check filename against exclude glob masks, pkglist and includepkg values
-            if (allowed_file(filename, &cmd_options)) {
+            if (allowed_file(filename, full_path, arg_len, &cmd_options)) {
                 // FINALLY! Add file into pool
                 struct PoolTask *task = g_malloc(sizeof(struct PoolTask));
                 task->full_path = full_path;

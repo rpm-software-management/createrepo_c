@@ -17,6 +17,9 @@
 #define DEFAULT_UNIQUE_MD_FILENAMES     TRUE
 
 
+GRegex *location_subs_re;  // Evil global variable
+
+
 struct CmdOptions {
 
     // Items filled by cmd option parser
@@ -158,7 +161,7 @@ void dumper_thread(gpointer data, gpointer user_data) {
         if (md) {
             // CACHE HIT!
 
-            puts("CACHE HIT");
+//            puts("CACHE HIT");
 
             if (udata->skip_stat) {
                 old_used = TRUE;
@@ -201,24 +204,15 @@ void dumper_thread(gpointer data, gpointer user_data) {
                     replacement = g_strconcat("<location xml:base=\"", location_base, "\" href=\"", location_href, "\"/>", NULL);
                 }
 
-//                puts(replacement);
-
-                GRegexCompileFlags re_compile_f = G_REGEX_DOTALL | G_REGEX_OPTIMIZE;
-                GRegexMatchFlags re_match_f = 0;
-                GRegex *location_subs_re;
-                location_subs_re = g_regex_new("<location[^>]*>", re_compile_f, re_match_f, NULL);
-
                 modified_primary_xml_used = TRUE;
                 modified_primary_xml = g_regex_replace_literal(location_subs_re,
                                                                 modified_primary_xml,
                                                                 -1,
                                                                 0,
                                                                 replacement,
-                                                                re_match_f,
+                                                                (GRegexMatchFlags) 0,
                                                                 NULL);
-
                 g_free(replacement);
-                g_regex_unref(location_subs_re);
             }
         }
     }
@@ -594,29 +588,38 @@ int main(int argc, char **argv) {
         }
     }
 
+
+    // Compile global regexp for matching location tag in xml chunks
+
+    GRegexCompileFlags re_compile_f = G_REGEX_DOTALL | G_REGEX_OPTIMIZE;
+    GRegexMatchFlags re_match_f = 0;
+    location_subs_re = g_regex_new("<location[^>]*>", re_compile_f, re_match_f, NULL);
+
+
     // Create and open new xml.gz files
 
-    gchar *pri_xml_filename = g_strconcat(out_repo, "/_primary.xml.gz");
+    printf("out_repo: %s\n", out_repo);
+
+    gchar *pri_xml_filename = g_strconcat(out_repo, "/_primary.xml.gz", NULL);
     //int fd_pri_xml = g_file_open_tmp("XXXXXX", &pri_xml_filename, NULL);
     //int fd_pri_xml = open(pri_xml_filename, O_RDWR);
     gzFile pri_gz_file = gzopen(pri_xml_filename, "wb");
     gzsetparams(pri_gz_file, Z_BEST_SPEED, Z_DEFAULT_STRATEGY);
     gzbuffer(pri_gz_file, GZ_BUFFER_SIZE);
 
-    gchar *fil_xml_filename = g_strconcat(out_repo, "/_filelists.xml.gz");
+    gchar *fil_xml_filename = g_strconcat(out_repo, "/_filelists.xml.gz", NULL);
     //int fd_fil_xml = g_file_open_tmp("XXXXXX", &fil_xml_filename, NULL);
     //int fd_fil_xml = open(fil_xml_filename, O_RDWR);
     gzFile fil_gz_file = gzopen(fil_xml_filename, "wb");
     gzsetparams(fil_gz_file, Z_BEST_SPEED, Z_DEFAULT_STRATEGY);
     gzbuffer(fil_gz_file, GZ_BUFFER_SIZE);
 
-    gchar *oth_xml_filename = g_strconcat(out_repo, "/_other.xml.gz");
+    gchar *oth_xml_filename = g_strconcat(out_repo, "/_other.xml.gz", NULL);
     //int fd_oth_xml = g_file_open_tmp("XXXXXX", &oth_xml_filename, NULL);
     //int fd_oth_xml = open(oth_xml_filename, O_RDWR);
     gzFile oth_gz_file = gzopen(oth_xml_filename, "wb");
     gzsetparams(oth_gz_file, Z_BEST_SPEED, Z_DEFAULT_STRATEGY);
     gzbuffer(oth_gz_file, GZ_BUFFER_SIZE);
-
 
     // Init package parser
 
@@ -741,20 +744,32 @@ int main(int argc, char **argv) {
     gzclose_w(user_data.fil_f);
     gzclose_w(user_data.oth_f);
 
-    // Move files from tmp
-/*
-    if (rename(pri_xml_filename, "primary.xml.gz")) {
+
+    // Rename files
+
+    char *new_name;
+
+    new_name = g_strconcat(out_repo, "primary.xml.gz", NULL);
+    if (rename(pri_xml_filename, new_name)) {
         perror("Error renaming file");
     }
-    if (rename(fil_xml_filename, "filelists.xml.gz")) {
+    g_free(new_name);
+
+    new_name = g_strconcat(out_repo, "filelists.xml.gz", NULL);
+    if (rename(fil_xml_filename, new_name)) {
         perror("Error renaming file");
     }
-    if (rename(oth_xml_filename, "other.xml.gz")) {
+    g_free(new_name);
+
+    new_name = g_strconcat(out_repo, "other.xml.gz", NULL);
+    if (rename(oth_xml_filename, new_name)) {
         perror("Error renaming file");
     }
-*/
+    g_free(new_name);
 
     // Clean up
+    g_regex_unref(location_subs_re);
+
     if (old_metadata) {
         destroy_old_metadata_hashtable(old_metadata);
     }

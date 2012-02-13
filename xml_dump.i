@@ -7,6 +7,10 @@
 #include "xml_dump.h"
 %}
 
+%newobject xml_dump_primary;
+%newobject xml_dump_filelists;
+%newobject xml_dump_other;
+
 %include "xml_dump.h"
 
 /*

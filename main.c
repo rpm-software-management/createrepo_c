@@ -29,6 +29,7 @@ struct CmdOptions {
     gboolean quiet;             // Shut up!
     gboolean verbose;           // Verbosely more than usual
     gboolean update;            // Update repo if metadata already exists
+    char **update_md_paths;     // Paths to other repositories which should be used for update
     gboolean skip_stat;         // skip stat() call during --update
     gboolean version;           // Output version.
     gboolean database;          // Not implemented yet!!!
@@ -44,6 +45,7 @@ struct CmdOptions {
 
     GSList *exclude_masks;
     GSList *include_pkgs;
+    GSList *l_update_md_paths;
     ChecksumType checksum_type;
 
 } cmd_options = {   .changelog_limit = DEFAULT_CHANGELOG_LIMIT,
@@ -269,11 +271,11 @@ void dumper_thread(gpointer data, gpointer user_data) {
 
 static GOptionEntry cmd_entries[] =
 {
-    { "baseurl", 'u', 0, G_OPTION_ARG_STRING, &(cmd_options.location_base),
+    { "baseurl", 'u', 0, G_OPTION_ARG_FILENAME, &(cmd_options.location_base),
       "Optional base URL location for all files.", "<URL>" },
-    { "outputdir", 'o', 0, G_OPTION_ARG_STRING, &(cmd_options.outputdir),
+    { "outputdir", 'o', 0, G_OPTION_ARG_FILENAME, &(cmd_options.outputdir),
       "Optional output directory", "<URL>" },
-    { "excludes", 'x', 0, G_OPTION_ARG_STRING_ARRAY, &(cmd_options.excludes),
+    { "excludes", 'x', 0, G_OPTION_ARG_FILENAME_ARRAY, &(cmd_options.excludes),
       "File globs to exclude, can be specified multiple times.", "<packages>" },
     { "pkglist", 'i', 0, G_OPTION_ARG_FILENAME, &(cmd_options.pkglist),
       "specify a text file which contains the complete list of files to include"
@@ -291,6 +293,8 @@ static GOptionEntry cmd_entries[] =
       "and mtime) since the metadata was generated, reuse the  existing  metadata  rather  than "
       "recalculating it. In the case of a large repository with only a few new or modified rpms"
       "this can significantly reduce I/O and processing time.", NULL },
+    { "update-md-path", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &(cmd_options.update_md_paths),
+      "Use the existing repodata  for --update from this path", NULL },
     { "skip-stat", 0, 0, G_OPTION_ARG_NONE, &(cmd_options.skip_stat),
       "skip the stat() call on a --update, assumes if the filename is the same then the file is"
       "still the same (only use this if you're fairly trusting or gullible).", NULL },
@@ -378,33 +382,43 @@ gboolean check_arguments(struct CmdOptions *options)
     }
 
     // Process pkglist file
-    if (!options->pkglist) {
-        return TRUE;
+    if (options->pkglist) {
+        if (!g_file_test(options->pkglist, G_FILE_TEST_IS_REGULAR|G_FILE_TEST_EXISTS)) {
+            printf("Warning: pkglist file doesn't exists\n");
+        } else {
+            char *content = NULL;
+            GError *err;
+            if (!g_file_get_contents(options->pkglist, &content, NULL, &err)) {
+                printf("Warning: Error while reading pkglist file: %s\n", err->message);
+                g_error_free(err);
+                g_free(content);
+            } else {
+                x = 0;
+                char **pkgs = g_strsplit(content, "\n", 0);
+                while (pkgs && pkgs[x] != NULL) {
+                    options->include_pkgs = g_slist_prepend(options->include_pkgs, (gpointer) pkgs[x]);
+                    x++;
+                }
+
+                g_free(pkgs);  // Free pkgs array, pointers from array are already stored in include_pkgs list
+                g_free(content);
+            }
+        }
     }
 
-    if (!g_file_test(options->pkglist, G_FILE_TEST_IS_REGULAR|G_FILE_TEST_EXISTS)) {
-        printf("Warning: pkglist file doesn't exists\n");
-        return TRUE;
-    }
-
-    char *content;
-    GError *err;
-    if (!g_file_get_contents(options->pkglist, &content, NULL, &err)) {
-        printf("Warning: Error while reading pkglist file: %s\n", err->message);
-        g_error_free(err);
-        g_free(content);
-        return TRUE;
-    }
-
+    // Process update_md_paths
     x = 0;
-    char **pkgs = g_strsplit(content, "\n", 0);
-    while (pkgs && pkgs[x] != NULL) {
-        options->include_pkgs = g_slist_prepend(options->include_pkgs, (gpointer) pkgs[x]);
+    while (options->update_md_paths && options->update_md_paths[x] != NULL) {
+        char *path = options->update_md_paths[x];
+        if (g_file_test(path, G_FILE_TEST_IS_DIR|G_FILE_TEST_EXISTS)) {
+            printf("Pridavam md path: %s\n", path);
+            path = g_strconcat(path, "/repodata/", NULL);
+            options->l_update_md_paths = g_slist_prepend(options->l_update_md_paths, (gpointer) path);
+        } else {
+            printf("Warning: update md path %s doesn't exists\n", path);
+        }
         x++;
     }
-
-    g_free(pkgs);  // Free pkgs array, pointers from array are already stored in include_pkgs list
-    g_free(content);
 
     return TRUE;
 }
@@ -439,6 +453,11 @@ void free_options(struct CmdOptions *options)
     // Free glob exclude masks GSList
     for (element = options->exclude_masks; element; element = g_slist_next(element)) {
         g_pattern_spec_free( (GPatternSpec *) element->data );
+    }
+
+    // Free l_update_md_paths GSList
+    for (element = options->l_update_md_paths; element; element = g_slist_next(element)) {
+        g_free( (gchar *) element->data );
     }
 }
 
@@ -562,7 +581,17 @@ int main(int argc, char **argv) {
         }
 
         // Load repodata from --update-md-path
-        // TODO
+        GSList *element;
+        for (element = cmd_options.l_update_md_paths; element; element = g_slist_next(element)) {
+            char *path = (char *) element->data;
+            printf("Nacitam md-path: %s\n", path);
+            int ret = locate_and_load_xml_metadata_2(old_metadata, path);
+            if (ret) {
+                printf("Loaded\n");
+            } else {
+                printf("FAIL\n");
+            }
+        }
     }
 
     // Create and open new xml.gz files

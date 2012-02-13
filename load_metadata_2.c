@@ -11,7 +11,7 @@
 void free_values(gpointer data)
 {
     struct package_metadata *md = (struct package_metadata *) data;
-    //xmlFree(md->location_href);
+    xmlFree(md->location_href);
     if (md->location_base) {
         xmlFree(md->location_base);
     }

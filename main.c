@@ -156,7 +156,7 @@ void dumper_thread(gpointer data, gpointer user_data) {
         if (md) {
             // CACHE HIT!
 
-//            puts("CACHE HIT");
+            puts("CACHE HIT");
 
             if (udata->skip_stat) {
                 old_used = TRUE;
@@ -554,10 +554,15 @@ int main(int argc, char **argv) {
 
     GHashTable *old_metadata = NULL;
     if (cmd_options.update) {
-        old_metadata = locate_and_load_xml_metadata_2(in_repo);
-        if (old_metadata) {
+        // Load local repodata
+        old_metadata = new_old_metadata_hashtable();
+        int ret = locate_and_load_xml_metadata_2(old_metadata, in_repo);
+        if (ret) {
             printf("Old metadata loaded\n");
         }
+
+        // Load repodata from --update-md-path
+        // TODO
     }
 
     // Create and open new xml.gz files
@@ -722,7 +727,7 @@ int main(int argc, char **argv) {
 
     // Clean up
     if (old_metadata) {
-        g_hash_table_remove_all (old_metadata);
+        destroy_old_metadata_hashtable(old_metadata);
     }
 
     g_free(in_repo);

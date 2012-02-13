@@ -23,6 +23,21 @@ void free_values(gpointer data)
 }
 
 
+GHashTable *new_old_metadata_hashtable()
+{
+    GHashTable *hashtable = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, free_values);
+    return hashtable;
+}
+
+
+void *destroy_old_metadata_hashtable(GHashTable *hashtable)
+{
+    if (hashtable) {
+        g_hash_table_destroy (hashtable);
+    }
+}
+
+
 int xmlInputReadCallback_plaintext (void * context, char * buffer, int len)
 {
     int readed = fread(buffer, 1, len, (FILE *) context);
@@ -178,6 +193,21 @@ void processNode(GHashTable *metadata, xmlTextReaderPtr pri_reader,
         key++;
     }
 
+    // Check if key already exists
+    if (g_hash_table_lookup(metadata, key)) {
+        printf("Warning: Key \"%s\" already exists\n", key);
+        g_free(pri_pkg_xml);
+        g_free(fil_pkg_xml);
+        g_free(oth_pkg_xml);
+        xmlFree(location_href);
+        if (location_base) {
+            xmlFree(location_base);
+        }
+        xmlFree(checksum_type);
+        return;
+    }
+
+    // Insert record into hashtable
     struct package_metadata *pkg_md = g_malloc(sizeof(struct package_metadata));
     pkg_md->time_file = time_file;
     pkg_md->size_package = size;
@@ -195,10 +225,10 @@ void processNode(GHashTable *metadata, xmlTextReaderPtr pri_reader,
 
 
 
-GHashTable *parse_xml_metadata(xmlTextReaderPtr pri_reader, xmlTextReaderPtr fil_reader, xmlTextReaderPtr oth_reader)
+int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTextReaderPtr fil_reader, xmlTextReaderPtr oth_reader)
 {
-    if (!pri_reader || !fil_reader || !oth_reader) {
-        return NULL;
+    if (!hashtable || !pri_reader || !fil_reader || !oth_reader) {
+        return 0;
     }
 
     // Go to a package level in xmls
@@ -214,7 +244,7 @@ GHashTable *parse_xml_metadata(xmlTextReaderPtr pri_reader, xmlTextReaderPtr fil
     name = xmlTextReaderName(pri_reader);
     if (strcmp(name, "metadata")) {
         xmlFree(name);
-        return NULL;
+        return 0;
     }
     xmlFree(name);
 
@@ -222,7 +252,7 @@ GHashTable *parse_xml_metadata(xmlTextReaderPtr pri_reader, xmlTextReaderPtr fil
     name = xmlTextReaderName(fil_reader);
     if (strcmp(name, "filelists")) {
         xmlFree(name);
-        return NULL;
+        return 0;
     }
     xmlFree(name);
 
@@ -230,7 +260,7 @@ GHashTable *parse_xml_metadata(xmlTextReaderPtr pri_reader, xmlTextReaderPtr fil
     name = xmlTextReaderName(oth_reader);
     if (strcmp(name, "otherdata")) {
         xmlFree(name);
-        return NULL;
+        return 0;
     }
     xmlFree(name);
 
@@ -241,7 +271,7 @@ GHashTable *parse_xml_metadata(xmlTextReaderPtr pri_reader, xmlTextReaderPtr fil
     if (strcmp(name, "package")) {
         puts("bad xml");
         xmlFree(name);
-        return;
+        return 0;
     }
     xmlFree(name);
 
@@ -250,7 +280,7 @@ GHashTable *parse_xml_metadata(xmlTextReaderPtr pri_reader, xmlTextReaderPtr fil
     if (strcmp(name, "package")) {
         puts("bad xml");
         xmlFree(name);
-        return;
+        return 0;
     }
     xmlFree(name);
 
@@ -259,33 +289,35 @@ GHashTable *parse_xml_metadata(xmlTextReaderPtr pri_reader, xmlTextReaderPtr fil
     if (strcmp(name, "package")) {
         puts("bad xml");
         xmlFree(name);
-        return;
+        return 0;
     }
     xmlFree(name);
 
-    GHashTable *metadata = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, free_values);
-
     while (pri_ret && fil_ret && oth_ret) {
-        processNode(metadata, pri_reader, fil_reader, oth_reader);
+        processNode(hashtable, pri_reader, fil_reader, oth_reader);
         pri_ret = xmlTextReaderNext(pri_reader);
         fil_ret = xmlTextReaderNext(fil_reader);
         oth_ret = xmlTextReaderNext(oth_reader);
     }
 
-    return metadata;
+    return 1;
 }
 
 
 #define GZ_BUFFER_SIZE   131072  // 1024*128
 
-GHashTable *load_gz_compressed_xml_metadata_2(const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
+int load_gz_compressed_xml_metadata_2(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
 {
+    if (!hashtable) {
+        return 0;
+    }
+
     GFileTest flags = G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR;
     if (!g_file_test(primary_xml_path, flags) ||
         !g_file_test(filelists_xml_path, flags) ||
         !g_file_test(other_xml_path, flags))
     {
-        return NULL;
+        return 0;
     }
 
     // Open files and get file descriptors
@@ -306,7 +338,7 @@ GHashTable *load_gz_compressed_xml_metadata_2(const char *primary_xml_path, cons
         close(pri_xml_fd);
         close(fil_xml_fd);
         close(oth_xml_fd);
-        return NULL;
+        return 0;
     }
 
     // Open gziped file
@@ -316,20 +348,20 @@ GHashTable *load_gz_compressed_xml_metadata_2(const char *primary_xml_path, cons
 
     if (!(pri_xml_gzfile = gzdopen(pri_xml_fd, "rb"))) {
 //    if (!(pri_xml_gzfile = gzopen(primary_xml_path, "rb"))) {
-        return NULL;
+        return 0;
     }
 
     if (!(fil_xml_gzfile = gzdopen(fil_xml_fd, "rb"))) {
 //    if (!(fil_xml_gzfile = gzopen(filelists_xml_path, "rb"))) {
         gzclose(pri_xml_gzfile);
-        return NULL;
+        return 0;
     }
 
     if (!(oth_xml_gzfile = gzdopen(oth_xml_fd, "rb"))) {
 //    if (!(oth_xml_gzfile = gzopen(other_xml_path, "rb"))) {
         gzclose(pri_xml_gzfile);
         gzclose(fil_xml_gzfile);
-        return NULL;
+        return 0;
     }
 
     // Set buffers
@@ -353,7 +385,7 @@ GHashTable *load_gz_compressed_xml_metadata_2(const char *primary_xml_path, cons
         gzclose(pri_xml_gzfile);
         gzclose(fil_xml_gzfile);
         gzclose(oth_xml_gzfile);
-        return NULL;
+        return 0;
     }
 
     fil_reader = xmlReaderForIO(xmlInputReadCallback_gz_compressed,
@@ -367,7 +399,7 @@ GHashTable *load_gz_compressed_xml_metadata_2(const char *primary_xml_path, cons
         gzclose(fil_xml_gzfile);
         gzclose(oth_xml_gzfile);
         puts("Fil Reader fail");
-        return NULL;
+        return 0;
     }
 
     oth_reader = xmlReaderForIO(xmlInputReadCallback_gz_compressed,
@@ -381,10 +413,10 @@ GHashTable *load_gz_compressed_xml_metadata_2(const char *primary_xml_path, cons
         xmlFreeTextReader(fil_reader);
         gzclose(oth_xml_gzfile);
         puts("Oth Reader fail");
-        return NULL;
+        return 0;
     }
 
-    GHashTable *result = parse_xml_metadata(pri_reader, fil_reader, oth_reader);
+    int result = parse_xml_metadata(hashtable, pri_reader, fil_reader, oth_reader);
 
     xmlFreeTextReader(pri_reader);
     xmlFreeTextReader(fil_reader);
@@ -394,15 +426,19 @@ GHashTable *load_gz_compressed_xml_metadata_2(const char *primary_xml_path, cons
 }
 
 
-GHashTable *load_xml_metadata_2(const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
+int load_xml_metadata_2(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
 {
+    if (!hashtable) {
+        return 0;
+    }
+
     GFileTest flags = G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR;
     if (!g_file_test(primary_xml_path, flags) ||
         !g_file_test(filelists_xml_path, flags) ||
         !g_file_test(other_xml_path, flags))
     {
         puts("file fail");
-        return NULL;
+        return 0;
     }
 
     FILE *pri_xml_file = fopen(primary_xml_path, "rb");
@@ -425,7 +461,7 @@ GHashTable *load_xml_metadata_2(const char *primary_xml_path, const char *fileli
         fclose(fil_xml_file);
         fclose(oth_xml_file);
         puts("pri Reader fail");
-        return NULL;
+        return 0;
     }
 
     fil_reader = xmlReaderForIO(xmlInputReadCallback_plaintext,
@@ -439,7 +475,7 @@ GHashTable *load_xml_metadata_2(const char *primary_xml_path, const char *fileli
         fclose(fil_xml_file);
         fclose(oth_xml_file);
         puts("Fil Reader fail");
-        return NULL;
+        return 0;
     }
 
     oth_reader = xmlReaderForIO(xmlInputReadCallback_plaintext,
@@ -453,10 +489,10 @@ GHashTable *load_xml_metadata_2(const char *primary_xml_path, const char *fileli
         xmlFreeTextReader(fil_reader);
         fclose(oth_xml_file);
         puts("Oth Reader fail");
-        return NULL;
+        return 0;
     }
 
-    GHashTable *result = parse_xml_metadata(pri_reader, fil_reader, oth_reader);
+    int result = parse_xml_metadata(hashtable, pri_reader, fil_reader, oth_reader);
 
     xmlFreeTextReader(pri_reader);
     xmlFreeTextReader(fil_reader);
@@ -466,12 +502,12 @@ GHashTable *load_xml_metadata_2(const char *primary_xml_path, const char *fileli
 }
 
 
-GHashTable *locate_and_load_xml_metadata_2(const char *repopath)
+int locate_and_load_xml_metadata_2(GHashTable *hashtable, const char *repopath)
 {
     // TODO: First try get info from repomd.xml
 
-    if (!repopath || !g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
-        return NULL;
+    if (!hashtable || !repopath || !g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
+        return 0;
     }
 
     gchar *pri_gz_xml = NULL;
@@ -483,7 +519,7 @@ GHashTable *locate_and_load_xml_metadata_2(const char *repopath)
 
     GDir *repodir = g_dir_open(repopath, 0, NULL);
     if (!repodir) {
-        return NULL;
+        return 0;
     }
 
     gchar *file;
@@ -505,14 +541,14 @@ GHashTable *locate_and_load_xml_metadata_2(const char *repopath)
 
     g_dir_close(repodir);
 
-    GHashTable *result = NULL;
+    int result = 0;
 
 //    xmlInitParser();
 
     if (pri_gz_xml && fil_gz_xml && oth_gz_xml) {
-        result = load_gz_compressed_xml_metadata_2(pri_gz_xml, fil_gz_xml, oth_gz_xml);
+        result = load_gz_compressed_xml_metadata_2(hashtable, pri_gz_xml, fil_gz_xml, oth_gz_xml);
     } else if (pri_xml && fil_xml && oth_xml) {
-        result = load_xml_metadata_2(pri_xml, fil_xml, oth_xml);
+        result = load_xml_metadata_2(hashtable, pri_xml, fil_xml, oth_xml);
     }
 
     // Cleanup memory allocated by libxml2

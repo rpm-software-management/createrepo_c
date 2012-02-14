@@ -91,7 +91,7 @@ int allowed_file(const gchar *filename, const gchar *fullpath, int repodir_name_
         relative_path++;
     }
 
-    printf("Filename: %s (%s)\n", filename, relative_path);
+//    printf("Filename: %s (%s)\n", filename, relative_path);
 
     // Check file against exclude glob masks
     if (options->exclude_masks) {
@@ -111,7 +111,7 @@ int allowed_file(const gchar *filename, const gchar *fullpath, int repodir_name_
     // TODO: Hash table could be more effective
     // Check file against include_pkgs filenames
     if (options->include_pkgs) {
-        puts("pkglist - check");
+//        puts("pkglist - check");
         GSList *element;
         for (element=options->include_pkgs; element; element=g_slist_next(element)) {
 //            printf("REL:  %s\nLIST: %s\n\n", relative_path, (char *) element->data);

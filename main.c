@@ -11,6 +11,8 @@
 #include "load_metadata.h"
 
 
+#define G_LOG_DOMAIN    ((gchar*) 0)
+
 #define DEFAULT_CHANGELOG_LIMIT         10
 #define DEFAULT_CHECKSUM                "sha256"
 #define DEFAULT_WORKERS                 5
@@ -69,6 +71,7 @@ struct UserData {
     gboolean quiet;
     gboolean verbose;
     gboolean skip_symlinks;
+    int package_count;
 
     // Update stuff
     gboolean skip_stat;
@@ -102,6 +105,7 @@ int allowed_file(const gchar *filename, const gchar *fullpath, int repodir_name_
         for (element=options->exclude_masks; element; element=g_slist_next(element)) {
             if (g_pattern_match((GPatternSpec *) element->data, str_len, filename, reversed_filename)) {
                 g_free(reversed_filename);
+                g_debug("Exclude masks hit - skipping: %s", filename);
                 return FALSE;
             }
             g_free(reversed_filename);
@@ -116,12 +120,15 @@ int allowed_file(const gchar *filename, const gchar *fullpath, int repodir_name_
         for (element=options->include_pkgs; element; element=g_slist_next(element)) {
 //            printf("REL:  %s\nLIST: %s\n\n", relative_path, (char *) element->data);
             if (!g_strcmp0(relative_path, (char *) element->data)) {
+                g_debug("Adding pkg: %s", fullpath);
                 return TRUE;
             }
         }
+        g_debug("Not in pkglist - skipping: %s", fullpath);
         return FALSE;
     }
 
+    g_debug("Adding pkg: %s", fullpath);
     return TRUE;
 }
 
@@ -171,7 +178,7 @@ void dumper_thread(gpointer data, gpointer user_data) {
         if (md) {
             // CACHE HIT!
 
-//            puts("CACHE HIT");
+            g_debug("CACHE HIT %s", task->filename);
 
             if (udata->skip_stat) {
                 old_used = TRUE;
@@ -180,6 +187,8 @@ void dumper_thread(gpointer data, gpointer user_data) {
                        && !strcmp(udata->checksum_type_str, md->checksum_type))
             {
                 old_used = TRUE;
+            } else {
+                g_debug("%s metadata are obsolete -> generating new", task->filename);
             }
         }
 
@@ -206,6 +215,8 @@ void dumper_thread(gpointer data, gpointer user_data) {
             }
 
             if (href_changed || base_changed) {
+                g_debug("CACHE HIT %s - Changing location tag", task->filename);
+
                 gchar *replacement;
 
                 if (!location_base) {
@@ -331,19 +342,19 @@ gboolean check_arguments(struct CmdOptions *options)
 {
     // Check outputdir
     if (options->outputdir && !g_file_test(options->outputdir, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
-        printf("Specified outputdir doesn't exists\n");
+        g_warning("Specified outputdir \"%s\" doesn't exists", options->outputdir);
         return FALSE;
     }
 
     // Check workers
     if ((options->workers < 1) || (options->workers > 100)) {
-        printf("Warning: Wrong number of workers - Using 5 workers.");
+        g_warning("Wrong number of workers - Using 5 workers.");
         options->workers = DEFAULT_WORKERS;
     }
 
     // Check changelog_limit
     if ((options->changelog_limit < 0) || (options->changelog_limit > 100)) {
-        printf("Warning: Wrong changelog limit - Using 10");
+        g_warning("Wrong changelog limit \"%d\" - Using 10", options->changelog_limit);
         options->changelog_limit = DEFAULT_CHANGELOG_LIMIT;
     }
 
@@ -358,7 +369,7 @@ gboolean check_arguments(struct CmdOptions *options)
             options->checksum_type = PKG_CHECKSUM_MD5;
         } else {
             g_string_free(checksum_str, TRUE);
-            printf("Error: Unknown/Unsupported checksum type");
+            g_critical("Unknown/Unsupported checksum type \"%s\"", options->checksum);
             return FALSE;
         }
         g_string_free(checksum_str, TRUE);
@@ -388,12 +399,12 @@ gboolean check_arguments(struct CmdOptions *options)
     // Process pkglist file
     if (options->pkglist) {
         if (!g_file_test(options->pkglist, G_FILE_TEST_IS_REGULAR|G_FILE_TEST_EXISTS)) {
-            printf("Warning: pkglist file doesn't exists\n");
+            g_warning("pkglist file \"%s\" doesn't exists", options->pkglist);
         } else {
             char *content = NULL;
             GError *err;
             if (!g_file_get_contents(options->pkglist, &content, NULL, &err)) {
-                printf("Warning: Error while reading pkglist file: %s\n", err->message);
+                g_warning("Error while reading pkglist file: %s", err->message);
                 g_error_free(err);
                 g_free(content);
             } else {
@@ -415,11 +426,11 @@ gboolean check_arguments(struct CmdOptions *options)
     while (options->update_md_paths && options->update_md_paths[x] != NULL) {
         char *path = options->update_md_paths[x];
         if (g_file_test(path, G_FILE_TEST_IS_DIR|G_FILE_TEST_EXISTS)) {
-            printf("Pridavam md path: %s\n", path);
+            g_message("Using md path: %s", path);
             //path = g_strconcat(path, "/repodata/", NULL);
             options->l_update_md_paths = g_slist_prepend(options->l_update_md_paths, (gpointer) path);
         } else {
-            printf("Warning: update md path %s doesn't exists\n", path);
+            g_warning("Update md path %s doesn't exists", path);
         }
         x++;
     }
@@ -562,12 +573,12 @@ int main(int argc, char **argv) {
 
     if (!g_file_test(out_repo, G_FILE_TEST_EXISTS)) {
         if (g_mkdir (out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
-            perror("Error while creating repodata directory");
+            g_critical("Error while creating repodata directory");
             exit(1);
         }
     } else {
         if (!g_file_test(out_repo, G_FILE_TEST_IS_DIR)) {
-            printf("Error repodata already exists and it is not a directory!");
+            g_critical("Error repodata already exists and it is not a directory!");
             exit(1);
         }
     }
@@ -580,20 +591,22 @@ int main(int argc, char **argv) {
         // Load local repodata
         old_metadata = new_old_metadata_hashtable();
         int ret = locate_and_load_xml_metadata_2(old_metadata, in_repo);
-        if (ret) {
-            printf("Old metadata loaded\n");
+        if (!ret) {
+            g_warning("Old metadata not found");
+        } else {
+            g_debug("Old metadata loaded");
         }
 
         // Load repodata from --update-md-path
         GSList *element;
         for (element = cmd_options.l_update_md_paths; element; element = g_slist_next(element)) {
             char *path = (char *) element->data;
-            printf("Nacitam md-path: %s\n", path);
+            g_debug("Loading md-path: %s", path);
             int ret = locate_and_load_xml_metadata_2(old_metadata, path);
             if (ret) {
-                printf("Loaded\n");
+                printf("md-path loaded");
             } else {
-                printf("FAIL\n");
+                printf("md-path loading failed");
             }
         }
     }
@@ -608,7 +621,8 @@ int main(int argc, char **argv) {
 
     // Create and open new xml.gz files
 
-    printf("out_repo: %s\n", out_repo);
+    g_message("Output repo path: %s", out_repo);
+    g_debug("Opening/Creating .xml.gz files");
 
     gchar *pri_xml_filename = g_strconcat(out_repo, "/_primary.xml.gz", NULL);
     //int fd_pri_xml = g_file_open_tmp("XXXXXX", &pri_xml_filename, NULL);
@@ -652,14 +666,14 @@ int main(int argc, char **argv) {
     user_data.skip_stat         = cmd_options.skip_stat;
     user_data.old_metadata      = old_metadata;
 
-    puts("Thread pool user data ready");
+    g_debug("Thread pool user data ready");
 
     // Thread pool - Creation
 
     g_thread_init(NULL);
     GThreadPool *pool = g_thread_pool_new(dumper_thread, &user_data, 0, TRUE, NULL);
 
-    puts("Thread pool ready");
+    g_debug("Thread pool ready");
 
     // Recursive walk
 
@@ -682,7 +696,7 @@ int main(int argc, char **argv) {
 
     g_queue_push_head(sub_dirs, input_dir_stripped);
 
-    puts("Walk starting");
+    g_message("Directory walk started");
 
     char *dirname;
     while (dirname = g_queue_pop_head(sub_dirs)) {
@@ -690,8 +704,8 @@ int main(int argc, char **argv) {
         GDir *dirp;
         dirp = g_dir_open (dirname, 0, NULL);
         if (!dirp) {
-            puts("Cannot open directory");
-            return 1;
+            g_warning("Cannot open directory: %s", dirname);
+            continue;
         }
 
         const gchar *filename;
@@ -701,6 +715,7 @@ int main(int argc, char **argv) {
                 if (g_file_test(full_path, G_FILE_TEST_IS_DIR)) {
                     gchar *sub_dir_in_chunk = g_string_chunk_insert (sub_dirs_chunk, full_path);
                     g_queue_push_head(sub_dirs, sub_dir_in_chunk);
+                    g_debug("Dir to scan: %s", sub_dir_in_chunk);
                 }
                 g_free(full_path);
                 continue;
@@ -728,12 +743,15 @@ int main(int argc, char **argv) {
         g_dir_close (dirp);
     }
 
-    puts("Walk done");
+    g_debug("Package count: %d", package_count);
+    g_message("Directory walk done");
 
     g_string_chunk_free (sub_dirs_chunk);
     g_queue_free(sub_dirs);
 
     // Write XML header
+    g_debug("Writing xml headers");
+
     gzprintf(user_data.pri_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
           "<metadata xmlns=\""XML_COMMON_NS"\" xmlns:rpm=\""XML_RPM_NS"\" packages=\"%d\">\n", package_count);
     gzprintf(user_data.fil_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -742,10 +760,13 @@ int main(int argc, char **argv) {
           "<otherdata xmlns=\""XML_OTHER_NS"\" packages=\"%d\">\n", package_count);
 
     // Start pool
+    user_data.package_count = package_count;
     g_thread_pool_set_max_threads(pool, MAX_THREADS, NULL);
+    g_message("Pool started");
 
     // Wait until pool is finished
     g_thread_pool_free(pool, FALSE, TRUE);
+    g_message("Pool finished");
 
     gzputs(user_data.pri_f, "</metadata>\n");
     gzputs(user_data.fil_f, "</filelists>\n");
@@ -757,7 +778,7 @@ int main(int argc, char **argv) {
 
 
     // Rename files
-
+    g_debug("File renaming");
     char *new_name;
 
     new_name = g_strconcat(out_repo, "primary.xml.gz", NULL);
@@ -779,6 +800,8 @@ int main(int argc, char **argv) {
     g_free(new_name);
 
     // Clean up
+    g_debug("Memory cleanup");
+
     g_regex_unref(location_subs_re);
 
     if (old_metadata) {
@@ -794,5 +817,6 @@ int main(int argc, char **argv) {
     free_options(&cmd_options);
     free_package_parser();
 
+    g_debug("All done");
     return 0;
 }

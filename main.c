@@ -580,7 +580,7 @@ int main(int argc, char **argv) {
         // Load repodata from --update-md-path
         GSList *element;
         for (element = cmd_options.l_update_md_paths; element; element = g_slist_next(element)) {
-            char *path = (char *) element->data;
+            char *path = g_strconcat((char *) element->data, "/repodata/", NULL);
             g_debug("Loading md-path: %s", path);
             int ret = locate_and_load_xml_metadata_2(old_metadata, path);
             if (ret) {
@@ -588,6 +588,7 @@ int main(int argc, char **argv) {
             } else {
                 printf("md-path loading failed");
             }
+            g_free(path);
         }
     }
 

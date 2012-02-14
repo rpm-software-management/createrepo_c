@@ -15,7 +15,8 @@ all: package.so xml_dump.so parsehdr.so parsepkg.so load_metadata.so main
 ctests: parsepkg_test_01 parsehdr_test_01 parsehdr_test_02 xml_dump_primary_test_01 \
         xml_dump_filelists_test_01 xml_dump_other_test_01 load_metadata_test_01 \
         load_metadata_test_02 load_metadata_test_03 load_metadata_test_04 \
-        load_metadata_2_test_01 load_metadata_2_test_02 load_metadata_2_test_03 load_metadata_2_test_04
+        load_metadata_2_test_01 load_metadata_2_test_02 load_metadata_2_test_03 \
+        load_metadata_2_test_04 repomd_test_01
 
 
 # Object files + Swit object files
@@ -49,6 +50,12 @@ load_metadata_2.o load_metadata_2_wrap.o: load_metadata_2.c load_metadata.h cons
 #	$(SWIG) -python -Wall load_metadata_2.i
 #	gcc $(CFLAGS) -c load_metadata_2.c load_metadata_2_wrap.c
 	gcc $(CFLAGS) -c load_metadata_2.c
+
+# TODO
+repomd.o repomd_wrap.o: repomd.c repomd.h constants.h misc.h
+#	$(SWIG) -python -Wall load_metadata_2.i
+#	gcc $(CFLAGS) -c load_metadata_2.c load_metadata_2_wrap.c
+	gcc $(CFLAGS) -c repomd.c
 
 
 # Object files
@@ -130,6 +137,9 @@ load_metadata_2_test_03: load_metadata_2.o
 
 load_metadata_2_test_04: load_metadata_2.o
 	gcc $(LINKFLAGS) $(CFLAGS) load_metadata_2.o ctests/load_metadata_2_test_04_big.c -o ctests/load_metadata_2_test_04_big
+
+repomd_test_01: repomd.o
+	gcc $(LINKFLAGS) $(CFLAGS) repomd.o misc.o ctests/repomd_test_01.c -o ctests/repomd_test_01
 
 
 # Main

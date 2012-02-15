@@ -2,6 +2,7 @@
 #include <assert.h>
 #include <rpm/rpmfi.h>
 #include <stdlib.h>
+#include "logging.h"
 #include "parsehdr.h"
 #include "xml_dump.h"
 #include "misc.h"

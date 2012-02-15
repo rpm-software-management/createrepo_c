@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <zlib.h>
+#include "logging.h"
 #include "load_metadata.h"
 
 

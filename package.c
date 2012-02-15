@@ -16,6 +16,7 @@
  */
 
 #include "package.h"
+#include "logging.h"
 
 #define PACKAGE_CHUNK_SIZE 2048
 

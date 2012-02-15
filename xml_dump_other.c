@@ -2,6 +2,7 @@
 #include <string.h>
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
+#include "logging.h"
 #include "package.h"
 #include "xml_dump.h"
 

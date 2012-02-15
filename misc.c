@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <arpa/inet.h>
+#include "logging.h"
 #include "constants.h"
 #include "misc.h"
 

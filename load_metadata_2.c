@@ -5,6 +5,7 @@
 #include <string.h>
 #include <zlib.h>
 #include <libxml/xmlreader.h>
+#include "logging.h"
 #include "load_metadata.h"
 
 

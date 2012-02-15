@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <rpm/rpmts.h>
 #include <rpm/rpmfi.h>
+#include "logging.h"
 #include "constants.h"
 #include "parsehdr.h"
 #include "xml_dump.h"

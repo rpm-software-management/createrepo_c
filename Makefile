@@ -10,7 +10,7 @@ LC=-lc
 LC=-lc
 
 
-all: package.so xml_dump.so parsehdr.so parsepkg.so load_metadata.so main
+all: package.so xml_dump.so parsehdr.so parsepkg.so main
 
 ctests: parsepkg_test_01 parsehdr_test_01 parsehdr_test_02 xml_dump_primary_test_01 \
         xml_dump_filelists_test_01 xml_dump_other_test_01 load_metadata_test_01 \
@@ -41,20 +41,16 @@ parsepkg.o parsepkg_wrap.o: parsepkg.c parsepkg.h constants.h
 	$(SWIG) -python -Wall parsepkg.i
 	gcc $(CFLAGS) -c parsepkg.c parsepkg_wrap.c
 
-load_metadata.o load_metadata_wrap.o: load_metadata.c load_metadata.h constants.h
-	$(SWIG) -python -Wall load_metadata.i
-	gcc $(CFLAGS) -c load_metadata.c load_metadata_wrap.c
-
 # TODO
-load_metadata_2.o load_metadata_2_wrap.o: load_metadata_2.c load_metadata.h constants.h
-#	$(SWIG) -python -Wall load_metadata_2.i
-#	gcc $(CFLAGS) -c load_metadata_2.c load_metadata_2_wrap.c
-	gcc $(CFLAGS) -c load_metadata_2.c
+load_metadata.o load_metadata_wrap.o: load_metadata.c load_metadata.h constants.h
+#	$(SWIG) -python -Wall load_metadata.i
+#	gcc $(CFLAGS) -c load_metadata.c load_metadata_wrap.c
+	gcc $(CFLAGS) -c load_metadata.c
 
 # TODO
 repomd.o repomd_wrap.o: repomd.c repomd.h constants.h misc.h
-#	$(SWIG) -python -Wall load_metadata_2.i
-#	gcc $(CFLAGS) -c load_metadata_2.c load_metadata_2_wrap.c
+#	$(SWIG) -python -Wall repomd.i
+#	gcc $(CFLAGS) -c repomd.c repomd_wrap.c
 	gcc $(CFLAGS) -c repomd.c
 
 
@@ -84,12 +80,8 @@ parsehdr.so: parsehdr_wrap.o parsehdr.o package.o xml_dump.o misc.o
 parsepkg.so: parsepkg_wrap.o parsepkg.o parsehdr.o package.o xml_dump.o misc.o
 	ld $(LINKFLAGS) -shared misc.o parsepkg_wrap.o parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o -o _parsepkg.so $(LC)
 
-load_metadata.so: load_metadata_wrap.o load_metadata.o
-	ld $(LINKFLAGS) -shared load_metadata_wrap.o load_metadata.o -o _load_metadata.so $(LC)
-
-# TODO
-#load_metadata_2.so: load_metadata_wrap.o load_metadata_2.o
-#	ld $(LINKFLAGS) -shared load_metadata_2_wrap.o load_metadata_2.o -o _load_metadata_2.so $(LC)
+#load_metadata.so: load_metadata_wrap.o load_metadata.o
+#	ld $(LINKFLAGS) -shared load_metadata_wrap.o load_metadata.o -o _load_metadata.so $(LC)
 
 
 # Tests
@@ -113,30 +105,17 @@ xml_dump_other_test_01: package.o xml_dump.o xml_dump_primary.o xml_dump_filelis
 	gcc $(LINKFLAGS) $(CFLAGS) package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o ctests/xml_dump_other_test_01.c -o ctests/xml_dump_other_test_01
 
 
-load_metadata_test_01: load_metadata.o
-	gcc $(LINKFLAGS) $(CFLAGS) load_metadata.o ctests/load_metadata_test_01.c -o ctests/load_metadata_test_01
+load_metadata_2_test_01: load_metadata.o
+	gcc $(LINKFLAGS) $(CFLAGS) load_metadata.o ctests/load_metadata_2_test_01.c -o ctests/load_metadata_test_01
 
-load_metadata_test_02: load_metadata.o
-	gcc $(LINKFLAGS) $(CFLAGS) load_metadata.o ctests/load_metadata_test_02.c -o ctests/load_metadata_test_02
+load_metadata_2_test_02: load_metadata.o
+	gcc $(LINKFLAGS) $(CFLAGS) load_metadata.o ctests/load_metadata_2_test_02.c -o ctests/load_metadata_test_02
 
-load_metadata_test_03: load_metadata.o
-	gcc $(LINKFLAGS) $(CFLAGS) load_metadata.o ctests/load_metadata_test_03.c -o ctests/load_metadata_test_03
+load_metadata_2_test_03: load_metadata.o
+	gcc $(LINKFLAGS) $(CFLAGS) load_metadata.o ctests/load_metadata_2_test_03.c -o ctests/load_metadata_2_test_03
 
-load_metadata_test_04: load_metadata.o
-	gcc $(LINKFLAGS) $(CFLAGS) load_metadata.o ctests/load_metadata_test_04_big.c -o ctests/load_metadata_test_04_big
-
-
-load_metadata_2_test_01: load_metadata_2.o
-	gcc $(LINKFLAGS) $(CFLAGS) load_metadata_2.o ctests/load_metadata_2_test_01.c -o ctests/load_metadata_2_test_01
-
-load_metadata_2_test_02: load_metadata_2.o
-	gcc $(LINKFLAGS) $(CFLAGS) load_metadata_2.o ctests/load_metadata_2_test_02.c -o ctests/load_metadata_2_test_02
-
-load_metadata_2_test_03: load_metadata_2.o
-	gcc $(LINKFLAGS) $(CFLAGS) load_metadata_2.o ctests/load_metadata_2_test_03.c -o ctests/load_metadata_2_test_03
-
-load_metadata_2_test_04: load_metadata_2.o
-	gcc $(LINKFLAGS) $(CFLAGS) load_metadata_2.o ctests/load_metadata_2_test_04_big.c -o ctests/load_metadata_2_test_04_big
+load_metadata_2_test_04: load_metadata.o
+	gcc $(LINKFLAGS) $(CFLAGS) load_metadata.o ctests/load_metadata_2_test_04_big.c -o ctests/load_metadata_2_test_04_big
 
 repomd_test_01: repomd.o
 	gcc $(LINKFLAGS) $(CFLAGS) repomd.o misc.o ctests/repomd_test_01.c -o ctests/repomd_test_01
@@ -144,8 +123,8 @@ repomd_test_01: repomd.o
 
 # Main
 
-main: parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o load_metadata_2.o repomd.o
-	gcc $(LINKFLAGS) $(CFLAGS) parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o repomd.o load_metadata_2.o main.c -o main
+main: parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o load_metadata.o repomd.o
+	gcc $(LINKFLAGS) $(CFLAGS) parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o repomd.o load_metadata.o main.c -o main
 
 
 clean:

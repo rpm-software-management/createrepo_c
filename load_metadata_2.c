@@ -115,15 +115,6 @@ void processNode(GHashTable *metadata, xmlTextReaderPtr pri_reader,
 
     xmlBufferFree(buf);
 
-    if (!pri_pkg_xml || !fil_pkg_xml || !oth_pkg_xml) {
-        // Something wrong
-        puts("Warning: Something wrong with metadata");
-        g_free(pri_pkg_xml);
-        g_free(fil_pkg_xml);
-        g_free(oth_pkg_xml);
-        return;
-    }
-
     // Get some info about package
 //    char *name = NULL;
     char *location_href = NULL;

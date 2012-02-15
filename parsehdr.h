@@ -1,5 +1,5 @@
-#ifndef __PARSEHDR__
-#define __PARSEHDR__
+#ifndef __C_CREATEREPOLIB_PARSEHDR_H__
+#define __C_CREATEREPOLIB_PARSEHDR_H__
 
 #include <rpm/rpmlib.h>
 #include <glib.h>
@@ -15,4 +15,4 @@ struct XmlStruct xml_from_header(Header hdr, gint64 mtime, gint64 size,
                         const char *location_href, const char *location_base,
                         int changelog_limit, gint64 hdr_start, gint64 hdr_end);
 
-#endif /* __PARSEHDR__ */
+#endif /* __C_CREATEREPOLIB_PARSEHDR_H__ */

@@ -1,5 +1,5 @@
-#ifndef __YUM_PACKAGE_H__
-#define __YUM_PACKAGE_H__
+#ifndef __C_CREATEREPOLIB_PACKAGE_H__
+#define __C_CREATEREPOLIB_PACKAGE_H__
 
 #include <glib.h>
 
@@ -71,4 +71,4 @@ ChangelogEntry *changelog_entry_new (void);
 Package        *package_new         (void);
 void            package_free        (Package *package);
 
-#endif /* __YUM_PACKAGE_H__ */
+#endif /* __C_CREATEREPOLIB_PACKAGE_H__ */

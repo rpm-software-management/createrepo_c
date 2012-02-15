@@ -1,5 +1,5 @@
-#ifndef __PARSEPKG__
-#define __PARSEPKG__
+#ifndef __C_CREATEREPOLIB_PARSEPKG_H__
+#define __C_CREATEREPOLIB_PARSEPKG_H__
 
 #include <rpm/rpmlib.h>
 #include <glib.h>
@@ -25,4 +25,4 @@ struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checks
                         const char *location_href, const char *location_base,
                         int changelog_limit, struct stat *stat_buf);
 
-#endif /* __PARSEPKG__ */
+#endif /* __C_CREATEREPOLIB_PARSEPKG_H__ */

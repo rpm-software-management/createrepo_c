@@ -1,5 +1,5 @@
-#ifndef __CONSTANTS__
-#define __CONSTANTS__
+#ifndef __C_CREATEREPOLIB_CONSTANTS_H__
+#define __C_CREATEREPOLIB_CONSTANTS_H__
 
 typedef enum {
     PKG_CHECKSUM_MD5,
@@ -7,4 +7,4 @@ typedef enum {
     PKG_CHECKSUM_SHA256
 } ChecksumType;
 
-#endif /* __CONSTANTS__ */
+#endif /* __C_CREATEREPOLIB_CONSTANTS_H__ */

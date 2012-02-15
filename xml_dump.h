@@ -1,5 +1,5 @@
-#ifndef __XML_DUMP__
-#define __XML_DUMP__
+#ifndef __C_CREATEREPOLIB_XML_DUMP_H__
+#define __C_CREATEREPOLIB_XML_DUMP_H__
 
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
@@ -29,4 +29,4 @@ char *xml_dump_filelists(Package *, const char *);
 char *xml_dump_other(Package *, const char *);
 struct XmlStruct xml_dump(Package *, const char *);
 
-#endif /* __XML_DUMP__ */
+#endif /* __C_CREATEREPOLIB_XML_DUMP_H__ */

@@ -1,5 +1,5 @@
-#ifndef __LOAD_METADATA__
-#define __LOAD_METADATA__
+#ifndef __C_CREATEREPOLIB_LOAD_METADATA_H__
+#define __C_CREATEREPOLIB_LOAD_METADATA_H__
 
 #include <glib.h>
 #include "constants.h"
@@ -28,4 +28,4 @@ int load_gz_compressed_xml_metadata_2(GHashTable *hashtable, const char *primary
 int load_xml_metadata_2(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path);
 int locate_and_load_xml_metadata_2(GHashTable *hashtable, const char *repopath);
 
-#endif /* __LOAD_METADATA__ */
+#endif /* __C_CREATEREPOLIB_LOAD_METADATA_H__ */

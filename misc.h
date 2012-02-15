@@ -1,5 +1,5 @@
-#ifndef __MISC__
-#define __MISC__
+#ifndef __C_CREATEREPOLIB_MISC_H__
+#define __C_CREATEREPOLIB_MISC_H__
 
 #include <glib.h>
 #include "constants.h"
@@ -28,4 +28,4 @@ struct HeaderRangeStruct {
 struct HeaderRangeStruct get_header_byte_range(const char *filename);
 
 
-#endif /* __MISC__ */
+#endif /* __C_CREATEREPOLIB_MISC_H__ */

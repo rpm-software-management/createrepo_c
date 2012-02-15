@@ -1,5 +1,5 @@
-#ifndef __C_CREATEREPOLIB_REPOMD__
-#define __C_CREATEREPOLIB_REPOMD__
+#ifndef __C_CREATEREPOLIB_REPOMD_H__
+#define __C_CREATEREPOLIB_REPOMD_H__
 
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
@@ -29,4 +29,4 @@ char *xml_repomd_2(const char *path, repomdData *pri_xml, repomdData *fil_xml, r
 char *xml_repomd(const char *path, const char *pri_xml, const char *fil_xml, const char *oth_xml,
                  const char *pri_sqlite, const char *fil_sqlite, const char *oth_sqlite);
 
-#endif /* __C_CREATEREPOLIB_REPOMD__ */
+#endif /* __C_CREATEREPOLIB_REPOMD_H__ */

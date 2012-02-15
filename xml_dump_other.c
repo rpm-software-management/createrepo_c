@@ -57,15 +57,13 @@ dump_changelog(xmlTextWriterPtr writer, Package *package, xmlCharEncodingHandler
         if (handler && tmp != NULL && tmp != n) xmlFree(tmp);
 
         // Write param date
-        tmp2 = g_strdup_printf("%d", entry->date);
-        rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "date", tmp2);
+        rc = xmlTextWriterWriteFormatAttribute(writer, "date", "%d", entry->date);
         if (rc < 0) {
              printf("Error at xmlTextWriterWriteAttribute\n");
              return;
         }
-        if (tmp2 != NULL) g_free(tmp2);
 
-        // Write text (file path)
+        // Write text
         tmp = ConvertInput(entry->changelog, handler);
         if (!tmp) tmp = n;
         xmlTextWriterWriteString(writer, BAD_CAST tmp);

@@ -67,7 +67,7 @@ int xmlInputCloseCallback_gz_compressed (void * context) {
 
 
 
-void processNode(GHashTable *metadata, xmlTextReaderPtr pri_reader,
+void process_node(GHashTable *metadata, xmlTextReaderPtr pri_reader,
                  xmlTextReaderPtr fil_reader, xmlTextReaderPtr oth_reader) {
 
 /*
@@ -117,7 +117,6 @@ void processNode(GHashTable *metadata, xmlTextReaderPtr pri_reader,
     xmlBufferFree(buf);
 
     // Get some info about package
-//    char *name = NULL;
     char *location_href = NULL;
     char *location_base = NULL;
     char *checksum_type = NULL;
@@ -132,6 +131,7 @@ void processNode(GHashTable *metadata, xmlTextReaderPtr pri_reader,
             continue;
         }
 
+//        char *name = NULL;
 //        if (!strcmp(node->name, "name")) {
 //            char *name = xmlNodeGetContent(node);
 //            puts(name);
@@ -164,7 +164,7 @@ void processNode(GHashTable *metadata, xmlTextReaderPtr pri_reader,
     }
 
     if ( !location_href || !checksum_type) {
-        puts("Warning: Bad xml data");
+        g_warning("process_node: Bad xml data! Some information are missing!");
         g_free(pri_pkg_xml);
         g_free(fil_pkg_xml);
         g_free(oth_pkg_xml);
@@ -187,7 +187,7 @@ void processNode(GHashTable *metadata, xmlTextReaderPtr pri_reader,
 
     // Check if key already exists
     if (g_hash_table_lookup(metadata, key)) {
-        printf("Warning: Key \"%s\" already exists\n", key);
+        g_warning("process_node: Warning: Key \"%s\" already exists in old metadata\n", key);
         g_free(pri_pkg_xml);
         g_free(fil_pkg_xml);
         g_free(oth_pkg_xml);
@@ -286,7 +286,7 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
     xmlFree(name);
 
     while (pri_ret && fil_ret && oth_ret) {
-        processNode(hashtable, pri_reader, fil_reader, oth_reader);
+        process_node(hashtable, pri_reader, fil_reader, oth_reader);
         pri_ret = xmlTextReaderNext(pri_reader);
         fil_ret = xmlTextReaderNext(fil_reader);
         oth_ret = xmlTextReaderNext(oth_reader);
@@ -298,9 +298,10 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
 
 #define GZ_BUFFER_SIZE   131072  // 1024*128
 
-int load_gz_compressed_xml_metadata_2(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
+int load_gz_compressed_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
 {
     if (!hashtable) {
+        g_debug("load_gz_compressed_xml_metadata: No hash table passed");
         return 0;
     }
 
@@ -309,6 +310,7 @@ int load_gz_compressed_xml_metadata_2(GHashTable *hashtable, const char *primary
         !g_file_test(filelists_xml_path, flags) ||
         !g_file_test(other_xml_path, flags))
     {
+        g_debug("load_gz_compressed_xml_metadata: One or more files don't exist");
         return 0;
     }
 
@@ -373,7 +375,7 @@ int load_gz_compressed_xml_metadata_2(GHashTable *hashtable, const char *primary
                                 NULL,
                                 XML_PARSE_NOBLANKS);
     if (!pri_reader) {
-        puts("pri Reader fail");
+        g_critical("load_gz_compressed_xml_metadata: Reader for primary.xml.gz file failed");
         gzclose(pri_xml_gzfile);
         gzclose(fil_xml_gzfile);
         gzclose(oth_xml_gzfile);
@@ -387,10 +389,10 @@ int load_gz_compressed_xml_metadata_2(GHashTable *hashtable, const char *primary
                                 NULL,
                                 XML_PARSE_NOBLANKS);
     if (!fil_reader) {
+        g_critical("load_gz_compressed_xml_metadata: Reader for filelists.xml.gz file failed");
         xmlFreeTextReader(pri_reader);
         gzclose(fil_xml_gzfile);
         gzclose(oth_xml_gzfile);
-        puts("Fil Reader fail");
         return 0;
     }
 
@@ -401,10 +403,10 @@ int load_gz_compressed_xml_metadata_2(GHashTable *hashtable, const char *primary
                                 NULL,
                                 XML_PARSE_NOBLANKS);
     if (!oth_reader) {
+        g_critical("load_gz_compressed_xml_metadata: Reader for other.xml.gz file failed");
         xmlFreeTextReader(pri_reader);
         xmlFreeTextReader(fil_reader);
         gzclose(oth_xml_gzfile);
-        puts("Oth Reader fail");
         return 0;
     }
 
@@ -418,9 +420,10 @@ int load_gz_compressed_xml_metadata_2(GHashTable *hashtable, const char *primary
 }
 
 
-int load_xml_metadata_2(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
+int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
 {
     if (!hashtable) {
+        g_debug("load_xml_metadata: No hash table passed");
         return 0;
     }
 
@@ -429,7 +432,7 @@ int load_xml_metadata_2(GHashTable *hashtable, const char *primary_xml_path, con
         !g_file_test(filelists_xml_path, flags) ||
         !g_file_test(other_xml_path, flags))
     {
-        puts("file fail");
+        g_debug("load_xml_metadata: One or more files don't exist");
         return 0;
     }
 
@@ -449,10 +452,10 @@ int load_xml_metadata_2(GHashTable *hashtable, const char *primary_xml_path, con
                                 NULL,
                                 XML_PARSE_NOBLANKS);
     if (!pri_reader) {
+        g_critical("load_xml_metadata: Reader for primary.xml file failed");
         fclose(pri_xml_file);
         fclose(fil_xml_file);
         fclose(oth_xml_file);
-        puts("pri Reader fail");
         return 0;
     }
 
@@ -463,10 +466,10 @@ int load_xml_metadata_2(GHashTable *hashtable, const char *primary_xml_path, con
                                 NULL,
                                 XML_PARSE_NOBLANKS);
     if (!fil_reader) {
+        g_critical("load_xml_metadata: Reader for filelists.xml file failed");
         xmlFreeTextReader(pri_reader);
         fclose(fil_xml_file);
         fclose(oth_xml_file);
-        puts("Fil Reader fail");
         return 0;
     }
 
@@ -477,10 +480,10 @@ int load_xml_metadata_2(GHashTable *hashtable, const char *primary_xml_path, con
                                 NULL,
                                 XML_PARSE_NOBLANKS);
     if (!oth_reader) {
+        g_critical("load_xml_metadata: Reader for other.xml file failed");
         xmlFreeTextReader(pri_reader);
         xmlFreeTextReader(fil_reader);
         fclose(oth_xml_file);
-        puts("Oth Reader fail");
         return 0;
     }
 
@@ -494,7 +497,7 @@ int load_xml_metadata_2(GHashTable *hashtable, const char *primary_xml_path, con
 }
 
 
-int locate_and_load_xml_metadata_2(GHashTable *hashtable, const char *repopath)
+int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath)
 {
     // TODO: First try get info from repomd.xml
 
@@ -511,6 +514,7 @@ int locate_and_load_xml_metadata_2(GHashTable *hashtable, const char *repopath)
 
     GDir *repodir = g_dir_open(repopath, 0, NULL);
     if (!repodir) {
+        g_debug("locate_and_load_xml_metadata: Path %s doesn't exists", repopath);
         return 0;
     }
 
@@ -538,9 +542,9 @@ int locate_and_load_xml_metadata_2(GHashTable *hashtable, const char *repopath)
 //    xmlInitParser();
 
     if (pri_gz_xml && fil_gz_xml && oth_gz_xml) {
-        result = load_gz_compressed_xml_metadata_2(hashtable, pri_gz_xml, fil_gz_xml, oth_gz_xml);
+        result = load_gz_compressed_xml_metadata(hashtable, pri_gz_xml, fil_gz_xml, oth_gz_xml);
     } else if (pri_xml && fil_xml && oth_xml) {
-        result = load_xml_metadata_2(hashtable, pri_xml, fil_xml, oth_xml);
+        result = load_xml_metadata(hashtable, pri_xml, fil_xml, oth_xml);
     }
 
     // Cleanup memory allocated by libxml2

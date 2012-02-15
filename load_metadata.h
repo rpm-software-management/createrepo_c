@@ -18,14 +18,10 @@ struct package_metadata {
 
 // Key in GHashTable is filename (just filename without path)
 
-GHashTable *load_gz_compressed_xml_metadata(const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path);
-GHashTable *load_xml_metadata(const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path);
-GHashTable *locate_and_load_xml_metadata(const char *repopath);
-
 GHashTable *new_old_metadata_hashtable();
 void *destroy_old_metadata_hashtable();
-int load_gz_compressed_xml_metadata_2(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path);
-int load_xml_metadata_2(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path);
-int locate_and_load_xml_metadata_2(GHashTable *hashtable, const char *repopath);
+int load_gz_compressed_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path);
+int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path);
+int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath);
 
 #endif /* __C_CREATEREPOLIB_LOAD_METADATA_H__ */

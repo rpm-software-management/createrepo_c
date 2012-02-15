@@ -588,7 +588,7 @@ int main(int argc, char **argv) {
     if (cmd_options.update) {
         // Load local repodata
         old_metadata = new_old_metadata_hashtable();
-        int ret = locate_and_load_xml_metadata_2(old_metadata, in_repo);
+        int ret = locate_and_load_xml_metadata(old_metadata, in_repo);
         if (!ret) {
             g_warning("Old metadata not found");
         } else {
@@ -600,7 +600,7 @@ int main(int argc, char **argv) {
         for (element = cmd_options.l_update_md_paths; element; element = g_slist_next(element)) {
             char *path = g_strconcat((char *) element->data, "/repodata/", NULL);
             g_debug("Loading md-path: %s", path);
-            int ret = locate_and_load_xml_metadata_2(old_metadata, path);
+            int ret = locate_and_load_xml_metadata(old_metadata, path);
             if (ret) {
                 printf("md-path loaded");
             } else {

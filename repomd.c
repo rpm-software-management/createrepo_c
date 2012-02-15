@@ -22,13 +22,20 @@ typedef struct _contentStat {
 
 repomdData *new_repomddata()
 {
-    return (repomdData *) g_malloc0(sizeof(repomdData));
+    repomdData *md = (repomdData *) g_malloc0(sizeof(repomdData));
+    md->chunk = g_string_chunk_new(512);
+    return md;
 }
 
 
 
 void free_repomddata(repomdData *md)
 {
+    if (!md) {
+        return;
+    }
+
+    g_string_chunk_free(md->chunk);
     g_free(md);
 }
 
@@ -109,6 +116,7 @@ int fill_missing_data(const char *base_path, repomdData *md) {
     gchar *path = g_strconcat(base_path, "/", md->location_href, NULL);
 
     if (!g_file_test(path, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR)) {
+        // File doesn't exists
         return 0;
     }
 
@@ -116,8 +124,11 @@ int fill_missing_data(const char *base_path, repomdData *md) {
     // Compute checksum of compressed file
 
     if (!md->checksum_type || !md->checksum) {
-        md->checksum_type = g_strdup(DEFAULT_CHECKSUM);
-        md->checksum = compute_file_checksum(path, DEFAULT_CHECKSUM_ENUM_VAL);
+        gchar *chksum;
+        md->checksum_type = g_string_chunk_insert(md->chunk, DEFAULT_CHECKSUM);
+        chksum = compute_file_checksum(path, DEFAULT_CHECKSUM_ENUM_VAL);
+        md->checksum = g_string_chunk_insert(md->chunk, chksum);
+        g_free(chksum);
     }
 
 
@@ -128,15 +139,18 @@ int fill_missing_data(const char *base_path, repomdData *md) {
             // File compressed by gzip
             contentStat *open_stat = NULL;
             open_stat = get_gz_compressed_content_stat(path, DEFAULT_CHECKSUM_ENUM_VAL);
-            md->checksum_open_type = g_strdup(DEFAULT_CHECKSUM);
-            md->checksum_open = open_stat->checksum;
-            md->size_open = open_stat->size;
+            md->checksum_open_type = g_string_chunk_insert(md->chunk, DEFAULT_CHECKSUM);
+            md->checksum_open = g_string_chunk_insert(md->chunk, open_stat->checksum);
+            if (!md->size_open) {
+                md->size_open = open_stat->size;
+            }
+            g_free(open_stat->checksum);
             g_free(open_stat);
         } else {
             // Unknown suffix -> unknown compression
             g_warning( "File \"%s\" compressed by an unsupported type of compression", path);
-            md->checksum_open_type = g_strdup("UNKNOWN");
-            md->checksum_open = g_strdup("file_compressed_by_an_unsupported_type_of_compression");
+            md->checksum_open_type = g_string_chunk_insert(md->chunk, "UNKNOWN");
+            md->checksum_open = g_string_chunk_insert(md->chunk, "file_compressed_by_an_unsupported_type_of_compression");
             md->size_open = -1;
         }
     }
@@ -147,8 +161,12 @@ int fill_missing_data(const char *base_path, repomdData *md) {
     if (!md->timestamp || !md->size) {
         struct stat buf;
         if (!stat(path, &buf)) {
-            md->timestamp = buf.st_mtime;
-            md->size      = buf.st_size;
+            if (!md->timestamp) {
+                md->timestamp = buf.st_mtime;
+            }
+            if (!md->size) {
+                md->size = buf.st_size;
+            }
         } else {
             g_warning( "Stat on file \"%s\" failed", path);
         }
@@ -160,6 +178,8 @@ int fill_missing_data(const char *base_path, repomdData *md) {
     if (!md->db_ver) {
         md->db_ver = 10;
     }
+
+    g_free(path);
 }
 
 
@@ -274,7 +294,7 @@ char *repomd_xml_dump(long revision, repomdData *pri_xml, repomdData *fil_xml, r
 
 
 
-char *xml_repomd(const char *path, repomdData *pri_xml, repomdData *fil_xml, repomdData *oth_xml,
+char *xml_repomd_2(const char *path, repomdData *pri_xml, repomdData *fil_xml, repomdData *oth_xml,
                  repomdData *pri_sqlite, repomdData *fil_sqlite, repomdData *oth_sqlite)
 {
     if (!path) {
@@ -300,6 +320,61 @@ char *xml_repomd(const char *path, repomdData *pri_xml, repomdData *fil_xml, rep
     // Dump xml
 
     char *res = repomd_xml_dump(revision, pri_xml, fil_xml, oth_xml, pri_sqlite, fil_sqlite, oth_sqlite);
+
+    return res;
+}
+
+
+
+char *xml_repomd(const char *path, const char *pri_xml, const char *fil_xml, const char *oth_xml,
+                 const char *pri_sqlite, const char *fil_sqlite, const char *oth_sqlite)
+{
+    if (!path) {
+        return NULL;
+    }
+
+    repomdData *pri_xml_rd    = NULL;
+    repomdData *fil_xml_rd    = NULL;
+    repomdData *oth_xml_rd    = NULL;
+    repomdData *pri_sqlite_rd = NULL;
+    repomdData *fil_sqlite_rd = NULL;
+    repomdData *oth_sqlite_rd = NULL;
+
+    if (pri_xml) {
+        pri_xml_rd = new_repomddata();
+        pri_xml_rd->location_href = pri_xml;
+    }
+    if (fil_xml) {
+        fil_xml_rd = new_repomddata();
+        fil_xml_rd->location_href = fil_xml;
+    }
+    if (oth_xml) {
+        oth_xml_rd = new_repomddata();
+        oth_xml_rd->location_href = oth_xml;
+    }
+    if (pri_sqlite) {
+        pri_sqlite_rd = new_repomddata();
+        pri_sqlite_rd->location_href = pri_sqlite;
+    }
+    if (fil_sqlite) {
+        fil_sqlite_rd = new_repomddata();
+        fil_sqlite_rd->location_href = fil_sqlite;
+    }
+    if (oth_sqlite) {
+        oth_sqlite_rd = new_repomddata();
+        oth_sqlite_rd->location_href = oth_sqlite;
+    }
+
+    // Dump xml
+
+    char *res = xml_repomd_2(path, pri_xml_rd, fil_xml_rd, oth_xml_rd, pri_sqlite_rd, fil_sqlite_rd, oth_sqlite_rd);
+
+    free_repomddata(pri_xml_rd);
+    free_repomddata(fil_xml_rd);
+    free_repomddata(oth_xml_rd);
+    free_repomddata(pri_sqlite_rd);
+    free_repomddata(fil_sqlite_rd);
+    free_repomddata(oth_sqlite_rd);
 
     return res;
 }

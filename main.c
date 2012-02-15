@@ -9,6 +9,7 @@
 #include <zlib.h>
 #include <fcntl.h>
 #include "load_metadata.h"
+#include "repomd.h"
 
 
 #define G_LOG_DOMAIN    ((gchar*) 0)
@@ -124,11 +125,8 @@ void dumper_thread(gpointer data, gpointer user_data) {
 
     struct PoolTask *task = (struct PoolTask *) data;
 
-    // get location_href without leading part of path (path to repo) and '/' char(s)
+    // get location_href without leading part of path (path to repo) including '/' char
     char *location_href = (gchar *) task->full_path + udata->repodir_name_len;
-    while (location_href[0] == '/') {
-        location_href++;
-    }
 
     char *location_base = udata->location_base;
 
@@ -173,8 +171,6 @@ void dumper_thread(gpointer data, gpointer user_data) {
         if (old_used) {
             // We have usable old data, but we have to check locations (href and base)
 
-//            puts("> Pouzijeme stare metadata");
-
             modified_primary_xml = md->primary_xml;
 
             gboolean href_changed = FALSE;
@@ -182,14 +178,10 @@ void dumper_thread(gpointer data, gpointer user_data) {
 
             if (g_strcmp0(md->location_href, location_href)) {
                 href_changed = TRUE;
-//                puts("> href ZMENEN");
-//                printf("> %s | %s\n", md->location_href, location_href);
             }
 
             if (g_strcmp0(md->location_base, location_base)) {
                 base_changed = TRUE;
-//                puts("> base ZMENEN");
-//                printf("> %s | %s\n", md->location_base, location_base);
             }
 
             if (href_changed || base_changed) {
@@ -536,18 +528,44 @@ int main(int argc, char **argv) {
 
     // Set paths of input and output repos
 
-    gchar *in_dir   = argv[1];
-    gchar *in_repo  = NULL;
-    gchar *out_repo = NULL;
+    gchar *in_dir   = NULL;  // path/to/repo/
+    gchar *in_repo  = NULL;  // path/to/repo/repodata/
+    gchar *out_dir  = NULL;  // path/to/out_repo/
+    gchar *out_repo = NULL;  // path/to/out_repo/repodata/
 
-    in_repo = g_strconcat(in_dir, "/repodata/", NULL);
+    // Normalize in_dir format (result has exactly only one traling '/')
+    int i = strlen(argv[1]);
+    do {
+        i--;
+    } while (argv[1][i] == '/');
+    in_dir = g_strndup(argv[1], i+2);
+    if (in_dir[i+1] != '/') {
+        in_dir[i+1] = '/';
+    }
+
+    in_repo = g_strconcat(in_dir, "repodata/", NULL);
 
     if (cmd_options.outputdir) {
-        out_repo = g_strconcat(cmd_options.outputdir, "/repodata/", NULL);
+        // Normalize out_dir
+        int i = strlen(cmd_options.outputdir);
+        do {
+            i--;
+        } while (cmd_options.outputdir[i] == '/');
+        out_dir = g_strndup(cmd_options.outputdir, i+2);
+        if (out_dir[i+1] != '/') {
+            out_dir[i+1] = '/';
+        }
+
+        out_repo = g_strconcat(cmd_options.outputdir, "repodata/", NULL);
     } else {
+        out_dir  = g_strdup(in_dir);
         out_repo = g_strdup(in_repo);
     }
 
+    printf("in_dir:   %s\n", in_dir);
+    printf("in_repo:  %s\n", in_repo);
+    printf("out_dir:  %s\n", out_dir);
+    printf("out_repo: %s\n", out_repo);
 
     // Create out_repo dir if doesn't exists
 
@@ -646,8 +664,10 @@ int main(int argc, char **argv) {
     user_data.skip_symlinks     = cmd_options.skip_symlinks;
     user_data.skip_stat         = cmd_options.skip_stat;
     user_data.old_metadata      = old_metadata;
+    user_data.repodir_name_len  = strlen(in_dir);
 
     g_debug("Thread pool user data ready");
+
 
     // Thread pool - Creation
 
@@ -656,30 +676,19 @@ int main(int argc, char **argv) {
 
     g_debug("Thread pool ready");
 
+
     // Recursive walk
 
     int package_count = 0;
 
-    GStringChunk *sub_dirs_chunk = g_string_chunk_new(1024);
-    GQueue *sub_dirs = g_queue_new();
-
-    // Get dir param without trailing "/"
-    int arg_len = strlen(in_dir);
-    int x;
-    for (x=(arg_len-1); x >= 0; x--) {
-        if (in_dir[x] != '/') {
-            break;
-        }
-    }
-    int repodir_name_len = x+1;  // len of path to a directory to index
-//    g_debug("%s | \"%s\"", in_dir, in_dir+repodir_name_len);
-    gchar *input_dir_stripped = g_string_chunk_insert_len(sub_dirs_chunk, in_dir, repodir_name_len);
-    user_data.repodir_name_len = repodir_name_len;
-
     if (!(cmd_options.pkglist)) {
         // If pkglist is supplied skip dir walk
 
+        GStringChunk *sub_dirs_chunk = g_string_chunk_new(1024);
+        GQueue *sub_dirs = g_queue_new();
+        gchar *input_dir_stripped = g_string_chunk_insert_len(sub_dirs_chunk, in_dir, strlen(in_dir)-1);
         g_queue_push_head(sub_dirs, input_dir_stripped);
+
         g_message("Directory walk started");
 
         char *dirname;
@@ -728,13 +737,16 @@ int main(int argc, char **argv) {
             // Cleanup
             g_dir_close (dirp);
         }
+
+        g_string_chunk_free (sub_dirs_chunk);
+        g_queue_free(sub_dirs);
     } else {
         g_debug("Skipping dir walk - using pkglist");
 
         GSList *element;
         for (element=cmd_options.include_pkgs; element; element=g_slist_next(element)) {
             gchar *relative_path = (gchar *) element->data;
-            gchar *full_path = g_strconcat(input_dir_stripped, "/", relative_path, NULL);
+            gchar *full_path = g_strconcat(in_dir, relative_path, NULL);
             gchar *dirname;
             gchar *filename;
 
@@ -767,8 +779,6 @@ int main(int argc, char **argv) {
     g_debug("Package count: %d", package_count);
     g_message("Directory walk done");
 
-    g_string_chunk_free (sub_dirs_chunk);
-    g_queue_free(sub_dirs);
 
     // Write XML header
     g_debug("Writing xml headers");
@@ -799,28 +809,51 @@ int main(int argc, char **argv) {
 
 
     // Rename files
+
     g_debug("File renaming");
     char *new_name;
+    gchar *pri_xml_name = g_strconcat("repodata/", "primary.xml.gz", NULL);
+    gchar *fil_xml_name = g_strconcat("repodata/", "filelists.xml.gz", NULL);
+    gchar *oth_xml_name = g_strconcat("repodata/", "other.xml.gz", NULL);
 
-    new_name = g_strconcat(out_repo, "primary.xml.gz", NULL);
+    new_name = g_strconcat(out_dir, pri_xml_name, NULL);
     if (rename(pri_xml_filename, new_name)) {
         perror("Error renaming file");
     }
     g_free(new_name);
 
-    new_name = g_strconcat(out_repo, "filelists.xml.gz", NULL);
+    new_name = g_strconcat(out_dir, fil_xml_name, NULL);
     if (rename(fil_xml_filename, new_name)) {
         perror("Error renaming file");
     }
     g_free(new_name);
 
-    new_name = g_strconcat(out_repo, "other.xml.gz", NULL);
+    new_name = g_strconcat(out_dir, oth_xml_name, NULL);
     if (rename(oth_xml_filename, new_name)) {
         perror("Error renaming file");
     }
     g_free(new_name);
 
+
+    // Create repomd.xml
+
+    g_debug("Generating repomd.xml");
+
+    gchar *repomd_xml = xml_repomd(out_dir, pri_xml_name, fil_xml_name, oth_xml_name, NULL, NULL, NULL);
+    gchar *repomd_path = g_strconcat(out_repo, "repomd.xml", NULL);
+    FILE *frepomd = fopen(repomd_path, "w");
+    fputs(repomd_xml, frepomd);
+    fclose(frepomd);
+
+    g_free(repomd_xml);
+    g_free(repomd_path);
+    g_free(pri_xml_name);
+    g_free(fil_xml_name);
+    g_free(oth_xml_name);
+
+
     // Clean up
+
     g_debug("Memory cleanup");
 
     g_regex_unref(location_subs_re);
@@ -831,6 +864,8 @@ int main(int argc, char **argv) {
 
     g_free(in_repo);
     g_free(out_repo);
+    g_free(in_dir);
+    g_free(out_dir);
     g_free(pri_xml_filename);
     g_free(fil_xml_filename);
     g_free(oth_xml_filename);

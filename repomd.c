@@ -13,6 +13,9 @@
 #define GZ_BUFFER_SIZE   131072  // 1024*128
 
 
+#define RPM_NS          "http://linux.duke.edu/metadata/rpm"
+#define XMLNS_NS        "http://linux.duke.edu/metadata/repo"
+
 
 typedef struct _contentStat {
     char *checksum;
@@ -249,7 +252,7 @@ char *repomd_xml_dump(long revision, repomdData *pri_xml, repomdData *fil_xml, r
 
     int rc;
 
-    rc = xmlTextWriterStartDocument(writer, NULL, NULL, NULL);
+    rc = xmlTextWriterStartDocument(writer, NULL, "UTF-8", NULL);
     if (rc < 0) {
         g_critical("Error at xmlTextWriterStartDocument\n");
         return NULL;
@@ -260,6 +263,8 @@ char *repomd_xml_dump(long revision, repomdData *pri_xml, repomdData *fil_xml, r
         g_critical("Error at xmlTextWriterStartElement repomd\n");
         return NULL;
     }
+    xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns:rpm", RPM_NS);
+    xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns", XMLNS_NS);
 
     rc = xmlTextWriterStartElement(writer, BAD_CAST "revision");
     if (rc < 0) {

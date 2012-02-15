@@ -556,7 +556,7 @@ int main(int argc, char **argv) {
             out_dir[i+1] = '/';
         }
 
-        out_repo = g_strconcat(cmd_options.outputdir, "repodata/", NULL);
+        out_repo = g_strconcat(out_dir, "repodata/", NULL);
     } else {
         out_dir  = g_strdup(in_dir);
         out_repo = g_strdup(in_repo);

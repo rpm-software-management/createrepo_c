@@ -144,8 +144,8 @@ repomd_test_01: repomd.o
 
 # Main
 
-main: parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o load_metadata_2.o
-	gcc $(LINKFLAGS) $(CFLAGS) parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o load_metadata_2.o main.c -o main
+main: parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o load_metadata_2.o repomd.o
+	gcc $(LINKFLAGS) $(CFLAGS) parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o repomd.o load_metadata_2.o main.c -o main
 
 
 clean:

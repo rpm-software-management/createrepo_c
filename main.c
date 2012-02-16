@@ -555,17 +555,12 @@ int main(int argc, char **argv) {
         if (out_dir[i+1] != '/') {
             out_dir[i+1] = '/';
         }
-
         out_repo = g_strconcat(out_dir, "repodata/", NULL);
     } else {
         out_dir  = g_strdup(in_dir);
         out_repo = g_strdup(in_repo);
     }
 
-    printf("in_dir:   %s\n", in_dir);
-    printf("in_repo:  %s\n", in_repo);
-    printf("out_dir:  %s\n", out_dir);
-    printf("out_repo: %s\n", out_repo);
 
     // Create out_repo dir if doesn't exists
 
@@ -624,25 +619,20 @@ int main(int argc, char **argv) {
     g_debug("Opening/Creating .xml.gz files");
 
     gchar *pri_xml_filename = g_strconcat(out_repo, "/_primary.xml.gz", NULL);
-    //int fd_pri_xml = g_file_open_tmp("XXXXXX", &pri_xml_filename, NULL);
-    //int fd_pri_xml = open(pri_xml_filename, O_RDWR);
     gzFile pri_gz_file = gzopen(pri_xml_filename, "wb");
     gzsetparams(pri_gz_file, Z_BEST_SPEED, Z_DEFAULT_STRATEGY);
     gzbuffer(pri_gz_file, GZ_BUFFER_SIZE);
 
     gchar *fil_xml_filename = g_strconcat(out_repo, "/_filelists.xml.gz", NULL);
-    //int fd_fil_xml = g_file_open_tmp("XXXXXX", &fil_xml_filename, NULL);
-    //int fd_fil_xml = open(fil_xml_filename, O_RDWR);
     gzFile fil_gz_file = gzopen(fil_xml_filename, "wb");
     gzsetparams(fil_gz_file, Z_BEST_SPEED, Z_DEFAULT_STRATEGY);
     gzbuffer(fil_gz_file, GZ_BUFFER_SIZE);
 
     gchar *oth_xml_filename = g_strconcat(out_repo, "/_other.xml.gz", NULL);
-    //int fd_oth_xml = g_file_open_tmp("XXXXXX", &oth_xml_filename, NULL);
-    //int fd_oth_xml = open(oth_xml_filename, O_RDWR);
     gzFile oth_gz_file = gzopen(oth_xml_filename, "wb");
     gzsetparams(oth_gz_file, Z_BEST_SPEED, Z_DEFAULT_STRATEGY);
     gzbuffer(oth_gz_file, GZ_BUFFER_SIZE);
+
 
     // Init package parser
 
@@ -682,14 +672,14 @@ int main(int argc, char **argv) {
     int package_count = 0;
 
     if (!(cmd_options.pkglist)) {
-        // If pkglist is supplied skip dir walk
+        // pkglist is not supplied -> do dir walk
+
+        g_message("Directory walk started");
 
         GStringChunk *sub_dirs_chunk = g_string_chunk_new(1024);
         GQueue *sub_dirs = g_queue_new();
         gchar *input_dir_stripped = g_string_chunk_insert_len(sub_dirs_chunk, in_dir, strlen(in_dir)-1);
         g_queue_push_head(sub_dirs, input_dir_stripped);
-
-        g_message("Directory walk started");
 
         char *dirname;
         while (dirname = g_queue_pop_head(sub_dirs)) {
@@ -720,7 +710,7 @@ int main(int argc, char **argv) {
                     continue;
                 }
 
-                // Check filename against exclude glob masks, pkglist and includepkg values
+                // Check filename against exclude glob masks
                 if (allowed_file(filename, &cmd_options)) {
                     // FINALLY! Add file into pool
                     g_debug("Adding pkg: %s", full_path);
@@ -741,16 +731,18 @@ int main(int argc, char **argv) {
         g_string_chunk_free (sub_dirs_chunk);
         g_queue_free(sub_dirs);
     } else {
+        // pkglist is supplied - use only files in pkglist
+
         g_debug("Skipping dir walk - using pkglist");
 
         GSList *element;
         for (element=cmd_options.include_pkgs; element; element=g_slist_next(element)) {
-            gchar *relative_path = (gchar *) element->data;
-            gchar *full_path = g_strconcat(in_dir, relative_path, NULL);
-            gchar *dirname;
-            gchar *filename;
+            gchar *relative_path = (gchar *) element->data;   // path from pkglist e.g. packages/i386/foobar.rpm
+            gchar *full_path = g_strconcat(in_dir, relative_path, NULL);   // /path/to/in_repo/packages/i386/foobar.rpm
+            gchar *dirname;  // packages/i386/
+            gchar *filename;  // foobar.rpm
 
-            // Get filename
+            // Get index of last '/'
             int rel_path_len = strlen(relative_path);
             int x = rel_path_len;
             for (x; x > 0; x--) {
@@ -762,9 +754,8 @@ int main(int argc, char **argv) {
             filename = relative_path + x + 1;
             dirname  = strndup(relative_path, x);
 
-//            g_debug("Full path: %s; Filename: %s; Dirname: %s;", full_path, filename, dirname);
-
             if (allowed_file(filename, &cmd_options)) {
+                // Check filename against exclude glob masks
                 g_debug("Adding pkg: %s", full_path);
                 struct PoolTask *task = g_malloc(sizeof(struct PoolTask));
                 task->full_path = full_path;
@@ -781,6 +772,7 @@ int main(int argc, char **argv) {
 
 
     // Write XML header
+
     g_debug("Writing xml headers");
 
     gzprintf(user_data.pri_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
@@ -790,12 +782,16 @@ int main(int argc, char **argv) {
     gzprintf(user_data.oth_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
           "<otherdata xmlns=\""XML_OTHER_NS"\" packages=\"%d\">\n", package_count);
 
+
     // Start pool
+
     user_data.package_count = package_count;
     g_thread_pool_set_max_threads(pool, MAX_THREADS, NULL);
     g_message("Pool started");
 
+
     // Wait until pool is finished
+
     g_thread_pool_free(pool, FALSE, TRUE);
     g_message("Pool finished");
 

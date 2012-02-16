@@ -539,7 +539,7 @@ int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath)
 
     int result = 0;
 
-//    xmlInitParser();
+//    LIBXML_TEST_VERSION
 
     if (pri_gz_xml && fil_gz_xml && oth_gz_xml) {
         result = load_gz_compressed_xml_metadata(hashtable, pri_gz_xml, fil_gz_xml, oth_gz_xml);

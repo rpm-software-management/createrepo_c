@@ -292,3 +292,23 @@ struct HeaderRangeStruct get_header_byte_range(const char *filename)
 
     return (struct HeaderRangeStruct) {hdrstart, hdrend};
 }
+
+
+const char *get_checksum_name_str(ChecksumType type)
+{
+    char *name = NULL;
+
+    switch (type) {
+        case PKG_CHECKSUM_MD5:
+            name = "md5";
+            break;
+        case PKG_CHECKSUM_SHA1:
+            name = "sha1";
+            break;
+        case PKG_CHECKSUM_SHA256:
+            name = "sha256";
+            break;
+    }
+
+    return name;
+}

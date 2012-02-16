@@ -27,5 +27,7 @@ struct HeaderRangeStruct {
 };
 struct HeaderRangeStruct get_header_byte_range(const char *filename);
 
+const char *get_checksum_name_str(ChecksumType type);
+
 
 #endif /* __C_CREATEREPOLIB_MISC_H__ */

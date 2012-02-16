@@ -110,10 +110,18 @@ contentStat *get_gz_compressed_content_stat(const char *filename, ChecksumType c
 
 
 
-int fill_missing_data(const char *base_path, repomdData *md) {
+int fill_missing_data(const char *base_path, repomdData *md, ChecksumType *checksum_type) {
     if (!md || !(md->location_href) || !strlen(md->location_href)) {
         // Nothing to do
         return 0;
+    }
+
+    char *checksum_str = DEFAULT_CHECKSUM;
+    ChecksumType checksum_t = DEFAULT_CHECKSUM_ENUM_VAL;
+
+    if (checksum_type) {
+        checksum_str = get_checksum_name_str(*checksum_type);
+        checksum_t = *checksum_type;
     }
 
     gchar *path = g_strconcat(base_path, "/", md->location_href, NULL);
@@ -128,8 +136,8 @@ int fill_missing_data(const char *base_path, repomdData *md) {
 
     if (!md->checksum_type || !md->checksum) {
         gchar *chksum;
-        md->checksum_type = g_string_chunk_insert(md->chunk, DEFAULT_CHECKSUM);
-        chksum = compute_file_checksum(path, DEFAULT_CHECKSUM_ENUM_VAL);
+        md->checksum_type = g_string_chunk_insert(md->chunk, checksum_str);
+        chksum = compute_file_checksum(path, checksum_t);
         md->checksum = g_string_chunk_insert(md->chunk, chksum);
         g_free(chksum);
     }
@@ -141,8 +149,8 @@ int fill_missing_data(const char *base_path, repomdData *md) {
         if (g_str_has_suffix(path, ".gz") || g_str_has_suffix(path, ".gzip")) {
             // File compressed by gzip
             contentStat *open_stat = NULL;
-            open_stat = get_gz_compressed_content_stat(path, DEFAULT_CHECKSUM_ENUM_VAL);
-            md->checksum_open_type = g_string_chunk_insert(md->chunk, DEFAULT_CHECKSUM);
+            open_stat = get_gz_compressed_content_stat(path, checksum_t);
+            md->checksum_open_type = g_string_chunk_insert(md->chunk, checksum_str);
             md->checksum_open = g_string_chunk_insert(md->chunk, open_stat->checksum);
             if (!md->size_open) {
                 md->size_open = open_stat->size;
@@ -300,7 +308,7 @@ char *repomd_xml_dump(long revision, repomdData *pri_xml, repomdData *fil_xml, r
 
 
 char *xml_repomd_2(const char *path, repomdData *pri_xml, repomdData *fil_xml, repomdData *oth_xml,
-                 repomdData *pri_sqlite, repomdData *fil_sqlite, repomdData *oth_sqlite)
+                 repomdData *pri_sqlite, repomdData *fil_sqlite, repomdData *oth_sqlite, ChecksumType *checksum_type)
 {
     if (!path) {
         return NULL;
@@ -309,12 +317,12 @@ char *xml_repomd_2(const char *path, repomdData *pri_xml, repomdData *fil_xml, r
 
     // Fill all missing stuff
 
-    fill_missing_data(path, pri_xml);
-    fill_missing_data(path, fil_xml);
-    fill_missing_data(path, oth_xml);
-    fill_missing_data(path, pri_sqlite);
-    fill_missing_data(path, fil_sqlite);
-    fill_missing_data(path, oth_sqlite);
+    fill_missing_data(path, pri_xml, checksum_type);
+    fill_missing_data(path, fil_xml, checksum_type);
+    fill_missing_data(path, oth_xml, checksum_type);
+    fill_missing_data(path, pri_sqlite, checksum_type);
+    fill_missing_data(path, fil_sqlite, checksum_type);
+    fill_missing_data(path, oth_sqlite, checksum_type);
 
 
     // Get revision
@@ -332,7 +340,7 @@ char *xml_repomd_2(const char *path, repomdData *pri_xml, repomdData *fil_xml, r
 
 
 char *xml_repomd(const char *path, const char *pri_xml, const char *fil_xml, const char *oth_xml,
-                 const char *pri_sqlite, const char *fil_sqlite, const char *oth_sqlite)
+                 const char *pri_sqlite, const char *fil_sqlite, const char *oth_sqlite, ChecksumType *checksum_type)
 {
     if (!path) {
         return NULL;
@@ -372,7 +380,7 @@ char *xml_repomd(const char *path, const char *pri_xml, const char *fil_xml, con
 
     // Dump xml
 
-    char *res = xml_repomd_2(path, pri_xml_rd, fil_xml_rd, oth_xml_rd, pri_sqlite_rd, fil_sqlite_rd, oth_sqlite_rd);
+    char *res = xml_repomd_2(path, pri_xml_rd, fil_xml_rd, oth_xml_rd, pri_sqlite_rd, fil_sqlite_rd, oth_sqlite_rd, checksum_type);
 
     free_repomddata(pri_xml_rd);
     free_repomddata(fil_xml_rd);

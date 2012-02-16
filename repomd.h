@@ -24,9 +24,9 @@ void free_repomddata(repomdData *md);
 
 // Function modifies params structures!
 char *xml_repomd_2(const char *path, repomdData *pri_xml, repomdData *fil_xml, repomdData *oth_xml,
-                 repomdData *pri_sqlite, repomdData *fil_sqlite, repomdData *oth_sqlite);
+                 repomdData *pri_sqlite, repomdData *fil_sqlite, repomdData *oth_sqlite, ChecksumType *checksum_type);
 
 char *xml_repomd(const char *path, const char *pri_xml, const char *fil_xml, const char *oth_xml,
-                 const char *pri_sqlite, const char *fil_sqlite, const char *oth_sqlite);
+                 const char *pri_sqlite, const char *fil_sqlite, const char *oth_sqlite, ChecksumType *checksum_type);
 
 #endif /* __C_CREATEREPOLIB_REPOMD_H__ */

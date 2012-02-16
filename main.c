@@ -12,6 +12,7 @@
 #include "repomd.h"
 
 
+#define VERSION         "0.1"
 #define G_LOG_DOMAIN    ((gchar*) 0)
 
 #define DEFAULT_CHANGELOG_LIMIT         10
@@ -519,8 +520,12 @@ int main(int argc, char **argv) {
 
     g_option_context_free(context);
 
-    if (argc != 2) {
-        printf("Must specify exactly one directory to index.");
+    if (cmd_options.version) {
+        puts("Version: "VERSION);
+        free_options(&cmd_options);
+        exit(0);
+    } else if (argc != 2) {
+        puts("Must specify exactly one directory to index.");
         free_options(&cmd_options);
         exit(1);
     }
@@ -671,8 +676,8 @@ int main(int argc, char **argv) {
 
     int package_count = 0;
 
-    if (!(cmd_options.pkglist)) {
-        // pkglist is not supplied -> do dir walk
+    if (!(cmd_options.include_pkgs)) {
+        // --pkglist (or --includepkg) is not supplied -> do dir walk
 
         g_message("Directory walk started");
 
@@ -751,7 +756,12 @@ int main(int argc, char **argv) {
                 }
             }
 
-            filename = relative_path + x + 1;
+            if (!x) {
+                // There was no '/' in path
+                filename = relative_path;
+            } else {
+                filename = relative_path + x + 1;
+            }
             dirname  = strndup(relative_path, x);
 
             if (allowed_file(filename, &cmd_options)) {
@@ -835,7 +845,7 @@ int main(int argc, char **argv) {
 
     g_debug("Generating repomd.xml");
 
-    gchar *repomd_xml = xml_repomd(out_dir, pri_xml_name, fil_xml_name, oth_xml_name, NULL, NULL, NULL);
+    gchar *repomd_xml = xml_repomd(out_dir, pri_xml_name, fil_xml_name, oth_xml_name, NULL, NULL, NULL, &cmd_options.checksum_type);
     gchar *repomd_path = g_strconcat(out_repo, "repomd.xml", NULL);
     FILE *frepomd = fopen(repomd_path, "w");
     fputs(repomd_xml, frepomd);

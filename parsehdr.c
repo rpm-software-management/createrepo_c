@@ -192,6 +192,11 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
             headerGet(hdr, flag_tags[pcor_type], fileflags, flags) &&
             headerGet(hdr, version_tags[pcor_type], fileversions, flags))
         {
+
+            // Because we have to select only libc.so with highest version
+            // e.g. libc.so.6(GLIBC_2.4)
+            Dependency *libc_require_highest = NULL;
+
             rpmtdInit(filenames);
             rpmtdInit(fileflags);
             rpmtdInit(fileversions);
@@ -267,6 +272,109 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                         break;
                     case REQUIRES:
                         dependency->pre = pre;
+
+                        // XXX: Ugly libc.so filtering ////////////////////////////////
+                        if (g_str_has_prefix(dependency->name, "libc.so.6")) {
+                            printf("libc.so.6: PREFIX %s\n", dependency->name);
+                            if (!libc_require_highest) {
+                                puts("libc_require_highest was free");
+                                libc_require_highest = dependency;
+                            } else {
+                                puts("DEATH FIGHT");
+                                // Only highest version can survive! Death figh!
+                                // libc.so.6, libc.so.6(GLIBC_2.3.4), libc.so.6(GLIBC_2.4), ...
+                                char *old_name = libc_require_highest->name;
+                                char *new_name = dependency->name;
+                                int old_len = strlen(old_name);
+                                int new_len = strlen(new_name);
+
+                                if (old_len == 9 && new_len > 9) {
+                                    puts("OLD WAS SHORTED");
+                                    // Old name is probably only "libc.so.6"
+                                    g_free(libc_require_highest);
+                                    libc_require_highest = dependency;
+                                } else if (old_len > 16 && new_len > 16) {
+                                    puts("TWO LONG NAMES");
+                                    // We have two long names, keep only highest version
+                                    int new_i = 16;
+                                    int old_i = 16;
+                                    do {
+                                        puts("jdu porovnat dve verze");
+                                        // Compare version
+                                        if (g_ascii_isdigit(old_name[old_i]) &&
+                                            g_ascii_isdigit(new_name[new_i]))
+                                        {
+                                            // Everything is ok, compare two numbers
+                                            int new_v = atoi(new_name + new_i);
+                                            int old_v = atoi(old_name + old_i);
+                                            printf("OLD: %s (%d)\n", old_name, old_v);
+                                            printf("NEW: %s (%d)\n", new_name, new_v);
+                                            if (new_v > old_v) {
+                                                puts("nova verze je vetsi");
+                                                g_free(libc_require_highest);
+                                                libc_require_highest = dependency;
+                                                break;
+                                            } else if (new_v < old_v) {
+                                                puts("nova verze je mensi");
+                                                g_free(dependency);
+                                                break;
+                                            }
+                                            puts("verze jsou si rovny");
+                                        } else {
+                                            // Weird, do not touch anything
+                                            puts("divne nemame na vstupu dve cisla");
+                                            g_free(dependency);
+                                            break;
+                                        }
+
+                                        // Find next digit in new
+                                        puts("jdu hledat dalso cislice");
+                                        int dot = 0;
+                                        while (1) {
+                                            new_i++;
+                                            if (new_name[new_i] == '\0') {
+                                                // End of string
+                                                g_free(dependency);
+                                                break;
+                                            }
+                                            if (new_name[new_i] == '.') {
+                                                // '.' is separator between digits
+                                                dot = 1;
+                                            } else if (dot && g_ascii_isdigit(new_name[new_i])) {
+                                                // We got next digit!
+                                                break;
+                                            }
+                                        }
+
+                                        // Find next digit in old
+                                        dot = 0;
+                                        while (1) {
+                                            old_i++;
+                                            if (old_name[old_i] == '\0') {
+                                                // End of string
+                                                g_free(libc_require_highest);
+                                                libc_require_highest = dependency;
+                                                break;
+                                            }
+                                            if (new_name[old_i] == '.') {
+                                                // '.' is separator between digits
+                                                dot = 1;
+                                            } else if (dot && g_ascii_isdigit(old_name[old_i])) {
+                                                // We got next digit!
+                                                break;
+                                            }
+                                        }
+                                    } while (new_name[new_i] != '\0' && old_name[old_i] != '\0');
+                                } else {
+                                    puts("SOMETHING DIFFERENT");
+                                    // Do not touch anything
+                                    g_free(dependency);
+                                }
+                            }
+                            break;
+                        }
+                        // XXX: Ugly libc.so filtering - END ////////////////////////////////
+
                         pkg->requires = g_slist_prepend(pkg->requires, dependency);
 
                         // Add file into ap_hashtable
@@ -276,8 +384,14 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                         value->pre = dependency->pre;
                         g_hash_table_insert(ap_hashtable, dependency->name, value);
                         break;
-                }
+                } // Switch end
+            } // While end
+
+            // XXX: Ugly libc.so filtering ////////////////////////////////
+            if (pcor_type == REQUIRES && libc_require_highest) {
+                pkg->requires = g_slist_prepend(pkg->requires, libc_require_highest);
             }
+            // XXX: Ugly libc.so filtering - END ////////////////////////////////
         }
 
         rpmtdFreeData(filenames);

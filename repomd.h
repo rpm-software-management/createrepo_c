@@ -5,8 +5,8 @@
 #include <libxml/xmlwriter.h>
 #include "package.h"
 
-typedef struct _repomdData {
-    char *location_href;
+struct repomdData {
+    const char *location_href;
     char *checksum;
     char *checksum_type;
     char *checksum_open;
@@ -17,16 +17,29 @@ typedef struct _repomdData {
     int db_ver;
 
     GStringChunk *chunk;
-} repomdData;
+};
 
-repomdData *new_repomddata();
-void free_repomddata(repomdData *md);
+
+struct repomdResult {
+    char *pri_xml_location;
+    char *fil_xml_location;
+    char *oth_xml_location;
+    char *pri_sqlite_location;
+    char *fil_sqlite_location;
+    char *oth_sqlite_location;
+    char *repomd_xml;
+};
+
+
+struct repomdData *new_repomddata();
+void free_repomddata(struct repomdData *);
+void free_repomdresult(struct repomdResult *);
 
 // Function modifies params structures!
-char *xml_repomd_2(const char *path, repomdData *pri_xml, repomdData *fil_xml, repomdData *oth_xml,
-                 repomdData *pri_sqlite, repomdData *fil_sqlite, repomdData *oth_sqlite, ChecksumType *checksum_type);
+struct repomdResult *xml_repomd_2(const char *path, int rename_to_unique, struct repomdData *pri_xml, struct repomdData *fil_xml, struct repomdData *oth_xml,
+                 struct repomdData *pri_sqlite, struct repomdData *fil_sqlite, struct repomdData *oth_sqlite, ChecksumType *checksum_type);
 
-char *xml_repomd(const char *path, const char *pri_xml, const char *fil_xml, const char *oth_xml,
+struct repomdResult *xml_repomd(const char *path, int rename_to_unique, const char *pri_xml, const char *fil_xml, const char *oth_xml,
                  const char *pri_sqlite, const char *fil_sqlite, const char *oth_sqlite, ChecksumType *checksum_type);
 
 #endif /* __C_CREATEREPOLIB_REPOMD_H__ */

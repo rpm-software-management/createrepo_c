@@ -715,6 +715,12 @@ int main(int argc, char **argv) {
                     continue;
                 }
 
+                // Skip symbolic links if --skip-symlinks arg is used
+                if (cmd_options.skip_symlinks && g_file_test(full_path, G_FILE_TEST_IS_SYMLINK)) {
+                    g_debug("Skipped symlink: %s", full_path);
+                    continue;
+                }
+
                 // Check filename against exclude glob masks
                 if (allowed_file(filename, &cmd_options)) {
                     // FINALLY! Add file into pool

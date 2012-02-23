@@ -147,11 +147,11 @@ void dumper_thread(gpointer data, gpointer user_data) {
     gchar *modified_primary_xml = NULL;
 
     gboolean old_used = FALSE;
-    struct package_metadata *md;
+    struct PackageMetadata *md;
 
     if (udata->old_metadata) {
         // We have old metadata
-        md = (struct package_metadata *) g_hash_table_lookup (udata->old_metadata, task->filename);
+        md = (struct PackageMetadata *) g_hash_table_lookup (udata->old_metadata, task->filename);
         if (md) {
             // CACHE HIT!
 
@@ -586,9 +586,10 @@ int main(int argc, char **argv) {
 
     GHashTable *old_metadata = NULL;
     if (cmd_options.update) {
+
         // Load local repodata
         old_metadata = new_old_metadata_hashtable();
-        int ret = locate_and_load_xml_metadata(old_metadata, in_repo);
+        int ret = locate_and_load_xml_metadata(old_metadata, in_dir);
         if (!ret) {
             g_warning("Old metadata not found");
         } else {
@@ -598,7 +599,7 @@ int main(int argc, char **argv) {
         // Load repodata from --update-md-path
         GSList *element;
         for (element = cmd_options.l_update_md_paths; element; element = g_slist_next(element)) {
-            char *path = g_strconcat((char *) element->data, "/repodata/", NULL);
+            char *path = (char *) element->data;
             g_debug("Loading md-path: %s", path);
             int ret = locate_and_load_xml_metadata(old_metadata, path);
             if (ret) {
@@ -606,9 +607,14 @@ int main(int argc, char **argv) {
             } else {
                 printf("md-path loading failed");
             }
-            g_free(path);
         }
     }
+
+
+    // Delete old metadata
+
+    g_debug("Removing old metadata");
+    remove_old_metadata(in_dir);
 
 
     // Compile global regexp for matching location tag in xml chunks
@@ -851,13 +857,13 @@ int main(int argc, char **argv) {
 
     g_debug("Generating repomd.xml");
 
-    gchar *repomd_xml = xml_repomd(out_dir, pri_xml_name, fil_xml_name, oth_xml_name, NULL, NULL, NULL, &cmd_options.checksum_type);
+    struct repomdResult *repomd_res = xml_repomd(out_dir, 1, pri_xml_name, fil_xml_name, oth_xml_name, NULL, NULL, NULL, &cmd_options.checksum_type);
     gchar *repomd_path = g_strconcat(out_repo, "repomd.xml", NULL);
     FILE *frepomd = fopen(repomd_path, "w");
-    fputs(repomd_xml, frepomd);
+    fputs(repomd_res->repomd_xml, frepomd);
     fclose(frepomd);
 
-    g_free(repomd_xml);
+    free_repomdresult(repomd_res);
     g_free(repomd_path);
     g_free(pri_xml_name);
     g_free(fil_xml_name);

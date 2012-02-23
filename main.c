@@ -329,6 +329,11 @@ gboolean check_arguments(struct CmdOptions *options)
         options->changelog_limit = DEFAULT_CHANGELOG_LIMIT;
     }
 
+    // Check simple filenames
+    if (options->simple_md_filenames) {
+        options->unique_md_filenames = FALSE;
+    }
+
     // Check and set checksum type
     if (options->checksum) {
         GString *checksum_str = g_string_ascii_down(g_string_new(options->checksum));
@@ -614,7 +619,7 @@ int main(int argc, char **argv) {
     // Delete old metadata
 
     g_debug("Removing old metadata");
-    remove_old_metadata(in_dir);
+    remove_old_metadata(out_dir);
 
 
     // Compile global regexp for matching location tag in xml chunks
@@ -857,8 +862,9 @@ int main(int argc, char **argv) {
 
     g_debug("Generating repomd.xml");
 
-    struct repomdResult *repomd_res = xml_repomd(out_dir, 1, pri_xml_name, fil_xml_name, oth_xml_name, NULL, NULL, NULL, &cmd_options.checksum_type);
+    struct repomdResult *repomd_res = xml_repomd(out_dir, cmd_options.unique_md_filenames, pri_xml_name, fil_xml_name, oth_xml_name, NULL, NULL, NULL, &cmd_options.checksum_type);
     gchar *repomd_path = g_strconcat(out_repo, "repomd.xml", NULL);
+
     FILE *frepomd = fopen(repomd_path, "w");
     fputs(repomd_res->repomd_xml, frepomd);
     fclose(frepomd);

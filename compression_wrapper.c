@@ -228,7 +228,12 @@ int cw_read(CW_FILE *cw_file, void *buffer, unsigned int len)
     switch (cw_file->type) {
 
         case (NO_COMPRESSION): // ----------------------------------------------
-            return fread(buffer, 1, len, (FILE *) cw_file->FILE);
+            ret = fread(buffer, 1, len, (FILE *) cw_file->FILE);
+            if (ret != len && !feof((FILE *) cw_file->FILE)) {
+                return CW_ERR;
+            } else {
+                return ret;
+            }
 
         case (GZ_COMPRESSION): // ----------------------------------------------
             return gzread( *((gzFile *) cw_file->FILE), buffer, len);

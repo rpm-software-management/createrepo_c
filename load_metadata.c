@@ -7,14 +7,11 @@
 #include <libxml/xmlreader.h>
 #include "logging.h"
 #include "load_metadata.h"
+#include "compression_wrapper.h"
 
 #undef MODULE
 #define MODULE "load_metadata: "
 
-/*
-TODO:
-- Support for loading bz2 compressed metadata
-*/
 
 void free_values(gpointer data)
 {
@@ -73,9 +70,13 @@ int xmlInputReadCallback_plaintext (void * context, char * buffer, int len)
 }
 
 
-int xmlInputReadCallback_gz_compressed (void * context, char * buffer, int len)
+int xmlInputReadCallback_compressed (void * context, char * buffer, int len)
 {
-    return gzread( *( (gzFile *) context), buffer, (unsigned int) len);
+    int readed = cw_read( ((CW_FILE *) context), buffer, (unsigned int) len);
+    if (readed == CW_ERR) {
+        return -1;
+    }
+    return readed;
 }
 
 
@@ -84,8 +85,8 @@ int xmlInputCloseCallback_plaintext (void * context) {
 }
 
 
-int xmlInputCloseCallback_gz_compressed (void * context) {
-    return (gzclose( *( (gzFile *) context ) ) == Z_OK) ? 0 : -1;
+int xmlInputCloseCallback_compressed (void * context) {
+    return (cw_close((CW_FILE *) context) == CW_OK) ? 0 : -1;
 }
 
 
@@ -154,19 +155,19 @@ void process_node(GHashTable *metadata, xmlTextReaderPtr pri_reader,
             continue;
         }
 
-        if (!strcmp(node->name, "location")) {
+        if (!g_strcmp0(node->name, "location")) {
             location_href = xmlGetProp(node, "href");
             location_base = xmlGetProp(node, "base");
             counter++;
-        } else if (!strcmp(node->name, "checksum")) {
+        } else if (!g_strcmp0(node->name, "checksum")) {
             checksum_type = xmlGetProp(node, "type");
             counter++;
-        } else if (!strcmp(node->name, "size")) {
+        } else if (!g_strcmp0(node->name, "size")) {
             char *size_str = xmlGetProp(node, "package");
             size = g_ascii_strtoll(size_str, NULL, 10);
             xmlFree(size_str);
             counter++;
-        } else if (!strcmp(node->name, "time")) {
+        } else if (!g_strcmp0(node->name, "time")) {
             char *file_time_str = xmlGetProp(node, "file");
             time_file = g_ascii_strtoll(file_time_str, NULL, 10);
             xmlFree(file_time_str);
@@ -251,7 +252,7 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
 
     pri_ret = xmlTextReaderRead(pri_reader);
     name = xmlTextReaderName(pri_reader);
-    if (strcmp(name, "metadata")) {
+    if (g_strcmp0(name, "metadata")) {
         xmlFree(name);
         return 0;
     }
@@ -259,7 +260,7 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
 
     fil_ret = xmlTextReaderRead(fil_reader);
     name = xmlTextReaderName(fil_reader);
-    if (strcmp(name, "filelists")) {
+    if (g_strcmp0(name, "filelists")) {
         xmlFree(name);
         return 0;
     }
@@ -267,7 +268,7 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
 
     oth_ret = xmlTextReaderRead(oth_reader);
     name = xmlTextReaderName(oth_reader);
-    if (strcmp(name, "otherdata")) {
+    if (g_strcmp0(name, "otherdata")) {
         xmlFree(name);
         return 0;
     }
@@ -278,7 +279,7 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
 
     pri_ret = xmlTextReaderRead(pri_reader);
     name = xmlTextReaderName(pri_reader);
-    if (strcmp(name, "package")) {
+    if (g_strcmp0(name, "package")) {
         g_warning(MODULE"parse_xml_metadata: Probably bad xml");
         xmlFree(name);
         return 0;
@@ -287,7 +288,7 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
 
     fil_ret = xmlTextReaderRead(fil_reader);
     name = xmlTextReaderName(fil_reader);
-    if (strcmp(name, "package")) {
+    if (g_strcmp0(name, "package")) {
         g_warning(MODULE"parse_xml_metadata: Probably bad xml");
         xmlFree(name);
         return 0;
@@ -296,7 +297,7 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
 
     oth_ret = xmlTextReaderRead(oth_reader);
     name = xmlTextReaderName(oth_reader);
-    if (strcmp(name, "package")) {
+    if (g_strcmp0(name, "package")) {
         g_warning(MODULE"parse_xml_metadata: Probably bad xml");
         xmlFree(name);
         return 0;
@@ -314,12 +315,11 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
 }
 
 
-#define GZ_BUFFER_SIZE   131072  // 1024*128
 
-int load_gz_compressed_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
+int load_compressed_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
 {
     if (!hashtable) {
-        g_debug(MODULE"load_gz_compressed_xml_metadata: No hash table passed");
+        g_debug(MODULE"load_compressed_xml_metadata: No hash table passed");
         return 0;
     }
 
@@ -328,103 +328,82 @@ int load_gz_compressed_xml_metadata(GHashTable *hashtable, const char *primary_x
         !g_file_test(filelists_xml_path, flags) ||
         !g_file_test(other_xml_path, flags))
     {
-        g_debug(MODULE"load_gz_compressed_xml_metadata: One or more files don't exist");
+        g_debug(MODULE"load_compressed_xml_metadata: One or more files don't exist");
         return 0;
     }
 
-    // Open files and get file descriptors
-    int pri_xml_fd = open(primary_xml_path, O_RDONLY);
-    int fil_xml_fd = open(filelists_xml_path, O_RDONLY);
-    int oth_xml_fd = open(other_xml_path, O_RDONLY);
-
-    // Get sizes of files
-    int pri_xml_size = lseek(pri_xml_fd, 0, SEEK_END);
-    lseek(pri_xml_fd, 0L, SEEK_SET);
-    int fil_xml_size = lseek(fil_xml_fd, 0, SEEK_END);
-    lseek(fil_xml_fd, 0L, SEEK_SET);
-    int oth_xml_size = lseek(oth_xml_fd, 0, SEEK_END);
-    lseek(oth_xml_fd, 0L, SEEK_SET);
-
-    if (!pri_xml_size || !fil_xml_size || !oth_xml_size) {
-        // One or more archives are empty
-        close(pri_xml_fd);
-        close(fil_xml_fd);
-        close(oth_xml_fd);
+    // Detect compression type
+    CompressionType c_type;
+    c_type = detect_compression(primary_xml_path);
+    if (c_type == UNKNOWN_COMPRESSION || c_type == NO_COMPRESSION) {
+        g_debug(MODULE"load_compressed_xml_metadata: Unknown compression");
         return 0;
     }
 
-    // Open gziped file
-    gzFile pri_xml_gzfile;
-    gzFile fil_xml_gzfile;
-    gzFile oth_xml_gzfile;
+    // Open compressed files
+    CW_FILE *pri_xml_cwfile;
+    CW_FILE *fil_xml_cwfile;
+    CW_FILE *oth_xml_cwfile;
 
-    if (!(pri_xml_gzfile = gzdopen(pri_xml_fd, "rb"))) {
-//    if (!(pri_xml_gzfile = gzopen(primary_xml_path, "rb"))) {
+    if (!(pri_xml_cwfile = cw_open(primary_xml_path, CW_MODE_READ, c_type))) {
         return 0;
     }
 
-    if (!(fil_xml_gzfile = gzdopen(fil_xml_fd, "rb"))) {
-//    if (!(fil_xml_gzfile = gzopen(filelists_xml_path, "rb"))) {
-        gzclose(pri_xml_gzfile);
+    if (!(fil_xml_cwfile = cw_open(filelists_xml_path, CW_MODE_READ, c_type))) {
+        cw_close(pri_xml_cwfile);
         return 0;
     }
 
-    if (!(oth_xml_gzfile = gzdopen(oth_xml_fd, "rb"))) {
-//    if (!(oth_xml_gzfile = gzopen(other_xml_path, "rb"))) {
-        gzclose(pri_xml_gzfile);
-        gzclose(fil_xml_gzfile);
+    if (!(oth_xml_cwfile = cw_open(other_xml_path, CW_MODE_READ, c_type))) {
+        cw_close(pri_xml_cwfile);
+        cw_close(fil_xml_cwfile);
         return 0;
     }
-
-    // Set buffers
-    gzbuffer(pri_xml_gzfile, GZ_BUFFER_SIZE);
-    gzbuffer(fil_xml_gzfile, GZ_BUFFER_SIZE);
-    gzbuffer(oth_xml_gzfile, GZ_BUFFER_SIZE);
 
     // Setup xml readers
     xmlTextReaderPtr pri_reader;
     xmlTextReaderPtr fil_reader;
     xmlTextReaderPtr oth_reader;
 
-    pri_reader = xmlReaderForIO(xmlInputReadCallback_gz_compressed,
-                                xmlInputCloseCallback_gz_compressed,
-                                &pri_xml_gzfile,
+    pri_reader = xmlReaderForIO(xmlInputReadCallback_compressed,
+                                xmlInputCloseCallback_compressed,
+                                pri_xml_cwfile,
                                 NULL,
                                 NULL,
                                 XML_PARSE_NOBLANKS);
     if (!pri_reader) {
-        g_critical(MODULE"load_gz_compressed_xml_metadata: Reader for primary.xml.gz file failed");
-        gzclose(pri_xml_gzfile);
-        gzclose(fil_xml_gzfile);
-        gzclose(oth_xml_gzfile);
+        g_critical(MODULE"load_compressed_xml_metadata: Reader for primary.xml.* file failed");
+        cw_close(pri_xml_cwfile);
+        cw_close(fil_xml_cwfile);
+        cw_close(oth_xml_cwfile);
         return 0;
     }
 
-    fil_reader = xmlReaderForIO(xmlInputReadCallback_gz_compressed,
-                                xmlInputCloseCallback_gz_compressed,
-                                &fil_xml_gzfile,
+    fil_reader = xmlReaderForIO(xmlInputReadCallback_compressed,
+                                xmlInputCloseCallback_compressed,
+                                fil_xml_cwfile,
                                 NULL,
                                 NULL,
                                 XML_PARSE_NOBLANKS);
     if (!fil_reader) {
-        g_critical(MODULE"load_gz_compressed_xml_metadata: Reader for filelists.xml.gz file failed");
+        g_critical(MODULE"load_compressed_xml_metadata: Reader for filelists.xml.* file failed");
         xmlFreeTextReader(pri_reader);
-        gzclose(fil_xml_gzfile);
-        gzclose(oth_xml_gzfile);
+        cw_close(fil_xml_cwfile);
+        cw_close(oth_xml_cwfile);
         return 0;
     }
 
-    oth_reader = xmlReaderForIO(xmlInputReadCallback_gz_compressed,
-                                xmlInputCloseCallback_gz_compressed,
-                                &oth_xml_gzfile,
+    oth_reader = xmlReaderForIO(xmlInputReadCallback_compressed,
+                                xmlInputCloseCallback_compressed,
+                                oth_xml_cwfile,
                                 NULL,
                                 NULL,
                                 XML_PARSE_NOBLANKS);
     if (!oth_reader) {
-        g_critical(MODULE"load_gz_compressed_xml_metadata: Reader for other.xml.gz file failed");
+        g_critical(MODULE"load_compressed_xml_metadata: Reader for other.xml.* file failed");
         xmlFreeTextReader(pri_reader);
         xmlFreeTextReader(fil_reader);
-        gzclose(oth_xml_gzfile);
+        cw_close(oth_xml_cwfile);
         return 0;
     }
 
@@ -557,7 +536,7 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
 
     ret = xmlTextReaderRead(reader);
     name = xmlTextReaderName(reader);
-    if (strcmp(name, "repomd")) {
+    if (g_strcmp0(name, "repomd")) {
         g_warning(MODULE"locate_metadata_via_repomd: Bad xml - missing repomd element? (%s)", name);
         xmlFree(name);
         xmlFreeTextReader(reader);
@@ -568,7 +547,7 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
 
     ret = xmlTextReaderRead(reader);
     name = xmlTextReaderName(reader);
-    if (strcmp(name, "revision")) {
+    if (g_strcmp0(name, "revision")) {
         g_warning(MODULE"locate_metadata_via_repomd: Bad xml - missing revision element? (%s)", name);
         xmlFree(name);
         xmlFreeTextReader(reader);
@@ -584,7 +563,7 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
         // Find first data element
         ret = xmlTextReaderRead(reader);
         name = xmlTextReaderName(reader);
-        if (!strcmp(name, "data")) {
+        if (!g_strcmp0(name, "data")) {
             xmlFree(name);
             break;
         }
@@ -622,7 +601,7 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
                 continue;
             }
 
-            if (!strcmp(sub_node->name, "location")) {
+            if (!g_strcmp0(sub_node->name, "location")) {
                 location_href = xmlGetProp(sub_node, "href");
             }
 
@@ -644,17 +623,17 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
 
         // Store the path
 
-        if (!strcmp(data_type, "primary")) {
+        if (!g_strcmp0(data_type, "primary")) {
             mdloc->pri_xml_href = full_location_href;
-        } else if (!strcmp(data_type, "filelists")) {
+        } else if (!g_strcmp0(data_type, "filelists")) {
             mdloc->fil_xml_href = full_location_href;
-        } else if (!strcmp(data_type, "other")) {
+        } else if (!g_strcmp0(data_type, "other")) {
             mdloc->oth_xml_href = full_location_href;
-        } else if (!strcmp(data_type, "primary_db")) {
+        } else if (!g_strcmp0(data_type, "primary_db")) {
             mdloc->pri_sqlite_href = full_location_href;
-        } else if (!strcmp(data_type, "filelists_db")) {
+        } else if (!g_strcmp0(data_type, "filelists_db")) {
             mdloc->fil_sqlite_href = full_location_href;
-        } else if (!strcmp(data_type, "other_db")) {
+        } else if (!g_strcmp0(data_type, "other_db")) {
             mdloc->oth_sqlite_href = full_location_href;
         }
 
@@ -703,23 +682,13 @@ int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath)
 
     int result;
 
-    if(g_str_has_suffix(ml->pri_xml_href, ".gz") &&
-       g_str_has_suffix(ml->fil_xml_href, ".gz") &&
-       g_str_has_suffix(ml->oth_xml_href, ".gz"))
-    {
-        result = load_gz_compressed_xml_metadata(hashtable, ml->pri_xml_href, ml->fil_xml_href, ml->oth_xml_href);
-    }
-    else if(g_str_has_suffix(ml->pri_xml_href, ".xml") &&
+    if(g_str_has_suffix(ml->pri_xml_href, ".xml") &&
               g_str_has_suffix(ml->fil_xml_href, ".xml") &&
               g_str_has_suffix(ml->oth_xml_href, ".xml"))
     {
         result = load_xml_metadata(hashtable, ml->pri_xml_href, ml->fil_xml_href, ml->oth_xml_href);
-    }
-    else
-    {
-        g_warning("locate_and_load_xml_metadata: Metadata uses unsupported type of compression");
-        free_metadata_location(ml);
-        return 0;
+    } else {
+        result = load_compressed_xml_metadata(hashtable, ml->pri_xml_href, ml->fil_xml_href, ml->oth_xml_href);
     }
 
     free_metadata_location(ml);

@@ -6,12 +6,12 @@
 #include "logging.h"
 #include "misc.h"
 #include "repomd.h"
+#include "compression_wrapper.h"
 
 #define DEFAULT_CHECKSUM                "sha256"
 #define DEFAULT_CHECKSUM_ENUM_VAL        PKG_CHECKSUM_SHA256
 
-#define GZ_BUFFER_SIZE   131072  // 1024*128
-
+#define BUFFER_SIZE          131072  // 1024 * 128
 
 #define RPM_NS          "http://linux.duke.edu/metadata/rpm"
 #define XMLNS_NS        "http://linux.duke.edu/metadata/repo"
@@ -59,7 +59,7 @@ void free_repomdresult(struct repomdResult *rr)
 
 
 
-contentStat *get_gz_compressed_content_stat(const char *filename, ChecksumType checksum_type)
+contentStat *get_compressed_content_stat(const char *filename, ChecksumType checksum_type)
 {
     if (!g_file_test(filename, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR)) {
         return NULL;
@@ -68,11 +68,10 @@ contentStat *get_gz_compressed_content_stat(const char *filename, ChecksumType c
 
     // Open compressed file
 
-    gzFile gzfile;
-    if (!(gzfile = gzopen(filename, "rb"))) {
+    CW_FILE *cwfile;
+    if (!(cwfile = cw_open(filename, CW_MODE_READ, AUTO_DETECT_COMPRESSION))) {
         return NULL;
     }
-    gzbuffer(gzfile, GZ_BUFFER_SIZE);
 
 
     // Create checksum structure
@@ -97,13 +96,13 @@ contentStat *get_gz_compressed_content_stat(const char *filename, ChecksumType c
     long size = 0;
 
     long readed;
-    unsigned char buffer[GZ_BUFFER_SIZE];
+    unsigned char buffer[BUFFER_SIZE];
 
     do {
-        readed = gzread(gzfile, (void *) buffer, GZ_BUFFER_SIZE);
+        readed = cw_read(cwfile, (void *) buffer, BUFFER_SIZE);
         g_checksum_update (checksum, buffer, readed);
         size += readed;
-    } while (readed == GZ_BUFFER_SIZE);
+    } while (readed == BUFFER_SIZE);
 
 
     // Create result structure
@@ -118,7 +117,7 @@ contentStat *get_gz_compressed_content_stat(const char *filename, ChecksumType c
     // Clean up
 
     g_checksum_free(checksum);
-    gzclose(gzfile);
+    cw_close(cwfile);
 
     return result;
 }
@@ -161,10 +160,12 @@ int fill_missing_data(const char *base_path, struct repomdData *md, ChecksumType
     // Compute checksum of non compressed content and its size
 
     if (!md->checksum_open_type || !md->checksum_open || !md->size_open) {
-        if (g_str_has_suffix(path, ".gz") || g_str_has_suffix(path, ".gzip")) {
-            // File compressed by gzip
+        if (detect_compression(path) != UNKNOWN_COMPRESSION &&
+            detect_compression(path) != NO_COMPRESSION)
+        {
+            // File compressed by supported algorithm
             contentStat *open_stat = NULL;
-            open_stat = get_gz_compressed_content_stat(path, checksum_t);
+            open_stat = get_compressed_content_stat(path, checksum_t);
             md->checksum_open_type = g_string_chunk_insert(md->chunk, checksum_str);
             md->checksum_open = g_string_chunk_insert(md->chunk, open_stat->checksum);
             if (!md->size_open) {
@@ -173,7 +174,7 @@ int fill_missing_data(const char *base_path, struct repomdData *md, ChecksumType
             g_free(open_stat->checksum);
             g_free(open_stat);
         } else {
-            // Unknown suffix -> unknown compression
+            // Unknown compression
             g_warning( "File \"%s\" compressed by an unsupported type of compression", path);
             md->checksum_open_type = g_string_chunk_insert(md->chunk, "UNKNOWN");
             md->checksum_open = g_string_chunk_insert(md->chunk, "file_compressed_by_an_unsupported_type_of_compression");

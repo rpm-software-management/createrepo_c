@@ -32,6 +32,8 @@ CW_FILE *cw_open(const char *filename, int mode, CompressionType comtype);
 
 int cw_read(CW_FILE *cw_file, void *buffer, unsigned int len);
 int cw_write(CW_FILE *cw_file, void *buffer, unsigned int len);
+int cw_puts(CW_FILE *cw_file, const char *str);
+int cw_printf(CW_FILE *cw_file, const char *format, ...);
 
 int cw_close(CW_FILE *cw_file);
 

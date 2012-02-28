@@ -1,5 +1,7 @@
 #include <glib.h>
 #include <magic.h>
+#include <assert.h>
+#include <string.h>
 #include "logging.h"
 #include "compression_wrapper.h"
 
@@ -144,12 +146,14 @@ CW_FILE *cw_open(const char *filename, int mode, CompressionType comtype)
         case (BZ2_COMPRESSION): // ---------------------------------------------
             file->type = BZ2_COMPRESSION;
             FILE *f;
-            if (f) {
-                if (mode == CW_MODE_WRITE) {
-                    f = fopen(filename, "wb");
+            if (mode == CW_MODE_WRITE) {
+                f = fopen(filename, "wb");
+                if (f) {
                     file->FILE = (void *) BZ2_bzWriteOpen(NULL, f, 2, BZ2_VERBOSITY, BZ2_WORK_FACTOR);
-                } else {
-                    f = fopen(filename, "rb");
+                }
+            } else {
+                f = fopen(filename, "rb");
+                if (f) {
                     file->FILE = (void *) BZ2_bzReadOpen(NULL, f, BZ2_VERBOSITY, BZ2_USE_LESS_MEMORY, NULL, 0);
                 }
             }
@@ -283,6 +287,102 @@ int cw_write(CW_FILE *cw_file, void *buffer, unsigned int len)
             }
             break;
     }
+
+    return ret;
+}
+
+
+
+int cw_puts(CW_FILE *cw_file, const char *str)
+{
+    if (!cw_file || !str || cw_file->mode != CW_MODE_WRITE) {
+        return CW_ERR;
+    }
+
+
+    size_t len;
+    int bzerror;
+    int ret = CW_ERR;
+
+    switch (cw_file->type) {
+
+        case (NO_COMPRESSION): // ----------------------------------------------
+            if (fputs(str, (FILE *) cw_file->FILE) != EOF) {
+                ret = CW_OK;
+            }
+            break;
+
+        case (GZ_COMPRESSION): // ----------------------------------------------
+            if (gzputs( *((gzFile *) cw_file->FILE), str) != -1) {
+                ret = CW_OK;
+            }
+            break;
+
+        case (BZ2_COMPRESSION): // ---------------------------------------------
+            len = strlen(str);
+            BZ2_bzWrite(&bzerror, (BZFILE *) cw_file->FILE, (void *) str, len);
+            if (bzerror == BZ_OK) {
+                ret = CW_OK;
+            } else {
+                ret = CW_ERR;
+            }
+            break;
+    }
+
+    return ret;
+}
+
+
+
+int cw_printf(CW_FILE *cw_file, const char *format, ...)
+{
+    if (!cw_file || !format || cw_file->mode != CW_MODE_WRITE) {
+        return CW_ERR;
+    }
+
+    va_list vl;
+    va_start(vl, format);
+
+    // Fill format string
+    int ret;
+    int buf_len = 0;
+    gchar *buf = NULL;
+    ret = g_vasprintf(&buf, format, vl);
+
+    va_end(vl);
+
+    if (ret < 0) {
+        g_debug(MODULE"cw_printf: vasprintf() call failed");
+        return CW_ERR;
+    }
+
+    assert(buf);
+
+    int bzerror;
+
+    switch (cw_file->type) {
+
+        case (NO_COMPRESSION): // ----------------------------------------------
+            if ((ret = vfprintf((FILE *) cw_file->FILE, format, vl)) < 0) {
+                ret = CW_ERR;
+            }
+            break;
+
+        case (GZ_COMPRESSION): // ----------------------------------------------
+            if (gzputs( *((gzFile *) cw_file->FILE), buf) == -1) {
+                ret = CW_ERR;
+            }
+            break;
+
+        case (BZ2_COMPRESSION): // ---------------------------------------------
+            BZ2_bzWrite(&bzerror, (BZFILE *) cw_file->FILE, buf, ret);
+            if (bzerror != BZ_OK) {
+                ret = CW_ERR;
+            }
+            break;
+    }
+
+    g_free(buf);
 
     return ret;
 }

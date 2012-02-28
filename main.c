@@ -110,6 +110,14 @@ int allowed_file(const gchar *filename, struct CmdOptions *options)
 }
 
 
+
+void black_hole_log_function (const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data)
+{
+    return;
+}
+
+
+
 #define LOCK_PRI        0
 #define LOCK_FIL        1
 #define LOCK_OTH        2
@@ -534,6 +542,24 @@ int main(int argc, char **argv) {
         fprintf(stderr, "Must specify exactly one directory to index.\n");
         free_options(&cmd_options);
         exit(1);
+    }
+
+
+    // Set logging stuff
+
+    if (cmd_options.quiet) {
+        // Quiet mode
+        GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
+        g_log_set_handler(NULL, levels, black_hole_log_function, NULL);
+        g_log_set_handler("C_CREATEREPOLIB", levels, black_hole_log_function, NULL);
+    } else if (cmd_options.verbose) {
+        // Verbose mode
+        ;
+    } else {
+        // Standard mode
+        GLogLevelFlags levels = G_LOG_LEVEL_DEBUG;
+        g_log_set_handler(NULL, levels, black_hole_log_function, NULL);
+        g_log_set_handler("C_CREATEREPOLIB", levels, black_hole_log_function, NULL);
     }
 
 

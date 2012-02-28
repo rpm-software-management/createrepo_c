@@ -1,0 +1,283 @@
+#include <glib.h>
+#include <magic.h>
+#include "logging.h"
+#include "compression_wrapper.h"
+
+#undef MODULE
+#define MODULE "compression_wrapper: "
+
+/*
+#define Z_NO_COMPRESSION         0
+#define Z_BEST_SPEED             1
+#define Z_BEST_COMPRESSION       9
+#define Z_DEFAULT_COMPRESSION  (-1)
+*/
+#define GZ_COMPRESSION_LEVEL    Z_BEST_SPEED
+
+/*
+#define Z_FILTERED            1
+#define Z_HUFFMAN_ONLY        2
+#define Z_RLE                 3
+#define Z_FIXED               4
+#define Z_DEFAULT_STRATEGY    0
+*/
+#define GZ_STRATEGY             Z_DEFAULT_STRATEGY
+#define GZ_BUFFER_SIZE          131072  // 1024 * 128
+
+#define BZ2_VERBOSITY           0
+#define BZ2_WORK_FACTOR         30
+#define BZ2_USE_LESS_MEMORY     0
+#define BZ2_SKIP_FFLUSH         0
+
+
+CompressionType detect_compression(const char *filename)
+{
+    CompressionType type = UNKNOWN_COMPRESSION;
+
+    if (!g_file_test(filename, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR)) {
+        return type;
+    }
+
+
+    // Try determine compression type via filename suffix
+
+    if (g_str_has_suffix(filename, ".gz") ||
+        g_str_has_suffix(filename, ".gzip"))
+    {
+        return GZ_COMPRESSION;
+    } else if (g_str_has_suffix(filename, ".bz2")) {
+        return BZ2_COMPRESSION;
+    }
+
+
+    // No success? Let's get hardcore... (Use magic bytes)
+
+    magic_t myt = magic_open(MAGIC_MIME_TYPE);
+    magic_load(myt, NULL);
+    if (magic_check(myt, NULL) == -1) {
+        g_critical(MODULE"detect_compression: magic_check() failed");
+        return type;
+    }
+
+    const char *mime_type = magic_file(myt, filename);
+
+    if (mime_type) {
+        g_debug(MODULE"detect_compression: Detected mime type: %s", mime_type);
+
+        if (g_str_has_suffix(mime_type, "gzip") ||
+            g_str_has_suffix(mime_type, "gunzip"))
+        {
+            type = GZ_COMPRESSION;
+        }
+
+        else if (g_str_has_suffix(mime_type, "bzip2")) {
+            type = BZ2_COMPRESSION;
+        }
+
+        else if (!g_strcmp0(mime_type, "text/plain")) {
+            type = NO_COMPRESSION;
+        }
+    } else {
+        g_debug(MODULE"detect_compression: Mime type not detected!");
+    }
+
+    magic_close(myt);
+
+    return type;
+}
+
+
+CW_FILE *cw_open(const char *filename, int mode, CompressionType comtype)
+{
+    CW_FILE *file = NULL;
+    CompressionType type;
+
+    if (!filename || (mode != CW_MODE_READ && mode != CW_MODE_WRITE)) {
+        return NULL;
+    }
+
+
+    // Compression type detection
+
+    if (comtype != AUTO_DETECT_COMPRESSION) {
+        type = comtype;
+    } else {
+        type = detect_compression(filename);
+    }
+
+    if (type == UNKNOWN_COMPRESSION) {
+        return NULL;
+    }
+
+
+    // Open file
+
+    file = g_malloc0(sizeof(CW_FILE));
+    file->mode = mode;
+
+    switch (type) {
+
+        case (NO_COMPRESSION): // ----------------------------------------------
+            file->type = NO_COMPRESSION;
+            if (mode == CW_MODE_WRITE) {
+                file->FILE = (void *) fopen(filename, "w");
+            } else {
+                file->FILE = (void *) fopen(filename, "r");
+            }
+            break;
+
+        case (GZ_COMPRESSION): // ----------------------------------------------
+            file->type = GZ_COMPRESSION;
+            file->FILE = g_malloc0(sizeof(gzFile));
+            if (mode == CW_MODE_WRITE) {
+                *((gzFile *) file->FILE) = gzopen(filename, "wb");
+                gzsetparams(*((gzFile *) file->FILE), GZ_COMPRESSION_LEVEL, GZ_STRATEGY);
+            } else {
+                *((gzFile *) file->FILE) = gzopen(filename, "rb");
+            }
+
+            if (gzbuffer(*((gzFile *) file->FILE), GZ_BUFFER_SIZE) == -1) {
+                g_debug(MODULE"cw_open: gzbuffer() call failed");
+            }
+            break;
+
+        case (BZ2_COMPRESSION): // ---------------------------------------------
+            file->type = BZ2_COMPRESSION;
+            FILE *f;
+            if (f) {
+                if (mode == CW_MODE_WRITE) {
+                    f = fopen(filename, "wb");
+                    file->FILE = (void *) BZ2_bzWriteOpen(NULL, f, 2, BZ2_VERBOSITY, BZ2_WORK_FACTOR);
+                } else {
+                    f = fopen(filename, "rb");
+                    file->FILE = (void *) BZ2_bzReadOpen(NULL, f, BZ2_VERBOSITY, BZ2_USE_LESS_MEMORY, NULL, 0);
+                }
+            }
+            break;
+    }
+
+
+    if (!file->FILE) {
+        // File is not open -> cleanup
+        g_free(file);
+        file = NULL;
+    }
+
+    return file;
+}
+
+
+
+int cw_close(CW_FILE *cw_file)
+{
+    if (!cw_file) {
+        return CW_ERR;
+    }
+
+
+    int ret;
+    int cw_ret = CW_ERR;
+
+    switch (cw_file->type) {
+
+        case (NO_COMPRESSION): // ----------------------------------------------
+            ret = fclose((FILE *) cw_file->FILE);
+            if (ret == 0) {
+                cw_ret = CW_OK;
+            }
+            break;
+
+        case (GZ_COMPRESSION): // ----------------------------------------------
+            ret = gzclose( *((gzFile *) cw_file->FILE));
+            if (ret == Z_OK) {
+                cw_ret = CW_OK;
+            }
+            g_free(cw_file->FILE);
+            break;
+
+        case (BZ2_COMPRESSION): // ---------------------------------------------
+            if (cw_file->mode == CW_MODE_READ) {
+                BZ2_bzReadClose(&ret, (BZFILE *) cw_file->FILE);
+            } else {
+                BZ2_bzWriteClose(&ret, (BZFILE *) cw_file->FILE, BZ2_SKIP_FFLUSH, NULL, NULL);
+            }
+
+            if (ret == BZ_OK) {
+                cw_ret = CW_OK;
+            }
+            break;
+    }
+
+    g_free(cw_file);
+
+    return cw_ret;
+}
+
+
+
+int cw_read(CW_FILE *cw_file, void *buffer, unsigned int len)
+{
+    if (!cw_file || !buffer || cw_file->mode != CW_MODE_READ) {
+        return CW_ERR;
+    }
+
+
+    int bzerror;
+    int ret;
+
+    switch (cw_file->type) {
+
+        case (NO_COMPRESSION): // ----------------------------------------------
+            return fread(buffer, 1, len, (FILE *) cw_file->FILE);
+
+        case (GZ_COMPRESSION): // ----------------------------------------------
+            return gzread( *((gzFile *) cw_file->FILE), buffer, len);
+
+        case (BZ2_COMPRESSION): // ---------------------------------------------
+            ret = BZ2_bzRead(&bzerror, (BZFILE *) cw_file->FILE, buffer, len);
+            if (bzerror == BZ_OK || bzerror == BZ_STREAM_END) {
+                return ret;
+            } else {
+                return CW_ERR;
+            }
+    }
+}
+
+
+
+int cw_write(CW_FILE *cw_file, void *buffer, unsigned int len)
+{
+    if (!cw_file || !buffer || cw_file->mode != CW_MODE_WRITE) {
+        return CW_ERR;
+    }
+
+
+    int bzerror;
+    int ret = CW_ERR;
+
+    switch (cw_file->type) {
+
+        case (NO_COMPRESSION): // ----------------------------------------------
+            if ((ret = fwrite(buffer, 1, len, (FILE *) cw_file->FILE)) != len) {
+                ret = CW_ERR;
+            }
+            break;
+
+        case (GZ_COMPRESSION): // ----------------------------------------------
+            if ((ret = gzwrite( *((gzFile *) cw_file->FILE), buffer, len)) == 0) {
+                ret = CW_ERR;
+            }
+            break;
+
+        case (BZ2_COMPRESSION): // ---------------------------------------------
+            BZ2_bzWrite(&bzerror, (BZFILE *) cw_file->FILE, buffer, len);
+            if (bzerror == BZ_OK) {
+                ret = len;
+            } else {
+                ret = CW_ERR;
+            }
+            break;
+    }
+
+    return ret;
+}

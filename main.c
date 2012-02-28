@@ -1,4 +1,5 @@
 #include <glib.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -135,7 +136,7 @@ void dumper_thread(gpointer data, gpointer user_data) {
     struct stat stat_buf;
     if (!(udata->old_metadata) || !(udata->skip_stat)) {
         if (stat(task->full_path, &stat_buf) == -1) {
-            perror("Stat");
+            g_critical("Stat() on %s: %s", task->full_path, strerror(errno));
             return;
         }
     }
@@ -530,7 +531,7 @@ int main(int argc, char **argv) {
         free_options(&cmd_options);
         exit(0);
     } else if (argc != 2) {
-        puts("Must specify exactly one directory to index.");
+        fprintf(stderr, "Must specify exactly one directory to index.\n");
         free_options(&cmd_options);
         exit(1);
     }

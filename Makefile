@@ -1,7 +1,7 @@
 SWIG=/usr/bin/swig
 # TODO: add -O2
 CFLAGS=-fPIC -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags` -pthread
-LINKFLAGS=-lz `pkg-config --libs glib-2.0 --libs-only-l gthread-2.0` `xml2-config --libs` -lrpm -lrpmio
+LINKFLAGS=-lmagic -lz -lbz2 `pkg-config --libs glib-2.0 --libs-only-l gthread-2.0` `xml2-config --libs` -lrpm -lrpmio
 LC=-lc
 
 # Profiling
@@ -15,8 +15,7 @@ all: package.so xml_dump.so parsehdr.so parsepkg.so main
 ctests: parsepkg_test_01 parsehdr_test_01 parsehdr_test_02 xml_dump_primary_test_01 \
         xml_dump_filelists_test_01 xml_dump_other_test_01 load_metadata_test_01 \
         load_metadata_test_02 load_metadata_test_03 load_metadata_test_04 \
-        load_metadata_2_test_01 load_metadata_2_test_02 load_metadata_2_test_03 \
-        load_metadata_2_test_04 repomd_test_01
+        repomd_test_01 compression_wrapper_test_01
 
 
 # Object files + Swit object files
@@ -42,16 +41,22 @@ parsepkg.o parsepkg_wrap.o: parsepkg.c parsepkg.h constants.h
 	gcc $(CFLAGS) -c parsepkg.c parsepkg_wrap.c
 
 # TODO
-load_metadata.o load_metadata_wrap.o: load_metadata.c load_metadata.h constants.h
+load_metadata.o load_metadata_wrap.o: load_metadata.c load_metadata.h constants.h compression_wrapper.h
 #	$(SWIG) -python -Wall load_metadata.i
 #	gcc $(CFLAGS) -c load_metadata.c load_metadata_wrap.c
 	gcc $(CFLAGS) -c load_metadata.c
 
 # TODO
-repomd.o repomd_wrap.o: repomd.c repomd.h constants.h misc.h
+repomd.o repomd_wrap.o: repomd.c repomd.h constants.h misc.h compression_wrapper.h
 #	$(SWIG) -python -Wall repomd.i
 #	gcc $(CFLAGS) -c repomd.c repomd_wrap.c
 	gcc $(CFLAGS) -c repomd.c
+
+# TODO
+compression_wrapper.o compression_wrapper_wrap.o: compression_wrapper.c compression_wrapper.h
+#	$(SWIG) -python -Wall repomd.i
+#	gcc $(CFLAGS) -c repomd.c repomd_wrap.c
+	gcc $(CFLAGS) -c compression_wrapper.c
 
 
 # Object files
@@ -105,26 +110,29 @@ xml_dump_other_test_01: package.o xml_dump.o xml_dump_primary.o xml_dump_filelis
 	gcc $(LINKFLAGS) $(CFLAGS) package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o ctests/xml_dump_other_test_01.c -o ctests/xml_dump_other_test_01
 
 
-load_metadata_2_test_01: load_metadata.o
-	gcc $(LINKFLAGS) $(CFLAGS) load_metadata.o ctests/load_metadata_2_test_01.c -o ctests/load_metadata_test_01
+load_metadata_test_01: load_metadata.o compression_wrapper.o
+	gcc $(LINKFLAGS) $(CFLAGS) compression_wrapper.o  load_metadata.o ctests/load_metadata_2_test_01.c -o ctests/load_metadata_test_01
 
-load_metadata_2_test_02: load_metadata.o
-	gcc $(LINKFLAGS) $(CFLAGS) load_metadata.o ctests/load_metadata_2_test_02.c -o ctests/load_metadata_test_02
+load_metadata_test_02: load_metadata.o compression_wrapper.o
+	gcc $(LINKFLAGS) $(CFLAGS) compression_wrapper.o load_metadata.o ctests/load_metadata_2_test_02.c -o ctests/load_metadata_test_02
 
-load_metadata_2_test_03: load_metadata.o
-	gcc $(LINKFLAGS) $(CFLAGS) load_metadata.o ctests/load_metadata_2_test_03.c -o ctests/load_metadata_2_test_03
+load_metadata_test_03: load_metadata.o compression_wrapper.o
+	gcc $(LINKFLAGS) $(CFLAGS) compression_wrapper.o load_metadata.o ctests/load_metadata_2_test_03.c -o ctests/load_metadata_2_test_03
 
-load_metadata_2_test_04: load_metadata.o
-	gcc $(LINKFLAGS) $(CFLAGS) load_metadata.o ctests/load_metadata_2_test_04_big.c -o ctests/load_metadata_2_test_04_big
+load_metadata_test_04: load_metadata.o compression_wrapper.o
+	gcc $(LINKFLAGS) $(CFLAGS) compression_wrapper.o load_metadata.o ctests/load_metadata_2_test_04_big.c -o ctests/load_metadata_2_test_04_big
 
-repomd_test_01: repomd.o
-	gcc $(LINKFLAGS) $(CFLAGS) repomd.o misc.o ctests/repomd_test_01.c -o ctests/repomd_test_01
+repomd_test_01: repomd.o compression_wrapper.o misc.o
+	gcc $(LINKFLAGS) $(CFLAGS) repomd.o compression_wrapper.o misc.o ctests/repomd_test_01.c -o ctests/repomd_test_01
+
+compression_wrapper_test_01: compression_wrapper.o
+	gcc $(LINKFLAGS) $(CFLAGS) compression_wrapper.o ctests/compression_wrapper_test_01.c -o ctests/compression_wrapper_test_01
 
 
 # Main
 
-main: parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o load_metadata.o repomd.o
-	gcc $(LINKFLAGS) $(CFLAGS) parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o repomd.o load_metadata.o main.c -o main
+main: compression_wrapper.o parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o load_metadata.o repomd.o
+	gcc $(LINKFLAGS) $(CFLAGS) compression_wrapper.o parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o repomd.o load_metadata.o main.c -o main
 
 
 clean:

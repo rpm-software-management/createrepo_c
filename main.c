@@ -7,10 +7,10 @@
 #include <dirent.h>
 #include "constants.h"
 #include "parsepkg.h"
-#include <zlib.h>
 #include <fcntl.h>
 #include "load_metadata.h"
 #include "repomd.h"
+#include "compression_wrapper.h"
 
 
 #define VERSION         "0.1"
@@ -63,9 +63,9 @@ struct CmdOptions {
 
 
 struct UserData {
-    gzFile *pri_f;
-    gzFile *fil_f;
-    gzFile *oth_f;
+    CW_FILE *pri_f;
+    CW_FILE *fil_f;
+    CW_FILE *oth_f;
     int changelog_limit;
     char *location_base;
     int repodir_name_len;
@@ -221,17 +221,17 @@ void dumper_thread(gpointer data, gpointer user_data) {
 
     // Write primary data
     G_LOCK(LOCK_PRI);
-    gzputs(udata->pri_f, (char *) res.primary);
+    cw_puts(udata->pri_f, (const char *) res.primary);
     G_UNLOCK(LOCK_PRI);
 
     // Write fielists data
     G_LOCK(LOCK_FIL);
-    gzputs(udata->fil_f, (char *) res.filelists);
+    cw_puts(udata->fil_f, (const char *) res.filelists);
     G_UNLOCK(LOCK_FIL);
 
     // Write other data
     G_LOCK(LOCK_OTH);
-    gzputs(udata->oth_f, (char *) res.other);
+    cw_puts(udata->oth_f, (const char *) res.other);
     G_UNLOCK(LOCK_OTH);
 
     // Clean up
@@ -630,25 +630,44 @@ int main(int argc, char **argv) {
     location_subs_re = g_regex_new("<location[^>]*>", re_compile_f, re_match_f, NULL);
 
 
-    // Create and open new xml.gz files
+    // Create and open new compressed files
+
+    CW_FILE *pri_cw_file;
+    CW_FILE *fil_cw_file;
+    CW_FILE *oth_cw_file;
 
     g_message("Output repo path: %s", out_repo);
     g_debug("Opening/Creating .xml.gz files");
 
     gchar *pri_xml_filename = g_strconcat(out_repo, "/_primary.xml.gz", NULL);
-    gzFile pri_gz_file = gzopen(pri_xml_filename, "wb");
-    gzsetparams(pri_gz_file, Z_BEST_SPEED, Z_DEFAULT_STRATEGY);
-    gzbuffer(pri_gz_file, GZ_BUFFER_SIZE);
-
     gchar *fil_xml_filename = g_strconcat(out_repo, "/_filelists.xml.gz", NULL);
-    gzFile fil_gz_file = gzopen(fil_xml_filename, "wb");
-    gzsetparams(fil_gz_file, Z_BEST_SPEED, Z_DEFAULT_STRATEGY);
-    gzbuffer(fil_gz_file, GZ_BUFFER_SIZE);
-
     gchar *oth_xml_filename = g_strconcat(out_repo, "/_other.xml.gz", NULL);
-    gzFile oth_gz_file = gzopen(oth_xml_filename, "wb");
-    gzsetparams(oth_gz_file, Z_BEST_SPEED, Z_DEFAULT_STRATEGY);
-    gzbuffer(oth_gz_file, GZ_BUFFER_SIZE);
+
+    if ((pri_cw_file = cw_open(pri_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
+        g_critical("Cannot open file: %s", pri_xml_filename);
+        g_free(pri_xml_filename);
+        g_free(fil_xml_filename);
+        g_free(oth_xml_filename);
+    }
+
+    if ((fil_cw_file = cw_open(fil_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
+        g_critical("Cannot open file: %s", fil_xml_filename);
+        g_free(pri_xml_filename);
+        g_free(fil_xml_filename);
+        g_free(oth_xml_filename);
+        cw_close(pri_cw_file);
+        exit(1);
+    }
+
+    if ((oth_cw_file = cw_open(oth_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
+        g_critical("Cannot open file: %s", oth_xml_filename);
+        g_free(pri_xml_filename);
+        g_free(fil_xml_filename);
+        g_free(oth_xml_filename);
+        cw_close(fil_cw_file);
+        cw_close(pri_cw_file);
+        exit(1);
+    }
 
 
     // Init package parser
@@ -659,9 +678,9 @@ int main(int argc, char **argv) {
     // Thread pool - User data initialization
 
     struct UserData user_data;
-    user_data.pri_f             = pri_gz_file;
-    user_data.fil_f             = fil_gz_file;
-    user_data.oth_f             = oth_gz_file;
+    user_data.pri_f             = pri_cw_file;
+    user_data.fil_f             = fil_cw_file;
+    user_data.oth_f             = oth_cw_file;
     user_data.changelog_limit   = cmd_options.changelog_limit;
     user_data.location_base     = cmd_options.location_base;
     user_data.checksum_type_str = cmd_options.checksum;
@@ -803,11 +822,11 @@ int main(int argc, char **argv) {
 
     g_debug("Writing xml headers");
 
-    gzprintf(user_data.pri_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+    cw_printf(user_data.pri_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
           "<metadata xmlns=\""XML_COMMON_NS"\" xmlns:rpm=\""XML_RPM_NS"\" packages=\"%d\">\n", package_count);
-    gzprintf(user_data.fil_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+    cw_printf(user_data.fil_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
           "<filelists xmlns=\""XML_FILELISTS_NS"\" packages=\"%d\">\n", package_count);
-    gzprintf(user_data.oth_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+    cw_printf(user_data.oth_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
           "<otherdata xmlns=\""XML_OTHER_NS"\" packages=\"%d\">\n", package_count);
 
 
@@ -823,13 +842,13 @@ int main(int argc, char **argv) {
     g_thread_pool_free(pool, FALSE, TRUE);
     g_message("Pool finished");
 
-    gzputs(user_data.pri_f, "</metadata>\n");
-    gzputs(user_data.fil_f, "</filelists>\n");
-    gzputs(user_data.oth_f, "</otherdata>\n");
+    cw_puts(user_data.pri_f, "\n</metadata>\n");
+    cw_puts(user_data.fil_f, "\n</filelists>\n");
+    cw_puts(user_data.oth_f, "\n</otherdata>\n");
 
-    gzclose_w(user_data.pri_f);
-    gzclose_w(user_data.fil_f);
-    gzclose_w(user_data.oth_f);
+    cw_close(user_data.pri_f);
+    cw_close(user_data.fil_f);
+    cw_close(user_data.oth_f);
 
 
     // Rename files

@@ -1,4 +1,5 @@
 #include <glib.h>
+#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -6,6 +7,10 @@
 #include "logging.h"
 #include "constants.h"
 #include "misc.h"
+
+#undef MODULE
+#define MODULE "misc: "
+
 
 #define BUFFER_SIZE     4096
 
@@ -30,6 +35,7 @@ const char *flag_to_string(gint64 flags)
             return "";
     }
 }
+
 
 
 /*
@@ -57,7 +63,9 @@ struct VersionStruct string_to_version(const char *string, GStringChunk *chunk)
     char *ptr;  // These names are totally self explaining
     char *ptr2; //
 
+
     // Epoch
+
     ptr = strstr(string, ":");
     if (ptr) {
         // Check if epoch str is a number
@@ -87,7 +95,9 @@ struct VersionStruct string_to_version(const char *string, GStringChunk *chunk)
         }
     }
 
+
     // Version + release
+
     ptr2 = strstr(ptr+1, "-");
     if (ptr2) {
         // Version
@@ -190,11 +200,14 @@ char *compute_file_checksum(const char *filename, ChecksumType type)
 {
     GChecksumType gchecksumtype;
 
+
     // Check if file exists and if it is a regular file (not a directory)
 
     if (!g_file_test(filename, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR))) {
+        g_critical(MODULE"compute_file_checksum: File %s doesn't exists", filename);
         return NULL;
     }
+
 
     // Convert our checksum type into glib type
 
@@ -208,14 +221,20 @@ char *compute_file_checksum(const char *filename, ChecksumType type)
         case PKG_CHECKSUM_SHA256:
             gchecksumtype = G_CHECKSUM_SHA256;
             break;
+        default:
+            g_critical(MODULE"compute_file_checksum: Unknown checksum type");
+            return NULL;
     };
+
 
     // Open file and initialize checksum structure
 
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
+        g_critical(MODULE"compute_file_checksum: Cannot open %s (%s)", filename, strerror(errno));
         return NULL;
     }
+
 
     // Calculate checksum
 
@@ -233,23 +252,19 @@ char *compute_file_checksum(const char *filename, ChecksumType type)
 
     fclose(fp);
 
-    // Malloc space and get checksum
 
-    const char *checksum_tmp_str = g_checksum_get_string(checksum);
-    size_t checksum_len = strlen(checksum_tmp_str);
-    char *checksum_str = (char *) malloc(sizeof(char) * (checksum_len + 1));
-    if (!checksum_str) {
-        g_checksum_free(checksum);
-        return NULL;
-    }
-    strcpy(checksum_str, checksum_tmp_str);
+    // Get checksum
 
-    // Clean up
-
+    char *checksum_str = g_strdup(g_checksum_get_string(checksum));
     g_checksum_free(checksum);
+
+    if (!checksum_str) {
+        g_critical(MODULE"compute_file_checksum: Cannot get checksum %s (low memory?)", filename);
+    }
 
     return checksum_str;
 }
+
 
 
 #define VAL_LEN         4       // Len of numeric values in rpm
@@ -259,8 +274,30 @@ struct HeaderRangeStruct get_header_byte_range(const char *filename)
     /* Values readed by fread are 4 bytes long and stored as big-endian.
      * So there is htonl function to convert this big-endian number into host byte order.
      */
+
+    struct HeaderRangeStruct results;
+
+    results.start = 0;
+    results.end   = 0;
+
+
+    // Open file
+
     FILE *fp = fopen(filename, "rb");
-    fseek(fp, 104, SEEK_SET);
+    if (!fp) {
+        g_critical(MODULE"get_header_byte_range: Cannot open file %s (%s)", filename, strerror(errno));
+        return results;
+    }
+
+
+    // Get header range
+
+    if (fseek(fp, 104, SEEK_SET) != 0) {
+        g_critical(MODULE"get_header_byte_range: fseek fail on %s (%s)", filename, strerror(errno));
+        fclose(fp);
+        return results;
+    }
+
     unsigned int sigindex = 0;
     unsigned int sigdata  = 0;
     fread(&sigindex, VAL_LEN, 1, fp);
@@ -290,7 +327,18 @@ struct HeaderRangeStruct get_header_byte_range(const char *filename)
 
     fclose(fp);
 
-    return (struct HeaderRangeStruct) {hdrstart, hdrend};
+
+    // Check sanity
+
+    if (hdrend < hdrstart) {
+        g_critical(MODULE"get_header_byte_range: sanity check fail on %s (%d > %d))", filename, hdrstart, hdrend);
+        return results;
+    }
+
+    results.start = hdrstart;
+    results.end   = hdrend;
+
+    return results;
 }
 
 
@@ -307,6 +355,9 @@ const char *get_checksum_name_str(ChecksumType type)
             break;
         case PKG_CHECKSUM_SHA256:
             name = "sha256";
+            break;
+        default:
+            g_debug(MODULE"get_checksum_name_str: Unknown checksum");
             break;
     }
 

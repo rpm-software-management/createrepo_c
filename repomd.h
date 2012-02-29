@@ -35,10 +35,6 @@ struct repomdData *new_repomddata();
 void free_repomddata(struct repomdData *);
 void free_repomdresult(struct repomdResult *);
 
-// Function modifies params structures!
-struct repomdResult *xml_repomd_2(const char *path, int rename_to_unique, struct repomdData *pri_xml, struct repomdData *fil_xml, struct repomdData *oth_xml,
-                 struct repomdData *pri_sqlite, struct repomdData *fil_sqlite, struct repomdData *oth_sqlite, ChecksumType *checksum_type);
-
 struct repomdResult *xml_repomd(const char *path, int rename_to_unique, const char *pri_xml, const char *fil_xml, const char *oth_xml,
                  const char *pri_sqlite, const char *fil_sqlite, const char *oth_sqlite, ChecksumType *checksum_type);
 

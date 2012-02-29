@@ -8,13 +8,23 @@
 #include "repomd.h"
 #include "compression_wrapper.h"
 
+#undef MODULE
+#define MODULE "repomd: "
+
+
 #define DEFAULT_CHECKSUM                "sha256"
 #define DEFAULT_CHECKSUM_ENUM_VAL        PKG_CHECKSUM_SHA256
+
+#define DEFAULT_DATABASE_VERSION        10
 
 #define BUFFER_SIZE          131072  // 1024 * 128
 
 #define RPM_NS          "http://linux.duke.edu/metadata/rpm"
 #define XMLNS_NS        "http://linux.duke.edu/metadata/repo"
+
+
+#define REPOMD_OK       0
+#define REPOMD_ERR      1
 
 
 typedef struct _contentStat {
@@ -26,7 +36,7 @@ typedef struct _contentStat {
 struct repomdData *new_repomddata()
 {
     struct repomdData *md = (struct repomdData *) g_malloc0(sizeof(struct repomdData));
-    md->chunk = g_string_chunk_new(512);
+    md->chunk = g_string_chunk_new(1024);
     return md;
 }
 
@@ -46,6 +56,10 @@ void free_repomddata(struct repomdData *md)
 
 void free_repomdresult(struct repomdResult *rr)
 {
+    if (!rr) {
+        return;
+    }
+
     g_free(rr->pri_xml_location);
     g_free(rr->fil_xml_location);
     g_free(rr->oth_xml_location);
@@ -127,7 +141,7 @@ contentStat *get_compressed_content_stat(const char *filename, ChecksumType chec
 int fill_missing_data(const char *base_path, struct repomdData *md, ChecksumType *checksum_type) {
     if (!md || !(md->location_href) || !strlen(md->location_href)) {
         // Nothing to do
-        return 0;
+        return REPOMD_ERR;
     }
 
     const char *checksum_str = DEFAULT_CHECKSUM;
@@ -142,7 +156,8 @@ int fill_missing_data(const char *base_path, struct repomdData *md, ChecksumType
 
     if (!g_file_test(path, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR)) {
         // File doesn't exists
-        return 0;
+        g_warning(MODULE"fill_missing_data: File %s doesn't exists", path);
+        return REPOMD_ERR;
     }
 
 
@@ -175,7 +190,7 @@ int fill_missing_data(const char *base_path, struct repomdData *md, ChecksumType
             g_free(open_stat);
         } else {
             // Unknown compression
-            g_warning( "File \"%s\" compressed by an unsupported type of compression", path);
+            g_warning(MODULE"File \"%s\" compressed by an unsupported type of compression", path);
             md->checksum_open_type = g_string_chunk_insert(md->chunk, "UNKNOWN");
             md->checksum_open = g_string_chunk_insert(md->chunk, "file_compressed_by_an_unsupported_type_of_compression");
             md->size_open = -1;
@@ -195,7 +210,7 @@ int fill_missing_data(const char *base_path, struct repomdData *md, ChecksumType
                 md->size = buf.st_size;
             }
         } else {
-            g_warning( "Stat on file \"%s\" failed", path);
+            g_warning(MODULE"Stat on file \"%s\" failed", path);
         }
     }
 
@@ -203,15 +218,17 @@ int fill_missing_data(const char *base_path, struct repomdData *md, ChecksumType
     // Set db version
 
     if (!md->db_ver) {
-        md->db_ver = 10;
+        md->db_ver = DEFAULT_DATABASE_VERSION;
     }
 
     g_free(path);
+
+    return REPOMD_OK;
 }
 
 
 
-void dump_data_items(xmlTextWriterPtr writer, struct repomdData *md, const char *type)
+void dump_data_items(xmlTextWriterPtr writer, struct repomdData *md, const xmlChar *type)
 {
     if (!writer || !md || !type) {
         return;
@@ -221,17 +238,17 @@ void dump_data_items(xmlTextWriterPtr writer, struct repomdData *md, const char 
     xmlTextWriterWriteAttribute(writer, BAD_CAST "type", type);
 
     xmlTextWriterStartElement(writer, BAD_CAST "checksum");
-    xmlTextWriterWriteAttribute(writer, BAD_CAST "type", md->checksum_type);
+    xmlTextWriterWriteAttribute(writer, BAD_CAST "type", (xmlChar *) md->checksum_type);
     xmlTextWriterWriteString(writer, BAD_CAST md->checksum);
     xmlTextWriterEndElement(writer);
 
     xmlTextWriterStartElement(writer, BAD_CAST "open-checksum");
-    xmlTextWriterWriteAttribute(writer, BAD_CAST "type", md->checksum_open_type);
+    xmlTextWriterWriteAttribute(writer, BAD_CAST "type", (xmlChar *) md->checksum_open_type);
     xmlTextWriterWriteString(writer, BAD_CAST md->checksum_open);
     xmlTextWriterEndElement(writer);
 
     xmlTextWriterStartElement(writer, BAD_CAST "location");
-    xmlTextWriterWriteAttribute(writer, BAD_CAST "href", md->location_href);
+    xmlTextWriterWriteAttribute(writer, BAD_CAST "href", (xmlChar *) md->location_href);
     xmlTextWriterEndElement(writer);
 
     xmlTextWriterStartElement(writer, BAD_CAST "timestamp");
@@ -246,9 +263,9 @@ void dump_data_items(xmlTextWriterPtr writer, struct repomdData *md, const char 
     xmlTextWriterWriteFormatString(writer, "%ld", md->size_open);
     xmlTextWriterEndElement(writer);
 
-    if (g_str_has_suffix(type, "_db")) {
+    if (g_str_has_suffix((char *)type, "_db")) {
         xmlTextWriterStartElement(writer, BAD_CAST "database_version");
-        xmlTextWriterWriteFormatString(writer, "%ld", md->db_ver);
+        xmlTextWriterWriteFormatString(writer, "%d", md->db_ver);
         xmlTextWriterEndElement(writer);
     }
 
@@ -261,13 +278,13 @@ char *repomd_xml_dump(long revision, struct repomdData *pri_xml, struct repomdDa
 {
     xmlBufferPtr buf = xmlBufferCreate();
     if (!buf) {
-        g_critical("Error creating the xml buffer");
+        g_critical(MODULE"Error creating the xml buffer");
         return NULL;
     }
 
     xmlTextWriterPtr writer = xmlNewTextWriterMemory(buf, 0);
     if (writer == NULL) {
-        g_critical("Error creating the xml writer");
+        g_critical(MODULE"Error creating the xml writer");
         return NULL;
     }
 
@@ -278,21 +295,21 @@ char *repomd_xml_dump(long revision, struct repomdData *pri_xml, struct repomdDa
 
     rc = xmlTextWriterStartDocument(writer, NULL, "UTF-8", NULL);
     if (rc < 0) {
-        g_critical("Error at xmlTextWriterStartDocument\n");
+        g_critical(MODULE"Error at xmlTextWriterStartDocument\n");
         return NULL;
     }
 
     rc = xmlTextWriterStartElement(writer, BAD_CAST "repomd");
     if (rc < 0) {
-        g_critical("Error at xmlTextWriterStartElement repomd\n");
+        g_critical(MODULE"Error at xmlTextWriterStartElement repomd\n");
         return NULL;
     }
-    xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns:rpm", RPM_NS);
-    xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns", XMLNS_NS);
+    xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns:rpm", (xmlChar *) RPM_NS);
+    xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns", (xmlChar *) XMLNS_NS);
 
     rc = xmlTextWriterStartElement(writer, BAD_CAST "revision");
     if (rc < 0) {
-        g_critical("Error at xmlTextWriterStartElement revision\n");
+        g_critical(MODULE"Error at xmlTextWriterStartElement revision\n");
         return NULL;
     }
 
@@ -300,12 +317,12 @@ char *repomd_xml_dump(long revision, struct repomdData *pri_xml, struct repomdDa
 
     xmlTextWriterEndElement(writer); // revision element end
 
-    dump_data_items(writer, pri_xml, "primary");
-    dump_data_items(writer, fil_xml, "filelists");
-    dump_data_items(writer, oth_xml, "other");
-    dump_data_items(writer, pri_sqlite, "primary_db");
-    dump_data_items(writer, fil_sqlite, "filelists_db");
-    dump_data_items(writer, oth_sqlite, "other_db");
+    dump_data_items(writer, pri_xml, (const xmlChar *) "primary");
+    dump_data_items(writer, fil_xml, (const xmlChar *) "filelists");
+    dump_data_items(writer, oth_xml, (const xmlChar *) "other");
+    dump_data_items(writer, pri_sqlite, (const xmlChar *) "primary_db");
+    dump_data_items(writer, fil_sqlite, (const xmlChar *) "filelists_db");
+    dump_data_items(writer, oth_sqlite, (const xmlChar *) "other_db");
 
     xmlTextWriterEndElement(writer); // repomd element end
 
@@ -353,7 +370,7 @@ void rename_file(const char *base_path, struct repomdData *md)
     // Rename
     if (g_file_test (new_path, G_FILE_TEST_EXISTS)) {
         if (remove(new_path)) {
-            g_critical("repomd: Cannot delete old %s", new_path);
+            g_critical(MODULE"rename_file: Cannot delete old %s", new_path);
             g_free(path);
             g_free(new_location_href);
             g_free(new_path);
@@ -361,7 +378,7 @@ void rename_file(const char *base_path, struct repomdData *md)
         }
     }
     if (rename(path, new_path)) {
-        g_critical("repomd: Cannot rename %s to %s", path, new_path);
+        g_critical(MODULE"rename_file: Cannot rename %s to %s", path, new_path);
         g_free(path);
         g_free(new_location_href);
         g_free(new_path);

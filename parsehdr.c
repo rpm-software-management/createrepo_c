@@ -7,49 +7,75 @@
 #include "xml_dump.h"
 #include "misc.h"
 
+#undef MODULE
+#define MODULE "parsehdr: "
+
+
+inline gchar *safe_string_chunk_insert(GStringChunk *chunk, const char *str)
+{
+    if (!chunk || !str) {
+        return NULL;
+    }
+
+    return g_string_chunk_insert(chunk, str);
+}
+
+
 
 Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksum,
                         const char *checksum_type, const char *location_href,
                         const char *location_base, int changelog_limit,
                         gint64 hdr_start, gint64 hdr_end)
 {
+    // Create new package structure
+
     Package *pkg = NULL;
     pkg = package_new();
+
+
+    // Create rpm tag data container
 
     rpmtd td = rpmtdNew();
     headerGetFlags flags = HEADERGET_MINMEM | HEADERGET_EXT;
 
-    pkg->pkgId = checksum;
-    pkg->name = headerGetString(hdr, RPMTAG_NAME);
+
+    // Fill package structure
+
+    pkg->pkgId = safe_string_chunk_insert(pkg->chunk, checksum);
+    pkg->name = safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_NAME));
+
     gint64 is_src = headerGetNumber(hdr, RPMTAG_SOURCEPACKAGE);
     if (is_src) {
-        pkg->arch = "src";
+        pkg->arch = safe_string_chunk_insert(pkg->chunk, "src");
     } else {
-        pkg->arch = headerGetString(hdr, RPMTAG_ARCH);
+        pkg->arch = safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_ARCH));
     }
-    pkg->version = headerGetString(hdr, RPMTAG_VERSION);
+
+    pkg->version = safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_VERSION));
+
 #define MAX_STR_INT_LEN 24
     char tmp_epoch[MAX_STR_INT_LEN];
-    if (snprintf(tmp_epoch, MAX_STR_INT_LEN, "%d", headerGetNumber(hdr, RPMTAG_EPOCH)) <= 0) {
+    if (snprintf(tmp_epoch, MAX_STR_INT_LEN, "%lld", headerGetNumber(hdr, RPMTAG_EPOCH)) <= 0) {
         tmp_epoch[0] = '\0';
     }
     pkg->epoch = g_string_chunk_insert_len(pkg->chunk, tmp_epoch, MAX_STR_INT_LEN);
-    pkg->release = headerGetString(hdr, RPMTAG_RELEASE);
-    pkg->summary = headerGetString(hdr, RPMTAG_SUMMARY);
-    pkg->description = headerGetString(hdr, RPMTAG_DESCRIPTION);
-    pkg->url = headerGetString(hdr, RPMTAG_URL);
+
+    pkg->release = safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_RELEASE));
+    pkg->summary = safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_SUMMARY));
+    pkg->description = safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_DESCRIPTION));
+    pkg->url = safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_URL));
     pkg->time_file = mtime;
     if (headerGet(hdr, RPMTAG_BUILDTIME, td, flags)) {
         pkg->time_build = rpmtdGetNumber(td);
     }
-    pkg->rpm_license = headerGetString(hdr, RPMTAG_LICENSE);
-    pkg->rpm_vendor = headerGetString(hdr, RPMTAG_VENDOR);
-    pkg->rpm_group = headerGetString(hdr, RPMTAG_GROUP);
-    pkg->rpm_buildhost = headerGetString(hdr, RPMTAG_BUILDHOST);
-    pkg->rpm_sourcerpm = headerGetString(hdr, RPMTAG_SOURCERPM);
+    pkg->rpm_license = safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_LICENSE));
+    pkg->rpm_vendor = safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_VENDOR));
+    pkg->rpm_group = safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_GROUP));
+    pkg->rpm_buildhost = safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_BUILDHOST));
+    pkg->rpm_sourcerpm = safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_SOURCERPM));
     pkg->rpm_header_start = hdr_start;
     pkg->rpm_header_end = hdr_end;
-    pkg->rpm_packager = headerGetString(hdr, RPMTAG_PACKAGER);
+    pkg->rpm_packager = safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_PACKAGER));
     pkg->size_package = size;
     if (headerGet(hdr, RPMTAG_SIZE, td, flags)) {
         pkg->size_installed = rpmtdGetNumber(td);
@@ -57,16 +83,16 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
     if (headerGet(hdr, RPMTAG_ARCHIVESIZE, td, flags)) {
         pkg->size_archive = rpmtdGetNumber(td);
     }
-    pkg->location_href = location_href;
-    pkg->location_base = location_base;
-    pkg->checksum_type = checksum_type;
+    pkg->location_href = safe_string_chunk_insert(pkg->chunk, location_href);
+    pkg->location_base = safe_string_chunk_insert(pkg->chunk, location_base);
+    pkg->checksum_type = safe_string_chunk_insert(pkg->chunk, checksum_type);
 
     rpmtdFreeData(td);
     rpmtdFree(td);
 
 
     //
-    // Files
+    // Fill files
     //
 
     rpmtd full_filenames = rpmtdNew(); // Only for filenames_hashtable
@@ -78,9 +104,10 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
     GHashTable *filenames_hashtable = g_hash_table_new(g_str_hash, g_str_equal);
 
     rpmtd dirnames = rpmtdNew();
-    int path_index = -1;
+
 
     // Create list of pointer to directory names
+
     int dir_count;
     char **dir_list = NULL;
     if (headerGet(hdr, RPMTAG_DIRNAMES, dirnames,  flags)) {
@@ -88,7 +115,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
         dir_count = rpmtdCount(dirnames);
         dir_list = malloc(sizeof(char *) * dir_count);
         while (rpmtdNext(dirnames) != -1) {
-            dir_list[x] = rpmtdGetString(dirnames);
+            dir_list[x] = safe_string_chunk_insert(pkg->chunk, rpmtdGetString(dirnames));
             x++;
         }
         assert(x == dir_count);
@@ -112,18 +139,18 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                (rpmtdNext(filemodes) != -1))
         {
             PackageFile *packagefile = package_file_new();
-            packagefile->name = rpmtdGetString(filenames);
+            packagefile->name = safe_string_chunk_insert(pkg->chunk, rpmtdGetString(filenames));
             packagefile->path = dir_list[(int) rpmtdGetNumber(indexes)];
 
             if (S_ISDIR(rpmtdGetNumber(filemodes))) {
                 // Directory
-                packagefile->type = "dir";
+                packagefile->type = safe_string_chunk_insert(pkg->chunk, "dir");
             } else if (rpmtdGetNumber(fileflags) & RPMFILE_GHOST) {
                 // Ghost
-                packagefile->type = "ghost";
+                packagefile->type = safe_string_chunk_insert(pkg->chunk, "ghost");
             } else {
                 // Regular file
-                packagefile->type = "";
+                packagefile->type = safe_string_chunk_insert(pkg->chunk, "");
             }
 
             g_hash_table_insert(filenames_hashtable, (gpointer) rpmtdGetString(full_filenames), (gpointer) rpmtdGetString(full_filenames));
@@ -175,8 +202,8 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
 
     // Struct used as value in ap_hashtable
     struct ap_value_struct {
-        char *flags;
-        char *version;
+        const char *flags;
+        const char *version;
         int pre;
     };
 
@@ -205,10 +232,10 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                    (rpmtdNext(fileversions) != -1))
             {
                 int pre = 0;
-                char *filename = rpmtdGetString(filenames);
+                const char *filename = rpmtdGetString(filenames);
                 guint64 num_flags = rpmtdGetNumber(fileflags);
-                char *flags = flag_to_string(num_flags);
-                char *full_version = rpmtdGetString(fileversions);
+                const char *flags = flag_to_string(num_flags);
+                const char *full_version = rpmtdGetString(fileversions);
 
                 // Requires specific stuff
                 if (pcor_type == REQUIRES) {
@@ -252,8 +279,8 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
 
                 // Create dynamic dependency object
                 Dependency *dependency = dependency_new();
-                dependency->name = filename;
-                dependency->flags = flags;
+                dependency->name = safe_string_chunk_insert(pkg->chunk, filename);
+                dependency->flags = safe_string_chunk_insert(pkg->chunk, flags);
                 struct VersionStruct ver = string_to_version(full_version, pkg->chunk);
                 dependency->epoch = ver.epoch;
                 dependency->version = ver.version;
@@ -365,7 +392,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
 
                         // Add file into ap_hashtable
                         struct ap_value_struct *value = malloc(sizeof(struct ap_value_struct));
-                        value->flags = dependency->flags;
+                        value->flags = flags;
                         value->version = full_version;
                         value->pre = dependency->pre;
                         g_hash_table_insert(ap_hashtable, dependency->name, value);
@@ -418,7 +445,6 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
         headerGet(hdr, RPMTAG_CHANGELOGTEXT, changelogtexts, flags))
     {
         gint64 last_time = 0;
-        gint64 time_offset = 1;
         rpmtdInit(changelogtimes);
         rpmtdInit(changelognames);
         rpmtdInit(changelogtexts);
@@ -430,9 +456,9 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
             gint64 time = rpmtdGetNumber(changelogtimes);
 
             ChangelogEntry *changelog = changelog_entry_new();
-            changelog->author    = rpmtdGetString(changelognames);
+            changelog->author    = safe_string_chunk_insert(pkg->chunk, rpmtdGetString(changelognames));
             changelog->date      = time;
-            changelog->changelog = rpmtdGetString(changelogtexts);
+            changelog->changelog = safe_string_chunk_insert(pkg->chunk, rpmtdGetString(changelogtexts));
 
             pkg->changelogs = g_slist_prepend(pkg->changelogs, changelog);
             changelog_limit--;

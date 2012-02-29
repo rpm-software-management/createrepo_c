@@ -1,3 +1,4 @@
+#include <glib.h>
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
 #include <string.h>
@@ -5,15 +6,13 @@
 #include "misc.h"
 #include "xml_dump.h"
 
-#define NAMEBUFF_LEN  1024
+#undef MODULE
+#define MODULE "xml_dump: "
 
-//#define DEBUG
-#undef DEBUG
 
 //xmlCharEncodingHandlerPtr handler = NULL;
 
-xmlChar *
-ConvertInput(const char *in, xmlCharEncodingHandlerPtr handler)
+xmlChar *ConvertInput(const char *in, xmlCharEncodingHandlerPtr handler)
 {
     return (xmlChar*) in;
 /*
@@ -65,10 +64,6 @@ void
 dump_files(xmlTextWriterPtr writer, Package *package, int primary,
            xmlCharEncodingHandlerPtr handler)
 {
-#ifdef DEBUG
-    printf("CALLED dump_files\n");
-#endif
-
     xmlChar *tmp = NULL;
 
     if (!package->files) {
@@ -80,7 +75,9 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
     for(element = package->files; element; element=element->next) {
         PackageFile *entry = (PackageFile*) element->data;
 
+
         // File without name or path is suspicious => Skip it
+
         if (!(entry->path)) {
             continue;
         }
@@ -89,30 +86,19 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
             continue;
         }
 
+
         // String concatenation (path + basename)
-        char fullname_buffer[NAMEBUFF_LEN];
-        int fullname_i, str_i=0;
-        char *astring = entry->path;
-        for (fullname_i=0; fullname_i<(NAMEBUFF_LEN-1); fullname_i++) {
-            if (astring[str_i] != '\0') {
-                fullname_buffer[fullname_i] = astring[str_i];
-            } else {
-                if (astring == entry->name) {
-                    // entry->name string just ends
-                    break;
-                }
-                str_i = 0;
-                astring = entry->name;
-                fullname_buffer[fullname_i] = astring[str_i];
-            }
-            str_i++;
-        }
-        fullname_buffer[fullname_i] = '\0';
+
+        gchar *fullname;
+        fullname = g_strconcat(entry->path, entry->name, NULL);
+
 
         // Skip a file if we want primary files and the file is not one
-        if (primary && !is_primary(fullname_buffer)) {
+
+        if (primary && !is_primary(fullname)) {
             continue;
         }
+
 
         // ***********************************
         // Element: file
@@ -121,7 +107,7 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
         int rc;
         rc = xmlTextWriterStartElement(writer, BAD_CAST "file");
         if (rc < 0) {
-            printf("Error at xmlTextWriterWriteElement\n");
+            g_critical(MODULE"dump_files: Error at xmlTextWriterWriteElement");
             return;
         }
 
@@ -129,25 +115,29 @@ dump_files(xmlTextWriterPtr writer, Package *package, int primary,
         if (entry->type && strlen(entry->type) && strcmp(entry->type, "file")) {
             tmp = ConvertInput(entry->type, handler);
             rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "type", tmp);
+            if (handler && tmp != NULL) xmlFree(tmp);
             if (rc < 0) {
-                 printf("Error at xmlTextWriterWriteAttribute\n");
+                 g_critical(MODULE"dump_files: Error at xmlTextWriterWriteAttribute");
                  return;
             }
-            if (handler && tmp != NULL) xmlFree(tmp);
+
         }
 
         // Write text (file path)
-        //tmp = ConvertInput(fullname_buffer, handler);
-        tmp = ConvertInput(fullname_buffer, handler);
+        tmp = ConvertInput(fullname, handler);
         if (tmp) {
-            xmlTextWriterWriteString(writer, BAD_CAST tmp);
+            rc = xmlTextWriterWriteString(writer, BAD_CAST tmp);
             if (handler && tmp != NULL) xmlFree(tmp);
+            if (rc < 0) {
+                g_critical(MODULE"dump_files: Error at xmlTextWriterWriteString\n");
+                return;
+            }
         }
 
         // Close file element
         rc = xmlTextWriterEndElement(writer);
         if (rc < 0) {
-            printf("Error at xmlTextWriterEndElement\n");
+            g_critical(MODULE"dump_files: Error at xmlTextWriterEndElement\n");
             return;
         }
     }

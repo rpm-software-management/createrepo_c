@@ -1,4 +1,5 @@
 #include <glib.h>
+#include <glib/gstdio.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -155,20 +156,20 @@ void process_node(GHashTable *metadata, xmlTextReaderPtr pri_reader,
             continue;
         }
 
-        if (!g_strcmp0(node->name, "location")) {
-            location_href = xmlGetProp(node, "href");
-            location_base = xmlGetProp(node, "base");
+        if (!g_strcmp0((char *) node->name, "location")) {
+            location_href = (char *) xmlGetProp(node, (xmlChar *) "href");
+            location_base = (char *) xmlGetProp(node, (xmlChar *) "base");
             counter++;
-        } else if (!g_strcmp0(node->name, "checksum")) {
-            checksum_type = xmlGetProp(node, "type");
+        } else if (!g_strcmp0((char *) node->name, "checksum")) {
+            checksum_type = (char *) xmlGetProp(node, (xmlChar *) "type");
             counter++;
-        } else if (!g_strcmp0(node->name, "size")) {
-            char *size_str = xmlGetProp(node, "package");
+        } else if (!g_strcmp0((char *) node->name, "size")) {
+            char *size_str = (char *) xmlGetProp(node, (xmlChar *) "package");
             size = g_ascii_strtoll(size_str, NULL, 10);
             xmlFree(size_str);
             counter++;
-        } else if (!g_strcmp0(node->name, "time")) {
-            char *file_time_str = xmlGetProp(node, "file");
+        } else if (!g_strcmp0((char *) node->name, "time")) {
+            char *file_time_str = (char *) xmlGetProp(node, (xmlChar *) "file");
             time_file = g_ascii_strtoll(file_time_str, NULL, 10);
             xmlFree(file_time_str);
             counter++;
@@ -252,7 +253,7 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
 
     pri_ret = xmlTextReaderRead(pri_reader);
     name = xmlTextReaderName(pri_reader);
-    if (g_strcmp0(name, "metadata")) {
+    if (g_strcmp0((char *) name, "metadata")) {
         xmlFree(name);
         return 0;
     }
@@ -260,7 +261,7 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
 
     fil_ret = xmlTextReaderRead(fil_reader);
     name = xmlTextReaderName(fil_reader);
-    if (g_strcmp0(name, "filelists")) {
+    if (g_strcmp0((char *) name, "filelists")) {
         xmlFree(name);
         return 0;
     }
@@ -268,7 +269,7 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
 
     oth_ret = xmlTextReaderRead(oth_reader);
     name = xmlTextReaderName(oth_reader);
-    if (g_strcmp0(name, "otherdata")) {
+    if (g_strcmp0((char *) name, "otherdata")) {
         xmlFree(name);
         return 0;
     }
@@ -279,7 +280,7 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
 
     pri_ret = xmlTextReaderRead(pri_reader);
     name = xmlTextReaderName(pri_reader);
-    if (g_strcmp0(name, "package")) {
+    if (g_strcmp0((char *) name, "package")) {
         g_warning(MODULE"parse_xml_metadata: Probably bad xml");
         xmlFree(name);
         return 0;
@@ -288,7 +289,7 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
 
     fil_ret = xmlTextReaderRead(fil_reader);
     name = xmlTextReaderName(fil_reader);
-    if (g_strcmp0(name, "package")) {
+    if (g_strcmp0((char *) name, "package")) {
         g_warning(MODULE"parse_xml_metadata: Probably bad xml");
         xmlFree(name);
         return 0;
@@ -297,7 +298,7 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
 
     oth_ret = xmlTextReaderRead(oth_reader);
     name = xmlTextReaderName(oth_reader);
-    if (g_strcmp0(name, "package")) {
+    if (g_strcmp0((char *) name, "package")) {
         g_warning(MODULE"parse_xml_metadata: Probably bad xml");
         xmlFree(name);
         return 0;
@@ -536,7 +537,7 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
 
     ret = xmlTextReaderRead(reader);
     name = xmlTextReaderName(reader);
-    if (g_strcmp0(name, "repomd")) {
+    if (g_strcmp0((char *) name, "repomd")) {
         g_warning(MODULE"locate_metadata_via_repomd: Bad xml - missing repomd element? (%s)", name);
         xmlFree(name);
         xmlFreeTextReader(reader);
@@ -547,7 +548,7 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
 
     ret = xmlTextReaderRead(reader);
     name = xmlTextReaderName(reader);
-    if (g_strcmp0(name, "revision")) {
+    if (g_strcmp0((char *) name, "revision")) {
         g_warning(MODULE"locate_metadata_via_repomd: Bad xml - missing revision element? (%s)", name);
         xmlFree(name);
         xmlFreeTextReader(reader);
@@ -563,7 +564,7 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
         // Find first data element
         ret = xmlTextReaderRead(reader);
         name = xmlTextReaderName(reader);
-        if (!g_strcmp0(name, "data")) {
+        if (!g_strcmp0((char *) name, "data")) {
             xmlFree(name);
             break;
         }
@@ -582,8 +583,8 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
     mdloc = g_malloc0(sizeof(struct MetadataLocation));
     mdloc->repomd = repomd;
 
-    char *data_type = NULL;
-    char *location_href = NULL;
+    xmlChar *data_type = NULL;
+    xmlChar *location_href = NULL;
 
     while (ret) {
         if (xmlTextReaderNodeType(reader) != 1) {
@@ -592,7 +593,7 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
         }
 
         xmlNodePtr data_node = xmlTextReaderExpand(reader);
-        data_type = xmlGetProp(data_node, "type");
+        data_type = xmlGetProp(data_node, (xmlChar *) "type");
         xmlNodePtr sub_node = data_node->children;
 
         while (sub_node) {
@@ -601,8 +602,8 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
                 continue;
             }
 
-            if (!g_strcmp0(sub_node->name, "location")) {
-                location_href = xmlGetProp(sub_node, "href");
+            if (!g_strcmp0((char *) sub_node->name, "location")) {
+                location_href = xmlGetProp(sub_node, (xmlChar *) "href");
             }
 
             // TODO: Check repodata validity checksum? mtime? size?
@@ -615,25 +616,25 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
 
         gchar *full_location_href;
         if (repopath_ends_with_slash) {
-            full_location_href = g_strconcat(repopath, location_href, NULL);
+            full_location_href = g_strconcat(repopath, (char *) location_href, NULL);
         } else {
-            full_location_href = g_strconcat(repopath, "/", location_href, NULL);
+            full_location_href = g_strconcat(repopath, "/", (char *) location_href, NULL);
         }
 
 
         // Store the path
 
-        if (!g_strcmp0(data_type, "primary")) {
+        if (!g_strcmp0((char *) data_type, "primary")) {
             mdloc->pri_xml_href = full_location_href;
-        } else if (!g_strcmp0(data_type, "filelists")) {
+        } else if (!g_strcmp0((char *) data_type, "filelists")) {
             mdloc->fil_xml_href = full_location_href;
-        } else if (!g_strcmp0(data_type, "other")) {
+        } else if (!g_strcmp0((char *) data_type, "other")) {
             mdloc->oth_xml_href = full_location_href;
-        } else if (!g_strcmp0(data_type, "primary_db")) {
+        } else if (!g_strcmp0((char *) data_type, "primary_db")) {
             mdloc->pri_sqlite_href = full_location_href;
-        } else if (!g_strcmp0(data_type, "filelists_db")) {
+        } else if (!g_strcmp0((char *) data_type, "filelists_db")) {
             mdloc->fil_sqlite_href = full_location_href;
-        } else if (!g_strcmp0(data_type, "other_db")) {
+        } else if (!g_strcmp0((char *) data_type, "other_db")) {
             mdloc->oth_sqlite_href = full_location_href;
         }
 
@@ -718,7 +719,7 @@ int remove_old_metadata(const char *repopath)
 
     int removed_files = 0;
     const gchar *file;
-    while (file = g_dir_read_name (repodir)) {
+    while ((file = g_dir_read_name (repodir))) {
         if (g_str_has_suffix(file, "primary.xml.gz") ||
             g_str_has_suffix(file, "filelists.xml.gz") ||
             g_str_has_suffix(file, "other.xml.gz") ||

@@ -1,4 +1,6 @@
 #include <glib.h>
+#include <glib/gstdio.h>
+#include <stdio.h>
 #include <magic.h>
 #include <assert.h>
 #include <string.h>
@@ -158,6 +160,9 @@ CW_FILE *cw_open(const char *filename, int mode, CompressionType comtype)
                 }
             }
             break;
+
+        default:
+            break;
     }
 
 
@@ -210,6 +215,9 @@ int cw_close(CW_FILE *cw_file)
                 cw_ret = CW_OK;
             }
             break;
+
+        default:
+            break;
     }
 
     g_free(cw_file);
@@ -233,23 +241,28 @@ int cw_read(CW_FILE *cw_file, void *buffer, unsigned int len)
 
         case (NO_COMPRESSION): // ----------------------------------------------
             ret = fread(buffer, 1, len, (FILE *) cw_file->FILE);
-            if (ret != len && !feof((FILE *) cw_file->FILE)) {
-                return CW_ERR;
-            } else {
-                return ret;
+            if ((ret != (int) len) && !feof((FILE *) cw_file->FILE)) {
+                ret = CW_ERR;
             }
+            break;
 
         case (GZ_COMPRESSION): // ----------------------------------------------
             return gzread( *((gzFile *) cw_file->FILE), buffer, len);
+            break;
 
         case (BZ2_COMPRESSION): // ---------------------------------------------
             ret = BZ2_bzRead(&bzerror, (BZFILE *) cw_file->FILE, buffer, len);
-            if (bzerror == BZ_OK || bzerror == BZ_STREAM_END) {
-                return ret;
-            } else {
+            if (bzerror != BZ_OK && bzerror != BZ_STREAM_END) {
                 return CW_ERR;
             }
+            break;
+
+        default:
+            ret = CW_ERR;
+            break;
     }
+
+    return ret;
 }
 
 
@@ -267,7 +280,7 @@ int cw_write(CW_FILE *cw_file, void *buffer, unsigned int len)
     switch (cw_file->type) {
 
         case (NO_COMPRESSION): // ----------------------------------------------
-            if ((ret = fwrite(buffer, 1, len, (FILE *) cw_file->FILE)) != len) {
+            if ((ret = (int) fwrite(buffer, 1, len, (FILE *) cw_file->FILE)) != (int) len) {
                 ret = CW_ERR;
             }
             break;
@@ -285,6 +298,9 @@ int cw_write(CW_FILE *cw_file, void *buffer, unsigned int len)
             } else {
                 ret = CW_ERR;
             }
+            break;
+
+        default:
             break;
     }
 
@@ -327,6 +343,9 @@ int cw_puts(CW_FILE *cw_file, const char *str)
                 ret = CW_ERR;
             }
             break;
+
+        default:
+            break;
     }
 
     return ret;
@@ -345,7 +364,6 @@ int cw_printf(CW_FILE *cw_file, const char *format, ...)
 
     // Fill format string
     int ret;
-    int buf_len = 0;
     gchar *buf = NULL;
     ret = g_vasprintf(&buf, format, vl);
 
@@ -379,6 +397,10 @@ int cw_printf(CW_FILE *cw_file, const char *format, ...)
             if (bzerror != BZ_OK) {
                 ret = CW_ERR;
             }
+            break;
+
+        default:
+            ret = CW_ERR;
             break;
     }
 

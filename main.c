@@ -1,4 +1,5 @@
 #include <glib.h>
+#include <glib/gstdio.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -744,7 +745,7 @@ int main(int argc, char **argv) {
         g_queue_push_head(sub_dirs, input_dir_stripped);
 
         char *dirname;
-        while (dirname = g_queue_pop_head(sub_dirs)) {
+        while ((dirname = g_queue_pop_head(sub_dirs))) {
             // Open dir
             GDir *dirp;
             dirp = g_dir_open (dirname, 0, NULL);
@@ -754,7 +755,7 @@ int main(int argc, char **argv) {
             }
 
             const gchar *filename;
-            while (filename = g_dir_read_name(dirp)) {
+            while ((filename = g_dir_read_name(dirp))) {
                 gchar *full_path = g_strconcat(dirname, "/", filename, NULL);
                 if (!g_file_test(full_path, G_FILE_TEST_IS_REGULAR)) {
                     if (g_file_test(full_path, G_FILE_TEST_IS_DIR)) {
@@ -813,7 +814,7 @@ int main(int argc, char **argv) {
             // Get index of last '/'
             int rel_path_len = strlen(relative_path);
             int x = rel_path_len;
-            for (x; x > 0; x--) {
+            for (; x > 0; x--) {
                 if (relative_path[x] == '/') {
                     break;
                 }

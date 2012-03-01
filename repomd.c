@@ -101,14 +101,21 @@ contentStat *get_compressed_content_stat(const char *filename, ChecksumType chec
         case PKG_CHECKSUM_SHA256:
             gchecksumtype = G_CHECKSUM_SHA256;
             break;
+        default:
+            g_critical(MODULE"get_compressed_content_stat: Unknown checksum type");
+            return NULL;
     };
 
 
     // Read compressed file and calculate checksum and size
 
     GChecksum *checksum = g_checksum_new(gchecksumtype);
-    long size = 0;
+    if (!checksum) {
+        g_critical(MODULE"get_compressed_content_stat: g_checksum_new() failed");
+        return NULL;
+    }
 
+    long size = 0;
     long readed;
     unsigned char buffer[BUFFER_SIZE];
 

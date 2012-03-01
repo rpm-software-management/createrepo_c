@@ -55,7 +55,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
 
 #define MAX_STR_INT_LEN 24
     char tmp_epoch[MAX_STR_INT_LEN];
-    if (snprintf(tmp_epoch, MAX_STR_INT_LEN, "%lld", headerGetNumber(hdr, RPMTAG_EPOCH)) <= 0) {
+    if (snprintf(tmp_epoch, MAX_STR_INT_LEN, "%llu", (long long unsigned int) headerGetNumber(hdr, RPMTAG_EPOCH)) <= 0) {
         tmp_epoch[0] = '\0';
     }
     pkg->epoch = g_string_chunk_insert_len(pkg->chunk, tmp_epoch, MAX_STR_INT_LEN);

@@ -53,7 +53,7 @@ void dump_changelog(xmlTextWriterPtr writer, Package *package)
         }
 
         // Write param date
-        rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "date", "%lld", entry->date);
+        rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "date", "%lld", (long long int) entry->date);
         if (rc < 0) {
              g_critical(MODULE"dump_changelog: Error at xmlTextWriterWriteFormatAttribute");
              return;

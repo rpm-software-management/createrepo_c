@@ -38,10 +38,15 @@ void dump_files(xmlTextWriterPtr writer, Package *package, int primary)
         gchar *fullname;
         fullname = g_strconcat(entry->path, entry->name, NULL);
 
+        if (!fullname) {
+            continue;
+        }
+
 
         // Skip a file if we want primary files and the file is not one
 
         if (primary && !is_primary(fullname)) {
+            g_free(fullname);
             continue;
         }
 
@@ -54,6 +59,7 @@ void dump_files(xmlTextWriterPtr writer, Package *package, int primary)
         rc = xmlTextWriterStartElement(writer, BAD_CAST "file");
         if (rc < 0) {
             g_critical(MODULE"dump_files: Error at xmlTextWriterWriteElement");
+            g_free(fullname);
             return;
         }
 
@@ -62,18 +68,18 @@ void dump_files(xmlTextWriterPtr writer, Package *package, int primary)
             rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "type", "%s", entry->type);
             if (rc < 0) {
                  g_critical(MODULE"dump_files: Error at xmlTextWriterWriteFormatAttribute");
+                 g_free(fullname);
                  return;
             }
 
         }
 
         // Write text (file path)
-        if (fullname) {
-            rc = xmlTextWriterWriteFormatString(writer, "%s", fullname);
-            if (rc < 0) {
-                g_critical(MODULE"dump_files: Error at xmlTextWriterWriteFormatString\n");
-                return;
-            }
+        rc = xmlTextWriterWriteFormatString(writer, "%s", fullname);
+        g_free(fullname);
+        if (rc < 0) {
+            g_critical(MODULE"dump_files: Error at xmlTextWriterWriteFormatString\n");
+            return;
         }
 
         // Close file element

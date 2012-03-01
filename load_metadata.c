@@ -145,8 +145,8 @@ void process_node(GHashTable *metadata, xmlTextReaderPtr pri_reader,
     char *location_href = NULL;
     char *location_base = NULL;
     char *checksum_type = NULL;
-    long time_file;
-    long size;
+    long time_file = -1;
+    long size = -1;
 
     xmlNodePtr node = pri_pkg_node->children;
     int counter = 0;
@@ -183,8 +183,8 @@ void process_node(GHashTable *metadata, xmlTextReaderPtr pri_reader,
         node = xmlNextElementSibling(node);
     }
 
-    if ( !location_href || !checksum_type) {
-        g_warning(MODULE"process_node: Bad xml data! Some information are missing!");
+    if ( counter != 4 || !location_href || !checksum_type) {
+        g_warning(MODULE"process_node: Bad xml data! Some information are missing (for package: %s)!", location_href);
         g_free(pri_pkg_xml);
         g_free(fil_pkg_xml);
         g_free(oth_pkg_xml);

@@ -336,14 +336,14 @@ void dump_base_items(xmlTextWriterPtr writer, Package *package)
     }
 
     // Write time attribute file
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "file", "%lld", package->time_file);
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "file", "%lld", (long long int) package->time_file);
     if (rc < 0) {
          g_critical(MODULE"dump_base_items: Error at xmlTextWriterWriteFormatAttribute");
          return;
     }
 
     // Write time attribute build
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "build", "%lld", package->time_build);
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "build", "%lld", (long long int) package->time_build);
     if (rc < 0) {
          g_critical(MODULE"dump_base_items: Error at xmlTextWriterWriteFormatAttribute");
          return;
@@ -368,21 +368,21 @@ void dump_base_items(xmlTextWriterPtr writer, Package *package)
     }
 
     // Write size attribute package
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "package", "%lld", package->size_package);
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "package", "%lld", (long long int)  package->size_package);
     if (rc < 0) {
          g_critical(MODULE"dump_base_items: Error at xmlTextWriterWriteFormatAttribute");
          return;
     }
 
     // Write size attribute installed
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "installed", "%lld", package->size_installed);
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "installed", "%lld", (long long int) package->size_installed);
     if (rc < 0) {
          g_critical(MODULE"dump_base_items: Error at xmlTextWriterWriteFormatAttribute");
          return;
     }
 
     // Write size attribute archive
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "archive", "%lld", package->size_archive);
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "archive", "%lld", (long long int) package->size_archive);
     if (rc < 0) {
          g_critical(MODULE"dump_base_items: Error at xmlTextWriterWriteFormatAttribute");
          return;
@@ -507,14 +507,14 @@ void dump_base_items(xmlTextWriterPtr writer, Package *package)
     }
 
     // Write header-range attribute hdrstart
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "start", "%lld", package->rpm_header_start);
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "start", "%lld", (long long int) package->rpm_header_start);
     if (rc < 0) {
          g_critical(MODULE"dump_base_items: Error at xmlTextWriterWriteFormatAttribute");
          return;
     }
 
     // Write header-range attribute hdrend
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "end", "%lld", package->rpm_header_end);
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "end", "%lld", (long long int)  package->rpm_header_end);
     if (rc < 0) {
          g_critical(MODULE"dump_base_items: Error at xmlTextWriterWriteFormatAttribute");
          return;

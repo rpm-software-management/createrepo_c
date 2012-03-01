@@ -504,9 +504,9 @@ struct XmlStruct xml_from_header(Header hdr, gint64 mtime, gint64 size,
                                 location_base, changelog_limit, hdr_start, hdr_end);
 
     struct XmlStruct result;
-    result.primary = xml_dump_primary(pkg, NULL);
-    result.filelists = xml_dump_filelists(pkg, NULL);
-    result.other = xml_dump_other(pkg, NULL);
+    result.primary = xml_dump_primary(pkg);
+    result.filelists = xml_dump_filelists(pkg);
+    result.other = xml_dump_other(pkg);
 
     // Cleanup
     package_free(pkg);

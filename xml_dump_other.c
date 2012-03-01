@@ -1,3 +1,5 @@
+#include <glib.h>
+#include <assert.h>
 #include <stdio.h>
 #include <string.h>
 #include <libxml/encoding.h>
@@ -6,10 +8,9 @@
 #include "package.h"
 #include "xml_dump.h"
 
-#define MY_ENCODING "UTF-8"
-//#define DEBUG
-#undef DEBUG
-//#define DEBUG_REQUIRES
+#undef MODULE
+#define MODULE "xml_dump_other: "
+
 
 #define PROVIDES    0
 #define CONFLICTS   1
@@ -17,17 +18,9 @@
 #define REQUIRES    3
 
 
-void
-dump_changelog(xmlTextWriterPtr writer, Package *package, xmlCharEncodingHandlerPtr handler)
+void dump_changelog(xmlTextWriterPtr writer, Package *package)
 {
-#ifdef DEBUG
-    printf("CALLED dump_changelog\n");
-#endif
-
     int rc;
-    char n[] = "";
-    xmlChar *tmp = NULL;
-    gchar   *tmp2 = NULL;
 
     if (!package->changelogs) {
         return;
@@ -38,74 +31,58 @@ dump_changelog(xmlTextWriterPtr writer, Package *package, xmlCharEncodingHandler
 
         ChangelogEntry *entry = (ChangelogEntry*) element->data;
 
+        assert(entry);
+
+
         // ***********************************
-        // Element: file
+        // Element: Changelog
         // ************************************
+
+        // Open changelog element
         rc = xmlTextWriterStartElement(writer, BAD_CAST "changelog");
         if (rc < 0) {
-            printf("Error at xmlTextWriterWriteElement\n");
+            g_critical(MODULE"dump_changelog: Error at xmlTextWriterWriteElement");
             return;
         }
 
         // Write param author
-        tmp = ConvertInput(entry->author, handler);
-        if (!tmp) tmp = n;
-        rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "author", tmp);
+        rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "author", "%s", entry->author);
         if (rc < 0) {
-             printf("Error at xmlTextWriterWriteAttribute\n");
+             g_critical(MODULE"dump_changelog: Error at xmlTextWriterWriteAttribute");
              return;
         }
-        if (handler && tmp != NULL && tmp != n) xmlFree(tmp);
 
         // Write param date
-        rc = xmlTextWriterWriteFormatAttribute(writer, "date", "%d", entry->date);
+        rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "date", "%lld", entry->date);
         if (rc < 0) {
-             printf("Error at xmlTextWriterWriteAttribute\n");
+             g_critical(MODULE"dump_changelog: Error at xmlTextWriterWriteFormatAttribute");
              return;
         }
 
-        // Write text
-        tmp = ConvertInput(entry->changelog, handler);
-        if (!tmp) tmp = n;
-        xmlTextWriterWriteString(writer, BAD_CAST tmp);
-        if (handler && tmp != NULL && tmp != n) xmlFree(tmp);
+        // Write changelog text
+        rc = xmlTextWriterWriteFormatString(writer, "%s", entry->changelog);
+        if (rc < 0) {
+             g_critical(MODULE"dump_changelog: Error at xmlTextWriterWriteFormatString");
+             return;
+        }
 
-        // Close file element
+        // Close changelog element
         rc = xmlTextWriterEndElement(writer);
         if (rc < 0) {
-            printf("Error at xmlTextWriterEndElement\n");
+            g_critical(MODULE"dump_changelog: Error at xmlTextWriterEndElement");
             return;
         }
     }
 }
 
 
-/**
- * dump_base_items:
- * @writer:
- * @package:
- *
- * Converts @pkg_dict into xml string
- *
- * Returns the converted XML string, or NULL in case of error.
- */
-void
-dump_other_items(xmlTextWriterPtr writer, Package *package, xmlCharEncodingHandlerPtr handler)
+void dump_other_items(xmlTextWriterPtr writer, Package *package)
 {
     int rc;
-    char n[] = "";
-    char zero[] = "0";
-    xmlChar *tmp  = NULL;
-    gchar   *tmp2 = NULL;
 
-#ifdef DEBUG
-    printf("CALLED dump_other_items\n");
-#endif
-
-    //rc = xmlTextWriterStartDocument(writer, NULL, MY_ENCODING, NULL);
     rc = xmlTextWriterStartDocument(writer, NULL, NULL, NULL);
     if (rc < 0) {
-        printf ("Error at xmlTextWriterStartDocument\n");
+        g_critical(MODULE"dump_other_items: Error at xmlTextWriterStartDocument");
         return;
     }
 
@@ -113,157 +90,136 @@ dump_other_items(xmlTextWriterPtr writer, Package *package, xmlCharEncodingHandl
     /***********************************
     Element: package
     ************************************/
+
+    // Open package element
     rc = xmlTextWriterStartElement(writer, BAD_CAST "package");
     if (rc < 0) {
-        printf("Error at xmlTextWriterStartElement\n");
+        g_critical(MODULE"dump_other_items: Error at xmlTextWriterStartElement");
         return;
     }
 
-    /* Add an attribute to package */
-    tmp = ConvertInput(package->pkgId, handler);
-    if (!tmp) tmp = n;
-    rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "pkgid", tmp);
+    // Add pkgid attribute
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "pkgid", "%s", package->pkgId);
     if (rc < 0) {
-         printf("Error at xmlTextWriterWriteAttribute\n");
+         g_critical(MODULE"dump_other_items: Error at xmlTextWriterWriteFormatAttribute");
          return;
     }
-    if (handler && tmp != NULL && tmp != n) xmlFree(tmp);
 
-    tmp = ConvertInput(package->name, handler);
-    if (!tmp) tmp = n;
-    rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "name", tmp);
+    // Add name attribute
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "name", "%s", package->name);
     if (rc < 0) {
-         printf("Error at xmlTextWriterWriteAttribute\n");
+         g_critical(MODULE"dump_other_items: Error at xmlTextWriterWriteFormatAttribute");
          return;
     }
-    if (handler && tmp != NULL && tmp != n) xmlFree(tmp);
 
-    tmp = ConvertInput(package->arch, handler);
-    if (!tmp) tmp = n;
-    rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "arch", tmp);
+    // Add arch attribute
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "arch", "%s", package->arch);
     if (rc < 0) {
-         printf("Error at xmlTextWriterWriteAttribute\n");
+         g_critical(MODULE"dump_other_items: Error at xmlTextWriterWriteFormatAttribute");
          return;
     }
-    if (handler && tmp != NULL && tmp != n) xmlFree(tmp);
+
 
     /***********************************
     Element: version
     ************************************/
+
+    // Open version element
     rc = xmlTextWriterStartElement(writer, BAD_CAST "version");
     if (rc < 0) {
-        printf("Error at xmlTextWriterStartElement\n");
+        g_critical(MODULE"dump_other_items: Error at xmlTextWriterStartElement");
         return;
     }
 
-    /* Write version attribute epoch */
-    tmp = ConvertInput(package->epoch, handler);
-    if (!tmp) tmp = zero;
-    rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "epoch", tmp);
-    if (rc < 0) {
-         printf("Error at xmlTextWriterWriteAttribute\n");
-         return;
+    // Write version attribute epoch
+    if (!package->epoch) {
+        rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "arch", BAD_CAST "0");
+    } else {
+        rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "arch", "%s", package->epoch);
     }
-    if (handler && tmp != NULL && tmp != zero) xmlFree(tmp);
-
-    /* Write version attribute ver */
-    tmp = ConvertInput(package->version, handler);
-    if (!tmp) tmp = n;
-    rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "ver", tmp);
     if (rc < 0) {
-         printf("Error at xmlTextWriterWriteAttribute\n");
-         return;
+        g_critical(MODULE"dump_other_items: Error at xmlTextWriterWrite(Format)Attribute");
+        return;
     }
-    if (handler && tmp != NULL && tmp != n) xmlFree(tmp);
 
-    /* Write version attribute rel */
-    tmp = ConvertInput(package->release, handler);
-    if (!tmp) tmp = n;
-    rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "rel", tmp);
+    // Write version attribute ver
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "ver", "%s", package->version);
     if (rc < 0) {
-         printf("Error at xmlTextWriterWriteAttribute\n");
-         return;
+        g_critical(MODULE"dump_other_items: Error at xmlTextWriterWriteFormatAttribute");
+        return;
     }
-    if (handler && tmp != NULL && tmp != n) xmlFree(tmp);
 
-    /* Close version element */
+    // Write version attribute rel
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "rel", "%s", package->release);
+    if (rc < 0) {
+        g_critical(MODULE"dump_other_items: Error at xmlTextWriterWriteFormatAttribute");
+        return;
+    }
+
+    // Close version element
     rc = xmlTextWriterEndElement(writer);
     if (rc < 0) {
-        printf("Error at xmlTextWriterEndElement\n");
+        g_critical(MODULE"dump_other_items: Error at xmlTextWriterEndElement");
         return;
     }
 
-    /* Files dump */
-    dump_changelog(writer, package, handler);
 
-    /* Close package element */
+    // Files dump
+
+    dump_changelog(writer, package);
+
+
+    // Close package element
     rc = xmlTextWriterEndElement(writer);
     if (rc < 0) {
-        printf("Error at xmlTextWriterEndElement\n");
+        g_critical(MODULE"dump_other_items: Error at xmlTextWriterEndElement");
         return;
     }
 
-    /* Close document (and every still opened tags) */
+    // Close document (and every still opened tags)
     rc = xmlTextWriterEndDocument(writer);
     if (rc < 0) {
-        printf("Error at xmlTextWriterEndDocument\n");
+        g_critical(MODULE"dump_other_items: Error at xmlTextWriterEndDocument");
         return;
     }
 }
 
 
-char *
-xml_dump_other(Package *package, const char *encoding)
+char *xml_dump_other(Package *package)
 {
-
-    /*
-    * Global variable initialization
-    */
-
-    // Encoging handler for selected encoding
-    xmlCharEncodingHandlerPtr handler = NULL;
-    if (encoding) {
-        handler = xmlFindCharEncodingHandler(encoding);
-        if (!handler) {
-            printf("ConvertInput: no encoding handler found for 'utf-8'\n");
-            return NULL;
-        }
-    }
-
-    /*
-     * XML Gen
-     */
-
     xmlBufferPtr buf = xmlBufferCreate();
     if (buf == NULL) {
-        printf("Error creating the xml buffer\n");
+        g_critical(MODULE"xml_dump_other: Error creating the xml buffer");
         return NULL;
     }
 
     xmlTextWriterPtr writer = xmlNewTextWriterMemory(buf, 0);
     if (writer == NULL) {
-        printf("Error creating the xml writer\n");
+        g_critical(MODULE"xml_dump_other: Error creating the xml writer");
         return NULL;
     }
 
-#ifdef DEBUG
-    printf("Xml buffer and writer created\n");
-#endif
 
-    dump_other_items(writer, package, handler);
+    // Dump IT!
+
+    dump_other_items(writer, package);
+
 
     xmlFreeTextWriter(writer);
 
-    // Get rid off <?xml ...?> header
+
+    // Get XML from xmlBuffer without <?xml ...?> header
+
+    assert(buf->content);
+
     char *pkg_str = strstr((const char*) buf->content, "<package");
     if (!pkg_str) {
         pkg_str = (char*) buf->content;
     }
 
-    char *result = malloc(sizeof(char) * strlen(pkg_str) + 1);
-    strcpy(result, pkg_str);
+    char *result = g_strdup(pkg_str);
 
     xmlBufferFree(buf);
+
     return result;
 }
-

@@ -11,22 +11,12 @@ struct XmlStruct{
     char *other;
 };
 
-/**
- * ConvertInput:
- * @in: string in a given encoding
- * @encoding: the encoding used
- *
- * Converts @in into UTF-8 for processing with libxml2 APIs
- *
- * Returns the converted UTF-8 string, or NULL in case of error.
- */
-xmlChar *ConvertInput(const char *, xmlCharEncodingHandlerPtr);
 
-void dump_files(xmlTextWriterPtr, Package *, int, xmlCharEncodingHandlerPtr);
+void dump_files(xmlTextWriterPtr, Package *, int);
 
-char *xml_dump_primary(Package *, const char *);
-char *xml_dump_filelists(Package *, const char *);
-char *xml_dump_other(Package *, const char *);
-struct XmlStruct xml_dump(Package *, const char *);
+char *xml_dump_primary(Package *);
+char *xml_dump_filelists(Package *);
+char *xml_dump_other(Package *);
+struct XmlStruct xml_dump(Package *);
 
 #endif /* __C_CREATEREPOLIB_XML_DUMP_H__ */

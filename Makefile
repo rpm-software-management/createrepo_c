@@ -10,7 +10,9 @@ LC=-lc
 LC=-lc
 
 
-all: package.so xml_dump.so parsehdr.so parsepkg.so main
+all: main
+
+so: package.so xml_dump.so parsehdr.so parsepkg.so
 
 ctests: parsepkg_test_01 parsehdr_test_01 parsehdr_test_02 xml_dump_primary_test_01 \
         xml_dump_filelists_test_01 xml_dump_other_test_01 load_metadata_test_01 \
@@ -21,24 +23,28 @@ ctests: parsepkg_test_01 parsehdr_test_01 parsehdr_test_02 xml_dump_primary_test
 # Object files + Swit object files
 
 package.o package_wrap.o: package.i package.c package.h
-	$(SWIG) -python -Wall package.i
-	gcc $(CFLAGS) -c package.c package_wrap.c
+#	$(SWIG) -python -Wall package.i
+#	gcc $(CFLAGS) -c package.c package_wrap.c
+	gcc $(CFLAGS) -c package.c
 
 #xml_dump.o xml_dump_wrap.o: xml_dump.i xml_dump.c xml_dump.h
 #	$(SWIG) -python -Wall xml_dump.i
 #	gcc $(CFLAGS) -c xml_dump.c xml_dump_wrap.c
 
-xml_dump_wrap.o: xml_dump.i xml_dump.c xml_dump.h
-	$(SWIG) -python -Wall xml_dump.i
-	gcc $(CFLAGS) -c xml_dump.c xml_dump_wrap.c
+xml_dump.o xml_dump_wrap.o: xml_dump.i xml_dump.c xml_dump.h
+#	$(SWIG) -python -Wall xml_dump.i
+#	gcc $(CFLAGS) -c xml_dump.c xml_dump_wrap.c
+	gcc $(CFLAGS) -c xml_dump.c
 
 parsehdr.o parsehdr_wrap.o: parsehdr.c parsehdr.h
-	$(SWIG) -python -Wall parsehdr.i
-	gcc $(CFLAGS) -c parsehdr.c parsehdr_wrap.c
+#	$(SWIG) -python -Wall parsehdr.i
+#	gcc $(CFLAGS) -c parsehdr.c parsehdr_wrap.c
+	gcc $(CFLAGS) -c parsehdr.c
 
 parsepkg.o parsepkg_wrap.o: parsepkg.c parsepkg.h constants.h
-	$(SWIG) -python -Wall parsepkg.i
-	gcc $(CFLAGS) -c parsepkg.c parsepkg_wrap.c
+#	$(SWIG) -python -Wall parsepkg.i
+#	gcc $(CFLAGS) -c parsepkg.c parsepkg_wrap.c
+	gcc $(CFLAGS) -c parsepkg.c
 
 # TODO
 load_metadata.o load_metadata_wrap.o: load_metadata.c load_metadata.h constants.h compression_wrapper.h
@@ -73,17 +79,17 @@ xml_dump_filelists.o: xml_dump_filelists.c xml_dump.h
 xml_dump_other.o: xml_dump_other.c xml_dump.h
 	gcc $(CFLAGS) -c xml_dump_other.c
 
-package.so: package_wrap.o package.o
-	ld $(LINKFLAGS) -shared package.o package_wrap.o -o _package.so $(LC)
+#package.so: package_wrap.o package.o
+#	ld $(LINKFLAGS) -shared package.o package_wrap.o -o _package.so $(LC)
 
-xml_dump.so: package.o xml_dump_wrap.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o
-	ld $(LINKFLAGS) -shared package.o xml_dump_wrap.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o -o _xml_dump.so $(LC)
+#xml_dump.so: package.o xml_dump_wrap.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o
+#	ld $(LINKFLAGS) -shared package.o xml_dump_wrap.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o -o _xml_dump.so $(LC)
 
-parsehdr.so: parsehdr_wrap.o parsehdr.o package.o xml_dump.o misc.o
-	ld $(LINKFLAGS) -shared misc.o parsehdr_wrap.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o -o _parsehdr.so $(LC)
+#parsehdr.so: parsehdr_wrap.o parsehdr.o package.o xml_dump.o misc.o
+#	ld $(LINKFLAGS) -shared misc.o parsehdr_wrap.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o -o _parsehdr.so $(LC)
 
-parsepkg.so: parsepkg_wrap.o parsepkg.o parsehdr.o package.o xml_dump.o misc.o
-	ld $(LINKFLAGS) -shared misc.o parsepkg_wrap.o parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o -o _parsepkg.so $(LC)
+#parsepkg.so: parsepkg_wrap.o parsepkg.o parsehdr.o package.o xml_dump.o misc.o
+#	ld $(LINKFLAGS) -shared misc.o parsepkg_wrap.o parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o -o _parsepkg.so $(LC)
 
 #load_metadata.so: load_metadata_wrap.o load_metadata.o
 #	ld $(LINKFLAGS) -shared load_metadata_wrap.o load_metadata.o -o _load_metadata.so $(LC)

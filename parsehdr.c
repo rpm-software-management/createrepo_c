@@ -460,6 +460,19 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
             changelog->date      = time;
             changelog->changelog = safe_string_chunk_insert(pkg->chunk, rpmtdGetString(changelogtexts));
 
+            // Remove space from end of author name
+            if (changelog->author) {
+                size_t len, x;
+                len = strlen(changelog->author);
+                for (x=(len-1); x > 0; x--) {
+                    if (changelog->author[x] == ' ') {
+                        changelog->author[x] = '\0';
+                    } else {
+                        break;
+                    }
+                }
+            }
+
             pkg->changelogs = g_slist_prepend(pkg->changelogs, changelog);
             changelog_limit--;
 

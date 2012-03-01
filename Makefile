@@ -1,6 +1,6 @@
 SWIG=/usr/bin/swig
 # TODO: add -O2
-CFLAGS=-Wall -Wextra -fPIC -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags` -pthread
+CFLAGS=-Wall -Wextra -O2 -fPIC -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags` -pthread
 LINKFLAGS=-lmagic -lz -lbz2 `pkg-config --libs glib-2.0 --libs-only-l gthread-2.0` `xml2-config --libs` -lrpm -lrpmio
 LC=-lc
 

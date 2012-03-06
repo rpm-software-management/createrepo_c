@@ -40,21 +40,21 @@ void dump_filelists_items(xmlTextWriterPtr writer, Package *package)
     }
 
     // Write param pkgid
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "pkgid", "%s", package->pkgId);
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "pkgid", "%s", (package->pkgId) ? package->pkgId : "");
     if (rc < 0) {
         g_critical(MODULE"dump_filelists_items: Error at xmlTextWriterWriteFormatAttribute");
         return;
     }
 
     // Add name attribute
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "name", "%s", package->name);
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "name", "%s", (package->name) ? package->name : "");
     if (rc < 0) {
         g_critical(MODULE"dump_filelists_items: Error at xmlTextWriterWriteFormatAttribute");
         return;
     }
 
     // Add arch attribute
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "arch", "%s", package->arch);
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "arch", "%s", (package->arch) ? package->arch : "");
     if (rc < 0) {
         g_critical(MODULE"dump_filelists_items: Error at xmlTextWriterWriteFormatAttribute");
         return;
@@ -73,25 +73,21 @@ void dump_filelists_items(xmlTextWriterPtr writer, Package *package)
     }
 
     // Write version attribute epoch
-    if (!package->epoch) {
-        rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "arch", BAD_CAST "0");
-    } else {
-        rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "arch", "%s", package->epoch);
-    }
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "epoch", "%s", (package->epoch) ? package->epoch : "0");
     if (rc < 0) {
         g_critical(MODULE"dump_filelists_items: Error at xmlTextWriterWriteFormatAttribute");
         return;
     }
 
     // Write version attribute ver
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "ver", "%s", package->version);
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "ver", "%s", (package->version) ? package->version : "");
     if (rc < 0) {
         g_critical(MODULE"dump_filelists_items: Error at xmlTextWriterWriteFormatAttribute");
         return;
     }
 
     // Write version attribute rel
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "rel", "%s", package->release);
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "rel", "%s", (package->release) ? package->release : "");
     if (rc < 0) {
         g_critical(MODULE"dump_filelists_items: Error at xmlTextWriterWriteFormatAttribute");
         return;

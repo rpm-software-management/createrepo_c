@@ -50,7 +50,7 @@ void dump_pco(xmlTextWriterPtr writer, Package *package, int pcotype)
 
 
     /***********************************
-     PCP Element: provides, oboletes, conflicts, requires
+     PCOR Element: provides, oboletes, conflicts, requires
     ************************************/
 
     rc = xmlTextWriterStartElement(writer, BAD_CAST elem_name);
@@ -66,7 +66,7 @@ void dump_pco(xmlTextWriterPtr writer, Package *package, int pcotype)
 
         assert(entry);
 
-        if (!entry->name || entry->name == '\0') {
+        if (!entry->name || entry->name[0] == '\0') {
             continue;
         }
 
@@ -94,7 +94,7 @@ void dump_pco(xmlTextWriterPtr writer, Package *package, int pcotype)
                  return;
             }
 
-            if (entry->epoch && entry->epoch != '\0') {
+            if (entry->epoch && entry->epoch[0] != '\0') {
                 rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "epoch", "%s", entry->epoch);
                 if (rc < 0) {
                      g_critical(MODULE"dump_pco: Error at xmlTextWriterWriteFormatAttribute");
@@ -102,7 +102,7 @@ void dump_pco(xmlTextWriterPtr writer, Package *package, int pcotype)
                 }
             }
 
-            if (entry->version && entry->version != '\0') {
+            if (entry->version && entry->version[0] != '\0') {
                 rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "ver", "%s", entry->version);
                 if (rc < 0) {
                      g_critical(MODULE"dump_pco: Error at xmlTextWriterWriteFormatAttribute");
@@ -110,7 +110,7 @@ void dump_pco(xmlTextWriterPtr writer, Package *package, int pcotype)
                 }
             }
 
-            if (entry->release && entry->release != '\0') {
+            if (entry->release && entry->release[0] != '\0') {
                 rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "rel", "%s", entry->release);
                 if (rc < 0) {
                      g_critical(MODULE"dump_pco: Error at xmlTextWriterWriteFormatAttribute");
@@ -125,7 +125,7 @@ void dump_pco(xmlTextWriterPtr writer, Package *package, int pcotype)
             if (entry->pre) {
                 rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "pre", BAD_CAST "1");
             } else {
-                ; //rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "pre", BAD_CAST "0");
+                rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "pre", BAD_CAST "0");
             }
             if (rc < 0) {
                  g_critical(MODULE"dump_pco: Error at xmlTextWriterWriteAttribute");
@@ -414,7 +414,7 @@ void dump_base_items(xmlTextWriterPtr writer, Package *package)
     }
 
     // Write location attribute base
-    if (package->location_base && package->location_base != '\0') {
+    if (package->location_base && package->location_base[0] != '\0') {
         rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "xml:base", "%s", package->location_base);
         if (rc < 0) {
              g_critical(MODULE"dump_base_items: Error at xmlTextWriterWriteFormatAttribute");

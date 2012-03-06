@@ -24,11 +24,7 @@ void dump_files(xmlTextWriterPtr writer, Package *package, int primary)
 
         // File without name or path is suspicious => Skip it
 
-        if (!(entry->path)) {
-            continue;
-        }
-
-        if (!(entry->name)) {
+        if (!(entry->path) || !(entry->name)) {
             continue;
         }
 
@@ -63,9 +59,10 @@ void dump_files(xmlTextWriterPtr writer, Package *package, int primary)
             return;
         }
 
-        // Write type
-        if (entry->type && strcmp(entry->type, "file")) {
-            rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "type", "%s", entry->type);
+        // Write type (skip type if type value is empty of "file")
+        if (entry->type && entry->type[0] != '\0' && strcmp(entry->type, "file")) {
+            //rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "type", "%s", entry->type);
+            rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "type", BAD_CAST entry->type);
             if (rc < 0) {
                  g_critical(MODULE"dump_files: Error at xmlTextWriterWriteFormatAttribute");
                  g_free(fullname);
@@ -75,7 +72,8 @@ void dump_files(xmlTextWriterPtr writer, Package *package, int primary)
         }
 
         // Write text (file path)
-        rc = xmlTextWriterWriteFormatString(writer, "%s", fullname);
+        //rc = xmlTextWriterWriteFormatString(writer, "%s", fullname);
+        rc = xmlTextWriterWriteString(writer, BAD_CAST fullname);
         g_free(fullname);
         if (rc < 0) {
             g_critical(MODULE"dump_files: Error at xmlTextWriterWriteFormatString\n");

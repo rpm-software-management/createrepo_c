@@ -46,7 +46,7 @@ void dump_changelog(xmlTextWriterPtr writer, Package *package)
         }
 
         // Write param author
-        rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "author", "%s", entry->author);
+        rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "author", "%s", (entry->author) ? entry->author : "");
         if (rc < 0) {
              g_critical(MODULE"dump_changelog: Error at xmlTextWriterWriteAttribute");
              return;
@@ -60,7 +60,7 @@ void dump_changelog(xmlTextWriterPtr writer, Package *package)
         }
 
         // Write changelog text
-        rc = xmlTextWriterWriteFormatString(writer, "%s", entry->changelog);
+        rc = xmlTextWriterWriteFormatString(writer, "%s", (entry->changelog) ? entry->changelog : "");
         if (rc < 0) {
              g_critical(MODULE"dump_changelog: Error at xmlTextWriterWriteFormatString");
              return;
@@ -99,21 +99,21 @@ void dump_other_items(xmlTextWriterPtr writer, Package *package)
     }
 
     // Add pkgid attribute
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "pkgid", "%s", package->pkgId);
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "pkgid", "%s", (package->pkgId) ? package->pkgId : "");
     if (rc < 0) {
          g_critical(MODULE"dump_other_items: Error at xmlTextWriterWriteFormatAttribute");
          return;
     }
 
     // Add name attribute
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "name", "%s", package->name);
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "name", "%s", (package->name) ? package->name : "");
     if (rc < 0) {
          g_critical(MODULE"dump_other_items: Error at xmlTextWriterWriteFormatAttribute");
          return;
     }
 
     // Add arch attribute
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "arch", "%s", package->arch);
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "arch", "%s", (package->arch) ? package->arch : "");
     if (rc < 0) {
          g_critical(MODULE"dump_other_items: Error at xmlTextWriterWriteFormatAttribute");
          return;
@@ -132,25 +132,21 @@ void dump_other_items(xmlTextWriterPtr writer, Package *package)
     }
 
     // Write version attribute epoch
-    if (!package->epoch) {
-        rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "arch", BAD_CAST "0");
-    } else {
-        rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "arch", "%s", package->epoch);
-    }
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "epoch", "%s", (package->epoch) ? package->epoch : "0");
     if (rc < 0) {
         g_critical(MODULE"dump_other_items: Error at xmlTextWriterWrite(Format)Attribute");
         return;
     }
 
     // Write version attribute ver
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "ver", "%s", package->version);
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "ver", "%s", (package->version) ? package->version : "");
     if (rc < 0) {
         g_critical(MODULE"dump_other_items: Error at xmlTextWriterWriteFormatAttribute");
         return;
     }
 
     // Write version attribute rel
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "rel", "%s", package->release);
+    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "rel", "%s", (package->release) ? package->release : "");
     if (rc < 0) {
         g_critical(MODULE"dump_other_items: Error at xmlTextWriterWriteFormatAttribute");
         return;

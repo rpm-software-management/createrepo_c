@@ -1,16 +1,15 @@
 SWIG=/usr/bin/swig
-# TODO: add -O2
 CFLAGS=-Wall -Wextra -O2 -fPIC -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags` -pthread
 LINKFLAGS=-lmagic -lz -lbz2 `pkg-config --libs glib-2.0 --libs-only-l gthread-2.0` `xml2-config --libs` -lrpm -lrpmio
 LC=-lc
 
 # Profiling
-#CFLAGS=-pg -O -fPIC -DDEBUG -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags` -pthread
-#LINKFLAGS=/lib/gcrt0.o `pkg-config --libs glib-2.0` `xml2-config --libs` -lrpm -lrpmio
-LC=-lc
+#CFLAGS=-pg -Wall -Wextra -O2 -fPIC -DDEBUG -I/usr/include/python2.7/ `pkg-config --cflags glib-2.0` `xml2-config --cflags` -pthread
+#LINKFLAGS=-lmagic -lz -lbz2 `pkg-config --libs glib-2.0 --libs-only-l gthread-2.0` `xml2-config --libs` -lrpm -lrpmio
+#LC=-lc_p
 
 
-all: main
+all: createrepo_c
 
 so: package.so xml_dump.so parsehdr.so parsepkg.so
 
@@ -22,7 +21,8 @@ ctests: parsepkg_test_01 parsehdr_test_01 parsehdr_test_02 xml_dump_primary_test
 
 # Object files + Swit object files
 
-package.o package_wrap.o: package.i package.c package.h
+#package.o package_wrap.o: package.c package.h package.i
+package.o package_wrap.o: package.c package.h
 #	$(SWIG) -python -Wall package.i
 #	gcc $(CFLAGS) -c package.c package_wrap.c
 	gcc $(CFLAGS) -c package.c
@@ -31,7 +31,8 @@ package.o package_wrap.o: package.i package.c package.h
 #	$(SWIG) -python -Wall xml_dump.i
 #	gcc $(CFLAGS) -c xml_dump.c xml_dump_wrap.c
 
-xml_dump.o xml_dump_wrap.o: xml_dump.i xml_dump.c xml_dump.h
+#xml_dump.o xml_dump_wrap.o: xml_dump.i xml_dump.c xml_dump.h
+xml_dump.o xml_dump_wrap.o: xml_dump.c xml_dump.h
 #	$(SWIG) -python -Wall xml_dump.i
 #	gcc $(CFLAGS) -c xml_dump.c xml_dump_wrap.c
 	gcc $(CFLAGS) -c xml_dump.c
@@ -135,11 +136,11 @@ compression_wrapper_test_01: compression_wrapper.o
 	gcc $(LINKFLAGS) $(CFLAGS) compression_wrapper.o ctests/compression_wrapper_test_01.c -o ctests/compression_wrapper_test_01
 
 
-# Main
+# Createrepo_c
 
-main: compression_wrapper.o parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o load_metadata.o repomd.o
-	gcc $(LINKFLAGS) $(CFLAGS) compression_wrapper.o parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o repomd.o load_metadata.o main.c -o main
+createrepo_c: compression_wrapper.o parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o load_metadata.o repomd.o
+	gcc $(LINKFLAGS) $(CFLAGS) compression_wrapper.o parsepkg.o parsehdr.o package.o xml_dump.o xml_dump_primary.o xml_dump_filelists.o xml_dump_other.o misc.o repomd.o load_metadata.o createrepo_c.c -o createrepo_c
 
 
 clean:
-	rm -f *.o *.so *_wrap.* main *.pyc
+	rm -f *.o *.so *_wrap.* createrepo_c *.pyc

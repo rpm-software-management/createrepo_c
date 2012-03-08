@@ -222,7 +222,7 @@ void process_node(GHashTable *metadata, xmlTextReaderPtr pri_reader,
 
     // Check if key already exists
     if (g_hash_table_lookup(metadata, key)) {
-        g_warning(MODULE"process_node: Warning: Key \"%s\" already exists in old metadata\n", key);
+        g_debug(MODULE"process_node: Warning: Key \"%s\" already exists in old metadata\n", key);
         g_free(pri_pkg_xml);
         g_free(fil_pkg_xml);
         g_free(oth_pkg_xml);

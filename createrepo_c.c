@@ -756,9 +756,15 @@ int main(int argc, char **argv) {
 
             const gchar *filename;
             while ((filename = g_dir_read_name(dirp))) {
+
                 gchar *full_path = g_strconcat(dirname, "/", filename, NULL);
-                if (!g_file_test(full_path, G_FILE_TEST_IS_REGULAR)) {
-                    if (g_file_test(full_path, G_FILE_TEST_IS_DIR)) {
+
+                // Non .rpm files
+                if (!g_str_has_suffix (filename, ".rpm")) {
+                    if (!g_file_test(full_path, G_FILE_TEST_IS_REGULAR) && 
+                        g_file_test(full_path, G_FILE_TEST_IS_DIR))
+                    {
+                        // Directory
                         gchar *sub_dir_in_chunk = g_string_chunk_insert (sub_dirs_chunk, full_path);
                         g_queue_push_head(sub_dirs, sub_dir_in_chunk);
                         g_debug("Dir to scan: %s", sub_dir_in_chunk);
@@ -767,15 +773,10 @@ int main(int argc, char **argv) {
                     continue;
                 }
 
-                // Skip non .rpm files
-                if (!g_str_has_suffix (filename, ".rpm")) {
-                    g_free(full_path);
-                    continue;
-                }
-
                 // Skip symbolic links if --skip-symlinks arg is used
                 if (cmd_options.skip_symlinks && g_file_test(full_path, G_FILE_TEST_IS_SYMLINK)) {
                     g_debug("Skipped symlink: %s", full_path);
+                    g_free(full_path);
                     continue;
                 }
 

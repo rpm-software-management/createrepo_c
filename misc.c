@@ -39,7 +39,7 @@ const char *flag_to_string(gint64 flags)
 
 
 /*
- * BE CAREFULL!
+ * BE CAREFUL!
  *
  * In case chunk param is NULL:
  * Returned structure had all strings malloced!!!

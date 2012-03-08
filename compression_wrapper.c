@@ -132,15 +132,14 @@ CW_FILE *cw_open(const char *filename, int mode, CompressionType comtype)
 
         case (GZ_COMPRESSION): // ----------------------------------------------
             file->type = GZ_COMPRESSION;
-            file->FILE = g_malloc0(sizeof(gzFile));
             if (mode == CW_MODE_WRITE) {
-                *((gzFile *) file->FILE) = gzopen(filename, "wb");
-                gzsetparams(*((gzFile *) file->FILE), GZ_COMPRESSION_LEVEL, GZ_STRATEGY);
+                file->FILE = (void *) gzopen(filename, "wb");
+                gzsetparams((gzFile) file->FILE, GZ_COMPRESSION_LEVEL, GZ_STRATEGY);
             } else {
-                *((gzFile *) file->FILE) = gzopen(filename, "rb");
+                file->FILE = (void *) gzopen(filename, "rb");
             }
 
-            if (gzbuffer(*((gzFile *) file->FILE), GZ_BUFFER_SIZE) == -1) {
+            if (gzbuffer((gzFile) file->FILE, GZ_BUFFER_SIZE) == -1) {
                 g_debug(MODULE"cw_open: gzbuffer() call failed");
             }
             break;
@@ -197,11 +196,10 @@ int cw_close(CW_FILE *cw_file)
             break;
 
         case (GZ_COMPRESSION): // ----------------------------------------------
-            ret = gzclose( *((gzFile *) cw_file->FILE));
+            ret = gzclose((gzFile) cw_file->FILE);
             if (ret == Z_OK) {
                 cw_ret = CW_OK;
             }
-            g_free(cw_file->FILE);
             break;
 
         case (BZ2_COMPRESSION): // ---------------------------------------------
@@ -247,7 +245,7 @@ int cw_read(CW_FILE *cw_file, void *buffer, unsigned int len)
             break;
 
         case (GZ_COMPRESSION): // ----------------------------------------------
-            return gzread( *((gzFile *) cw_file->FILE), buffer, len);
+            return gzread((gzFile) cw_file->FILE, buffer, len);
             break;
 
         case (BZ2_COMPRESSION): // ---------------------------------------------
@@ -286,7 +284,7 @@ int cw_write(CW_FILE *cw_file, void *buffer, unsigned int len)
             break;
 
         case (GZ_COMPRESSION): // ----------------------------------------------
-            if ((ret = gzwrite( *((gzFile *) cw_file->FILE), buffer, len)) == 0) {
+            if ((ret = gzwrite((gzFile) cw_file->FILE, buffer, len)) == 0) {
                 ret = CW_ERR;
             }
             break;
@@ -329,7 +327,7 @@ int cw_puts(CW_FILE *cw_file, const char *str)
             break;
 
         case (GZ_COMPRESSION): // ----------------------------------------------
-            if (gzputs( *((gzFile *) cw_file->FILE), str) != -1) {
+            if (gzputs((gzFile) cw_file->FILE, str) != -1) {
                 ret = CW_OK;
             }
             break;
@@ -387,7 +385,7 @@ int cw_printf(CW_FILE *cw_file, const char *format, ...)
             break;
 
         case (GZ_COMPRESSION): // ----------------------------------------------
-            if (gzputs( *((gzFile *) cw_file->FILE), buf) == -1) {
+            if (gzputs((gzFile) cw_file->FILE, buf) == -1) {
                 ret = CW_ERR;
             }
             break;

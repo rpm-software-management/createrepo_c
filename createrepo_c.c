@@ -570,6 +570,7 @@ int main(int argc, char **argv) {
     gchar *in_repo  = NULL;  // path/to/repo/repodata/
     gchar *out_dir  = NULL;  // path/to/out_repo/
     gchar *out_repo = NULL;  // path/to/out_repo/repodata/
+    gchar *tmp_out_repo = NULL; // path/to/out_repo/.repodata/
 
     // Normalize in_dir format (result has exactly only one traling '/')
     int i = strlen(argv[1]);
@@ -594,14 +595,31 @@ int main(int argc, char **argv) {
             out_dir[i+1] = '/';
         }
         out_repo = g_strconcat(out_dir, "repodata/", NULL);
+        tmp_out_repo = g_strconcat(out_dir, ".repodata/", NULL);
     } else {
         out_dir  = g_strdup(in_dir);
         out_repo = g_strdup(in_repo);
+        tmp_out_repo = g_strconcat(out_dir, ".repodata/", NULL);
+    }
+
+
+    // Check if tmp_out_repo exists
+
+    if (g_file_test(tmp_out_repo, G_FILE_TEST_EXISTS)) {
+            g_critical("Temporary repodata directory: %s already exists! (Another createrepo process is running?)", tmp_out_repo);
+            exit(1);
+    }
+
+    // Create tmp_out_repo dir
+
+    if (g_mkdir (tmp_out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
+        g_critical("Error while creating temporary repodata directory %s", tmp_out_repo);
+        exit(1);
     }
 
 
     // Create out_repo dir if doesn't exists
-
+/*
     if (!g_file_test(out_repo, G_FILE_TEST_EXISTS)) {
         if (g_mkdir (out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
             g_critical("Error while creating repodata directory");
@@ -613,6 +631,7 @@ int main(int argc, char **argv) {
             exit(1);
         }
     }
+*/
 
 
     // Load old metadata if --update
@@ -644,12 +663,6 @@ int main(int argc, char **argv) {
     }
 
 
-    // Delete old metadata
-
-    g_debug("Removing old metadata");
-    remove_old_metadata(out_dir);
-
-
     // Compile global regexp for matching location tag in xml chunks
 
     GRegexCompileFlags re_compile_f = G_REGEX_DOTALL | G_REGEX_OPTIMIZE;
@@ -663,12 +676,12 @@ int main(int argc, char **argv) {
     CW_FILE *fil_cw_file;
     CW_FILE *oth_cw_file;
 
-    g_message("Output repo path: %s", out_repo);
+    g_message("Temporary output repo path: %s", tmp_out_repo);
     g_debug("Opening/Creating .xml.gz files");
 
-    gchar *pri_xml_filename = g_strconcat(out_repo, "/_primary.xml.gz", NULL);
-    gchar *fil_xml_filename = g_strconcat(out_repo, "/_filelists.xml.gz", NULL);
-    gchar *oth_xml_filename = g_strconcat(out_repo, "/_other.xml.gz", NULL);
+    gchar *pri_xml_filename = g_strconcat(tmp_out_repo, "/primary.xml.gz", NULL);
+    gchar *fil_xml_filename = g_strconcat(tmp_out_repo, "/filelists.xml.gz", NULL);
+    gchar *oth_xml_filename = g_strconcat(tmp_out_repo, "/other.xml.gz", NULL);
 
     if ((pri_cw_file = cw_open(pri_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
         g_critical("Cannot open file: %s", pri_xml_filename);
@@ -879,42 +892,74 @@ int main(int argc, char **argv) {
     cw_close(user_data.oth_f);
 
 
-    // Rename files
+    // Move files from out_repo into tmp_out_repo
 
-    g_debug("File renaming");
-    char *new_name;
-    gchar *pri_xml_name = g_strconcat("repodata/", "primary.xml.gz", NULL);
-    gchar *fil_xml_name = g_strconcat("repodata/", "filelists.xml.gz", NULL);
-    gchar *oth_xml_name = g_strconcat("repodata/", "other.xml.gz", NULL);
+    g_debug("Moving data from %s", out_repo);
+    if (g_file_test(out_repo, G_FILE_TEST_EXISTS)) {
 
-    new_name = g_strconcat(out_dir, pri_xml_name, NULL);
-    if (rename(pri_xml_filename, new_name)) {
-        perror("Error renaming file");
+        // Delete old metadata
+        g_debug("Removing old metadata from %s", out_repo);
+        remove_old_metadata(out_dir);
+
+        // Move files from out_repo to tmp_out_repo
+        GDir *dirp;
+        dirp = g_dir_open (out_repo, 0, NULL);
+        if (!dirp) {
+            g_critical("Cannot open directory: %s", out_repo);
+            exit(1);
+        }
+
+        const gchar *filename;
+        while ((filename = g_dir_read_name(dirp))) {
+            gchar *full_path = g_strconcat(out_repo, filename, NULL);
+            gchar *new_full_path = g_strconcat(tmp_out_repo, filename, NULL);
+
+            if (g_rename(full_path, new_full_path) == -1) {
+                g_critical("Cannot move file %s -> %s", full_path, new_full_path);
+            } else {
+                g_debug("Moved %s -> %s", full_path, new_full_path);
+            }
+
+            g_free(full_path);
+            g_free(new_full_path);
+        }
+
+        g_dir_close(dirp);
+
+        // Remove out_repo
+        if (g_rmdir(out_repo) == -1) {
+            g_critical("Cannot remove %s", out_repo);
+        } else {
+            g_debug("Old out repo %s removed", out_repo);
+        }
     }
-    g_free(new_name);
 
-    new_name = g_strconcat(out_dir, fil_xml_name, NULL);
-    if (rename(fil_xml_filename, new_name)) {
-        perror("Error renaming file");
-    }
-    g_free(new_name);
 
-    new_name = g_strconcat(out_dir, oth_xml_name, NULL);
-    if (rename(oth_xml_filename, new_name)) {
-        perror("Error renaming file");
+    // Rename tmp_out_repo to out_repo
+    if (g_rename(tmp_out_repo, out_repo) == -1) {
+        g_critical("Cannot rename %s -> %s", tmp_out_repo, out_repo);
+    } else {
+        g_debug("Renamed %s -> %s", tmp_out_repo, out_repo);
     }
-    g_free(new_name);
 
 
     // Create repomd.xml
 
     g_debug("Generating repomd.xml");
 
+    gchar *pri_xml_name = g_strconcat("repodata/", "primary.xml.gz", NULL);
+    gchar *fil_xml_name = g_strconcat("repodata/", "filelists.xml.gz", NULL);
+    gchar *oth_xml_name = g_strconcat("repodata/", "other.xml.gz", NULL);
+
     struct repomdResult *repomd_res = xml_repomd(out_dir, cmd_options.unique_md_filenames, pri_xml_name, fil_xml_name, oth_xml_name, NULL, NULL, NULL, &cmd_options.checksum_type);
     gchar *repomd_path = g_strconcat(out_repo, "repomd.xml", NULL);
 
     FILE *frepomd = fopen(repomd_path, "w");
-    fputs(repomd_res->repomd_xml, frepomd);
+    if (frepomd && repomd_res->repomd_xml) {
+        fputs(repomd_res->repomd_xml, frepomd);
+    } else {
+        g_critical("Generate of repomd.xml failed");
+    }
     fclose(frepomd);
 
     free_repomdresult(repomd_res);

@@ -60,8 +60,8 @@ struct VersionStruct string_to_version(const char *string, GStringChunk *chunk)
         return ver;
     }
 
-    char *ptr;  // These names are totally self explaining
-    char *ptr2; //
+    const char *ptr;  // These names are totally self explaining
+    const char *ptr2; //
 
 
     // Epoch
@@ -76,9 +76,7 @@ struct VersionStruct string_to_version(const char *string, GStringChunk *chunk)
             if (chunk) {
                 ver.epoch = g_string_chunk_insert_len(chunk, string, len);
             } else {
-                ver.epoch = malloc(sizeof(char) * (len + 1));
-                strncpy(ver.epoch, string, len);
-                ver.epoch[len] = '\0';
+                ver.epoch = g_strndup(string, len);
             }
         }
     } else { // There is no epoch
@@ -89,9 +87,7 @@ struct VersionStruct string_to_version(const char *string, GStringChunk *chunk)
         if (chunk) {
             ver.epoch = g_string_chunk_insert_const(chunk, "0");
         } else {
-            ver.epoch = malloc(sizeof(char) * 2);
-            ver.epoch[0] = '0';
-            ver.epoch[1] = '\0';
+            ver.epoch = g_strdup("0");
         }
     }
 
@@ -105,9 +101,7 @@ struct VersionStruct string_to_version(const char *string, GStringChunk *chunk)
         if (chunk) {
             ver.version = g_string_chunk_insert_len(chunk, ptr+1, version_len);
         } else {
-            ver.version = malloc(sizeof(char) * (version_len + 1));
-            strncpy(ver.version, ptr+1, version_len);
-            ver.version[version_len] = '\0';
+            ver.version = g_strndup(ptr+1, version_len);
         }
 
         // Release
@@ -116,16 +110,14 @@ struct VersionStruct string_to_version(const char *string, GStringChunk *chunk)
             if (chunk) {
                 ver.release = g_string_chunk_insert_len(chunk, ptr2+1, release_len);
             } else {
-                ver.release = malloc(sizeof(char) * (release_len+1));
-                strcpy(ver.release, ptr2+1);
+                ver.release = g_strndup(ptr2+1, release_len);
             }
         }
     } else { // Release is not here, just version
         if (chunk) {
             ver.version = g_string_chunk_insert_const(chunk, ptr+1);
         } else {
-            ver.version = malloc(sizeof(char) * (strlen(ptr+1) + 1));
-            strcpy(ver.version, ptr+1);
+            ver.version = g_strdup(ptr+1);
         }
     }
 

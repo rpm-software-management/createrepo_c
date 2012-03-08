@@ -121,25 +121,40 @@ void process_node(GHashTable *metadata, xmlTextReaderPtr pri_reader,
     xmlBufferPtr buf = xmlBufferCreate();
 
     len = xmlNodeDump(buf, NULL, pri_pkg_node, 0, 0);  // TODO: formatting
-    pri_pkg_xml = malloc(sizeof(char) * (len+1));
-    strcpy(pri_pkg_xml, (char *) xmlBufferContent(buf));
-    ((char *) pri_pkg_xml)[len] = '\0';
+    if (len >= 0) {
+        pri_pkg_xml = g_strndup((char *) xmlBufferContent(buf), (gsize) len);
+    } else {
+        pri_pkg_xml = NULL;
+        g_critical(MODULE"process_node: xmlNodeDump() [primary.xml] failed");
+    }
 
     xmlBufferEmpty(buf);
 
     len = xmlNodeDump(buf, NULL, fil_pkg_node, 0, 0);  // TODO: formatting
-    fil_pkg_xml = malloc(sizeof(char) * (len+1));
-    strcpy(fil_pkg_xml, (char *) xmlBufferContent(buf));
-    ((char *) fil_pkg_xml)[len] = '\0';
+    if (len >= 0) {
+        fil_pkg_xml = g_strndup((char *) xmlBufferContent(buf), (gsize) len);
+    } else {
+        fil_pkg_xml = NULL;
+        g_critical(MODULE"process_node: xmlNodeDump() [filelists.xml] failed");
+    }
 
     xmlBufferEmpty(buf);
 
     len = xmlNodeDump(buf, NULL, oth_pkg_node, 0, 0);  // TODO: formatting
-    oth_pkg_xml = malloc(sizeof(char) * (len+1));
-    strcpy(oth_pkg_xml, (char *) xmlBufferContent(buf));
-    ((char *) oth_pkg_xml)[len] = '\0';
+    if (len >= 0) {
+        oth_pkg_xml = g_strndup((char *) xmlBufferContent(buf), (gsize) len);
+    } else {
+        oth_pkg_xml = NULL;
+        g_critical(MODULE"process_node: xmlNodeDump() [other.xml] failed");
+    }
 
     xmlBufferFree(buf);
+
+
+    if (!pri_pkg_xml || !fil_pkg_xml || !oth_pkg_xml) {
+        return;
+    }
+
 
     // Get some info about package
     char *location_href = NULL;

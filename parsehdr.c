@@ -110,9 +110,8 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
 
     int dir_count;
     char **dir_list = NULL;
-    if (headerGet(hdr, RPMTAG_DIRNAMES, dirnames,  flags)) {
+    if (headerGet(hdr, RPMTAG_DIRNAMES, dirnames,  flags) && (dir_count = rpmtdCount(dirnames))) {
         int x = 0;
-        dir_count = rpmtdCount(dirnames);
         dir_list = malloc(sizeof(char *) * dir_count);
         while (rpmtdNext(dirnames) != -1) {
             dir_list[x] = safe_string_chunk_insert(pkg->chunk, rpmtdGetString(dirnames));
@@ -140,7 +139,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
         {
             PackageFile *packagefile = package_file_new();
             packagefile->name = safe_string_chunk_insert(pkg->chunk, rpmtdGetString(filenames));
-            packagefile->path = dir_list[(int) rpmtdGetNumber(indexes)];
+            packagefile->path = (dir_list) ? dir_list[(int) rpmtdGetNumber(indexes)] : "";
 
             if (S_ISDIR(rpmtdGetNumber(filemodes))) {
                 // Directory

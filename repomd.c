@@ -17,7 +17,7 @@
 
 #define DEFAULT_DATABASE_VERSION        10
 
-#define BUFFER_SIZE          131072  // 1024 * 128
+#define BUFFER_SIZE          8192
 
 #define RPM_NS          "http://linux.duke.edu/metadata/rpm"
 #define XMLNS_NS        "http://linux.duke.edu/metadata/repo"

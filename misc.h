@@ -29,5 +29,13 @@ struct HeaderRangeStruct get_header_byte_range(const char *filename);
 
 const char *get_checksum_name_str(ChecksumType type);
 
+char *get_filename(const char *filepath);
+
+
+#define CR_COPY_OK              0
+#define CR_COPY_ERR             1
+
+int copy_file(const char *src, const char *dst);
+
 
 #endif /* __C_CREATEREPOLIB_MISC_H__ */

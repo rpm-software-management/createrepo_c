@@ -355,3 +355,91 @@ const char *get_checksum_name_str(ChecksumType type)
 
     return name;
 }
+
+
+char *get_filename(const char *filepath)
+{
+    char *filename = NULL;
+
+    if (!filepath) {
+        return filename;
+    }
+
+    filename = (char *) filepath;
+    size_t x = 0;
+
+    while (filepath[x] != '\0') {
+        if (filepath[x] == '/') {
+            filename = (char *) filepath+(x+1);
+        }
+        x++;
+    }
+
+    return filename;
+}
+
+
+int copy_file(const char *src, const char *dst)
+{
+    size_t readed;
+    char buf[BUFFER_SIZE];
+
+    FILE *orig;
+    FILE *new;
+
+    if ((orig = fopen(src, "r")) == NULL) {
+        g_debug(MODULE"copy_file: Cannot open source file %s (%s)", src, strerror(errno));
+        return CR_COPY_ERR;
+    }
+
+    if ((new = fopen(dst, "w")) == NULL) {
+        g_debug(MODULE"copy_file: Cannot open destination file %s (%s)", dst, strerror(errno));
+        fclose(orig);
+        return CR_COPY_ERR;
+    }
+
+    while ((readed = fread(buf, 1, BUFFER_SIZE, orig)) > 0) {
+        if (fwrite(buf, 1, readed, new) != readed) {
+            g_debug(MODULE"copy_file: Error while copy %s -> %s (%s)", src, dst, strerror(errno));
+            fclose(new);
+            fclose(orig);
+            return CR_COPY_ERR;
+        }
+
+        if (readed != BUFFER_SIZE && ferror(orig)) {
+            g_debug(MODULE"copy_file: Error while copy %s -> %s (%s)", src, dst, strerror(errno));
+            fclose(new);
+            fclose(orig);
+            return CR_COPY_ERR;
+        }
+    }
+
+    fclose(new);
+    fclose(orig);
+
+    return CR_COPY_OK;
+}
+
+/*
+long int get_file_size(const char *path)
+{
+    if (!path) {
+        return -1;
+    }
+
+    FILE *f;
+    if ((f = fopen(path, "r")) == NULL) {
+        return -1;
+    }
+
+    if (fseek(f, 0, SEEK_END) != 0) {
+        return -1;
+    }
+
+    long int size = ftell(f);
+
+    fclose(f);
+
+    return size;
+}
+*/

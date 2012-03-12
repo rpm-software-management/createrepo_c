@@ -27,10 +27,30 @@
 #define REPOMD_ERR      1
 
 
+struct repomdData {
+    const char *location_href;
+    char *checksum;
+    char *checksum_type;
+    char *checksum_open;
+    char *checksum_open_type;
+    long timestamp;
+    long size;
+    long size_open;
+    int db_ver;
+
+    GStringChunk *chunk;
+};
+
+
 typedef struct _contentStat {
     char *checksum;
     long size;
 } contentStat;
+
+
+struct repomdData *new_repomddata();
+void free_repomddata(struct repomdData *);
+void free_repomdresult(struct repomdResult *);
 
 
 struct repomdData *new_repomddata()
@@ -66,6 +86,8 @@ void free_repomdresult(struct repomdResult *rr)
     g_free(rr->pri_sqlite_location);
     g_free(rr->fil_sqlite_location);
     g_free(rr->oth_sqlite_location);
+    g_free(rr->groupfile_location);
+    g_free(rr->cgroupfile_location);
     g_free(rr->repomd_xml);
 
     g_free(rr);
@@ -234,6 +256,119 @@ int fill_missing_data(const char *base_path, struct repomdData *md, ChecksumType
 }
 
 
+void process_groupfile(const char *base_path, struct repomdData *groupfile,
+                       struct repomdData *cgroupfile, ChecksumType *checksum_type)
+{
+    if (!groupfile || !(groupfile->location_href) || !strlen(groupfile->location_href)) {
+        return;
+    }
+
+
+    // Checksum stuff
+
+    const char *checksum_str = DEFAULT_CHECKSUM;
+    ChecksumType checksum_t = DEFAULT_CHECKSUM_ENUM_VAL;
+
+    if (checksum_type) {
+        checksum_str = get_checksum_name_str(*checksum_type);
+        checksum_t = *checksum_type;
+    }
+
+
+    // Paths
+
+    gchar *clocation_href = g_strconcat(groupfile->location_href, ".gz", NULL);
+    cgroupfile->location_href = g_string_chunk_insert(cgroupfile->chunk, clocation_href);
+    g_free(clocation_href);
+
+    gchar *path = g_strconcat(base_path, "/", groupfile->location_href, NULL);
+    gchar *cpath = g_strconcat(base_path, "/", cgroupfile->location_href, NULL);
+
+    if (!g_file_test(path, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR)) {
+        // File doesn't exists
+        g_warning(MODULE"process_groupfile: File %s doesn't exists", path);
+        return;
+    }
+
+
+    // Compress file + get size of non compressed file
+
+    int readed;
+    char buf[BUFFER_SIZE];
+    CW_FILE *cw_plain;
+    CW_FILE *cw_compressed;
+
+    cw_plain = cw_open(path, CW_MODE_READ, NO_COMPRESSION);
+    cw_compressed = cw_open(cpath, CW_MODE_WRITE, GZ_COMPRESSION);
+
+    while ((readed = cw_read(cw_plain, buf, BUFFER_SIZE)) > 0) {
+        if (cw_write(cw_compressed, buf, (unsigned int) readed) == CW_ERR) {
+            g_debug(MODULE"process_groupfile: Error while groupfile compression");
+            break;
+        }
+    }
+
+    cw_close(cw_compressed);
+    cw_close(cw_plain);
+
+    if (readed == CW_ERR) {
+        g_debug(MODULE"process_groupfile: Error while groupfile compression");
+    }
+
+
+    // Compute checksums
+
+    gchar *checksum;
+    gchar *cchecksum;
+    checksum = compute_file_checksum(path, checksum_t);
+    cchecksum = compute_file_checksum(cpath, checksum_t);
+
+
+    // Get stats
+
+    long gf_size = -1, cgf_size = -1;
+    long gf_time = -1, cgf_time = -1;
+    struct stat gf_stat, cgf_stat;
+
+    if (stat(path, &gf_stat)) {
+        g_debug(MODULE"process_groupfile: Error while stat() on %s", path);
+    } else {
+        gf_size = gf_stat.st_size;
+        gf_time = gf_stat.st_mtime;
+    }
+
+    if (stat(cpath, &cgf_stat)) {
+        g_debug(MODULE"process_groupfile: Error while stat() on %s", path);
+    } else {
+        cgf_size = cgf_stat.st_size;
+        cgf_time = cgf_stat.st_mtime;
+    }
+
+
+    // Results
+
+    groupfile->checksum = g_string_chunk_insert(groupfile->chunk, checksum);
+    groupfile->checksum_type = g_string_chunk_insert(groupfile->chunk, checksum_str);
+    groupfile->checksum_open = NULL;
+    groupfile->checksum_open_type = NULL;
+    groupfile->timestamp = gf_time;
+    groupfile->size = gf_size;
+    groupfile->size_open = -1;
+
+    cgroupfile->checksum = g_string_chunk_insert(cgroupfile->chunk, cchecksum);
+    cgroupfile->checksum_type = g_string_chunk_insert(cgroupfile->chunk, checksum_str);
+    cgroupfile->checksum_open = g_string_chunk_insert(groupfile->chunk, checksum);
+    cgroupfile->checksum_open_type = g_string_chunk_insert(groupfile->chunk, checksum_str);
+    cgroupfile->timestamp = cgf_time;
+    cgroupfile->size = cgf_size;
+    cgroupfile->size_open = gf_size;
+
+    g_free(checksum);
+    g_free(cchecksum);
+    g_free(path);
+    g_free(cpath);
+}
+
 
 void dump_data_items(xmlTextWriterPtr writer, struct repomdData *md, const xmlChar *type)
 {
@@ -249,10 +384,12 @@ void dump_data_items(xmlTextWriterPtr writer, struct repomdData *md, const xmlCh
     xmlTextWriterWriteString(writer, BAD_CAST md->checksum);
     xmlTextWriterEndElement(writer);
 
-    xmlTextWriterStartElement(writer, BAD_CAST "open-checksum");
-    xmlTextWriterWriteAttribute(writer, BAD_CAST "type", (xmlChar *) md->checksum_open_type);
-    xmlTextWriterWriteString(writer, BAD_CAST md->checksum_open);
-    xmlTextWriterEndElement(writer);
+    if (md->checksum_open) {
+        xmlTextWriterStartElement(writer, BAD_CAST "open-checksum");
+        xmlTextWriterWriteAttribute(writer, BAD_CAST "type", (xmlChar *) md->checksum_open_type);
+        xmlTextWriterWriteString(writer, BAD_CAST md->checksum_open);
+        xmlTextWriterEndElement(writer);
+    }
 
     xmlTextWriterStartElement(writer, BAD_CAST "location");
     xmlTextWriterWriteAttribute(writer, BAD_CAST "href", (xmlChar *) md->location_href);
@@ -266,9 +403,11 @@ void dump_data_items(xmlTextWriterPtr writer, struct repomdData *md, const xmlCh
     xmlTextWriterWriteFormatString(writer, "%ld", md->size);
     xmlTextWriterEndElement(writer);
 
-    xmlTextWriterStartElement(writer, BAD_CAST "open-size");
-    xmlTextWriterWriteFormatString(writer, "%ld", md->size_open);
-    xmlTextWriterEndElement(writer);
+    if (md->size_open != -1) {
+        xmlTextWriterStartElement(writer, BAD_CAST "open-size");
+        xmlTextWriterWriteFormatString(writer, "%ld", md->size_open);
+        xmlTextWriterEndElement(writer);
+    }
 
     if (g_str_has_suffix((char *)type, "_db")) {
         xmlTextWriterStartElement(writer, BAD_CAST "database_version");
@@ -281,7 +420,8 @@ void dump_data_items(xmlTextWriterPtr writer, struct repomdData *md, const xmlCh
 
 
 char *repomd_xml_dump(long revision, struct repomdData *pri_xml, struct repomdData *fil_xml, struct repomdData *oth_xml,
-                 struct repomdData *pri_sqlite, struct repomdData *fil_sqlite, struct repomdData *oth_sqlite)
+                 struct repomdData *pri_sqlite, struct repomdData *fil_sqlite, struct repomdData *oth_sqlite,
+                 struct repomdData *groupfile, struct repomdData *cgroupfile)
 {
     xmlBufferPtr buf = xmlBufferCreate();
     if (!buf) {
@@ -330,6 +470,8 @@ char *repomd_xml_dump(long revision, struct repomdData *pri_xml, struct repomdDa
     dump_data_items(writer, pri_sqlite, (const xmlChar *) "primary_db");
     dump_data_items(writer, fil_sqlite, (const xmlChar *) "filelists_db");
     dump_data_items(writer, oth_sqlite, (const xmlChar *) "other_db");
+    dump_data_items(writer, groupfile, (const xmlChar *) "group");
+    dump_data_items(writer, cgroupfile, (const xmlChar *) "group_gz");
 
     xmlTextWriterEndElement(writer); // repomd element end
 
@@ -400,9 +542,11 @@ void rename_file(const char *base_path, struct repomdData *md)
 }
 
 
-
-struct repomdResult *xml_repomd_2(const char *path, int rename_to_unique, struct repomdData *pri_xml, struct repomdData *fil_xml, struct repomdData *oth_xml,
-                 struct repomdData *pri_sqlite, struct repomdData *fil_sqlite, struct repomdData *oth_sqlite, ChecksumType *checksum_type)
+// groupfile is expected uncompressed!
+struct repomdResult *xml_repomd_2(const char *path, int rename_to_unique,
+                                  struct repomdData *pri_xml, struct repomdData *fil_xml, struct repomdData *oth_xml,
+                                  struct repomdData *pri_sqlite, struct repomdData *fil_sqlite, struct repomdData *oth_sqlite,
+                                  struct repomdData *groupfile, struct repomdData *cgroupfile, ChecksumType *checksum_type)
 {
     if (!path) {
         return NULL;
@@ -420,6 +564,8 @@ struct repomdResult *xml_repomd_2(const char *path, int rename_to_unique, struct
     fill_missing_data(path, fil_sqlite, checksum_type);
     fill_missing_data(path, oth_sqlite, checksum_type);
 
+    process_groupfile(path, groupfile, cgroupfile, checksum_type);
+
 
     // Include checksum in the metadata filename
 
@@ -430,6 +576,8 @@ struct repomdResult *xml_repomd_2(const char *path, int rename_to_unique, struct
         rename_file(path, pri_sqlite);
         rename_file(path, fil_sqlite);
         rename_file(path, oth_sqlite);
+        rename_file(path, groupfile);
+        rename_file(path, cgroupfile);
     }
 
 
@@ -441,6 +589,8 @@ struct repomdResult *xml_repomd_2(const char *path, int rename_to_unique, struct
     res->pri_sqlite_location = pri_sqlite ? g_strdup(pri_sqlite->location_href) : NULL;
     res->fil_sqlite_location = fil_sqlite ? g_strdup(fil_sqlite->location_href) : NULL;
     res->oth_sqlite_location = oth_sqlite ? g_strdup(oth_sqlite->location_href) : NULL;
+    res->groupfile_location = groupfile ? g_strdup(groupfile->location_href) : NULL;
+    res->cgroupfile_location = cgroupfile ? (char *) cgroupfile->location_href : NULL;
 
     // Get revision
 
@@ -449,7 +599,7 @@ struct repomdResult *xml_repomd_2(const char *path, int rename_to_unique, struct
 
     // Dump xml
 
-    res->repomd_xml = repomd_xml_dump(revision, pri_xml, fil_xml, oth_xml, pri_sqlite, fil_sqlite, oth_sqlite);
+    res->repomd_xml = repomd_xml_dump(revision, pri_xml, fil_xml, oth_xml, pri_sqlite, fil_sqlite, oth_sqlite, groupfile, cgroupfile);
 
     return res;
 }
@@ -457,7 +607,7 @@ struct repomdResult *xml_repomd_2(const char *path, int rename_to_unique, struct
 
 
 struct repomdResult *xml_repomd(const char *path, int rename_to_unique, const char *pri_xml, const char *fil_xml, const char *oth_xml,
-                 const char *pri_sqlite, const char *fil_sqlite, const char *oth_sqlite, ChecksumType *checksum_type)
+                 const char *pri_sqlite, const char *fil_sqlite, const char *oth_sqlite, const char *groupfile, ChecksumType *checksum_type)
 {
     if (!path) {
         return NULL;
@@ -469,6 +619,8 @@ struct repomdResult *xml_repomd(const char *path, int rename_to_unique, const ch
     struct repomdData *pri_sqlite_rd = NULL;
     struct repomdData *fil_sqlite_rd = NULL;
     struct repomdData *oth_sqlite_rd = NULL;
+    struct repomdData *groupfile_rd  = NULL;
+    struct repomdData *cgroupfile_rd  = NULL;
 
     if (pri_xml) {
         pri_xml_rd = new_repomddata();
@@ -494,10 +646,19 @@ struct repomdResult *xml_repomd(const char *path, int rename_to_unique, const ch
         oth_sqlite_rd = new_repomddata();
         oth_sqlite_rd->location_href = oth_sqlite;
     }
+    if (groupfile) {
+        groupfile_rd = new_repomddata();
+        groupfile_rd->location_href = groupfile;
+        cgroupfile_rd = new_repomddata();
+        cgroupfile_rd->location_href = groupfile;
+    }
 
     // Dump xml
 
-    struct repomdResult *res = xml_repomd_2(path, rename_to_unique, pri_xml_rd, fil_xml_rd, oth_xml_rd, pri_sqlite_rd, fil_sqlite_rd, oth_sqlite_rd, checksum_type);
+    struct repomdResult *res = xml_repomd_2(path, rename_to_unique,
+                                            pri_xml_rd, fil_xml_rd, oth_xml_rd,
+                                            pri_sqlite_rd, fil_sqlite_rd, oth_sqlite_rd,
+                                            groupfile_rd, cgroupfile_rd, checksum_type);
 
     free_repomddata(pri_xml_rd);
     free_repomddata(fil_xml_rd);
@@ -505,6 +666,8 @@ struct repomdResult *xml_repomd(const char *path, int rename_to_unique, const ch
     free_repomddata(pri_sqlite_rd);
     free_repomddata(fil_sqlite_rd);
     free_repomddata(oth_sqlite_rd);
+    free_repomddata(groupfile_rd);
+    free_repomddata(cgroupfile_rd);
 
     return res;
 }

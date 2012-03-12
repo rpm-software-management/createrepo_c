@@ -12,6 +12,7 @@
 #include "load_metadata.h"
 #include "repomd.h"
 #include "compression_wrapper.h"
+#include "misc.h"
 
 
 #define VERSION         "0.1"
@@ -22,6 +23,8 @@
 #define DEFAULT_WORKERS                 5
 #define DEFAULT_UNIQUE_MD_FILENAMES     TRUE
 
+#define BUF_SIZE        2048
+
 
 GRegex *location_subs_re;  // Evil global variable
 
@@ -30,11 +33,13 @@ struct CmdOptions {
 
     // Items filled by cmd option parser
 
+    char *input_dir;            //
     char *location_base;        // Base URL location for all files
     char *outputdir;            // Output directory
     char **excludes;            // List of file globs to exclude
     char *pkglist;              // File with files to include
     char **includepkg;          // List of files to include
+    char *groupfile;            // Groupfile
     gboolean quiet;             // Shut up!
     gboolean verbose;           // Verbosely more than usual
     gboolean update;            // Update repo if metadata already exists
@@ -52,6 +57,7 @@ struct CmdOptions {
 
     // Items filled by check_arguments()
 
+    char *groupfile_fullpath;
     GSList *exclude_masks;
     GSList *include_pkgs;
     GSList *l_update_md_paths;
@@ -270,16 +276,19 @@ static GOptionEntry cmd_entries[] =
     { "baseurl", 'u', 0, G_OPTION_ARG_FILENAME, &(cmd_options.location_base),
       "Optional base URL location for all files.", "<URL>" },
     { "outputdir", 'o', 0, G_OPTION_ARG_FILENAME, &(cmd_options.outputdir),
-      "Optional output directory", "<URL>" },
+      "Optional output directory.", "<URL>" },
     { "excludes", 'x', 0, G_OPTION_ARG_FILENAME_ARRAY, &(cmd_options.excludes),
       "File globs to exclude, can be specified multiple times.", "<packages>" },
     { "pkglist", 'i', 0, G_OPTION_ARG_FILENAME, &(cmd_options.pkglist),
-      "specify a text file which contains the complete list of files to include"
+      "Specify a text file which contains the complete list of files to include"
       " in the  repository  from the set found in the directory. File format is"
       " one package per line, no wildcards or globs.", "<filename>" },
     { "includepkg", 'n', 0, G_OPTION_ARG_FILENAME_ARRAY, &(cmd_options.includepkg),
-      "specify pkgs to include on the command line. Takes urls as well as local paths.",
+      "Specify pkgs to include on the command line. Takes urls as well as local paths.",
       "<packages>" },
+    { "groupfile", 'g', 0, G_OPTION_ARG_FILENAME, &(cmd_options.groupfile),
+      "Path to groupfile to include in metadata.",
+      "GROUPFILE" },
     { "quiet", 'q', 0, G_OPTION_ARG_NONE, &(cmd_options.quiet),
       "Run quietly.", NULL },
     { "verbose", 'v', 0, G_OPTION_ARG_NONE, &(cmd_options.verbose),
@@ -290,9 +299,9 @@ static GOptionEntry cmd_entries[] =
       "recalculating it. In the case of a large repository with only a few new or modified rpms"
       "this can significantly reduce I/O and processing time.", NULL },
     { "update-md-path", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &(cmd_options.update_md_paths),
-      "Use the existing repodata  for --update from this path", NULL },
+      "Use the existing repodata  for --update from this path.", NULL },
     { "skip-stat", 0, 0, G_OPTION_ARG_NONE, &(cmd_options.skip_stat),
-      "skip the stat() call on a --update, assumes if the filename is the same then the file is"
+      "Skip the stat() call on a --update, assumes if the filename is the same then the file is"
       "still the same (only use this if you're fairly trusting or gullible).", NULL },
     { "version", 'V', 0, G_OPTION_ARG_NONE, &(cmd_options.version),
       "Output version.", NULL},
@@ -301,7 +310,7 @@ static GOptionEntry cmd_entries[] =
     { "no-database", 0, 0, G_OPTION_ARG_NONE, &(cmd_options.no_database),
       "Do not generate sqlite databases in the repository.", NULL },
     { "skip-symlinks", 'S', 0, G_OPTION_ARG_NONE, &(cmd_options.skip_symlinks),
-      "Ignore symlinks of packages", NULL},
+      "Ignore symlinks of packages.", NULL},
     { "checksum", 's', 0, G_OPTION_ARG_STRING, &(cmd_options.checksum),
       "Choose the checksum type used in repomd.xml and  for  packages  in  the  metadata."
       "The default  is  now \"sha256\".", "<checksum_type>" },
@@ -309,12 +318,12 @@ static GOptionEntry cmd_entries[] =
       "Only import the last N changelog entries, from each rpm, into the metadata.",
       "<number>" },
     { "unique-md-filenames", 0, 0, G_OPTION_ARG_NONE, &(cmd_options.unique_md_filenames),
-      "Include the file's checksum in the metadata filename, helps HTTP caching (default)",
+      "Include the file's checksum in the metadata filename, helps HTTP caching (default).",
       NULL },
     { "simple-md-filenames", 0, 0, G_OPTION_ARG_NONE, &(cmd_options.simple_md_filenames),
       "Do not include the file's checksum in the metadata filename.", NULL },
     { "workers", 0, 0, G_OPTION_ARG_INT, &(cmd_options.workers),
-      "number of workers to spawn to read rpms.", NULL },
+      "Number of workers to spawn to read rpms.", NULL },
     { NULL }
 };
 
@@ -382,6 +391,21 @@ gboolean check_arguments(struct CmdOptions *options)
         x++;
     }
 
+    // Check groupfile
+    options->groupfile_fullpath = NULL;
+    if (options->groupfile) {
+        if (g_str_has_prefix(options->groupfile, "/")) {
+            options->groupfile_fullpath = g_strdup(options->groupfile);
+        } else {
+            options->groupfile_fullpath = g_strconcat(options->input_dir, options->groupfile, NULL);
+        }
+
+        if (!g_file_test(options->groupfile_fullpath, G_FILE_TEST_IS_REGULAR|G_FILE_TEST_EXISTS)) {
+            g_warning("groupfile %s doesn't exists", options->groupfile_fullpath);
+            return FALSE;
+        }
+    }
+
     // Process pkglist file
     if (options->pkglist) {
         if (!g_file_test(options->pkglist, G_FILE_TEST_IS_REGULAR|G_FILE_TEST_EXISTS)) {
@@ -430,10 +454,13 @@ gboolean check_arguments(struct CmdOptions *options)
 
 void free_options(struct CmdOptions *options)
 {
+    g_free(options->input_dir);
     g_free(options->location_base);
     g_free(options->outputdir);
     g_free(options->pkglist);
     g_free(options->checksum);
+    g_free(options->groupfile);
+    g_free(options->groupfile_fullpath);
 
     // Free excludes string list
     int x = 0;
@@ -525,15 +552,7 @@ int main(int argc, char **argv) {
 // ---------- DEBUG STUFF END */
 
 
-    // Check parsed arguments
-
-    if (!check_arguments(&cmd_options)) {
-        free_options(&cmd_options);
-        g_option_context_free(context);
-        exit(1);
-    }
-
-    g_option_context_free(context);
+    // Arguments pre-check
 
     if (cmd_options.version) {
         puts("Version: "VERSION);
@@ -544,6 +563,41 @@ int main(int argc, char **argv) {
         free_options(&cmd_options);
         exit(1);
     }
+
+
+    // Dirs
+
+    gchar *in_dir   = NULL;  // path/to/repo/
+    gchar *in_repo  = NULL;  // path/to/repo/repodata/
+    gchar *out_dir  = NULL;  // path/to/out_repo/
+    gchar *out_repo = NULL;  // path/to/out_repo/repodata/
+    gchar *tmp_out_repo = NULL; // path/to/out_repo/.repodata/
+
+
+    // Normalize in_dir format (result has exactly only one traling '/')
+
+    int i = strlen(argv[1]);
+    do {
+        i--;
+    } while (argv[1][i] == '/');
+    in_dir = g_strndup(argv[1], i+2);
+    if (in_dir[i+1] != '/') {
+        in_dir[i+1] = '/';
+    }
+
+    cmd_options.input_dir = g_strdup(in_dir);
+
+
+    // Check parsed arguments
+
+    if (!check_arguments(&cmd_options)) {
+        g_free(in_dir);
+        free_options(&cmd_options);
+        g_option_context_free(context);
+        exit(1);
+    }
+
+    g_option_context_free(context);
 
 
     // Set logging stuff
@@ -565,22 +619,6 @@ int main(int argc, char **argv) {
 
 
     // Set paths of input and output repos
-
-    gchar *in_dir   = NULL;  // path/to/repo/
-    gchar *in_repo  = NULL;  // path/to/repo/repodata/
-    gchar *out_dir  = NULL;  // path/to/out_repo/
-    gchar *out_repo = NULL;  // path/to/out_repo/repodata/
-    gchar *tmp_out_repo = NULL; // path/to/out_repo/.repodata/
-
-    // Normalize in_dir format (result has exactly only one traling '/')
-    int i = strlen(argv[1]);
-    do {
-        i--;
-    } while (argv[1][i] == '/');
-    in_dir = g_strndup(argv[1], i+2);
-    if (in_dir[i+1] != '/') {
-        in_dir[i+1] = '/';
-    }
 
     in_repo = g_strconcat(in_dir, "repodata/", NULL);
 
@@ -632,6 +670,17 @@ int main(int argc, char **argv) {
         }
     }
 */
+
+
+    // Copy groupfile
+    gchar *groupfile = NULL;
+    if (cmd_options.groupfile_fullpath) {
+        groupfile = g_strconcat(tmp_out_repo, get_filename(cmd_options.groupfile_fullpath), NULL);
+        g_debug("Copy groupfile %s -> %s", cmd_options.groupfile_fullpath, groupfile);
+        if (copy_file(cmd_options.groupfile_fullpath, groupfile) != CR_COPY_OK) {
+            g_critical("Error while copy %s -> %s", cmd_options.groupfile_fullpath, groupfile);
+        }
+    }
 
 
     // Load old metadata if --update
@@ -950,8 +999,9 @@ int main(int argc, char **argv) {
     gchar *pri_xml_name = g_strconcat("repodata/", "primary.xml.gz", NULL);
     gchar *fil_xml_name = g_strconcat("repodata/", "filelists.xml.gz", NULL);
     gchar *oth_xml_name = g_strconcat("repodata/", "other.xml.gz", NULL);
+    gchar *groupfile_name = g_strconcat("repodata/", get_filename(groupfile), NULL);
 
-    struct repomdResult *repomd_res = xml_repomd(out_dir, cmd_options.unique_md_filenames, pri_xml_name, fil_xml_name, oth_xml_name, NULL, NULL, NULL, &cmd_options.checksum_type);
+    struct repomdResult *repomd_res = xml_repomd(out_dir, cmd_options.unique_md_filenames, pri_xml_name, fil_xml_name, oth_xml_name, NULL, NULL, NULL, groupfile_name, &cmd_options.checksum_type);
     gchar *repomd_path = g_strconcat(out_repo, "repomd.xml", NULL);
 
     FILE *frepomd = fopen(repomd_path, "w");
@@ -967,6 +1017,7 @@ int main(int argc, char **argv) {
     g_free(pri_xml_name);
     g_free(fil_xml_name);
     g_free(oth_xml_name);
+    g_free(groupfile_name);
 
 
     // Clean up
@@ -986,6 +1037,7 @@ int main(int argc, char **argv) {
     g_free(pri_xml_filename);
     g_free(fil_xml_filename);
     g_free(oth_xml_filename);
+    g_free(groupfile);
 
     free_options(&cmd_options);
     free_package_parser();

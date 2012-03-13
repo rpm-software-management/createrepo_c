@@ -1,6 +1,5 @@
 PROJECT (createrepo_c)
-CMAKE_MINIMUM_REQUIRED (VERSION 2.4)
-#CMAKE_POLICY (SET CMP0005 OLD)
+CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
 
 # LibXml2 workaround:
 execute_process(COMMAND xml2-config --cflags

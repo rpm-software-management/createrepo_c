@@ -999,7 +999,10 @@ int main(int argc, char **argv) {
     gchar *pri_xml_name = g_strconcat("repodata/", "primary.xml.gz", NULL);
     gchar *fil_xml_name = g_strconcat("repodata/", "filelists.xml.gz", NULL);
     gchar *oth_xml_name = g_strconcat("repodata/", "other.xml.gz", NULL);
-    gchar *groupfile_name = g_strconcat("repodata/", get_filename(groupfile), NULL);
+    gchar *groupfile_name = NULL;
+    if (groupfile) {
+        groupfile_name = g_strconcat("repodata/", get_filename(groupfile), NULL);
+    }
 
     struct repomdResult *repomd_res = xml_repomd(out_dir, cmd_options.unique_md_filenames, pri_xml_name, fil_xml_name, oth_xml_name, NULL, NULL, NULL, groupfile_name, &cmd_options.checksum_type);
     gchar *repomd_path = g_strconcat(out_repo, "repomd.xml", NULL);
@@ -1032,6 +1035,7 @@ int main(int argc, char **argv) {
 
     g_free(in_repo);
     g_free(out_repo);
+    g_free(tmp_out_repo);
     g_free(in_dir);
     g_free(out_dir);
     g_free(pri_xml_filename);

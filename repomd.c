@@ -259,7 +259,7 @@ int fill_missing_data(const char *base_path, struct repomdData *md, ChecksumType
 void process_groupfile(const char *base_path, struct repomdData *groupfile,
                        struct repomdData *cgroupfile, ChecksumType *checksum_type)
 {
-    if (!groupfile || !(groupfile->location_href) || !strlen(groupfile->location_href)) {
+    if (!groupfile || !(groupfile->location_href) || !strlen(groupfile->location_href) || !cgroupfile) {
         return;
     }
 
@@ -287,6 +287,8 @@ void process_groupfile(const char *base_path, struct repomdData *groupfile,
     if (!g_file_test(path, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR)) {
         // File doesn't exists
         g_warning(MODULE"process_groupfile: File %s doesn't exists", path);
+        g_free(path);
+        g_free(cpath);
         return;
     }
 
@@ -590,7 +592,7 @@ struct repomdResult *xml_repomd_2(const char *path, int rename_to_unique,
     res->fil_sqlite_location = fil_sqlite ? g_strdup(fil_sqlite->location_href) : NULL;
     res->oth_sqlite_location = oth_sqlite ? g_strdup(oth_sqlite->location_href) : NULL;
     res->groupfile_location = groupfile ? g_strdup(groupfile->location_href) : NULL;
-    res->cgroupfile_location = cgroupfile ? (char *) cgroupfile->location_href : NULL;
+    res->cgroupfile_location = cgroupfile ? g_strdup(cgroupfile->location_href) : NULL;
 
     // Get revision
 
@@ -620,7 +622,7 @@ struct repomdResult *xml_repomd(const char *path, int rename_to_unique, const ch
     struct repomdData *fil_sqlite_rd = NULL;
     struct repomdData *oth_sqlite_rd = NULL;
     struct repomdData *groupfile_rd  = NULL;
-    struct repomdData *cgroupfile_rd  = NULL;
+    struct repomdData *cgroupfile_rd = NULL;
 
     if (pri_xml) {
         pri_xml_rd = new_repomddata();

@@ -56,6 +56,8 @@ void free_metadata_location(struct MetadataLocation *ml)
     g_free(ml->pri_sqlite_href);
     g_free(ml->fil_sqlite_href);
     g_free(ml->oth_sqlite_href);
+    g_free(ml->groupfile_href);
+    g_free(ml->cgroupfile_href);
     g_free(ml->repomd);
     g_free(ml);
 }
@@ -651,6 +653,10 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
             mdloc->fil_sqlite_href = full_location_href;
         } else if (!g_strcmp0((char *) data_type, "other_db")) {
             mdloc->oth_sqlite_href = full_location_href;
+        } else if (!g_strcmp0((char *) data_type, "group")) {
+            mdloc->groupfile_href = full_location_href;
+        } else if (!g_strcmp0((char *) data_type, "group_gz")) { // even with a createrepo param --xz this name has a _gz suffix
+            mdloc->cgroupfile_href = full_location_href;
         }
 
 
@@ -668,6 +674,37 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
     // Note: Do not free repomd! It is pointed from mdloc structure!
 
     return mdloc;
+}
+
+
+// Return list of non-null pointers on strings in the passed structure
+GSList *get_list_of_md_locations (struct MetadataLocation *ml)
+{
+    GSList *list = NULL;
+
+    if (!ml) {
+        return list;
+    }
+
+    if (ml->pri_xml_href)    list = g_slist_prepend(list, (gpointer) ml->pri_xml_href);
+    if (ml->fil_xml_href)    list = g_slist_prepend(list, (gpointer) ml->fil_xml_href);
+    if (ml->oth_xml_href)    list = g_slist_prepend(list, (gpointer) ml->oth_xml_href);
+    if (ml->pri_sqlite_href) list = g_slist_prepend(list, (gpointer) ml->pri_sqlite_href);
+    if (ml->fil_sqlite_href) list = g_slist_prepend(list, (gpointer) ml->fil_sqlite_href);
+    if (ml->oth_sqlite_href) list = g_slist_prepend(list, (gpointer) ml->oth_sqlite_href);
+    if (ml->groupfile_href)  list = g_slist_prepend(list, (gpointer) ml->groupfile_href);
+    if (ml->cgroupfile_href) list = g_slist_prepend(list, (gpointer) ml->cgroupfile_href);
+    if (ml->repomd)          list = g_slist_prepend(list, (gpointer) ml->repomd);
+
+    return list;
+}
+
+
+void free_list_of_md_locations(GSList *list)
+{
+    if (list) {
+        g_slist_free(list);
+    }
 }
 
 
@@ -730,9 +767,34 @@ int remove_old_metadata(const char *repopath)
     }
 
 
-    // List dir and remove all files which could be related to metadata
+    // Remove all metadata listed in repomd.xml
 
     int removed_files = 0;
+
+    struct MetadataLocation *ml;
+    ml = locate_metadata_via_repomd(repopath);
+    if (ml) {
+        GSList *list = get_list_of_md_locations(ml);
+        GSList *element;
+
+        for (element=list; element; element=element->next) {
+            gchar *path = (char *) element->data;
+
+            g_debug(MODULE"Removing: %s (path obtained from repomd.xml)", path);
+            if (g_remove(path) == -1) {
+                g_warning(MODULE"remove_old_metadata: Cannot remove %s", path);
+            } else {
+                removed_files++;
+            }
+        }
+
+        free_list_of_md_locations(list);
+        free_metadata_location(ml);
+    }
+
+
+    // (Just for sure) List dir and remove all files which could be related to an old metadata
+
     const gchar *file;
     while ((file = g_dir_read_name (repodir))) {
         if (g_str_has_suffix(file, "primary.xml.gz") ||

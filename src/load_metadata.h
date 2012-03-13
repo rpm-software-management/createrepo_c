@@ -23,6 +23,8 @@ struct MetadataLocation {
     char *pri_sqlite_href;
     char *fil_sqlite_href;
     char *oth_sqlite_href;
+    char *groupfile_href;
+    char *cgroupfile_href; // compressed groupfile location
     char *repomd;
 };
 

@@ -13,60 +13,15 @@
 #include "repomd.h"
 #include "compression_wrapper.h"
 #include "misc.h"
+#include "cmd_parser.h"
+#include "xml_dump.h"
 
 
 #define VERSION         "0.1"
 #define G_LOG_DOMAIN    ((gchar*) 0)
 
-#define DEFAULT_CHANGELOG_LIMIT         10
-#define DEFAULT_CHECKSUM                "sha256"
-#define DEFAULT_WORKERS                 5
-#define DEFAULT_UNIQUE_MD_FILENAMES     TRUE
-
-#define BUF_SIZE        2048
-
 
 GRegex *location_subs_re;  // Evil global variable
-
-
-struct CmdOptions {
-
-    // Items filled by cmd option parser
-
-    char *input_dir;            //
-    char *location_base;        // Base URL location for all files
-    char *outputdir;            // Output directory
-    char **excludes;            // List of file globs to exclude
-    char *pkglist;              // File with files to include
-    char **includepkg;          // List of files to include
-    char *groupfile;            // Groupfile
-    gboolean quiet;             // Shut up!
-    gboolean verbose;           // Verbosely more than usual
-    gboolean update;            // Update repo if metadata already exists
-    char **update_md_paths;     // Paths to other repositories which should be used for update
-    gboolean skip_stat;         // skip stat() call during --update
-    gboolean version;           // Output version.
-    gboolean database;          // Not implemented yet!!!
-    gboolean no_database;       // Implemented :-P
-    char *checksum;             // Type of checksum
-    gboolean skip_symlinks;     // Ignore symlinks of packages
-    int changelog_limit;
-    gboolean unique_md_filenames; // Include the file's checksum in filename
-    gboolean simple_md_filenames; // Simple checksum in filename
-    int workers;                // Number of threads to spawn
-
-    // Items filled by check_arguments()
-
-    char *groupfile_fullpath;
-    GSList *exclude_masks;
-    GSList *include_pkgs;
-    GSList *l_update_md_paths;
-    ChecksumType checksum_type;
-
-} cmd_options = {   .changelog_limit = DEFAULT_CHANGELOG_LIMIT,
-                    .checksum = NULL,
-                    .workers =  DEFAULT_WORKERS,
-                    .unique_md_filenames = DEFAULT_UNIQUE_MD_FILENAMES };
 
 
 struct UserData {
@@ -96,6 +51,14 @@ struct PoolTask {
 };
 
 
+
+void black_hole_log_function (const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data)
+{
+    return;
+}
+
+
+
 int allowed_file(const gchar *filename, struct CmdOptions *options)
 {
     // Check file against exclude glob masks
@@ -114,13 +77,6 @@ int allowed_file(const gchar *filename, struct CmdOptions *options)
         }
     }
     return TRUE;
-}
-
-
-
-void black_hole_log_function (const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data)
-{
-    return;
 }
 
 
@@ -269,299 +225,29 @@ void dumper_thread(gpointer data, gpointer user_data) {
 }
 
 
-// Command line params
-
-static GOptionEntry cmd_entries[] =
-{
-    { "baseurl", 'u', 0, G_OPTION_ARG_FILENAME, &(cmd_options.location_base),
-      "Optional base URL location for all files.", "<URL>" },
-    { "outputdir", 'o', 0, G_OPTION_ARG_FILENAME, &(cmd_options.outputdir),
-      "Optional output directory.", "<URL>" },
-    { "excludes", 'x', 0, G_OPTION_ARG_FILENAME_ARRAY, &(cmd_options.excludes),
-      "File globs to exclude, can be specified multiple times.", "<packages>" },
-    { "pkglist", 'i', 0, G_OPTION_ARG_FILENAME, &(cmd_options.pkglist),
-      "Specify a text file which contains the complete list of files to include"
-      " in the repository from the set found in the directory. File format is"
-      " one package per line, no wildcards or globs.", "<filename>" },
-    { "includepkg", 'n', 0, G_OPTION_ARG_FILENAME_ARRAY, &(cmd_options.includepkg),
-      "Specify pkgs to include on the command line. Takes urls as well as local paths.",
-      "<packages>" },
-    { "groupfile", 'g', 0, G_OPTION_ARG_FILENAME, &(cmd_options.groupfile),
-      "Path to groupfile to include in metadata.",
-      "GROUPFILE" },
-    { "quiet", 'q', 0, G_OPTION_ARG_NONE, &(cmd_options.quiet),
-      "Run quietly.", NULL },
-    { "verbose", 'v', 0, G_OPTION_ARG_NONE, &(cmd_options.verbose),
-      "Run verbosely.", NULL },
-    { "update", 0, 0, G_OPTION_ARG_NONE, &(cmd_options.update),
-      "If metadata already exists in the outputdir and an rpm is unchanged (based on file size "
-      "and mtime) since the metadata was generated, reuse the existing metadata rather than "
-      "recalculating it. In the case of a large repository with only a few new or modified rpms"
-      "this can significantly reduce I/O and processing time.", NULL },
-    { "update-md-path", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &(cmd_options.update_md_paths),
-      "Use the existing repodata for --update from this path.", NULL },
-    { "skip-stat", 0, 0, G_OPTION_ARG_NONE, &(cmd_options.skip_stat),
-      "Skip the stat() call on a --update, assumes if the filename is the same then the file is"
-      "still the same (only use this if you're fairly trusting or gullible).", NULL },
-    { "version", 'V', 0, G_OPTION_ARG_NONE, &(cmd_options.version),
-      "Output version.", NULL},
-    { "database", 'd', 0, G_OPTION_ARG_NONE, &(cmd_options.database),
-      "Generate sqlite databases for use with yum. NOT IMPLEMENTED!", NULL },
-    { "no-database", 0, 0, G_OPTION_ARG_NONE, &(cmd_options.no_database),
-      "Do not generate sqlite databases in the repository.", NULL },
-    { "skip-symlinks", 'S', 0, G_OPTION_ARG_NONE, &(cmd_options.skip_symlinks),
-      "Ignore symlinks of packages.", NULL},
-    { "checksum", 's', 0, G_OPTION_ARG_STRING, &(cmd_options.checksum),
-      "Choose the checksum type used in repomd.xml and for packages in the metadata."
-      "The default is now \"sha256\".", "<checksum_type>" },
-    { "changelog-limit", 0, 0, G_OPTION_ARG_INT, &(cmd_options.changelog_limit),
-      "Only import the last N changelog entries, from each rpm, into the metadata.",
-      "<number>" },
-    { "unique-md-filenames", 0, 0, G_OPTION_ARG_NONE, &(cmd_options.unique_md_filenames),
-      "Include the file's checksum in the metadata filename, helps HTTP caching (default).",
-      NULL },
-    { "simple-md-filenames", 0, 0, G_OPTION_ARG_NONE, &(cmd_options.simple_md_filenames),
-      "Do not include the file's checksum in the metadata filename.", NULL },
-    { "workers", 0, 0, G_OPTION_ARG_INT, &(cmd_options.workers),
-      "Number of workers to spawn to read rpms.", NULL },
-    { NULL }
-};
-
-
-gboolean check_arguments(struct CmdOptions *options)
-{
-    // Check outputdir
-    if (options->outputdir && !g_file_test(options->outputdir, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
-        g_warning("Specified outputdir \"%s\" doesn't exists", options->outputdir);
-        return FALSE;
-    }
-
-    // Check workers
-    if ((options->workers < 1) || (options->workers > 100)) {
-        g_warning("Wrong number of workers - Using 5 workers.");
-        options->workers = DEFAULT_WORKERS;
-    }
-
-    // Check changelog_limit
-    if ((options->changelog_limit < 0) || (options->changelog_limit > 100)) {
-        g_warning("Wrong changelog limit \"%d\" - Using 10", options->changelog_limit);
-        options->changelog_limit = DEFAULT_CHANGELOG_LIMIT;
-    }
-
-    // Check simple filenames
-    if (options->simple_md_filenames) {
-        options->unique_md_filenames = FALSE;
-    }
-
-    // Check and set checksum type
-    if (options->checksum) {
-        GString *checksum_str = g_string_ascii_down(g_string_new(options->checksum));
-        if (!strcmp(checksum_str->str, "sha256")) {
-            options->checksum_type = PKG_CHECKSUM_SHA256;
-        } else if (!strcmp(checksum_str->str, "sha1")) {
-            options->checksum_type = PKG_CHECKSUM_SHA1;
-        } else if (!strcmp(checksum_str->str, "md5")) {
-            options->checksum_type = PKG_CHECKSUM_MD5;
-        } else {
-            g_string_free(checksum_str, TRUE);
-            g_critical("Unknown/Unsupported checksum type \"%s\"", options->checksum);
-            return FALSE;
-        }
-        g_string_free(checksum_str, TRUE);
-    } else {
-        options->checksum = g_strdup("sha256");
-        options->checksum_type = PKG_CHECKSUM_SHA256;
-    }
-
-
-    int x;
-
-    // Process exclude glob masks
-    x = 0;
-    while (options->excludes && options->excludes[x] != NULL) {
-        GPatternSpec *pattern = g_pattern_spec_new(options->excludes[x]);
-        options->exclude_masks = g_slist_prepend(options->exclude_masks, (gpointer) pattern);
-        x++;
-    }
-
-    // Process includepkgs
-    x = 0;
-    while (options->includepkg && options->includepkg[x] != NULL) {
-        options->include_pkgs = g_slist_prepend(options->include_pkgs, (gpointer) options->includepkg[x]);
-        x++;
-    }
-
-    // Check groupfile
-    options->groupfile_fullpath = NULL;
-    if (options->groupfile) {
-        if (g_str_has_prefix(options->groupfile, "/")) {
-            options->groupfile_fullpath = g_strdup(options->groupfile);
-        } else {
-            options->groupfile_fullpath = g_strconcat(options->input_dir, options->groupfile, NULL);
-        }
-
-        if (!g_file_test(options->groupfile_fullpath, G_FILE_TEST_IS_REGULAR|G_FILE_TEST_EXISTS)) {
-            g_warning("groupfile %s doesn't exists", options->groupfile_fullpath);
-            return FALSE;
-        }
-    }
-
-    // Process pkglist file
-    if (options->pkglist) {
-        if (!g_file_test(options->pkglist, G_FILE_TEST_IS_REGULAR|G_FILE_TEST_EXISTS)) {
-            g_warning("pkglist file \"%s\" doesn't exists", options->pkglist);
-        } else {
-            char *content = NULL;
-            GError *err;
-            if (!g_file_get_contents(options->pkglist, &content, NULL, &err)) {
-                g_warning("Error while reading pkglist file: %s", err->message);
-                g_error_free(err);
-                g_free(content);
-            } else {
-                x = 0;
-                char **pkgs = g_strsplit(content, "\n", 0);
-                while (pkgs && pkgs[x] != NULL) {
-                    if (strlen(pkgs[x])) {
-                        options->include_pkgs = g_slist_prepend(options->include_pkgs, (gpointer) pkgs[x]);
-                    }
-                    x++;
-                }
-
-                g_free(pkgs);  // Free pkgs array, pointers from array are already stored in include_pkgs list
-                g_free(content);
-            }
-        }
-    }
-
-    // Process update_md_paths
-    x = 0;
-    while (options->update_md_paths && options->update_md_paths[x] != NULL) {
-        char *path = options->update_md_paths[x];
-        if (g_file_test(path, G_FILE_TEST_IS_DIR|G_FILE_TEST_EXISTS)) {
-            g_message("Using md path: %s", path);
-            //path = g_strconcat(path, "/repodata/", NULL);
-            options->l_update_md_paths = g_slist_prepend(options->l_update_md_paths, (gpointer) path);
-        } else {
-            g_warning("Update md path %s doesn't exists", path);
-        }
-        x++;
-    }
-
-    return TRUE;
-}
-
-
-
-void free_options(struct CmdOptions *options)
-{
-    g_free(options->input_dir);
-    g_free(options->location_base);
-    g_free(options->outputdir);
-    g_free(options->pkglist);
-    g_free(options->checksum);
-    g_free(options->groupfile);
-    g_free(options->groupfile_fullpath);
-
-    // Free excludes string list
-    int x = 0;
-    while (options->excludes && options->excludes[x] != NULL) {
-        g_free(options->excludes[x]);
-        options->excludes[x] = NULL;
-    }
-
-    // inludepkg string list MUST NOT be freed!
-    // Items from the list are referenced by include_pkgs GSList and will be
-    // freed from them.
-
-    GSList *element = NULL;
-
-    // Free include_pkgs GSList
-    for (element = options->include_pkgs; element; element = g_slist_next(element)) {
-        g_free( (gchar *) element->data );
-    }
-
-    // Free glob exclude masks GSList
-    for (element = options->exclude_masks; element; element = g_slist_next(element)) {
-        g_pattern_spec_free( (GPatternSpec *) element->data );
-    }
-
-    // Free l_update_md_paths GSList
-    for (element = options->l_update_md_paths; element; element = g_slist_next(element)) {
-        g_free( (gchar *) element->data );
-    }
-}
-
-
-
-#define MAX_THREADS     5
-#define GZ_BUFFER_SIZE  8192
-
-#define XML_COMMON_NS           "http://linux.duke.edu/metadata/common"
-#define XML_FILELISTS_NS        "http://linux.duke.edu/metadata/filelists"
-#define XML_OTHER_NS            "http://linux.duke.edu/metadata/other"
-#define XML_RPM_NS              "http://linux.duke.edu/metadata/rpm"
-
 
 int main(int argc, char **argv) {
 
 
     // Arguments parsing
 
-    GError *error = NULL;
-    GOptionContext *context;
-
-    context = g_option_context_new("- program that creates a repomd (xml-based rpm metadata) repository from a set of rpms.");
-    g_option_context_add_main_entries(context, cmd_entries, NULL);
-    if (!g_option_context_parse(context, &argc, &argv, &error)) {
-        g_print("Option parsing failed: %s\n", error->message);
+    struct CmdOptions *cmd_options;
+    cmd_options = parse_arguments(&argc, &argv);
+    if (!cmd_options) {
         exit(1);
     }
-
-/* // -------------- DEBUG STUFF
-    puts("Argument list - Start");
-    int ix;
-    printf("baseurl: %s\n", cmd_options.location_base);
-    printf("outputdir: %s\n", cmd_options.outputdir);
-    ix = 0;
-    puts("excludes:");
-    while (cmd_options.excludes && cmd_options.excludes[ix] != NULL) {
-        printf("  %2d) %s\n", ix, cmd_options.excludes[ix]);
-        ix++;
-    }
-    printf("pkglist: %s\n", cmd_options.pkglist);
-    ix = 0;
-    puts("includepkg:");
-    while (cmd_options.includepkg && cmd_options.includepkg[ix] != NULL) {
-        printf("  %2d) %s\n", ix, cmd_options.includepkg[ix]);
-        ix++;
-    }
-    printf("quiet: %d\n", cmd_options.quiet);
-    printf("verbose: %d\n", cmd_options.verbose);
-    printf("update: %d\n", cmd_options.update);
-    printf("skip_stat: %d\n", cmd_options.skip_stat);
-    printf("version: %d\n", cmd_options.version);
-    printf("database: %d\n", cmd_options.database);
-    printf("no-database: %d\n", cmd_options.no_database);
-    printf("checksum: %s\n", cmd_options.checksum);
-    printf("skip_symlinks: %d\n", cmd_options.skip_symlinks);
-    printf("changelog_limit: %d\n", cmd_options.changelog_limit);
-    printf("unique_md_filenames: %d\n", cmd_options.unique_md_filenames);
-    printf("simple_md_filenames: %d\n", cmd_options.simple_md_filenames);
-    printf("workers: %d\n", cmd_options.workers);
-    puts("Arguments list - End");
-// ---------- DEBUG STUFF END */
 
 
     // Arguments pre-check
 
-    if (cmd_options.version) {
+    if (cmd_options->version) {
         puts("Version: "VERSION);
-        free_options(&cmd_options);
+        free_options(cmd_options);
         exit(0);
     } else if (argc != 2) {
         fprintf(stderr, "Must specify exactly one directory to index.\n");
         fprintf(stderr, "Usage: %s [options] <directory_to_index>\n\n", get_filename(argv[0]));
-        free_options(&cmd_options);
+        free_options(cmd_options);
         exit(1);
     }
 
@@ -586,29 +272,26 @@ int main(int argc, char **argv) {
         in_dir[i+1] = '/';
     }
 
-    cmd_options.input_dir = g_strdup(in_dir);
+    cmd_options->input_dir = g_strdup(in_dir);
 
 
     // Check parsed arguments
 
-    if (!check_arguments(&cmd_options)) {
+    if (!check_arguments(cmd_options)) {
         g_free(in_dir);
-        free_options(&cmd_options);
-        g_option_context_free(context);
+        free_options(cmd_options);
         exit(1);
     }
-
-    g_option_context_free(context);
 
 
     // Set logging stuff
 
-    if (cmd_options.quiet) {
+    if (cmd_options->quiet) {
         // Quiet mode
         GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
         g_log_set_handler(NULL, levels, black_hole_log_function, NULL);
         g_log_set_handler("C_CREATEREPOLIB", levels, black_hole_log_function, NULL);
-    } else if (cmd_options.verbose) {
+    } else if (cmd_options->verbose) {
         // Verbose mode
         ;
     } else {
@@ -623,13 +306,13 @@ int main(int argc, char **argv) {
 
     in_repo = g_strconcat(in_dir, "repodata/", NULL);
 
-    if (cmd_options.outputdir) {
+    if (cmd_options->outputdir) {
         // Normalize out_dir
-        int i = strlen(cmd_options.outputdir);
+        int i = strlen(cmd_options->outputdir);
         do {
             i--;
-        } while (cmd_options.outputdir[i] == '/');
-        out_dir = g_strndup(cmd_options.outputdir, i+2);
+        } while (cmd_options->outputdir[i] == '/');
+        out_dir = g_strndup(cmd_options->outputdir, i+2);
         if (out_dir[i+1] != '/') {
             out_dir[i+1] = '/';
         }
@@ -649,6 +332,7 @@ int main(int argc, char **argv) {
             exit(1);
     }
 
+
     // Create tmp_out_repo dir
 
     if (g_mkdir (tmp_out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
@@ -657,29 +341,14 @@ int main(int argc, char **argv) {
     }
 
 
-    // Create out_repo dir if doesn't exists
-/*
-    if (!g_file_test(out_repo, G_FILE_TEST_EXISTS)) {
-        if (g_mkdir (out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
-            g_critical("Error while creating repodata directory");
-            exit(1);
-        }
-    } else {
-        if (!g_file_test(out_repo, G_FILE_TEST_IS_DIR)) {
-            g_critical("Error repodata already exists and it is not a directory!");
-            exit(1);
-        }
-    }
-*/
-
-
     // Copy groupfile
+
     gchar *groupfile = NULL;
-    if (cmd_options.groupfile_fullpath) {
-        groupfile = g_strconcat(tmp_out_repo, get_filename(cmd_options.groupfile_fullpath), NULL);
-        g_debug("Copy groupfile %s -> %s", cmd_options.groupfile_fullpath, groupfile);
-        if (copy_file(cmd_options.groupfile_fullpath, groupfile) != CR_COPY_OK) {
-            g_critical("Error while copy %s -> %s", cmd_options.groupfile_fullpath, groupfile);
+    if (cmd_options->groupfile_fullpath) {
+        groupfile = g_strconcat(tmp_out_repo, get_filename(cmd_options->groupfile_fullpath), NULL);
+        g_debug("Copy groupfile %s -> %s", cmd_options->groupfile_fullpath, groupfile);
+        if (copy_file(cmd_options->groupfile_fullpath, groupfile) != CR_COPY_OK) {
+            g_critical("Error while copy %s -> %s", cmd_options->groupfile_fullpath, groupfile);
         }
     }
 
@@ -687,7 +356,7 @@ int main(int argc, char **argv) {
     // Load old metadata if --update
 
     GHashTable *old_metadata = NULL;
-    if (cmd_options.update) {
+    if (cmd_options->update) {
 
         // Load local repodata
         old_metadata = new_old_metadata_hashtable();
@@ -700,7 +369,7 @@ int main(int argc, char **argv) {
 
         // Load repodata from --update-md-path
         GSList *element;
-        for (element = cmd_options.l_update_md_paths; element; element = g_slist_next(element)) {
+        for (element = cmd_options->l_update_md_paths; element; element = g_slist_next(element)) {
             char *path = (char *) element->data;
             g_debug("Loading md-path: %s", path);
             int ret = locate_and_load_xml_metadata(old_metadata, path);
@@ -771,14 +440,14 @@ int main(int argc, char **argv) {
     user_data.pri_f             = pri_cw_file;
     user_data.fil_f             = fil_cw_file;
     user_data.oth_f             = oth_cw_file;
-    user_data.changelog_limit   = cmd_options.changelog_limit;
-    user_data.location_base     = cmd_options.location_base;
-    user_data.checksum_type_str = cmd_options.checksum;
-    user_data.checksum_type     = cmd_options.checksum_type;
-    user_data.quiet             = cmd_options.quiet;
-    user_data.verbose           = cmd_options.verbose;
-    user_data.skip_symlinks     = cmd_options.skip_symlinks;
-    user_data.skip_stat         = cmd_options.skip_stat;
+    user_data.changelog_limit   = cmd_options->changelog_limit;
+    user_data.location_base     = cmd_options->location_base;
+    user_data.checksum_type_str = cmd_options->checksum;
+    user_data.checksum_type     = cmd_options->checksum_type;
+    user_data.quiet             = cmd_options->quiet;
+    user_data.verbose           = cmd_options->verbose;
+    user_data.skip_symlinks     = cmd_options->skip_symlinks;
+    user_data.skip_stat         = cmd_options->skip_stat;
     user_data.old_metadata      = old_metadata;
     user_data.repodir_name_len  = strlen(in_dir);
 
@@ -797,7 +466,7 @@ int main(int argc, char **argv) {
 
     int package_count = 0;
 
-    if (!(cmd_options.include_pkgs)) {
+    if (!(cmd_options->include_pkgs)) {
         // --pkglist (or --includepkg) is not supplied -> do dir walk
 
         g_message("Directory walk started");
@@ -837,14 +506,14 @@ int main(int argc, char **argv) {
                 }
 
                 // Skip symbolic links if --skip-symlinks arg is used
-                if (cmd_options.skip_symlinks && g_file_test(full_path, G_FILE_TEST_IS_SYMLINK)) {
+                if (cmd_options->skip_symlinks && g_file_test(full_path, G_FILE_TEST_IS_SYMLINK)) {
                     g_debug("Skipped symlink: %s", full_path);
                     g_free(full_path);
                     continue;
                 }
 
                 // Check filename against exclude glob masks
-                if (allowed_file(filename, &cmd_options)) {
+                if (allowed_file(filename, cmd_options)) {
                     // FINALLY! Add file into pool
                     g_debug("Adding pkg: %s", full_path);
                     struct PoolTask *task = g_malloc(sizeof(struct PoolTask));
@@ -853,7 +522,6 @@ int main(int argc, char **argv) {
                     task->path = g_strdup(dirname);  // TODO: One common path for all tasks with same path??
                     g_thread_pool_push(pool, task, NULL);
                     package_count++;
-//                    g_debug("Full path: %s; Filename: %s; Dirname: %s;", full_path, filename, dirname);
                 }
             }
 
@@ -869,7 +537,7 @@ int main(int argc, char **argv) {
         g_debug("Skipping dir walk - using pkglist");
 
         GSList *element;
-        for (element=cmd_options.include_pkgs; element; element=g_slist_next(element)) {
+        for (element=cmd_options->include_pkgs; element; element=g_slist_next(element)) {
             gchar *relative_path = (gchar *) element->data;   // path from pkglist e.g. packages/i386/foobar.rpm
             gchar *full_path = g_strconcat(in_dir, relative_path, NULL);   // /path/to/in_repo/packages/i386/foobar.rpm
             gchar *dirname;  // packages/i386/
@@ -892,7 +560,7 @@ int main(int argc, char **argv) {
             }
             dirname  = strndup(relative_path, x);
 
-            if (allowed_file(filename, &cmd_options)) {
+            if (allowed_file(filename, cmd_options)) {
                 // Check filename against exclude glob masks
                 g_debug("Adding pkg: %s", full_path);
                 struct PoolTask *task = g_malloc(sizeof(struct PoolTask));
@@ -924,7 +592,7 @@ int main(int argc, char **argv) {
     // Start pool
 
     user_data.package_count = package_count;
-    g_thread_pool_set_max_threads(pool, MAX_THREADS, NULL);
+    g_thread_pool_set_max_threads(pool, cmd_options->workers, NULL);
     g_message("Pool started");
 
 
@@ -1005,7 +673,7 @@ int main(int argc, char **argv) {
         groupfile_name = g_strconcat("repodata/", get_filename(groupfile), NULL);
     }
 
-    struct repomdResult *repomd_res = xml_repomd(out_dir, cmd_options.unique_md_filenames, pri_xml_name, fil_xml_name, oth_xml_name, NULL, NULL, NULL, groupfile_name, &cmd_options.checksum_type);
+    struct repomdResult *repomd_res = xml_repomd(out_dir, cmd_options->unique_md_filenames, pri_xml_name, fil_xml_name, oth_xml_name, NULL, NULL, NULL, groupfile_name, &(cmd_options->checksum_type));
     gchar *repomd_path = g_strconcat(out_repo, "repomd.xml", NULL);
 
     FILE *frepomd = fopen(repomd_path, "w");
@@ -1044,7 +712,7 @@ int main(int argc, char **argv) {
     g_free(oth_xml_filename);
     g_free(groupfile);
 
-    free_options(&cmd_options);
+    free_options(cmd_options);
     free_package_parser();
 
     g_debug("All done");

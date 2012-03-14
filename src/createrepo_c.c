@@ -560,6 +560,7 @@ int main(int argc, char **argv) {
         exit(0);
     } else if (argc != 2) {
         fprintf(stderr, "Must specify exactly one directory to index.\n");
+        fprintf(stderr, "Usage: %s [options] <directory_to_index>\n\n", get_filename(argv[0]));
         free_options(&cmd_options);
         exit(1);
     }

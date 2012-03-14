@@ -281,7 +281,7 @@ static GOptionEntry cmd_entries[] =
       "File globs to exclude, can be specified multiple times.", "<packages>" },
     { "pkglist", 'i', 0, G_OPTION_ARG_FILENAME, &(cmd_options.pkglist),
       "Specify a text file which contains the complete list of files to include"
-      " in the  repository  from the set found in the directory. File format is"
+      " in the repository from the set found in the directory. File format is"
       " one package per line, no wildcards or globs.", "<filename>" },
     { "includepkg", 'n', 0, G_OPTION_ARG_FILENAME_ARRAY, &(cmd_options.includepkg),
       "Specify pkgs to include on the command line. Takes urls as well as local paths.",
@@ -294,12 +294,12 @@ static GOptionEntry cmd_entries[] =
     { "verbose", 'v', 0, G_OPTION_ARG_NONE, &(cmd_options.verbose),
       "Run verbosely.", NULL },
     { "update", 0, 0, G_OPTION_ARG_NONE, &(cmd_options.update),
-      "If  metadata already exists in the outputdir and an rpm is unchanged (based on file size "
-      "and mtime) since the metadata was generated, reuse the  existing  metadata  rather  than "
+      "If metadata already exists in the outputdir and an rpm is unchanged (based on file size "
+      "and mtime) since the metadata was generated, reuse the existing metadata rather than "
       "recalculating it. In the case of a large repository with only a few new or modified rpms"
       "this can significantly reduce I/O and processing time.", NULL },
     { "update-md-path", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &(cmd_options.update_md_paths),
-      "Use the existing repodata  for --update from this path.", NULL },
+      "Use the existing repodata for --update from this path.", NULL },
     { "skip-stat", 0, 0, G_OPTION_ARG_NONE, &(cmd_options.skip_stat),
       "Skip the stat() call on a --update, assumes if the filename is the same then the file is"
       "still the same (only use this if you're fairly trusting or gullible).", NULL },
@@ -312,8 +312,8 @@ static GOptionEntry cmd_entries[] =
     { "skip-symlinks", 'S', 0, G_OPTION_ARG_NONE, &(cmd_options.skip_symlinks),
       "Ignore symlinks of packages.", NULL},
     { "checksum", 's', 0, G_OPTION_ARG_STRING, &(cmd_options.checksum),
-      "Choose the checksum type used in repomd.xml and  for  packages  in  the  metadata."
-      "The default  is  now \"sha256\".", "<checksum_type>" },
+      "Choose the checksum type used in repomd.xml and for packages in the metadata."
+      "The default is now \"sha256\".", "<checksum_type>" },
     { "changelog-limit", 0, 0, G_OPTION_ARG_INT, &(cmd_options.changelog_limit),
       "Only import the last N changelog entries, from each rpm, into the metadata.",
       "<number>" },

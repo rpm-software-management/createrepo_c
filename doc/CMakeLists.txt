@@ -1,0 +1,1 @@
+INSTALL_FILES(/usr/share/man/man8 FILES createrepo_c.8.gz)

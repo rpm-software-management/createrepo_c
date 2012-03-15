@@ -1,10 +1,4 @@
 C implementation of createrepo.
 This program generates a repodata dir and xml files for a repository of 
 rpm packages.
-
 run createrepo -h for usage syntax
-
-Compilation:
-------------
-$ cmake .
-$ make

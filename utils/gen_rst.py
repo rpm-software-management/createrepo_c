@@ -62,7 +62,7 @@ def parse_arguments_from_c_file(filename):
 
     try:
         content = open(filename, "r").read()
-    except IOException:
+    except IOError:
         print "Error: Cannot open file %s" % filename
         return args
 

@@ -599,7 +599,7 @@ int main(int argc, char **argv) {
 
     user_data.package_count = package_count;
     g_thread_pool_set_max_threads(pool, cmd_options->workers, NULL);
-    g_message("Pool started");
+    g_message("Pool started (with %d workers)", cmd_options->workers);
 
 
     // Wait until pool is finished

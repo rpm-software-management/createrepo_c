@@ -11,147 +11,76 @@
 #undef MODULE
 #define MODULE "xml_dump_filelists: "
 
-#define PROVIDES    0
-#define CONFLICTS   1
-#define OBSOLETES   2
-#define REQUIRES    3
+#define FORMAT_XML  1
 
 
-void dump_filelists_items(xmlTextWriterPtr writer, Package *package)
+void dump_filelists_items(xmlNodePtr root, Package *package)
 {
-    int rc;
-
-    rc = xmlTextWriterStartDocument(writer, NULL, NULL, NULL);
-    if (rc < 0) {
-        g_critical(MODULE"dump_filelists_items: Error at xmlTextWriterStartDocument");
-        return;
-    }
-
-
     /***********************************
-    Element: package
+     Element: package
     ************************************/
 
-    // Open package element
-    rc = xmlTextWriterStartElement(writer, BAD_CAST "package");
-    if (rc < 0) {
-        g_critical(MODULE"dump_filelists_items: Error at xmlTextWriterStartElement");
-        return;
-    }
-
-    // Write param pkgid
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "pkgid", "%s", (package->pkgId) ? package->pkgId : "");
-    if (rc < 0) {
-        g_critical(MODULE"dump_filelists_items: Error at xmlTextWriterWriteFormatAttribute");
-        return;
-    }
+    // Add pkgid attribute
+    xmlNewProp(root, BAD_CAST "pkgid", BAD_CAST ((package->pkgId) ? package->pkgId : ""));
 
     // Add name attribute
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "name", "%s", (package->name) ? package->name : "");
-    if (rc < 0) {
-        g_critical(MODULE"dump_filelists_items: Error at xmlTextWriterWriteFormatAttribute");
-        return;
-    }
+    xmlNewProp(root, BAD_CAST "name", BAD_CAST ((package->name) ? package->name : ""));
 
     // Add arch attribute
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "arch", "%s", (package->arch) ? package->arch : "");
-    if (rc < 0) {
-        g_critical(MODULE"dump_filelists_items: Error at xmlTextWriterWriteFormatAttribute");
-        return;
-    }
+    xmlNewProp(root, BAD_CAST "arch", BAD_CAST ((package->arch) ? package->arch : ""));
 
 
     /***********************************
-    Element: version
+     Element: version
     ************************************/
 
-    // Open version element
-    rc = xmlTextWriterStartElement(writer, BAD_CAST "version");
-    if (rc < 0) {
-        g_critical(MODULE"dump_filelists_items: Error at xmlTextWriterStartElement");
-        return;
-    }
+    xmlNodePtr version;
+
+    // Add version element
+    version = xmlNewChild(root, NULL, BAD_CAST "version", NULL);
 
     // Write version attribute epoch
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "epoch", "%s", (package->epoch) ? package->epoch : "0");
-    if (rc < 0) {
-        g_critical(MODULE"dump_filelists_items: Error at xmlTextWriterWriteFormatAttribute");
-        return;
-    }
+    xmlNewProp(version, BAD_CAST "epoch", BAD_CAST ((package->epoch) ? package->epoch : ""));
 
     // Write version attribute ver
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "ver", "%s", (package->version) ? package->version : "");
-    if (rc < 0) {
-        g_critical(MODULE"dump_filelists_items: Error at xmlTextWriterWriteFormatAttribute");
-        return;
-    }
+    xmlNewProp(version, BAD_CAST "ver", BAD_CAST ((package->version) ? package->version : ""));
 
     // Write version attribute rel
-    rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "rel", "%s", (package->release) ? package->release : "");
-    if (rc < 0) {
-        g_critical(MODULE"dump_filelists_items: Error at xmlTextWriterWriteFormatAttribute");
-        return;
-    }
+    xmlNewProp(version, BAD_CAST "rel", BAD_CAST ((package->release) ? package->release : ""));
 
-    // Close version element
-    rc = xmlTextWriterEndElement(writer);
-    if (rc < 0) {
-        g_critical(MODULE"dump_filelists_items: Error at xmlTextWriterEndElement");
-        return;
-    }
 
     // Files dump
-    dump_files(writer, package, 0);
 
-    // Close package element
-    rc = xmlTextWriterEndElement(writer);
-    if (rc < 0) {
-        g_critical(MODULE"dump_filelists_items: Error at xmlTextWriterEndElement");
-        return;
-    }
-
-    // Close document (and every still opened tags)
-    rc = xmlTextWriterEndDocument(writer);
-    if (rc < 0) {
-        g_critical(MODULE"dump_filelists_items: Error at xmlTextWriterEndDocument");
-        return;
-    }
+    dump_files(root, package, 0);
 }
 
 
 char *xml_dump_filelists(Package *package)
 {
+    xmlNodePtr root = NULL;
+    root = xmlNewNode(NULL, BAD_CAST "package");
+
+
+    // Dump IT!
+
+    dump_filelists_items(root, package);
+
+    char *result;
     xmlBufferPtr buf = xmlBufferCreate();
     if (buf == NULL) {
         g_critical(MODULE"xml_dump_filelists: Error creating the xml buffer");
         return NULL;
     }
-
-    xmlTextWriterPtr writer = xmlNewTextWriterMemory(buf, 0);
-    if (writer == NULL) {
-        g_critical(MODULE"xml_dump_filelists: Error creating the xml writer");
-        return NULL;
-    }
-
-    // Dump IT!
-
-    dump_filelists_items(writer, package);
-
-    xmlFreeTextWriter(writer);
-
-
-    // Get XML from xmlBuffer without <?xml ...?> header
-
+    // Seems to be little bit faster than xmlDocDumpFormatMemory
+    xmlNodeDump(buf, NULL, root, 1, FORMAT_XML);
     assert(buf->content);
-
-    char *pkg_str = strstr((const char*) buf->content, "<package");
-    if (!pkg_str) {
-        pkg_str = (char*) buf->content;
-    }
-
-    char *result = g_strdup(pkg_str);
-
+    result = g_strdup((char *) buf->content);
     xmlBufferFree(buf);
+
+
+    // Cleanup
+
+    xmlFreeNode(root);
 
     return result;
 }

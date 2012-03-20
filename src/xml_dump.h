@@ -20,7 +20,7 @@ struct XmlStruct{
 };
 
 
-void dump_files(xmlTextWriterPtr, Package *, int);
+void dump_files(xmlNodePtr, Package *, int);
 
 char *xml_dump_primary(Package *);
 char *xml_dump_filelists(Package *);

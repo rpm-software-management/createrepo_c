@@ -10,9 +10,9 @@
 #define MODULE "xml_dump: "
 
 
-void dump_files(xmlTextWriterPtr writer, Package *package, int primary)
+void dump_files(xmlNodePtr node, Package *package, int primary)
 {
-    if (!package->files) {
+    if (!node || !package->files) {
         return;
     }
 
@@ -51,40 +51,13 @@ void dump_files(xmlTextWriterPtr writer, Package *package, int primary)
         // Element: file
         // ************************************
 
-        int rc;
-        rc = xmlTextWriterStartElement(writer, BAD_CAST "file");
-        if (rc < 0) {
-            g_critical(MODULE"dump_files: Error at xmlTextWriterWriteElement");
-            g_free(fullname);
-            return;
-        }
+        xmlNodePtr file_node;
+        file_node = xmlNewTextChild(node, NULL, BAD_CAST "file", BAD_CAST fullname);
+        g_free(fullname);
 
         // Write type (skip type if type value is empty of "file")
         if (entry->type && entry->type[0] != '\0' && strcmp(entry->type, "file")) {
-            //rc = xmlTextWriterWriteFormatAttribute(writer, BAD_CAST "type", "%s", entry->type);
-            rc = xmlTextWriterWriteAttribute(writer, BAD_CAST "type", BAD_CAST entry->type);
-            if (rc < 0) {
-                 g_critical(MODULE"dump_files: Error at xmlTextWriterWriteFormatAttribute");
-                 g_free(fullname);
-                 return;
-            }
-
-        }
-
-        // Write text (file path)
-        //rc = xmlTextWriterWriteFormatString(writer, "%s", fullname);
-        rc = xmlTextWriterWriteString(writer, BAD_CAST fullname);
-        g_free(fullname);
-        if (rc < 0) {
-            g_critical(MODULE"dump_files: Error at xmlTextWriterWriteFormatString\n");
-            return;
-        }
-
-        // Close file element
-        rc = xmlTextWriterEndElement(writer);
-        if (rc < 0) {
-            g_critical(MODULE"dump_files: Error at xmlTextWriterEndElement\n");
-            return;
+            xmlNewProp(file_node, BAD_CAST "type", BAD_CAST entry->type);
         }
     }
 }

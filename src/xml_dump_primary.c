@@ -24,7 +24,7 @@
 
 void dump_pco(xmlNodePtr root, Package *package, int pcotype)
 {
-    const char *elem_name = NULL;
+    const char *elem_name;
     GSList *files = NULL;
 
     const char *provides  = "rpm:provides";
@@ -335,7 +335,7 @@ char *xml_dump_primary(Package *package)
     char *result;
     xmlBufferPtr buf = xmlBufferCreate();
     if (buf == NULL) {
-        g_critical(MODULE"xml_dump_other: Error creating the xml buffer");
+        g_critical(MODULE"%s: Error creating the xml buffer", __func__);
         return NULL;
     }
     // Seems to be little bit faster than xmlDocDumpFormatMemory

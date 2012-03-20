@@ -196,7 +196,7 @@ char *compute_file_checksum(const char *filename, ChecksumType type)
     // Check if file exists and if it is a regular file (not a directory)
 
     if (!g_file_test(filename, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR))) {
-        g_critical(MODULE"compute_file_checksum: File %s doesn't exists", filename);
+        g_critical(MODULE"%s: File %s doesn't exists", __func__, filename);
         return NULL;
     }
 
@@ -214,7 +214,7 @@ char *compute_file_checksum(const char *filename, ChecksumType type)
             gchecksumtype = G_CHECKSUM_SHA256;
             break;
         default:
-            g_critical(MODULE"compute_file_checksum: Unknown checksum type");
+            g_critical(MODULE"%s: Unknown checksum type", __func__);
             return NULL;
     };
 
@@ -223,7 +223,7 @@ char *compute_file_checksum(const char *filename, ChecksumType type)
 
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
-        g_critical(MODULE"compute_file_checksum: Cannot open %s (%s)", filename, strerror(errno));
+        g_critical(MODULE"%s: Cannot open %s (%s)", __func__, filename, strerror(errno));
         return NULL;
     }
 
@@ -251,7 +251,7 @@ char *compute_file_checksum(const char *filename, ChecksumType type)
     g_checksum_free(checksum);
 
     if (!checksum_str) {
-        g_critical(MODULE"compute_file_checksum: Cannot get checksum %s (low memory?)", filename);
+        g_critical(MODULE"%s: Cannot get checksum %s (low memory?)", __func__, filename);
     }
 
     return checksum_str;
@@ -277,7 +277,7 @@ struct HeaderRangeStruct get_header_byte_range(const char *filename)
 
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
-        g_critical(MODULE"get_header_byte_range: Cannot open file %s (%s)", filename, strerror(errno));
+        g_critical(MODULE"%s: Cannot open file %s (%s)", __func__, filename, strerror(errno));
         return results;
     }
 
@@ -285,7 +285,7 @@ struct HeaderRangeStruct get_header_byte_range(const char *filename)
     // Get header range
 
     if (fseek(fp, 104, SEEK_SET) != 0) {
-        g_critical(MODULE"get_header_byte_range: fseek fail on %s (%s)", filename, strerror(errno));
+        g_critical(MODULE"%s: fseek fail on %s (%s)", __func__, filename, strerror(errno));
         fclose(fp);
         return results;
     }
@@ -323,7 +323,7 @@ struct HeaderRangeStruct get_header_byte_range(const char *filename)
     // Check sanity
 
     if (hdrend < hdrstart) {
-        g_critical(MODULE"get_header_byte_range: sanity check fail on %s (%d > %d))", filename, hdrstart, hdrend);
+        g_critical(MODULE"%s: sanity check fail on %s (%d > %d))", __func__, filename, hdrstart, hdrend);
         return results;
     }
 
@@ -349,7 +349,7 @@ const char *get_checksum_name_str(ChecksumType type)
             name = "sha256";
             break;
         default:
-            g_debug(MODULE"get_checksum_name_str: Unknown checksum");
+            g_debug(MODULE"%s: Unknown checksum", __func__);
             break;
     }
 
@@ -388,26 +388,26 @@ int copy_file(const char *src, const char *dst)
     FILE *new;
 
     if ((orig = fopen(src, "r")) == NULL) {
-        g_debug(MODULE"copy_file: Cannot open source file %s (%s)", src, strerror(errno));
+        g_debug(MODULE"%s: Cannot open source file %s (%s)", __func__, src, strerror(errno));
         return CR_COPY_ERR;
     }
 
     if ((new = fopen(dst, "w")) == NULL) {
-        g_debug(MODULE"copy_file: Cannot open destination file %s (%s)", dst, strerror(errno));
+        g_debug(MODULE"%s: Cannot open destination file %s (%s)", __func__, dst, strerror(errno));
         fclose(orig);
         return CR_COPY_ERR;
     }
 
     while ((readed = fread(buf, 1, BUFFER_SIZE, orig)) > 0) {
         if (fwrite(buf, 1, readed, new) != readed) {
-            g_debug(MODULE"copy_file: Error while copy %s -> %s (%s)", src, dst, strerror(errno));
+            g_debug(MODULE"%s: Error while copy %s -> %s (%s)", __func__, src, dst, strerror(errno));
             fclose(new);
             fclose(orig);
             return CR_COPY_ERR;
         }
 
         if (readed != BUFFER_SIZE && ferror(orig)) {
-            g_debug(MODULE"copy_file: Error while copy %s -> %s (%s)", src, dst, strerror(errno));
+            g_debug(MODULE"%s: Error while copy %s -> %s (%s)", __func__, src, dst, strerror(errno));
             fclose(new);
             fclose(orig);
             return CR_COPY_ERR;

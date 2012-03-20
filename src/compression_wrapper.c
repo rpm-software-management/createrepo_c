@@ -26,7 +26,7 @@
 #define Z_DEFAULT_STRATEGY    0
 */
 #define GZ_STRATEGY             Z_DEFAULT_STRATEGY
-#define GZ_BUFFER_SIZE          131072  // 1024 * 128
+#define GZ_BUFFER_SIZE          (1024*128)
 
 #define BZ2_VERBOSITY           0
 #define BZ2_WORK_FACTOR         30
@@ -59,14 +59,14 @@ CompressionType detect_compression(const char *filename)
     magic_t myt = magic_open(MAGIC_MIME_TYPE);
     magic_load(myt, NULL);
     if (magic_check(myt, NULL) == -1) {
-        g_critical(MODULE"detect_compression: magic_check() failed");
+        g_critical(MODULE"%s: magic_check() failed", __func__);
         return type;
     }
 
     const char *mime_type = magic_file(myt, filename);
 
     if (mime_type) {
-        g_debug(MODULE"detect_compression: Detected mime type: %s", mime_type);
+        g_debug(MODULE"%s: Detected mime type: %s", __func__, mime_type);
 
         if (g_str_has_suffix(mime_type, "gzip") ||
             g_str_has_suffix(mime_type, "gunzip"))
@@ -82,7 +82,7 @@ CompressionType detect_compression(const char *filename)
             type = NO_COMPRESSION;
         }
     } else {
-        g_debug(MODULE"detect_compression: Mime type not detected!");
+        g_debug(MODULE"%s: Mime type not detected!", __func__);
     }
 
     magic_close(myt);
@@ -140,7 +140,7 @@ CW_FILE *cw_open(const char *filename, int mode, CompressionType comtype)
             }
 
             if (gzbuffer((gzFile) file->FILE, GZ_BUFFER_SIZE) == -1) {
-                g_debug(MODULE"cw_open: gzbuffer() call failed");
+                g_debug(MODULE"%s: gzbuffer() call failed", __func__);
             }
             break;
 
@@ -368,7 +368,7 @@ int cw_printf(CW_FILE *cw_file, const char *format, ...)
     va_end(vl);
 
     if (ret < 0) {
-        g_debug(MODULE"cw_printf: vasprintf() call failed");
+        g_debug(MODULE"%s: vasprintf() call failed", __func__);
         return CW_ERR;
     }
 

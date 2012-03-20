@@ -68,7 +68,7 @@ char *xml_dump_filelists(Package *package)
     char *result;
     xmlBufferPtr buf = xmlBufferCreate();
     if (buf == NULL) {
-        g_critical(MODULE"xml_dump_filelists: Error creating the xml buffer");
+        g_critical(MODULE"%s: Error creating the xml buffer", __func__);
         return NULL;
     }
     // Seems to be little bit faster than xmlDocDumpFormatMemory

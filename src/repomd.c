@@ -124,7 +124,7 @@ contentStat *get_compressed_content_stat(const char *filename, ChecksumType chec
             gchecksumtype = G_CHECKSUM_SHA256;
             break;
         default:
-            g_critical(MODULE"get_compressed_content_stat: Unknown checksum type");
+            g_critical(MODULE"%s: Unknown checksum type", __func__);
             return NULL;
     };
 
@@ -133,7 +133,7 @@ contentStat *get_compressed_content_stat(const char *filename, ChecksumType chec
 
     GChecksum *checksum = g_checksum_new(gchecksumtype);
     if (!checksum) {
-        g_critical(MODULE"get_compressed_content_stat: g_checksum_new() failed");
+        g_critical(MODULE"%s: g_checksum_new() failed", __func__);
         return NULL;
     }
 
@@ -185,7 +185,7 @@ int fill_missing_data(const char *base_path, struct repomdData *md, ChecksumType
 
     if (!g_file_test(path, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR)) {
         // File doesn't exists
-        g_warning(MODULE"fill_missing_data: File %s doesn't exists", path);
+        g_warning(MODULE"%s: File %s doesn't exists", __func__, path);
         return REPOMD_ERR;
     }
 
@@ -219,7 +219,7 @@ int fill_missing_data(const char *base_path, struct repomdData *md, ChecksumType
             g_free(open_stat);
         } else {
             // Unknown compression
-            g_warning(MODULE"File \"%s\" compressed by an unsupported type of compression", path);
+            g_warning(MODULE"%s: File \"%s\" compressed by an unsupported type of compression", __func__, path);
             md->checksum_open_type = g_string_chunk_insert(md->chunk, "UNKNOWN");
             md->checksum_open = g_string_chunk_insert(md->chunk, "file_compressed_by_an_unsupported_type_of_compression");
             md->size_open = -1;
@@ -239,7 +239,7 @@ int fill_missing_data(const char *base_path, struct repomdData *md, ChecksumType
                 md->size = buf.st_size;
             }
         } else {
-            g_warning(MODULE"Stat on file \"%s\" failed", path);
+            g_warning(MODULE"%s: Stat on file \"%s\" failed", __func__, path);
         }
     }
 
@@ -286,7 +286,7 @@ void process_groupfile(const char *base_path, struct repomdData *groupfile,
 
     if (!g_file_test(path, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR)) {
         // File doesn't exists
-        g_warning(MODULE"process_groupfile: File %s doesn't exists", path);
+        g_warning(MODULE"%s: File %s doesn't exists", __func__, path);
         g_free(path);
         g_free(cpath);
         return;
@@ -305,7 +305,7 @@ void process_groupfile(const char *base_path, struct repomdData *groupfile,
 
     while ((readed = cw_read(cw_plain, buf, BUFFER_SIZE)) > 0) {
         if (cw_write(cw_compressed, buf, (unsigned int) readed) == CW_ERR) {
-            g_debug(MODULE"process_groupfile: Error while groupfile compression");
+            g_debug(MODULE"%s: Error while groupfile compression", __func__);
             break;
         }
     }
@@ -314,7 +314,7 @@ void process_groupfile(const char *base_path, struct repomdData *groupfile,
     cw_close(cw_plain);
 
     if (readed == CW_ERR) {
-        g_debug(MODULE"process_groupfile: Error while groupfile compression");
+        g_debug(MODULE"%s: Error while groupfile compression", __func__);
     }
 
 
@@ -333,14 +333,14 @@ void process_groupfile(const char *base_path, struct repomdData *groupfile,
     struct stat gf_stat, cgf_stat;
 
     if (stat(path, &gf_stat)) {
-        g_debug(MODULE"process_groupfile: Error while stat() on %s", path);
+        g_debug(MODULE"%s: Error while stat() on %s", __func__, path);
     } else {
         gf_size = gf_stat.st_size;
         gf_time = gf_stat.st_mtime;
     }
 
     if (stat(cpath, &cgf_stat)) {
-        g_debug(MODULE"process_groupfile: Error while stat() on %s", path);
+        g_debug(MODULE"%s: Error while stat() on %s", __func__, path);
     } else {
         cgf_size = cgf_stat.st_size;
         cgf_time = cgf_stat.st_mtime;
@@ -427,13 +427,13 @@ char *repomd_xml_dump(long revision, struct repomdData *pri_xml, struct repomdDa
 {
     xmlBufferPtr buf = xmlBufferCreate();
     if (!buf) {
-        g_critical(MODULE"Error creating the xml buffer");
+        g_critical(MODULE"%s: Error creating the xml buffer", __func__);
         return NULL;
     }
 
     xmlTextWriterPtr writer = xmlNewTextWriterMemory(buf, 0);
     if (writer == NULL) {
-        g_critical(MODULE"Error creating the xml writer");
+        g_critical(MODULE"%s: Error creating the xml writer", __func__);
         return NULL;
     }
 
@@ -444,13 +444,13 @@ char *repomd_xml_dump(long revision, struct repomdData *pri_xml, struct repomdDa
 
     rc = xmlTextWriterStartDocument(writer, NULL, "UTF-8", NULL);
     if (rc < 0) {
-        g_critical(MODULE"Error at xmlTextWriterStartDocument\n");
+        g_critical(MODULE"%s: Error at xmlTextWriterStartDocument\n", __func__);
         return NULL;
     }
 
     rc = xmlTextWriterStartElement(writer, BAD_CAST "repomd");
     if (rc < 0) {
-        g_critical(MODULE"Error at xmlTextWriterStartElement repomd\n");
+        g_critical(MODULE"%s: Error at xmlTextWriterStartElement repomd\n", __func__);
         return NULL;
     }
     xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns:rpm", (xmlChar *) RPM_NS);
@@ -458,7 +458,7 @@ char *repomd_xml_dump(long revision, struct repomdData *pri_xml, struct repomdDa
 
     rc = xmlTextWriterStartElement(writer, BAD_CAST "revision");
     if (rc < 0) {
-        g_critical(MODULE"Error at xmlTextWriterStartElement revision\n");
+        g_critical(MODULE"%s: Error at xmlTextWriterStartElement revision\n", __func__);
         return NULL;
     }
 
@@ -521,7 +521,7 @@ void rename_file(const char *base_path, struct repomdData *md)
     // Rename
     if (g_file_test (new_path, G_FILE_TEST_EXISTS)) {
         if (remove(new_path)) {
-            g_critical(MODULE"rename_file: Cannot delete old %s", new_path);
+            g_critical(MODULE"%s: Cannot delete old %s", __func__, new_path);
             g_free(path);
             g_free(new_location_href);
             g_free(new_path);
@@ -529,7 +529,7 @@ void rename_file(const char *base_path, struct repomdData *md)
         }
     }
     if (rename(path, new_path)) {
-        g_critical(MODULE"rename_file: Cannot rename %s to %s", path, new_path);
+        g_critical(MODULE"%s: Cannot rename %s to %s", __func__, path, new_path);
         g_free(path);
         g_free(new_location_href);
         g_free(new_path);

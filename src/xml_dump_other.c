@@ -104,7 +104,7 @@ char *xml_dump_other(Package *package)
     char *result;
     xmlBufferPtr buf = xmlBufferCreate();
     if (buf == NULL) {
-        g_critical(MODULE"xml_dump_other: Error creating the xml buffer");
+        g_critical(MODULE"%s: Error creating the xml buffer", __func__);
         return NULL;
     }
     // Seems to be little bit faster than xmlDocDumpFormatMemory

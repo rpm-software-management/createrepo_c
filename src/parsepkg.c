@@ -29,7 +29,7 @@ void init_package_parser()
     rpmReadConfigFiles(NULL, NULL);
     ts = rpmtsCreate();
     if (!ts) {
-        g_critical(MODULE"init_package_parser: rpmtsCreate() failed");
+        g_critical(MODULE"%s: rpmtsCreate() failed", __func__);
     }
 
     rpmVSFlags vsflags = 0;
@@ -78,7 +78,7 @@ struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checks
             checksum_type_str = "sha256";
             break;
         default:
-            g_critical(MODULE"Unknown checksum type");
+            g_critical(MODULE"%s: Unknown checksum type", __func__);
             return result;
             break;
     };
@@ -89,7 +89,7 @@ struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checks
     FD_t fd = NULL;
     fd = Fopen(filename, "r.ufdio");
     if (!fd) {
-        g_critical(MODULE"xml_from_package_file: Fopen failed %s", strerror(errno));
+        g_critical(MODULE"%s: Fopen failed %s", __func__, strerror(errno));
         return result;
     }
 
@@ -101,13 +101,13 @@ struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checks
     if (rc != RPMRC_OK) {
         switch (rc) {
             case RPMRC_NOKEY:
-                g_debug(MODULE"xml_from_package_file: %s: Public key is unavailable.", filename);
+                g_debug(MODULE"%s: %s: Public key is unavailable.", __func__, filename);
                 break;
             case RPMRC_NOTTRUSTED:
-                g_debug(MODULE"xml_from_package_file:  %s: Signature is OK, but key is not trusted.", filename);
+                g_debug(MODULE"%s:  %s: Signature is OK, but key is not trusted.", __func__, filename);
                 break;
             default:
-                g_critical(MODULE"xml_from_package_file: rpmReadPackageFile() error (%s)", strerror(errno));
+                g_critical(MODULE"%s: rpmReadPackageFile() error (%s)", __func__, strerror(errno));
                 return result;
         }
     }
@@ -126,7 +126,7 @@ struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checks
     if (!stat_buf) {
         struct stat stat_buf_own;
         if (stat(filename, &stat_buf_own) == -1) {
-            g_critical(MODULE"xml_from_package_file: stat() error (%s)", strerror(errno));
+            g_critical(MODULE"%s: stat() error (%s)", __func__, strerror(errno));
             return result;
         }
         mtime  = stat_buf_own.st_mtime;

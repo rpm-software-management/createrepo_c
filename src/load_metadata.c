@@ -127,7 +127,7 @@ void process_node(GHashTable *metadata, xmlTextReaderPtr pri_reader,
         pri_pkg_xml = g_strndup((char *) xmlBufferContent(buf), (gsize) len);
     } else {
         pri_pkg_xml = NULL;
-        g_critical(MODULE"process_node: xmlNodeDump() [primary.xml] failed");
+        g_critical(MODULE"%s: xmlNodeDump() [primary.xml] failed", __func__);
     }
 
     xmlBufferEmpty(buf);
@@ -137,7 +137,7 @@ void process_node(GHashTable *metadata, xmlTextReaderPtr pri_reader,
         fil_pkg_xml = g_strndup((char *) xmlBufferContent(buf), (gsize) len);
     } else {
         fil_pkg_xml = NULL;
-        g_critical(MODULE"process_node: xmlNodeDump() [filelists.xml] failed");
+        g_critical(MODULE"%s: xmlNodeDump() [filelists.xml] failed", __func__);
     }
 
     xmlBufferEmpty(buf);
@@ -147,7 +147,7 @@ void process_node(GHashTable *metadata, xmlTextReaderPtr pri_reader,
         oth_pkg_xml = g_strndup((char *) xmlBufferContent(buf), (gsize) len);
     } else {
         oth_pkg_xml = NULL;
-        g_critical(MODULE"process_node: xmlNodeDump() [other.xml] failed");
+        g_critical(MODULE"%s: xmlNodeDump() [other.xml] failed", __func__);
     }
 
     xmlBufferFree(buf);
@@ -201,7 +201,7 @@ void process_node(GHashTable *metadata, xmlTextReaderPtr pri_reader,
     }
 
     if ( counter != 4 || !location_href || !checksum_type) {
-        g_warning(MODULE"process_node: Bad xml data! Some information are missing (for package: %s)!", location_href);
+        g_warning(MODULE"%s: Bad xml data! Some information are missing (for package: %s)!", __func__, location_href);
         g_free(pri_pkg_xml);
         g_free(fil_pkg_xml);
         g_free(oth_pkg_xml);
@@ -224,7 +224,7 @@ void process_node(GHashTable *metadata, xmlTextReaderPtr pri_reader,
 
     // Check if key already exists
     if (g_hash_table_lookup(metadata, key)) {
-        g_debug(MODULE"process_node: Warning: Key \"%s\" already exists in old metadata\n", key);
+        g_debug(MODULE"%s: Warning: Key \"%s\" already exists in old metadata\n", __func__, key);
         g_free(pri_pkg_xml);
         g_free(fil_pkg_xml);
         g_free(oth_pkg_xml);
@@ -298,7 +298,7 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
     pri_ret = xmlTextReaderRead(pri_reader);
     name = xmlTextReaderName(pri_reader);
     if (g_strcmp0((char *) name, "package")) {
-        g_warning(MODULE"parse_xml_metadata: Probably bad xml");
+        g_warning(MODULE"%s: Probably bad xml", __func__);
         xmlFree(name);
         return 0;
     }
@@ -307,7 +307,7 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
     fil_ret = xmlTextReaderRead(fil_reader);
     name = xmlTextReaderName(fil_reader);
     if (g_strcmp0((char *) name, "package")) {
-        g_warning(MODULE"parse_xml_metadata: Probably bad xml");
+        g_warning(MODULE"%s: Probably bad xml", __func__);
         xmlFree(name);
         return 0;
     }
@@ -316,7 +316,7 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
     oth_ret = xmlTextReaderRead(oth_reader);
     name = xmlTextReaderName(oth_reader);
     if (g_strcmp0((char *) name, "package")) {
-        g_warning(MODULE"parse_xml_metadata: Probably bad xml");
+        g_warning(MODULE"%s: Probably bad xml", __func__);
         xmlFree(name);
         return 0;
     }
@@ -337,7 +337,7 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
 int load_compressed_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
 {
     if (!hashtable) {
-        g_debug(MODULE"load_compressed_xml_metadata: No hash table passed");
+        g_debug(MODULE"%s: No hash table passed", __func__);
         return 0;
     }
 
@@ -346,7 +346,7 @@ int load_compressed_xml_metadata(GHashTable *hashtable, const char *primary_xml_
         !g_file_test(filelists_xml_path, flags) ||
         !g_file_test(other_xml_path, flags))
     {
-        g_debug(MODULE"load_compressed_xml_metadata: One or more files don't exist");
+        g_debug(MODULE"%s: One or more files don't exist", __func__);
         return 0;
     }
 
@@ -354,7 +354,7 @@ int load_compressed_xml_metadata(GHashTable *hashtable, const char *primary_xml_
     CompressionType c_type;
     c_type = detect_compression(primary_xml_path);
     if (c_type == UNKNOWN_COMPRESSION || c_type == NO_COMPRESSION) {
-        g_debug(MODULE"load_compressed_xml_metadata: Unknown compression");
+        g_debug(MODULE"%s: Unknown compression", __func__);
         return 0;
     }
 
@@ -390,7 +390,7 @@ int load_compressed_xml_metadata(GHashTable *hashtable, const char *primary_xml_
                                 NULL,
                                 XML_PARSE_NOBLANKS);
     if (!pri_reader) {
-        g_critical(MODULE"load_compressed_xml_metadata: Reader for primary.xml.* file failed");
+        g_critical(MODULE"%s: Reader for primary.xml.* file failed", __func__);
         cw_close(pri_xml_cwfile);
         cw_close(fil_xml_cwfile);
         cw_close(oth_xml_cwfile);
@@ -404,7 +404,7 @@ int load_compressed_xml_metadata(GHashTable *hashtable, const char *primary_xml_
                                 NULL,
                                 XML_PARSE_NOBLANKS);
     if (!fil_reader) {
-        g_critical(MODULE"load_compressed_xml_metadata: Reader for filelists.xml.* file failed");
+        g_critical(MODULE"%s: Reader for filelists.xml.* file failed", __func__);
         xmlFreeTextReader(pri_reader);
         cw_close(fil_xml_cwfile);
         cw_close(oth_xml_cwfile);
@@ -418,7 +418,7 @@ int load_compressed_xml_metadata(GHashTable *hashtable, const char *primary_xml_
                                 NULL,
                                 XML_PARSE_NOBLANKS);
     if (!oth_reader) {
-        g_critical(MODULE"load_compressed_xml_metadata: Reader for other.xml.* file failed");
+        g_critical(MODULE"%s: Reader for other.xml.* file failed", __func__);
         xmlFreeTextReader(pri_reader);
         xmlFreeTextReader(fil_reader);
         cw_close(oth_xml_cwfile);
@@ -438,7 +438,7 @@ int load_compressed_xml_metadata(GHashTable *hashtable, const char *primary_xml_
 int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
 {
     if (!hashtable) {
-        g_debug(MODULE"load_xml_metadata: No hash table passed");
+        g_debug(MODULE"%s: No hash table passed", __func__);
         return 0;
     }
 
@@ -447,7 +447,7 @@ int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const
         !g_file_test(filelists_xml_path, flags) ||
         !g_file_test(other_xml_path, flags))
     {
-        g_debug(MODULE"load_xml_metadata: One or more files don't exist");
+        g_debug(MODULE"%s: One or more files don't exist", __func__);
         return 0;
     }
 
@@ -467,7 +467,7 @@ int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const
                                 NULL,
                                 XML_PARSE_NOBLANKS);
     if (!pri_reader) {
-        g_critical(MODULE"load_xml_metadata: Reader for primary.xml file failed");
+        g_critical(MODULE"%s: Reader for primary.xml file failed", __func__);
         fclose(pri_xml_file);
         fclose(fil_xml_file);
         fclose(oth_xml_file);
@@ -481,7 +481,7 @@ int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const
                                 NULL,
                                 XML_PARSE_NOBLANKS);
     if (!fil_reader) {
-        g_critical(MODULE"load_xml_metadata: Reader for filelists.xml file failed");
+        g_critical(MODULE"%s: Reader for filelists.xml file failed", __func__);
         xmlFreeTextReader(pri_reader);
         fclose(fil_xml_file);
         fclose(oth_xml_file);
@@ -539,7 +539,7 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
     }
 
     if (!g_file_test(repomd, G_FILE_TEST_EXISTS)) {
-        g_debug(MODULE"locate_metadata_via_repomd: %s doesn't exists", repomd);
+        g_debug(MODULE"%s: %s doesn't exists", __func__, repomd);
         g_free(repomd);
         return NULL;
     }
@@ -555,7 +555,7 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
     ret = xmlTextReaderRead(reader);
     name = xmlTextReaderName(reader);
     if (g_strcmp0((char *) name, "repomd")) {
-        g_warning(MODULE"locate_metadata_via_repomd: Bad xml - missing repomd element? (%s)", name);
+        g_warning(MODULE"%s: Bad xml - missing repomd element? (%s)", __func__, name);
         xmlFree(name);
         xmlFreeTextReader(reader);
         g_free(repomd);
@@ -566,7 +566,7 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
     ret = xmlTextReaderRead(reader);
     name = xmlTextReaderName(reader);
     if (g_strcmp0((char *) name, "revision")) {
-        g_warning(MODULE"locate_metadata_via_repomd: Bad xml - missing revision element? (%s)", name);
+        g_warning(MODULE"%s: Bad xml - missing revision element? (%s)", __func__, name);
         xmlFree(name);
         xmlFreeTextReader(reader);
         g_free(repomd);
@@ -590,7 +590,7 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
 
     if (!ret) {
         // No elements left -> Bad xml
-        g_warning(MODULE"locate_metadata_vie_repomd: Bad xml - missing data elements?");
+        g_warning(MODULE"%s: Bad xml - missing data elements?", __func__);
         xmlFreeTextReader(reader);
         g_free(repomd);
         return NULL;
@@ -762,7 +762,7 @@ int remove_old_metadata(const char *repopath)
     GDir *repodir;
     repodir = g_dir_open(full_repopath, 0, NULL);
     if (!repodir) {
-        g_debug(MODULE"remove_old_metadata: Path %s doesn't exists", repopath);
+        g_debug(MODULE"%s: Path %s doesn't exists", __func__, repopath);
         return -1;
     }
 
@@ -780,9 +780,9 @@ int remove_old_metadata(const char *repopath)
         for (element=list; element; element=element->next) {
             gchar *path = (char *) element->data;
 
-            g_debug(MODULE"Removing: %s (path obtained from repomd.xml)", path);
+            g_debug("%s: Removing: %s (path obtained from repomd.xml)", __func__, path);
             if (g_remove(path) == -1) {
-                g_warning(MODULE"remove_old_metadata: Cannot remove %s", path);
+                g_warning("%s: remove_old_metadata: Cannot remove %s", __func__, path);
             } else {
                 removed_files++;
             }
@@ -811,9 +811,9 @@ int remove_old_metadata(const char *repopath)
             gchar *path;
             path = g_strconcat(full_repopath, file, NULL);
 
-            g_debug(MODULE"Removing: %s", path);
+            g_debug(MODULE"%s: Removing: %s", __func__, path);
             if (g_remove(path) == -1) {
-                g_warning(MODULE"remove_old_metadata: Cannot remove %s", path);
+                g_warning(MODULE"%s: Cannot remove %s", __func__, path);
             } else {
                 removed_files++;
             }

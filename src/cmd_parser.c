@@ -71,7 +71,7 @@ static GOptionEntry cmd_entries[] =
       "Do not include the file's checksum in the metadata filename.", NULL },
     { "workers", 0, 0, G_OPTION_ARG_INT, &(_cmd_options.workers),
       "Number of workers to spawn to read rpms.", NULL },
-    { NULL }
+    { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
 };
 
 

@@ -13,6 +13,10 @@
 #undef MODULE
 #define MODULE "load_metadata: "
 
+#define FORMAT_XML      1
+#define FORMAT_LEVEL    0
+
+
 
 void free_values(gpointer data)
 {
@@ -122,7 +126,7 @@ void process_node(GHashTable *metadata, xmlTextReaderPtr pri_reader,
     char *oth_pkg_xml;
     xmlBufferPtr buf = xmlBufferCreate();
 
-    len = xmlNodeDump(buf, NULL, pri_pkg_node, 0, 0);  // TODO: formatting
+    len = xmlNodeDump(buf, NULL, pri_pkg_node, FORMAT_LEVEL, FORMAT_XML);
     if (len >= 0) {
         pri_pkg_xml = g_strndup((char *) xmlBufferContent(buf), (gsize) len);
     } else {
@@ -132,7 +136,7 @@ void process_node(GHashTable *metadata, xmlTextReaderPtr pri_reader,
 
     xmlBufferEmpty(buf);
 
-    len = xmlNodeDump(buf, NULL, fil_pkg_node, 0, 0);  // TODO: formatting
+    len = xmlNodeDump(buf, NULL, fil_pkg_node, FORMAT_LEVEL, FORMAT_XML);
     if (len >= 0) {
         fil_pkg_xml = g_strndup((char *) xmlBufferContent(buf), (gsize) len);
     } else {
@@ -142,7 +146,7 @@ void process_node(GHashTable *metadata, xmlTextReaderPtr pri_reader,
 
     xmlBufferEmpty(buf);
 
-    len = xmlNodeDump(buf, NULL, oth_pkg_node, 0, 0);  // TODO: formatting
+    len = xmlNodeDump(buf, NULL, oth_pkg_node, FORMAT_LEVEL, FORMAT_XML);
     if (len >= 0) {
         oth_pkg_xml = g_strndup((char *) xmlBufferContent(buf), (gsize) len);
     } else {

@@ -64,6 +64,21 @@ void black_hole_log_function (const gchar *log_domain, GLogLevelFlags log_level,
 }
 
 
+// Global variables used by signal handler
+char *tmp_repodata_path = NULL;
+
+// Signal handler
+void sigint_catcher(int sig)
+{
+    UNUSED(sig);
+    g_message("SIGINT catched: Terminating...");
+    if (tmp_repodata_path) {
+        remove_dir(tmp_repodata_path);
+    }
+    exit(1);
+}
+
+
 
 int allowed_file(const gchar *filename, struct CmdOptions *options)
 {
@@ -345,6 +360,22 @@ int main(int argc, char **argv) {
         g_critical("Error while creating temporary repodata directory %s", tmp_out_repo);
         exit(1);
     }
+
+
+    // Set handler for sigint
+
+    tmp_repodata_path = tmp_out_repo;
+
+    g_debug("SIGINT handler setup");
+    struct sigaction sigact;
+    sigact.sa_handler = sigint_catcher;
+    sigemptyset(&sigact.sa_mask);
+    sigact.sa_flags = 0;
+    if (sigaction(SIGINT, &sigact, NULL) == -1) {
+        g_critical("sigaction(): %s", strerror(errno));
+        exit(1);
+    }
+
 
 
     // Copy groupfile
@@ -710,6 +741,7 @@ int main(int argc, char **argv) {
 
     g_free(in_repo);
     g_free(out_repo);
+    tmp_repodata_path = NULL;
     g_free(tmp_out_repo);
     g_free(in_dir);
     g_free(out_dir);

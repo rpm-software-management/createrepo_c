@@ -1,9 +1,13 @@
+#define _XOPEN_SOURCE 500
+
 #include <glib.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <arpa/inet.h>
+#include <unistd.h>
+#include <ftw.h>
 #include "logging.h"
 #include "constants.h"
 #include "misc.h"
@@ -13,6 +17,8 @@
 
 
 #define BUFFER_SIZE     4096
+
+#define UNUSED(x) (void)(x) // Used to suppress compiler warning about unused param
 
 
 const char *flag_to_string(gint64 flags)
@@ -420,6 +426,7 @@ int copy_file(const char *src, const char *dst)
     return CR_COPY_OK;
 }
 
+
 /*
 long int get_file_size(const char *path)
 {
@@ -443,3 +450,22 @@ long int get_file_size(const char *path)
     return size;
 }
 */
+
+
+int remove_dir_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
+{
+    UNUSED(sb);
+    UNUSED(typeflag);
+    UNUSED(ftwbuf);
+    int rv = remove(fpath);
+    if (rv)
+        g_critical("%s: Cannot remove: %s: %s", __func__, fpath, strerror(errno));
+
+    return rv;
+}
+
+
+int remove_dir(const char *path)
+{
+    return nftw(path, remove_dir_cb, 64, FTW_DEPTH | FTW_PHYS);
+}

@@ -36,6 +36,6 @@ char *get_filename(const char *filepath);
 #define CR_COPY_ERR             1
 
 int copy_file(const char *src, const char *dst);
-
+int remove_dir(const char *path);
 
 #endif /* __C_CREATEREPOLIB_MISC_H__ */

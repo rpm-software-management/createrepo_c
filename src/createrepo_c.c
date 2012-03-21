@@ -346,18 +346,15 @@ int main(int argc, char **argv) {
     }
 
 
-    // Check if tmp_out_repo exists
-
-    if (g_file_test(tmp_out_repo, G_FILE_TEST_EXISTS)) {
-            g_critical("Temporary repodata directory: %s already exists! (Another createrepo process is running?)", tmp_out_repo);
-            exit(1);
-    }
-
-
-    // Create tmp_out_repo dir
+    // Check if tmp_out_repo exists & Create tmp_out_repo dir
 
     if (g_mkdir (tmp_out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
-        g_critical("Error while creating temporary repodata directory %s", tmp_out_repo);
+        if (errno == EEXIST) {
+            g_critical("Temporary repodata directory: %s already exists! (Another createrepo process is running?)", tmp_out_repo);
+        } else {
+            g_critical("Error while creating temporary repodata directory %s: %s", tmp_out_repo, strerror(errno));
+        }
+
         exit(1);
     }
 

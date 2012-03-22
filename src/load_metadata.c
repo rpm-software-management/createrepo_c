@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <string.h>
-#include <zlib.h>
 #include <libxml/xmlreader.h>
 #include "logging.h"
 #include "load_metadata.h"
@@ -67,16 +66,6 @@ void free_metadata_location(struct MetadataLocation *ml)
 }
 
 
-int xmlInputReadCallback_plaintext (void * context, char * buffer, int len)
-{
-    int readed = fread(buffer, 1, len, (FILE *) context);
-    if (readed != len && !feof((FILE *) context)) {
-        return -1;
-    }
-    return readed;
-}
-
-
 int xmlInputReadCallback_compressed (void * context, char * buffer, int len)
 {
     int readed = cw_read( ((CW_FILE *) context), buffer, (unsigned int) len);
@@ -86,10 +75,6 @@ int xmlInputReadCallback_compressed (void * context, char * buffer, int len)
     return readed;
 }
 
-
-int xmlInputCloseCallback_plaintext (void * context) {
-    return fclose((FILE *) context) ? -1 : 0;
-}
 
 
 int xmlInputCloseCallback_compressed (void * context) {
@@ -338,7 +323,7 @@ int parse_xml_metadata(GHashTable *hashtable, xmlTextReaderPtr pri_reader, xmlTe
 
 
 
-int load_compressed_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
+int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
 {
     if (!hashtable) {
         g_debug(MODULE"%s: No hash table passed", __func__);
@@ -357,7 +342,8 @@ int load_compressed_xml_metadata(GHashTable *hashtable, const char *primary_xml_
     // Detect compression type
     CompressionType c_type;
     c_type = detect_compression(primary_xml_path);
-    if (c_type == UNKNOWN_COMPRESSION || c_type == NO_COMPRESSION) {
+
+    if (c_type == UNKNOWN_COMPRESSION) {
         g_debug(MODULE"%s: Unknown compression", __func__);
         return 0;
     }
@@ -426,83 +412,6 @@ int load_compressed_xml_metadata(GHashTable *hashtable, const char *primary_xml_
         xmlFreeTextReader(pri_reader);
         xmlFreeTextReader(fil_reader);
         cw_close(oth_xml_cwfile);
-        return 0;
-    }
-
-    int result = parse_xml_metadata(hashtable, pri_reader, fil_reader, oth_reader);
-
-    xmlFreeTextReader(pri_reader);
-    xmlFreeTextReader(fil_reader);
-    xmlFreeTextReader(oth_reader);
-
-    return result;
-}
-
-
-int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
-{
-    if (!hashtable) {
-        g_debug(MODULE"%s: No hash table passed", __func__);
-        return 0;
-    }
-
-    GFileTest flags = G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR;
-    if (!g_file_test(primary_xml_path, flags) ||
-        !g_file_test(filelists_xml_path, flags) ||
-        !g_file_test(other_xml_path, flags))
-    {
-        g_debug(MODULE"%s: One or more files don't exist", __func__);
-        return 0;
-    }
-
-    FILE *pri_xml_file = fopen(primary_xml_path, "rb");
-    FILE *fil_xml_file = fopen(filelists_xml_path, "rb");
-    FILE *oth_xml_file = fopen(other_xml_path, "rb");
-
-    // Setup xml readers
-    xmlTextReaderPtr pri_reader;
-    xmlTextReaderPtr fil_reader;
-    xmlTextReaderPtr oth_reader;
-
-    pri_reader = xmlReaderForIO(xmlInputReadCallback_plaintext,
-                                xmlInputCloseCallback_plaintext,
-                                pri_xml_file,
-                                NULL,
-                                NULL,
-                                XML_PARSE_NOBLANKS);
-    if (!pri_reader) {
-        g_critical(MODULE"%s: Reader for primary.xml file failed", __func__);
-        fclose(pri_xml_file);
-        fclose(fil_xml_file);
-        fclose(oth_xml_file);
-        return 0;
-    }
-
-    fil_reader = xmlReaderForIO(xmlInputReadCallback_plaintext,
-                                xmlInputCloseCallback_plaintext,
-                                fil_xml_file,
-                                NULL,
-                                NULL,
-                                XML_PARSE_NOBLANKS);
-    if (!fil_reader) {
-        g_critical(MODULE"%s: Reader for filelists.xml file failed", __func__);
-        xmlFreeTextReader(pri_reader);
-        fclose(fil_xml_file);
-        fclose(oth_xml_file);
-        return 0;
-    }
-
-    oth_reader = xmlReaderForIO(xmlInputReadCallback_plaintext,
-                                xmlInputCloseCallback_plaintext,
-                                oth_xml_file,
-                                NULL,
-                                NULL,
-                                XML_PARSE_NOBLANKS);
-    if (!oth_reader) {
-        g_critical("load_xml_metadata: Reader for other.xml file failed");
-        xmlFreeTextReader(pri_reader);
-        xmlFreeTextReader(fil_reader);
-        fclose(oth_xml_file);
         return 0;
     }
 
@@ -738,15 +647,7 @@ int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath)
     // Load metadata
 
     int result;
-
-    if(g_str_has_suffix(ml->pri_xml_href, ".xml") &&
-              g_str_has_suffix(ml->fil_xml_href, ".xml") &&
-              g_str_has_suffix(ml->oth_xml_href, ".xml"))
-    {
-        result = load_xml_metadata(hashtable, ml->pri_xml_href, ml->fil_xml_href, ml->oth_xml_href);
-    } else {
-        result = load_compressed_xml_metadata(hashtable, ml->pri_xml_href, ml->fil_xml_href, ml->oth_xml_href);
-    }
+    result = load_xml_metadata(hashtable, ml->pri_xml_href, ml->fil_xml_href, ml->oth_xml_href);
 
     free_metadata_location(ml);
 

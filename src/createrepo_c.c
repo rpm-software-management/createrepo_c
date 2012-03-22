@@ -713,10 +713,10 @@ int main(int argc, char **argv) {
     FILE *frepomd = fopen(repomd_path, "w");
     if (frepomd && repomd_res->repomd_xml) {
         fputs(repomd_res->repomd_xml, frepomd);
+        fclose(frepomd);
     } else {
         g_critical("Generate of repomd.xml failed");
     }
-    fclose(frepomd);
 
     free_repomdresult(repomd_res);
     g_free(repomd_path);

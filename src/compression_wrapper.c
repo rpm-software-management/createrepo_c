@@ -85,6 +85,14 @@ CompressionType detect_compression(const char *filename)
         g_debug(MODULE"%s: Mime type not detected!", __func__);
     }
 
+
+    // Xml detection
+
+    if (type == UNKNOWN_COMPRESSION && g_str_has_suffix(filename, ".xml"))
+    {
+        type = NO_COMPRESSION;
+    }
+
     magic_close(myt);
 
     return type;

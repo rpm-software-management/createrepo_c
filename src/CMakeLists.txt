@@ -15,4 +15,12 @@ SET_TARGET_PROPERTIES(libcreaterepo_c PROPERTIES OUTPUT_NAME "libcreaterepo_c")
 ADD_EXECUTABLE(../createrepo_c createrepo_c.c cmd_parser.c)
 TARGET_LINK_LIBRARIES(../createrepo_c libcreaterepo_c ${GLIB2_LIBRARIES} ${GTHREAD2_LIBRARIES})
 
+SET (parser_test_SRCS load_metadata_2.c)
+ADD_LIBRARY(parser_testlib ${parser_test_SRCS})
+TARGET_LINK_LIBRARIES(parser_testlib libcreaterepo_c)
+TARGET_LINK_LIBRARIES(parser_testlib "-lexpat")
+
+ADD_EXECUTABLE(../parser_test parser_test.c)
+TARGET_LINK_LIBRARIES(../parser_test parser_testlib)
+
 INSTALL_PROGRAMS(/usr/bin/ FILES createrepo_c)

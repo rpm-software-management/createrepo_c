@@ -10,7 +10,7 @@ message("LIBXML2_FLAGS: ${LIBXML2_FLAGS}")
 execute_process(COMMAND xml2-config --libs
     OUTPUT_VARIABLE LIBXML2_LDFLAGS)
 string(REPLACE "\n" "" LIBXML2_LDFLAGS ${LIBXML2_LDFLAGS})
-message("LIBXML2_LFLAGS: ${LIBXML2_LDFLAGS}")
+message("LIBXML2_LDFLAGS: ${LIBXML2_LDFLAGS}")
 
 
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -Wl,--as-needed ${LIBXML2_FLAGS}")
@@ -26,6 +26,7 @@ find_package(BZip2 REQUIRED)
 find_package(GLIB2 REQUIRED)
 find_package(GTHREAD2 REQUIRED)
 find_package(ZLIB REQUIRED)
+find_package(EXPAT REQUIRED)    # Doesn't work!
 #find_package(LibXml2 REQUIRED) # Doesn't work!
 
 include_directories(${GLIB2_INCLUDE_DIRS})

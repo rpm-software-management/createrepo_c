@@ -10,7 +10,6 @@
 #include "parsepkg.h"
 #include <fcntl.h>
 #include "load_metadata.h"
-#include "load_metadata_2.h"
 #include "repomd.h"
 #include "compression_wrapper.h"
 #include "misc.h"
@@ -360,7 +359,7 @@ int main(int argc, char **argv) {
 
         // Load local repodata
         old_metadata = new_metadata_hashtable();
-        int ret = locate_and_load_xml_metadata_2(old_metadata, in_dir);
+        int ret = locate_and_load_xml_metadata(old_metadata, in_dir);
         if (!ret) {
             g_warning("Old metadata not found");
         } else {
@@ -372,7 +371,7 @@ int main(int argc, char **argv) {
         for (element = cmd_options->l_update_md_paths; element; element = g_slist_next(element)) {
             char *path = (char *) element->data;
             g_debug("Loading md-path: %s", path);
-            int ret = locate_and_load_xml_metadata_2(old_metadata, path);
+            int ret = locate_and_load_xml_metadata(old_metadata, path);
             if (ret) {
                 printf("md-path loaded");
             } else {

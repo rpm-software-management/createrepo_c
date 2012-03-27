@@ -10,6 +10,7 @@
 #include "parsepkg.h"
 #include <fcntl.h>
 #include "load_metadata.h"
+#include "load_metadata_2.h"
 #include "repomd.h"
 #include "compression_wrapper.h"
 #include "misc.h"
@@ -140,11 +141,11 @@ void dumper_thread(gpointer data, gpointer user_data) {
     gchar *modified_primary_xml = NULL;
 
     gboolean old_used = FALSE;
-    struct PackageMetadata *md;
+    Package *md;
 
     if (udata->old_metadata) {
         // We have old metadata
-        md = (struct PackageMetadata *) g_hash_table_lookup (udata->old_metadata, task->filename);
+        md = (Package *) g_hash_table_lookup (udata->old_metadata, task->filename);
         if (md) {
             // CACHE HIT!
 
@@ -163,42 +164,9 @@ void dumper_thread(gpointer data, gpointer user_data) {
         }
 
         if (old_used) {
-            // We have usable old data, but we have to check locations (href and base)
-
-            modified_primary_xml = md->primary_xml;
-
-            gboolean href_changed = FALSE;
-            gboolean base_changed = FALSE;
-
-            if (g_strcmp0(md->location_href, location_href)) {
-                href_changed = TRUE;
-            }
-
-            if (g_strcmp0(md->location_base, location_base)) {
-                base_changed = TRUE;
-            }
-
-            if (href_changed || base_changed) {
-                g_debug("CACHE HIT %s - Changing location tag", task->filename);
-
-                gchar *replacement;
-
-                if (!location_base) {
-                    replacement = g_strconcat("<location href=\"", location_href, "\"/>", NULL);
-                } else {
-                    replacement = g_strconcat("<location xml:base=\"", location_base, "\" href=\"", location_href, "\"/>", NULL);
-                }
-
-                modified_primary_xml_used = TRUE;
-                modified_primary_xml = g_regex_replace_literal(location_subs_re,
-                                                                modified_primary_xml,
-                                                                -1,
-                                                                0,
-                                                                replacement,
-                                                                (GRegexMatchFlags) 0,
-                                                                NULL);
-                g_free(replacement);
-            }
+            // We have usable old data, but we have to set locations (href and base)
+            md->location_href = location_href;
+            md->location_base = location_base;
         }
     }
 
@@ -206,9 +174,7 @@ void dumper_thread(gpointer data, gpointer user_data) {
         res = xml_from_package_file(task->full_path, udata->checksum_type, location_href,
                                     udata->location_base, udata->changelog_limit, NULL);
     } else {
-        res.primary = modified_primary_xml;
-        res.filelists = md->filelists_xml;
-        res.other = md->other_xml;
+        res = xml_dump(md);
     }
 
     // Write primary data
@@ -393,8 +359,8 @@ int main(int argc, char **argv) {
     if (cmd_options->update) {
 
         // Load local repodata
-        old_metadata = new_old_metadata_hashtable();
-        int ret = locate_and_load_xml_metadata(old_metadata, in_dir);
+        old_metadata = new_metadata_hashtable();
+        int ret = locate_and_load_xml_metadata_2(old_metadata, in_dir);
         if (!ret) {
             g_warning("Old metadata not found");
         } else {
@@ -406,7 +372,7 @@ int main(int argc, char **argv) {
         for (element = cmd_options->l_update_md_paths; element; element = g_slist_next(element)) {
             char *path = (char *) element->data;
             g_debug("Loading md-path: %s", path);
-            int ret = locate_and_load_xml_metadata(old_metadata, path);
+            int ret = locate_and_load_xml_metadata_2(old_metadata, path);
             if (ret) {
                 printf("md-path loaded");
             } else {
@@ -733,7 +699,7 @@ int main(int argc, char **argv) {
     g_regex_unref(location_subs_re);
 
     if (old_metadata) {
-        destroy_old_metadata_hashtable(old_metadata);
+        destroy_metadata_hashtable(old_metadata);
     }
 
     g_free(in_repo);

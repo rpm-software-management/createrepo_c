@@ -69,6 +69,8 @@ struct ParserData {
     Package *pkg;
     ParserContext context;
     TextElement last_elem;
+
+    gboolean error;
 };
 
 
@@ -112,6 +114,12 @@ void pri_start_handler(void *data, const char *el, const char **attr) {
 
     // <rpm:entry>
     } else if (!strcmp(el, "rpm:entry")) {
+        if (!pkg) {
+            ppd->error = TRUE;
+            g_critical(MODULE"%s: Have <rpm:entry> but pkg object doesn't exist!", __func__);
+            return;
+        }
+
         Dependency *dependency;
         dependency = dependency_new();
 
@@ -160,10 +168,12 @@ void pri_start_handler(void *data, const char *el, const char **attr) {
     } else if (!strcmp(el, "package")) {
         // Check sanity
         if (ppd->context != METADATA) {
+            ppd->error = TRUE;
             g_critical(MODULE"%s: Package element: Bad XML context!", __func__);
             return;
         }
         if (ppd->pkg) {
+            ppd->error = TRUE;
             g_critical(MODULE"%s: Package element: Pkg pointer is not NULL", __func__);
             return;
         }
@@ -181,6 +191,12 @@ void pri_start_handler(void *data, const char *el, const char **attr) {
 
     // <version>
     } else if (!strcmp(el, "version")) {
+        if (!pkg) {
+            ppd->error = TRUE;
+            g_critical(MODULE"%s: Have <version> but pkg object doesn't exist!", __func__);
+            return;
+        }
+
         for (i = 0; attr[i]; i += 2) {
             if (!strcmp(attr[i], "epoch")) {
                 pkg->epoch = g_string_chunk_insert(pkg->chunk, attr[i+1]);
@@ -196,6 +212,12 @@ void pri_start_handler(void *data, const char *el, const char **attr) {
     // <checksum>
     } else if (!strcmp(el, "checksum")) {
         ppd->last_elem = CHECKSUM_ELEM;
+
+        if (!pkg) {
+            ppd->error = TRUE;
+            g_critical(MODULE"%s: Have <checksum> but pkg object doesn't exist!", __func__);
+            return;
+        }
 
         for (i = 0; attr[i]; i += 2) {
             if (!strcmp(attr[i], "type")) {
@@ -221,6 +243,12 @@ void pri_start_handler(void *data, const char *el, const char **attr) {
 
     // <time>
     } else if (!strcmp(el, "time")) {
+        if (!pkg) {
+            ppd->error = TRUE;
+            g_critical(MODULE"%s: Have <time> but pkg object doesn't exist!", __func__);
+            return;
+        }
+
         for (i = 0; attr[i]; i += 2) {
             if (!strcmp(attr[i], "file")) {
                 pkg->time_file = g_ascii_strtoll(attr[i+1], NULL, 10);
@@ -233,6 +261,12 @@ void pri_start_handler(void *data, const char *el, const char **attr) {
 
     // <size>
     } else if (!strcmp(el, "size")) {
+        if (!pkg) {
+            ppd->error = TRUE;
+            g_critical(MODULE"%s: Have <size> but pkg object doesn't exist!", __func__);
+            return;
+        }
+
         for (i = 0; attr[i]; i += 2) {
             if (!strcmp(attr[i], "package")) {
                 pkg->size_package = g_ascii_strtoll(attr[i+1], NULL, 10);
@@ -247,6 +281,12 @@ void pri_start_handler(void *data, const char *el, const char **attr) {
 
     // <location>
     } else if (!strcmp(el, "location")) {
+        if (!pkg) {
+            ppd->error = TRUE;
+            g_critical(MODULE"%s: Have <location> but pkg object doesn't exist!", __func__);
+            return;
+        }
+
         for (i = 0; attr[i]; i += 2) {
             if (!strcmp(attr[i], "href")) {
                 pkg->location_href = g_string_chunk_insert(pkg->chunk, attr[i+1]);
@@ -283,6 +323,12 @@ void pri_start_handler(void *data, const char *el, const char **attr) {
 
     // <rpm:header-range>
     } else if (!strcmp(el, "rpm:header-range")) {
+        if (!pkg) {
+            ppd->error = TRUE;
+            g_critical(MODULE"%s: Have <rpm:header-range> but pkg object doesn't exist!", __func__);
+            return;
+        }
+
         for (i = 0; attr[i]; i += 2) {
             if (!strcmp(attr[i], "start")) {
                 pkg->rpm_header_start = g_ascii_strtoll(attr[i+1], NULL, 10);
@@ -312,6 +358,7 @@ void pri_start_handler(void *data, const char *el, const char **attr) {
     // <metadata>
     } else if (!strcmp(el, "metadata")) {
         if (ppd->context != ROOT) {
+            ppd->error = TRUE;
             g_critical(MODULE"%s: Bad context (%d) for %s element", __func__, ppd->context, el);
             return;
         }
@@ -319,6 +366,7 @@ void pri_start_handler(void *data, const char *el, const char **attr) {
 
     // unknown element
     } else {
+        ppd->error = TRUE;
         g_warning(MODULE"%s: Unknown element: %s", __func__, el);
     }
 }
@@ -354,7 +402,8 @@ void pri_char_handler(void *data, const char *txt, int txtlen) {
             g_string_append_len(ppd->current_string, txt, (gsize) txtlen);
             break;
         default:
-            g_warning(MODULE"%s: Unknown last xml element", __func__);
+            ppd->error = TRUE;
+            g_warning(MODULE"%s: Unknown xml element (%d) in primary.xml", __func__, ppd->last_elem);
             break;
     }
 }
@@ -368,10 +417,10 @@ void pri_end_handler(void *data, const char *el) {
 
     // Store strings
 
-    gchar *txt = ppd->current_string->str;
-    gsize txtlen = ppd->current_string->len;
+    if (ppd->last_elem != NONE_ELEM && pkg) {
+        gchar *txt = ppd->current_string->str;
+        gsize txtlen = ppd->current_string->len;
 
-    if (ppd->last_elem != NONE_ELEM) {
         switch (ppd->last_elem) {
             case NAME_ELEM:
                 pkg->name = g_string_chunk_insert_len(pkg->chunk, txt, txtlen);
@@ -427,7 +476,7 @@ void pri_end_handler(void *data, const char *el) {
     if (!strcmp(el, "package")) {
         ppd->context = METADATA;
 
-        if (ppd->pkg){
+        if (ppd->pkg) {
             // Store package into the hashtable
             char *key = pkg->pkgId;
             if (key && key[0] != '\0') {
@@ -483,8 +532,13 @@ void fil_start_handler(void *data, const char *el, const char **attr) {
 
     // <file>
     if (!strcmp(el, "file")) {
-        assert(pkg);
         ppd->last_elem = FILE_ELEM;
+
+        if (!pkg) {
+            ppd->error = TRUE;
+            g_critical(MODULE"%s: Have <file> but pkg object doesn't exist!", __func__);
+            return;
+        }
 
         for (i = 0; attr[i]; i += 2) {
             if (!strcmp(attr[i], "type")) {
@@ -502,10 +556,12 @@ void fil_start_handler(void *data, const char *el, const char **attr) {
     } else if (!strcmp(el, "package")) {
         // Check sanity
         if (ppd->context != FILELISTS) {
+            ppd->error = TRUE;
             g_critical(MODULE"%s: Package element: Bad XML context!", __func__);
             return;
         }
         if (ppd->pkg) {
+            ppd->error = TRUE;
             g_critical(MODULE"%s: Package element: Pkg pointer is not NULL", __func__);
             return;
         }
@@ -522,9 +578,11 @@ void fil_start_handler(void *data, const char *el, const char **attr) {
         if (key) {
             ppd->pkg = (Package *) g_hash_table_lookup(ppd->hashtable, (gconstpointer) key);
             if (!ppd->pkg) {
+                ppd->error = TRUE;
                 g_critical(MODULE"%s: Unknown package (package ID: %s)", __func__, key);
             }
         } else {
+            ppd->error = TRUE;
             g_critical(MODULE"%s: Package withou pkgid attribute found!", __func__);
         }
 
@@ -535,6 +593,7 @@ void fil_start_handler(void *data, const char *el, const char **attr) {
     // <filelists>
     } else if (!strcmp(el, "filelists")) {
         if (ppd->context != ROOT) {
+            ppd->error = TRUE;
             g_critical(MODULE"%s: Bad context (%d) for %s element", __func__, ppd->context, el);
             return;
         }
@@ -542,6 +601,7 @@ void fil_start_handler(void *data, const char *el, const char **attr) {
 
     // Unknown element
     } else {
+        ppd->error = TRUE;
         g_warning(MODULE"%s: Unknown element: %s", __func__, el);
     }
 }
@@ -562,22 +622,9 @@ void fil_char_handler(void *data, const char *txt, int txtlen) {
         case FILE_GHOST_ELEM:
             g_string_append_len(ppd->current_string, txt, (gsize) txtlen);
             break;
-        case NAME_ELEM:
-        case ARCH_ELEM:
-        case CHECKSUM_ELEM:
-        case SUMMARY_ELEM:
-        case DESCRIPTION_ELEM:
-        case PACKAGER_ELEM:
-        case URL_ELEM:
-        case RPM_LICENSE_ELEM:
-        case RPM_VENDOR_ELEM:
-        case RPM_GROUP_ELEM:
-        case RPM_BUILDHOST_ELEM:
-        case RPM_SOURCERPM_ELEM:
-            g_warning(MODULE"%s: unsupported last xml element", __func__);
-            break;
         default:
-            g_warning(MODULE"%s: Unknown last xml element", __func__);
+            ppd->error = TRUE;
+            g_warning(MODULE"%s: Unknown xml element (%d) in filelists.xml", __func__, ppd->last_elem);
             break;
     }
 }
@@ -591,27 +638,13 @@ void fil_end_handler(void *data, const char *el) {
 
     // Store strings
 
-    PackageFile *file;
-    gchar *filename;
-    gchar *txt = ppd->current_string->str;
-    gsize txtlen = ppd->current_string->len;
+    if (ppd->last_elem != NONE_ELEM && pkg) {
+        PackageFile *file;
+        gchar *filename;
+        gchar *txt = ppd->current_string->str;
+        gsize txtlen = ppd->current_string->len;
 
-    if (ppd->last_elem != NONE_ELEM) {
         switch (ppd->last_elem) {
-            case NAME_ELEM:
-            case ARCH_ELEM:
-            case CHECKSUM_ELEM:
-            case SUMMARY_ELEM:
-            case DESCRIPTION_ELEM:
-            case PACKAGER_ELEM:
-            case URL_ELEM:
-            case RPM_LICENSE_ELEM:
-            case RPM_VENDOR_ELEM:
-            case RPM_GROUP_ELEM:
-            case RPM_BUILDHOST_ELEM:
-            case RPM_SOURCERPM_ELEM:
-                g_warning(MODULE"%s: Bad last xml element state", __func__);
-                break;
             case FILE_ELEM:
             case FILE_DIR_ELEM:
             case FILE_GHOST_ELEM:
@@ -634,8 +667,11 @@ void fil_end_handler(void *data, const char *el) {
                 }
 
                 pkg->files = g_slist_prepend(pkg->files, file);
+                break;
 
             default:
+                ppd->error = TRUE;
+                g_warning(MODULE"%s: Bad last xml element state (%d) in filelists.xml", __func__, ppd->last_elem);
                 break;
         }
 
@@ -649,10 +685,12 @@ void fil_end_handler(void *data, const char *el) {
 
     if (!strcmp(el, "package")) {
         ppd->context = FILELISTS;
-        ppd->pkg = NULL;
 
-        // Reverse list of files
-        pkg->files = g_slist_reverse(pkg->files);
+        if (pkg) {
+            // Reverse list of files
+            pkg->files = g_slist_reverse(pkg->files);
+            ppd->pkg = NULL;
+        }
 
     } else if (!strcmp(el, "filelists")) {
         ppd->context = ROOT;
@@ -670,8 +708,13 @@ void oth_start_handler(void *data, const char *el, const char **attr) {
 
     // <changelog>
     if (!strcmp(el, "changelog")) {
-        assert(pkg);
         ppd->last_elem = CHANGELOG_ELEM;
+
+        if (!pkg) {
+            ppd->error = TRUE;
+            g_critical(MODULE"%s: Have <changelog> but pkg object doesn't exist!", __func__);
+            return;
+        }
 
         ChangelogEntry *changelog_entry;
         changelog_entry = changelog_entry_new();
@@ -692,10 +735,12 @@ void oth_start_handler(void *data, const char *el, const char **attr) {
     } else if (!strcmp(el, "package")) {
         // Check sanity
         if (ppd->context != OTHERDATA) {
+            ppd->error = TRUE;
             g_critical(MODULE"%s: Package element: Bad XML context (%d)!", __func__, ppd->context);
             return;
         }
         if (ppd->pkg) {
+            ppd->error = TRUE;
             g_critical(MODULE"%s: Package element: Pkg pointer is not NULL", __func__);
             return;
         }
@@ -712,9 +757,11 @@ void oth_start_handler(void *data, const char *el, const char **attr) {
         if (key) {
             ppd->pkg = (Package *) g_hash_table_lookup(ppd->hashtable, (gconstpointer) key);
             if (!ppd->pkg) {
+                ppd->error = TRUE;
                 g_critical(MODULE"%s: Unknown package (package ID: %s)", __func__, key);
             }
         } else {
+            ppd->error = TRUE;
             g_critical(MODULE"%s: Package withou pkgid attribute found!", __func__);
         }
 
@@ -725,6 +772,7 @@ void oth_start_handler(void *data, const char *el, const char **attr) {
     // <otherdata>
     } else if (!strcmp(el, "otherdata")) {
         if (ppd->context != ROOT) {
+            ppd->error = TRUE;
             g_critical(MODULE"%s: Bad context (%d) for %s element", __func__, ppd->context, el);
             return;
         }
@@ -732,6 +780,7 @@ void oth_start_handler(void *data, const char *el, const char **attr) {
 
     // Unknown element
     } else {
+        ppd->error = TRUE;
         g_warning(MODULE"%s: Unknown element: %s", __func__, el);
     }
 }
@@ -750,25 +799,9 @@ void oth_char_handler(void *data, const char *txt, int txtlen) {
         case CHANGELOG_ELEM:
             g_string_append_len(ppd->current_string, txt, (gsize) txtlen);
             break;
-        case FILE_ELEM:
-        case FILE_DIR_ELEM:
-        case FILE_GHOST_ELEM:
-        case NAME_ELEM:
-        case ARCH_ELEM:
-        case CHECKSUM_ELEM:
-        case SUMMARY_ELEM:
-        case DESCRIPTION_ELEM:
-        case PACKAGER_ELEM:
-        case URL_ELEM:
-        case RPM_LICENSE_ELEM:
-        case RPM_VENDOR_ELEM:
-        case RPM_GROUP_ELEM:
-        case RPM_BUILDHOST_ELEM:
-        case RPM_SOURCERPM_ELEM:
-            g_warning(MODULE"%s: unsupported last xml element", __func__);
-            break;
         default:
-            g_warning(MODULE"%s: Unknown last xml element", __func__);
+            ppd->error = TRUE;
+            g_warning(MODULE"%s: Unknown xml element (%d) in other.xml", __func__, ppd->last_elem);
             break;
     }
 }
@@ -782,32 +815,18 @@ void oth_end_handler(void *data, const char *el) {
 
     // Store strings
 
-    gchar *txt = ppd->current_string->str;
-    gsize txtlen = ppd->current_string->len;
+    if (ppd->last_elem != NONE_ELEM && pkg) {
+        gchar *txt = ppd->current_string->str;
+        gsize txtlen = ppd->current_string->len;
 
-    if (ppd->last_elem != NONE_ELEM) {
         switch (ppd->last_elem) {
             case CHANGELOG_ELEM:
                 ((ChangelogEntry *) pkg->changelogs->data)->changelog = g_string_chunk_insert_len(pkg->chunk, txt, txtlen);
                 break;
-            case NAME_ELEM:
-            case ARCH_ELEM:
-            case CHECKSUM_ELEM:
-            case SUMMARY_ELEM:
-            case DESCRIPTION_ELEM:
-            case PACKAGER_ELEM:
-            case URL_ELEM:
-            case RPM_LICENSE_ELEM:
-            case RPM_VENDOR_ELEM:
-            case RPM_GROUP_ELEM:
-            case RPM_BUILDHOST_ELEM:
-            case RPM_SOURCERPM_ELEM:
-            case FILE_ELEM:
-            case FILE_DIR_ELEM:
-            case FILE_GHOST_ELEM:
-                g_warning(MODULE"%s: Bad last xml element state", __func__);
-                break;
+
             default:
+                ppd->error = TRUE;
+                g_warning(MODULE"%s: Bad last xml element state (%d) in other.xml", __func__, ppd->last_elem);
                 break;
         }
 
@@ -821,10 +840,12 @@ void oth_end_handler(void *data, const char *el) {
 
     if (!strcmp(el, "package")) {
         ppd->context = OTHERDATA;
-        ppd->pkg = NULL;
 
-        // Reverse list of changelogs
-        pkg->changelogs = g_slist_reverse(pkg->changelogs);
+        if (pkg) {
+            // Reverse list of changelogs
+            pkg->changelogs = g_slist_reverse(pkg->changelogs);
+            ppd->pkg = NULL;
+        }
 
     } else if (!strcmp(el, "otherdata")) {
         ppd->context = ROOT;
@@ -882,6 +903,7 @@ int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const
     parser_data.pkg = NULL;
     parser_data.context = ROOT;
     parser_data.last_elem = NONE_ELEM;
+    parser_data.error = FALSE;
 
     pri_p = XML_ParserCreate(NULL);
     XML_SetUserData(pri_p, (void *) &parser_data);
@@ -930,6 +952,9 @@ int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const
         }
     }
 
+    if (parser_data.error)
+        goto cleanup;
+
     assert(!parser_data.pkg);
     parser_data.context = ROOT;
     parser_data.last_elem = NONE_ELEM;
@@ -962,6 +987,9 @@ int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const
             break;
         }
     }
+
+    if (parser_data.error)
+        goto cleanup;
 
     assert(!parser_data.pkg);
     parser_data.context = ROOT;
@@ -996,6 +1024,8 @@ int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const
         }
     }
 
+// Goto label
+cleanup:
 
     // Cleanup
 
@@ -1007,6 +1037,11 @@ int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const
     cw_close(oth_xml_cwfile);
 
     g_string_free(parser_data.current_string, TRUE);
+
+
+    if (parser_data.error) {
+        return 0;
+    }
 
     return 1;
 }
@@ -1043,6 +1078,14 @@ int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath, Ha
 
     intern_hashtable = new_metadata_hashtable();
     result = load_xml_metadata(intern_hashtable, ml->pri_xml_href, ml->fil_xml_href, ml->oth_xml_href);
+
+    if (!result) {
+        g_critical(MODULE"%s: Error encountered while parsing", __func__);
+        destroy_metadata_hashtable(intern_hashtable);
+        free_metadata_location(ml);
+        return result;
+    }
+
     g_debug(MODULE"%s: Parsed items: %d\n", __func__, g_hash_table_size(intern_hashtable));
 
     // Fill user hashtable and use user selected key

@@ -1,6 +1,7 @@
 SET (createrepo_c_SRCS
     compression_wrapper.c load_metadata.c misc.c package.c parsehdr.c parsepkg.c
-    repomd.c xml_dump.c xml_dump_filelists.c xml_dump_other.c xml_dump_primary.c)
+    repomd.c xml_dump.c xml_dump_filelists.c xml_dump_other.c xml_dump_primary.c
+    locate_metadata.c)
 
 #ADD_LIBRARY(libcreaterepo_c SHARED ${createrepo_c_SRCS})
 ADD_LIBRARY(libcreaterepo_c ${createrepo_c_SRCS})

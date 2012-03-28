@@ -9,6 +9,7 @@
 #include "constants.h"
 #include "parsepkg.h"
 #include <fcntl.h>
+#include "locate_metadata.h"
 #include "load_metadata.h"
 #include "repomd.h"
 #include "compression_wrapper.h"

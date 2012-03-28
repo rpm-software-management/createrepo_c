@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <zlib.h>
+#include <assert.h>
 #include "logging.h"
 #include "misc.h"
 #include "repomd.h"
@@ -17,11 +18,13 @@
 
 #define DEFAULT_DATABASE_VERSION        10
 
+#define STR_BUFFER_SIZE      32
 #define BUFFER_SIZE          8192
 
 #define RPM_NS          "http://linux.duke.edu/metadata/rpm"
 #define XMLNS_NS        "http://linux.duke.edu/metadata/repo"
 
+#define FORMAT_XML  1
 
 #define REPOMD_OK       0
 #define REPOMD_ERR      1
@@ -372,52 +375,45 @@ void process_groupfile(const char *base_path, struct repomdData *groupfile,
 }
 
 
-void dump_data_items(xmlTextWriterPtr writer, struct repomdData *md, const xmlChar *type)
+void dump_data_items(xmlNodePtr root, struct repomdData *md, const xmlChar *type)
 {
-    if (!writer || !md || !type) {
+    xmlNodePtr data, node;
+    gchar str_buffer[STR_BUFFER_SIZE];
+
+    if (!root || !md || !type) {
         return;
     }
 
-    xmlTextWriterStartElement(writer, BAD_CAST "data");
-    xmlTextWriterWriteAttribute(writer, BAD_CAST "type", type);
+    data = xmlNewChild(root, NULL, BAD_CAST "data", NULL);
+    xmlNewProp(data, BAD_CAST "type", BAD_CAST type);
 
-    xmlTextWriterStartElement(writer, BAD_CAST "checksum");
-    xmlTextWriterWriteAttribute(writer, BAD_CAST "type", (xmlChar *) md->checksum_type);
-    xmlTextWriterWriteString(writer, BAD_CAST md->checksum);
-    xmlTextWriterEndElement(writer);
+
+    node = xmlNewTextChild(data, NULL, BAD_CAST "checksum", BAD_CAST md->checksum);
+    xmlNewProp(node, BAD_CAST "type", BAD_CAST md->checksum_type);
 
     if (md->checksum_open) {
-        xmlTextWriterStartElement(writer, BAD_CAST "open-checksum");
-        xmlTextWriterWriteAttribute(writer, BAD_CAST "type", (xmlChar *) md->checksum_open_type);
-        xmlTextWriterWriteString(writer, BAD_CAST md->checksum_open);
-        xmlTextWriterEndElement(writer);
+        node = xmlNewTextChild(data, NULL, BAD_CAST "open-checksum", BAD_CAST md->checksum_open);
+        xmlNewProp(node, BAD_CAST "type", BAD_CAST md->checksum_open_type);
     }
 
-    xmlTextWriterStartElement(writer, BAD_CAST "location");
-    xmlTextWriterWriteAttribute(writer, BAD_CAST "href", (xmlChar *) md->location_href);
-    xmlTextWriterEndElement(writer);
+    node = xmlNewChild(data, NULL, BAD_CAST "location", NULL);
+    xmlNewProp(node, BAD_CAST "href", BAD_CAST md->location_href);
 
-    xmlTextWriterStartElement(writer, BAD_CAST "timestamp");
-    xmlTextWriterWriteFormatString(writer, "%ld", md->timestamp);
-    xmlTextWriterEndElement(writer);
+    g_snprintf(str_buffer, STR_BUFFER_SIZE, "%ld", md->timestamp);
+    xmlNewChild(data, NULL, BAD_CAST "timestamp", BAD_CAST str_buffer);
 
-    xmlTextWriterStartElement(writer, BAD_CAST "size");
-    xmlTextWriterWriteFormatString(writer, "%ld", md->size);
-    xmlTextWriterEndElement(writer);
+    g_snprintf(str_buffer, STR_BUFFER_SIZE, "%ld", md->size);
+    xmlNewChild(data, NULL, BAD_CAST "size", BAD_CAST str_buffer);
 
     if (md->size_open != -1) {
-        xmlTextWriterStartElement(writer, BAD_CAST "open-size");
-        xmlTextWriterWriteFormatString(writer, "%ld", md->size_open);
-        xmlTextWriterEndElement(writer);
+        g_snprintf(str_buffer, STR_BUFFER_SIZE, "%ld", md->size_open);
+        xmlNewChild(data, NULL, BAD_CAST "open-size", BAD_CAST str_buffer);
     }
 
     if (g_str_has_suffix((char *)type, "_db")) {
-        xmlTextWriterStartElement(writer, BAD_CAST "database_version");
-        xmlTextWriterWriteFormatString(writer, "%d", md->db_ver);
-        xmlTextWriterEndElement(writer);
+        g_snprintf(str_buffer, STR_BUFFER_SIZE, "%d", md->db_ver);
+        xmlNewChild(data, NULL, BAD_CAST "database_version", BAD_CAST str_buffer);
     }
-
-    xmlTextWriterEndElement(writer);  // data element end
 }
 
 
@@ -425,66 +421,41 @@ char *repomd_xml_dump(long revision, struct repomdData *pri_xml, struct repomdDa
                  struct repomdData *pri_sqlite, struct repomdData *fil_sqlite, struct repomdData *oth_sqlite,
                  struct repomdData *groupfile, struct repomdData *cgroupfile)
 {
-    xmlBufferPtr buf = xmlBufferCreate();
-    if (!buf) {
-        g_critical(MODULE"%s: Error creating the xml buffer", __func__);
-        return NULL;
-    }
-
-    xmlTextWriterPtr writer = xmlNewTextWriterMemory(buf, 0);
-    if (writer == NULL) {
-        g_critical(MODULE"%s: Error creating the xml writer", __func__);
-        return NULL;
-    }
+    xmlDocPtr doc;
+    xmlNodePtr root;
 
 
     // Start of XML document
 
-    int rc;
+    doc = xmlNewDoc(BAD_CAST "1.0");
+    root = xmlNewNode(NULL, BAD_CAST "repomd");
+    xmlNewNs(root, BAD_CAST XMLNS_NS, BAD_CAST NULL);
+    xmlNewNs(root, BAD_CAST RPM_NS, BAD_CAST "rpm");
+    xmlDocSetRootElement(doc, root);
 
-    rc = xmlTextWriterStartDocument(writer, NULL, "UTF-8", NULL);
-    if (rc < 0) {
-        g_critical(MODULE"%s: Error at xmlTextWriterStartDocument\n", __func__);
-        return NULL;
-    }
+    gchar str_revision[32];
+    g_snprintf(str_revision, 32, "%ld", revision);
+    xmlNewChild(root, NULL, BAD_CAST "revision", BAD_CAST str_revision);
 
-    rc = xmlTextWriterStartElement(writer, BAD_CAST "repomd");
-    if (rc < 0) {
-        g_critical(MODULE"%s: Error at xmlTextWriterStartElement repomd\n", __func__);
-        return NULL;
-    }
-    xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns:rpm", (xmlChar *) RPM_NS);
-    xmlTextWriterWriteAttribute(writer, BAD_CAST "xmlns", (xmlChar *) XMLNS_NS);
+    dump_data_items(root, pri_xml, (const xmlChar *) "primary");
+    dump_data_items(root, fil_xml, (const xmlChar *) "filelists");
+    dump_data_items(root, oth_xml, (const xmlChar *) "other");
+    dump_data_items(root, pri_sqlite, (const xmlChar *) "primary_db");
+    dump_data_items(root, fil_sqlite, (const xmlChar *) "filelists_db");
+    dump_data_items(root, oth_sqlite, (const xmlChar *) "other_db");
+    dump_data_items(root, groupfile, (const xmlChar *) "group");
+    dump_data_items(root, cgroupfile, (const xmlChar *) "group_gz");
 
-    rc = xmlTextWriterStartElement(writer, BAD_CAST "revision");
-    if (rc < 0) {
-        g_critical(MODULE"%s: Error at xmlTextWriterStartElement revision\n", __func__);
-        return NULL;
-    }
 
-    xmlTextWriterWriteFormatString(writer, "%ld", revision);
+    // Dump IT!
 
-    xmlTextWriterEndElement(writer); // revision element end
-
-    dump_data_items(writer, pri_xml, (const xmlChar *) "primary");
-    dump_data_items(writer, fil_xml, (const xmlChar *) "filelists");
-    dump_data_items(writer, oth_xml, (const xmlChar *) "other");
-    dump_data_items(writer, pri_sqlite, (const xmlChar *) "primary_db");
-    dump_data_items(writer, fil_sqlite, (const xmlChar *) "filelists_db");
-    dump_data_items(writer, oth_sqlite, (const xmlChar *) "other_db");
-    dump_data_items(writer, groupfile, (const xmlChar *) "group");
-    dump_data_items(writer, cgroupfile, (const xmlChar *) "group_gz");
-
-    xmlTextWriterEndElement(writer); // repomd element end
-
-    xmlFreeTextWriter(writer);
-
-    char *result = g_strdup((char*) buf->content);
+    char *result;
+    xmlDocDumpFormatMemory(doc, (xmlChar **) &result, NULL, FORMAT_XML);
 
 
     // Clean up
 
-    xmlBufferFree(buf);
+    xmlFreeDoc(doc);
 
     return result;
 }

@@ -17,9 +17,17 @@ struct MetadataLocation {
 };
 
 
+typedef enum {
+    HT_KEY_DEFAULT,
+    HT_KEY_HASH = HT_KEY_DEFAULT,
+    HT_KEY_NAME,
+    HT_KEY_FILENAME
+} HashTableKey;
+
+
 GHashTable *new_metadata_hashtable();
 void destroy_metadata_hashtable(GHashTable *hashtable);
-int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath);
+int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath, HashTableKey key);
 
 struct MetadataLocation *locate_metadata_via_repomd(const char *);
 void free_metadata_location(struct MetadataLocation *);

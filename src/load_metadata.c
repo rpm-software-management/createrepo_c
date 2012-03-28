@@ -1029,7 +1029,6 @@ int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const
     cw_close(fil_xml_cwfile);
     cw_close(oth_xml_cwfile);
 
-    // TODO: free userdata
     g_string_free(pri_pd.current_string, TRUE);
 
     return 1;
@@ -1037,7 +1036,7 @@ int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const
 
 
 
-int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath)
+int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath, HashTableKey key)
 {
     if (!hashtable || !repopath || !g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
         return 0;
@@ -1063,7 +1062,7 @@ int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath)
     // Load metadata
 
     int result;
-    GHashTable *intern_hashtable; // key is checksum (pkgId)
+    GHashTable *intern_hashtable;  // key is checksum (pkgId)
 
     intern_hashtable = new_metadata_hashtable();
     result = load_xml_metadata(intern_hashtable, ml->pri_xml_href, ml->fil_xml_href, ml->oth_xml_href);
@@ -1072,23 +1071,34 @@ int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath)
     // Fill user hashtable and use user selected key
 
     GHashTableIter iter;
-    gpointer key, value;
+    gpointer p_key, p_value;
 
     g_hash_table_iter_init (&iter, intern_hashtable);
-    while (g_hash_table_iter_next (&iter, &key, &value)) {
-        Package *pkg = (Package *) value;
+    while (g_hash_table_iter_next (&iter, &p_key, &p_value)) {
+        Package *pkg = (Package *) p_value;
         gpointer new_key;
 
-        // TODO: Switch and param for key selection
-//        new_key = pkg->name;
-//        new_key = pkg->pkgId;
-        new_key = pkg->location_href;
+        switch (key) {
+            case HT_KEY_FILENAME:
+                new_key = pkg->location_href;
+                break;
+            case HT_KEY_HASH:
+                new_key = pkg->pkgId;
+                break;
+            case HT_KEY_NAME:
+                new_key = pkg->name;
+                break;
+            default:
+                g_critical(MODULE"%s: Unknown hash table key selected", __func__);
+                new_key = pkg->pkgId;
+                break;
+        }
 
         if (g_hash_table_lookup(hashtable, new_key)) {
             g_debug(MODULE"%s: Key \"%s\" already exists in hashtable\n", __func__, (char *) new_key);
             g_hash_table_iter_remove(&iter);
         } else {
-            g_hash_table_insert(hashtable, new_key, value);
+            g_hash_table_insert(hashtable, new_key, p_value);
             g_hash_table_iter_steal(&iter);
         }
     }

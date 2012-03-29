@@ -20,6 +20,7 @@ find_package(GTHREAD2 REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(EXPAT REQUIRED)
 find_package(LibXml2 REQUIRED)
+find_package(Libmagic REQUIRED)
 
 
 # Check libraries
@@ -48,6 +49,10 @@ IF (NOT LIBXML2_FOUND)
     MESSAGE(FATAL_ERROR "No LibXml2 library installed")
 ENDIF (NOT LIBXML2_FOUND)
 
+IF (NOT Libmagic_FOUND)
+    MESSAGE(FATAL_ERROR "No Libmagic library installed")
+ENDIF (NOT Libmagic_FOUND)
+
 
 # Add include dirs
 
@@ -57,18 +62,6 @@ include_directories(${GTHREAD2_INCLUDE_DIRS})
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(${EXPAT_INCLUDE_DIRS})
 include_directories(${LIBXML2_INCLUDE_DIRS})
-
-
-# libmagic:
-
-FIND_LIBRARY(LIBMAGIC magic)
-IF(LIBMAGIC)
-    SET(LIBMAGIC_LDFLAGS "-lmagic")
-ELSE()
-  MESSAGE(FATAL_ERROR "The libmagic library is required to build. Either get it
-  from here http://www.darwinsys.com/file/ or install the file development
-  package (i.e 'pkcon install file-devel' on fedora).")
-ENDIF()
 
 
 # rpm:

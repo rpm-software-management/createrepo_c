@@ -11,7 +11,7 @@ TARGET_LINK_LIBRARIES(libcreaterepo_c ${BZIP2_LIBRARIES})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${GLIB2_LIBRARIES})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${LIBMAGIC_LDFLAGS})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${LIBXML2_LDFLAGS})
-TARGET_LINK_LIBRARIES(libcreaterepo_c "-lexpat")
+TARGET_LINK_LIBRARIES(libcreaterepo_c ${EXPAT_LIBRARIES})
 SET_TARGET_PROPERTIES(libcreaterepo_c PROPERTIES OUTPUT_NAME "libcreaterepo_c")
 
 ADD_EXECUTABLE(../createrepo_c createrepo_c.c cmd_parser.c)

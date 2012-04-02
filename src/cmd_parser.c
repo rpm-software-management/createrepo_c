@@ -83,11 +83,14 @@ struct CmdOptions *parse_arguments(int *argc, char ***argv)
 
     context = g_option_context_new("- program that creates a repomd (xml-based rpm metadata) repository from a set of rpms.");
     g_option_context_add_main_entries(context, cmd_entries, NULL);
-    if (!g_option_context_parse(context, argc, argv, &error)) {
+
+    gboolean ret = g_option_context_parse(context, argc, argv, &error);
+    g_option_context_free(context);
+    if (!ret) {
         g_print("Option parsing failed: %s\n", error->message);
+        g_error_free(error);
         return NULL;
     }
-    g_option_context_free(context);
 
     return &(_cmd_options);
 }
@@ -229,30 +232,23 @@ void free_options(struct CmdOptions *options)
     g_free(options->groupfile_fullpath);
 
     // Free excludes string list
-    int x = 0;
-    while (options->excludes && options->excludes[x] != NULL) {
-        g_free(options->excludes[x]);
-        options->excludes[x] = NULL;
-    }
-
-    // inludepkg string list MUST NOT be freed!
-    // Items from the list are referenced by include_pkgs GSList and will be
-    // freed from them.
+    g_strfreev(options->excludes);
+    g_strfreev(options->includepkg);
 
     GSList *element = NULL;
 
-    // Free include_pkgs GSList
-    for (element = options->include_pkgs; element; element = g_slist_next(element)) {
-        g_free( (gchar *) element->data );
-    }
+    // Items of include_pkgs are referenced from options->includepkg
+    g_slist_free(options->include_pkgs);
 
     // Free glob exclude masks GSList
     for (element = options->exclude_masks; element; element = g_slist_next(element)) {
         g_pattern_spec_free( (GPatternSpec *) element->data );
     }
+    g_slist_free(options->exclude_masks);
 
     // Free l_update_md_paths GSList
     for (element = options->l_update_md_paths; element; element = g_slist_next(element)) {
         g_free( (gchar *) element->data );
     }
+    g_slist_free(options->l_update_md_paths);
 }

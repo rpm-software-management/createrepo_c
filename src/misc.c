@@ -469,3 +469,28 @@ int remove_dir(const char *path)
 {
     return nftw(path, remove_dir_cb, 64, FTW_DEPTH | FTW_PHYS);
 }
+
+
+char *normalize_dir_path(const char *path)
+{
+    char *normalized = NULL;
+
+    if (!path)
+        return normalized;
+
+    int i = strlen(path);
+    if (i == 0) {
+        return g_strdup("./");
+    }
+
+    do { // Skip all traling '/'
+        i--;
+    } while (i >= 0 && path[i] == '/');
+
+    normalized = g_strndup(path, i+2);
+    if (normalized[i+1] != '/') {
+        normalized[i+1] = '/';
+    }
+
+    return normalized;
+}

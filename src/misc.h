@@ -38,4 +38,7 @@ char *get_filename(const char *filepath);
 int copy_file(const char *src, const char *dst);
 int remove_dir(const char *path);
 
+// return new allocated string with normalized path or NULL
+char *normalize_dir_path(const char *path);
+
 #endif /* __C_CREATEREPOLIB_MISC_H__ */

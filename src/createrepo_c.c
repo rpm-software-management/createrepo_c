@@ -245,18 +245,7 @@ int main(int argc, char **argv) {
     gchar *out_repo = NULL;  // path/to/out_repo/repodata/
     gchar *tmp_out_repo = NULL; // path/to/out_repo/.repodata/
 
-
-    // Normalize in_dir format (result has exactly only one traling '/')
-
-    int i = strlen(argv[1]);
-    do {
-        i--;
-    } while (argv[1][i] == '/');
-    in_dir = g_strndup(argv[1], i+2);
-    if (in_dir[i+1] != '/') {
-        in_dir[i+1] = '/';
-    }
-
+    in_dir = normalize_dir_path(argv[1]);
     cmd_options->input_dir = g_strdup(in_dir);
 
 
@@ -292,15 +281,7 @@ int main(int argc, char **argv) {
     in_repo = g_strconcat(in_dir, "repodata/", NULL);
 
     if (cmd_options->outputdir) {
-        // Normalize out_dir
-        int i = strlen(cmd_options->outputdir);
-        do {
-            i--;
-        } while (cmd_options->outputdir[i] == '/');
-        out_dir = g_strndup(cmd_options->outputdir, i+2);
-        if (out_dir[i+1] != '/') {
-            out_dir[i+1] = '/';
-        }
+        out_dir = normalize_dir_path(cmd_options->outputdir);
         out_repo = g_strconcat(out_dir, "repodata/", NULL);
         tmp_out_repo = g_strconcat(out_dir, ".repodata/", NULL);
     } else {

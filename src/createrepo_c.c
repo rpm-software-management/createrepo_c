@@ -22,8 +22,6 @@
 #define G_LOG_DOMAIN    ((gchar*) 0)
 
 
-GRegex *location_subs_re;  // Evil global variable
-
 
 struct UserData {
     CW_FILE *pri_f;
@@ -382,13 +380,6 @@ int main(int argc, char **argv) {
     }
 
 
-    // Compile global regexp for matching location tag in xml chunks
-
-    GRegexCompileFlags re_compile_f = G_REGEX_DOTALL | G_REGEX_OPTIMIZE;
-    GRegexMatchFlags re_match_f = 0;
-    location_subs_re = g_regex_new("<location[^>]*>", re_compile_f, re_match_f, NULL);
-
-
     // Create and open new compressed files
 
     CW_FILE *pri_cw_file;
@@ -695,8 +686,6 @@ int main(int argc, char **argv) {
     // Clean up
 
     g_debug("Memory cleanup");
-
-    g_regex_unref(location_subs_re);
 
     if (old_metadata) {
         destroy_metadata_hashtable(old_metadata);

@@ -61,7 +61,7 @@ include_directories(${BZIP2_INCLUDE_DIRS})
 include_directories(${GTHREAD2_INCLUDE_DIRS})
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(${EXPAT_INCLUDE_DIRS})
-include_directories(${LIBXML2_INCLUDE_DIRS})
+include_directories(${LIBXML2_INCLUDE_DIR})
 
 
 # rpm:

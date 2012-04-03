@@ -1086,7 +1086,7 @@ int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath, Ha
         return result;
     }
 
-    g_debug(MODULE"%s: Parsed items: %d\n", __func__, g_hash_table_size(intern_hashtable));
+    g_debug(MODULE"%s: Parsed items: %d", __func__, g_hash_table_size(intern_hashtable));
 
     // Fill user hashtable and use user selected key
 
@@ -1115,7 +1115,7 @@ int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath, Ha
         }
 
         if (g_hash_table_lookup(hashtable, new_key)) {
-            g_debug(MODULE"%s: Key \"%s\" already exists in hashtable\n", __func__, (char *) new_key);
+            g_debug(MODULE"%s: Key \"%s\" already exists in hashtable", __func__, (char *) new_key);
             g_hash_table_iter_remove(&iter);
         } else {
             g_hash_table_insert(hashtable, new_key, p_value);

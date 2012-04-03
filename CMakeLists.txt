@@ -123,8 +123,8 @@ INSTALL_FILES(/usr/share/doc/createrepo_c-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK
 
 # Gen manpage
 
-message("Gen manpage")
-execute_process(COMMAND bash gen_manpage.sh src/cmd_parser.c ../doc/ WORKING_DIRECTORY utils/)
+#message("Gen manpage")
+#execute_process(COMMAND bash gen_manpage.sh src/cmd_parser.c ../doc/ WORKING_DIRECTORY utils/)
 
 
 # Subdirs

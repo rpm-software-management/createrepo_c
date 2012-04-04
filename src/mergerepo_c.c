@@ -59,7 +59,7 @@ static GOptionEntry cmd_entries[] =
     { "no-database", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.no_database), "", NULL },
     { "verbose", 'v', 0, G_OPTION_ARG_NONE, &(_cmd_options.verbose), "", NULL },
     { "outputdir", 'o', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.outputdir), "Location to create the repository", "OUTPUTDIR" },
-    { "nogroups", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.nogroups), "Do not merge group(comps) metadata", NULL },
+    { "nogroups", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.nogroups), "Do not merge group (comps) metadata", NULL },
     { "noupdateinfo", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.noupdateinfo), "Do not merge updateinfo metadata", NULL },
     { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type), "Which compression type to use", "COMPRESS_TYPE" },
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
@@ -113,6 +113,19 @@ gboolean check_arguments(struct CmdOptions *options)
             x++;
         }
         g_strfreev(arch_set);
+    }
+
+    // Compress type
+    if (options->compress_type) {
+        if (!g_strcmp0(options->compress_type, "gz")) {
+            options->compression_type = GZ_COMPRESSION;
+        } else if (!g_strcmp0(options->compress_type, "bz2")) {
+            options->compression_type = BZ2_COMPRESSION;
+//        } else if (g_strcmp0(options->compress_type, "xz") {
+        } else {
+            g_critical("Compression z not available: Please choose from: gz or bz2 (xz is not supported yet)");
+            ret = FALSE;
+        }
     }
 
     return ret;
@@ -327,11 +340,17 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, struct Cmd
     CW_FILE *fil_f;
     CW_FILE *oth_f;
 
-    gchar *pri_xml_filename = g_strconcat(cmd_options->out_repo, "/primary.xml.gz", NULL);
-    gchar *fil_xml_filename = g_strconcat(cmd_options->out_repo, "/filelists.xml.gz", NULL);
-    gchar *oth_xml_filename = g_strconcat(cmd_options->out_repo, "/other.xml.gz", NULL);
+    const char *suffix = get_suffix(cmd_options->compression_type);
+    if (!suffix) {
+        g_warning("Unknown compression_type (%d)", cmd_options->compression_type);
+        return 0;
+    }
 
-    if ((pri_f = cw_open(pri_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
+    gchar *pri_xml_filename = g_strconcat(cmd_options->out_repo, "/primary.xml", suffix, NULL);
+    gchar *fil_xml_filename = g_strconcat(cmd_options->out_repo, "/filelists.xml", suffix, NULL);
+    gchar *oth_xml_filename = g_strconcat(cmd_options->out_repo, "/other.xml", suffix, NULL);
+
+    if ((pri_f = cw_open(pri_xml_filename, CW_MODE_WRITE, cmd_options->compression_type)) == NULL) {
         g_critical("Cannot open file: %s", pri_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
@@ -339,7 +358,7 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, struct Cmd
         return 0;
     }
 
-    if ((fil_f = cw_open(fil_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
+    if ((fil_f = cw_open(fil_xml_filename, CW_MODE_WRITE, cmd_options->compression_type)) == NULL) {
         g_critical("Cannot open file: %s", fil_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
@@ -348,7 +367,7 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, struct Cmd
         return 0;
     }
 
-    if ((oth_f = cw_open(oth_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
+    if ((oth_f = cw_open(oth_xml_filename, CW_MODE_WRITE, cmd_options->compression_type)) == NULL) {
         g_critical("Cannot open file: %s", oth_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
@@ -410,9 +429,9 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, struct Cmd
 
     // Gen repomd.xml
 
-    gchar *pri_xml_name = g_strconcat("repodata/", "primary.xml.gz", NULL);
-    gchar *fil_xml_name = g_strconcat("repodata/", "filelists.xml.gz", NULL);
-    gchar *oth_xml_name = g_strconcat("repodata/", "other.xml.gz", NULL);
+    gchar *pri_xml_name = g_strconcat("repodata/", "primary.xml", suffix, NULL);
+    gchar *fil_xml_name = g_strconcat("repodata/", "filelists.xml",suffix, NULL);
+    gchar *oth_xml_name = g_strconcat("repodata/", "other.xml", suffix, NULL);
 
     struct repomdResult *repomd_res = xml_repomd(cmd_options->out_dir, 1, pri_xml_name, fil_xml_name, oth_xml_name, NULL, NULL, NULL, NULL, NULL);
     gchar *repomd_path = g_strconcat(cmd_options->out_repo, "repomd.xml", NULL);

@@ -385,13 +385,24 @@ char *get_filename(const char *filepath)
 }
 
 
-int copy_file(const char *src, const char *dst)
+int copy_file(const char *src, const char *in_dst)
 {
     size_t readed;
     char buf[BUFFER_SIZE];
 
     FILE *orig;
     FILE *new;
+
+    if (!src || !in_dst) {
+        g_debug(MODULE"%s: File name cannot be NULL", __func__);
+        return CR_COPY_ERR;
+    }
+
+    // If destination is dir use filename from src
+    gchar dst = in_dst;
+    if (g_str_has_suffix(in_dst, "/")) {
+        dst = g_strconcat(in_dst, get_filename(src), NULL);
+    }
 
     if ((orig = fopen(src, "r")) == NULL) {
         g_debug(MODULE"%s: Cannot open source file %s (%s)", __func__, src, strerror(errno));
@@ -418,6 +429,10 @@ int copy_file(const char *src, const char *dst)
             fclose(orig);
             return CR_COPY_ERR;
         }
+    }
+
+    if (dst != in_dst) {
+        g_free(dst);
     }
 
     fclose(new);

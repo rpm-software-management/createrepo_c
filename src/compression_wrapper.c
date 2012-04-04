@@ -99,6 +99,22 @@ CompressionType detect_compression(const char *filename)
 }
 
 
+const char *get_suffix(CompressionType comtype)
+{
+    char *suffix = NULL;
+    switch (comtype) {
+        case GZ_COMPRESSION:
+            suffix = ".gz"; break;
+        case BZ2_COMPRESSION:
+            suffix = ".bz2"; break;
+        default:
+            break;
+    }
+
+    return suffix;
+}
+
+
 CW_FILE *cw_open(const char *filename, int mode, CompressionType comtype)
 {
     CW_FILE *file = NULL;

@@ -26,6 +26,7 @@ typedef struct {
 #define CW_OK   0
 #define CW_ERR -1
 
+const char *get_suffix(CompressionType comtype);
 CompressionType detect_compression(const char* filename);
 
 CW_FILE *cw_open(const char *filename, int mode, CompressionType comtype);

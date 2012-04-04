@@ -4,6 +4,7 @@
 #include <string.h>
 #include "compression_wrapper.h"
 #include "misc.h"
+#include "locate_metadata.h"
 #include "load_metadata.h"
 #include "package.h"
 #include "xml_dump.h"
@@ -99,6 +100,7 @@ gboolean check_arguments(struct CmdOptions *options)
         }
         x++;
     }
+    options->repo_list = g_slist_reverse (options->repo_list);
 
     // Process archlist
     options->arch_list = NULL;
@@ -332,7 +334,7 @@ long merge_repos(GHashTable *merged, struct CmdOptions *cmd_options) {
 
 
 
-int dump_merged_metadata(GHashTable *merged_hashtable, long packages, struct CmdOptions *cmd_options)
+int dump_merged_metadata(GHashTable *merged_hashtable, long packages, gchar *groupfile, struct CmdOptions *cmd_options)
 {
     // Create/Open output xml files
 
@@ -433,7 +435,7 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, struct Cmd
     gchar *fil_xml_name = g_strconcat("repodata/", "filelists.xml",suffix, NULL);
     gchar *oth_xml_name = g_strconcat("repodata/", "other.xml", suffix, NULL);
 
-    struct repomdResult *repomd_res = xml_repomd(cmd_options->out_dir, 1, pri_xml_name, fil_xml_name, oth_xml_name, NULL, NULL, NULL, NULL, NULL);
+    struct repomdResult *repomd_res = xml_repomd(cmd_options->out_dir, 1, pri_xml_name, fil_xml_name, oth_xml_name, NULL, NULL, NULL, groupfile, NULL);
     gchar *repomd_path = g_strconcat(cmd_options->out_repo, "repomd.xml", NULL);
 
     FILE *frepomd = fopen(repomd_path, "w");
@@ -517,9 +519,26 @@ int main(int argc, char **argv)
     loaded_packages = merge_repos(merged_hashtable, cmd_options);
 
 
+    // Get paths of groupfiles
+
+    GSList *element = NULL;
+    gchar *groupfile = NULL;
+    for (element = cmd_options->repo_list; element; element = g_slist_next(element)) {
+        gchar *repopath = (gchar *) element->data;
+        struct MetadataLocation *loc = locate_metadata_via_repomd(repopath);
+        if (!loc || !loc->groupfile_href) {
+            break;
+        }
+        if (copy_file(loc->groupfile_href, cmd_options->out_repo) == CR_COPY_OK) {
+            groupfile = g_strconcat(cmd_options->out_repo, get_filename(loc->groupfile_href), NULL);
+        }
+        break;
+    }
+
+
     // Dump metadata
 
-    dump_merged_metadata(merged_hashtable, loaded_packages, cmd_options);
+    dump_merged_metadata(merged_hashtable, loaded_packages, groupfile, cmd_options);
 
 
     // Cleanup

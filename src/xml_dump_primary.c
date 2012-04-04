@@ -98,9 +98,9 @@ void dump_pco(xmlNodePtr root, Package *package, int pcotype)
             }
         }
 
-        if (pcotype == REQUIRES) {
+        if (pcotype == REQUIRES && entry->pre) {
             // Add pre attribute
-            xmlNewProp(entry_node, BAD_CAST "pre", BAD_CAST ((entry->pre) ? "1" : "0"));
+            xmlNewProp(entry_node, BAD_CAST "pre", BAD_CAST "1");
         }
     }
 }

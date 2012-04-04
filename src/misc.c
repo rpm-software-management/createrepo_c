@@ -399,7 +399,7 @@ int copy_file(const char *src, const char *in_dst)
     }
 
     // If destination is dir use filename from src
-    gchar dst = in_dst;
+    gchar *dst = (gchar *) in_dst;
     if (g_str_has_suffix(in_dst, "/")) {
         dst = g_strconcat(in_dst, get_filename(src), NULL);
     }

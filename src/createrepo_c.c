@@ -646,7 +646,10 @@ int main(int argc, char **argv) {
         groupfile_name = g_strconcat("repodata/", get_filename(groupfile), NULL);
     }
 
-    struct repomdResult *repomd_res = xml_repomd(out_dir, cmd_options->unique_md_filenames, pri_xml_name, fil_xml_name, oth_xml_name, NULL, NULL, NULL, groupfile_name, &(cmd_options->checksum_type));
+    struct repomdResult *repomd_res = xml_repomd(out_dir, cmd_options->unique_md_filenames,
+                                                 pri_xml_name, fil_xml_name, oth_xml_name,
+                                                 NULL, NULL, NULL, groupfile_name, NULL,
+                                                 &(cmd_options->checksum_type));
     gchar *repomd_path = g_strconcat(out_repo, "repomd.xml", NULL);
 
     FILE *frepomd = fopen(repomd_path, "w");

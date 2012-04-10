@@ -417,9 +417,11 @@ void dump_data_items(xmlNodePtr root, struct repomdData *md, const xmlChar *type
 }
 
 
-char *repomd_xml_dump(long revision, struct repomdData *pri_xml, struct repomdData *fil_xml, struct repomdData *oth_xml,
-                 struct repomdData *pri_sqlite, struct repomdData *fil_sqlite, struct repomdData *oth_sqlite,
-                 struct repomdData *groupfile, struct repomdData *cgroupfile)
+char *repomd_xml_dump(long revision, struct repomdData *pri_xml, struct repomdData *fil_xml,
+                      struct repomdData *oth_xml, struct repomdData *pri_sqlite,
+                      struct repomdData *fil_sqlite, struct repomdData *oth_sqlite,
+                      struct repomdData *groupfile, struct repomdData *cgroupfile,
+                      struct repomdData *update_info)
 {
     xmlDocPtr doc;
     xmlNodePtr root;
@@ -445,6 +447,7 @@ char *repomd_xml_dump(long revision, struct repomdData *pri_xml, struct repomdDa
     dump_data_items(root, oth_sqlite, (const xmlChar *) "other_db");
     dump_data_items(root, groupfile, (const xmlChar *) "group");
     dump_data_items(root, cgroupfile, (const xmlChar *) "group_gz");
+    dump_data_items(root, update_info, (const xmlChar *) "updateinfo");
 
 
     // Dump IT!
@@ -516,10 +519,12 @@ void rename_file(const char *base_path, struct repomdData *md)
 
 
 // groupfile is expected uncompressed!
-struct repomdResult *xml_repomd_2(const char *path, int rename_to_unique,
-                                  struct repomdData *pri_xml, struct repomdData *fil_xml, struct repomdData *oth_xml,
-                                  struct repomdData *pri_sqlite, struct repomdData *fil_sqlite, struct repomdData *oth_sqlite,
-                                  struct repomdData *groupfile, struct repomdData *cgroupfile, ChecksumType *checksum_type)
+struct repomdResult *xml_repomd_2(const char *path, int rename_to_unique, struct repomdData *pri_xml,
+                                  struct repomdData *fil_xml, struct repomdData *oth_xml,
+                                  struct repomdData *pri_sqlite, struct repomdData *fil_sqlite,
+                                  struct repomdData *oth_sqlite, struct repomdData *groupfile,
+                                  struct repomdData *cgroupfile, struct repomdData *update_info,
+                                  ChecksumType *checksum_type)
 {
     if (!path) {
         return NULL;
@@ -536,6 +541,7 @@ struct repomdResult *xml_repomd_2(const char *path, int rename_to_unique,
     fill_missing_data(path, pri_sqlite, checksum_type);
     fill_missing_data(path, fil_sqlite, checksum_type);
     fill_missing_data(path, oth_sqlite, checksum_type);
+    fill_missing_data(path, update_info, checksum_type);
 
     process_groupfile(path, groupfile, cgroupfile, checksum_type);
 
@@ -551,6 +557,7 @@ struct repomdResult *xml_repomd_2(const char *path, int rename_to_unique,
         rename_file(path, oth_sqlite);
         rename_file(path, groupfile);
         rename_file(path, cgroupfile);
+        rename_file(path, update_info);
     }
 
 
@@ -564,6 +571,7 @@ struct repomdResult *xml_repomd_2(const char *path, int rename_to_unique,
     res->oth_sqlite_location = oth_sqlite ? g_strdup(oth_sqlite->location_href) : NULL;
     res->groupfile_location = groupfile ? g_strdup(groupfile->location_href) : NULL;
     res->cgroupfile_location = cgroupfile ? g_strdup(cgroupfile->location_href) : NULL;
+    res->update_info_location = update_info ? g_strdup(update_info->location_href) : NULL;
 
     // Get revision
 
@@ -572,28 +580,32 @@ struct repomdResult *xml_repomd_2(const char *path, int rename_to_unique,
 
     // Dump xml
 
-    res->repomd_xml = repomd_xml_dump(revision, pri_xml, fil_xml, oth_xml, pri_sqlite, fil_sqlite, oth_sqlite, groupfile, cgroupfile);
+    res->repomd_xml = repomd_xml_dump(revision, pri_xml, fil_xml, oth_xml, pri_sqlite, fil_sqlite, oth_sqlite, groupfile, cgroupfile, update_info);
 
     return res;
 }
 
 
 
-struct repomdResult *xml_repomd(const char *path, int rename_to_unique, const char *pri_xml, const char *fil_xml, const char *oth_xml,
-                 const char *pri_sqlite, const char *fil_sqlite, const char *oth_sqlite, const char *groupfile, ChecksumType *checksum_type)
+struct repomdResult *xml_repomd(const char *path, int rename_to_unique, const char *pri_xml,
+                                const char *fil_xml, const char *oth_xml,
+                                const char *pri_sqlite, const char *fil_sqlite,
+                                const char *oth_sqlite, const char *groupfile,
+                                const char *update_info, ChecksumType *checksum_type)
 {
     if (!path) {
         return NULL;
     }
 
-    struct repomdData *pri_xml_rd    = NULL;
-    struct repomdData *fil_xml_rd    = NULL;
-    struct repomdData *oth_xml_rd    = NULL;
-    struct repomdData *pri_sqlite_rd = NULL;
-    struct repomdData *fil_sqlite_rd = NULL;
-    struct repomdData *oth_sqlite_rd = NULL;
-    struct repomdData *groupfile_rd  = NULL;
-    struct repomdData *cgroupfile_rd = NULL;
+    struct repomdData *pri_xml_rd     = NULL;
+    struct repomdData *fil_xml_rd     = NULL;
+    struct repomdData *oth_xml_rd     = NULL;
+    struct repomdData *pri_sqlite_rd  = NULL;
+    struct repomdData *fil_sqlite_rd  = NULL;
+    struct repomdData *oth_sqlite_rd  = NULL;
+    struct repomdData *groupfile_rd   = NULL;
+    struct repomdData *cgroupfile_rd  = NULL;
+    struct repomdData *update_info_rd = NULL;
 
     if (pri_xml) {
         pri_xml_rd = new_repomddata();
@@ -625,13 +637,18 @@ struct repomdResult *xml_repomd(const char *path, int rename_to_unique, const ch
         cgroupfile_rd = new_repomddata();
         cgroupfile_rd->location_href = groupfile;
     }
+    if (update_info) {
+        update_info_rd = new_repomddata();
+        update_info_rd->location_href = update_info;
+    }
 
     // Dump xml
 
     struct repomdResult *res = xml_repomd_2(path, rename_to_unique,
                                             pri_xml_rd, fil_xml_rd, oth_xml_rd,
                                             pri_sqlite_rd, fil_sqlite_rd, oth_sqlite_rd,
-                                            groupfile_rd, cgroupfile_rd, checksum_type);
+                                            groupfile_rd, cgroupfile_rd, update_info_rd,
+                                            checksum_type);
 
     free_repomddata(pri_xml_rd);
     free_repomddata(fil_xml_rd);
@@ -641,6 +658,7 @@ struct repomdResult *xml_repomd(const char *path, int rename_to_unique, const ch
     free_repomddata(oth_sqlite_rd);
     free_repomddata(groupfile_rd);
     free_repomddata(cgroupfile_rd);
+    free_repomddata(update_info_rd);
 
     return res;
 }

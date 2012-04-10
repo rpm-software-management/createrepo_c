@@ -15,6 +15,7 @@ struct repomdResult {
     char *oth_sqlite_location;
     char *groupfile_location;
     char *cgroupfile_location;
+    char *update_info_location;
     char *repomd_xml;
 };
 
@@ -22,7 +23,10 @@ struct repomdResult {
 void free_repomdresult(struct repomdResult *);
 
 // all files except groupfile must be compressed (only group file should by plain noncompressed xml)
-struct repomdResult *xml_repomd(const char *path, int rename_to_unique, const char *pri_xml, const char *fil_xml, const char *oth_xml,
-                 const char *pri_sqlite, const char *fil_sqlite, const char *oth_sqlite, const char *groupfile, ChecksumType *checksum_type);
+struct repomdResult *xml_repomd(const char *path, int rename_to_unique, const char *pri_xml,
+                                const char *fil_xml, const char *oth_xml,
+                                const char *pri_sqlite, const char *fil_sqlite,
+                                const char *oth_sqlite, const char *groupfile,
+                                const char *update_info, ChecksumType *checksum_type);
 
 #endif /* __C_CREATEREPOLIB_REPOMD_H__ */

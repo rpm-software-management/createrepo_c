@@ -351,12 +351,14 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, gchar *gro
     gchar *pri_xml_filename = g_strconcat(cmd_options->out_repo, "/primary.xml", suffix, NULL);
     gchar *fil_xml_filename = g_strconcat(cmd_options->out_repo, "/filelists.xml", suffix, NULL);
     gchar *oth_xml_filename = g_strconcat(cmd_options->out_repo, "/other.xml", suffix, NULL);
+    gchar *ui_xml_filename  = g_strconcat(cmd_options->out_repo, "/updateinfo.xml", suffix, NULL);
 
     if ((pri_f = cw_open(pri_xml_filename, CW_MODE_WRITE, cmd_options->compression_type)) == NULL) {
         g_critical("Cannot open file: %s", pri_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
+        g_free(ui_xml_filename);
         return 0;
     }
 
@@ -365,6 +367,7 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, gchar *gro
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
+        g_free(ui_xml_filename);
         cw_close(pri_f);
         return 0;
     }
@@ -374,6 +377,7 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, gchar *gro
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
+        g_free(ui_xml_filename);
         cw_close(fil_f);
         cw_close(pri_f);
         return 0;
@@ -429,13 +433,28 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, gchar *gro
     cw_close(oth_f);
 
 
+    // Write updateinfo.xml
+    // TODO
+
+    CW_FILE *update_info = NULL;
+    if ((update_info = cw_open(ui_xml_filename, CW_MODE_WRITE, cmd_options->compression_type))) {
+        cw_puts(update_info, "<?xml version=\"1.0\"?>\n<updates></updates>\n");
+        cw_close(update_info);
+    } else {
+        g_warning("Cannot open file: %s", ui_xml_filename);
+    }
+
+
     // Gen repomd.xml
 
     gchar *pri_xml_name = g_strconcat("repodata/", "primary.xml", suffix, NULL);
     gchar *fil_xml_name = g_strconcat("repodata/", "filelists.xml",suffix, NULL);
     gchar *oth_xml_name = g_strconcat("repodata/", "other.xml", suffix, NULL);
+    gchar *ui_xml_name  = g_strconcat("repodata/", "updateinfo.xml", suffix, NULL);
 
-    struct repomdResult *repomd_res = xml_repomd(cmd_options->out_dir, 1, pri_xml_name, fil_xml_name, oth_xml_name, NULL, NULL, NULL, groupfile, NULL);
+    struct repomdResult *repomd_res = xml_repomd(cmd_options->out_dir, 1, pri_xml_name,
+                                                 fil_xml_name, oth_xml_name, NULL, NULL,
+                                                 NULL, groupfile, ui_xml_name, NULL);
     gchar *repomd_path = g_strconcat(cmd_options->out_repo, "repomd.xml", NULL);
 
     FILE *frepomd = fopen(repomd_path, "w");
@@ -453,10 +472,12 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, gchar *gro
     g_free(pri_xml_name);
     g_free(fil_xml_name);
     g_free(oth_xml_name);
+    g_free(ui_xml_name);
 
     g_free(pri_xml_filename);
     g_free(fil_xml_filename);
     g_free(oth_xml_filename);
+    g_free(ui_xml_filename);
 
     return 1;
 }

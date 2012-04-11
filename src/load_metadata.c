@@ -480,7 +480,7 @@ void pri_end_handler(void *data, const char *el) {
             // Store package into the hashtable
             char *key = pkg->pkgId;
             if (key && key[0] != '\0') {
-                g_hash_table_insert(ppd->hashtable, key, ppd->pkg);
+                g_hash_table_replace(ppd->hashtable, key, ppd->pkg);
             } else {
                 g_warning(MODULE"%s: Empty hashtable key!", __func__);
             }
@@ -1050,7 +1050,7 @@ cleanup:
 
 int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath, HashTableKey key)
 {
-    if (!hashtable || !repopath || !g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
+    if (!hashtable || !repopath) {
         return 0;
     }
 
@@ -1058,7 +1058,7 @@ int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath, Ha
     // Get paths of old metadata files from repomd
 
     struct MetadataLocation *ml;
-    ml = locate_metadata_via_repomd(repopath);
+    ml = get_metadata_location(repopath);
     if (!ml) {
         return 0;
     }
@@ -1100,7 +1100,7 @@ int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath, Ha
 
         switch (key) {
             case HT_KEY_FILENAME:
-                new_key = pkg->location_href;
+                new_key = get_filename(pkg->location_href);
                 break;
             case HT_KEY_HASH:
                 new_key = pkg->pkgId;

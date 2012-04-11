@@ -367,9 +367,8 @@ char *get_filename(const char *filepath)
 {
     char *filename = NULL;
 
-    if (!filepath) {
+    if (!filepath)
         return filename;
-    }
 
     filename = (char *) filepath;
     size_t x = 0;

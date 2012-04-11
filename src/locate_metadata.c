@@ -1,10 +1,14 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <libxml/xmlreader.h>
+#include <curl/curl.h>
+#include "misc.h"
 #include "locate_metadata.h"
 
 #undef MODULE
 #define MODULE "locate_metadata: "
+
+#define TMPDIR_PATTERN  "/tmp/createrepo_c_tmp_repo_XXXXXX"
 
 #define FORMAT_XML      1
 #define FORMAT_LEVEL    0
@@ -17,6 +21,11 @@ void free_metadata_location(struct MetadataLocation *ml)
         return;
     }
 
+    if (ml->tmp_dir) {
+        g_debug(MODULE"%s: Removing %s", __func__,  ml->tmp_dir);
+        remove_dir(ml->tmp_dir);
+    }
+
     g_free(ml->pri_xml_href);
     g_free(ml->fil_xml_href);
     g_free(ml->oth_xml_href);
@@ -26,50 +35,25 @@ void free_metadata_location(struct MetadataLocation *ml)
     g_free(ml->groupfile_href);
     g_free(ml->cgroupfile_href);
     g_free(ml->repomd);
+    g_free(ml->tmp_dir);
     g_free(ml);
 }
 
 
 
-struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
-
-    if (!repopath || !g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
-        return NULL;
-    }
-
-
-    // Check if repopath ends with slash
-
-    gboolean repopath_ends_with_slash = FALSE;
-
-    if (g_str_has_suffix(repopath, "/")) {
-        repopath_ends_with_slash = TRUE;
-    }
-
-
-    // Create path to repomd.xml and check if it exists
-
-    gchar *repomd;
-
-    if (repopath_ends_with_slash) {
-        repomd = g_strconcat(repopath, "repodata/repomd.xml", NULL);
-    } else {
-        repomd = g_strconcat(repopath, "/repodata/repomd.xml", NULL);
-    }
-
-    if (!g_file_test(repomd, G_FILE_TEST_EXISTS)) {
-        g_debug(MODULE"%s: %s doesn't exists", __func__, repomd);
-        g_free(repomd);
-        return NULL;
-    }
-
-
-    // Parse repomd.xml
-
+struct MetadataLocation *parse_repomd(const char *repomd_path, const char *repopath)
+{
     int ret;
     xmlChar *name;
     xmlTextReaderPtr reader;
-    reader = xmlReaderForFile(repomd, NULL, XML_PARSE_NOBLANKS);
+
+
+    // Parsing
+    reader = xmlReaderForFile(repomd_path, NULL, XML_PARSE_NOBLANKS);
+    if (!reader) {
+        g_warning(MODULE"%s: Error while xmlReaderForFile()", __func__);
+        return NULL;
+    }
 
     ret = xmlTextReaderRead(reader);
     name = xmlTextReaderName(reader);
@@ -77,7 +61,6 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
         g_warning(MODULE"%s: Bad xml - missing repomd element? (%s)", __func__, name);
         xmlFree(name);
         xmlFreeTextReader(reader);
-        g_free(repomd);
         return NULL;
     }
     xmlFree(name);
@@ -88,7 +71,6 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
         g_warning(MODULE"%s: Bad xml - missing revision element? (%s)", __func__, name);
         xmlFree(name);
         xmlFreeTextReader(reader);
-        g_free(repomd);
         return NULL;
     }
     xmlFree(name);
@@ -111,13 +93,12 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
         // No elements left -> Bad xml
         g_warning(MODULE"%s: Bad xml - missing data elements?", __func__);
         xmlFreeTextReader(reader);
-        g_free(repomd);
         return NULL;
     }
 
     struct MetadataLocation *mdloc;
     mdloc = g_malloc0(sizeof(struct MetadataLocation));
-    mdloc->repomd = repomd;
+    mdloc->repomd = g_strdup(repomd_path);
 
     xmlChar *data_type = NULL;
     xmlChar *location_href = NULL;
@@ -151,11 +132,7 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
         // Build absolute path
 
         gchar *full_location_href;
-        if (repopath_ends_with_slash) {
-            full_location_href = g_strconcat(repopath, (char *) location_href, NULL);
-        } else {
-            full_location_href = g_strconcat(repopath, "/", (char *) location_href, NULL);
-        }
+        full_location_href = g_strconcat(repopath, (char *) location_href, NULL);
 
 
         // Store the path
@@ -190,10 +167,277 @@ struct MetadataLocation *locate_metadata_via_repomd(const char *repopath) {
 
     xmlFreeTextReader(reader);
 
-    // Note: Do not free repomd! It is pointed from mdloc structure!
-
     return mdloc;
 }
+
+
+
+struct MetadataLocation *get_local_metadata(const char *in_repopath)
+{
+    struct MetadataLocation *ret = NULL;
+
+    if (!in_repopath) {
+        return ret;
+    }
+
+    if (!g_file_test(in_repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
+        g_warning(MODULE"%s: %s is not a directory", __func__, in_repopath);
+        return ret;
+    }
+
+
+    // Create path to repomd.xml and check if it exists
+
+    gchar *repomd;
+    gchar *repopath;
+    if (!g_str_has_suffix(in_repopath, "/"))
+        repopath = g_strconcat(in_repopath, "/", NULL);
+    else
+        repopath = g_strdup(in_repopath);
+    repomd = g_strconcat(repopath, "repodata/repomd.xml", NULL);
+
+    if (!g_file_test(repomd, G_FILE_TEST_EXISTS)) {
+        g_debug(MODULE"%s: %s doesn't exists", __func__, repomd);
+        g_free(repomd);
+        return ret;
+    }
+
+    ret = parse_repomd(repomd, repopath);
+
+    g_free(repomd);
+    g_free(repopath);
+
+    return ret;
+}
+
+
+
+void download(CURL *handle, const char *url, const char *tmp_repo, char **error)
+{
+    CURLcode rcode;
+    gchar *full_path;
+    FILE *file = NULL;
+
+    full_path = g_strconcat(tmp_repo, get_filename(url), NULL);
+    if (!full_path) {
+        *error = g_strdup_printf(MODULE"%s: g_strconcat() error", __func__);
+        return;
+    }
+
+    file = fopen(full_path, "w");
+    if (!file) {
+        *error = g_strdup_printf(MODULE"%s: Cannot open %s", __func__, full_path);
+        goto download_cleanup;
+    }
+
+    // Set URL
+    if (curl_easy_setopt(handle, CURLOPT_URL, url) != CURLE_OK) {
+        *error = g_strdup_printf(MODULE"%s: curl_easy_setopt(CURLOPT_URL) error", __func__);
+        goto download_cleanup;
+    }
+
+    // Set output file descriptor
+    if (curl_easy_setopt(handle, CURLOPT_WRITEDATA, file) != CURLE_OK) {
+        *error = g_strdup_printf(MODULE"%s: curl_easy_setopt(CURLOPT_WRITEDATA) error", __func__);
+        goto download_cleanup;
+    }
+
+    rcode = curl_easy_perform(handle);
+    if (rcode != 0) {
+        *error = g_strdup_printf(MODULE"%s: curl_easy_perform() error: %s", __func__, curl_easy_strerror(rcode));
+    }
+
+
+download_cleanup:
+
+    g_debug(MODULE"%s: Successfully downloaded: %s", __func__, full_path);
+
+    if (file) fclose(file);
+    g_free(full_path);
+}
+
+
+
+struct MetadataLocation *get_remote_metadata(const char *repopath)
+{
+    gchar *url = NULL;
+    gchar *tmp_repomd = NULL;
+    gchar *tmp_repodata = NULL;
+    FILE *f_repomd = NULL;
+    CURL *handle = NULL;
+    CURLcode rcode;
+    char errorbuf[CURL_ERROR_SIZE];
+    gchar tmp_dir[] = TMPDIR_PATTERN;
+    struct MetadataLocation *r_location = NULL;
+    struct MetadataLocation *ret = NULL;
+
+    if (!repopath) {
+        return ret;
+    }
+
+
+    // Create temporary repo in /tmp
+
+    if(!g_mkdtemp(tmp_dir)) {
+        g_critical(MODULE"%s: Cannot create a temporary directory", __func__);
+        return ret;
+    }
+
+    tmp_repodata = g_strconcat(tmp_dir, "/repodata/", NULL);
+
+    if (g_mkdir (tmp_repodata, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
+        g_critical(MODULE"%s: Cannot create a temporary directory", __func__);
+        return ret;
+    }
+
+
+    // Prepare temporary repomd.xml
+
+    tmp_repomd = g_strconcat(tmp_repodata, "repomd.xml", NULL);
+    f_repomd = fopen(tmp_repomd, "w");
+    if (!f_repomd) {
+        g_critical(MODULE"%s: Cannot open %s", __func__, tmp_repomd);
+        goto get_remote_metadata_cleanup;
+    }
+
+    g_debug(MODULE"%s: Using tmp dir: %s", __func__, tmp_dir);
+
+
+    // Download repo files
+
+    url = g_strconcat(repopath, "repodata/repomd.xml", NULL);
+    handle = curl_easy_init();
+
+    // Set error buffer
+    if (curl_easy_setopt(handle, CURLOPT_ERRORBUFFER, errorbuf) != CURLE_OK) {
+        g_critical(MODULE"%s: curl_easy_setopt(CURLOPT_ERRORBUFFER) error", __func__);
+        goto get_remote_metadata_cleanup;
+    }
+
+    // Set URL
+    if (curl_easy_setopt(handle, CURLOPT_URL, url) != CURLE_OK) {
+        g_critical(MODULE"%s: curl_easy_setopt(CURLOPT_URL) error", __func__);
+        goto get_remote_metadata_cleanup;
+    }
+
+    // Set output file descriptor
+    if (curl_easy_setopt(handle, CURLOPT_WRITEDATA, f_repomd) != CURLE_OK) {
+        g_critical(MODULE"%s: curl_easy_setopt(CURLOPT_WRITEDATA) error", __func__);
+        goto get_remote_metadata_cleanup;
+    }
+
+    // Fail on HTTP error (return code >= 400)
+    if (curl_easy_setopt(handle, CURLOPT_FAILONERROR, 1) != CURLE_OK) {
+        g_critical(MODULE"%s: curl_easy_setopt(CURLOPT_FAILONERROR) error", __func__);
+        goto get_remote_metadata_cleanup;
+    }
+
+
+    // Perform a file transfer of repomd.xml
+
+    rcode = curl_easy_perform(handle);
+    if (rcode != 0) {
+        g_critical(MODULE"%s: curl_easy_perform() error: %s", __func__, errorbuf);
+        goto get_remote_metadata_cleanup;
+    }
+
+    fclose(f_repomd);
+    f_repomd = NULL;
+
+
+    // Parse downloaded repomd.xml
+
+    r_location = parse_repomd(tmp_repomd, repopath);
+    if (!r_location) {
+        g_critical(MODULE"%s: repomd.xml parser failed on %s", __func__, tmp_repomd);
+        goto get_remote_metadata_cleanup;
+    }
+
+
+    // Download all other repofiles
+    char *error = NULL;
+
+    if (r_location->pri_xml_href)
+        download(handle, r_location->pri_xml_href, tmp_repodata, &error);
+    if (!error && r_location->fil_xml_href)
+        download(handle, r_location->fil_xml_href, tmp_repodata, &error);
+    if (!error && r_location->oth_xml_href)
+        download(handle, r_location->oth_xml_href, tmp_repodata, &error);
+    if (!error && r_location->pri_sqlite_href)
+        download(handle, r_location->pri_sqlite_href, tmp_repodata, &error);
+    if (!error && r_location->fil_sqlite_href)
+        download(handle, r_location->fil_sqlite_href, tmp_repodata, &error);
+    if (!error && r_location->oth_sqlite_href)
+        download(handle, r_location->oth_sqlite_href, tmp_repodata, &error);
+    if (!error && r_location->groupfile_href)
+        download(handle, r_location->groupfile_href, tmp_repodata, &error);
+    if (!error && r_location->cgroupfile_href)
+        download(handle, r_location->cgroupfile_href, tmp_repodata, &error);
+
+    if (error) {
+        g_critical(MODULE"%s: Error while downloadig files: %s", __func__, error);
+        g_free(error);
+        goto get_remote_metadata_cleanup;
+    }
+
+    g_debug(MODULE"%s: Remote metadata was successfully downloaded", __func__);
+
+
+    // Parse downloaded data
+
+    ret = get_local_metadata(tmp_dir);
+    if (ret) {
+        ret->tmp_dir = g_strdup(tmp_dir);
+    }
+
+
+get_remote_metadata_cleanup:
+
+    if (f_repomd) fclose(f_repomd);
+    g_free(tmp_repomd);
+    g_free(tmp_repodata);
+    g_free(url);
+    curl_easy_cleanup(handle);
+    if (!ret) remove_dir(tmp_dir);
+    if (r_location) free_metadata_location(r_location);
+
+    return ret;
+}
+
+
+
+struct MetadataLocation *get_metadata_location(const char *in_repopath)
+{
+    struct MetadataLocation *ret = NULL;
+
+    // repopath must ends with slash
+
+    gchar *repopath;
+
+    if (g_str_has_suffix(in_repopath, "/")) {
+        repopath = g_strdup(in_repopath);
+    } else {
+        repopath = g_strconcat(in_repopath, "/", NULL);
+    }
+
+    if (g_str_has_prefix(repopath, "ftp://") ||
+        g_str_has_prefix(repopath, "http://") ||
+        g_str_has_prefix(repopath, "https://"))
+    {
+        // Download data via curl
+        ret = get_remote_metadata(repopath);
+    } else {
+        const char *path = repopath;
+        if (g_str_has_prefix(repopath, "file://")) {
+            path = repopath+7;
+        }
+        ret = get_local_metadata(path);
+    }
+
+    g_free(repopath);
+    return ret;
+}
+
 
 
 // Return list of non-null pointers on strings in the passed structure
@@ -214,6 +458,7 @@ GSList *get_list_of_md_locations (struct MetadataLocation *ml)
     if (ml->groupfile_href)  list = g_slist_prepend(list, (gpointer) ml->groupfile_href);
     if (ml->cgroupfile_href) list = g_slist_prepend(list, (gpointer) ml->cgroupfile_href);
     if (ml->repomd)          list = g_slist_prepend(list, (gpointer) ml->repomd);
+    if (ml->tmp_dir)         list = g_slist_prepend(list, (gpointer) ml->tmp_dir);
 
     return list;
 }
@@ -229,9 +474,10 @@ void free_list_of_md_locations(GSList *list)
 
 
 
-int remove_old_metadata(const char *repopath)
+int remove_metadata(const char *repopath)
 {
     if (!repopath || !g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
+        g_debug(MODULE"%s: remove_old_metadata: Cannot remove %s", __func__, repopath);
         return -1;
     }
 
@@ -251,7 +497,7 @@ int remove_old_metadata(const char *repopath)
     int removed_files = 0;
 
     struct MetadataLocation *ml;
-    ml = locate_metadata_via_repomd(repopath);
+    ml = get_metadata_location(repopath);
     if (ml) {
         GSList *list = get_list_of_md_locations(ml);
         GSList *element;
@@ -259,9 +505,9 @@ int remove_old_metadata(const char *repopath)
         for (element=list; element; element=element->next) {
             gchar *path = (char *) element->data;
 
-            g_debug("%s: Removing: %s (path obtained from repomd.xml)", __func__, path);
+            g_debug(MODULE"%s: Removing: %s (path obtained from repomd.xml)", __func__, path);
             if (g_remove(path) == -1) {
-                g_warning("%s: remove_old_metadata: Cannot remove %s", __func__, path);
+                g_warning(MODULE"%s: remove_old_metadata: Cannot remove %s", __func__, path);
             } else {
                 removed_files++;
             }

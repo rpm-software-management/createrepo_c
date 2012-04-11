@@ -206,13 +206,7 @@ gboolean check_arguments(struct CmdOptions *options)
     x = 0;
     while (options->update_md_paths && options->update_md_paths[x] != NULL) {
         char *path = options->update_md_paths[x];
-        if (g_file_test(path, G_FILE_TEST_IS_DIR|G_FILE_TEST_EXISTS)) {
-            g_message("Using md path: %s", path);
-            //path = g_strconcat(path, "/repodata/", NULL);
-            options->l_update_md_paths = g_slist_prepend(options->l_update_md_paths, (gpointer) path);
-        } else {
-            g_warning("Update md path %s doesn't exists", path);
-        }
+        options->l_update_md_paths = g_slist_prepend(options->l_update_md_paths, (gpointer) path);
         x++;
     }
 

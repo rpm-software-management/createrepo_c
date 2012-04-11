@@ -21,6 +21,7 @@ find_package(ZLIB REQUIRED)
 find_package(EXPAT REQUIRED)
 find_package(LibXml2 REQUIRED)
 find_package(Libmagic REQUIRED)
+find_package(CURL REQUIRED)
 
 
 # Check libraries
@@ -53,6 +54,9 @@ IF (NOT Libmagic_FOUND)
     MESSAGE(FATAL_ERROR "No Libmagic library installed")
 ENDIF (NOT Libmagic_FOUND)
 
+IF (NOT CURL_FOUND)
+    MESSAGE(FATAL_ERROR "No CURL library installed")
+ENDIF (NOT CURL_FOUND)
 
 # Add include dirs
 
@@ -62,6 +66,7 @@ include_directories(${GTHREAD2_INCLUDE_DIRS})
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(${EXPAT_INCLUDE_DIRS})
 include_directories(${LIBXML2_INCLUDE_DIR})
+include_directories(${CURL_INCLUDE_DIR})
 
 
 # rpm:

@@ -191,11 +191,9 @@ void dumper_thread(gpointer data, gpointer user_data) {
     G_UNLOCK(LOCK_OTH);
 
     // Clean up
-    if (!old_used) {
-        free(res.primary);
-        free(res.filelists);
-        free(res.other);
-    }
+    free(res.primary);
+    free(res.filelists);
+    free(res.other);
 
     if (modified_primary_xml_used) {
         g_free(modified_primary_xml);
@@ -341,23 +339,25 @@ int main(int argc, char **argv) {
         old_metadata = new_metadata_hashtable();
         int ret = locate_and_load_xml_metadata(old_metadata, in_dir, HT_KEY_FILENAME);
         if (!ret) {
-            g_warning("Old metadata not found");
+            g_warning("Old metadata from %s - loading failed", in_dir);
         } else {
-            g_debug("Old metadata loaded");
+            g_debug("Old metadata from: %s - loaded", in_dir);
         }
 
         // Load repodata from --update-md-path
         GSList *element;
         for (element = cmd_options->l_update_md_paths; element; element = g_slist_next(element)) {
             char *path = (char *) element->data;
-            g_debug("Loading md-path: %s", path);
+            g_message("Loading metadata from: %s", path);
             int ret = locate_and_load_xml_metadata(old_metadata, path, HT_KEY_FILENAME);
             if (ret) {
-                printf("md-path loaded");
+                g_debug("Old metadata from md-path %s - loaded", path);
             } else {
-                printf("md-path loading failed");
+                g_warning("Old metadata from md-path %s - loading failed", path);
             }
         }
+
+        g_message("Loaded information about %d packages", g_hash_table_size(old_metadata));
     }
 
 
@@ -492,7 +492,7 @@ int main(int argc, char **argv) {
                     struct PoolTask *task = g_malloc(sizeof(struct PoolTask));
                     task->full_path = full_path;
                     task->filename = g_strdup(filename);
-                    task->path = g_strdup(dirname);  // TODO: One common path for all tasks with same path??
+                    task->path = g_strdup(dirname);  // TODO: One common path for all tasks with the same path??
                     g_thread_pool_push(pool, task, NULL);
                     package_count++;
                 }
@@ -590,7 +590,7 @@ int main(int argc, char **argv) {
 
         // Delete old metadata
         g_debug("Removing old metadata from %s", out_repo);
-        remove_old_metadata(out_dir);
+        remove_metadata(out_dir);
 
         // Move files from out_repo to tmp_out_repo
         GDir *dirp;

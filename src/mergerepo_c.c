@@ -91,12 +91,12 @@ gboolean check_arguments(struct CmdOptions *options)
         char *normalized = normalize_dir_path(options->repos[x]);
         if (normalized) {
             options->repo_list = g_slist_prepend(options->repo_list, normalized);
-            if (!g_file_test(normalized, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
+/*            if (!g_file_test(normalized, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
                 g_critical("Path \"%s\" doesn't exists", normalized);
                 ret = FALSE;
             } else {
                 g_debug("Using repo: %s", normalized);
-            }
+            }*/
         }
         x++;
     }
@@ -257,7 +257,9 @@ int add_package(Package *pkg, gchar *repopath, GHashTable *merged, struct CmdOpt
 
     if (!list) {
         list = g_slist_prepend(list, pkg);
-        pkg->location_base = repopath; // XXX: maybe insert into chunk
+        if (!pkg->location_base) {
+            pkg->location_base = repopath; // XXX: maybe insert into the chunk
+        }
         g_hash_table_insert (merged, (gpointer) pkg->name, (gpointer) list);
         return 1;
     }
@@ -277,6 +279,9 @@ int add_package(Package *pkg, gchar *repopath, GHashTable *merged, struct CmdOpt
 
     // Add package
 
+    if (!pkg->location_base) {
+        pkg->location_base = repopath; // XXX: maybe insert into the chunk
+    }
     list = g_slist_prepend(list, pkg);
 
     return 1;
@@ -317,6 +322,7 @@ long merge_repos(GHashTable *merged, struct CmdOptions *cmd_options) {
             if (add_package(pkg, repopath, merged, cmd_options)) {
                 // Package was added - remove only record from hashtable
                 g_hash_table_iter_steal(&iter);
+                loaded_packages++;
             } /* else {
                 // Package was not added - remove record and data
                 g_hash_table_iter_remove(&iter);
@@ -546,7 +552,7 @@ int main(int argc, char **argv)
     gchar *groupfile = NULL;
     for (element = cmd_options->repo_list; element; element = g_slist_next(element)) {
         gchar *repopath = (gchar *) element->data;
-        struct MetadataLocation *loc = locate_metadata_via_repomd(repopath);
+        struct MetadataLocation *loc = get_metadata_location(repopath);
         if (!loc || !loc->groupfile_href) {
             break;
         }

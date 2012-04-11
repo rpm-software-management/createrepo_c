@@ -12,6 +12,7 @@ TARGET_LINK_LIBRARIES(libcreaterepo_c ${GLIB2_LIBRARIES})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${Libmagic_LIBRARY})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${LIBXML2_LIBRARIES})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${EXPAT_LIBRARIES})
+TARGET_LINK_LIBRARIES(libcreaterepo_c ${CURL_LIBRARY})
 SET_TARGET_PROPERTIES(libcreaterepo_c PROPERTIES OUTPUT_NAME "libcreaterepo_c")
 
 ADD_EXECUTABLE(../createrepo_c createrepo_c.c cmd_parser.c)

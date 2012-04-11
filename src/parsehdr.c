@@ -152,7 +152,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                 packagefile->type = safe_string_chunk_insert(pkg->chunk, "");
             }
 
-            g_hash_table_insert(filenames_hashtable, (gpointer) rpmtdGetString(full_filenames), (gpointer) rpmtdGetString(full_filenames));
+            g_hash_table_replace(filenames_hashtable, (gpointer) rpmtdGetString(full_filenames), (gpointer) rpmtdGetString(full_filenames));
             pkg->files = g_slist_prepend(pkg->files, packagefile);
         }
         pkg->files = g_slist_reverse (pkg->files);
@@ -287,7 +287,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
 
                 switch (pcor_type) {
                     case PROVIDES:
-                        g_hash_table_insert(provided_hashtable, dependency->name, dependency->name);
+                        g_hash_table_replace(provided_hashtable, dependency->name, dependency->name);
                         pkg->provides = g_slist_prepend(pkg->provides, dependency);
                         break;
                     case CONFLICTS:
@@ -394,7 +394,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                         value->flags = flags;
                         value->version = full_version;
                         value->pre = dependency->pre;
-                        g_hash_table_insert(ap_hashtable, dependency->name, value);
+                        g_hash_table_replace(ap_hashtable, dependency->name, value);
                         break;
                 } // Switch end
             } // While end

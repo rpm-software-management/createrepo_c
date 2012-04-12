@@ -53,17 +53,24 @@ CompressionType detect_compression(const char *filename)
     // Try determine compression type via filename suffix
 
     if (g_str_has_suffix(filename, ".gz") ||
-        g_str_has_suffix(filename, ".gzip"))
+        g_str_has_suffix(filename, ".gzip") ||
+        g_str_has_suffix(filename, ".gunzip"))
     {
         return GZ_COMPRESSION;
-    } else if (g_str_has_suffix(filename, ".bz2")) {
+    } else if (g_str_has_suffix(filename, ".bz2") ||
+               g_str_has_suffix(filename, ".bzip2"))
+    {
         return BZ2_COMPRESSION;
+    } else if (g_str_has_suffix(filename, ".xml"))
+    {
+        return NO_COMPRESSION;
     }
 
 
     // No success? Let's get hardcore... (Use magic bytes)
 
-    magic_t myt = magic_open(MAGIC_MIME_TYPE);
+    //magic_t myt = magic_open(MAGIC_MIME_TYPE);
+    magic_t myt = magic_open(MAGIC_MIME);
     magic_load(myt, NULL);
     if (magic_check(myt, NULL) == -1) {
         g_critical(MODULE"%s: magic_check() failed", __func__);
@@ -75,17 +82,35 @@ CompressionType detect_compression(const char *filename)
     if (mime_type) {
         g_debug(MODULE"%s: Detected mime type: %s", __func__, mime_type);
 
-        if (g_str_has_suffix(mime_type, "gzip") ||
-            g_str_has_suffix(mime_type, "gunzip"))
+//        if (g_str_has_suffix(mime_type, "gzip") ||
+//            g_str_has_suffix(mime_type, "gunzip"))
+        if (g_str_has_prefix(mime_type, "application/x-gzip") ||
+            g_str_has_prefix(mime_type, "application/gzip") ||
+            g_str_has_prefix(mime_type, "application/gzip-compressed") ||
+            g_str_has_prefix(mime_type, "application/gzipped") ||
+            g_str_has_prefix(mime_type, "application/x-gzip-compressed") ||
+            g_str_has_prefix(mime_type, "application/x-compress") ||
+            g_str_has_prefix(mime_type, "application/x-gzip") ||
+            g_str_has_prefix(mime_type, "application/x-gunzip") ||
+            g_str_has_prefix(mime_type, "multipart/x-gzip"))
         {
             type = GZ_COMPRESSION;
         }
 
-        else if (g_str_has_suffix(mime_type, "bzip2")) {
+//        else if (g_str_has_suffix(mime_type, "bzip2")) {
+        else if (g_str_has_prefix(mime_type, "application/x-bzip2") ||
+                 g_str_has_prefix(mime_type, "application/x-bz2") ||
+                 g_str_has_prefix(mime_type, "application/bzip2") ||
+                 g_str_has_prefix(mime_type, "application/bz2"))
+        {
             type = BZ2_COMPRESSION;
         }
 
-        else if (!g_strcmp0(mime_type, "text/plain")) {
+//        else if (!g_strcmp0(mime_type, "text/plain")) {
+        else if (g_str_has_prefix(mime_type, "application/xml") ||
+                 g_str_has_prefix(mime_type, "application/x-xml") ||
+                 g_str_has_prefix(mime_type, "text/xml"))
+        {
             type = NO_COMPRESSION;
         }
     } else {

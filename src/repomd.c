@@ -92,6 +92,7 @@ void free_repomdresult(struct repomdResult *rr)
     g_free(rr->oth_sqlite_location);
     g_free(rr->groupfile_location);
     g_free(rr->cgroupfile_location);
+    g_free(rr->update_info_location);
     g_free(rr->repomd_xml);
 
     g_free(rr);

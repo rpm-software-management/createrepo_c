@@ -1,4 +1,5 @@
 #include <glib.h>
+#include <assert.h>
 #include <sys/stat.h>
 #include <errno.h>
 #include <string.h>
@@ -282,7 +283,11 @@ int add_package(Package *pkg, gchar *repopath, GHashTable *merged, struct CmdOpt
     if (!pkg->location_base) {
         pkg->location_base = repopath; // XXX: maybe insert into the chunk
     }
-    list = g_slist_prepend(list, pkg);
+
+    // XXX: The first list element (pointed from hashtable) must stay first!
+    // g_slist_append() is suitable but non effective, insert a new element right after
+    // first element is optimal (at least for now)
+    assert(g_slist_insert(list, pkg, 1) == list);
 
     return 1;
 }
@@ -306,7 +311,7 @@ long merge_repos(GHashTable *merged, struct CmdOptions *cmd_options) {
 
         if (locate_and_load_xml_metadata(tmp_hashtable, repopath, HT_KEY_HASH) == 0) {
             g_critical("Cannot load repo: \"%s\"", repopath);
-            destroy_metadata_hashtable(merged);
+            destroy_metadata_hashtable(tmp_hashtable);
             break;
         }
 
@@ -357,7 +362,9 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, gchar *gro
     gchar *pri_xml_filename = g_strconcat(cmd_options->out_repo, "/primary.xml", suffix, NULL);
     gchar *fil_xml_filename = g_strconcat(cmd_options->out_repo, "/filelists.xml", suffix, NULL);
     gchar *oth_xml_filename = g_strconcat(cmd_options->out_repo, "/other.xml", suffix, NULL);
-    gchar *ui_xml_filename  = g_strconcat(cmd_options->out_repo, "/updateinfo.xml", suffix, NULL);
+    gchar *ui_xml_filename = NULL;
+    if (!cmd_options->noupdateinfo)
+        ui_xml_filename  = g_strconcat(cmd_options->out_repo, "/updateinfo.xml", suffix, NULL);
 
     if ((pri_f = cw_open(pri_xml_filename, CW_MODE_WRITE, cmd_options->compression_type)) == NULL) {
         g_critical("Cannot open file: %s", pri_xml_filename);
@@ -442,12 +449,14 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, gchar *gro
     // Write updateinfo.xml
     // TODO
 
-    CW_FILE *update_info = NULL;
-    if ((update_info = cw_open(ui_xml_filename, CW_MODE_WRITE, cmd_options->compression_type))) {
-        cw_puts(update_info, "<?xml version=\"1.0\"?>\n<updates></updates>\n");
-        cw_close(update_info);
-    } else {
-        g_warning("Cannot open file: %s", ui_xml_filename);
+    if (!cmd_options->noupdateinfo) {
+        CW_FILE *update_info = NULL;
+        if ((update_info = cw_open(ui_xml_filename, CW_MODE_WRITE, cmd_options->compression_type))) {
+            cw_puts(update_info, "<?xml version=\"1.0\"?>\n<updates></updates>\n");
+            cw_close(update_info);
+        } else {
+            g_warning("Cannot open file: %s", ui_xml_filename);
+        }
     }
 
 
@@ -456,25 +465,33 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, gchar *gro
     gchar *pri_xml_name = g_strconcat("repodata/", "primary.xml", suffix, NULL);
     gchar *fil_xml_name = g_strconcat("repodata/", "filelists.xml",suffix, NULL);
     gchar *oth_xml_name = g_strconcat("repodata/", "other.xml", suffix, NULL);
-    gchar *ui_xml_name  = g_strconcat("repodata/", "updateinfo.xml", suffix, NULL);
+    gchar *ui_xml_name = NULL;
+    if (!cmd_options->noupdateinfo)
+        ui_xml_name = g_strconcat("repodata/", "updateinfo.xml", suffix, NULL);
 
     struct repomdResult *repomd_res = xml_repomd(cmd_options->out_dir, 1, pri_xml_name,
                                                  fil_xml_name, oth_xml_name, NULL, NULL,
                                                  NULL, groupfile, ui_xml_name, NULL);
-    gchar *repomd_path = g_strconcat(cmd_options->out_repo, "repomd.xml", NULL);
-
-    FILE *frepomd = fopen(repomd_path, "w");
-    if (frepomd && repomd_res->repomd_xml) {
-        fputs(repomd_res->repomd_xml, frepomd);
-        fclose(frepomd);
-    } else {
-        g_critical("Generate of repomd.xml failed");
+    if (repomd_res) {
+        if (repomd_res->repomd_xml) {
+            gchar *repomd_path = g_strconcat(cmd_options->out_repo, "repomd.xml", NULL);
+            FILE *frepomd = fopen(repomd_path, "w");
+            if (frepomd) {
+                fputs(repomd_res->repomd_xml, frepomd);
+                fclose(frepomd);
+            } else {
+                g_critical("Cannot open file: %s", repomd_path);
+            }
+            g_free(repomd_path);
+        } else {
+            g_critical("Generate of repomd.xml failed");
+        }
+        free_repomdresult(repomd_res);
     }
 
 
     // Clean up
 
-    g_free(repomd_path);
     g_free(pri_xml_name);
     g_free(fil_xml_name);
     g_free(oth_xml_name);
@@ -554,11 +571,13 @@ int main(int argc, char **argv)
         gchar *repopath = (gchar *) element->data;
         struct MetadataLocation *loc = get_metadata_location(repopath);
         if (!loc || !loc->groupfile_href) {
+            free_metadata_location(loc);
             break;
         }
         if (copy_file(loc->groupfile_href, cmd_options->out_repo) == CR_COPY_OK) {
             groupfile = g_strconcat(cmd_options->out_repo, get_filename(loc->groupfile_href), NULL);
         }
+        free_metadata_location(loc);
         break;
     }
 
@@ -570,6 +589,7 @@ int main(int argc, char **argv)
 
     // Cleanup
 
+    g_free(groupfile);
     destroy_merged_metadata_hashtable(merged_hashtable);
     free_options(cmd_options);
     return 0;

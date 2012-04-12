@@ -312,7 +312,8 @@ long merge_repos(GHashTable *merged, struct CmdOptions *cmd_options) {
 
         GHashTableIter iter;
         gpointer key, value;
-        guint original_size, used;
+        guint original_size;
+        long repo_loaded_packages = 0;
 
         original_size = g_hash_table_size(tmp_hashtable);
 
@@ -322,17 +323,16 @@ long merge_repos(GHashTable *merged, struct CmdOptions *cmd_options) {
             if (add_package(pkg, repopath, merged, cmd_options)) {
                 // Package was added - remove only record from hashtable
                 g_hash_table_iter_steal(&iter);
-                loaded_packages++;
+                repo_loaded_packages++;
             } /* else {
                 // Package was not added - remove record and data
                 g_hash_table_iter_remove(&iter);
             } */
         }
 
-        used = original_size - g_hash_table_size(tmp_hashtable);
-        loaded_packages += used;
+        loaded_packages += repo_loaded_packages;
         destroy_metadata_hashtable(tmp_hashtable);
-        g_debug("Repo: %s (Loaded: %ld Used: %ld)", repopath, (unsigned long) original_size, (unsigned long) used);
+        g_debug("Repo: %s (Loaded: %ld Used: %ld)", repopath, (unsigned long) original_size, repo_loaded_packages);
     }
 
     return loaded_packages;

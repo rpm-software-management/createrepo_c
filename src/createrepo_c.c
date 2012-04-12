@@ -574,9 +574,9 @@ int main(int argc, char **argv) {
     g_thread_pool_free(pool, FALSE, TRUE);
     g_message("Pool finished");
 
-    cw_puts(user_data.pri_f, "\n</metadata>\n");
-    cw_puts(user_data.fil_f, "\n</filelists>\n");
-    cw_puts(user_data.oth_f, "\n</otherdata>\n");
+    cw_puts(user_data.pri_f, "</metadata>");
+    cw_puts(user_data.fil_f, "</filelists>");
+    cw_puts(user_data.oth_f, "</otherdata>");
 
     cw_close(user_data.pri_f);
     cw_close(user_data.fil_f);

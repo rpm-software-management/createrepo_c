@@ -11,7 +11,8 @@
 #undef MODULE
 #define MODULE "xml_dump_filelists: "
 
-#define FORMAT_XML  1
+#define FORMAT_XML      1
+#define FORMAT_LEVEL    0
 
 
 void dump_filelists_items(xmlNodePtr root, Package *package)
@@ -72,9 +73,11 @@ char *xml_dump_filelists(Package *package)
         return NULL;
     }
     // Seems to be little bit faster than xmlDocDumpFormatMemory
-    xmlNodeDump(buf, NULL, root, 1, FORMAT_XML);
+    xmlNodeDump(buf, NULL, root, FORMAT_LEVEL, FORMAT_XML);
     assert(buf->content);
-    result = g_strdup((char *) buf->content);
+    result = g_strndup((char *) buf->content, (buf->use+1)); // g_strndup allocate (buf->use+1
+    result[buf->use]     = '\n';
+    result[buf->use+1]   = '\0';
     xmlBufferFree(buf);
 
 

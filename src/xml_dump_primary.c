@@ -16,7 +16,8 @@
 #define OBSOLETES   2
 #define REQUIRES    3
 
-#define FORMAT_XML  1
+#define FORMAT_XML      1
+#define FORMAT_LEVEL    0
 
 #define DATE_STR_MAX_LEN    32
 #define SIZE_STR_MAX_LEN    32
@@ -241,13 +242,13 @@ void dump_base_items(xmlNodePtr root, Package *package)
 
     location = xmlNewChild(root, NULL, BAD_CAST "location", NULL);
 
-    // Write location attribute href
-    xmlNewProp(location, BAD_CAST "href", BAD_CAST ((package->location_href) ? package->location_href : ""));
-
-    // Write location attribute base
+// Write location attribute base
     if (package->location_base && package->location_base[0] != '\0') {
         xmlNewProp(location, BAD_CAST "xml:base", BAD_CAST package->location_base);
     }
+
+    // Write location attribute href
+    xmlNewProp(location, BAD_CAST "href", BAD_CAST ((package->location_href) ? package->location_href : ""));
 
 
     /***********************************
@@ -339,9 +340,11 @@ char *xml_dump_primary(Package *package)
         return NULL;
     }
     // Seems to be little bit faster than xmlDocDumpFormatMemory
-    xmlNodeDump(buf, NULL, root, 1, FORMAT_XML);
+    xmlNodeDump(buf, NULL, root, FORMAT_LEVEL, FORMAT_XML);
     assert(buf->content);
-    result = g_strdup((char *) buf->content);
+    result = g_strndup((char *) buf->content, (buf->use+1)); // g_strndup allocate (buf->use+1)+1
+    result[buf->use]     = '\n';
+    result[buf->use+1]   = '\0';
     xmlBufferFree(buf);
 
 

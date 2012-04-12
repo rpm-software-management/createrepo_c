@@ -24,7 +24,8 @@
 #define RPM_NS          "http://linux.duke.edu/metadata/rpm"
 #define XMLNS_NS        "http://linux.duke.edu/metadata/repo"
 
-#define FORMAT_XML  1
+#define XML_ENC         "UTF-8"
+#define FORMAT_XML      1
 
 #define REPOMD_OK       0
 #define REPOMD_ERR      1
@@ -453,7 +454,8 @@ char *repomd_xml_dump(long revision, struct repomdData *pri_xml, struct repomdDa
     // Dump IT!
 
     char *result;
-    xmlDocDumpFormatMemory(doc, (xmlChar **) &result, NULL, FORMAT_XML);
+    //xmlDocDumpFormatMemory(doc, (xmlChar **) &result, NULL, FORMAT_XML);
+    xmlDocDumpFormatMemoryEnc(doc, (xmlChar **) &result, NULL, XML_ENC, FORMAT_XML);
 
 
     // Clean up

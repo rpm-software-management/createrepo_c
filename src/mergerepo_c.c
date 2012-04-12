@@ -427,9 +427,9 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, gchar *gro
 
     // Write xml footers
 
-    cw_puts(pri_f, "\n</metadata>\n");
-    cw_puts(fil_f, "\n</filelists>\n");
-    cw_puts(oth_f, "\n</otherdata>\n");
+    cw_puts(pri_f, "</metadata>");
+    cw_puts(fil_f, "</filelists>");
+    cw_puts(oth_f, "</otherdata>");
 
 
     // Close files

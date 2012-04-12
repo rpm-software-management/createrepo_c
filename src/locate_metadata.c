@@ -2,6 +2,8 @@
 #include <glib/gstdio.h>
 #include <libxml/xmlreader.h>
 #include <curl/curl.h>
+#include <string.h>
+#include <errno.h>
 #include "misc.h"
 #include "locate_metadata.h"
 
@@ -278,8 +280,8 @@ struct MetadataLocation *get_remote_metadata(const char *repopath)
 
     // Create temporary repo in /tmp
 
-    if(!g_mkdtemp(tmp_dir)) {
-        g_critical(MODULE"%s: Cannot create a temporary directory", __func__);
+    if(!mkdtemp(tmp_dir)) {
+        g_critical(MODULE"%s: Cannot create a temporary directory: %s", __func__, strerror(errno));
         return ret;
     }
 

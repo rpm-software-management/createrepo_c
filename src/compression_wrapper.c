@@ -34,6 +34,13 @@
 #define BZ2_SKIP_FFLUSH         0
 
 
+#if ZLIB_VERNUM < 0x1240
+// XXX: Zlib has gzbuffer since 1.2.4
+#define gzbuffer(a,b) 0
+#endif
+
+
+
 CompressionType detect_compression(const char *filename)
 {
     CompressionType type = UNKNOWN_COMPRESSION;

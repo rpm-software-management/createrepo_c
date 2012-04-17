@@ -337,10 +337,10 @@ int main(int argc, char **argv) {
         // Load local repodata
         old_metadata = new_metadata_hashtable();
         int ret = locate_and_load_xml_metadata(old_metadata, in_dir, HT_KEY_FILENAME);
-        if (!ret) {
-            g_warning("Old metadata from %s - loading failed", in_dir);
-        } else {
+        if (ret == LOAD_METADATA_OK) {
             g_debug("Old metadata from: %s - loaded", in_dir);
+        } else {
+            g_warning("Old metadata from %s - loading failed", in_dir);
         }
 
         // Load repodata from --update-md-path
@@ -349,7 +349,7 @@ int main(int argc, char **argv) {
             char *path = (char *) element->data;
             g_message("Loading metadata from: %s", path);
             int ret = locate_and_load_xml_metadata(old_metadata, path, HT_KEY_FILENAME);
-            if (ret) {
+            if (ret == LOAD_METADATA_OK) {
                 g_debug("Old metadata from md-path %s - loaded", path);
             } else {
                 g_warning("Old metadata from md-path %s - loading failed", path);

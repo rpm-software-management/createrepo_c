@@ -307,7 +307,7 @@ long merge_repos(GHashTable *merged, struct CmdOptions *cmd_options) {
         repopath = (gchar *) element->data;
         g_debug("Processing: %s", repopath);
 
-        if (locate_and_load_xml_metadata(tmp_hashtable, repopath, HT_KEY_HASH) == 0) {
+        if (locate_and_load_xml_metadata(tmp_hashtable, repopath, HT_KEY_HASH) == LOAD_METADATA_ERR) {
             g_critical("Cannot load repo: \"%s\"", repopath);
             destroy_metadata_hashtable(tmp_hashtable);
             break;

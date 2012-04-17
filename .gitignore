@@ -4,3 +4,16 @@
 *_wrap.c
 snippets/
 notes
+Makefile
+mergerepo_c
+createrepo_c
+tests/testcompression_wrapper
+createrepo*.rpm
+cmake_install.cmake
+install_manifest.txt
+CMakeCache.txt
+CMakeFiles
+CPackConfig.cmake
+CPackSourceConfig.cmake
+_CPack_Packages/
+*_

@@ -336,8 +336,13 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                                                 break;
                                             }
                                         } else {
-                                            // Weird, do not touch anything
-                                            g_free(dependency);
+                                            // we probably got something like libc.so.6()(64bit)
+                                            if (!g_ascii_isdigit(old_name[old_i])) {
+                                                // replace current libc.so.6()(64bit) with
+                                                // the new one libc.so.6...
+                                                g_free(libc_require_highest);
+                                                libc_require_highest = dependency;
+                                            }
                                             break;
                                         }
 

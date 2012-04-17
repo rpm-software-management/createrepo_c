@@ -51,8 +51,6 @@ struct PoolTask {
 
 
 
-#define UNUSED(x) (void)(x) // Used to suppress compiler warning about unused param
-
 void black_hole_log_function (const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data)
 {
     UNUSED(log_domain);
@@ -65,6 +63,7 @@ void black_hole_log_function (const gchar *log_domain, GLogLevelFlags log_level,
 
 // Global variables used by signal handler
 char *tmp_repodata_path = NULL;
+
 
 // Signal handler
 void sigint_catcher(int sig)

@@ -4,6 +4,9 @@
 #include <glib.h>
 #include "constants.h"
 
+#define UNUSED(x) (void)(x) // Used to suppress compiler warning about unused param
+
+
 const char *flag_to_string(gint64 flags);
 
 struct VersionStruct {

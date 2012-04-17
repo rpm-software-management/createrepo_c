@@ -18,8 +18,6 @@
 
 #define BUFFER_SIZE     4096
 
-#define UNUSED(x) (void)(x) // Used to suppress compiler warning about unused param
-
 
 const char *flag_to_string(gint64 flags)
 {

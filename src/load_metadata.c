@@ -867,7 +867,7 @@ int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const
     compression_type = detect_compression(primary_xml_path);
     if (compression_type == UNKNOWN_COMPRESSION) {
         g_debug(MODULE"%s: Unknown compression", __func__);
-        return 0;
+        return LOAD_METADATA_ERR;
     }
 
 
@@ -875,17 +875,17 @@ int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const
 
     if (!(pri_xml_cwfile = cw_open(primary_xml_path, CW_MODE_READ, compression_type))) {
         g_debug(MODULE"%s: Cannot open file: %s", __func__, primary_xml_path);
-        return 0;
+        return LOAD_METADATA_ERR;
     }
 
     if (!(fil_xml_cwfile = cw_open(filelists_xml_path, CW_MODE_READ, compression_type))) {
         g_debug(MODULE"%s: Cannot open file: %s", __func__, filelists_xml_path);
-        return 0;
+        return LOAD_METADATA_ERR;
     }
 
     if (!(oth_xml_cwfile = cw_open(other_xml_path, CW_MODE_READ, compression_type))) {
         g_debug(MODULE"%s: Cannot open file: %s", __func__, other_xml_path);
-        return 0;
+        return LOAD_METADATA_ERR;
     }
 
 
@@ -931,20 +931,20 @@ int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const
         pri_buff = XML_GetBuffer(pri_p, CHUNK_SIZE);
         if (!pri_buff) {
             g_critical(MODULE"%s: Ran out of memory for parse", __func__);
-            return 0;
+            return LOAD_METADATA_ERR;
         }
 
         pri_len = cw_read(pri_xml_cwfile, (void *) pri_buff, CHUNK_SIZE);
         if (pri_len < 0) {
             g_critical(MODULE"%s: Read error", __func__);
-            return 0;
+            return LOAD_METADATA_ERR;
         }
 
         if (! XML_ParseBuffer(pri_p, pri_len, pri_len == 0)) {
             g_critical(MODULE"%s: Parse error at line: %d (%s)", __func__,
                                 (int) XML_GetCurrentLineNumber(pri_p),
                                 (char *) XML_ErrorString(XML_GetErrorCode(pri_p)));
-            return 0;
+            return LOAD_METADATA_ERR;
         }
 
         if (pri_len == 0) {
@@ -967,20 +967,20 @@ int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const
         fil_buff = XML_GetBuffer(fil_p, CHUNK_SIZE);
         if (!fil_buff) {
             g_critical(MODULE"%s: Ran out of memory for parse", __func__);
-            return 0;
+            return LOAD_METADATA_ERR;
         }
 
         fil_len = cw_read(fil_xml_cwfile, (void *) fil_buff, CHUNK_SIZE);
         if (fil_len < 0) {
             g_critical(MODULE"%s: Read error", __func__);
-            return 0;
+            return LOAD_METADATA_ERR;
         }
 
         if (! XML_ParseBuffer(fil_p, fil_len, fil_len == 0)) {
             g_critical(MODULE"%s: Parse error at line: %d (%s)", __func__,
                                 (int) XML_GetCurrentLineNumber(fil_p),
                                 (char *) XML_ErrorString(XML_GetErrorCode(fil_p)));
-            return 0;
+            return LOAD_METADATA_ERR;
         }
 
         if (fil_len == 0) {
@@ -1003,20 +1003,20 @@ int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const
         oth_buff = XML_GetBuffer(oth_p, CHUNK_SIZE);
         if (!oth_buff) {
             g_critical(MODULE"%s: Ran out of memory for parse", __func__);
-            return 0;
+            return LOAD_METADATA_ERR;
         }
 
         oth_len = cw_read(oth_xml_cwfile, (void *) oth_buff, CHUNK_SIZE);
         if (oth_len < 0) {
             g_critical(MODULE"%s: Read error", __func__);
-            return 0;
+            return LOAD_METADATA_ERR;
         }
 
         if (! XML_ParseBuffer(oth_p, oth_len, oth_len == 0)) {
             g_critical(MODULE"%s: Parse error at line: %d (%s)", __func__,
                                 (int) XML_GetCurrentLineNumber(oth_p),
                                 (char *) XML_ErrorString(XML_GetErrorCode(oth_p)));
-            return 0;
+            return LOAD_METADATA_ERR;
         }
 
         if (oth_len == 0) {
@@ -1040,10 +1040,10 @@ cleanup:
 
 
     if (parser_data.error) {
-        return 0;
+        return LOAD_METADATA_ERR;
     }
 
-    return 1;
+    return LOAD_METADATA_OK;
 }
 
 
@@ -1051,7 +1051,7 @@ cleanup:
 int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath, HashTableKey key)
 {
     if (!hashtable || !repopath) {
-        return 0;
+        return LOAD_METADATA_ERR;
     }
 
 
@@ -1060,14 +1060,14 @@ int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath, Ha
     struct MetadataLocation *ml;
     ml = get_metadata_location(repopath);
     if (!ml) {
-        return 0;
+        return LOAD_METADATA_ERR;
     }
 
 
     if (!ml->pri_xml_href || !ml->fil_xml_href || !ml->oth_xml_href) {
         // Some file(s) is/are missing
         free_metadata_location(ml);
-        return 0;
+        return LOAD_METADATA_ERR;
     }
 
 
@@ -1079,7 +1079,7 @@ int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath, Ha
     intern_hashtable = new_metadata_hashtable();
     result = load_xml_metadata(intern_hashtable, ml->pri_xml_href, ml->fil_xml_href, ml->oth_xml_href);
 
-    if (!result) {
+    if (result == LOAD_METADATA_ERR) {
         g_critical(MODULE"%s: Error encountered while parsing", __func__);
         destroy_metadata_hashtable(intern_hashtable);
         free_metadata_location(ml);

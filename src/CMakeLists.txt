@@ -3,8 +3,7 @@ SET (createrepo_c_SRCS
     repomd.c xml_dump.c xml_dump_filelists.c xml_dump_other.c xml_dump_primary.c
     locate_metadata.c)
 
-#ADD_LIBRARY(libcreaterepo_c SHARED ${createrepo_c_SRCS})
-ADD_LIBRARY(libcreaterepo_c ${createrepo_c_SRCS})
+ADD_LIBRARY(libcreaterepo_c SHARED ${createrepo_c_SRCS})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${ZLIB_LIBRARY})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${RPMDB_LIBRARY})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${BZIP2_LIBRARIES})

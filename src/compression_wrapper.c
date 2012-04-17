@@ -46,9 +46,9 @@ CompressionType detect_compression(const char *filename)
     CompressionType type = UNKNOWN_COMPRESSION;
 
     if (!g_file_test(filename, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR)) {
+        g_debug(MODULE"%s: File %s doesn't exists or it's not a regular file", __func__, filename);
         return type;
     }
-
 
     // Try determine compression type via filename suffix
 
@@ -80,7 +80,7 @@ CompressionType detect_compression(const char *filename)
     const char *mime_type = magic_file(myt, filename);
 
     if (mime_type) {
-        g_debug(MODULE"%s: Detected mime type: %s", __func__, mime_type);
+        g_debug(MODULE"%s: Detected mime type: %s (%s)", __func__, mime_type, filename);
 
 //        if (g_str_has_suffix(mime_type, "gzip") ||
 //            g_str_has_suffix(mime_type, "gunzip"))
@@ -107,14 +107,16 @@ CompressionType detect_compression(const char *filename)
         }
 
 //        else if (!g_strcmp0(mime_type, "text/plain")) {
-        else if (g_str_has_prefix(mime_type, "application/xml") ||
+        else if (g_str_has_prefix(mime_type, "text/plain") ||
+                 g_str_has_prefix(mime_type, "text/xml") ||
+                 g_str_has_prefix(mime_type, "application/xml") ||
                  g_str_has_prefix(mime_type, "application/x-xml") ||
-                 g_str_has_prefix(mime_type, "text/xml"))
+                 g_str_has_prefix(mime_type, "application/x-empty"))
         {
             type = NO_COMPRESSION;
         }
     } else {
-        g_debug(MODULE"%s: Mime type not detected!", __func__);
+        g_debug(MODULE"%s: Mime type not detected! (%s)", __func__, filename);
     }
 
 
@@ -153,11 +155,25 @@ CW_FILE *cw_open(const char *filename, int mode, CompressionType comtype)
     CompressionType type;
 
     if (!filename || (mode != CW_MODE_READ && mode != CW_MODE_WRITE)) {
+        g_debug(MODULE"%s: Filename is NULL or bad mode value", __func__);
         return NULL;
     }
 
 
     // Compression type detection
+
+    if (mode == CW_MODE_WRITE) {
+        if (comtype == AUTO_DETECT_COMPRESSION) {
+            g_debug(MODULE"%s: AUTO_DETECT_COMPRESSION cannot be used if mode is CW_MODE_WRITE", __func__);
+            return NULL;
+        }
+
+        if (comtype == UNKNOWN_COMPRESSION) {
+            g_debug(MODULE"%s: UNKNOWN_COMPRESSION cannot be used if mode is CW_MODE_WRITE", __func__);
+            return NULL;
+        }
+    }
+
 
     if (comtype != AUTO_DETECT_COMPRESSION) {
         type = comtype;
@@ -166,6 +182,7 @@ CW_FILE *cw_open(const char *filename, int mode, CompressionType comtype)
     }
 
     if (type == UNKNOWN_COMPRESSION) {
+        g_debug(MODULE"%s: Cannot detect compression type", __func__);
         return NULL;
     }
 
@@ -321,7 +338,7 @@ int cw_read(CW_FILE *cw_file, void *buffer, unsigned int len)
 
 
 
-int cw_write(CW_FILE *cw_file, void *buffer, unsigned int len)
+int cw_write(CW_FILE *cw_file, const void *buffer, unsigned int len)
 {
     if (!cw_file || !buffer || cw_file->mode != CW_MODE_WRITE) {
         return CW_ERR;
@@ -340,13 +357,17 @@ int cw_write(CW_FILE *cw_file, void *buffer, unsigned int len)
             break;
 
         case (GZ_COMPRESSION): // ----------------------------------------------
+            if (len == 0) {
+                ret = 0;
+                break;
+            }
             if ((ret = gzwrite((gzFile) cw_file->FILE, buffer, len)) == 0) {
                 ret = CW_ERR;
             }
             break;
 
         case (BZ2_COMPRESSION): // ---------------------------------------------
-            BZ2_bzWrite(&bzerror, (BZFILE *) cw_file->FILE, buffer, len);
+            BZ2_bzWrite(&bzerror, (BZFILE *) cw_file->FILE, (void *) buffer, len);
             if (bzerror == BZ_OK) {
                 ret = len;
             } else {

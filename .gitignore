@@ -8,6 +8,7 @@ Makefile
 mergerepo_c
 createrepo_c
 tests/testcompression_wrapper
+tests/testload_metadata
 createrepo*.rpm
 cmake_install.cmake
 install_manifest.txt

@@ -1,0 +1,2 @@
+ADD_EXECUTABLE(testcompression_wrapper testcompression_wrapper.c)
+TARGET_LINK_LIBRARIES(testcompression_wrapper libcreaterepo_c ${GLIB2_LIBRARIES})

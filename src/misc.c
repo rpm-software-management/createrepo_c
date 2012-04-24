@@ -77,10 +77,12 @@ struct VersionStruct string_to_version(const char *string, GStringChunk *chunk)
         strtol(string, &p, 10);
         if (p == ptr) { // epoch str seems to be a number
             size_t len = ptr - string;
-            if (chunk) {
-                ver.epoch = g_string_chunk_insert_len(chunk, string, len);
-            } else {
-                ver.epoch = g_strndup(string, len);
+            if (len) {
+                if (chunk) {
+                    ver.epoch = g_string_chunk_insert_len(chunk, string, len);
+                } else {
+                    ver.epoch = g_strndup(string, len);
+                }
             }
         }
     } else { // There is no epoch
@@ -196,11 +198,15 @@ char *compute_file_checksum(const char *filename, ChecksumType type)
 {
     GChecksumType gchecksumtype;
 
+    if (!filename) {
+        g_debug(MODULE"%s: Filename param is NULL", __func__);
+        return NULL;
+    }
 
     // Check if file exists and if it is a regular file (not a directory)
 
     if (!g_file_test(filename, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR))) {
-        g_critical(MODULE"%s: File %s doesn't exists", __func__, filename);
+        g_debug(MODULE"%s: File %s doesn't exists", __func__, filename);
         return NULL;
     }
 
@@ -218,7 +224,7 @@ char *compute_file_checksum(const char *filename, ChecksumType type)
             gchecksumtype = G_CHECKSUM_SHA256;
             break;
         default:
-            g_critical(MODULE"%s: Unknown checksum type", __func__);
+            g_debug(MODULE"%s: Unknown checksum type", __func__);
             return NULL;
     };
 
@@ -281,7 +287,7 @@ struct HeaderRangeStruct get_header_byte_range(const char *filename)
 
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
-        g_critical(MODULE"%s: Cannot open file %s (%s)", __func__, filename, strerror(errno));
+        g_debug(MODULE"%s: Cannot open file %s (%s)", __func__, filename, strerror(errno));
         return results;
     }
 
@@ -289,7 +295,7 @@ struct HeaderRangeStruct get_header_byte_range(const char *filename)
     // Get header range
 
     if (fseek(fp, 104, SEEK_SET) != 0) {
-        g_critical(MODULE"%s: fseek fail on %s (%s)", __func__, filename, strerror(errno));
+        g_debug(MODULE"%s: fseek fail on %s (%s)", __func__, filename, strerror(errno));
         fclose(fp);
         return results;
     }
@@ -327,7 +333,7 @@ struct HeaderRangeStruct get_header_byte_range(const char *filename)
     // Check sanity
 
     if (hdrend < hdrstart) {
-        g_critical(MODULE"%s: sanity check fail on %s (%d > %d))", __func__, filename, hdrstart, hdrend);
+        g_debug(MODULE"%s: sanity check fail on %s (%d > %d))", __func__, filename, hdrstart, hdrend);
         return results;
     }
 
@@ -353,7 +359,7 @@ const char *get_checksum_name_str(ChecksumType type)
             name = "sha256";
             break;
         default:
-            g_debug(MODULE"%s: Unknown checksum", __func__);
+            g_debug(MODULE"%s: Unknown checksum (%d)", __func__, type);
             break;
     }
 
@@ -471,7 +477,7 @@ int remove_dir_cb(const char *fpath, const struct stat *sb, int typeflag, struct
     UNUSED(ftwbuf);
     int rv = remove(fpath);
     if (rv)
-        g_critical("%s: Cannot remove: %s: %s", __func__, fpath, strerror(errno));
+        g_warning("%s: Cannot remove: %s: %s", __func__, fpath, strerror(errno));
 
     return rv;
 }
@@ -483,6 +489,7 @@ int remove_dir(const char *path)
 }
 
 
+// Return path with exactly one trailing '/'
 char *normalize_dir_path(const char *path)
 {
     char *normalized = NULL;
@@ -495,7 +502,7 @@ char *normalize_dir_path(const char *path)
         return g_strdup("./");
     }
 
-    do { // Skip all traling '/'
+    do { // Skip all trailing '/'
         i--;
     } while (i >= 0 && path[i] == '/');
 

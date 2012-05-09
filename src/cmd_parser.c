@@ -163,13 +163,21 @@ gboolean check_arguments(struct CmdOptions *options)
     // Check groupfile
     options->groupfile_fullpath = NULL;
     if (options->groupfile) {
+        gboolean remote = FALSE;
+
         if (g_str_has_prefix(options->groupfile, "/")) {
+            // Absolute local path
+            options->groupfile_fullpath = g_strdup(options->groupfile);
+        } else if (strstr(options->groupfile, "://")) {
+            // Remote groupfile
+            remote = TRUE;
             options->groupfile_fullpath = g_strdup(options->groupfile);
         } else {
+            // Relative path (from intput_dir)
             options->groupfile_fullpath = g_strconcat(options->input_dir, options->groupfile, NULL);
         }
 
-        if (!g_file_test(options->groupfile_fullpath, G_FILE_TEST_IS_REGULAR|G_FILE_TEST_EXISTS)) {
+        if (!remote && !g_file_test(options->groupfile_fullpath, G_FILE_TEST_IS_REGULAR|G_FILE_TEST_EXISTS)) {
             g_warning("groupfile %s doesn't exists", options->groupfile_fullpath);
             return FALSE;
         }

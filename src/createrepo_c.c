@@ -323,7 +323,7 @@ int main(int argc, char **argv) {
     if (cmd_options->groupfile_fullpath) {
         groupfile = g_strconcat(tmp_out_repo, get_filename(cmd_options->groupfile_fullpath), NULL);
         g_debug("Copy groupfile %s -> %s", cmd_options->groupfile_fullpath, groupfile);
-        if (copy_file(cmd_options->groupfile_fullpath, groupfile) != CR_COPY_OK) {
+        if (better_copy_file(cmd_options->groupfile_fullpath, groupfile) != CR_COPY_OK) {
             g_critical("Error while copy %s -> %s", cmd_options->groupfile_fullpath, groupfile);
         }
     }

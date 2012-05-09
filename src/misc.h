@@ -2,6 +2,7 @@
 #define __C_CREATEREPOLIB_MISC_H__
 
 #include <glib.h>
+#include <curl/curl.h>
 #include "constants.h"
 
 #define UNUSED(x) (void)(x) // Used to suppress compiler warning about unused param
@@ -38,7 +39,9 @@ char *get_filename(const char *filepath);
 #define CR_COPY_OK              0
 #define CR_COPY_ERR             1
 
+void download(CURL *handle, const char *url, const char *in_dst, char **error);
 int copy_file(const char *src, const char *dst);
+int better_copy_file(const char *src, const char *dst);
 int remove_dir(const char *path);
 
 // return new allocated string with normalized path or NULL

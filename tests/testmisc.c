@@ -22,6 +22,10 @@
 #define TMP_DIR_PATTERN         "/tmp/createrepo_test_XXXXXX"
 #define NON_EXIST_FILE          "/tmp/foobarfile.which.should.not.exists"
 
+#define VALID_URL_01    "http://google.com/index.html"
+#define URL_FILENAME_01 "index.html"
+#define INVALID_URL     "htp://foo.bar"
+
 
 static void test_string_to_version(void)
 {
@@ -460,7 +464,7 @@ static void copyfiletest_setup(Copyfiletest *copyfiletest, gconstpointer test_da
     UNUSED(test_data);
     copyfiletest->tmp_dir = g_strdup(TMP_DIR_PATTERN);
     mkdtemp(copyfiletest->tmp_dir);
-    copyfiletest->dst_file = g_strconcat(copyfiletest->tmp_dir, DST_FILE, NULL);
+    copyfiletest->dst_file = g_strconcat(copyfiletest->tmp_dir, "/", DST_FILE, NULL);
 }
 
 
@@ -555,6 +559,86 @@ static void copyfiletest_test_corner_cases(Copyfiletest *copyfiletest, gconstpoi
     g_assert_cmpint(ret, ==, CR_COPY_ERR);
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
 }
+
+
+
+static void test_download_valid_url_1(Copyfiletest *copyfiletest, gconstpointer test_data)
+{
+    UNUSED(test_data);
+
+    char *error = NULL;
+    CURL *handle = curl_easy_init();
+
+    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
+    download(handle, VALID_URL_01, copyfiletest->dst_file, &error);
+    curl_easy_cleanup(handle);
+    g_assert(!error);
+    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
+}
+
+
+
+static void test_download_valid_url_2(Copyfiletest *copyfiletest, gconstpointer test_data)
+{
+    UNUSED(test_data);
+
+    char *error = NULL;
+    CURL *handle = curl_easy_init();
+
+    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
+    download(handle, VALID_URL_01, copyfiletest->tmp_dir, &error);
+    curl_easy_cleanup(handle);
+    g_assert(!error);
+    char *dst = g_strconcat(copyfiletest->tmp_dir, "/", URL_FILENAME_01, NULL);
+    g_assert(g_file_test(dst, G_FILE_TEST_EXISTS));
+    g_free(dst);
+}
+
+
+static void test_download_invalid_url(Copyfiletest *copyfiletest, gconstpointer test_data)
+{
+    UNUSED(test_data);
+
+    char *error = NULL;
+    CURL *handle = curl_easy_init();
+
+    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
+    download(handle, INVALID_URL, copyfiletest->dst_file, &error);
+    curl_easy_cleanup(handle);
+    g_assert(error);
+    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
+}
+
+
+
+static void test_better_copy_file_local(Copyfiletest *copyfiletest, gconstpointer test_data)
+{
+    UNUSED(test_data);
+    int ret;
+    char *checksum;
+
+    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
+    ret = better_copy_file(BINARY_FILE, copyfiletest->dst_file);
+    g_assert_cmpint(ret, ==, CR_COPY_OK);
+    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
+    checksum = compute_file_checksum(copyfiletest->dst_file, PKG_CHECKSUM_SHA256);
+    g_assert_cmpstr(checksum, ==, "bf68e32ad78cea8287be0f35b74fa3fecd0eaa91770b48f1a7282b015d6d883e");
+    g_free(checksum);
+}
+
+
+
+static void test_better_copy_file_url(Copyfiletest *copyfiletest, gconstpointer test_data)
+{
+    UNUSED(test_data);
+    int ret;
+
+    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
+    ret = better_copy_file(VALID_URL_01, copyfiletest->dst_file);
+    g_assert_cmpint(ret, ==, CR_COPY_OK);
+    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
+}
+
 
 
 static void test_remove_dir(void)
@@ -674,6 +758,11 @@ int main(int argc, char *argv[])
     g_test_add("/misc/copyfiletest_test_binary_file", Copyfiletest, NULL, copyfiletest_setup, copyfiletest_test_binary_file, copyfiletest_teardown);
     g_test_add("/misc/copyfiletest_test_rewrite", Copyfiletest, NULL, copyfiletest_setup, copyfiletest_test_rewrite, copyfiletest_teardown);
     g_test_add("/misc/copyfiletest_test_corner_cases", Copyfiletest, NULL, copyfiletest_setup, copyfiletest_test_corner_cases, copyfiletest_teardown);
+    g_test_add("/misc/test_download_valid_url_1", Copyfiletest, NULL, copyfiletest_setup, test_download_valid_url_1, copyfiletest_teardown);
+    g_test_add("/misc/test_download_valid_url_2", Copyfiletest, NULL, copyfiletest_setup, test_download_valid_url_2, copyfiletest_teardown);
+    g_test_add("/misc/test_download_invalid_url", Copyfiletest, NULL, copyfiletest_setup, test_download_invalid_url, copyfiletest_teardown);
+    g_test_add("/misc/test_better_copy_file_local", Copyfiletest, NULL, copyfiletest_setup, test_better_copy_file_local, copyfiletest_teardown);
+    g_test_add("/misc/test_better_copy_file_url", Copyfiletest, NULL, copyfiletest_setup, test_better_copy_file_url, copyfiletest_teardown);
     g_test_add_func("/misc/test_normalize_dir_path", test_normalize_dir_path);
     g_test_add_func("/misc/test_remove_dir", test_remove_dir);
 

@@ -214,52 +214,6 @@ struct MetadataLocation *get_local_metadata(const char *in_repopath)
 
 
 
-void download(CURL *handle, const char *url, const char *tmp_repo, char **error)
-{
-    CURLcode rcode;
-    gchar *full_path;
-    FILE *file = NULL;
-
-    full_path = g_strconcat(tmp_repo, get_filename(url), NULL);
-    if (!full_path) {
-        *error = g_strdup_printf(MODULE"%s: g_strconcat() error", __func__);
-        return;
-    }
-
-    file = fopen(full_path, "w");
-    if (!file) {
-        *error = g_strdup_printf(MODULE"%s: Cannot open %s", __func__, full_path);
-        goto download_cleanup;
-    }
-
-    // Set URL
-    if (curl_easy_setopt(handle, CURLOPT_URL, url) != CURLE_OK) {
-        *error = g_strdup_printf(MODULE"%s: curl_easy_setopt(CURLOPT_URL) error", __func__);
-        goto download_cleanup;
-    }
-
-    // Set output file descriptor
-    if (curl_easy_setopt(handle, CURLOPT_WRITEDATA, file) != CURLE_OK) {
-        *error = g_strdup_printf(MODULE"%s: curl_easy_setopt(CURLOPT_WRITEDATA) error", __func__);
-        goto download_cleanup;
-    }
-
-    rcode = curl_easy_perform(handle);
-    if (rcode != 0) {
-        *error = g_strdup_printf(MODULE"%s: curl_easy_perform() error: %s", __func__, curl_easy_strerror(rcode));
-    }
-
-
-download_cleanup:
-
-    g_debug(MODULE"%s: Successfully downloaded: %s", __func__, full_path);
-
-    if (file) fclose(file);
-    g_free(full_path);
-}
-
-
-
 struct MetadataLocation *get_remote_metadata(const char *repopath)
 {
     gchar *url = NULL;

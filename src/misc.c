@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <ftw.h>
+#include <curl/curl.h>
 #include "logging.h"
 #include "constants.h"
 #include "misc.h"
@@ -445,29 +446,90 @@ int copy_file(const char *src, const char *in_dst)
 }
 
 
-/*
-long int get_file_size(const char *path)
+
+void download(CURL *handle, const char *url, const char *in_dst, char **error)
 {
-    if (!path) {
-        return -1;
+    CURLcode rcode;
+    FILE *file = NULL;
+
+
+    // If destination is dir use filename from src
+
+    gchar *dst = NULL;
+    if (g_str_has_suffix(in_dst, "/")) {
+        dst = g_strconcat(in_dst, get_filename(url), NULL);
+    } else if (g_file_test(in_dst, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR))) {
+        dst = g_strconcat(in_dst, "/", get_filename(url), NULL);
+    } else {
+        dst = g_strdup(in_dst);
     }
 
-    FILE *f;
-    if ((f = fopen(path, "r")) == NULL) {
-        return -1;
+    file = fopen(dst, "w");
+    if (!file) {
+        *error = g_strdup_printf(MODULE"%s: Cannot open %s", __func__, dst);
+        remove(dst);
+        g_free(dst);
+        return;
     }
 
-    if (fseek(f, 0, SEEK_END) != 0) {
-        return -1;
+
+    // Set URL
+
+    if (curl_easy_setopt(handle, CURLOPT_URL, url) != CURLE_OK) {
+        *error = g_strdup_printf(MODULE"%s: curl_easy_setopt(CURLOPT_URL) error", __func__);
+        fclose(file);
+        remove(dst);
+        g_free(dst);
+        return;
     }
 
-    long int size = ftell(f);
 
-    fclose(f);
+    // Set output file descriptor
 
-    return size;
+    if (curl_easy_setopt(handle, CURLOPT_WRITEDATA, file) != CURLE_OK) {
+        *error = g_strdup_printf(MODULE"%s: curl_easy_setopt(CURLOPT_WRITEDATA) error", __func__);
+        fclose(file);
+        remove(dst);
+        g_free(dst);
+        return;
+    }
+
+    rcode = curl_easy_perform(handle);
+    if (rcode != 0) {
+        *error = g_strdup_printf(MODULE"%s: curl_easy_perform() error: %s", __func__, curl_easy_strerror(rcode));
+        fclose(file);
+        remove(dst);
+        g_free(dst);
+        return;
+    }
+
+
+    g_debug(MODULE"%s: Successfully downloaded: %s", __func__, dst);
+
+    fclose(file);
+    g_free(dst);
 }
-*/
+
+
+
+int better_copy_file(const char *src, const char *in_dst)
+{
+    if (!strstr(src, "://")) {
+        // Probably local path
+        return copy_file(src, in_dst);
+    }
+
+    char *error = NULL;
+    CURL *handle = curl_easy_init();
+    download(handle, src, in_dst, &error);
+    curl_easy_cleanup(handle);
+    if (error) {
+        g_debug(MODULE"%s: Error while downloading %s: %s", __func__, src, error);
+        return CR_COPY_ERR;
+    }
+
+    return CR_COPY_OK;
+}
 
 
 int remove_dir_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)

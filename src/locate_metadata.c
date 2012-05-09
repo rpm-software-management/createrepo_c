@@ -37,6 +37,8 @@ void free_metadata_location(struct MetadataLocation *ml)
     g_free(ml->groupfile_href);
     g_free(ml->cgroupfile_href);
     g_free(ml->repomd);
+    g_free(ml->original_url);
+    g_free(ml->local_path);
     g_free(ml->tmp_dir);
     g_free(ml);
 }
@@ -101,6 +103,7 @@ struct MetadataLocation *parse_repomd(const char *repomd_path, const char *repop
     struct MetadataLocation *mdloc;
     mdloc = g_malloc0(sizeof(struct MetadataLocation));
     mdloc->repomd = g_strdup(repomd_path);
+    mdloc->local_path = g_strdup(repopath);
 
     xmlChar *data_type = NULL;
     xmlChar *location_href = NULL;
@@ -344,6 +347,7 @@ struct MetadataLocation *get_remote_metadata(const char *repopath)
     ret = get_local_metadata(tmp_dir);
     if (ret) {
         ret->tmp_dir = g_strdup(tmp_dir);
+        ret->original_url = g_strdup(repopath);
     }
 
 
@@ -414,6 +418,7 @@ GSList *get_list_of_md_locations (struct MetadataLocation *ml)
     if (ml->groupfile_href)  list = g_slist_prepend(list, (gpointer) ml->groupfile_href);
     if (ml->cgroupfile_href) list = g_slist_prepend(list, (gpointer) ml->cgroupfile_href);
     if (ml->repomd)          list = g_slist_prepend(list, (gpointer) ml->repomd);
+    if (ml->original_url)    list = g_slist_prepend(list, (gpointer) ml->original_url);
     if (ml->tmp_dir)         list = g_slist_prepend(list, (gpointer) ml->tmp_dir);
 
     return list;

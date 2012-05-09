@@ -74,8 +74,8 @@ gboolean check_arguments(struct CmdOptions *options)
     gboolean ret = TRUE;
 
     if (options->outputdir){
-        if (!g_file_test(options->outputdir, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR)) {
-            g_warning("Specified outputdir \"%s\" is regular file.", options->outputdir);
+        if (!g_file_test(options->outputdir, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
+            g_warning("Specified outputdir \"%s\" is not a directory.", options->outputdir);
             ret = FALSE;
         }
         options->out_dir = normalize_dir_path(options->outputdir);
@@ -92,16 +92,11 @@ gboolean check_arguments(struct CmdOptions *options)
         char *normalized = normalize_dir_path(options->repos[x]);
         if (normalized) {
             options->repo_list = g_slist_prepend(options->repo_list, normalized);
-/*            if (!g_file_test(normalized, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
-                g_critical("Path \"%s\" doesn't exists", normalized);
-                ret = FALSE;
-            } else {
-                g_debug("Using repo: %s", normalized);
-            }*/
         }
         x++;
     }
-    options->repo_list = g_slist_reverse (options->repo_list);
+    // Reverse come with downloading repos
+    // options->repo_list = g_slist_reverse (options->repo_list);
 
     // Process archlist
     options->arch_list = NULL;
@@ -225,16 +220,16 @@ void destroy_merged_metadata_hashtable(GHashTable *hashtable)
 
 // Merged table structure: {"package_name": [pkg, pkg, pkg, ...], ...}
 
-int add_package(Package *pkg, gchar *repopath, GHashTable *merged, struct CmdOptions *cmd_options)
+int add_package(Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_list)
 {
     GSList *list, *element;
 
 
     // Check if the package meet the command line architecture constraints
 
-    if (cmd_options->arch_list) {
+    if (arch_list) {
         gboolean right_arch = FALSE;
-        for (element=cmd_options->arch_list; element; element=g_slist_next(element)) {
+        for (element=arch_list; element; element=g_slist_next(element)) {
             if (!g_strcmp0(pkg->arch, (gchar *) element->data)) {
                 right_arch = TRUE;
             }
@@ -292,23 +287,23 @@ int add_package(Package *pkg, gchar *repopath, GHashTable *merged, struct CmdOpt
 
 
 
-long merge_repos(GHashTable *merged, struct CmdOptions *cmd_options) {
+long merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list) {
 
     long loaded_packages = 0;
 
     // Load all repos
 
     GSList *element = NULL;
-    for (element = cmd_options->repo_list; element; element = g_slist_next(element)) {
+    for (element = repo_list; element; element = g_slist_next(element)) {
         GHashTable *tmp_hashtable;
-        gchar *repopath;
 
         tmp_hashtable = new_metadata_hashtable();
-        repopath = (gchar *) element->data;
-        g_debug("Processing: %s", repopath);
+        struct MetadataLocation *ml = (struct MetadataLocation *) element->data;
+        gchar *repopath = ml->local_path;
+        g_debug("Processing: %s", ml->repomd);
 
-        if (locate_and_load_xml_metadata(tmp_hashtable, repopath, HT_KEY_HASH) == LOAD_METADATA_ERR) {
-            g_critical("Cannot load repo: \"%s\"", repopath);
+        if (load_xml_metadata(tmp_hashtable, ml, HT_KEY_HASH) == LOAD_METADATA_ERR) {
+            g_critical("Cannot load repo: \"%s\"", ml->repomd);
             destroy_metadata_hashtable(tmp_hashtable);
             break;
         }
@@ -323,7 +318,7 @@ long merge_repos(GHashTable *merged, struct CmdOptions *cmd_options) {
         g_hash_table_iter_init (&iter, tmp_hashtable);
         while (g_hash_table_iter_next (&iter, &key, &value)) {
             Package *pkg = (Package *) value;
-            if (add_package(pkg, repopath, merged, cmd_options)) {
+            if (add_package(pkg, repopath, merged, arch_list)) {
                 // Package was added - remove only record from hashtable
                 g_hash_table_iter_steal(&iter);
                 repo_loaded_packages++;
@@ -554,35 +549,49 @@ int main(int argc, char **argv)
     }
 
 
+    // Download repos
+
+    GSList *local_repos = NULL;
+    GSList *element = NULL;
+    gchar *groupfile = NULL;
+
+    for (element = cmd_options->repo_list; element; element = g_slist_next(element)) {
+        struct MetadataLocation *loc = get_metadata_location((gchar *) element->data);
+        local_repos = g_slist_prepend(local_repos, loc);
+    }
+
+
+    // Get first groupfile
+
+    for (element = local_repos; element; element = g_slist_next(element)) {
+        struct MetadataLocation *loc = (struct MetadataLocation  *) element->data;
+        if (!groupfile && loc->groupfile_href) {
+            if (copy_file(loc->groupfile_href, cmd_options->out_repo) == CR_COPY_OK) {
+                groupfile = g_strconcat(cmd_options->out_repo, get_filename(loc->groupfile_href), NULL);
+                break;
+            }
+        }
+    }
+
+
     // Load metadata
 
     long loaded_packages;
     GHashTable *merged_hashtable = new_merged_metadata_hashtable();
-    loaded_packages = merge_repos(merged_hashtable, cmd_options);
-
-
-    // Get paths of groupfiles
-
-    GSList *element = NULL;
-    gchar *groupfile = NULL;
-    for (element = cmd_options->repo_list; element; element = g_slist_next(element)) {
-        gchar *repopath = (gchar *) element->data;
-        struct MetadataLocation *loc = get_metadata_location(repopath);
-        if (!loc || !loc->groupfile_href) {
-            free_metadata_location(loc);
-            break;
-        }
-        if (copy_file(loc->groupfile_href, cmd_options->out_repo) == CR_COPY_OK) {
-            groupfile = g_strconcat(cmd_options->out_repo, get_filename(loc->groupfile_href), NULL);
-        }
-        free_metadata_location(loc);
-        break;
-    }
+    loaded_packages = merge_repos(merged_hashtable, local_repos, cmd_options->arch_list);
 
 
     // Dump metadata
 
     dump_merged_metadata(merged_hashtable, loaded_packages, groupfile, cmd_options);
+
+
+    // Remove downloaded repos and free repo location structures
+
+    for (element = local_repos; element; element = g_slist_next(element)) {
+        struct MetadataLocation *loc = (struct MetadataLocation  *) element->data;
+        free_metadata_location(loc);
+    }
 
 
     // Cleanup

@@ -854,7 +854,7 @@ void oth_end_handler(void *data, const char *el) {
 
 
 
-int load_xml_metadata(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
+int load_xml_files(GHashTable *hashtable, const char *primary_xml_path, const char *filelists_xml_path, const char *other_xml_path)
 {
     CompressionType compression_type;
     CW_FILE *pri_xml_cwfile, *fil_xml_cwfile, *oth_xml_cwfile;
@@ -1048,21 +1048,11 @@ cleanup:
 
 
 
-int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath, HashTableKey key)
+int load_xml_metadata(GHashTable *hashtable, struct MetadataLocation *ml, HashTableKey key)
 {
-    if (!hashtable || !repopath) {
+    if (!hashtable || !ml) {
         return LOAD_METADATA_ERR;
     }
-
-
-    // Get paths of old metadata files from repomd
-
-    struct MetadataLocation *ml;
-    ml = get_metadata_location(repopath);
-    if (!ml) {
-        return LOAD_METADATA_ERR;
-    }
-
 
     if (!ml->pri_xml_href || !ml->fil_xml_href || !ml->oth_xml_href) {
         // Some file(s) is/are missing
@@ -1077,7 +1067,7 @@ int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath, Ha
     GHashTable *intern_hashtable;  // key is checksum (pkgId)
 
     intern_hashtable = new_metadata_hashtable();
-    result = load_xml_metadata(intern_hashtable, ml->pri_xml_href, ml->fil_xml_href, ml->oth_xml_href);
+    result = load_xml_files(intern_hashtable, ml->pri_xml_href, ml->fil_xml_href, ml->oth_xml_href);
 
     if (result == LOAD_METADATA_ERR) {
         g_critical(MODULE"%s: Error encountered while parsing", __func__);
@@ -1127,7 +1117,24 @@ int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath, Ha
     // Cleanup
 
     destroy_metadata_hashtable(intern_hashtable);
+
+    return LOAD_METADATA_OK;
+}
+
+
+
+int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath, HashTableKey key)
+{
+    if (!hashtable || !repopath) {
+        return LOAD_METADATA_ERR;
+    }
+
+    int ret;
+    struct MetadataLocation *ml;
+
+    ml = get_metadata_location(repopath);
+    ret = load_xml_metadata(hashtable, ml, key);
     free_metadata_location(ml);
 
-    return result;
+    return ret;
 }

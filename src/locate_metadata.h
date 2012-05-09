@@ -12,6 +12,8 @@ struct MetadataLocation {
     char *groupfile_href;
     char *cgroupfile_href; // compressed groupfile location
     char *repomd;
+    char *original_url; // Origin path of repo (URL of repo, if metadata were downloaded)
+    char *local_path; // local path to repo
     char *tmp_dir; // Path to dir where temporary metadata are stored (if metadata were downloaded)
 };
 

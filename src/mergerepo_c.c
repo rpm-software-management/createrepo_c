@@ -74,10 +74,6 @@ gboolean check_arguments(struct CmdOptions *options)
     gboolean ret = TRUE;
 
     if (options->outputdir){
-        if (!g_file_test(options->outputdir, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
-            g_warning("Specified outputdir \"%s\" is not a directory.", options->outputdir);
-            ret = FALSE;
-        }
         options->out_dir = normalize_dir_path(options->outputdir);
     } else {
         options->out_dir = g_strdup(DEFAULT_OUTPUTDIR);
@@ -252,7 +248,7 @@ int add_package(Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_
     if (!list) {
         list = g_slist_prepend(list, pkg);
         if (!pkg->location_base) {
-            pkg->location_base = repopath; // XXX: maybe insert into the chunk
+            pkg->location_base = g_string_chunk_insert(pkg->chunk, repopath);
         }
         g_hash_table_insert (merged, (gpointer) pkg->name, (gpointer) list);
         return 1;
@@ -274,7 +270,7 @@ int add_package(Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_
     // Add package
 
     if (!pkg->location_base) {
-        pkg->location_base = repopath; // XXX: maybe insert into the chunk
+        pkg->location_base = g_string_chunk_insert(pkg->chunk, repopath);
     }
 
     // XXX: The first list element (pointed from hashtable) must stay first!
@@ -299,8 +295,14 @@ long merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list) {
 
         tmp_hashtable = new_metadata_hashtable();
         struct MetadataLocation *ml = (struct MetadataLocation *) element->data;
-        gchar *repopath = ml->local_path;
-        g_debug("Processing: %s", ml->repomd);
+
+        // Base paths in output of original createrepo doesn't have trailing '/'
+        gchar *repopath = normalize_dir_path(ml->original_url);
+        if (repopath && strlen(repopath) > 1) {
+            repopath[strlen(repopath)-1] = '\0';
+        }
+
+        g_debug("Processing: %s", repopath);
 
         if (load_xml_metadata(tmp_hashtable, ml, HT_KEY_HASH) == LOAD_METADATA_ERR) {
             g_critical("Cannot load repo: \"%s\"", ml->repomd);
@@ -331,6 +333,7 @@ long merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list) {
         loaded_packages += repo_loaded_packages;
         destroy_metadata_hashtable(tmp_hashtable);
         g_debug("Repo: %s (Loaded: %ld Used: %ld)", repopath, (unsigned long) original_size, repo_loaded_packages);
+        g_free(repopath);
     }
 
     return loaded_packages;
@@ -593,6 +596,7 @@ int main(int argc, char **argv)
         free_metadata_location(loc);
     }
 
+    g_slist_free (local_repos);
 
     // Cleanup
 

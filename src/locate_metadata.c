@@ -347,7 +347,6 @@ struct MetadataLocation *get_remote_metadata(const char *repopath)
     ret = get_local_metadata(tmp_dir);
     if (ret) {
         ret->tmp_dir = g_strdup(tmp_dir);
-        ret->original_url = g_strdup(repopath);
     }
 
 
@@ -394,6 +393,9 @@ struct MetadataLocation *get_metadata_location(const char *in_repopath)
         ret = get_local_metadata(path);
     }
 
+    if (ret) {
+        ret->original_url = g_strdup(in_repopath);
+    }
     g_free(repopath);
     return ret;
 }

@@ -152,6 +152,11 @@ SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 #ENDIF("${isSystemDir}" STREQUAL "-1")
 
 
+# Add custom target for tests
+
+ADD_CUSTOM_TARGET(tests)
+
+
 # Subdirs
 
 ADD_SUBDIRECTORY (src)

@@ -38,6 +38,7 @@ echo "Using root projekt dir: $PREFIX"
 
     cp --verbose --parents doc/CMakeLists.txt $DIRECTORY
     cp --verbose --parents doc/createrepo_c.8.gz $DIRECTORY
+    cp --verbose --parents doc/mergerepo_c.8.gz $DIRECTORY
 
     cp --verbose --parents src/CMakeLists.txt $DIRECTORY
     cp --verbose --parents src/*.c $DIRECTORY

@@ -133,8 +133,8 @@ def parse_arguments_from_c_file(filename):
 
 
 if __name__ == "__main__":
-    parser = OptionParser('usage: %prog [options] <filename>')
-    #parser.add_option('-o', '--outputdir', help="...")
+    parser = OptionParser('usage: %prog [options] <filename> [--mergerepo]')
+    parser.add_option('-m', '--mergerepo', action="store_true", help="Gen rst for mergerepo")
     options, args = parser.parse_args()
 
     if len(args) < 1:
@@ -143,12 +143,19 @@ if __name__ == "__main__":
 
     args = parse_arguments_from_c_file(args[0])
 
-    NAME="createrepo_c"
-
-    info = Info(NAME,
+    if not options.mergerepo:
+        NAME = "createrepo_c"
+        info = Info(NAME,
                 description="C implementation of createrepo",
                 synopsis="%s [options] <directory>" % (NAME,),
                 options=args)
+    else:
+        NAME = "mergerepo_c"
+        info = Info(NAME,
+                description="C implementation of mergerepo",
+                synopsis="%s [options] <directory>" % (NAME,),
+                options=args)
+
     ret = info.gen_rst()
     if not ret:
         print >> sys.stderr, "Error: Rst has not been generated"

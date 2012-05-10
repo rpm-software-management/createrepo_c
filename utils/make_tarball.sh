@@ -11,6 +11,7 @@ fi
 
 PREFIX="$1/"
 DIRECTORY="./$NAME-$VER"
+TARBALL="$DIRECTORY.tar.bz2"
 
 echo "Using root projekt dir: $PREFIX"
 
@@ -42,6 +43,10 @@ echo "Using root projekt dir: $PREFIX"
     cp --verbose --parents src/*.c $DIRECTORY
     cp --verbose --parents src/*.h $DIRECTORY
 
-    tar -cvjf "$DIRECTORY.tar.bz2" "$DIRECTORY"
+    cp --verbose --parents tests/CMakeLists.txt $DIRECTORY
+    cp --verbose --parents tests/*.c $DIRECTORY
+    cp --recursive --verbose --parents tests/test_data $DIRECTORY
+
+    tar -cvjf "$TARBALL" "$DIRECTORY"
 )
 

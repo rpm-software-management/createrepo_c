@@ -2,11 +2,24 @@
 
 RPMBUILD_DIR="${HOME}/rpmbuild/"
 
-if [ $# -ne "1" ]
+if [ $# -lt "1"  -o $# -gt "2" ]
 then
-    echo "Usage: `basename $0` <root_project_dir>"
+    echo "Usage: `basename $0` <root_project_dir> [--git]"
     exit 1
 fi
+
+USE_GIT=""
+
+if [ $# -eq "2" ]
+then
+    if [ $2 != "--git" ]
+    then
+        echo -e "Bad second argument\nUsage: `basename $0` <root_project_dir> [--git]"
+        exit 1
+    fi
+    USE_GIT="1"
+fi
+
 
 PREFIX="$1/"
 
@@ -21,8 +34,15 @@ if [ ! -d "$RPMBUILD_DIR" ]; then
     exit 1
 fi
 
-echo "> Making tarball .."
-$MY_DIR/make_tarball.sh $PREFIX > /dev/null
+
+if [ $USE_GIT ]; then
+    echo "> Making tarball from GIT.."
+    $MY_DIR/make_tarball_from_git.sh > /dev/null
+else
+    echo "> Making tarball .."
+    $MY_DIR/make_tarball.sh $PREFIX > /dev/null
+fi
+
 if [ ! $? == "0" ]; then
     echo "Error while making tarball"
     exit 1

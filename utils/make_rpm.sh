@@ -30,15 +30,15 @@ fi
 echo "Tarball done"
 
 echo "> Copying tarball and .spec file into the $RPMBUILD_DIR .."
-cp $PREFIX/createrepo_c-*.tar.bz2 $RPMBUILD_DIR/SPECS/
+cp $PREFIX/createrepo_c-*.tar.bz2 $RPMBUILD_DIR/SOURCES/
 if [ ! $? == "0" ]; then
-    echo "Error while: cp $PREFIX/createrepo_c-*.tar.bz2 $RPMBUILD_DIR/SPECS/"
+    echo "Error while: cp $PREFIX/createrepo_c-*.tar.bz2 $RPMBUILD_DIR/SOURCES/"
     exit 1
 fi
 
-cp $PREFIX/createrepo_c.spec $RPMBUILD_DIR/SOURCES/
+cp $PREFIX/createrepo_c.spec $RPMBUILD_DIR/SPECS/
 if [ ! $? == "0" ]; then
-    echo "Error while: cp $PREFIX/createrepo_c.spec $RPMBUILD_DIR/SOURCES/"
+    echo "Error while: cp $PREFIX/createrepo_c.spec $RPMBUILD_DIR/SPECS/"
     exit 1
 fi
 echo "Copying done"

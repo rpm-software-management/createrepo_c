@@ -420,8 +420,6 @@ GSList *get_list_of_md_locations (struct MetadataLocation *ml)
     if (ml->groupfile_href)  list = g_slist_prepend(list, (gpointer) ml->groupfile_href);
     if (ml->cgroupfile_href) list = g_slist_prepend(list, (gpointer) ml->cgroupfile_href);
     if (ml->repomd)          list = g_slist_prepend(list, (gpointer) ml->repomd);
-    if (ml->original_url)    list = g_slist_prepend(list, (gpointer) ml->original_url);
-    if (ml->tmp_dir)         list = g_slist_prepend(list, (gpointer) ml->tmp_dir);
 
     return list;
 }

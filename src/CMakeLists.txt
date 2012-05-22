@@ -21,5 +21,5 @@ ADD_EXECUTABLE(mergerepo_c mergerepo_c.c)
 TARGET_LINK_LIBRARIES(mergerepo_c libcreaterepo_c ${GLIB2_LIBRARIES} ${GTHREAD2_LIBRARIES})
 
 INSTALL(TARGETS libcreaterepo_c LIBRARY DESTINATION ${LIB_INSTALL_DIR})
-INSTALL(PROGRAMS createrepo_c DESTINATION usr/bin/)
-INSTALL(PROGRAMS mergerepo_c DESTINATION usr/bin/)
+INSTALL(TARGETS createrepo_c DESTINATION usr/bin/)
+INSTALL(TARGETS mergerepo_c DESTINATION usr/bin/)

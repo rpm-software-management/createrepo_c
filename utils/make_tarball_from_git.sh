@@ -13,7 +13,7 @@ MY_DIR=`dirname $0`
 MY_DIR="$MY_DIR/"
 
 DIRECTORY="./$NAME-$VER"
-TARBALL="$DIRECTORY.tar.bz2"
+TARBALL="$DIRECTORY.tar.xz"
 
 TMP_DIR=`mktemp -d`
 echo "Using TMP_DIR: $TMP_DIR"

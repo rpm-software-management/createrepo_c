@@ -17,7 +17,7 @@ VER=`$MY_DIR/get_version.py $1`
 
 PREFIX="$1/"
 DIRECTORY="./$NAME-$VER"
-TARBALL="$DIRECTORY.tar.bz2"
+TARBALL="$DIRECTORY.tar.xz"
 
 echo "Using root projekt dir: $PREFIX"
 
@@ -53,6 +53,6 @@ echo "Using root projekt dir: $PREFIX"
     cp --verbose --parents tests/*.c $DIRECTORY
     cp --recursive --verbose --parents tests/test_data $DIRECTORY
 
-    tar -cvjf "$TARBALL" "$DIRECTORY"
+    tar -cvJf "$TARBALL" "$DIRECTORY"
 )
 

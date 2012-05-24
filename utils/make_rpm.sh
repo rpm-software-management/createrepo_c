@@ -5,6 +5,8 @@ RPMBUILD_DIR="${HOME}/rpmbuild/"
 BUILD_DIR="$RPMBUILD_DIR/BUILD"
 echo "Cleaning $BUILD_DIR"
 rm -rf $BUILD_DIR
+echo "Removing $RPMBUILD_DIR/createrepo_c.spec"
+rm -f $RPMBUILD_DIR/createrepo_c.spec
 
 
 if [ $# -lt "1"  -o $# -gt "2" ]
@@ -55,9 +57,9 @@ fi
 echo "Tarball done"
 
 echo "> Copying tarball and .spec file into the $RPMBUILD_DIR .."
-cp $PREFIX/createrepo_c-*.tar.bz2 $RPMBUILD_DIR/SOURCES/
+cp $PREFIX/createrepo_c-*.tar.xz $RPMBUILD_DIR/SOURCES/
 if [ ! $? == "0" ]; then
-    echo "Error while: cp $PREFIX/createrepo_c-*.tar.bz2 $RPMBUILD_DIR/SOURCES/"
+    echo "Error while: cp $PREFIX/createrepo_c-*.tar.xz $RPMBUILD_DIR/SOURCES/"
     exit 1
 fi
 

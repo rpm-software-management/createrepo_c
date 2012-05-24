@@ -1,7 +1,7 @@
 #!/bin/bash
 
 NAME="createrepo_c"
-VER="0.1.0"
+VER="0.0.0"
 
 if [ $# -ne "0" ]
 then
@@ -27,6 +27,10 @@ echo "Using root projekt dir: $PREFIX"
     echo "Cloning git repo..."
     git clone git://fedorahosted.org/git/createrepo_c.git $TMP_DIR
 )
+
+# Get actual version
+VER=`$MY_DIR/get_version.py $TMP_DIR`
+echo "Detected version $VER"
 
 echo "Making tarball from git..."
 $MY_DIR/make_tarball.sh $TMP_DIR

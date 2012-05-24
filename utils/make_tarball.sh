@@ -1,13 +1,19 @@
 #!/bin/bash
 
 NAME="createrepo_c"
-VER="0.1.0"
+VER="0.0.0"
 
 if [ $# -ne "1" ]
 then
     echo "Usage: `basename $0` <root_project_dir>"
     exit 1
 fi
+
+MY_DIR=`dirname $0`
+MY_DIR="$MY_DIR/"
+
+# Get actual version
+VER=`$MY_DIR/get_version.py $1`
 
 PREFIX="$1/"
 DIRECTORY="./$NAME-$VER"
@@ -32,13 +38,12 @@ echo "Using root projekt dir: $PREFIX"
     cp --verbose AUTHORS $DIRECTORY
     cp --verbose README $DIRECTORY
     cp --verbose COPYING $DIRECTORY
-    cp --verbose COPYING.lib $DIRECTORY
 
     cp --verbose --parents cmake/Modules/* $DIRECTORY
 
     cp --verbose --parents doc/CMakeLists.txt $DIRECTORY
-    cp --verbose --parents doc/createrepo_c.8.gz $DIRECTORY
-    cp --verbose --parents doc/mergerepo_c.8.gz $DIRECTORY
+    cp --verbose --parents doc/createrepo_c.8.* $DIRECTORY
+    cp --verbose --parents doc/mergerepo_c.8.* $DIRECTORY
 
     cp --verbose --parents src/CMakeLists.txt $DIRECTORY
     cp --verbose --parents src/*.c $DIRECTORY

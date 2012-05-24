@@ -2,6 +2,11 @@
 
 RPMBUILD_DIR="${HOME}/rpmbuild/"
 
+BUILD_DIR="$RPMBUILD_DIR/BUILD"
+echo "Cleaning $BUILD_DIR"
+rm -rf $BUILD_DIR
+
+
 if [ $# -lt "1"  -o $# -gt "2" ]
 then
     echo "Usage: `basename $0` <root_project_dir> [--git]"

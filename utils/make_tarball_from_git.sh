@@ -12,9 +12,6 @@ fi
 MY_DIR=`dirname $0`
 MY_DIR="$MY_DIR/"
 
-DIRECTORY="./$NAME-$VER"
-TARBALL="$DIRECTORY.tar.xz"
-
 TMP_DIR=`mktemp -d`
 echo "Using TMP_DIR: $TMP_DIR"
 
@@ -32,6 +29,9 @@ echo "Using root projekt dir: $PREFIX"
 VER=`$MY_DIR/get_version.py $TMP_DIR`
 echo "Detected version $VER"
 
+DIRECTORY="./$NAME-$VER"
+TARBALL="$DIRECTORY.tar.xz"
+
 echo "Making tarball from git..."
 $MY_DIR/make_tarball.sh $TMP_DIR
 
@@ -43,5 +43,3 @@ echo "rm -rf $TMP_DIR"
 rm -rf $TMP_DIR
 
 echo "DONE"
-
-

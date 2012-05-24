@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include "version.h"
 #include "constants.h"
 #include "parsepkg.h"
 #include <fcntl.h>
@@ -36,7 +37,6 @@
 #include "xml_dump.h"
 
 
-#define VERSION         "0.1"
 #define G_LOG_DOMAIN    ((gchar*) 0)
 
 
@@ -241,7 +241,7 @@ int main(int argc, char **argv) {
     // Arguments pre-check
 
     if (cmd_options->version) {
-        puts("Version: "VERSION);
+        printf("Version: %d.%d.%d\n", MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION);
         free_options(cmd_options);
         exit(0);
     } else if (argc != 2) {

@@ -21,6 +21,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <string.h>
+#include "version.h"
 #include "compression_wrapper.h"
 #include "misc.h"
 #include "locate_metadata.h"
@@ -30,7 +31,6 @@
 #include "repomd.h"
 
 
-#define VERSION         "0.1"
 #define G_LOG_DOMAIN    ((gchar*) 0)
 
 #define DEFAULT_OUTPUTDIR               "merged_repo/"
@@ -537,6 +537,12 @@ int main(int argc, char **argv)
     if (!check_arguments(cmd_options)) {
         free_options(cmd_options);
         return 1;
+    }
+
+    if (cmd_options->version) {
+        printf("Version: %d.%d.%d\n", MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION);
+        free_options(cmd_options);
+        exit(0);
     }
 
     if (g_slist_length(cmd_options->repo_list) < 2) {

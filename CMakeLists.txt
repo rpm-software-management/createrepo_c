@@ -1,9 +1,11 @@
 PROJECT (createrepo_c)
 CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
 
-set (CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS} -g -O3")
-set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -ggdb -O0 -Wall -Wextra")
-set (CMAKE_BUILD_TYPE DEBUG)
+IF(NOT CMAKE_BUILD_TYPE)
+    SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
+        "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
+        FORCE)
+ENDIF(NOT CMAKE_BUILD_TYPE)
 
 
 # Add path with own cmake modules

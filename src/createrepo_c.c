@@ -264,6 +264,16 @@ int main(int argc, char **argv) {
     cmd_options->input_dir = g_strdup(in_dir);
 
 
+    // Check if inputdir exists
+
+    if (!g_file_test(cmd_options->input_dir, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
+        g_warning("Directory %s must exist", cmd_options->input_dir);
+        g_free(in_dir);
+        free_options(cmd_options);
+        exit(1);
+    }
+
+
     // Check parsed arguments
 
     if (!check_arguments(cmd_options)) {

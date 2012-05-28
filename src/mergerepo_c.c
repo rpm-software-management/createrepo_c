@@ -581,10 +581,25 @@ int main(int argc, char **argv)
     GSList *local_repos = NULL;
     GSList *element = NULL;
     gchar *groupfile = NULL;
+    gboolean download_failed = FALSE;
 
     for (element = cmd_options->repo_list; element; element = g_slist_next(element)) {
         struct MetadataLocation *loc = get_metadata_location((gchar *) element->data);
+        if (!loc) {
+            download_failed = TRUE;
+            break;
+        }
         local_repos = g_slist_prepend(local_repos, loc);
+    }
+
+    if (download_failed) {
+        g_warning("Downloading of repodata failed");
+        // Remove downloaded metadata and free structures
+        for (element = local_repos; element; element = g_slist_next(element)) {
+            struct MetadataLocation *loc = (struct MetadataLocation  *) element->data;
+            free_metadata_location(loc);
+        }
+        return 1;
     }
 
 

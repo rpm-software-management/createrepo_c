@@ -110,8 +110,8 @@ int allowed_file(const gchar *filename, struct CmdOptions *options)
                 g_debug("Exclude masks hit - skipping: %s", filename);
                 return FALSE;
             }
-            g_free(reversed_filename);
         }
+        g_free(reversed_filename);
     }
     return TRUE;
 }

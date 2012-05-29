@@ -471,9 +471,10 @@ int main(int argc, char **argv) {
 
         g_message("Directory walk started");
 
+        size_t in_dir_len = strlen(in_dir);
         GStringChunk *sub_dirs_chunk = g_string_chunk_new(1024);
         GQueue *sub_dirs = g_queue_new();
-        gchar *input_dir_stripped = g_string_chunk_insert_len(sub_dirs_chunk, in_dir, strlen(in_dir)-1);
+        gchar *input_dir_stripped = g_string_chunk_insert_len(sub_dirs_chunk, in_dir, in_dir_len-1);
         g_queue_push_head(sub_dirs, input_dir_stripped);
 
         char *dirname;
@@ -513,7 +514,11 @@ int main(int argc, char **argv) {
                 }
 
                 // Check filename against exclude glob masks
-                if (allowed_file(filename, cmd_options)) {
+                const gchar *repo_relative_path = filename;
+                if (in_dir_len < strlen(full_path))  // This probably should be always true
+                    repo_relative_path = full_path + in_dir_len;
+
+                if (allowed_file(repo_relative_path, cmd_options)) {
                     // FINALLY! Add file into pool
                     g_debug("Adding pkg: %s", full_path);
                     struct PoolTask *task = g_malloc(sizeof(struct PoolTask));

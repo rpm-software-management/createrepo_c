@@ -362,13 +362,25 @@ int main(int argc, char **argv) {
     GHashTable *old_metadata = NULL;
     if (cmd_options->update) {
 
-        // Load local repodata
+        int ret;
         old_metadata = new_metadata_hashtable();
-        int ret = locate_and_load_xml_metadata(old_metadata, in_dir, HT_KEY_FILENAME);
+
+        // Load data from output dir if output dir is specified
+        if (cmd_options->outputdir) {
+            ret = locate_and_load_xml_metadata(old_metadata, out_dir, HT_KEY_FILENAME);
+            if (ret == LOAD_METADATA_OK) {
+                g_debug("Old metadata from: %s - loaded", out_dir);
+            } else {
+                g_debug("Old metadata from %s - loading failed", out_dir);
+            }
+        }
+
+        // Load local repodata
+        ret = locate_and_load_xml_metadata(old_metadata, in_dir, HT_KEY_FILENAME);
         if (ret == LOAD_METADATA_OK) {
             g_debug("Old metadata from: %s - loaded", in_dir);
         } else {
-            g_warning("Old metadata from %s - loading failed", in_dir);
+            g_debug("Old metadata from %s - loading failed", in_dir);
         }
 
         // Load repodata from --update-md-path

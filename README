@@ -2,3 +2,33 @@ C implementation of createrepo.
 This program generates a repodata dir and xml files for a repository of 
 rpm packages.
 run createrepo -h for usage syntax
+
+
+Differences in behaviour between createrepo_c and createrepo:
+-------------------------------------------------------------
+
+Use case:
+- Repodata in repo/ are has checksum xxx
+- Params: --update --checksum=yyy repo/
+
+createrepo_c result:
+All package checksums are recalculated into yyy
+
+original createrepo result:
+Only new and changed packages has yyy checksums
+other packages has still xxx checksums
+
+-----------------------------------------------
+
+Use case:
+- Some packages in repo/ are symlinks
+- Params: --skip-symlinks repo/
+
+createrepo_c result:
+Symlinked packages are ignored
+
+original createrepo result:
+Symlinked packages are processed
+
+-----------------------------------------------
+

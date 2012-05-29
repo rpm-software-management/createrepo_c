@@ -1,11 +1,16 @@
 PROJECT (createrepo_c)
 CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
 
+set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -Wall -Wextra")
 IF(NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
         "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
         FORCE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
+
+IF(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "DEBUG")
+    MESSAGE("Build type is set do DEBUG!")
+ENDIF()
 
 
 # Add path with own cmake modules

@@ -37,6 +37,13 @@
 #define DEFAULT_COMPRESSION_TYPE        GZ_COMPRESSION
 
 
+typedef enum {
+    MM_DEFAULT,
+    MM_REPO = MM_DEFAULT,
+    MM_TIMESTAMP,
+    MM_NVR
+} MergeMethod;
+
 
 struct CmdOptions {
 
@@ -53,6 +60,7 @@ struct CmdOptions {
     gboolean nogroups;
     gboolean noupdateinfo;
     char *compress_type;
+    char *merge_method_str;
 
     // Items filled by check_arguments()
 
@@ -61,12 +69,14 @@ struct CmdOptions {
     GSList *repo_list;
     GSList *arch_list;
     CompressionType compression_type;
+    MergeMethod merge_method;
 
 };
 
 
 struct CmdOptions _cmd_options = {
-        .compression_type = GZ_COMPRESSION
+        .compression_type = GZ_COMPRESSION,
+        .merge_method = MM_DEFAULT
     };
 
 
@@ -82,6 +92,7 @@ static GOptionEntry cmd_entries[] =
     { "nogroups", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.nogroups), "Do not merge group (comps) metadata", NULL },
     { "noupdateinfo", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.noupdateinfo), "Do not merge updateinfo metadata", NULL },
     { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type), "Which compression type to use", "COMPRESS_TYPE" },
+    { "method", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.merge_method_str), "Specify merge method for packages with the same name and arch (possible values: repo (default), ts, nvr)", "COMPRESS_TYPE" },
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
 };
 
@@ -133,9 +144,23 @@ gboolean check_arguments(struct CmdOptions *options)
             options->compression_type = GZ_COMPRESSION;
         } else if (!g_strcmp0(options->compress_type, "bz2")) {
             options->compression_type = BZ2_COMPRESSION;
-//        } else if (g_strcmp0(options->compress_type, "xz") {
+//        } else if (g_strcmp0(options->compress_type, "xz")) {
         } else {
-            g_critical("Compression z not available: Please choose from: gz or bz2 (xz is not supported yet)");
+            g_critical("Compression %s not available: Please choose from: gz or bz2 (xz is not supported yet)", options->compress_type);
+            ret = FALSE;
+        }
+    }
+
+    // Merge method
+    if (options->merge_method_str) {
+        if (!g_strcmp0(options->merge_method_str, "repo")) {
+            options->merge_method = MM_REPO;
+        } else if (!g_strcmp0(options->merge_method_str, "ts")) {
+            options->merge_method = MM_TIMESTAMP;
+        } else if (!g_strcmp0(options->merge_method_str, "nvr")) {
+            options->merge_method = MM_NVR;
+        } else {
+            g_critical("Unknown merge method %s", options->merge_method_str);
             ret = FALSE;
         }
     }
@@ -170,6 +195,7 @@ void free_options(struct CmdOptions *options)
     g_free(options->outputdir);
     g_free(options->archlist);
     g_free(options->compress_type);
+    g_free(options->merge_method_str);
 
     g_strfreev(options->repos);
     g_free(options->out_dir);
@@ -233,8 +259,11 @@ void destroy_merged_metadata_hashtable(GHashTable *hashtable)
 
 
 // Merged table structure: {"package_name": [pkg, pkg, pkg, ...], ...}
-
-int add_package(Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_list)
+// Return codes:
+// 0 = Package was not added
+// 1 = Package was added
+// 2 = Package replaced old package
+int add_package(Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_list, MergeMethod merge_method)
 {
     GSList *list, *element;
 
@@ -278,9 +307,47 @@ int add_package(Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_
     for (element=list; element; element=g_slist_next(element)) {
         Package *c_pkg = (Package *) element->data;
         if (!g_strcmp0(pkg->arch, c_pkg->arch)) {
-            // Package with the same arch already exists
-            g_debug("Package %s (%s) already exists", pkg->name, pkg->arch);
-            return 0;
+
+            // REPO merge method
+            if (merge_method == MM_REPO) {
+                // Package with the same arch already exists
+                g_debug("Package %s (%s) already exists", pkg->name, pkg->arch);
+                return 0;
+
+            // TS merge method
+            } else if (merge_method == MM_TIMESTAMP) {
+                if (pkg->time_file > c_pkg->time_file) {
+                    // Remove older package
+                    package_free(c_pkg);
+                    // Replace package in element
+                    if (!pkg->location_base)
+                        pkg->location_base = g_string_chunk_insert(pkg->chunk, repopath);
+                    element->data = pkg;
+                    return 2;
+                } else {
+                    g_debug("Newer package %s (%s) already exists", pkg->name, pkg->arch);
+                    return 0;
+                }
+
+            // NVR merge method
+            } else if (merge_method == MM_NVR) {
+                int cmp_res = cmp_version_string(pkg->version, c_pkg->version);
+                long pkg_release   = (pkg->release)   ? strtol(pkg->release, NULL, 10)   : 0;
+                long c_pkg_release = (c_pkg->release) ? strtol(c_pkg->release, NULL, 10) : 0;
+
+                if (cmp_res == 1 || (cmp_res == 0 && pkg_release > c_pkg_release)) {
+                    // Remove older package
+                    package_free(c_pkg);
+                    // Replace package in element
+                    if (!pkg->location_base)
+                        pkg->location_base = g_string_chunk_insert(pkg->chunk, repopath);
+                    element->data = pkg;
+                    return 2;
+                } else {
+                    g_debug("Newer version of package %s (%s) already exists", pkg->name, pkg->arch);
+                    return 0;
+                }
+            }
         }
     }
 
@@ -301,7 +368,7 @@ int add_package(Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_
 
 
 
-long merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list) {
+long merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list, MergeMethod merge_method) {
 
     long loaded_packages = 0;
 
@@ -338,10 +405,13 @@ long merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list) {
         g_hash_table_iter_init (&iter, tmp_hashtable);
         while (g_hash_table_iter_next (&iter, &key, &value)) {
             Package *pkg = (Package *) value;
-            if (add_package(pkg, repopath, merged, arch_list)) {
+            int ret = add_package(pkg, repopath, merged, arch_list, merge_method);
+            if (ret > 0) {
                 // Package was added - remove only record from hashtable
                 g_hash_table_iter_steal(&iter);
-                repo_loaded_packages++;
+                if (ret == 1) {
+                    repo_loaded_packages++;
+                }
             } /* else {
                 // Package was not added - remove record and data
                 g_hash_table_iter_remove(&iter);
@@ -620,7 +690,7 @@ int main(int argc, char **argv)
 
     long loaded_packages;
     GHashTable *merged_hashtable = new_merged_metadata_hashtable();
-    loaded_packages = merge_repos(merged_hashtable, local_repos, cmd_options->arch_list);
+    loaded_packages = merge_repos(merged_hashtable, local_repos, cmd_options->arch_list, cmd_options->merge_method);
 
 
     // Dump metadata

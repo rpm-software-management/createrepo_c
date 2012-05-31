@@ -28,7 +28,7 @@
 
 const char *flag_to_string(gint64 flags);
 
-struct VersionStruct {
+struct EVR {
     char *epoch;
     char *version;
     char *release;
@@ -38,7 +38,7 @@ struct VersionStruct {
  * BE CAREFULL! Returned structure had all strings malloced!!!
  * Be so kind and don't forget use free() for all its element, before end of structure lifecycle.
  */
-struct VersionStruct string_to_version(const char *string, GStringChunk *chunk);
+struct EVR string_to_version(const char *string, GStringChunk *chunk);
 
 inline int is_primary(const char *filename);
 char *compute_file_checksum(const char *filename, ChecksumType type);

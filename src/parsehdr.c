@@ -298,10 +298,10 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                 Dependency *dependency = dependency_new();
                 dependency->name = safe_string_chunk_insert(pkg->chunk, filename);
                 dependency->flags = safe_string_chunk_insert(pkg->chunk, flags);
-                struct VersionStruct ver = string_to_version(full_version, pkg->chunk);
-                dependency->epoch = ver.epoch;
-                dependency->version = ver.version;
-                dependency->release = ver.release;
+                struct EVR evr = string_to_version(full_version, pkg->chunk);
+                dependency->epoch = evr.epoch;
+                dependency->version = evr.version;
+                dependency->release = evr.release;
 
                 switch (pcor_type) {
                     case PROVIDES:

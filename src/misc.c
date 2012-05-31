@@ -72,15 +72,15 @@ const char *flag_to_string(gint64 flags)
  * Returned structure had all string inserted in the passed chunk.
  *
  */
-struct VersionStruct string_to_version(const char *string, GStringChunk *chunk)
+struct EVR string_to_version(const char *string, GStringChunk *chunk)
 {
-    struct VersionStruct ver;
-    ver.epoch = NULL;
-    ver.version = NULL;
-    ver.release = NULL;
+    struct EVR evr;
+    evr.epoch = NULL;
+    evr.version = NULL;
+    evr.release = NULL;
 
     if (!string || !(strlen(string))) {
-        return ver;
+        return evr;
     }
 
     const char *ptr;  // These names are totally self explaining
@@ -98,9 +98,9 @@ struct VersionStruct string_to_version(const char *string, GStringChunk *chunk)
             size_t len = ptr - string;
             if (len) {
                 if (chunk) {
-                    ver.epoch = g_string_chunk_insert_len(chunk, string, len);
+                    evr.epoch = g_string_chunk_insert_len(chunk, string, len);
                 } else {
-                    ver.epoch = g_strndup(string, len);
+                    evr.epoch = g_strndup(string, len);
                 }
             }
         }
@@ -108,11 +108,11 @@ struct VersionStruct string_to_version(const char *string, GStringChunk *chunk)
         ptr = (char*) string-1;
     }
 
-    if (!ver.epoch) {
+    if (!evr.epoch) {
         if (chunk) {
-            ver.epoch = g_string_chunk_insert_const(chunk, "0");
+            evr.epoch = g_string_chunk_insert_const(chunk, "0");
         } else {
-            ver.epoch = g_strdup("0");
+            evr.epoch = g_strdup("0");
         }
     }
 
@@ -124,29 +124,29 @@ struct VersionStruct string_to_version(const char *string, GStringChunk *chunk)
         // Version
         size_t version_len = ptr2 - (ptr+1);
         if (chunk) {
-            ver.version = g_string_chunk_insert_len(chunk, ptr+1, version_len);
+            evr.version = g_string_chunk_insert_len(chunk, ptr+1, version_len);
         } else {
-            ver.version = g_strndup(ptr+1, version_len);
+            evr.version = g_strndup(ptr+1, version_len);
         }
 
         // Release
         size_t release_len = strlen(ptr2+1);
         if (release_len) {
             if (chunk) {
-                ver.release = g_string_chunk_insert_len(chunk, ptr2+1, release_len);
+                evr.release = g_string_chunk_insert_len(chunk, ptr2+1, release_len);
             } else {
-                ver.release = g_strndup(ptr2+1, release_len);
+                evr.release = g_strndup(ptr2+1, release_len);
             }
         }
     } else { // Release is not here, just version
         if (chunk) {
-            ver.version = g_string_chunk_insert_const(chunk, ptr+1);
+            evr.version = g_string_chunk_insert_const(chunk, ptr+1);
         } else {
-            ver.version = g_strdup(ptr+1);
+            evr.version = g_strdup(ptr+1);
         }
     }
 
-    return ver;
+    return evr;
 }
 
 

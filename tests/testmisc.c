@@ -47,7 +47,7 @@
 
 static void test_string_to_version(void)
 {
-    struct VersionStruct evr;
+    struct EVR evr;
 
     // V
 
@@ -217,7 +217,7 @@ static void test_string_to_version(void)
 
 static void test_string_to_version_with_chunk(void)
 {
-    struct VersionStruct evr;
+    struct EVR evr;
     GStringChunk *chunk;
     chunk = g_string_chunk_new(512);
 

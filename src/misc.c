@@ -593,3 +593,116 @@ char *normalize_dir_path(const char *path)
 
     return normalized;
 }
+
+
+struct Version str_to_version(const char *str)
+{
+    char *endptr;
+    const char *ptr = str;
+    struct Version ver;
+    ver.version = 0;
+    ver.release = 0;
+    ver.patch   = 0;
+    ver.suffix  = NULL;
+
+    if (!str || str[0] == '\0') {
+        return ver;
+    }
+
+
+    // Version chunk
+
+    ver.version = strtol(ptr, &endptr, 10);
+    if (!endptr || endptr[0] == '\0') {
+        // Whole string has been converted successfully
+        return ver;
+    } else {
+        if (endptr[0] == '.') {
+            // '.' is supposed to be delimiter -> skip it and go to next chunk
+            ptr = endptr+1;
+        } else {
+            ver.suffix = g_strdup(endptr);
+            return ver;
+        }
+    }
+
+
+    // Release chunk
+
+    ver.release = strtol(ptr, &endptr, 10);
+    if (!endptr || endptr[0] == '\0') {
+        // Whole string has been converted successfully
+        return ver;
+    } else {
+        if (endptr[0] == '.') {
+            // '.' is supposed to be delimiter -> skip it and go to next chunk
+            ptr = endptr+1;
+        } else {
+            ver.suffix = g_strdup(endptr);
+            return ver;
+        }
+    }
+
+
+    // Patch chunk
+
+    ver.patch = strtol(ptr, &endptr, 10);
+    if (!endptr || endptr[0] == '\0') {
+        // Whole string has been converted successfully
+        return ver;
+    } else {
+        if (endptr[0] == '.') {
+            // '.' is supposed to be delimiter -> skip it and go to next chunk
+            ptr = endptr+1;
+        } else {
+            ver.suffix = g_strdup(endptr);
+            return ver;
+        }
+    }
+
+    return ver;
+}
+
+
+// Return values:
+// 0 - versions are same
+// 1 - first string is bigger version
+// 2 - second string is bigger version
+int cmp_version_string(const char* str1, const char *str2)
+{
+    struct Version ver1, ver2;
+
+    if (!str1 && !str2) {
+        return 0;
+    }
+
+    // Get version
+    ver1 = str_to_version(str1);
+    ver2 = str_to_version(str2);
+
+    if (ver1.version > ver2.version) {
+        return 1;
+    } else if (ver1.version < ver2.version) {
+        return 2;
+    } else if (ver1.release > ver2.release) {
+        return 1;
+    } else if (ver1.release < ver2.release) {
+        return 2;
+    } else if (ver1.patch > ver2. patch) {
+        return 1;
+    } else if (ver1.patch < ver2.patch) {
+        return 2;
+    }
+
+    int strcmp_res = g_strcmp0(ver1.suffix, ver2.suffix);
+    if (strcmp_res > 0) {
+        return 1;
+    } else if (strcmp_res < 0) {
+        return 2;
+    }
+
+    g_free(ver1.suffix);
+    g_free(ver2.suffix);
+
+    return 0;
+}

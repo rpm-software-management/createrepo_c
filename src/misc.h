@@ -34,6 +34,16 @@ struct EVR {
     char *release;
 };
 
+
+struct Version {
+    // e.g. for openssl-devel-1.0.0i = version: 1, release: 0, patch: 0, suffix: i
+    long version;
+    long release;
+    long patch;
+    char *suffix;
+};
+
+
 /*
  * BE CAREFULL! Returned structure had all strings malloced!!!
  * Be so kind and don't forget use free() for all its element, before end of structure lifecycle.
@@ -64,5 +74,8 @@ int remove_dir(const char *path);
 
 // return new allocated string with normalized path or NULL
 char *normalize_dir_path(const char *path);
+
+struct Version str_to_version(const char *str);
+int cmp_version_string(const char* str1, const char *str2);
 
 #endif /* __C_CREATEREPOLIB_MISC_H__ */

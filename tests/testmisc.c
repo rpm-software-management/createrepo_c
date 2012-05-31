@@ -760,6 +760,172 @@ static void test_normalize_dir_path(void)
 }
 
 
+static void test_str_to_version(void)
+{
+    struct Version ver;
+
+    ver = str_to_version(NULL);
+    g_assert_cmpint(ver.version, ==, 0);
+    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.patch, ==, 0);
+    g_assert_cmpstr(ver.suffix, ==, NULL);
+
+    ver = str_to_version("");
+    g_assert_cmpint(ver.version, ==, 0);
+    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.patch, ==, 0);
+    g_assert_cmpstr(ver.suffix, ==, NULL);
+
+    ver = str_to_version("abcd");
+    g_assert_cmpint(ver.version, ==, 0);
+    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.patch, ==, 0);
+    g_assert_cmpstr(ver.suffix, ==, "abcd");
+    g_free(ver.suffix);
+
+    ver = str_to_version("0.0.0");
+    g_assert_cmpint(ver.version, ==, 0);
+    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.patch, ==, 0);
+    g_assert_cmpstr(ver.suffix, ==, NULL);
+
+    ver = str_to_version("9");
+    g_assert_cmpint(ver.version, ==, 9);
+    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.patch, ==, 0);
+    g_assert_cmpstr(ver.suffix, ==, NULL);
+
+    ver = str_to_version("3beta");
+    g_assert_cmpint(ver.version, ==, 3);
+    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.patch, ==, 0);
+    g_assert_cmpstr(ver.suffix, ==, "beta");
+    g_free(ver.suffix);
+
+    ver = str_to_version("5.2gamma");
+    g_assert_cmpint(ver.version, ==, 5);
+    g_assert_cmpint(ver.release, ==, 2);
+    g_assert_cmpint(ver.patch, ==, 0);
+    g_assert_cmpstr(ver.suffix, ==, "gamma");
+    g_free(ver.suffix);
+
+    ver = str_to_version("0.0.0b");
+    g_assert_cmpint(ver.version, ==, 0);
+    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.patch, ==, 0);
+    g_assert_cmpstr(ver.suffix, ==, "b");
+    g_free(ver.suffix);
+
+    ver = str_to_version("2.3.4");
+    g_assert_cmpint(ver.version, ==, 2);
+    g_assert_cmpint(ver.release, ==, 3);
+    g_assert_cmpint(ver.patch, ==, 4);
+    g_assert_cmpstr(ver.suffix, ==, NULL);
+
+    ver = str_to_version("11.33.123");
+    g_assert_cmpint(ver.version, ==, 11);
+    g_assert_cmpint(ver.release, ==, 33);
+    g_assert_cmpint(ver.patch, ==, 123);
+    g_assert_cmpstr(ver.suffix, ==, NULL);
+
+    ver = str_to_version("1234567.0987654.45678");
+    g_assert_cmpint(ver.version, ==, 1234567);
+    g_assert_cmpint(ver.release, ==, 987654);
+    g_assert_cmpint(ver.patch, ==, 45678);
+    g_assert_cmpstr(ver.suffix, ==, NULL);
+
+    ver = str_to_version("1.0.2i");
+    g_assert_cmpint(ver.version, ==, 1);
+    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.patch, ==, 2);
+    g_assert_cmpstr(ver.suffix, ==, "i");
+    g_free(ver.suffix);
+
+    ver = str_to_version("1..3");
+    g_assert_cmpint(ver.version, ==, 1);
+    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.patch, ==, 3);
+    g_assert_cmpstr(ver.suffix, ==, NULL);
+    g_free(ver.suffix);
+
+    ver = str_to_version("..alpha");
+    g_assert_cmpint(ver.version, ==, 0);
+    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.patch, ==, 0);
+    g_assert_cmpstr(ver.suffix, ==, "alpha");
+    g_free(ver.suffix);
+
+    ver = str_to_version("alpha");
+    g_assert_cmpint(ver.version, ==, 0);
+    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.patch, ==, 0);
+    g_assert_cmpstr(ver.suffix, ==, "alpha");
+    g_free(ver.suffix);
+
+    ver = str_to_version("1-2-3");
+    g_assert_cmpint(ver.version, ==, 1);
+    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.patch, ==, 0);
+    g_assert_cmpstr(ver.suffix, ==, "-2-3");
+    g_free(ver.suffix);
+}
+
+
+static void test_cmp_version_string(void)
+{
+    int ret;
+
+    ret = cmp_version_string(NULL, NULL);
+    g_assert_cmpint(ret, ==, 0);
+
+    ret = cmp_version_string("", "");
+    g_assert_cmpint(ret, ==, 0);
+
+    ret = cmp_version_string(NULL, "");
+    g_assert_cmpint(ret, ==, 0);
+
+    ret = cmp_version_string("", NULL);
+    g_assert_cmpint(ret, ==, 0);
+
+    ret = cmp_version_string("3", "3");
+    g_assert_cmpint(ret, ==, 0);
+
+    ret = cmp_version_string("1", "2");
+    g_assert_cmpint(ret, ==, 2);
+
+    ret = cmp_version_string("99", "8");
+    g_assert_cmpint(ret, ==, 1);
+
+    ret = cmp_version_string("5.4.3", "5.4.3");
+    g_assert_cmpint(ret, ==, 0);
+
+    ret = cmp_version_string("5.3.2", "5.3.1");
+    g_assert_cmpint(ret, ==, 1);
+
+    ret = cmp_version_string("5.3.5", "5.3.6");
+    g_assert_cmpint(ret, ==, 2);
+
+    ret = cmp_version_string("6.3.2a", "6.3.2b");
+    g_assert_cmpint(ret, ==, 2);
+
+    ret = cmp_version_string("6.3.2azb", "6.3.2abc");
+    g_assert_cmpint(ret, ==, 1);
+
+    ret = cmp_version_string("1.2beta", "1.2beta");
+    g_assert_cmpint(ret, ==, 0);
+
+    ret = cmp_version_string("n", "n");
+    g_assert_cmpint(ret, ==, 0);
+
+    ret = cmp_version_string("c", "b");
+    g_assert_cmpint(ret, ==,  1);
+
+    ret = cmp_version_string("c", "f");
+    g_assert_cmpint(ret, ==, 2);
+}
+
+
+
 int main(int argc, char *argv[])
 {
     g_test_init(&argc, &argv, NULL);
@@ -783,6 +949,8 @@ int main(int argc, char *argv[])
     g_test_add("/misc/test_better_copy_file_url", Copyfiletest, NULL, copyfiletest_setup, test_better_copy_file_url, copyfiletest_teardown);
     g_test_add_func("/misc/test_normalize_dir_path", test_normalize_dir_path);
     g_test_add_func("/misc/test_remove_dir", test_remove_dir);
+    g_test_add_func("/misc/test_str_to_version", test_str_to_version);
+    g_test_add_func("/misc/test_cmp_version_string", test_cmp_version_string);
 
     return g_test_run();
 }

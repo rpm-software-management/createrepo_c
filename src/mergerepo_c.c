@@ -61,6 +61,7 @@ struct CmdOptions {
     gboolean noupdateinfo;
     char *compress_type;
     char *merge_method_str;
+    gboolean all;
 
     // Items filled by check_arguments()
 
@@ -93,6 +94,7 @@ static GOptionEntry cmd_entries[] =
     { "noupdateinfo", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.noupdateinfo), "Do not merge updateinfo metadata", NULL },
     { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type), "Which compression type to use", "COMPRESS_TYPE" },
     { "method", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.merge_method_str), "Specify merge method for packages with the same name and arch (possible values: repo (default), ts, nvr)", "COMPRESS_TYPE" },
+    { "all", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.all), "Include all packages with the same name and arch if version or release is different. If used, --method argument is ignored!", NULL },
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
 };
 
@@ -263,7 +265,8 @@ void destroy_merged_metadata_hashtable(GHashTable *hashtable)
 // 0 = Package was not added
 // 1 = Package was added
 // 2 = Package replaced old package
-int add_package(Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_list, MergeMethod merge_method)
+int add_package(Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_list,
+                MergeMethod merge_method, gboolean include_all)
 {
     GSList *list, *element;
 
@@ -308,43 +311,63 @@ int add_package(Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_
         Package *c_pkg = (Package *) element->data;
         if (!g_strcmp0(pkg->arch, c_pkg->arch)) {
 
-            // REPO merge method
-            if (merge_method == MM_REPO) {
-                // Package with the same arch already exists
-                g_debug("Package %s (%s) already exists", pkg->name, pkg->arch);
-                return 0;
+            if (!include_all) {
 
-            // TS merge method
-            } else if (merge_method == MM_TIMESTAMP) {
-                if (pkg->time_file > c_pkg->time_file) {
-                    // Remove older package
-                    package_free(c_pkg);
-                    // Replace package in element
-                    if (!pkg->location_base)
-                        pkg->location_base = g_string_chunk_insert(pkg->chunk, repopath);
-                    element->data = pkg;
-                    return 2;
-                } else {
-                    g_debug("Newer package %s (%s) already exists", pkg->name, pkg->arch);
+                // Two packages has same name and arch
+                // Use selected merge method to determine which package should be included
+
+                // REPO merge method
+                if (merge_method == MM_REPO) {
+                    // Package with the same arch already exists
+                    g_debug("Package %s (%s) already exists", pkg->name, pkg->arch);
                     return 0;
+
+                // TS merge method
+                } else if (merge_method == MM_TIMESTAMP) {
+                    if (pkg->time_file > c_pkg->time_file) {
+                        // Remove older package
+                        package_free(c_pkg);
+                        // Replace package in element
+                        if (!pkg->location_base)
+                            pkg->location_base = g_string_chunk_insert(pkg->chunk, repopath);
+                        element->data = pkg;
+                        return 2;
+                    } else {
+                        g_debug("Newer package %s (%s) already exists", pkg->name, pkg->arch);
+                        return 0;
+                    }
+
+                // NVR merge method
+                } else if (merge_method == MM_NVR) {
+                    int cmp_res = cmp_version_string(pkg->version, c_pkg->version);
+                    long pkg_release   = (pkg->release)   ? strtol(pkg->release, NULL, 10)   : 0;
+                    long c_pkg_release = (c_pkg->release) ? strtol(c_pkg->release, NULL, 10) : 0;
+
+                    if (cmp_res == 1 || (cmp_res == 0 && pkg_release > c_pkg_release)) {
+                        // Remove older package
+                        package_free(c_pkg);
+                        // Replace package in element
+                        if (!pkg->location_base)
+                            pkg->location_base = g_string_chunk_insert(pkg->chunk, repopath);
+                        element->data = pkg;
+                        return 2;
+                    } else {
+                        g_debug("Newer version of package %s (%s) already exists", pkg->name, pkg->arch);
+                        return 0;
+                    }
                 }
 
-            // NVR merge method
-            } else if (merge_method == MM_NVR) {
+            } else {
+
+                // Two packages has same name and arch but all param is used
+
                 int cmp_res = cmp_version_string(pkg->version, c_pkg->version);
                 long pkg_release   = (pkg->release)   ? strtol(pkg->release, NULL, 10)   : 0;
                 long c_pkg_release = (c_pkg->release) ? strtol(c_pkg->release, NULL, 10) : 0;
 
-                if (cmp_res == 1 || (cmp_res == 0 && pkg_release > c_pkg_release)) {
-                    // Remove older package
-                    package_free(c_pkg);
-                    // Replace package in element
-                    if (!pkg->location_base)
-                        pkg->location_base = g_string_chunk_insert(pkg->chunk, repopath);
-                    element->data = pkg;
-                    return 2;
-                } else {
-                    g_debug("Newer version of package %s (%s) already exists", pkg->name, pkg->arch);
+                if (cmp_res == 0 && pkg_release == c_pkg_release) {
+                    // Package with same name, arch, version and release is already listed
+                    g_debug("Same version of package %s (%s) already exists", pkg->name, pkg->arch);
                     return 0;
                 }
             }
@@ -368,7 +391,7 @@ int add_package(Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_
 
 
 
-long merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list, MergeMethod merge_method) {
+long merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list, MergeMethod merge_method, gboolean include_all) {
 
     long loaded_packages = 0;
 
@@ -405,7 +428,7 @@ long merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list, Merge
         g_hash_table_iter_init (&iter, tmp_hashtable);
         while (g_hash_table_iter_next (&iter, &key, &value)) {
             Package *pkg = (Package *) value;
-            int ret = add_package(pkg, repopath, merged, arch_list, merge_method);
+            int ret = add_package(pkg, repopath, merged, arch_list, merge_method, include_all);
             if (ret > 0) {
                 // Package was added - remove only record from hashtable
                 g_hash_table_iter_steal(&iter);
@@ -690,7 +713,8 @@ int main(int argc, char **argv)
 
     long loaded_packages;
     GHashTable *merged_hashtable = new_merged_metadata_hashtable();
-    loaded_packages = merge_repos(merged_hashtable, local_repos, cmd_options->arch_list, cmd_options->merge_method);
+    loaded_packages = merge_repos(merged_hashtable, local_repos, cmd_options->arch_list,
+                                  cmd_options->merge_method, cmd_options->all);
 
 
     // Dump metadata

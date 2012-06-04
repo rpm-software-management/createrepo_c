@@ -62,6 +62,7 @@ struct CmdOptions {
     char *compress_type;
     char *merge_method_str;
     gboolean all;
+    char *noarch_repo_url;
 
     // Items filled by check_arguments()
 
@@ -95,6 +96,7 @@ static GOptionEntry cmd_entries[] =
     { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type), "Which compression type to use", "COMPRESS_TYPE" },
     { "method", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.merge_method_str), "Specify merge method for packages with the same name and arch (possible values: repo (default), ts, nvr)", "COMPRESS_TYPE" },
     { "all", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.all), "Include all packages with the same name and arch if version or release is different. If used, --method argument is ignored!", NULL },
+    { "noarch-repo", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.noarch_repo_url), "Packages from other repositories will be replaced with package from this repo if exists in it.", "URL" },
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
 };
 
@@ -198,6 +200,7 @@ void free_options(struct CmdOptions *options)
     g_free(options->archlist);
     g_free(options->compress_type);
     g_free(options->merge_method_str);
+    g_free(options->noarch_repo_url);
 
     g_strfreev(options->repos);
     g_free(options->out_dir);
@@ -262,9 +265,9 @@ void destroy_merged_metadata_hashtable(GHashTable *hashtable)
 
 // Merged table structure: {"package_name": [pkg, pkg, pkg, ...], ...}
 // Return codes:
-// 0 = Package was not added
-// 1 = Package was added
-// 2 = Package replaced old package
+//  0 = Package was not added
+//  1 = Package was added
+//  2 = Package replaced old package
 int add_package(Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_list,
                 MergeMethod merge_method, gboolean include_all)
 {
@@ -391,9 +394,11 @@ int add_package(Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_
 
 
 
-long merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list, MergeMethod merge_method, gboolean include_all) {
+long merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list, MergeMethod merge_method,
+                 gboolean include_all, GHashTable *noarch_hashtable) {
 
     long loaded_packages = 0;
+    GSList *used_noarch_keys = NULL;
 
     // Load all repos
 
@@ -427,18 +432,37 @@ long merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list, Merge
 
         g_hash_table_iter_init (&iter, tmp_hashtable);
         while (g_hash_table_iter_next (&iter, &key, &value)) {
+            int ret;
             Package *pkg = (Package *) value;
-            int ret = add_package(pkg, repopath, merged, arch_list, merge_method, include_all);
+
+            // Lookup a package in the noarch_hashtable
+            gboolean noarch_pkg_used = FALSE;
+            if (noarch_hashtable && !g_strcmp0(pkg->arch, "noarch")) {
+                Package *noarch_pkg;
+                noarch_pkg = g_hash_table_lookup(noarch_hashtable, pkg->location_href);
+                if (noarch_pkg) {
+                    pkg = noarch_pkg;
+                    noarch_pkg_used = TRUE;
+                }
+            }
+
+            // Add package
+            ret = add_package(pkg, repopath, merged, arch_list, merge_method, include_all);
+
             if (ret > 0) {
-                // Package was added - remove only record from hashtable
-                g_hash_table_iter_steal(&iter);
+                if (!noarch_pkg_used) {
+                    // Original package was added - remove only record from hashtable
+                    g_hash_table_iter_steal(&iter);
+                } else {
+                    // Package from noarch repo was added - do not remove record, just make note
+                    used_noarch_keys = g_slist_prepend(used_noarch_keys, pkg->location_href);
+                    g_debug("Package: %s (from: %s) has been replaced by noarch package", pkg->location_href, repopath);
+                }
+
                 if (ret == 1) {
                     repo_loaded_packages++;
                 }
-            } /* else {
-                // Package was not added - remove record and data
-                g_hash_table_iter_remove(&iter);
-            } */
+            }
         }
 
         loaded_packages += repo_loaded_packages;
@@ -446,6 +470,14 @@ long merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list, Merge
         g_debug("Repo: %s (Loaded: %ld Used: %ld)", repopath, (unsigned long) original_size, repo_loaded_packages);
         g_free(repopath);
     }
+
+
+    // Steal used keys from noarch_hashtable
+
+    for (element = used_noarch_keys; element; element = g_slist_next(element)) {
+        g_hash_table_steal(noarch_hashtable, (gconstpointer) element->data);
+    }
+    g_slist_free(used_noarch_keys);
 
     return loaded_packages;
 }
@@ -709,12 +741,57 @@ int main(int argc, char **argv)
     }
 
 
+    // Load noarch repo
+
+    GHashTable *noarch_hashtable = NULL; // Key is HT_KEY_FILENAME
+
+    if (cmd_options->noarch_repo_url) {
+        struct MetadataLocation *noarch_ml;
+
+        noarch_ml = get_metadata_location(cmd_options->noarch_repo_url);
+        noarch_hashtable = new_metadata_hashtable();
+
+        // Base paths in output of original createrepo doesn't have trailing '/'
+        gchar *noarch_repopath = normalize_dir_path(noarch_ml->original_url);
+        if (noarch_repopath && strlen(noarch_repopath) > 1) {
+            noarch_repopath[strlen(noarch_repopath)-1] = '\0';
+        }
+
+        g_debug("Loading noarch_repo: %s", noarch_repopath);
+
+        if (load_xml_metadata(noarch_hashtable, noarch_ml, HT_KEY_FILENAME) == LOAD_METADATA_ERR) {
+            g_error("Cannot load noarch repo: \"%s\"", noarch_ml->repomd);
+            destroy_metadata_hashtable(noarch_hashtable);
+            noarch_hashtable = NULL;
+            // TODO cleanup
+            free_metadata_location(noarch_ml);
+            return 1;
+        }
+
+        // Fill basepath - set proper base path for all packages in noarch hastable
+        GHashTableIter iter;
+        gpointer p_key, p_value;
+
+        g_hash_table_iter_init (&iter, noarch_hashtable);
+        while (g_hash_table_iter_next (&iter, &p_key, &p_value)) {
+            Package *pkg = (Package *) p_value;
+            if (!pkg->location_base) {
+                pkg->location_base = g_string_chunk_insert(pkg->chunk, noarch_repopath);
+            }
+        }
+
+        g_free(noarch_repopath);
+        free_metadata_location(noarch_ml);
+    }
+
+
     // Load metadata
 
     long loaded_packages;
     GHashTable *merged_hashtable = new_merged_metadata_hashtable();
     loaded_packages = merge_repos(merged_hashtable, local_repos, cmd_options->arch_list,
-                                  cmd_options->merge_method, cmd_options->all);
+                                  cmd_options->merge_method, cmd_options->all,
+                                  noarch_hashtable);
 
 
     // Dump metadata
@@ -734,6 +811,7 @@ int main(int argc, char **argv)
     // Cleanup
 
     g_free(groupfile);
+    destroy_metadata_hashtable(noarch_hashtable);
     destroy_merged_metadata_hashtable(merged_hashtable);
     free_options(cmd_options);
     return 0;

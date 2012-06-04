@@ -586,7 +586,7 @@ void fil_start_handler(void *data, const char *el, const char **attr) {
 
         ppd->context = PACKAGE;
 
-        gchar *key;
+        gchar *key = NULL;
         for (i = 0; attr[i]; i += 2) {
             if (!strcmp(attr[i], "pkgid")) {
                 key = (gchar *) attr[i+1];
@@ -765,7 +765,7 @@ void oth_start_handler(void *data, const char *el, const char **attr) {
 
         ppd->context = PACKAGE;
 
-        gchar *key;
+        gchar *key = NULL;
         for (i = 0; attr[i]; i += 2) {
             if (!strcmp(attr[i], "pkgid")) {
                 key = (gchar *) attr[i+1];

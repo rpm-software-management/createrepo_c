@@ -7,7 +7,7 @@ if [ $# -ne $EXPECTED_ARGS ]
 then
     echo "Usage: `basename $0` <createrepo_input_file> <mergerepo_input_file> <outputdir>"
     echo
-    echo "Example: `basename $0` ../src/cmd_parser.c ../src/mergerepo_c.c ../doc/"
+    echo "Example: `basename $0` src/cmd_parser.c src/mergerepo_c.c doc/"
     exit 1
 fi
 

@@ -94,9 +94,9 @@ static GOptionEntry cmd_entries[] =
     { "nogroups", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.nogroups), "Do not merge group (comps) metadata", NULL },
     { "noupdateinfo", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.noupdateinfo), "Do not merge updateinfo metadata", NULL },
     { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type), "Which compression type to use", "COMPRESS_TYPE" },
-    { "method", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.merge_method_str), "Specify merge method for packages with the same name and arch (possible values: repo (default), ts, nvr)", "COMPRESS_TYPE" },
-    { "all", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.all), "Include all packages with the same name and arch if version or release is different. If used, --method argument is ignored!", NULL },
-    { "noarch-repo", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.noarch_repo_url), "Packages from other repositories will be replaced with package from this repo if exists in it.", "URL" },
+    { "method", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.merge_method_str), "Specify merge method for packages with the same name and arch (available merge methods: repo (default), ts, nvr)", "MERGE_METHOD" },
+    { "all", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.all), "Include all packages with the same name and arch if version or release is different. If used --method argument is ignored!", NULL },
+    { "noarch-repo", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.noarch_repo_url), "Packages with noarch architecture will be replaced by package from this repo if exists in it.", "URL" },
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
 };
 

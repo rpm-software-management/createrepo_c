@@ -36,6 +36,7 @@ extern short initialized;
 /** \ingroup parsepkg
  * Initialize global structures for package parsing.
  * This function call rpmReadConfigFiles() and create global transaction set.
+ * This function should be called only once! This function is not thread safe!
  */
 void init_package_parser();
 

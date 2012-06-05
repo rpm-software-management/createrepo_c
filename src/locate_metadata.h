@@ -19,25 +19,52 @@
 #ifndef __C_CREATEREPOLIB_LOCATE_METADATA_H__
 #define __C_CREATEREPOLIB_LOCATE_METADATA_H__
 
+/** \defgroup   locate_metadata Locate metadata API.
+ */
 
+/** \ingroup locate_metadata
+ * Structure representing metadata location.
+ */
 struct MetadataLocation {
-    char *pri_xml_href;
-    char *fil_xml_href;
-    char *oth_xml_href;
-    char *pri_sqlite_href;
-    char *fil_sqlite_href;
-    char *oth_sqlite_href;
-    char *groupfile_href;
-    char *cgroupfile_href; // compressed groupfile location
-    char *repomd;
-    char *original_url; // Original path of repo from commandline
-    char *local_path; // local path to repo
-    char *tmp_dir; // Path to dir where temporary metadata are stored (if metadata were downloaded)
+    char *pri_xml_href;         /*!< path to primary.xml */
+    char *fil_xml_href;         /*!< path to filelists.xml */
+    char *oth_xml_href;         /*!< path to other.xml */
+    char *pri_sqlite_href;      /*!< path to primary.sqlite */
+    char *fil_sqlite_href;      /*!< path to filelists.sqlite */
+    char *oth_sqlite_href;      /*!< path to other.sqlite */
+    char *groupfile_href;       /*!< path to groupfile */
+    char *cgroupfile_href;      /*!< path to compressed groupfile */
+    char *repomd;               /*!< path to repomd.xml */
+    char *original_url;         /*!< original path of repo from commandline param */
+    char *local_path;           /*!< local path to repo */
+    char *tmp_dir;              /*!< path to dir where metadata are stored if metadata were downloaded */
 };
 
-struct MetadataLocation *get_metadata_location(const char *);
-void free_metadata_location(struct MetadataLocation *);
+/** \ingroup locate_metadata
+ * Parses repomd.xml and returns a filled MetadataLocation structure.
+ * Remote repodata (repopath with prefix "ftp://" or "http://") are dowloaded
+ * into a temporary directory and removed when the free_metadata_location()
+ * is called on the MetadataLocation.
+ * @param repopath      path to directory with repodata/ subdirectory
+ * @return              filled MetadataLocation structure
+ */
+struct MetadataLocation *get_metadata_location(const char *repopath);
 
+/** \ingroup locate_metadata
+ * Free MetadataLocation. If repodata were downloaded remove
+ * a temporary directory with repodata.
+ * @param ml            MeatadaLocation
+ */
+void free_metadata_location(struct MetadataLocation *ml);
+
+/** \ingroup locate_metadata
+ * Remove files related to repodata from the specified path.
+ * Files not listed in repomd.xml and with nonstandard names
+ * (standard names are names with suffixes like primary.xml.*, primary.sqlite.*,
+ * other.xml.*, etc.) are keep untouched (repodata/ subdirectory IS NOT removed!).
+ * @param repopath      path to directory with repodata/ subdirectory
+ * @return              number of removed files
+ */
 int remove_metadata(const char *repopath);
 
 #endif /* __C_CREATEREPOLIB_LOCATE_METADATA_H__ */

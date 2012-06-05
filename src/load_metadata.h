@@ -22,20 +22,52 @@
 #include <glib.h>
 #include "locate_metadata.h"
 
+/** \defgroup   load_metadata   Load metadata API.
+ */
+
+/** \ingroup load_metadata
+ * Package attribute used as key in the hashtable.
+ */
 typedef enum {
-    HT_KEY_DEFAULT,
-    HT_KEY_HASH = HT_KEY_DEFAULT,
-    HT_KEY_NAME,
-    HT_KEY_FILENAME
+    HT_KEY_DEFAULT,                     /*!< default = package hash (Package ->pkgId) */
+    HT_KEY_HASH = HT_KEY_DEFAULT,       /*!< package hash (Package ->pkgId) */
+    HT_KEY_NAME,                        /*!< package name (Package ->name) */
+    HT_KEY_FILENAME                     /*!< package filename (Package ->location_href) */
 } HashTableKey;
 
+/**@{*/
+#define LOAD_METADATA_OK        0       /*!< Return value - Metadata loaded successfully */
+#define LOAD_METADATA_ERR       1       /*!< Return value - Error while loading metadata */
+/**@}*/
 
-#define LOAD_METADATA_OK        0
-#define LOAD_METADATA_ERR       1
-
+/** \ingroup load_metadata
+ * Create new (empty) metadata hashtable.
+ * @return              empty metadata hashtable
+ */
 GHashTable *new_metadata_hashtable();
+
+/** \ingroup load_metadata
+ * Destroys all keys and values in the metadata hash table and decrements its reference count by 1.
+ * @param hashtable     metadata hashtable
+ */
 void destroy_metadata_hashtable(GHashTable *hashtable);
+
+/** \ingroup load_metadata
+ * Load metadata from the specified location.
+ * @param hashtable     destination metadata hashtable
+ * @param ml            metadata location
+ * @param key           hashtable key
+ * @return              return code (LOAD_METADATA_OK or LOAD_METADATA_ERR)
+ */
 int load_xml_metadata(GHashTable *hashtable, struct MetadataLocation *ml, HashTableKey key);
+
+/** \ingroup load_metadata
+ * Locate and load metadata from the specified path.
+ * @param hashtable     destination metadata hashtable
+ * @param repopath      path to repo (to directory with repodata/ subdir)
+ * @param key           hashtable key
+ * @return              return code (LOAD_METADATA_OK or LOAD_METADATA_ERR)
+ */
 int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath, HashTableKey key);
 
 #endif /* __C_CREATEREPOLIB_LOAD_METADATA_H__ */

@@ -25,20 +25,34 @@
 #include "package.h"
 #include "xml_dump.h"
 
-/*
-Package *parse_package(Header hdr, gint64 mtime, gint64 size, const char *checksum, const char *checksum_type,
-                      const char *location_href, const char *location_base,
-                      int changelog_limit, gint64 hdr_start, gint64 hdr_end);
-*/
+/** \defgroup parsepkg  Package parser API.
+ */
 
+/** \ingroup parsepkg
+ * Status of initialization of global structures for package parsing.
+ */
 extern short initialized;
+
+/** \ingroup parsepkg
+ * Initialize global structures for package parsing.
+ * This function call rpmReadConfigFiles() and create global transaction set.
+ */
 void init_package_parser();
+
+/** \ingroup parsepkg
+ * Free global structures for package parsing.
+ */
 void free_package_parser();
 
-
-// TODO: swig map for struct stat stat_buf
-
-// stat_buf can be NULL
+/** \ingroup parsepkg
+ * Generate XML for the specified package.
+ * @param filename              filename
+ * @param checksum_type         type of checksum to be used
+ * @param location_href         package location inside repository
+ * @param location_base         location (url) of repository
+ * @param changelog_limit       number of changelog entries
+ * @param stat_buf              struct stat of the filename (optional - could be NULL)
+ */
 struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checksum_type,
                         const char *location_href, const char *location_base,
                         int changelog_limit, struct stat *stat_buf);

@@ -36,13 +36,15 @@
 #define MODULE "parsepkg: "
 
 
-short initialized = 0;
+volatile short initialized = 0;
 rpmts ts = NULL;
 
 
 
 void init_package_parser()
 {
+    if (initialized)
+        return;
     initialized = 1;
     rpmReadConfigFiles(NULL, NULL);
     ts = rpmtsCreate();

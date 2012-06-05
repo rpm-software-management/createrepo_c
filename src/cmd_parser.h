@@ -23,45 +23,66 @@
 #include "constants.h"
 
 
+/**
+ * Command line options
+ */
 struct CmdOptions {
+
+    // Items filled by hand (from createrepo_c.c)
+
+    char *input_dir;            /*!< Input directory (the mandatory argument of createrepo) */
 
     // Items filled by cmd option parser
 
-    char *input_dir;            //
-    char *location_base;        // Base URL location for all files
-    char *outputdir;            // Output directory
-    char **excludes;            // List of file globs to exclude
-    char *pkglist;              // File with files to include
-    char **includepkg;          // List of files to include
-    char *groupfile;            // Groupfile
-    gboolean quiet;             // Shut up!
-    gboolean verbose;           // Verbosely more than usual
-    gboolean update;            // Update repo if metadata already exists
-    char **update_md_paths;     // Paths to other repositories which should be used for update
-    gboolean skip_stat;         // skip stat() call during --update
-    gboolean version;           // Output version.
-    gboolean database;          // Not implemented yet!!!
-    gboolean no_database;       // Implemented :-P
-    char *checksum;             // Type of checksum
-    gboolean skip_symlinks;     // Ignore symlinks of packages
-    int changelog_limit;
-    gboolean unique_md_filenames; // Include the file's checksum in filename
-    gboolean simple_md_filenames; // Simple checksum in filename
-    int workers;                  // Number of threads to spawn
+    char *location_base;        /*!< base URL location */
+    char *outputdir;            /*!< output directory */
+    char **excludes;            /*!< list of file globs to exclude */
+    char *pkglist;              /*!< file with files to include */
+    char **includepkg;          /*!< list of files to include */
+    char *groupfile;            /*!< groupfile path or URL */
+    gboolean quiet;             /*!< quiet mode */
+    gboolean verbose;           /*!< verbosely more than usual (enable debug output) */
+    gboolean update;            /*!< update repo if metadata already exists */
+    char **update_md_paths;     /*!< list of paths to repositories which should be used for update */
+    gboolean skip_stat;         /*!< skip stat() call during --update */
+    gboolean version;           /*!< print program version */
+    gboolean database;          /*!< create sqlite database metadata - Not implemented yet!!! :( */
+    gboolean no_database;       /*!< do not create database - Implemented ;) */
+    char *checksum;             /*!< type of checksum */
+    gboolean skip_symlinks;     /*!< ignore symlinks of packages */
+    int changelog_limit;        /*!< number of changelog messages in other.(xml|sqlite) */
+    gboolean unique_md_filenames;       /*!< include the file checksums in the filenames */
+    gboolean simple_md_filenames;       /*!< simple filenames (Name does not contain checksum) */
+    int workers;                /*!< number of threads to spawn */
 
     // Items filled by check_arguments()
 
-    char *groupfile_fullpath;
-    GSList *exclude_masks;
-    GSList *include_pkgs;
-    GSList *l_update_md_paths;
-    ChecksumType checksum_type;
+    char *groupfile_fullpath;   /*!< full path to groupfile */
+    GSList *exclude_masks;      /*!< list of exclude masks (list of GPatternSpec pointers) */
+    GSList *include_pkgs;       /*!< list of packages to include (build from includepkg options and pkglist file) */
+    GSList *l_update_md_paths;  /*!< list of repos from update_md_paths (remote repos are downloaded) */
+    ChecksumType checksum_type; /*!< checksum type */
 
 };
 
-
+/**
+ * Parses commandline arguments.
+ * @param argc          pointer to argc
+ * @param argv          pointer to argv
+ * @return              CmdOptions filled by command line arguments
+ */
 struct CmdOptions *parse_arguments(int *argc, char ***argv);
+
+/**
+ * Performs some checks of arguments and fill some other items.
+ * in the CmdOptions structure.
+ */
 gboolean check_arguments(struct CmdOptions *options);
+
+/**
+ * Frees CmdOptions.
+ * @param options       pointer to struct with command line options
+ */
 void free_options(struct CmdOptions *options);
 
 #endif /* __C_CREATEREPOLIB_CMD_PARSER_H__ */

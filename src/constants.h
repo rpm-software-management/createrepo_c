@@ -19,10 +19,13 @@
 #ifndef __C_CREATEREPOLIB_CONSTANTS_H__
 #define __C_CREATEREPOLIB_CONSTANTS_H__
 
+/**
+ * Checksum type.
+ */
 typedef enum {
-    PKG_CHECKSUM_MD5,
-    PKG_CHECKSUM_SHA1,
-    PKG_CHECKSUM_SHA256
+    PKG_CHECKSUM_MD5,           /*!< MD5 checksum */
+    PKG_CHECKSUM_SHA1,          /*!< SHA1 checksum */
+    PKG_CHECKSUM_SHA256         /*!< SHA256 checksum */
 } ChecksumType;
 
 #endif /* __C_CREATEREPOLIB_CONSTANTS_H__ */

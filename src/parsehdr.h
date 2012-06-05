@@ -24,10 +24,42 @@
 #include "package.h"
 #include "xml_dump.h"
 
+/** \defgroup parsehdr         Header parser API.
+ */
+
+/** \ingroup parsehdr
+ * Read data from header and return filled Package structure.
+ * @param hdr                   Header
+ * @param mtime                 mtime of rpm file
+ * @param size                  size of rpm file (in bytes)
+ * @param checksum              checksum of rpm file
+ * @param checksum_type         used checksum algorithm
+ * @param location_href         location of package inside repository
+ * @param location_base         location (url) of repository
+ * @param changelog_limit       number of changelog entries
+ * @param hdr_start             start byte of header
+ * @param hdr_end               last byte of header
+ * @return                      Package
+ */
 Package *parse_header(Header hdr, gint64 mtime, gint64 size,
                         const char *checksum, const char *checksum_type,
                         const char *location_href, const char *location_base,
                         int changelog_limit, gint64 hdr_start, gint64 hdr_end);
+
+/** \ingroup parsehdr
+ * Read data from header and return struct XmlStruct.
+ * @param hdr                   Header
+ * @param mtime                 mtime of rpm file
+ * @param size                  size of rpm file (in bytes)
+ * @param checksum              checksum of rpm file
+ * @param checksum_type         used checksum algorithm
+ * @param location_href         location of package inside repository
+ * @param location_base         location (url) of repository
+ * @param changelog_limit       number of changelog entries
+ * @param hdr_start             start byte of header
+ * @param hdr_end               last byte of header
+ * @return                      XML chunks for primary, filelists and other (in struct XmlStruct)
+ */
 struct XmlStruct xml_from_header(Header hdr, gint64 mtime, gint64 size,
                         const char *checksum, const char *checksum_type,
                         const char *location_href, const char *location_base,

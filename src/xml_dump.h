@@ -23,26 +23,60 @@
 #include <libxml/xmlwriter.h>
 #include "package.h"
 
-// XML namespaces
+/** \defgroup   xml_dump        XML dump API.
+ */
 
-#define XML_COMMON_NS           "http://linux.duke.edu/metadata/common"
-#define XML_FILELISTS_NS        "http://linux.duke.edu/metadata/filelists"
-#define XML_OTHER_NS            "http://linux.duke.edu/metadata/other"
-#define XML_RPM_NS              "http://linux.duke.edu/metadata/rpm"
+/**@{*/
+#define XML_COMMON_NS           "http://linux.duke.edu/metadata/common"         /*!< Default namespace for primary.xml */
+#define XML_FILELISTS_NS        "http://linux.duke.edu/metadata/filelists"      /*!< Default namespace for filelists.xml */
+#define XML_OTHER_NS            "http://linux.duke.edu/metadata/other"          /*!< Default namespace for other.xml */
+#define XML_RPM_NS              "http://linux.duke.edu/metadata/rpm"            /*!< Namespace used in primary.xml */
+/**@}*/
 
 
+/** \ingroup xml_dump
+ * Xml chunks for primary.xml, filelists.xml and other.xml.
+ */
 struct XmlStruct{
-    char *primary;
-    char *filelists;
-    char *other;
+    char *primary;      /*!< XML chunk for primary.xml */
+    char *filelists;    /*!< XML chunk for filelists.xml */
+    char *other;        /*!< XML chunk for other.xml */
 };
 
+/** \ingroup xml_dump
+ * Dump files from the package and append them to the node as childrens.
+ * @param node          parent xml node
+ * @param package       Package
+ * @param primary       process only primary files (see is_primary() function in the misc module)
+ */
+void dump_files(xmlNodePtr node, Package *package, int primary);
 
-void dump_files(xmlNodePtr, Package *, int);
+/** \ingroup xml_dump
+ * Generate primary xml chunk from Package.
+ * @param package       Package
+ * @return              xml chunk string or NULL on error
+ */
+char *xml_dump_primary(Package *package);
 
-char *xml_dump_primary(Package *);
-char *xml_dump_filelists(Package *);
-char *xml_dump_other(Package *);
-struct XmlStruct xml_dump(Package *);
+/** \ingroup xml_dump
+ * Generate filelists xml chunk from Package.
+ * @param package       Package
+ * @return              xml chunk string or NULL on error
+ */
+char *xml_dump_filelists(Package *package);
+
+/** \ingroup xml_dump
+ * Generate other xml chunk from Package.
+ * @param package       Package
+ * @return              xml chunk string or NULL on error
+ */
+char *xml_dump_other(Package *package);
+
+/** \ingroup xml_dump
+ * Generate all three xml chunks (primary, filelists, other) from Package.
+ * @param package       Package
+ * @return              XmlStruct
+ */
+struct XmlStruct xml_dump(Package *package);
 
 #endif /* __C_CREATEREPOLIB_XML_DUMP_H__ */

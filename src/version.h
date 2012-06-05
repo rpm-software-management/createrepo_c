@@ -19,8 +19,13 @@
 #ifndef __C_CREATEREPOLIB_VERSION_H__
 #define __C_CREATEREPOLIB_VERSION_H__
 
+/** \defgroup version   Library version information.
+ */
+
+/**@{*/
 #define MAJOR_VERSION   0
 #define MINOR_VERSION   1
 #define PATCH_VERSION   4
+/**@}*/
 
 #endif /* __C_CREATEREPOLIB_VERSION_H__ */

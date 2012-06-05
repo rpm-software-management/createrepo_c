@@ -167,7 +167,7 @@ const char *get_suffix(CompressionType comtype)
 }
 
 
-CW_FILE *cw_open(const char *filename, int mode, CompressionType comtype)
+CW_FILE *cw_open(const char *filename, OpenMode mode, CompressionType comtype)
 {
     CW_FILE *file = NULL;
     CompressionType type;

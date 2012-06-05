@@ -37,10 +37,14 @@ typedef enum {
     BZ2_COMPRESSION,            /*!< BZip2 compression */
 } CompressionType;
 
-/**@{*/
-#define CW_MODE_READ    0       /*!< Read mode */
-#define CW_MODE_WRITE   1       /*!< Write mode */
-/**@}*/
+/** \ingroup compression_wrapper
+ * Open modes.
+ */
+typedef enum {
+    CW_MODE_READ,               /*!< Read mode */
+    CW_MODE_WRITE               /*!< Write mode */
+} OpenMode;
+
 
 /** \ingroup compression_wrapper
  * Structure represents a compressed file.
@@ -48,7 +52,7 @@ typedef enum {
 typedef struct {
     CompressionType type;       /*!< Type of compression */
     void *FILE;                 /*!< Pointer to gzFile, BZFILE or plain FILE */
-    int mode;                   /*!< Mode */
+    OpenMode mode;              /*!< Mode */
 } CW_FILE;
 
 /**@{*/
@@ -74,11 +78,11 @@ CompressionType detect_compression(const char* filename);
 /** \ingroup compression_wrapper
  * Open/Create the specified file.
  * @param filename      filename
- * @param mode          mode
+ * @param mode          open mode
  * @param comtype       type of compression
  * @return              pointer to a CW_FILE or NULL
  */
-CW_FILE *cw_open(const char *filename, int mode, CompressionType comtype);
+CW_FILE *cw_open(const char *filename, OpenMode mode, CompressionType comtype);
 
 /** \ingroup compression_wrapper
  * Reads an array of len bytes from the cw_file.

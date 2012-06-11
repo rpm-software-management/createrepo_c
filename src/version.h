@@ -25,7 +25,7 @@
 /**@{*/
 #define MAJOR_VERSION   0
 #define MINOR_VERSION   1
-#define PATCH_VERSION   4
+#define PATCH_VERSION   5
 /**@}*/
 
 #endif /* __C_CREATEREPOLIB_VERSION_H__ */

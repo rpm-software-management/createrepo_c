@@ -402,18 +402,25 @@ int main(int argc, char **argv) {
 
     // Create and open new compressed files
 
+    const char *compression_suffix = NULL;
+    CompressionType used_compression = GZ_COMPRESSION;
+    if (cmd_options->xz_compression) {
+        used_compression = XZ_COMPRESSION;
+    }
+    compression_suffix = get_suffix(used_compression);
+
     CW_FILE *pri_cw_file;
     CW_FILE *fil_cw_file;
     CW_FILE *oth_cw_file;
 
     g_message("Temporary output repo path: %s", tmp_out_repo);
-    g_debug("Opening/Creating .xml.gz files");
+    g_debug("Opening/Creating .xml%s files", compression_suffix);
 
-    gchar *pri_xml_filename = g_strconcat(tmp_out_repo, "/primary.xml.gz", NULL);
-    gchar *fil_xml_filename = g_strconcat(tmp_out_repo, "/filelists.xml.gz", NULL);
-    gchar *oth_xml_filename = g_strconcat(tmp_out_repo, "/other.xml.gz", NULL);
+    gchar *pri_xml_filename = g_strconcat(tmp_out_repo, "/primary.xml", compression_suffix, NULL);
+    gchar *fil_xml_filename = g_strconcat(tmp_out_repo, "/filelists.xml", compression_suffix, NULL);
+    gchar *oth_xml_filename = g_strconcat(tmp_out_repo, "/other.xml", compression_suffix, NULL);
 
-    if ((pri_cw_file = cw_open(pri_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
+    if ((pri_cw_file = cw_open(pri_xml_filename, CW_MODE_WRITE, used_compression)) == NULL) {
         g_critical("Cannot open file: %s", pri_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
@@ -421,7 +428,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    if ((fil_cw_file = cw_open(fil_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
+    if ((fil_cw_file = cw_open(fil_xml_filename, CW_MODE_WRITE, used_compression)) == NULL) {
         g_critical("Cannot open file: %s", fil_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
@@ -430,7 +437,7 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    if ((oth_cw_file = cw_open(oth_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
+    if ((oth_cw_file = cw_open(oth_xml_filename, CW_MODE_WRITE, used_compression)) == NULL) {
         g_critical("Cannot open file: %s", oth_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
@@ -682,9 +689,9 @@ int main(int argc, char **argv) {
 
     g_debug("Generating repomd.xml");
 
-    gchar *pri_xml_name = g_strconcat("repodata/", "primary.xml.gz", NULL);
-    gchar *fil_xml_name = g_strconcat("repodata/", "filelists.xml.gz", NULL);
-    gchar *oth_xml_name = g_strconcat("repodata/", "other.xml.gz", NULL);
+    gchar *pri_xml_name = g_strconcat("repodata/", "primary.xml", compression_suffix, NULL);
+    gchar *fil_xml_name = g_strconcat("repodata/", "filelists.xml", compression_suffix, NULL);
+    gchar *oth_xml_name = g_strconcat("repodata/", "other.xml", compression_suffix, NULL);
     gchar *groupfile_name = NULL;
     if (groupfile) {
         groupfile_name = g_strconcat("repodata/", get_filename(groupfile), NULL);

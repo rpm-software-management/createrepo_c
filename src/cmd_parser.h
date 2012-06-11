@@ -54,6 +54,7 @@ struct CmdOptions {
     gboolean unique_md_filenames;       /*!< include the file checksums in the filenames */
     gboolean simple_md_filenames;       /*!< simple filenames (Name does not contain checksum) */
     int workers;                /*!< number of threads to spawn */
+    gboolean xz_compression;    /*!< use xz for repodata compression */
 
     // Items filled by check_arguments()
 

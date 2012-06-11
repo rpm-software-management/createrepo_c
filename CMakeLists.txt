@@ -29,6 +29,7 @@ find_package(EXPAT REQUIRED)
 find_package(LibXml2 REQUIRED)
 find_package(Libmagic REQUIRED)
 find_package(CURL REQUIRED)
+find_package(LZMA REQUIRED)
 
 
 # Check libraries
@@ -65,6 +66,10 @@ IF (NOT CURL_FOUND)
     MESSAGE(FATAL_ERROR "No CURL library installed")
 ENDIF (NOT CURL_FOUND)
 
+IF (NOT LZMA_FOUND)
+    MESSAGE(FATAL_ERROR "No LZMA (xz) library installed")
+ENDIF (NOT LZMA_FOUND)
+
 # Add include dirs
 
 include_directories(${GLIB2_INCLUDE_DIRS})
@@ -74,6 +79,7 @@ include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(${EXPAT_INCLUDE_DIRS})
 include_directories(${LIBXML2_INCLUDE_DIR})
 include_directories(${CURL_INCLUDE_DIR})
+include_directories(${LZMA_INCLUDE_DIR})
 
 
 # rpm:

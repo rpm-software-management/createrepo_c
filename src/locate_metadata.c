@@ -507,6 +507,9 @@ int remove_metadata(const char *repopath)
             g_str_has_suffix(file, "primary.xml.bz2") ||
             g_str_has_suffix(file, "filelists.xml.bz2") ||
             g_str_has_suffix(file, "other.xml.bz2") ||
+            g_str_has_suffix(file, "primary.xml.xz") ||
+            g_str_has_suffix(file, "filelists.xml.xz") ||
+            g_str_has_suffix(file, "other.xml.xz") ||
             g_str_has_suffix(file, "primary.xml") ||
             g_str_has_suffix(file, "filelists.xml") ||
             g_str_has_suffix(file, "other.xml") ||

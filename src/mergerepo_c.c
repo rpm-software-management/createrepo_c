@@ -148,9 +148,10 @@ gboolean check_arguments(struct CmdOptions *options)
             options->compression_type = GZ_COMPRESSION;
         } else if (!g_strcmp0(options->compress_type, "bz2")) {
             options->compression_type = BZ2_COMPRESSION;
-//        } else if (g_strcmp0(options->compress_type, "xz")) {
+        } else if (!g_strcmp0(options->compress_type, "xz")) {
+            options->compression_type = XZ_COMPRESSION;
         } else {
-            g_critical("Compression %s not available: Please choose from: gz or bz2 (xz is not supported yet)", options->compress_type);
+            g_critical("Compression %s not available: Please choose from: gz or bz2 or xz", options->compress_type);
             ret = FALSE;
         }
     }
@@ -498,14 +499,14 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, gchar *gro
         return 0;
     }
 
-    gchar *pri_xml_filename = g_strconcat(cmd_options->out_repo, "/primary.xml", suffix, NULL);
-    gchar *fil_xml_filename = g_strconcat(cmd_options->out_repo, "/filelists.xml", suffix, NULL);
-    gchar *oth_xml_filename = g_strconcat(cmd_options->out_repo, "/other.xml", suffix, NULL);
+    gchar *pri_xml_filename = g_strconcat(cmd_options->out_repo, "/primary.xml", ".gz", NULL);
+    gchar *fil_xml_filename = g_strconcat(cmd_options->out_repo, "/filelists.xml", ".gz", NULL);
+    gchar *oth_xml_filename = g_strconcat(cmd_options->out_repo, "/other.xml", ".gz", NULL);
     gchar *ui_xml_filename = NULL;
     if (!cmd_options->noupdateinfo)
         ui_xml_filename  = g_strconcat(cmd_options->out_repo, "/updateinfo.xml", suffix, NULL);
 
-    if ((pri_f = cw_open(pri_xml_filename, CW_MODE_WRITE, cmd_options->compression_type)) == NULL) {
+    if ((pri_f = cw_open(pri_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
         g_critical("Cannot open file: %s", pri_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
@@ -514,7 +515,7 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, gchar *gro
         return 0;
     }
 
-    if ((fil_f = cw_open(fil_xml_filename, CW_MODE_WRITE, cmd_options->compression_type)) == NULL) {
+    if ((fil_f = cw_open(fil_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
         g_critical("Cannot open file: %s", fil_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
@@ -524,7 +525,7 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, gchar *gro
         return 0;
     }
 
-    if ((oth_f = cw_open(oth_xml_filename, CW_MODE_WRITE, cmd_options->compression_type)) == NULL) {
+    if ((oth_f = cw_open(oth_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
         g_critical("Cannot open file: %s", oth_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
@@ -601,9 +602,9 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, gchar *gro
 
     // Gen repomd.xml
 
-    gchar *pri_xml_name = g_strconcat("repodata/", "primary.xml", suffix, NULL);
-    gchar *fil_xml_name = g_strconcat("repodata/", "filelists.xml",suffix, NULL);
-    gchar *oth_xml_name = g_strconcat("repodata/", "other.xml", suffix, NULL);
+    gchar *pri_xml_name = g_strconcat("repodata/", "primary.xml", ".gz", NULL);
+    gchar *fil_xml_name = g_strconcat("repodata/", "filelists.xml",".gz", NULL);
+    gchar *oth_xml_name = g_strconcat("repodata/", "other.xml", ".gz", NULL);
     gchar *ui_xml_name = NULL;
     if (!cmd_options->noupdateinfo)
         ui_xml_name = g_strconcat("repodata/", "updateinfo.xml", suffix, NULL);

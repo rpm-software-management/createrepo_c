@@ -611,7 +611,8 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, gchar *gro
 
     struct repomdResult *repomd_res = xml_repomd(cmd_options->out_dir, 1, pri_xml_name,
                                                  fil_xml_name, oth_xml_name, NULL, NULL,
-                                                 NULL, groupfile, ui_xml_name, NULL);
+                                                 NULL, groupfile, ui_xml_name, NULL,
+                                                 cmd_options->compression_type);
     if (repomd_res) {
         if (repomd_res->repomd_xml) {
             gchar *repomd_path = g_strconcat(cmd_options->out_repo, "repomd.xml", NULL);

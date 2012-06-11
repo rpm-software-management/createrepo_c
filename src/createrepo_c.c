@@ -404,8 +404,9 @@ int main(int argc, char **argv) {
 
     const char *compression_suffix = NULL;
     CompressionType used_compression = GZ_COMPRESSION;
+    CompressionType groupfile_compression = GZ_COMPRESSION;
     if (cmd_options->xz_compression) {
-        used_compression = XZ_COMPRESSION;
+        groupfile_compression = XZ_COMPRESSION;
     }
     compression_suffix = get_suffix(used_compression);
 
@@ -700,7 +701,8 @@ int main(int argc, char **argv) {
     struct repomdResult *repomd_res = xml_repomd(out_dir, cmd_options->unique_md_filenames,
                                                  pri_xml_name, fil_xml_name, oth_xml_name,
                                                  NULL, NULL, NULL, groupfile_name, NULL,
-                                                 &(cmd_options->checksum_type));
+                                                 &(cmd_options->checksum_type),
+                                                 groupfile_compression);
     gchar *repomd_path = g_strconcat(out_repo, "repomd.xml", NULL);
 
     FILE *frepomd = fopen(repomd_path, "w");

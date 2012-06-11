@@ -21,6 +21,7 @@
 
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
+#include "compression_wrapper.h"
 #include "package.h"
 
 /** \defgroup repomd            Repomd API.
@@ -68,6 +69,7 @@ struct repomdResult *xml_repomd(const char *path, int rename_to_unique, const ch
                                 const char *fil_xml, const char *oth_xml,
                                 const char *pri_sqlite, const char *fil_sqlite,
                                 const char *oth_sqlite, const char *groupfile,
-                                const char *update_info, ChecksumType *checksum_type);
+                                const char *update_info, ChecksumType *checksum_type,
+                                CompressionType groupfile_compression);
 
 #endif /* __C_CREATEREPOLIB_REPOMD_H__ */

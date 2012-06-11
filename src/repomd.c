@@ -280,7 +280,8 @@ int fill_missing_data(const char *base_path, struct repomdData *md, ChecksumType
 
 
 void process_groupfile(const char *base_path, struct repomdData *groupfile,
-                       struct repomdData *cgroupfile, ChecksumType *checksum_type)
+                       struct repomdData *cgroupfile, ChecksumType *checksum_type,
+                       CompressionType groupfile_compression)
 {
     if (!groupfile || !(groupfile->location_href) || !strlen(groupfile->location_href) || !cgroupfile) {
         return;
@@ -300,7 +301,9 @@ void process_groupfile(const char *base_path, struct repomdData *groupfile,
 
     // Paths
 
-    gchar *clocation_href = g_strconcat(groupfile->location_href, ".gz", NULL);
+    const char *suffix = get_suffix(groupfile_compression);
+
+    gchar *clocation_href = g_strconcat(groupfile->location_href, suffix, NULL);
     cgroupfile->location_href = g_string_chunk_insert(cgroupfile->chunk, clocation_href);
     g_free(clocation_href);
 
@@ -324,7 +327,7 @@ void process_groupfile(const char *base_path, struct repomdData *groupfile,
     CW_FILE *cw_compressed;
 
     cw_plain = cw_open(path, CW_MODE_READ, NO_COMPRESSION);
-    cw_compressed = cw_open(cpath, CW_MODE_WRITE, GZ_COMPRESSION);
+    cw_compressed = cw_open(cpath, CW_MODE_WRITE, groupfile_compression);
 
     while ((readed = cw_read(cw_plain, buf, BUFFER_SIZE)) > 0) {
         if (cw_write(cw_compressed, buf, (unsigned int) readed) == CW_ERR) {
@@ -545,7 +548,7 @@ struct repomdResult *xml_repomd_2(const char *path, int rename_to_unique, struct
                                   struct repomdData *pri_sqlite, struct repomdData *fil_sqlite,
                                   struct repomdData *oth_sqlite, struct repomdData *groupfile,
                                   struct repomdData *cgroupfile, struct repomdData *update_info,
-                                  ChecksumType *checksum_type)
+                                  ChecksumType *checksum_type, CompressionType groupfile_compression)
 {
     if (!path) {
         return NULL;
@@ -564,7 +567,7 @@ struct repomdResult *xml_repomd_2(const char *path, int rename_to_unique, struct
     fill_missing_data(path, oth_sqlite, checksum_type);
     fill_missing_data(path, update_info, checksum_type);
 
-    process_groupfile(path, groupfile, cgroupfile, checksum_type);
+    process_groupfile(path, groupfile, cgroupfile, checksum_type, groupfile_compression);
 
 
     // Include checksum in the metadata filename
@@ -612,7 +615,8 @@ struct repomdResult *xml_repomd(const char *path, int rename_to_unique, const ch
                                 const char *fil_xml, const char *oth_xml,
                                 const char *pri_sqlite, const char *fil_sqlite,
                                 const char *oth_sqlite, const char *groupfile,
-                                const char *update_info, ChecksumType *checksum_type)
+                                const char *update_info, ChecksumType *checksum_type,
+                                CompressionType groupfile_compression)
 {
     if (!path) {
         return NULL;
@@ -669,7 +673,7 @@ struct repomdResult *xml_repomd(const char *path, int rename_to_unique, const ch
                                             pri_xml_rd, fil_xml_rd, oth_xml_rd,
                                             pri_sqlite_rd, fil_sqlite_rd, oth_sqlite_rd,
                                             groupfile_rd, cgroupfile_rd, update_info_rd,
-                                            checksum_type);
+                                            checksum_type, groupfile_compression);
 
     free_repomddata(pri_xml_rd);
     free_repomddata(fil_xml_rd);

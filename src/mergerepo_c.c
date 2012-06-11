@@ -605,13 +605,16 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, gchar *gro
     gchar *pri_xml_name = g_strconcat("repodata/", "primary.xml", ".gz", NULL);
     gchar *fil_xml_name = g_strconcat("repodata/", "filelists.xml",".gz", NULL);
     gchar *oth_xml_name = g_strconcat("repodata/", "other.xml", ".gz", NULL);
+    gchar *rel_groupfile = NULL;
+    if (groupfile)
+        rel_groupfile = g_strconcat("repodata/", get_filename(groupfile), NULL);
     gchar *ui_xml_name = NULL;
     if (!cmd_options->noupdateinfo)
         ui_xml_name = g_strconcat("repodata/", "updateinfo.xml", suffix, NULL);
 
     struct repomdResult *repomd_res = xml_repomd(cmd_options->out_dir, 1, pri_xml_name,
                                                  fil_xml_name, oth_xml_name, NULL, NULL,
-                                                 NULL, groupfile, ui_xml_name, NULL,
+                                                 NULL, rel_groupfile, ui_xml_name, NULL,
                                                  cmd_options->compression_type);
     if (repomd_res) {
         if (repomd_res->repomd_xml) {
@@ -636,6 +639,7 @@ int dump_merged_metadata(GHashTable *merged_hashtable, long packages, gchar *gro
     g_free(pri_xml_name);
     g_free(fil_xml_name);
     g_free(oth_xml_name);
+    g_free(rel_groupfile);
     g_free(ui_xml_name);
 
     g_free(pri_xml_filename);

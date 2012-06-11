@@ -20,6 +20,7 @@
 #include <glib/gstdio.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include "createrepo/misc.h"
 #include "createrepo/compression_wrapper.h"
 
@@ -32,18 +33,22 @@
 #define FILE_COMPRESSED_0_PLAIN                 "test_data/compressed_files/00_plain.txt"
 #define FILE_COMPRESSED_0_GZ                    "test_data/compressed_files/00_plain.txt.gz"
 #define FILE_COMPRESSED_0_BZ2                   "test_data/compressed_files/00_plain.txt.bz2"
+#define FILE_COMPRESSED_0_XZ                    "test_data/compressed_files/00_plain.txt.xz"
 #define FILE_COMPRESSED_0_PLAIN_BAD_SUFFIX      "test_data/compressed_files/00_plain.foo0"
 #define FILE_COMPRESSED_0_GZ_BAD_SUFFIX         "test_data/compressed_files/00_plain.foo1"
 #define FILE_COMPRESSED_0_BZ2_BAD_SUFFIX        "test_data/compressed_files/00_plain.foo2"
+#define FILE_COMPRESSED_0_XZ_BAD_SUFFIX         "test_data/compressed_files/00_plain.foo3"
 
 #define FILE_COMPRESSED_1_CONTENT               "foobar foobar foobar foobar test test\nfolkjsaflkjsadokf\n"
 #define FILE_COMPRESSED_1_CONTENT_LEN           56
 #define FILE_COMPRESSED_1_PLAIN                 "test_data/compressed_files/01_plain.txt"
 #define FILE_COMPRESSED_1_GZ                    "test_data/compressed_files/01_plain.txt.gz"
 #define FILE_COMPRESSED_1_BZ2                   "test_data/compressed_files/01_plain.txt.bz2"
+#define FILE_COMPRESSED_1_XZ                    "test_data/compressed_files/01_plain.txt.xz"
 #define FILE_COMPRESSED_1_PLAIN_BAD_SUFFIX      "test_data/compressed_files/01_plain.foo0"
 #define FILE_COMPRESSED_1_GZ_BAD_SUFFIX         "test_data/compressed_files/01_plain.foo1"
 #define FILE_COMPRESSED_1_BZ2_BAD_SUFFIX        "test_data/compressed_files/01_plain.foo2"
+#define FILE_COMPRESSED_1_XZ_BAD_SUFFIX         "test_data/compressed_files/01_plain.foo3"
 
 
 
@@ -65,6 +70,9 @@ static void test_get_suffix(void)
 
     suffix = get_suffix(BZ2_COMPRESSION);
     g_assert_cmpstr(suffix, ==, ".bz2");
+
+    suffix = get_suffix(XZ_COMPRESSION);
+    g_assert_cmpstr(suffix, ==, ".xz");
 }
 
 
@@ -92,6 +100,13 @@ static void test_detect_compression(void)
     g_assert_cmpint(ret, ==, BZ2_COMPRESSION);
     ret = detect_compression(FILE_COMPRESSED_1_BZ2);
     g_assert_cmpint(ret, ==, BZ2_COMPRESSION);
+
+    // Xz
+
+    ret = detect_compression(FILE_COMPRESSED_0_XZ);
+    g_assert_cmpint(ret, ==, XZ_COMPRESSION);
+    ret = detect_compression(FILE_COMPRESSED_1_XZ);
+    g_assert_cmpint(ret, ==, XZ_COMPRESSION);
 }
 
 
@@ -102,7 +117,6 @@ static void test_detect_compression_bad_suffix(void)
     // Plain
 
     ret = detect_compression(FILE_COMPRESSED_0_PLAIN_BAD_SUFFIX);
-    printf("%s: (%d)\n", FILE_COMPRESSED_0_PLAIN_BAD_SUFFIX, ret);
     g_assert_cmpint(ret, ==, NO_COMPRESSION);
     ret = detect_compression(FILE_COMPRESSED_1_PLAIN_BAD_SUFFIX);
     g_assert_cmpint(ret, ==, NO_COMPRESSION);
@@ -120,6 +134,13 @@ static void test_detect_compression_bad_suffix(void)
     g_assert_cmpint(ret, ==, BZ2_COMPRESSION);
     ret = detect_compression(FILE_COMPRESSED_1_BZ2_BAD_SUFFIX);
     g_assert_cmpint(ret, ==, BZ2_COMPRESSION);
+
+    // Xz
+
+    ret = detect_compression(FILE_COMPRESSED_0_XZ_BAD_SUFFIX);
+    g_assert_cmpint(ret, ==, XZ_COMPRESSION);
+    ret = detect_compression(FILE_COMPRESSED_1_XZ_BAD_SUFFIX);
+    g_assert_cmpint(ret, ==, XZ_COMPRESSION);
 }
 
 
@@ -156,6 +177,11 @@ static void test_cw_read_with_autodetection(void)
 
     test_helper_cw_input(FILE_COMPRESSED_0_BZ2, AUTO_DETECT_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
     test_helper_cw_input(FILE_COMPRESSED_1_BZ2, AUTO_DETECT_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
+
+    // Xz
+
+    test_helper_cw_input(FILE_COMPRESSED_0_XZ, AUTO_DETECT_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
+    test_helper_cw_input(FILE_COMPRESSED_1_XZ, AUTO_DETECT_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
 }
 
 
@@ -208,7 +234,7 @@ void test_helper_cw_output(int type, const char *filename, CompressionType ctype
             break;
 
         case OUTPUT_TYPE_PRINTF:
-            ret = cw_printf(file, "%s", content);
+            ret = cw_printf(file, "%s", content);   // XXX
             g_assert_cmpint(ret, ==, len);
             break;
 
@@ -239,24 +265,51 @@ static void outputtest_cw_output(Outputtest *outputtest, gconstpointer test_data
 
     // Plain
 
-    test_helper_cw_output(OUTPUT_TYPE_WRITE, outputtest->tmp_filename, NO_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
-    test_helper_cw_output(OUTPUT_TYPE_WRITE, outputtest->tmp_filename, NO_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
-    test_helper_cw_output(OUTPUT_TYPE_PUTS, outputtest->tmp_filename, NO_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
-    test_helper_cw_output(OUTPUT_TYPE_PUTS, outputtest->tmp_filename, NO_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
+    printf("Testing - plain\nwrite()\n");
+    test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename, NO_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
+    test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename, NO_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
+    printf("puts()\n");
+    test_helper_cw_output(OUTPUT_TYPE_PUTS,   outputtest->tmp_filename, NO_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
+    test_helper_cw_output(OUTPUT_TYPE_PUTS,   outputtest->tmp_filename, NO_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
+    printf("printf()\n");
+    test_helper_cw_output(OUTPUT_TYPE_PRINTF, outputtest->tmp_filename, NO_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
+    test_helper_cw_output(OUTPUT_TYPE_PRINTF, outputtest->tmp_filename, NO_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
 
     // Gz
 
-    test_helper_cw_output(OUTPUT_TYPE_WRITE, outputtest->tmp_filename, GZ_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
-    test_helper_cw_output(OUTPUT_TYPE_WRITE, outputtest->tmp_filename, GZ_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
-    test_helper_cw_output(OUTPUT_TYPE_PUTS, outputtest->tmp_filename, GZ_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
-    test_helper_cw_output(OUTPUT_TYPE_PUTS, outputtest->tmp_filename, GZ_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
+    printf("Testing - gz\nwrite()\n");
+    test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename, GZ_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
+    test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename, GZ_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
+    printf("puts()\n");
+    test_helper_cw_output(OUTPUT_TYPE_PUTS,   outputtest->tmp_filename, GZ_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
+    test_helper_cw_output(OUTPUT_TYPE_PUTS,   outputtest->tmp_filename, GZ_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
+    printf("printf()\n");
+    test_helper_cw_output(OUTPUT_TYPE_PRINTF, outputtest->tmp_filename, GZ_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
+    test_helper_cw_output(OUTPUT_TYPE_PRINTF, outputtest->tmp_filename, GZ_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
 
     // Bz2
 
-    test_helper_cw_output(OUTPUT_TYPE_WRITE, outputtest->tmp_filename, BZ2_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
-    test_helper_cw_output(OUTPUT_TYPE_WRITE, outputtest->tmp_filename, BZ2_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
+    printf("Testing - bz2\nwrite()\n");
+    test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename, BZ2_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
+    test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename, BZ2_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
+    printf("puts()\n");
+    test_helper_cw_output(OUTPUT_TYPE_PUTS,   outputtest->tmp_filename, BZ2_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
+    test_helper_cw_output(OUTPUT_TYPE_PUTS,   outputtest->tmp_filename, BZ2_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
+    printf("printf()\n");
     test_helper_cw_output(OUTPUT_TYPE_PRINTF, outputtest->tmp_filename, BZ2_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
     test_helper_cw_output(OUTPUT_TYPE_PRINTF, outputtest->tmp_filename, BZ2_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
+
+    // Xz
+
+    printf("Testing - xz\nwrite()\n");
+    test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename, XZ_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
+    test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename, XZ_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
+    printf("puts()\n");
+    test_helper_cw_output(OUTPUT_TYPE_PUTS,   outputtest->tmp_filename, XZ_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
+    test_helper_cw_output(OUTPUT_TYPE_PUTS,   outputtest->tmp_filename, XZ_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
+    printf("printf()\n");
+    test_helper_cw_output(OUTPUT_TYPE_PRINTF, outputtest->tmp_filename, XZ_COMPRESSION, FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
+    test_helper_cw_output(OUTPUT_TYPE_PRINTF, outputtest->tmp_filename, XZ_COMPRESSION, FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
 }
 
 

@@ -22,10 +22,6 @@
 /** \defgroup   compression_wrapper     Wrapper for compressed file.
  */
 
-#include <stdio.h>
-#include <zlib.h>
-#include <bzlib.h>
-
 /** \ingroup compression_wrapper
  * Compression type.
  */
@@ -35,6 +31,7 @@ typedef enum {
     NO_COMPRESSION,             /*!< No compression */
     GZ_COMPRESSION,             /*!< Gzip compression */
     BZ2_COMPRESSION,            /*!< BZip2 compression */
+    XZ_COMPRESSION,             /*!< XZ compression */
 } CompressionType;
 
 /** \ingroup compression_wrapper

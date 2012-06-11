@@ -22,6 +22,10 @@
 #include <magic.h>
 #include <assert.h>
 #include <string.h>
+#include <stdio.h>
+#include <zlib.h>
+#include <bzlib.h>
+#include <lzma.h>
 #include "logging.h"
 #include "compression_wrapper.h"
 
@@ -51,11 +55,38 @@
 #define BZ2_USE_LESS_MEMORY     0
 #define BZ2_SKIP_FFLUSH         0
 
+/*
+number 0..9
+or
+LZMA_PRESET_DEFAULT default preset
+LZMA_PRESET_EXTREME significantly slower, improving the compression ratio marginally
+*/
+#define XZ_COMPRESSION_LEVEL    5
+
+/*
+LZMA_CHECK_NONE
+LZMA_CHECK_CRC32
+LZMA_CHECK_CRC64
+LZMA_CHECK_SHA256
+*/
+#define XZ_CHECK                LZMA_CHECK_CRC32
+
+/* UINT64_MAX effectively disable the limiter */
+#define XZ_MEMORY_USAGE_LIMIT   UINT64_MAX
+#define XZ_DECODER_FLAGS        0
+#define XZ_BUFFER_SIZE          (1024*32)
 
 #if ZLIB_VERNUM < 0x1240
 // XXX: Zlib has gzbuffer since 1.2.4
 #define gzbuffer(a,b) 0
 #endif
+
+
+typedef struct {
+    lzma_stream stream;
+    FILE *file;
+    unsigned char buffer[XZ_BUFFER_SIZE];
+} XzFile;
 
 
 
@@ -79,6 +110,9 @@ CompressionType detect_compression(const char *filename)
                g_str_has_suffix(filename, ".bzip2"))
     {
         return BZ2_COMPRESSION;
+    } else if (g_str_has_suffix(filename, ".xz"))
+    {
+        return XZ_COMPRESSION;
     } else if (g_str_has_suffix(filename, ".xml"))
     {
         return NO_COMPRESSION;
@@ -100,8 +134,6 @@ CompressionType detect_compression(const char *filename)
     if (mime_type) {
         g_debug(MODULE"%s: Detected mime type: %s (%s)", __func__, mime_type, filename);
 
-//        if (g_str_has_suffix(mime_type, "gzip") ||
-//            g_str_has_suffix(mime_type, "gunzip"))
         if (g_str_has_prefix(mime_type, "application/x-gzip") ||
             g_str_has_prefix(mime_type, "application/gzip") ||
             g_str_has_prefix(mime_type, "application/gzip-compressed") ||
@@ -115,7 +147,6 @@ CompressionType detect_compression(const char *filename)
             type = GZ_COMPRESSION;
         }
 
-//        else if (g_str_has_suffix(mime_type, "bzip2")) {
         else if (g_str_has_prefix(mime_type, "application/x-bzip2") ||
                  g_str_has_prefix(mime_type, "application/x-bz2") ||
                  g_str_has_prefix(mime_type, "application/bzip2") ||
@@ -124,7 +155,11 @@ CompressionType detect_compression(const char *filename)
             type = BZ2_COMPRESSION;
         }
 
-//        else if (!g_strcmp0(mime_type, "text/plain")) {
+        else if (g_str_has_prefix(mime_type, "application/x-xz"))
+        {
+            type = XZ_COMPRESSION;
+        }
+
         else if (g_str_has_prefix(mime_type, "text/plain") ||
                  g_str_has_prefix(mime_type, "text/xml") ||
                  g_str_has_prefix(mime_type, "application/xml") ||
@@ -159,6 +194,8 @@ const char *get_suffix(CompressionType comtype)
             suffix = ".gz"; break;
         case BZ2_COMPRESSION:
             suffix = ".bz2"; break;
+        case XZ_COMPRESSION:
+            suffix = ".xz"; break;
         default:
             break;
     }
@@ -251,7 +288,60 @@ CW_FILE *cw_open(const char *filename, OpenMode mode, CompressionType comtype)
             }
             break;
 
-        default:
+        case (XZ_COMPRESSION): // ----------------------------------------------
+            file->type = XZ_COMPRESSION;
+            XzFile *xz_file = g_malloc(sizeof(XzFile));
+            lzma_stream *stream = &(xz_file->stream);
+            memset(stream, 0, sizeof(lzma_stream));
+            /* ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ XXX: This part
+             is a little tricky. Because in the default initializer LZMA_STREAM_INIT
+             are some items NULL and (according to C standard) NULL may have
+             different internal representation than zero.
+             This should not be a problem nowadays, but who knows what the future will bring.
+            */
+
+            // Prepare coder/decoder
+
+            int ret;
+            if (mode == CW_MODE_WRITE)
+                ret = lzma_easy_encoder(stream, XZ_COMPRESSION_LEVEL, XZ_CHECK);
+            else
+                ret = lzma_auto_decoder(stream, XZ_MEMORY_USAGE_LIMIT, XZ_DECODER_FLAGS);
+
+            if (ret != LZMA_OK) {
+                switch (ret) {
+                    case LZMA_MEM_ERROR:
+                        g_debug(MODULE"%s: XZ: Cannot allocate memory", __func__);
+                        break;
+                    case LZMA_OPTIONS_ERROR:
+                        g_debug(MODULE"%s: XZ: Unsupported flags (options)", __func__);
+                        break;
+                    case LZMA_PROG_ERROR:
+                        g_debug(MODULE"%s: XZ: One or more of the parameters have values that will never be valid.", __func__);
+                        break;
+                    default:
+                        g_debug(MODULE"%s: XZ: Unknown error", __func__);
+                }
+                g_free((void *) xz_file);
+                break;
+            }
+
+            // Open input/output file
+
+            if (mode == CW_MODE_WRITE)
+                xz_file->file = fopen(filename, "wb");
+            else
+                xz_file->file = fopen(filename, "rb");
+
+            if (!(xz_file->file)) {
+                lzma_end(&(xz_file->stream));
+                g_free((void *) xz_file);
+            }
+
+            file->FILE = (void *) xz_file;
+            break;
+
+        default: // ------------------------------------------------------------
             break;
     }
 
@@ -305,7 +395,46 @@ int cw_close(CW_FILE *cw_file)
             }
             break;
 
-        default:
+        case (XZ_COMPRESSION): { // --------------------------------------------
+            XzFile *xz_file = (XzFile *) cw_file->FILE;
+            lzma_stream *stream = &(xz_file->stream);
+
+            if (cw_file->mode == CW_MODE_WRITE) {
+                // Write out rest of buffer
+                while (1) {
+                    int ret;
+                    stream->next_out = (uint8_t*) xz_file->buffer;
+                    stream->avail_out = XZ_BUFFER_SIZE;
+                    ret = lzma_code(stream, LZMA_FINISH);
+
+                    if(ret != LZMA_OK && ret != LZMA_STREAM_END) {
+                        // Error while coding
+                        break;
+                    }
+
+                    size_t out_len = XZ_BUFFER_SIZE - stream->avail_out;
+                    if(fwrite(xz_file->buffer, 1, out_len, xz_file->file) != out_len) {
+                        // Error while writing
+                        break;
+                    }
+
+                    if(ret == LZMA_STREAM_END) {
+                        // Everything all right
+                        cw_ret = CW_OK;
+                        break;
+                    }
+                }
+            } else {
+                cw_ret = CW_OK;
+            }
+
+            fclose(xz_file->file);
+            lzma_end(stream);
+            g_free(stream);
+            break;
+        }
+
+        default: // ------------------------------------------------------------
             break;
     }
 
@@ -346,7 +475,45 @@ int cw_read(CW_FILE *cw_file, void *buffer, unsigned int len)
             }
             break;
 
-        default:
+        case (XZ_COMPRESSION): { // --------------------------------------------
+            XzFile *xz_file = (XzFile *) cw_file->FILE;
+            lzma_stream *stream = &(xz_file->stream);
+
+            stream->next_out = buffer;
+            stream->avail_out = len;
+
+            while (stream->avail_out) {
+                int lret;
+
+                // Fill input buffer
+                if (stream->avail_in == 0) {
+                    if ((lret = fread(xz_file->buffer, 1, XZ_BUFFER_SIZE, xz_file->file)) < 0) {
+                        g_debug(MODULE"%s: XZ: Error while fread", __func__);
+                        return CW_ERR;   // Error while reading input file
+                    } else if (lret == 0) {
+                        g_debug(MODULE"%s: EOF", __func__);
+                        break;   // EOF
+                    }
+                    stream->next_in = xz_file->buffer;
+                    stream->avail_in = lret;
+                }
+
+                // Decode
+                lret = lzma_code(stream, LZMA_RUN);
+                if (lret != LZMA_OK && lret != LZMA_STREAM_END) {
+                    g_debug(MODULE"%s: XZ: Error while decoding (%d)", __func__, lret);
+                    return CW_ERR;  // Error while decoding
+                }
+                if (lret == LZMA_STREAM_END) {
+                    break;
+                }
+            }
+
+            ret = len - stream->avail_out;
+            break;
+        }
+
+        default: // ------------------------------------------------------------
             ret = CW_ERR;
             break;
     }
@@ -393,7 +560,35 @@ int cw_write(CW_FILE *cw_file, const void *buffer, unsigned int len)
             }
             break;
 
-        default:
+        case (XZ_COMPRESSION): { // --------------------------------------------
+            XzFile *xz_file = (XzFile *) cw_file->FILE;
+            lzma_stream *stream = &(xz_file->stream);
+
+            ret = len;
+            stream->next_in = buffer;
+            stream->avail_in = len;
+
+            while (stream->avail_in) {
+                int lret;
+                stream->next_out = xz_file->buffer;
+                stream->avail_out = XZ_BUFFER_SIZE;
+                lret = lzma_code(stream, LZMA_RUN);
+                if (lret != LZMA_OK) {
+                    ret = CW_ERR;
+                    break;   // Error while coding
+                }
+
+                size_t out_len = XZ_BUFFER_SIZE - stream->avail_out;
+                if ((fwrite(xz_file->buffer, 1, out_len, xz_file->file)) != out_len) {
+                    ret = CW_ERR;
+                    break;   // Error while writing
+                }
+            }
+
+            break;
+        }
+
+        default: // ------------------------------------------------------------
             break;
     }
 
@@ -437,7 +632,17 @@ int cw_puts(CW_FILE *cw_file, const char *str)
             }
             break;
 
-        default:
+        case (XZ_COMPRESSION): // ----------------------------------------------
+            len = strlen(str);
+            ret = cw_write(cw_file, str, len);
+            if (ret == (int) len) {
+                ret = CW_OK;
+            } else {
+                ret = CW_ERR;
+            }
+            break;
+
+        default: // ------------------------------------------------------------
             break;
     }
 
@@ -469,12 +674,12 @@ int cw_printf(CW_FILE *cw_file, const char *format, ...)
 
     assert(buf);
 
-    int bzerror;
+    int tmp_ret;
 
     switch (cw_file->type) {
 
         case (NO_COMPRESSION): // ----------------------------------------------
-            if ((ret = vfprintf((FILE *) cw_file->FILE, format, vl)) < 0) {
+            if ((ret = fwrite(buf, 1, ret, cw_file->FILE)) < 0) {
                 ret = CW_ERR;
             }
             break;
@@ -486,13 +691,20 @@ int cw_printf(CW_FILE *cw_file, const char *format, ...)
             break;
 
         case (BZ2_COMPRESSION): // ---------------------------------------------
-            BZ2_bzWrite(&bzerror, (BZFILE *) cw_file->FILE, buf, ret);
-            if (bzerror != BZ_OK) {
+            BZ2_bzWrite(&tmp_ret, (BZFILE *) cw_file->FILE, buf, ret);
+            if (tmp_ret != BZ_OK) {
                 ret = CW_ERR;
             }
             break;
 
-        default:
+        case (XZ_COMPRESSION): // ----------------------------------------------
+            tmp_ret = cw_write(cw_file, buf, ret);
+            if (tmp_ret != (int) ret) {
+                ret = CW_ERR;
+            }
+            break;
+
+        default: // ------------------------------------------------------------
             ret = CW_ERR;
             break;
     }

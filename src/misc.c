@@ -465,6 +465,85 @@ int copy_file(const char *src, const char *in_dst)
 
 
 
+int compress_file(const char *src, const char *in_dst, CompressionType compression)
+{
+    int readed;
+    char buf[BUFFER_SIZE];
+
+    FILE *orig;
+    CW_FILE *new;
+
+    if (!src) {
+        g_debug(MODULE"%s: File name cannot be NULL", __func__);
+        return CR_COPY_ERR;
+    }
+
+    if (compression == AUTO_DETECT_COMPRESSION ||
+        compression == UNKNOWN_COMPRESSION) {
+        g_debug(MODULE"%s: Bad compression type", __func__);
+        return CR_COPY_ERR;
+    }
+
+    // Src must be a file NOT a directory
+    if (g_str_has_suffix(src, "/") ||
+        !g_file_test(src, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR))) 
+    {
+        g_debug(MODULE"%s: Source (%s) must be directory!", __func__, src);
+        return CR_COPY_ERR;
+    }
+
+    gchar *dst = (gchar *) in_dst;
+    if (!dst) {
+        // If destination is NULL, use src + compression suffix
+        const gchar *suffix = get_suffix(compression);
+        dst = g_strconcat(src, suffix, NULL);
+    } else {
+        // If destination is dir use filename from src + compression suffix
+        if (g_str_has_suffix(in_dst, "/")) {
+            const gchar *suffix = get_suffix(compression);
+            dst = g_strconcat(in_dst, get_filename(src), suffix, NULL);
+        }
+    }
+
+    if ((orig = fopen(src, "r")) == NULL) {
+        g_debug(MODULE"%s: Cannot open source file %s (%s)", __func__, src, strerror(errno));
+        return CR_COPY_ERR;
+    }
+
+    if ((new = cw_open(dst, CW_MODE_WRITE, compression)) == NULL) {
+        g_debug(MODULE"%s: Cannot open destination file %s", __func__, dst);
+        fclose(orig);
+        return CR_COPY_ERR;
+    }
+
+    while ((readed = fread(buf, 1, BUFFER_SIZE, orig)) > 0) {
+        if (cw_write(new, buf, readed) != readed) {
+            g_debug(MODULE"%s: Error while copy %s -> %s", __func__, src, dst);
+            cw_close(new);
+            fclose(orig);
+            return CR_COPY_ERR;
+        }
+
+        if (readed != BUFFER_SIZE && ferror(orig)) {
+            g_debug(MODULE"%s: Error while copy %s -> %s (%s)", __func__, src, dst, strerror(errno));
+            cw_close(new);
+            fclose(orig);
+            return CR_COPY_ERR;
+        }
+    }
+
+    if (dst != in_dst) {
+        g_free(dst);
+    }
+
+    cw_close(new);
+    fclose(orig);
+
+    return CR_COPY_OK;
+}
+
+
+
 void download(CURL *handle, const char *url, const char *in_dst, char **error)
 {
     CURLcode rcode;

@@ -21,6 +21,7 @@
 
 #include <glib.h>
 #include <curl/curl.h>
+#include "compression_wrapper.h"
 #include "constants.h"
 
 /** \defgroup   misc    Miscellaneous useful functions and macros.
@@ -136,6 +137,15 @@ void download(CURL *handle, const char *url, const char *destination, char **err
  * @return              CR_COPY_OK or CR_COPY_ERR on error
  */
 int copy_file(const char *src, const char *dst);
+
+/** \ingroup misc
+ * Compress file.
+ * @param src           source filename
+ * @param dst           destination (If dst is dir, filename of src + compression suffix is used.
+ *                      If dst is NULL, src + compression suffix is used)
+ * @return              CR_COPY_OK or CR_COPY_ERR on error
+ */
+int compress_file(const char *src, const char *dst, CompressionType compression);
 
 /** \ingroup misc
  * Better copy file. Source (src) could be remote address ("http://" or "ftp://").

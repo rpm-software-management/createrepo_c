@@ -579,6 +579,21 @@ static void copyfiletest_test_corner_cases(Copyfiletest *copyfiletest, gconstpoi
 }
 
 
+static void compressfile_test_text_file(Copyfiletest *copyfiletest, gconstpointer test_data)
+{
+    UNUSED(test_data);
+    int ret;
+    char *checksum;
+
+    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
+    ret = compress_file(TEXT_FILE, copyfiletest->dst_file, GZ_COMPRESSION);
+    g_assert_cmpint(ret, ==, CR_COPY_OK);
+    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
+    checksum = compute_file_checksum(copyfiletest->dst_file, PKG_CHECKSUM_SHA256);
+    g_assert_cmpstr(checksum, ==, "8909fde88a5747d800fd2562b0f22945f014aa7df64cf1c15c7933ae54b72ab6");
+    g_free(checksum);
+}
+
 
 static void test_download_valid_url_1(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
@@ -942,6 +957,7 @@ int main(int argc, char *argv[])
     g_test_add("/misc/copyfiletest_test_binary_file", Copyfiletest, NULL, copyfiletest_setup, copyfiletest_test_binary_file, copyfiletest_teardown);
     g_test_add("/misc/copyfiletest_test_rewrite", Copyfiletest, NULL, copyfiletest_setup, copyfiletest_test_rewrite, copyfiletest_teardown);
     g_test_add("/misc/copyfiletest_test_corner_cases", Copyfiletest, NULL, copyfiletest_setup, copyfiletest_test_corner_cases, copyfiletest_teardown);
+    g_test_add("/misc/compressfile_test_text_file", Copyfiletest, NULL, copyfiletest_setup, compressfile_test_text_file, copyfiletest_teardown);
     g_test_add("/misc/test_download_valid_url_1", Copyfiletest, NULL, copyfiletest_setup, test_download_valid_url_1, copyfiletest_teardown);
     g_test_add("/misc/test_download_valid_url_2", Copyfiletest, NULL, copyfiletest_setup, test_download_valid_url_2, copyfiletest_teardown);
     g_test_add("/misc/test_download_invalid_url", Copyfiletest, NULL, copyfiletest_setup, test_download_invalid_url, copyfiletest_teardown);

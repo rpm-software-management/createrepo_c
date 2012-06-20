@@ -46,6 +46,19 @@ void init_package_parser();
 void free_package_parser();
 
 /** \ingroup parsepkg
+ * Generate package object from package file.
+ * @param filename              filename
+ * @param checksum_type         type of checksum to be used
+ * @param location_href         package location inside repository
+ * @param location_base         location (url) of repository
+ * @param changelog_limit       number of changelog entries
+ * @param stat_buf              struct stat of the filename (optional - could be NULL)
+ */
+Package *package_from_file(const char *filename, ChecksumType checksum_type,
+                        const char *location_href, const char *location_base,
+                        int changelog_limit, struct stat *stat_buf);
+
+/** \ingroup parsepkg
  * Generate XML for the specified package.
  * @param filename              filename
  * @param checksum_type         type of checksum to be used

@@ -72,6 +72,110 @@ void free_package_parser()
 }
 
 
+Package *package_from_file(const char *filename, ChecksumType checksum_type,
+                           const char *location_href, const char *location_base,
+                           int changelog_limit, struct stat *stat_buf)
+{
+    Package *result = NULL;
+    const char *checksum_type_str;
+
+    // Set checksum type
+
+    switch (checksum_type) {
+        case PKG_CHECKSUM_MD5:
+            checksum_type_str = "md5";
+            break;
+        case PKG_CHECKSUM_SHA1:
+             checksum_type_str = "sha1";
+            break;
+        case PKG_CHECKSUM_SHA256:
+            checksum_type_str = "sha256";
+            break;
+        default:
+            g_critical(MODULE"%s: Unknown checksum type", __func__);
+            return result;
+            break;
+    };
+
+
+    // Open rpm file
+
+    FD_t fd = NULL;
+    fd = Fopen(filename, "r.ufdio");
+    if (!fd) {
+        g_critical(MODULE"%s: Fopen failed %s", __func__, strerror(errno));
+        return result;
+    }
+
+
+    // Read package
+
+    Header hdr;
+    int rc = rpmReadPackageFile(ts, fd, NULL, &hdr);
+    if (rc != RPMRC_OK) {
+        switch (rc) {
+            case RPMRC_NOKEY:
+                g_debug(MODULE"%s: %s: Public key is unavailable.", __func__, filename);
+                break;
+            case RPMRC_NOTTRUSTED:
+                g_debug(MODULE"%s:  %s: Signature is OK, but key is not trusted.", __func__, filename);
+                break;
+            default:
+                g_critical(MODULE"%s: rpmReadPackageFile() error (%s)", __func__, strerror(errno));
+                return result;
+        }
+    }
+
+
+    // Cleanup
+
+    Fclose(fd);
+
+
+    // Get file stat
+
+    gint64 mtime;
+    gint64 size;
+
+    if (!stat_buf) {
+        struct stat stat_buf_own;
+        if (stat(filename, &stat_buf_own) == -1) {
+            g_critical(MODULE"%s: stat() error (%s)", __func__, strerror(errno));
+            return result;
+        }
+        mtime  = stat_buf_own.st_mtime;
+        size   = stat_buf_own.st_size;
+    } else {
+        mtime  = stat_buf->st_mtime;
+        size   = stat_buf->st_size;
+    }
+
+
+    // Compute checksum
+
+    char *checksum = compute_file_checksum(filename, checksum_type);
+
+
+    // Get header range
+
+    struct HeaderRangeStruct hdr_r = get_header_byte_range(filename);
+
+
+    // Get package object
+
+    result = parse_header(hdr, mtime, size, checksum, checksum_type_str, location_href,
+                          location_base, changelog_limit, hdr_r.start, hdr_r.end);
+
+
+    // Cleanup
+
+    free(checksum);
+    headerFree(hdr);
+
+    return result;
+}
+
+
 
 struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checksum_type,
                 const char *location_href, const char *location_base, int changelog_limit,

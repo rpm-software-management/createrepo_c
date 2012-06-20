@@ -43,7 +43,7 @@ const char *flag_to_string(gint64 flags)
     flags &= 0xf;
     switch(flags) {
         case 0:
-            return "";
+            return NULL;
         case 2:
             return "LT";
         case 4:
@@ -55,7 +55,7 @@ const char *flag_to_string(gint64 flags)
         case 12:
             return "GE";
         default:
-            return "";
+            return NULL;
     }
 }
 

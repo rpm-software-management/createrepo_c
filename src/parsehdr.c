@@ -285,7 +285,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                     gpointer value;
                     if (g_hash_table_lookup_extended(ap_hashtable, filename, NULL, &value)) {
                         struct ap_value_struct *ap_value = value;
-                        if (!strcmp(ap_value->flags, flags) &&
+                        if (!g_strcmp0(ap_value->flags, flags) &&
                             !strcmp(ap_value->version, full_version) &&
                             (ap_value->pre == pre))
                         {

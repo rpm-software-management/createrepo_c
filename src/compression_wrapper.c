@@ -164,7 +164,8 @@ CompressionType detect_compression(const char *filename)
                  g_str_has_prefix(mime_type, "text/xml") ||
                  g_str_has_prefix(mime_type, "application/xml") ||
                  g_str_has_prefix(mime_type, "application/x-xml") ||
-                 g_str_has_prefix(mime_type, "application/x-empty"))
+                 g_str_has_prefix(mime_type, "application/x-empty") ||
+                 g_str_has_prefix(mime_type, "inode/x-empty"))
         {
             type = NO_COMPRESSION;
         }

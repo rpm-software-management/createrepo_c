@@ -471,6 +471,9 @@ int cw_read(CW_FILE *cw_file, void *buffer, unsigned int len)
 
         case (BZ2_COMPRESSION): // ---------------------------------------------
             ret = BZ2_bzRead(&bzerror, (BZFILE *) cw_file->FILE, buffer, len);
+            if (!ret && bzerror == BZ_SEQUENCE_ERROR)
+                // Next read after BZ_STREAM_END (EOF)
+                return 0;
             if (bzerror != BZ_OK && bzerror != BZ_STREAM_END) {
                 return CW_ERR;
             }

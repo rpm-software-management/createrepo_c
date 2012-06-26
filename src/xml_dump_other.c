@@ -112,6 +112,9 @@ void dump_other_items(xmlNodePtr root, Package *package)
 
 char *xml_dump_other(Package *package)
 {
+    if (!package)
+        return NULL;
+
     xmlNodePtr root = NULL;
     root = xmlNewNode(NULL, BAD_CAST "package");
 

@@ -85,9 +85,17 @@ void dump_files(xmlNodePtr node, Package *package, int primary)
 struct XmlStruct xml_dump(Package *pkg)
 {
     struct XmlStruct result;
-    result.primary = xml_dump_primary(pkg);
+
+    if (!pkg) {
+        result.primary   = NULL;
+        result.filelists = NULL;
+        result.other     = NULL;
+        return result;
+    }
+
+    result.primary   = xml_dump_primary(pkg);
     result.filelists = xml_dump_filelists(pkg);
-    result.other = xml_dump_other(pkg);
+    result.other     = xml_dump_other(pkg);
 
     return result;
 }

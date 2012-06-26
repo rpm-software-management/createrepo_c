@@ -343,6 +343,9 @@ void dump_base_items(xmlNodePtr root, Package *package)
 
 char *xml_dump_primary(Package *package)
 {
+    if (!package)
+        return NULL;
+
     xmlNodePtr root = NULL;
     root = xmlNewNode(NULL, BAD_CAST "package");
 

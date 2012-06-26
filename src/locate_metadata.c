@@ -63,7 +63,8 @@ void free_metadata_location(struct MetadataLocation *ml)
 
 
 
-struct MetadataLocation *parse_repomd(const char *repomd_path, const char *repopath)
+struct MetadataLocation *
+parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite)
 {
     int ret;
     xmlChar *name;
@@ -166,11 +167,11 @@ struct MetadataLocation *parse_repomd(const char *repomd_path, const char *repop
             mdloc->fil_xml_href = full_location_href;
         } else if (!g_strcmp0((char *) data_type, "other")) {
             mdloc->oth_xml_href = full_location_href;
-        } else if (!g_strcmp0((char *) data_type, "primary_db")) {
+        } else if (!ignore_sqlite && !g_strcmp0((char *) data_type, "primary_db")) {
             mdloc->pri_sqlite_href = full_location_href;
-        } else if (!g_strcmp0((char *) data_type, "filelists_db")) {
+        } else if (!ignore_sqlite && !g_strcmp0((char *) data_type, "filelists_db")) {
             mdloc->fil_sqlite_href = full_location_href;
-        } else if (!g_strcmp0((char *) data_type, "other_db")) {
+        } else if (!ignore_sqlite && !g_strcmp0((char *) data_type, "other_db")) {
             mdloc->oth_sqlite_href = full_location_href;
         } else if (!g_strcmp0((char *) data_type, "group")) {
             mdloc->groupfile_href = full_location_href;
@@ -195,7 +196,7 @@ struct MetadataLocation *parse_repomd(const char *repomd_path, const char *repop
 
 
 
-struct MetadataLocation *get_local_metadata(const char *in_repopath)
+struct MetadataLocation *get_local_metadata(const char *in_repopath, int ignore_sqlite)
 {
     struct MetadataLocation *ret = NULL;
 
@@ -225,7 +226,7 @@ struct MetadataLocation *get_local_metadata(const char *in_repopath)
         return ret;
     }
 
-    ret = parse_repomd(repomd, repopath);
+    ret = parse_repomd(repomd, repopath, ignore_sqlite);
 
     g_free(repomd);
     g_free(repopath);
@@ -235,7 +236,7 @@ struct MetadataLocation *get_local_metadata(const char *in_repopath)
 
 
 
-struct MetadataLocation *get_remote_metadata(const char *repopath)
+struct MetadataLocation *get_remote_metadata(const char *repopath, int ignore_sqlite)
 {
     gchar *url = NULL;
     gchar *tmp_repomd = NULL;
@@ -324,7 +325,7 @@ struct MetadataLocation *get_remote_metadata(const char *repopath)
 
     // Parse downloaded repomd.xml
 
-    r_location = parse_repomd(tmp_repomd, repopath);
+    r_location = parse_repomd(tmp_repomd, repopath, ignore_sqlite);
     if (!r_location) {
         g_critical(MODULE"%s: repomd.xml parser failed on %s", __func__, tmp_repomd);
         goto get_remote_metadata_cleanup;
@@ -362,7 +363,7 @@ struct MetadataLocation *get_remote_metadata(const char *repopath)
 
     // Parse downloaded data
 
-    ret = get_local_metadata(tmp_dir);
+    ret = get_local_metadata(tmp_dir, ignore_sqlite);
     if (ret) {
         ret->tmp_dir = g_strdup(tmp_dir);
     }
@@ -383,7 +384,7 @@ get_remote_metadata_cleanup:
 
 
 
-struct MetadataLocation *get_metadata_location(const char *in_repopath)
+struct MetadataLocation *get_metadata_location(const char *in_repopath, int ignore_sqlite)
 {
     struct MetadataLocation *ret = NULL;
 
@@ -402,13 +403,13 @@ struct MetadataLocation *get_metadata_location(const char *in_repopath)
         g_str_has_prefix(repopath, "https://"))
     {
         // Download data via curl
-        ret = get_remote_metadata(repopath);
+        ret = get_remote_metadata(repopath, ignore_sqlite);
     } else {
         const char *path = repopath;
         if (g_str_has_prefix(repopath, "file://")) {
             path = repopath+7;
         }
-        ret = get_local_metadata(path);
+        ret = get_local_metadata(path, ignore_sqlite);
     }
 
     if (ret) {
@@ -476,7 +477,7 @@ int remove_metadata(const char *repopath)
     int removed_files = 0;
 
     struct MetadataLocation *ml;
-    ml = get_metadata_location(repopath);
+    ml = get_metadata_location(repopath, 0);
     if (ml) {
         GSList *list = get_list_of_md_locations(ml);
         GSList *element;
@@ -486,7 +487,8 @@ int remove_metadata(const char *repopath)
 
             g_debug(MODULE"%s: Removing: %s (path obtained from repomd.xml)", __func__, path);
             if (g_remove(path) == -1) {
-                g_warning(MODULE"%s: remove_old_metadata: Cannot remove %s", __func__, path);
+                // g_warning(MODULE"%s: remove_old_metadata: Cannot remove %s", __func__, path);
+                ;
             } else {
                 removed_files++;
             }

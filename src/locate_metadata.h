@@ -46,9 +46,10 @@ struct MetadataLocation {
  * into a temporary directory and removed when the free_metadata_location()
  * is called on the MetadataLocation.
  * @param repopath      path to directory with repodata/ subdirectory
+ * @param ignore_sqlite if ignore_sqlite != 0 sqlite dbs are ignored
  * @return              filled MetadataLocation structure
  */
-struct MetadataLocation *get_metadata_location(const char *repopath);
+struct MetadataLocation *get_metadata_location(const char *repopath, int ignore_sqlite);
 
 /** \ingroup locate_metadata
  * Free MetadataLocation. If repodata were downloaded remove

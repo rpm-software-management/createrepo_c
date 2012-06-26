@@ -864,7 +864,7 @@ main(int argc, char **argv)
     gboolean download_failed = FALSE;
 
     for (element = cmd_options->repo_list; element; element = g_slist_next(element)) {
-        struct MetadataLocation *loc = get_metadata_location((gchar *) element->data);
+        struct MetadataLocation *loc = get_metadata_location((gchar *) element->data, 1);
         if (!loc) {
             download_failed = TRUE;
             break;
@@ -903,7 +903,7 @@ main(int argc, char **argv)
     if (cmd_options->noarch_repo_url) {
         struct MetadataLocation *noarch_ml;
 
-        noarch_ml = get_metadata_location(cmd_options->noarch_repo_url);
+        noarch_ml = get_metadata_location(cmd_options->noarch_repo_url, 1);
         noarch_hashtable = new_metadata_hashtable();
 
         // Base paths in output of original createrepo doesn't have trailing '/'

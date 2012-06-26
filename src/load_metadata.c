@@ -1160,7 +1160,7 @@ int locate_and_load_xml_metadata(GHashTable *hashtable, const char *repopath, Ha
     int ret;
     struct MetadataLocation *ml;
 
-    ml = get_metadata_location(repopath);
+    ml = get_metadata_location(repopath, 1);
     ret = load_xml_metadata(hashtable, ml, key);
     free_metadata_location(ml);
 

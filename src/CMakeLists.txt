@@ -1,7 +1,7 @@
 SET (createrepo_c_SRCS
     compression_wrapper.c load_metadata.c misc.c package.c parsehdr.c parsepkg.c
     repomd.c xml_dump.c xml_dump_filelists.c xml_dump_other.c xml_dump_primary.c
-    locate_metadata.c)
+    locate_metadata.c sqlite.c)
 
 ADD_LIBRARY(libcreaterepo_c SHARED ${createrepo_c_SRCS})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${ZLIB_LIBRARY})
@@ -13,6 +13,7 @@ TARGET_LINK_LIBRARIES(libcreaterepo_c ${LIBXML2_LIBRARIES})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${EXPAT_LIBRARIES})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${CURL_LIBRARY})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${LZMA_LIBRARIES})
+TARGET_LINK_LIBRARIES(libcreaterepo_c ${SQLITE3_LIBRARIES})
 
 SET_TARGET_PROPERTIES(libcreaterepo_c PROPERTIES OUTPUT_NAME "createrepo_c" SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR} VERSION "${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
 

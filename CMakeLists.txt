@@ -30,6 +30,7 @@ find_package(LibXml2 REQUIRED)
 find_package(Libmagic REQUIRED)
 find_package(CURL REQUIRED)
 find_package(LZMA REQUIRED)
+find_package(Sqlite3 REQUIRED)
 
 
 # Check libraries
@@ -69,6 +70,10 @@ ENDIF (NOT CURL_FOUND)
 IF (NOT LZMA_FOUND)
     MESSAGE(FATAL_ERROR "No LZMA (xz) library installed")
 ENDIF (NOT LZMA_FOUND)
+
+IF (NOT SQLITE3_FOUND)
+    MESSAGE(FATAL_ERROR "No Sqlite3 library installed")
+ENDIF (NOT SQLITE3_FOUND)
 
 # Add include dirs
 

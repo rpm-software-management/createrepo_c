@@ -92,7 +92,7 @@ Package *package_from_file(const char *filename, ChecksumType checksum_type,
             checksum_type_str = "sha256";
             break;
         default:
-            g_critical(MODULE"%s: Unknown checksum type", __func__);
+            g_warning(MODULE"%s: Unknown checksum type", __func__);
             return result;
             break;
     };
@@ -103,7 +103,7 @@ Package *package_from_file(const char *filename, ChecksumType checksum_type,
     FD_t fd = NULL;
     fd = Fopen(filename, "r.ufdio");
     if (!fd) {
-        g_critical(MODULE"%s: Fopen failed %s", __func__, strerror(errno));
+        g_warning(MODULE"%s: Fopen of %s failed %s", __func__, filename, strerror(errno));
         return result;
     }
 
@@ -121,7 +121,7 @@ Package *package_from_file(const char *filename, ChecksumType checksum_type,
                 g_debug(MODULE"%s:  %s: Signature is OK, but key is not trusted.", __func__, filename);
                 break;
             default:
-                g_critical(MODULE"%s: rpmReadPackageFile() error (%s)", __func__, strerror(errno));
+                g_warning(MODULE"%s: rpmReadPackageFile() error (%s)", __func__, strerror(errno));
                 return result;
         }
     }
@@ -140,7 +140,7 @@ Package *package_from_file(const char *filename, ChecksumType checksum_type,
     if (!stat_buf) {
         struct stat stat_buf_own;
         if (stat(filename, &stat_buf_own) == -1) {
-            g_critical(MODULE"%s: stat() error (%s)", __func__, strerror(errno));
+            g_warning(MODULE"%s: stat() error (%s)", __func__, strerror(errno));
             return result;
         }
         mtime  = stat_buf_own.st_mtime;
@@ -202,7 +202,7 @@ struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checks
             checksum_type_str = "sha256";
             break;
         default:
-            g_critical(MODULE"%s: Unknown checksum type", __func__);
+            g_warning(MODULE"%s: Unknown checksum type", __func__);
             return result;
             break;
     };
@@ -213,7 +213,7 @@ struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checks
     FD_t fd = NULL;
     fd = Fopen(filename, "r.ufdio");
     if (!fd) {
-        g_critical(MODULE"%s: Fopen failed %s", __func__, strerror(errno));
+        g_warning(MODULE"%s: Fopen failed %s", __func__, strerror(errno));
         return result;
     }
 
@@ -231,7 +231,7 @@ struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checks
                 g_debug(MODULE"%s:  %s: Signature is OK, but key is not trusted.", __func__, filename);
                 break;
             default:
-                g_critical(MODULE"%s: rpmReadPackageFile() error (%s)", __func__, strerror(errno));
+                g_warning(MODULE"%s: rpmReadPackageFile() error (%s)", __func__, strerror(errno));
                 return result;
         }
     }
@@ -250,7 +250,7 @@ struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checks
     if (!stat_buf) {
         struct stat stat_buf_own;
         if (stat(filename, &stat_buf_own) == -1) {
-            g_critical(MODULE"%s: stat() error (%s)", __func__, strerror(errno));
+            g_warning(MODULE"%s: stat() error (%s)", __func__, strerror(errno));
             return result;
         }
         mtime  = stat_buf_own.st_mtime;

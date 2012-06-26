@@ -9,3 +9,7 @@ ADD_DEPENDENCIES(tests testload_metadata)
 ADD_EXECUTABLE(testmisc testmisc.c)
 TARGET_LINK_LIBRARIES(testmisc libcreaterepo_c ${GLIB2_LIBRARIES})
 ADD_DEPENDENCIES(tests testmisc)
+
+ADD_EXECUTABLE(testsqlite testsqlite.c)
+TARGET_LINK_LIBRARIES(testsqlite libcreaterepo_c ${GLIB2_LIBRARIES})
+ADD_DEPENDENCIES(tests testsqlite)

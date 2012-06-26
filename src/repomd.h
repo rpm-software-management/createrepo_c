@@ -27,49 +27,89 @@
 /** \defgroup repomd            Repomd API.
  */
 
-
-/** \ingroup repomd
- * Structure representing repomd.xml.
+/** \ingroup misc
+ * RepomdRecord object
  */
-struct repomdResult {
-    char *pri_xml_location;             /*!< location of primary.xml */
-    char *fil_xml_location;             /*!< location of filelists.xml */
-    char *oth_xml_location;             /*!< location of other.xml */
-    char *pri_sqlite_location;          /*!< location of primary.sqlite */
-    char *fil_sqlite_location;          /*!< location of filelists.sqlite */
-    char *oth_sqlite_location;          /*!< location of other.sqlite */
-    char *groupfile_location;           /*!< location of groupfile */
-    char *cgroupfile_location;          /*!< location of compressed groupfile */
-    char *update_info_location;         /*!< location of updateinfo.xml */
-    char *repomd_xml;                   /*!< xml representation of repomd_xml */
+typedef struct _RepomdRecord * RepomdRecord;
+
+/** \ingroup misc
+ * Internal representation of RepomdRecord object
+ */
+struct _RepomdRecord {
+    const char *location_href;  /*!< location of the file */
+    char *checksum;             /*!< checksum of file */
+    char *checksum_type;        /*!< checksum type */
+    char *checksum_open;        /*!< checksum of uncompressed file */
+    char *checksum_open_type;   /*!< checksum type of uncompressed file*/
+    long timestamp;             /*!< mtime of the file */
+    long size;                  /*!< size of file in bytes */
+    long size_open;             /*!< size of uncompressed file in bytes */
+    int db_ver;                 /*!< version of database */
+
+    GStringChunk *chunk;        /*!< string chunk for string from this structure*/
 };
 
 /** \ingroup repomd
- * Free repomdResult.
- * @param repomdResult          struct repomdReult
+ * Creates (alloc) new RepomdRecord object
+ * @param path                  path to the compressed file
  */
-void free_repomdresult(struct repomdResult *);
+RepomdRecord new_repomdrecord(const char *path);
 
 /** \ingroup repomd
- * Generate repomd.xml content and rename files (if rename_to_unique != 0).
- * @param path                  path to repository (to the directory contains repodata/ subdir)
- * @param rename_to_unique      rename files? - insert checksum into the metadata file names (=0 do not insert, !=0 insert)
- * @param pri_xml               location of compressed primary.xml (relative towards to the path)
- * @param fil_xml               location of compressed filelists.xml (relative towards to the path)
- * @param oth_xml               location of compressed other.xml (relative towards to the path)
- * @param pri_sqlite            location of compressed primary.sqlite (relative towards to the path)
- * @param fil_sqlite            location of compressed filelists.sqlite (relative towards to the path)
- * @param oth_sqlite            location of compressed other.sqlite (relative towards to the path)
- * @param groupfile             location of groupfile (non compressed!)
- * @param update_info           location of compressed update_info
- * @param checksum_type         type of checksum
- * @return                      repomdResult
+ * Destroy RepomdRecord object
+ * @param record                RepomdRecord object
  */
-struct repomdResult *xml_repomd(const char *path, int rename_to_unique, const char *pri_xml,
-                                const char *fil_xml, const char *oth_xml,
-                                const char *pri_sqlite, const char *fil_sqlite,
-                                const char *oth_sqlite, const char *groupfile,
-                                const char *update_info, ChecksumType *checksum_type,
-                                CompressionType groupfile_compression);
+void free_repomdrecord(RepomdRecord record);
+
+/** \ingroup repomd
+ * Fill unfilled items in the RepomdRecord (calculate checksums,
+ * get file size before/after compression, etc.).
+ * Note: For groupfile you shoud use process_groupfile function.
+ * @param base_path             path to repo (to directory with repodata subdir)
+ * @param record                RepomdRecord object
+ * @param checksum_type         type of checksum to use
+ */
+int fill_missing_data(const char *base_path, RepomdRecord record, ChecksumType *checksum_type);
+
+/** \ingroup repomd
+ * Analogue of fill_missing_data but for groupfile.
+ * Groupfile must be set with the path to existing non compressed groupfile.
+ * Compressed group file will be created and compressed_groupfile record updated.
+ * @param base_path             path to repo (to directory with repodata subdir)
+ * @groupfile                   RepomdRecord initialized to an existing groupfile
+ * @compressed_groupfile        a RepomdRecord object that will by filled
+ * @checksum_type               type of checksums
+ * @compression                 type of compression
+ */
+void process_groupfile(const char *base_path, RepomdRecord groupfile,
+                       RepomdRecord compressed_groupfile, ChecksumType *checksum_type,
+                       CompressionType compression);
+
+/** \ingroup repomd
+ * Add a hash as prefix to the filename.
+ * @base_path                   path to repo (to directory with repodata subdir)
+ * @record                      RepomdRecord of file to be renamed
+ */
+void rename_file(const char *base_path, RepomdRecord record);
+
+/** \ingroup repomd
+ * Generate repomd.xml content.
+ * @param path                  path to repository (to the directory contains repodata/ subdir)
+ * @param pri_xml               RepomdRecord of primary.xml.gz (relative towards to the path param)
+ * @param fil_xml               RepomdRecord of filelists.xml.gz (relative towards to the path param)
+ * @param oth_xml               RepomdRecord of other.xml.gz (relative towards to the path param)
+ * @param pri_sqlite            RepomdRecord of primary.sqlite.* (relative towards to the path param)
+ * @param fil_sqlite            RepomdRecord of filelists.sqlite.* (relative towards to the path param)
+ * @param oth_sqlite            RepomdRecord of other.sqlite.* (relative towards to the path param)
+ * @param groupfile             RepomdRecord of *.xml (relative towards to the path param)
+ * @param cgroupfile            RepomdRecord of *.xml.* (relative towards to the path param)
+ * @param update_info           RepomdRecord of updateinfo.xml.* (relative towards to the path param)
+ * @return                      string with repomd.xml content
+ */
+gchar * xml_repomd(const char *path, RepomdRecord pri_xml,
+                   RepomdRecord fil_xml, RepomdRecord oth_xml,
+                   RepomdRecord pri_sqlite, RepomdRecord fil_sqlite,
+                   RepomdRecord oth_sqlite, RepomdRecord groupfile,
+                   RepomdRecord cgroupfile, RepomdRecord update_info);
 
 #endif /* __C_CREATEREPOLIB_REPOMD_H__ */

@@ -58,7 +58,7 @@ typedef struct {
  * Package
  */
 typedef struct {
-    gint64 pkgKey;              /*!< not used */
+    gint64 pkgKey;              /*!< used while inserting into sqlite db */
     char *pkgId;                /*!< package hash */
     char *name;                 /*!< name */
     char *arch;                 /*!< architecture */

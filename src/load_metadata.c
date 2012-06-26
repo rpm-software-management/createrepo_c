@@ -117,6 +117,16 @@ void destroy_metadata_hashtable(GHashTable *hashtable)
 
 
 
+inline gchar *
+chunk_insert_len_or_null (GStringChunk *chunk, const gchar *str, gssize len) {
+    if (!str || len <= 0)
+        return NULL;
+
+    return g_string_chunk_insert_len(chunk, str, len);
+}
+
+
+
 // primary.xml parser handlers
 
 void pri_start_handler(void *data, const char *el, const char **attr) {
@@ -441,40 +451,40 @@ void pri_end_handler(void *data, const char *el) {
 
         switch (ppd->last_elem) {
             case NAME_ELEM:
-                pkg->name = g_string_chunk_insert_len(pkg->chunk, txt, txtlen);
+                pkg->name = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case ARCH_ELEM:
-                pkg->arch = g_string_chunk_insert_len(pkg->chunk, txt, txtlen);
+                pkg->arch = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case CHECKSUM_ELEM:
-                pkg->pkgId = g_string_chunk_insert_len(pkg->chunk, txt, txtlen);
+                pkg->pkgId = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case SUMMARY_ELEM:
-                pkg->summary = g_string_chunk_insert_len(pkg->chunk, txt, txtlen);
+                pkg->summary = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case DESCRIPTION_ELEM:
-                pkg->description = g_string_chunk_insert_len(pkg->chunk, txt, txtlen);
+                pkg->description = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case PACKAGER_ELEM:
-                pkg->rpm_packager = g_string_chunk_insert_len(pkg->chunk, txt, txtlen);
+                pkg->rpm_packager = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case URL_ELEM:
-                pkg->url = g_string_chunk_insert_len(pkg->chunk, txt, txtlen);
+                pkg->url = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case RPM_LICENSE_ELEM:
-                pkg->rpm_license = g_string_chunk_insert_len(pkg->chunk, txt, txtlen);
+                pkg->rpm_license = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case RPM_VENDOR_ELEM:
-                pkg->rpm_vendor = g_string_chunk_insert_len(pkg->chunk, txt, txtlen);
+                pkg->rpm_vendor = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case RPM_GROUP_ELEM:
-                pkg->rpm_group = g_string_chunk_insert_len(pkg->chunk, txt, txtlen);
+                pkg->rpm_group = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case RPM_BUILDHOST_ELEM:
-                pkg->rpm_buildhost = g_string_chunk_insert_len(pkg->chunk, txt, txtlen);
+                pkg->rpm_buildhost = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case RPM_SOURCERPM_ELEM:
-                pkg->rpm_sourcerpm = g_string_chunk_insert_len(pkg->chunk, txt, txtlen);
+                pkg->rpm_sourcerpm = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case FILE_ELEM:
             case FILE_DIR_ELEM:
@@ -677,7 +687,7 @@ void fil_end_handler(void *data, const char *el) {
                 file->path = g_string_chunk_insert_len(pkg->chunk, txt, (txtlen - strlen(filename)));
 
                 if (ppd->last_elem == FILE_ELEM) {
-                    file->type = NULL;
+                    file->type = NULL; // "file";
                 } else if (ppd->last_elem == FILE_DIR_ELEM) {
                     file->type = "dir";
                 } else if (ppd->last_elem == FILE_GHOST_ELEM) {

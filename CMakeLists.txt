@@ -152,6 +152,8 @@ SET(CMAKE_INSTALL_PREFIX "/")
 INSTALL(FILES README
               COPYING
               DESTINATION "/usr/share/doc/createrepo_c-${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
+INSTALL(FILES createrepo_c.bash
+              DESTINATION "/etc/bash_completion.d")
 
 
 # Target to generate API documentation with Doxygen

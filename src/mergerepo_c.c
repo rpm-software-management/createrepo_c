@@ -566,9 +566,9 @@ dump_merged_metadata(GHashTable *merged_hashtable, long packages,
 
     // Prepare sqlite if needed
 
-    gchar *pri_db_filename;
-    gchar *fil_db_filename;
-    gchar *oth_db_filename;
+    gchar *pri_db_filename = NULL;
+    gchar *fil_db_filename = NULL;
+    gchar *oth_db_filename = NULL;
     sqlite3 *pri_db = NULL;
     sqlite3 *fil_db = NULL;
     sqlite3 *oth_db = NULL;

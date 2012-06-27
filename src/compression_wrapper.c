@@ -51,7 +51,8 @@
 #define GZ_BUFFER_SIZE          (1024*128)
 
 #define BZ2_VERBOSITY           0
-#define BZ2_WORK_FACTOR         30
+#define BZ2_BLOCKSIZE100K       5  // Higher gives better compression but takes more memory
+#define BZ2_WORK_FACTOR         0  // 0 == default == 30 (available values 0-250)
 #define BZ2_USE_LESS_MEMORY     0
 #define BZ2_SKIP_FFLUSH         0
 
@@ -279,7 +280,7 @@ CW_FILE *cw_open(const char *filename, OpenMode mode, CompressionType comtype)
             if (mode == CW_MODE_WRITE) {
                 f = fopen(filename, "wb");
                 if (f) {
-                    file->FILE = (void *) BZ2_bzWriteOpen(NULL, f, 2, BZ2_VERBOSITY, BZ2_WORK_FACTOR);
+                    file->FILE = (void *) BZ2_bzWriteOpen(NULL, f, BZ2_BLOCKSIZE100K, BZ2_VERBOSITY, BZ2_WORK_FACTOR);
                 }
             } else {
                 f = fopen(filename, "rb");

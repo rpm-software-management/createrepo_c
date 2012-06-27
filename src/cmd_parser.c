@@ -18,6 +18,7 @@
 
 #include <string.h>
 #include "cmd_parser.h"
+#include "compression_wrapper.h"
 #include "misc.h"
 
 
@@ -27,10 +28,14 @@
 #define DEFAULT_UNIQUE_MD_FILENAMES     TRUE
 
 
-struct CmdOptions _cmd_options = {   .changelog_limit = DEFAULT_CHANGELOG_LIMIT,
-                    .checksum = NULL,
-                    .workers =  DEFAULT_WORKERS,
-                    .unique_md_filenames = DEFAULT_UNIQUE_MD_FILENAMES };
+struct CmdOptions _cmd_options = {
+        .changelog_limit     = DEFAULT_CHANGELOG_LIMIT,
+        .checksum            = NULL,
+        .workers             = DEFAULT_WORKERS,
+        .unique_md_filenames = DEFAULT_UNIQUE_MD_FILENAMES,
+        .checksum_type       = PKG_CHECKSUM_SHA256,
+        .compression_type    = UNKNOWN_COMPRESSION
+    };
 
 
 
@@ -91,6 +96,8 @@ static GOptionEntry cmd_entries[] =
       "Number of workers to spawn to read rpms.", NULL },
     { "xz", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.xz_compression),
       "Use xz for repodata compression.", NULL },
+    { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type),
+      "Which compression type to use.", "<compress_type>" },
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
 };
 
@@ -157,11 +164,24 @@ gboolean check_arguments(struct CmdOptions *options)
             return FALSE;
         }
         g_string_free(checksum_str, TRUE);
-    } else {
-        options->checksum = g_strdup("sha256");
-        options->checksum_type = PKG_CHECKSUM_SHA256;
     }
 
+    // Check and set compression type
+    if (options->compress_type) {
+        GString *compress_str = g_string_ascii_down(g_string_new(options->compress_type));
+        if (!strcmp(compress_str->str, "gz")) {
+            options->compression_type = GZ_COMPRESSION;
+        } else if (!strcmp(compress_str->str, "bz2")) {
+            options->compression_type = BZ2_COMPRESSION;
+        } else if (!strcmp(compress_str->str, "xz")) {
+            options->compression_type = XZ_COMPRESSION;
+        } else {
+            g_string_free(compress_str, TRUE);
+            g_critical("Unknown/Unsupported compression type \"%s\"", options->compress_type);
+            return FALSE;
+        }
+        g_string_free(compress_str, TRUE);
+    }
 
     int x;
 
@@ -250,6 +270,7 @@ void free_options(struct CmdOptions *options)
     g_free(options->outputdir);
     g_free(options->pkglist);
     g_free(options->checksum);
+    g_free(options->compress_type);
     g_free(options->groupfile);
     g_free(options->groupfile_fullpath);
 

@@ -50,9 +50,9 @@ struct UserData {
     DbFilelistsStatements fil_statements;
     DbOtherStatements oth_statements;
     int changelog_limit;
-    char *location_base;
+    const char *location_base;
     int repodir_name_len;
-    char *checksum_type_str;
+    const char *checksum_type_str;
     ChecksumType checksum_type;
     gboolean quiet;
     gboolean verbose;
@@ -137,9 +137,9 @@ void dumper_thread(gpointer data, gpointer user_data) {
     struct PoolTask *task = (struct PoolTask *) data;
 
     // get location_href without leading part of path (path to repo) including '/' char
-    char *location_href = (gchar *) task->full_path + udata->repodir_name_len;
+    const char *location_href = task->full_path + udata->repodir_name_len;
 
-    char *location_base = udata->location_base;
+    const char *location_base = udata->location_base;
 
     // Get stat info about file
     struct stat stat_buf;
@@ -179,8 +179,8 @@ void dumper_thread(gpointer data, gpointer user_data) {
 
         if (old_used) {
             // We have usable old data, but we have to set locations (href and base)
-            md->location_href = location_href;
-            md->location_base = location_base;
+            md->location_href = (char *) location_href;
+            md->location_base = (char *) location_base;
         }
     }
 
@@ -418,16 +418,26 @@ int main(int argc, char **argv) {
     }
 
 
-    // Create and open new compressed files
+    // Setup compression types
 
     const char *sqlite_compression_suffix = NULL;
     CompressionType sqlite_compression = BZ2_COMPRESSION;
     CompressionType groupfile_compression = GZ_COMPRESSION;
+
+    if (cmd_options->compression_type != UNKNOWN_COMPRESSION) {
+        sqlite_compression    = cmd_options->compression_type;
+        groupfile_compression = cmd_options->compression_type;
+    }
+
     if (cmd_options->xz_compression) {
-        sqlite_compression = XZ_COMPRESSION;
+        sqlite_compression    = XZ_COMPRESSION;
         groupfile_compression = XZ_COMPRESSION;
     }
+
     sqlite_compression_suffix = get_suffix(sqlite_compression);
+
+
+    // Create and open new compressed files
 
     CW_FILE *pri_cw_file;
     CW_FILE *fil_cw_file;
@@ -510,7 +520,7 @@ int main(int argc, char **argv) {
     user_data.oth_statements    = oth_statements;
     user_data.changelog_limit   = cmd_options->changelog_limit;
     user_data.location_base     = cmd_options->location_base;
-    user_data.checksum_type_str = cmd_options->checksum;
+    user_data.checksum_type_str = get_checksum_name_str(cmd_options->checksum_type);
     user_data.checksum_type     = cmd_options->checksum_type;
     user_data.quiet             = cmd_options->quiet;
     user_data.verbose           = cmd_options->verbose;

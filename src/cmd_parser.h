@@ -21,6 +21,7 @@
 
 #include <glib.h>
 #include "constants.h"
+#include "compression_wrapper.h"
 
 
 /**
@@ -49,6 +50,7 @@ struct CmdOptions {
     gboolean database;          /*!< create sqlite database metadata - Not implemented yet!!! :( */
     gboolean no_database;       /*!< do not create database - Implemented ;) */
     char *checksum;             /*!< type of checksum */
+    char *compress_type;        /*!< which compression type to use */
     gboolean skip_symlinks;     /*!< ignore symlinks of packages */
     int changelog_limit;        /*!< number of changelog messages in other.(xml|sqlite) */
     gboolean unique_md_filenames;       /*!< include the file checksums in the filenames */
@@ -63,6 +65,7 @@ struct CmdOptions {
     GSList *include_pkgs;       /*!< list of packages to include (build from includepkg options and pkglist file) */
     GSList *l_update_md_paths;  /*!< list of repos from update_md_paths (remote repos are downloaded) */
     ChecksumType checksum_type; /*!< checksum type */
+    CompressionType compression_type; /*!< compression type */
 
 };
 

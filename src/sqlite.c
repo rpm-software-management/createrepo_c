@@ -320,6 +320,7 @@ db_tweak(sqlite3 *db, GError **err)
 
     // Do not wait for disk writes to be fully
     // written to disk before continuing
+
     sqlite3_exec (db, "PRAGMA synchronous = OFF", NULL, NULL, NULL);
 
     sqlite3_exec (db, "PRAGMA journal_mode = MEMORY", NULL, NULL, NULL);
@@ -485,6 +486,12 @@ open_db(const char *path, DatabaseType db_type, GError **err)
 
     sqlite3_exec(db, "BEGIN", NULL, NULL, NULL);
 
+    db_tweak(db, &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        return db;
+    }
+
     db_create_dbinfo_table(db, &tmp_err);
     if (tmp_err) {
         g_propagate_error(err, tmp_err);
@@ -503,14 +510,6 @@ open_db(const char *path, DatabaseType db_type, GError **err)
         g_propagate_error(err, tmp_err);
         return db;
     }
-
-    db_tweak(db, &tmp_err);
-    if (tmp_err) {
-        g_propagate_error(err, tmp_err);
-        return db;
-    }
-
-//    sqlite3_exec (db, "COMMIT", NULL, NULL, NULL);
 
     return db;
 }

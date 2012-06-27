@@ -76,7 +76,7 @@ static GOptionEntry cmd_entries[] =
     { "version", 'V', 0, G_OPTION_ARG_NONE, &(_cmd_options.version),
       "Output version.", NULL},
     { "database", 'd', 0, G_OPTION_ARG_NONE, &(_cmd_options.database),
-      "Generate sqlite databases for use with yum. NOT IMPLEMENTED!", NULL },
+      "Generate sqlite databases for use with yum.", NULL },
     { "no-database", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.no_database),
       "Do not generate sqlite databases in the repository.", NULL },
     { "skip-symlinks", 'S', 0, G_OPTION_ARG_NONE, &(_cmd_options.skip_symlinks),

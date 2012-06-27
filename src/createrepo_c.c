@@ -83,6 +83,36 @@ void black_hole_log_function (const gchar *log_domain, GLogLevelFlags log_level,
 }
 
 
+
+void log_function (const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data)
+{
+    UNUSED(user_data);
+
+    if (log_domain)
+        printf("%s: ", log_domain);
+
+    switch(log_level) {
+        case G_LOG_LEVEL_ERROR:
+            printf("Error: %s\n", message);
+            break;
+        case G_LOG_LEVEL_CRITICAL:
+            printf("Critical: %s\n", message);
+            break;
+        case G_LOG_LEVEL_WARNING:
+            printf("Warning: %s\n", message);
+            break;
+        case G_LOG_LEVEL_DEBUG:
+            printf("- %s\n", message);
+            break;
+        default:
+        printf("> %s\n", message);
+    }
+
+    return;
+}
+
+
+
 // Global variables used by signal handler
 char *tmp_repodata_path = NULL;
 
@@ -303,6 +333,8 @@ int main(int argc, char **argv) {
 
     // Set logging stuff
 
+    g_log_set_default_handler (log_function, NULL);
+
     if (cmd_options->quiet) {
         // Quiet mode
         GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
@@ -310,7 +342,9 @@ int main(int argc, char **argv) {
         g_log_set_handler("C_CREATEREPOLIB", levels, black_hole_log_function, NULL);
     } else if (cmd_options->verbose) {
         // Verbose mode
-        ;
+        GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
+        g_log_set_handler(NULL, levels, log_function, NULL);
+        g_log_set_handler("C_CREATEREPOLIB", levels, log_function, NULL);
     } else {
         // Standard mode
         GLogLevelFlags levels = G_LOG_LEVEL_DEBUG;
@@ -384,6 +418,7 @@ int main(int argc, char **argv) {
         old_metadata = new_metadata_hashtable();
 
         // Load data from output dir if output dir is specified
+        // This is default behaviour of classic createrepo
         if (cmd_options->outputdir) {
             ret = locate_and_load_xml_metadata(old_metadata, out_dir, HT_KEY_FILENAME);
             if (ret == LOAD_METADATA_OK) {
@@ -394,6 +429,8 @@ int main(int argc, char **argv) {
         }
 
         // Load local repodata
+        // Classic createrepo doesn't load this metadata if --outputdir option is used,
+        // but createrepo_c does.
         ret = locate_and_load_xml_metadata(old_metadata, in_dir, HT_KEY_FILENAME);
         if (ret == LOAD_METADATA_OK) {
             g_debug("Old metadata from: %s - loaded", in_dir);

@@ -22,6 +22,7 @@
 #include <curl/curl.h>
 #include <string.h>
 #include <errno.h>
+#include "logging.h"
 #include "misc.h"
 #include "locate_metadata.h"
 

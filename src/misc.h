@@ -76,7 +76,15 @@ struct EVR string_to_version(const char *string, GStringChunk *chunk);
  * @param filename      full path to file
  * @return              1 if it is primary file, otherwise 0
  */
-inline int is_primary(const char *filename);
+static inline int is_primary(const char *filename) {
+    if (!strncmp(filename, "/etc/", 5))
+        return 1;
+    if (!strcmp(filename, "/usr/lib/sendmail"))
+        return 1;
+    if (strstr(filename, "bin/"))
+        return 1;
+    return 0;
+};
 
 /** \ingroup misc
  * Compute file checksum.

@@ -154,11 +154,11 @@ string_to_version(const char *string, GStringChunk *chunk)
 }
 
 
-
+/*
 inline int
 is_primary(const char *filename)
 {
-/*
+
     This optimal piece of code cannot be used because of yum...
     We must match any string that contains "bin/" in dirname
 
@@ -199,7 +199,7 @@ is_primary(const char *filename)
             return 1;
         }
     }
-*/
+
 
     if (!strncmp(filename, "/etc/", 5)) {
         return 1;
@@ -215,7 +215,7 @@ is_primary(const char *filename)
 
     return 0;
 }
-
+*/
 
 
 char *

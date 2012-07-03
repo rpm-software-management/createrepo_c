@@ -13,7 +13,7 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
 #define _XOPEN_SOURCE 500
@@ -38,7 +38,8 @@
 #define BUFFER_SIZE     4096
 
 
-const char *flag_to_string(gint64 flags)
+const char *
+flag_to_string(gint64 flags)
 {
     flags &= 0xf;
     switch(flags) {
@@ -66,13 +67,15 @@ const char *flag_to_string(gint64 flags)
  *
  * In case chunk param is NULL:
  * Returned structure had all strings malloced!!!
- * Be so kind and don't forget use free() for all its element, before end of structure lifecycle.
+ * Be so kind and don't forget use free() for all its element, before end of
+ * structure lifecycle.
  *
  * In case chunk is pointer to a GStringChunk:
  * Returned structure had all string inserted in the passed chunk.
  *
  */
-struct EVR string_to_version(const char *string, GStringChunk *chunk)
+struct EVR
+string_to_version(const char *string, GStringChunk *chunk)
 {
     struct EVR evr;
     evr.epoch = NULL;
@@ -133,7 +136,8 @@ struct EVR string_to_version(const char *string, GStringChunk *chunk)
         size_t release_len = strlen(ptr2+1);
         if (release_len) {
             if (chunk) {
-                evr.release = g_string_chunk_insert_len(chunk, ptr2+1, release_len);
+                evr.release = g_string_chunk_insert_len(chunk, ptr2+1,
+                                                        release_len);
             } else {
                 evr.release = g_strndup(ptr2+1, release_len);
             }
@@ -151,7 +155,8 @@ struct EVR string_to_version(const char *string, GStringChunk *chunk)
 
 
 
-inline int is_primary(const char *filename)
+inline int
+is_primary(const char *filename)
 {
 /*
     This optimal piece of code cannot be used because of yum...
@@ -213,7 +218,8 @@ inline int is_primary(const char *filename)
 
 
 
-char *compute_file_checksum(const char *filename, ChecksumType type)
+char *
+compute_file_checksum(const char *filename, ChecksumType type)
 {
     GChecksumType gchecksumtype;
 
@@ -252,7 +258,8 @@ char *compute_file_checksum(const char *filename, ChecksumType type)
 
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
-        g_critical(MODULE"%s: Cannot open %s (%s)", __func__, filename, strerror(errno));
+        g_critical(MODULE"%s: Cannot open %s (%s)", __func__, filename,
+                                                    strerror(errno));
         return NULL;
     }
 
@@ -264,7 +271,8 @@ char *compute_file_checksum(const char *filename, ChecksumType type)
 
     while (1) {
         size_t input_len;
-        input_len = fread((void *) buffer, sizeof(unsigned char), BUFFER_SIZE, fp);
+        input_len = fread((void *) buffer, sizeof(unsigned char),
+                          BUFFER_SIZE, fp);
         g_checksum_update(checksum, (const guchar *) buffer, input_len);
         if (input_len < BUFFER_SIZE) {
             break;
@@ -280,7 +288,8 @@ char *compute_file_checksum(const char *filename, ChecksumType type)
     g_checksum_free(checksum);
 
     if (!checksum_str) {
-        g_critical(MODULE"%s: Cannot get checksum %s (low memory?)", __func__, filename);
+        g_critical(MODULE"%s: Cannot get checksum %s (low memory?)", __func__,
+                   filename);
     }
 
     return checksum_str;
@@ -290,10 +299,12 @@ char *compute_file_checksum(const char *filename, ChecksumType type)
 
 #define VAL_LEN         4       // Len of numeric values in rpm
 
-struct HeaderRangeStruct get_header_byte_range(const char *filename)
+struct HeaderRangeStruct
+get_header_byte_range(const char *filename)
 {
     /* Values readed by fread are 4 bytes long and stored as big-endian.
-     * So there is htonl function to convert this big-endian number into host byte order.
+     * So there is htonl function to convert this big-endian number into host
+     * byte order.
      */
 
     struct HeaderRangeStruct results;
@@ -306,7 +317,8 @@ struct HeaderRangeStruct get_header_byte_range(const char *filename)
 
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
-        g_debug(MODULE"%s: Cannot open file %s (%s)", __func__, filename, strerror(errno));
+        g_debug(MODULE"%s: Cannot open file %s (%s)", __func__, filename,
+                strerror(errno));
         return results;
     }
 
@@ -314,7 +326,8 @@ struct HeaderRangeStruct get_header_byte_range(const char *filename)
     // Get header range
 
     if (fseek(fp, 104, SEEK_SET) != 0) {
-        g_debug(MODULE"%s: fseek fail on %s (%s)", __func__, filename, strerror(errno));
+        g_debug(MODULE"%s: fseek fail on %s (%s)", __func__, filename,
+                strerror(errno));
         fclose(fp);
         return results;
     }
@@ -352,7 +365,8 @@ struct HeaderRangeStruct get_header_byte_range(const char *filename)
     // Check sanity
 
     if (hdrend < hdrstart) {
-        g_debug(MODULE"%s: sanity check fail on %s (%d > %d))", __func__, filename, hdrstart, hdrend);
+        g_debug(MODULE"%s: sanity check fail on %s (%d > %d))", __func__,
+                filename, hdrstart, hdrend);
         return results;
     }
 
@@ -363,7 +377,8 @@ struct HeaderRangeStruct get_header_byte_range(const char *filename)
 }
 
 
-const char *get_checksum_name_str(ChecksumType type)
+const char *
+get_checksum_name_str(ChecksumType type)
 {
     char *name = NULL;
 
@@ -386,7 +401,8 @@ const char *get_checksum_name_str(ChecksumType type)
 }
 
 
-char *get_filename(const char *filepath)
+char *
+get_filename(const char *filepath)
 {
     char *filename = NULL;
 
@@ -407,7 +423,8 @@ char *get_filename(const char *filepath)
 }
 
 
-int copy_file(const char *src, const char *in_dst)
+int
+copy_file(const char *src, const char *in_dst)
 {
     size_t readed;
     char buf[BUFFER_SIZE];
@@ -427,26 +444,30 @@ int copy_file(const char *src, const char *in_dst)
     }
 
     if ((orig = fopen(src, "r")) == NULL) {
-        g_debug(MODULE"%s: Cannot open source file %s (%s)", __func__, src, strerror(errno));
+        g_debug(MODULE"%s: Cannot open source file %s (%s)", __func__, src,
+                strerror(errno));
         return CR_COPY_ERR;
     }
 
     if ((new = fopen(dst, "w")) == NULL) {
-        g_debug(MODULE"%s: Cannot open destination file %s (%s)", __func__, dst, strerror(errno));
+        g_debug(MODULE"%s: Cannot open destination file %s (%s)", __func__, dst,
+                strerror(errno));
         fclose(orig);
         return CR_COPY_ERR;
     }
 
     while ((readed = fread(buf, 1, BUFFER_SIZE, orig)) > 0) {
         if (fwrite(buf, 1, readed, new) != readed) {
-            g_debug(MODULE"%s: Error while copy %s -> %s (%s)", __func__, src, dst, strerror(errno));
+            g_debug(MODULE"%s: Error while copy %s -> %s (%s)", __func__, src,
+                    dst, strerror(errno));
             fclose(new);
             fclose(orig);
             return CR_COPY_ERR;
         }
 
         if (readed != BUFFER_SIZE && ferror(orig)) {
-            g_debug(MODULE"%s: Error while copy %s -> %s (%s)", __func__, src, dst, strerror(errno));
+            g_debug(MODULE"%s: Error while copy %s -> %s (%s)", __func__, src,
+                    dst, strerror(errno));
             fclose(new);
             fclose(orig);
             return CR_COPY_ERR;
@@ -465,7 +486,8 @@ int copy_file(const char *src, const char *in_dst)
 
 
 
-int compress_file(const char *src, const char *in_dst, CompressionType compression)
+int
+compress_file(const char *src, const char *in_dst, CompressionType compression)
 {
     int readed;
     char buf[BUFFER_SIZE];
@@ -506,7 +528,8 @@ int compress_file(const char *src, const char *in_dst, CompressionType compressi
     }
 
     if ((orig = fopen(src, "r")) == NULL) {
-        g_debug(MODULE"%s: Cannot open source file %s (%s)", __func__, src, strerror(errno));
+        g_debug(MODULE"%s: Cannot open source file %s (%s)", __func__, src,
+                strerror(errno));
         return CR_COPY_ERR;
     }
 
@@ -525,7 +548,8 @@ int compress_file(const char *src, const char *in_dst, CompressionType compressi
         }
 
         if (readed != BUFFER_SIZE && ferror(orig)) {
-            g_debug(MODULE"%s: Error while copy %s -> %s (%s)", __func__, src, dst, strerror(errno));
+            g_debug(MODULE"%s: Error while copy %s -> %s (%s)", __func__, src,
+                    dst, strerror(errno));
             cw_close(new);
             fclose(orig);
             return CR_COPY_ERR;
@@ -544,7 +568,8 @@ int compress_file(const char *src, const char *in_dst, CompressionType compressi
 
 
 
-void download(CURL *handle, const char *url, const char *in_dst, char **error)
+void
+download(CURL *handle, const char *url, const char *in_dst, char **error)
 {
     CURLcode rcode;
     FILE *file = NULL;
@@ -573,7 +598,8 @@ void download(CURL *handle, const char *url, const char *in_dst, char **error)
     // Set URL
 
     if (curl_easy_setopt(handle, CURLOPT_URL, url) != CURLE_OK) {
-        *error = g_strdup_printf(MODULE"%s: curl_easy_setopt(CURLOPT_URL) error", __func__);
+        *error = g_strdup_printf(MODULE"%s: curl_easy_setopt(CURLOPT_URL) error",
+                                 __func__);
         fclose(file);
         remove(dst);
         g_free(dst);
@@ -584,7 +610,9 @@ void download(CURL *handle, const char *url, const char *in_dst, char **error)
     // Set output file descriptor
 
     if (curl_easy_setopt(handle, CURLOPT_WRITEDATA, file) != CURLE_OK) {
-        *error = g_strdup_printf(MODULE"%s: curl_easy_setopt(CURLOPT_WRITEDATA) error", __func__);
+        *error = g_strdup_printf(MODULE
+                        "%s: curl_easy_setopt(CURLOPT_WRITEDATA) error",
+                         __func__);
         fclose(file);
         remove(dst);
         g_free(dst);
@@ -593,7 +621,8 @@ void download(CURL *handle, const char *url, const char *in_dst, char **error)
 
     rcode = curl_easy_perform(handle);
     if (rcode != 0) {
-        *error = g_strdup_printf(MODULE"%s: curl_easy_perform() error: %s", __func__, curl_easy_strerror(rcode));
+        *error = g_strdup_printf(MODULE"%s: curl_easy_perform() error: %s",
+                                 __func__, curl_easy_strerror(rcode));
         fclose(file);
         remove(dst);
         g_free(dst);
@@ -609,7 +638,8 @@ void download(CURL *handle, const char *url, const char *in_dst, char **error)
 
 
 
-int better_copy_file(const char *src, const char *in_dst)
+int
+better_copy_file(const char *src, const char *in_dst)
 {
     if (!strstr(src, "://")) {
         // Probably local path
@@ -621,7 +651,8 @@ int better_copy_file(const char *src, const char *in_dst)
     download(handle, src, in_dst, &error);
     curl_easy_cleanup(handle);
     if (error) {
-        g_debug(MODULE"%s: Error while downloading %s: %s", __func__, src, error);
+        g_debug(MODULE"%s: Error while downloading %s: %s", __func__, src,
+                error);
         return CR_COPY_ERR;
     }
 
@@ -629,7 +660,9 @@ int better_copy_file(const char *src, const char *in_dst)
 }
 
 
-int remove_dir_cb(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf)
+int
+remove_dir_cb(const char *fpath, const struct stat *sb, int typeflag,
+              struct FTW *ftwbuf)
 {
     UNUSED(sb);
     UNUSED(typeflag);
@@ -642,14 +675,16 @@ int remove_dir_cb(const char *fpath, const struct stat *sb, int typeflag, struct
 }
 
 
-int remove_dir(const char *path)
+int
+remove_dir(const char *path)
 {
     return nftw(path, remove_dir_cb, 64, FTW_DEPTH | FTW_PHYS);
 }
 
 
 // Return path with exactly one trailing '/'
-char *normalize_dir_path(const char *path)
+char *
+normalize_dir_path(const char *path)
 {
     char *normalized = NULL;
 
@@ -674,7 +709,8 @@ char *normalize_dir_path(const char *path)
 }
 
 
-struct Version str_to_version(const char *str)
+struct Version
+str_to_version(const char *str)
 {
     char *endptr;
     const char *ptr = str;
@@ -747,7 +783,8 @@ struct Version str_to_version(const char *str)
 // 0 - versions are same
 // 1 - first string is bigger version
 // 2 - second string is bigger version
-int cmp_version_string(const char* str1, const char *str2)
+int
+cmp_version_string(const char* str1, const char *str2)
 {
     struct Version ver1, ver2;
 
@@ -784,4 +821,46 @@ int cmp_version_string(const char* str1, const char *str2)
     g_free(ver2.suffix);
 
     return 0;
+}
+
+
+void
+black_hole_log_function (const gchar *log_domain, GLogLevelFlags log_level,
+                         const gchar *message, gpointer user_data)
+{
+    UNUSED(log_domain);
+    UNUSED(log_level);
+    UNUSED(message);
+    UNUSED(user_data);
+    return;
+}
+
+
+void
+log_function (const gchar *log_domain, GLogLevelFlags log_level,
+              const gchar *message, gpointer user_data)
+{
+    UNUSED(user_data);
+
+    if (log_domain)
+        printf("%s: ", log_domain);
+
+    switch(log_level) {
+        case G_LOG_LEVEL_ERROR:
+            printf("Error: %s\n", message);
+            break;
+        case G_LOG_LEVEL_CRITICAL:
+            printf("Critical: %s\n", message);
+            break;
+        case G_LOG_LEVEL_WARNING:
+            printf("Warning: %s\n", message);
+            break;
+        case G_LOG_LEVEL_DEBUG:
+            printf("- %s\n", message);
+            break;
+        default:
+        printf("> %s\n", message);
+    }
+
+    return;
 }

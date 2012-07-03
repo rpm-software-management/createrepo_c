@@ -235,18 +235,6 @@ free_options(struct CmdOptions *options)
 
 
 void
-black_hole_log_function (const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data)
-{
-    UNUSED(log_domain);
-    UNUSED(log_level);
-    UNUSED(message);
-    UNUSED(user_data);
-    return;
-}
-
-
-
-void
 free_merged_values(gpointer data)
 {
     GSList *element = (GSList *) data;
@@ -836,7 +824,15 @@ main(int argc, char **argv)
 
     // Set logging
 
-    if (!cmd_options->verbose) {
+    g_log_set_default_handler (log_function, NULL);
+
+    if (cmd_options->verbose) {
+        // Verbose mode
+        GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
+        g_log_set_handler(NULL, levels, log_function, NULL);
+        g_log_set_handler("C_CREATEREPOLIB", levels, log_function, NULL);
+    } else {
+        // Standard mode
         GLogLevelFlags levels = G_LOG_LEVEL_DEBUG;
         g_log_set_handler(NULL, levels, black_hole_log_function, NULL);
         g_log_set_handler("C_CREATEREPOLIB", levels, black_hole_log_function, NULL);

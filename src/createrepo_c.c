@@ -72,47 +72,6 @@ struct PoolTask {
 };
 
 
-
-void black_hole_log_function (const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data)
-{
-    UNUSED(log_domain);
-    UNUSED(log_level);
-    UNUSED(message);
-    UNUSED(user_data);
-    return;
-}
-
-
-
-void log_function (const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data)
-{
-    UNUSED(user_data);
-
-    if (log_domain)
-        printf("%s: ", log_domain);
-
-    switch(log_level) {
-        case G_LOG_LEVEL_ERROR:
-            printf("Error: %s\n", message);
-            break;
-        case G_LOG_LEVEL_CRITICAL:
-            printf("Critical: %s\n", message);
-            break;
-        case G_LOG_LEVEL_WARNING:
-            printf("Warning: %s\n", message);
-            break;
-        case G_LOG_LEVEL_DEBUG:
-            printf("- %s\n", message);
-            break;
-        default:
-        printf("> %s\n", message);
-    }
-
-    return;
-}
-
-
-
 // Global variables used by signal handler
 char *tmp_repodata_path = NULL;
 

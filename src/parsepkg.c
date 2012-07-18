@@ -41,7 +41,7 @@ rpmts ts = NULL;
 
 
 
-void init_package_parser()
+void package_parser_init()
 {
     if (initialized)
         return;
@@ -61,7 +61,7 @@ void init_package_parser()
 
 
 
-void free_package_parser()
+void package_parser_shutdown()
 {
     if (ts) {
         rpmtsFree(ts);

@@ -38,12 +38,12 @@ extern short initialized;
  * This function call rpmReadConfigFiles() and create global transaction set.
  * This function should be called only once! This function is not thread safe!
  */
-void init_package_parser();
+void package_parser_init();
 
 /** \ingroup parsepkg
  * Free global structures for package parsing.
  */
-void free_package_parser();
+void package_parser_shutdown();
 
 /** \ingroup parsepkg
  * Generate package object from package file.

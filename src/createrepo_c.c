@@ -502,7 +502,7 @@ int main(int argc, char **argv) {
 
     // Init package parser
 
-    init_package_parser();
+    package_parser_init();
 
 
     // Thread pool - User data initialization
@@ -916,7 +916,7 @@ int main(int argc, char **argv) {
     g_free(groupfile);
 
     free_options(cmd_options);
-    free_package_parser();
+    package_parser_shutdown();
 
     g_debug("All done");
     return 0;

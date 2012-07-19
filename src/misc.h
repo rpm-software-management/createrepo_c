@@ -35,7 +35,7 @@ extern "C" {
 /** \ingroup misc
  * Macro for supress compiler warning about unused param.
  */
-#define UNUSED(x) (void)(x) // Suppress compiler warning about unused param
+#define UNUSED(x) (void)(x) /* Suppress compiler warning about unused param */
 
 /** \ingroup misc
  * Convert flags from RPM header to a string representation.

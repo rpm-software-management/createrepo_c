@@ -30,12 +30,12 @@
  */
 struct CmdOptions {
 
-    // Items filled by hand (from createrepo_c.c)
+    /* Items filled by hand (from createrepo_c.c) */
 
     char *input_dir;            /*!< Input directory (the mandatory argument
                                      of createrepo) */
 
-    // Items filled by cmd option parser
+    /* Items filled by cmd option parser */
 
     char *location_base;        /*!< base URL location */
     char *outputdir;            /*!< output directory */
@@ -64,7 +64,7 @@ struct CmdOptions {
     int workers;                /*!< number of threads to spawn */
     gboolean xz_compression;    /*!< use xz for repodata compression */
 
-    // Items filled by check_arguments()
+    /* Items filled by check_arguments() */
 
     char *groupfile_fullpath;   /*!< full path to groupfile */
     GSList *exclude_masks;      /*!< list of exclude masks

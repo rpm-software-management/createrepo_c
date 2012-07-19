@@ -13,7 +13,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #ifndef __C_CREATEREPOLIB_VERSION_H__
@@ -22,10 +23,18 @@
 /** \defgroup version   Library version information.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**@{*/
 #define MAJOR_VERSION   0
 #define MINOR_VERSION   1
 #define PATCH_VERSION   5
 /**@}*/
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __C_CREATEREPOLIB_VERSION_H__ */

@@ -13,7 +13,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #ifndef __C_CREATEREPOLIB_SQLITE_H__
@@ -23,6 +24,9 @@
 #include <sqlite3.h>
 #include "package.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** \defgroup   sqlite        SQLite metadata API.
  */
@@ -140,7 +144,8 @@ DbPrimaryStatements prepare_primary_db_statements(sqlite3 *db, GError **err);
  * @param err                   **GError
  * @return                      DbFilelistsStatements object
  */
-DbFilelistsStatements prepare_filelists_db_statements(sqlite3 *db, GError **err);
+DbFilelistsStatements prepare_filelists_db_statements(sqlite3 *db,
+                                                      GError **err);
 
 /** \ingroup sqlite
  * Prepare compiled statements for use in the add_other_pkg_db function.
@@ -207,5 +212,9 @@ void dbinfo_update(sqlite3 *db, const char *checksum, GError **err);
  * @param err                   **GError
  */
 void close_db(sqlite3 *db, DatabaseType db_type, GError **err);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __C_CREATEREPOLIB_SQLITE_H__ */

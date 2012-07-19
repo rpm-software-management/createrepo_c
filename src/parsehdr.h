@@ -13,11 +13,16 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #ifndef __C_CREATEREPOLIB_PARSEHDR_H__
 #define __C_CREATEREPOLIB_PARSEHDR_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <rpm/rpmlib.h>
 #include <glib.h>
@@ -58,11 +63,16 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size,
  * @param changelog_limit       number of changelog entries
  * @param hdr_start             start byte of header
  * @param hdr_end               last byte of header
- * @return                      XML chunks for primary, filelists and other (in struct XmlStruct)
+ * @return                      XML chunks for primary, filelists and other
+ *                              (in struct XmlStruct)
  */
 struct XmlStruct xml_from_header(Header hdr, gint64 mtime, gint64 size,
                         const char *checksum, const char *checksum_type,
                         const char *location_href, const char *location_base,
                         int changelog_limit, gint64 hdr_start, gint64 hdr_end);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __C_CREATEREPOLIB_PARSEHDR_H__ */

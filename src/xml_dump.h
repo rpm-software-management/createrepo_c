@@ -13,11 +13,16 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #ifndef __C_CREATEREPOLIB_XML_DUMP_H__
 #define __C_CREATEREPOLIB_XML_DUMP_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
@@ -27,10 +32,14 @@
  */
 
 /**@{*/
-#define XML_COMMON_NS           "http://linux.duke.edu/metadata/common"         /*!< Default namespace for primary.xml */
-#define XML_FILELISTS_NS        "http://linux.duke.edu/metadata/filelists"      /*!< Default namespace for filelists.xml */
-#define XML_OTHER_NS            "http://linux.duke.edu/metadata/other"          /*!< Default namespace for other.xml */
-#define XML_RPM_NS              "http://linux.duke.edu/metadata/rpm"            /*!< Namespace used in primary.xml */
+/** Default namespace for primary.xml */
+#define XML_COMMON_NS           "http://linux.duke.edu/metadata/common"
+/** Default namespace for filelists.xml */
+#define XML_FILELISTS_NS        "http://linux.duke.edu/metadata/filelists"
+/** Default namespace for other.xml */
+#define XML_OTHER_NS            "http://linux.duke.edu/metadata/other"
+/** Namespace used in primary.xml */
+#define XML_RPM_NS              "http://linux.duke.edu/metadata/rpm"
 /**@}*/
 
 
@@ -47,7 +56,8 @@ struct XmlStruct{
  * Dump files from the package and append them to the node as childrens.
  * @param node          parent xml node
  * @param package       Package
- * @param primary       process only primary files (see is_primary() function in the misc module)
+ * @param primary       process only primary files (see is_primary() function
+ *                      in the misc module)
  */
 void dump_files(xmlNodePtr node, Package *package, int primary);
 
@@ -78,5 +88,9 @@ char *xml_dump_other(Package *package);
  * @return              XmlStruct
  */
 struct XmlStruct xml_dump(Package *package);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __C_CREATEREPOLIB_XML_DUMP_H__ */

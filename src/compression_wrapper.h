@@ -13,11 +13,16 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #ifndef __C_CREATEREPOLIB_COMPRESSION_WRAPPER_H__
 #define __C_CREATEREPOLIB_COMPRESSION_WRAPPER_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** \defgroup   compression_wrapper     Wrapper for compressed file.
  */
@@ -95,7 +100,7 @@ int cw_read(CW_FILE *cw_file, void *buffer, unsigned int len);
  * @param cw_file       CW_FILE pointer
  * @param buffer        source buffer
  * @param len           number of bytes to read
- * @return              number of uncompressed bytes readed (0 for EOF) or CW_ERR
+ * @return              number of uncompressed bytes readed (0 = EOF) or CW_ERR
  */
 int cw_write(CW_FILE *cw_file, const void *buffer, unsigned int len);
 
@@ -123,5 +128,8 @@ int cw_printf(CW_FILE *cw_file, const char *format, ...);
  */
 int cw_close(CW_FILE *cw_file);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __C_CREATEREPOLIB_COMPRESSION_WRAPPER_H__ */

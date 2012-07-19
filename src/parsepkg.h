@@ -13,11 +13,16 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #ifndef __C_CREATEREPOLIB_PARSEPKG_H__
 #define __C_CREATEREPOLIB_PARSEPKG_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <rpm/rpmlib.h>
 #include <glib.h>
@@ -52,7 +57,8 @@ void package_parser_shutdown();
  * @param location_href         package location inside repository
  * @param location_base         location (url) of repository
  * @param changelog_limit       number of changelog entries
- * @param stat_buf              struct stat of the filename (optional - could be NULL)
+ * @param stat_buf              struct stat of the filename
+ *                              (optional - could be NULL)
  */
 Package *package_from_file(const char *filename, ChecksumType checksum_type,
                         const char *location_href, const char *location_base,
@@ -65,10 +71,15 @@ Package *package_from_file(const char *filename, ChecksumType checksum_type,
  * @param location_href         package location inside repository
  * @param location_base         location (url) of repository
  * @param changelog_limit       number of changelog entries
- * @param stat_buf              struct stat of the filename (optional - could be NULL)
+ * @param stat_buf              struct stat of the filename
+ *                              (optional - could be NULL)
  */
 struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checksum_type,
                         const char *location_href, const char *location_base,
                         int changelog_limit, struct stat *stat_buf);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __C_CREATEREPOLIB_PARSEPKG_H__ */

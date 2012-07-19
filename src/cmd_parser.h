@@ -13,7 +13,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #ifndef __C_CREATEREPOLIB_CMD_PARSER_H__
@@ -31,7 +32,8 @@ struct CmdOptions {
 
     // Items filled by hand (from createrepo_c.c)
 
-    char *input_dir;            /*!< Input directory (the mandatory argument of createrepo) */
+    char *input_dir;            /*!< Input directory (the mandatory argument
+                                     of createrepo) */
 
     // Items filled by cmd option parser
 
@@ -42,28 +44,35 @@ struct CmdOptions {
     char **includepkg;          /*!< list of files to include */
     char *groupfile;            /*!< groupfile path or URL */
     gboolean quiet;             /*!< quiet mode */
-    gboolean verbose;           /*!< verbosely more than usual (enable debug output) */
+    gboolean verbose;           /*!< verbosely more than usual (debug) */
     gboolean update;            /*!< update repo if metadata already exists */
-    char **update_md_paths;     /*!< list of paths to repositories which should be used for update */
+    char **update_md_paths;     /*!< list of paths to repositories which should
+                                     be used for update */
     gboolean skip_stat;         /*!< skip stat() call during --update */
     gboolean version;           /*!< print program version */
-    gboolean database;          /*!< create sqlite database metadata - Not implemented yet!!! :( */
-    gboolean no_database;       /*!< do not create database - Implemented ;) */
+    gboolean database;          /*!< create sqlite database metadata */
+    gboolean no_database;       /*!< do not create database */
     char *checksum;             /*!< type of checksum */
     char *compress_type;        /*!< which compression type to use */
     gboolean skip_symlinks;     /*!< ignore symlinks of packages */
-    int changelog_limit;        /*!< number of changelog messages in other.(xml|sqlite) */
-    gboolean unique_md_filenames;       /*!< include the file checksums in the filenames */
-    gboolean simple_md_filenames;       /*!< simple filenames (Name does not contain checksum) */
+    int changelog_limit;        /*!< number of changelog messages in
+                                     other.(xml|sqlite) */
+    gboolean unique_md_filenames;       /*!< include the file checksums in
+                                             the filenames */
+    gboolean simple_md_filenames;       /*!< simple filenames (names without
+                                             checksums) */
     int workers;                /*!< number of threads to spawn */
     gboolean xz_compression;    /*!< use xz for repodata compression */
 
     // Items filled by check_arguments()
 
     char *groupfile_fullpath;   /*!< full path to groupfile */
-    GSList *exclude_masks;      /*!< list of exclude masks (list of GPatternSpec pointers) */
-    GSList *include_pkgs;       /*!< list of packages to include (build from includepkg options and pkglist file) */
-    GSList *l_update_md_paths;  /*!< list of repos from update_md_paths (remote repos are downloaded) */
+    GSList *exclude_masks;      /*!< list of exclude masks
+                                     (list of GPatternSpec pointers) */
+    GSList *include_pkgs;       /*!< list of packages to include (build from
+                                     includepkg options and pkglist file) */
+    GSList *l_update_md_paths;  /*!< list of repos from update_md_paths
+                                     (remote repos are downloaded) */
     ChecksumType checksum_type; /*!< checksum type */
     CompressionType compression_type; /*!< compression type */
 

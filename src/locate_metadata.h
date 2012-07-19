@@ -13,11 +13,16 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 
+ * USA
  */
 
 #ifndef __C_CREATEREPOLIB_LOCATE_METADATA_H__
 #define __C_CREATEREPOLIB_LOCATE_METADATA_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /** \defgroup   locate_metadata Locate metadata API.
  */
@@ -35,9 +40,11 @@ struct MetadataLocation {
     char *groupfile_href;       /*!< path to groupfile */
     char *cgroupfile_href;      /*!< path to compressed groupfile */
     char *repomd;               /*!< path to repomd.xml */
-    char *original_url;         /*!< original path of repo from commandline param */
+    char *original_url;         /*!< original path of repo from commandline
+                                     param */
     char *local_path;           /*!< local path to repo */
-    char *tmp_dir;              /*!< path to dir where metadata are stored if metadata were downloaded */
+    char *tmp_dir;              /*!< path to dir where metadata are stored if
+                                     metadata were downloaded */
 };
 
 /** \ingroup locate_metadata
@@ -60,12 +67,16 @@ void free_metadata_location(struct MetadataLocation *ml);
 
 /** \ingroup locate_metadata
  * Remove files related to repodata from the specified path.
- * Files not listed in repomd.xml and with nonstandard names
- * (standard names are names with suffixes like primary.xml.*, primary.sqlite.*,
- * other.xml.*, etc.) are keep untouched (repodata/ subdirectory IS NOT removed!).
+ * Files not listed in repomd.xml and with nonstandard names (standard names
+ * are names with suffixes like primary.xml.*, primary.sqlite.*, other.xml.*,
+ * etc.) are keep untouched (repodata/ subdirectory IS NOT removed!).
  * @param repopath      path to directory with repodata/ subdirectory
  * @return              number of removed files
  */
 int remove_metadata(const char *repopath);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __C_CREATEREPOLIB_LOCATE_METADATA_H__ */

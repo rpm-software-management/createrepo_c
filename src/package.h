@@ -13,11 +13,16 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #ifndef __C_CREATEREPOLIB_PACKAGE_H__
 #define __C_CREATEREPOLIB_PACKAGE_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <glib.h>
 
@@ -29,7 +34,8 @@
  */
 typedef struct {
     char *name;                 /*!< name */
-    char *flags;                /*!< flags (value returned by flag_to_string() from misc module) */
+    char *flags;                /*!< flags (value returned by flag_to_string()
+                                     from misc module) */
     char *epoch;                /*!< epoch */
     char *version;              /*!< version */
     char *release;              /*!< release */
@@ -50,7 +56,7 @@ typedef struct {
  */
 typedef struct {
     char *author;               /*!< author of changelog */
-    gint64 date;                /*!< date of changelog in seconds since epoch */
+    gint64 date;                /*!< date of changelog - seconds since epoch */
     char *changelog;            /*!< text of changelog */
 } ChangelogEntry;
 
@@ -72,28 +78,35 @@ typedef struct {
     gint64 time_build;          /*!< build time (from rpm header) */
     char *rpm_license;          /*!< license */
     char *rpm_vendor;           /*!< vendor */
-    char *rpm_group;            /*!< group (one value from /usr/share/doc/rpm-(your_rpm_version)/GROUPS) */
-    char *rpm_buildhost;        /*!< hostname of machine which builds the package */
+    char *rpm_group;            /*!< group (one value from /usr/share/doc/rpm-
+                                     (your_rpm_version)/GROUPS) */
+    char *rpm_buildhost;        /*!< hostname of machine which builds
+                                     the package */
     char *rpm_sourcerpm;        /*!< name of srpms */
     gint64 rpm_header_start;    /*!< start byte of header in rpm */
     gint64 rpm_header_end;      /*!< end byte of header in rpm */
     char *rpm_packager;         /*!< packager of package */
     gint64 size_package;        /*!< size of rpm package */
     gint64 size_installed;      /*!< size of installed files */
-    gint64 size_archive;        /*!< size of archive (I have no idea what does it mean) */
+    gint64 size_archive;        /*!< size of archive (I have no idea what does
+                                     it mean) */
     char *location_href;        /*!< file location inside repository */
     char *location_base;        /*!< location (url) of repository */
-    char *checksum_type;        /*!< type of checksum used ("sha1", "sha256", "md5", ..) */
+    char *checksum_type;        /*!< type of checksum used ("sha1", "sha256",
+                                     "md5", ..) */
 
     GSList *requires;           /*!< requires (list of Dependency structs) */
     GSList *provides;           /*!< provides (list of Dependency structs) */
     GSList *conflicts;          /*!< conflicts (list of Dependency structs) */
     GSList *obsoletes;          /*!< obsoletes (list of Dependency structs) */
 
-    GSList *files;              /*!< files in the package (list of PackageFile structs) */
-    GSList *changelogs;         /*!< changelogs (list of ChangelogEntry structs) */
+    GSList *files;              /*!< files in the package (list of PackageFile
+                                     structs) */
+    GSList *changelogs;         /*!< changelogs (list of ChangelogEntry
+                                     structs) */
 
-    GStringChunk *chunk;        /*!< string chunk for store all package strings on the single place */
+    GStringChunk *chunk;        /*!< string chunk for store all package strings
+                                     on the single place */
 } Package;
 
 typedef void (*PackageFn) (Package *pkg, gpointer data);
@@ -127,5 +140,9 @@ Package        *package_new         (void);
  * @param package       Package
  */
 void            package_free        (Package *package);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __C_CREATEREPOLIB_PACKAGE_H__ */

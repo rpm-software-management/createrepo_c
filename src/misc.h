@@ -13,11 +13,16 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #ifndef __C_CREATEREPOLIB_MISC_H__
 #define __C_CREATEREPOLIB_MISC_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <glib.h>
 #include <curl/curl.h>
@@ -63,9 +68,10 @@ struct Version {
 /** \ingroup misc
  * Convert epoch-version-release string into EVR structure.
  * If no GStringChunk passed, all non NULL items in returned structure
- * are malloced and in that case, you have to free all non-NULL element yourself.
+ * are malloced and in that case, you have to free all non-NULL element
+ * yourself.
  * @param string        NULL terminated n-v-r string
- * @param chunk         string chunk for store strings (optional, could be NULL)
+ * @param chunk         string chunk for strings (optional - could be NULL)
  * @return              filled NVR
  */
 struct EVR string_to_version(const char *string, GStringChunk *chunk);
@@ -160,10 +166,12 @@ int copy_file(const char *src, const char *dst);
  *                      If dst is NULL, src + compression suffix is used)
  * @return              CR_COPY_OK or CR_COPY_ERR on error
  */
-int compress_file(const char *src, const char *dst, CompressionType compression);
+int compress_file(const char *src,
+                  const char *dst,
+                  CompressionType compression);
 
 /** \ingroup misc
- * Better copy file. Source (src) could be remote address ("http://" or "ftp://").
+ * Better copy file. Source (src) could be remote address (http:// or ftp://).
  * @param src           source filename
  * @param dst           destination (if dst is dir, filename of src is used)
  * @return              CR_COPY_OK or CR_COPY_ERR on error
@@ -207,8 +215,10 @@ int cmp_version_string(const char* str1, const char *str2);
  * @param message       message
  * @param user_data     user data
  */
-void black_hole_log_function (const gchar *log_domain, GLogLevelFlags log_level,
-                              const gchar *message, gpointer user_data);
+void black_hole_log_function (const gchar *log_domain,
+                              GLogLevelFlags log_level,
+                              const gchar *message,
+                              gpointer user_data);
 
 /** \ingroup misc
  * Createrepo_c library standard logging function.
@@ -219,5 +229,9 @@ void black_hole_log_function (const gchar *log_domain, GLogLevelFlags log_level,
  */
 void log_function (const gchar *log_domain, GLogLevelFlags log_level,
                    const gchar *message, gpointer user_data);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __C_CREATEREPOLIB_MISC_H__ */

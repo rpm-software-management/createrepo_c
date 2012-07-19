@@ -13,11 +13,16 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #ifndef __C_CREATEREPOLIB_CONSTANTS_H__
 #define __C_CREATEREPOLIB_CONSTANTS_H__
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Checksum type.
@@ -27,5 +32,9 @@ typedef enum {
     PKG_CHECKSUM_SHA1,          /*!< SHA1 checksum */
     PKG_CHECKSUM_SHA256         /*!< SHA256 checksum */
 } ChecksumType;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __C_CREATEREPOLIB_CONSTANTS_H__ */

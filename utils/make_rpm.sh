@@ -8,7 +8,6 @@ rm -rf $BUILD_DIR
 echo "Removing $RPMBUILD_DIR/createrepo_c.spec"
 rm -f $RPMBUILD_DIR/createrepo_c.spec
 
-
 if [ $# -lt "1"  -o $# -gt "2" ]
 then
     echo "Usage: `basename $0` <root_project_dir> [--git]"
@@ -65,12 +64,12 @@ fi
 
 cp $PREFIX/createrepo_c.spec $RPMBUILD_DIR/SPECS/
 if [ ! $? == "0" ]; then
-    echo "Error while: cp $PREFIX/createrepo_c.spec $RPMBUILD_DIR/SPECS/"
+    echo "Error while: cp $PREFIX/createrepo_c*.spec $RPMBUILD_DIR/SPECS/"
     exit 1
 fi
 echo "Copying done"
 
-echo "> Starting rpmbuild .."
+echo "> Starting rpmbuild createrepo_c.."
 rpmbuild -ba $RPMBUILD_DIR/SPECS/createrepo_c.spec
 if [ ! $? == "0" ]; then
     echo "Error while: rpmbuild -ba $RPMBUILD_DIR/SPECS/createrepo_c.spec"

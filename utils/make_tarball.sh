@@ -19,6 +19,7 @@ PREFIX="$1/"
 DIRECTORY="./$NAME-$VER"
 TARBALL="$DIRECTORY.tar.xz"
 
+
 echo "Using root projekt dir: $PREFIX"
 
 (
@@ -47,6 +48,7 @@ echo "Using root projekt dir: $PREFIX"
     cp --verbose --parents doc/mergerepo_c.8.* $DIRECTORY
 
     cp --verbose --parents src/CMakeLists.txt $DIRECTORY
+    cp --verbose --parents src/createrepo_c.pc.cmake $DIRECTORY
     cp --verbose --parents src/*.c $DIRECTORY
     cp --verbose --parents src/*.h $DIRECTORY
 

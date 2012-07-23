@@ -24,8 +24,6 @@
 extern "C" {
 #endif
 
-#include <libxml/encoding.h>
-#include <libxml/xmlwriter.h>
 #include "package.h"
 
 /** \defgroup   xml_dump        XML dump API.
@@ -51,15 +49,6 @@ struct XmlStruct{
     char *filelists;    /*!< XML chunk for filelists.xml */
     char *other;        /*!< XML chunk for other.xml */
 };
-
-/** \ingroup xml_dump
- * Dump files from the package and append them to the node as childrens.
- * @param node          parent xml node
- * @param package       Package
- * @param primary       process only primary files (see is_primary() function
- *                      in the misc module)
- */
-void dump_files(xmlNodePtr node, Package *package, int primary);
 
 /** \ingroup xml_dump
  * Generate primary xml chunk from Package.

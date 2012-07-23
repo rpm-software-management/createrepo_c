@@ -25,6 +25,7 @@
 #include "logging.h"
 #include "package.h"
 #include "xml_dump.h"
+#include "xml_dump_internal.h"
 
 #undef MODULE
 #define MODULE "xml_dump_primary: "

@@ -23,6 +23,7 @@
 #include "logging.h"
 #include "misc.h"
 #include "xml_dump.h"
+#include "xml_dump_internal.h"
 
 #undef MODULE
 #define MODULE "xml_dump: "

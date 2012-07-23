@@ -328,7 +328,7 @@ db_create_other_tables (sqlite3 *db, GError **err)
 static void
 db_tweak(sqlite3 *db, GError **err)
 {
-    UNUSED(err);
+    CR_UNUSED(err);
 
     // Do not wait for disk writes to be fully
     // written to disk before continuing
@@ -480,7 +480,7 @@ db_index_other_tables (sqlite3 *db, GError **err)
 
 
 sqlite3 *
-open_db(const char *path, DatabaseType db_type, GError **err)
+cr_open_db(const char *path, cr_DatabaseType db_type, GError **err)
 {
     GError *tmp_err = NULL;
     sqlite3 *db = NULL;
@@ -511,11 +511,11 @@ open_db(const char *path, DatabaseType db_type, GError **err)
     }
 
     switch (db_type) {
-        case DB_PRIMARY:
+        case CR_DB_PRIMARY:
             db_create_primary_tables(db, &tmp_err); break;
-        case DB_FILELISTS:
+        case CR_DB_FILELISTS:
             db_create_filelists_tables(db, &tmp_err); break;
-        case DB_OTHER:
+        case CR_DB_OTHER:
             db_create_other_tables(db, &tmp_err); break;
     }
     if (tmp_err) {
@@ -528,7 +528,7 @@ open_db(const char *path, DatabaseType db_type, GError **err)
 
 
 void
-close_db(sqlite3 *db, DatabaseType db_type, GError **err)
+cr_close_db(sqlite3 *db, cr_DatabaseType db_type, GError **err)
 {
     GError *tmp_err = NULL;
 
@@ -536,11 +536,11 @@ close_db(sqlite3 *db, DatabaseType db_type, GError **err)
         return;
 
     switch (db_type) {
-        case DB_PRIMARY:
+        case CR_DB_PRIMARY:
             db_index_primary_tables(db, &tmp_err); break;
-        case DB_FILELISTS:
+        case CR_DB_FILELISTS:
             db_index_filelists_tables(db, &tmp_err); break;
-        case DB_OTHER:
+        case CR_DB_OTHER:
             db_index_other_tables(db, &tmp_err); break;
     }
 
@@ -560,7 +560,7 @@ close_db(sqlite3 *db, DatabaseType db_type, GError **err)
 
 
 void
-dbinfo_update(sqlite3 *db, const char *checksum, GError **err)
+cr_dbinfo_update(sqlite3 *db, const char *checksum, GError **err)
 {
     int rc;
     char *sql;
@@ -633,7 +633,7 @@ force_null(const char *str)
 
 
 void
-db_package_write (sqlite3 *db, sqlite3_stmt *handle, Package *p)
+db_package_write (sqlite3 *db, sqlite3_stmt *handle, cr_Package *p)
 {
     int rc;
 
@@ -711,7 +711,7 @@ void
 db_dependency_write (sqlite3 *db,
                      sqlite3_stmt *handle,
                      gint64 pkgKey,
-                     Dependency *dep,
+                     cr_Dependency *dep,
                      gboolean isRequirement)
 {
     int rc;
@@ -764,7 +764,7 @@ void
 db_file_write (sqlite3 *db,
                sqlite3_stmt *handle,
                gint64 pkgKey,
-               PackageFile *file)
+               cr_PackageFile *file)
 {
     int rc;
 
@@ -772,7 +772,7 @@ db_file_write (sqlite3 *db,
     if (!fullpath)
         return; // Nothing to do
 
-    if (!is_primary(fullpath)) {
+    if (!cr_is_primary(fullpath)) {
         g_free(fullpath);
         return;
     }
@@ -864,12 +864,12 @@ package_files_to_hash (GSList *files)
                                   (GDestroyNotify) encoded_package_file_free);
 
     for (iter = files; iter; iter = iter->next) {
-        PackageFile *file;
+        cr_PackageFile *file;
         EncodedPackageFile *enc;
         char *dir;
         char *name;
 
-        file = (PackageFile *) iter->data;
+        file = (cr_PackageFile *) iter->data;
 
         dir = file->path;
         name = file->name;
@@ -932,7 +932,7 @@ write_file (gpointer key, gpointer value, gpointer user_data)
 
 
 void
-db_filelists_write (sqlite3 *db, sqlite3_stmt *handle, Package *p)
+db_filelists_write (sqlite3 *db, sqlite3_stmt *handle, cr_Package *p)
 {
     GHashTable *hash;
     FileWriteInfo info;
@@ -1001,7 +1001,7 @@ db_package_ids_prepare(sqlite3 *db, GError **err)
 
 
 void
-db_package_ids_write (sqlite3 *db, sqlite3_stmt *handle, Package *pkg)
+db_package_ids_write (sqlite3 *db, sqlite3_stmt *handle, cr_Package *pkg)
 {
     int rc;
 
@@ -1024,11 +1024,11 @@ db_package_ids_write (sqlite3 *db, sqlite3_stmt *handle, Package *pkg)
 
 // Primary.sqlite interface
 
-DbPrimaryStatements
-prepare_primary_db_statements(sqlite3 *db, GError **err)
+cr_DbPrimaryStatements
+cr_prepare_primary_db_statements(sqlite3 *db, GError **err)
 {
     GError *tmp_err = NULL;
-    DbPrimaryStatements ret = malloc(sizeof(*ret));
+    cr_DbPrimaryStatements ret = malloc(sizeof(*ret));
 
     ret->db               = db;
     ret->pkg_handle       = NULL;
@@ -1079,7 +1079,7 @@ prepare_primary_db_statements(sqlite3 *db, GError **err)
 
 
 void
-destroy_primary_db_statements(DbPrimaryStatements stmts)
+cr_destroy_primary_db_statements(cr_DbPrimaryStatements stmts)
 {
     if (!stmts)
         return;
@@ -1101,7 +1101,7 @@ destroy_primary_db_statements(DbPrimaryStatements stmts)
 
 
 void
-add_primary_pkg_db(DbPrimaryStatements stmts, Package *pkg)
+cr_add_primary_pkg_db(cr_DbPrimaryStatements stmts, cr_Package *pkg)
 {
     GSList *iter;
 
@@ -1113,33 +1113,33 @@ add_primary_pkg_db(DbPrimaryStatements stmts, Package *pkg)
         db_dependency_write (stmts->db,
                              stmts->provides_handle,
                              pkg->pkgKey,
-                             (Dependency *) iter->data,
+                             (cr_Dependency *) iter->data,
                              FALSE);
 
     for (iter = pkg->conflicts; iter; iter = iter->next)
         db_dependency_write (stmts->db,
                              stmts->conflicts_handle,
                              pkg->pkgKey,
-                             (Dependency *) iter->data,
+                             (cr_Dependency *) iter->data,
                              FALSE);
 
     for (iter = pkg->obsoletes; iter; iter = iter->next)
         db_dependency_write (stmts->db,
                              stmts->obsoletes_handle,
                              pkg->pkgKey,
-                             (Dependency *) iter->data,
+                             (cr_Dependency *) iter->data,
                              FALSE);
 
     for (iter = pkg->requires; iter; iter = iter->next)
         db_dependency_write (stmts->db,
                              stmts->requires_handle,
                              pkg->pkgKey,
-                             (Dependency *) iter->data,
+                             (cr_Dependency *) iter->data,
                              TRUE);
 
     for (iter = pkg->files; iter; iter = iter->next)
         db_file_write (stmts->db, stmts->files_handle, pkg->pkgKey,
-                       (PackageFile *) iter->data);
+                       (cr_PackageFile *) iter->data);
 
 //    sqlite3_exec (stmts->db, "COMMIT", NULL, NULL, NULL);
 }
@@ -1148,11 +1148,11 @@ add_primary_pkg_db(DbPrimaryStatements stmts, Package *pkg)
 // filelists.sqlite interface
 
 
-DbFilelistsStatements
-prepare_filelists_db_statements(sqlite3 *db, GError **err)
+cr_DbFilelistsStatements
+cr_prepare_filelists_db_statements(sqlite3 *db, GError **err)
 {
     GError *tmp_err = NULL;
-    DbFilelistsStatements ret = malloc(sizeof(*ret));
+    cr_DbFilelistsStatements ret = malloc(sizeof(*ret));
 
     ret->db                = db;
     ret->package_id_handle = NULL;
@@ -1175,7 +1175,7 @@ prepare_filelists_db_statements(sqlite3 *db, GError **err)
 
 
 void
-destroy_filelists_db_statements(DbFilelistsStatements stmts)
+cr_destroy_filelists_db_statements(cr_DbFilelistsStatements stmts)
 {
     if (!stmts)
         return;
@@ -1189,7 +1189,7 @@ destroy_filelists_db_statements(DbFilelistsStatements stmts)
 
 
 void
-add_filelists_pkg_db(DbFilelistsStatements stmts, Package *pkg)
+cr_add_filelists_pkg_db(cr_DbFilelistsStatements stmts, cr_Package *pkg)
 {
     // Add package record into the filelists.sqlite
     db_package_ids_write(stmts->db, stmts->package_id_handle, pkg);
@@ -1200,11 +1200,11 @@ add_filelists_pkg_db(DbFilelistsStatements stmts, Package *pkg)
 // other.sqlite interface
 
 
-DbOtherStatements
-prepare_other_db_statements(sqlite3 *db, GError **err)
+cr_DbOtherStatements
+cr_prepare_other_db_statements(sqlite3 *db, GError **err)
 {
     GError *tmp_err = NULL;
-    DbOtherStatements ret = malloc(sizeof(*ret));
+    cr_DbOtherStatements ret = malloc(sizeof(*ret));
 
     ret->db                = db;
     ret->package_id_handle = NULL;
@@ -1227,7 +1227,7 @@ prepare_other_db_statements(sqlite3 *db, GError **err)
 
 
 void
-destroy_other_db_statements(DbOtherStatements stmts)
+cr_destroy_other_db_statements(cr_DbOtherStatements stmts)
 {
     if (!stmts)
         return;
@@ -1241,10 +1241,10 @@ destroy_other_db_statements(DbOtherStatements stmts)
 
 
 void
-add_other_pkg_db(DbOtherStatements stmts, Package *pkg)
+cr_add_other_pkg_db(cr_DbOtherStatements stmts, cr_Package *pkg)
 {
     GSList *iter;
-    ChangelogEntry *entry;
+    cr_ChangelogEntry *entry;
     int rc;
 
     sqlite3_stmt *handle = stmts->changelog_handle;
@@ -1254,7 +1254,7 @@ add_other_pkg_db(DbOtherStatements stmts, Package *pkg)
     db_package_ids_write(stmts->db, stmts->package_id_handle, pkg);
 
     for (iter = pkg->changelogs; iter; iter = iter->next) {
-        entry = (ChangelogEntry *) iter->data;
+        entry = (cr_ChangelogEntry *) iter->data;
 
         sqlite3_bind_int  (handle, 1, pkg->pkgKey);
         sqlite3_bind_text (handle, 2, entry->author, -1, SQLITE_STATIC);

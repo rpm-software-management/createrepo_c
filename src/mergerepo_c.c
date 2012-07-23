@@ -35,8 +35,8 @@
 #define G_LOG_DOMAIN    ((gchar*) 0)
 
 #define DEFAULT_OUTPUTDIR               "merged_repo/"
-#define DEFAULT_DB_COMPRESSION_TYPE             BZ2_COMPRESSION
-#define DEFAULT_GROUPFILE_COMPRESSION_TYPE      GZ_COMPRESSION
+#define DEFAULT_DB_COMPRESSION_TYPE             CR_CW_BZ2_COMPRESSION
+#define DEFAULT_GROUPFILE_COMPRESSION_TYPE      CR_CW_GZ_COMPRESSION
 
 
 typedef enum {
@@ -72,8 +72,8 @@ struct CmdOptions {
     char *out_repo;
     GSList *repo_list;
     GSList *arch_list;
-    CompressionType db_compression_type;
-    CompressionType groupfile_compression_type;
+    cr_CompressionType db_compression_type;
+    cr_CompressionType groupfile_compression_type;
     MergeMethod merge_method;
 
 };
@@ -112,7 +112,7 @@ check_arguments(struct CmdOptions *options)
     gboolean ret = TRUE;
 
     if (options->outputdir){
-        options->out_dir = normalize_dir_path(options->outputdir);
+        options->out_dir = cr_normalize_dir_path(options->outputdir);
     } else {
         options->out_dir = g_strdup(DEFAULT_OUTPUTDIR);
     }
@@ -123,7 +123,7 @@ check_arguments(struct CmdOptions *options)
     x = 0;
     options->repo_list = NULL;
     while (options->repos && options->repos[x] != NULL) {
-        char *normalized = normalize_dir_path(options->repos[x]);
+        char *normalized = cr_normalize_dir_path(options->repos[x]);
         if (normalized) {
             options->repo_list = g_slist_prepend(options->repo_list, normalized);
         }
@@ -150,14 +150,14 @@ check_arguments(struct CmdOptions *options)
     // Compress type
     if (options->compress_type) {
         if (!g_strcmp0(options->compress_type, "gz")) {
-            options->db_compression_type = GZ_COMPRESSION;
-            options->groupfile_compression_type = GZ_COMPRESSION;
+            options->db_compression_type = CR_CW_GZ_COMPRESSION;
+            options->groupfile_compression_type = CR_CW_GZ_COMPRESSION;
         } else if (!g_strcmp0(options->compress_type, "bz2")) {
-            options->db_compression_type = BZ2_COMPRESSION;
-            options->groupfile_compression_type = BZ2_COMPRESSION;
+            options->db_compression_type = CR_CW_BZ2_COMPRESSION;
+            options->groupfile_compression_type = CR_CW_BZ2_COMPRESSION;
         } else if (!g_strcmp0(options->compress_type, "xz")) {
-            options->db_compression_type = XZ_COMPRESSION;
-            options->groupfile_compression_type = XZ_COMPRESSION;
+            options->db_compression_type = CR_CW_XZ_COMPRESSION;
+            options->groupfile_compression_type = CR_CW_XZ_COMPRESSION;
         } else {
             g_critical("Compression %s not available: Please choose from: gz or bz2 or xz", options->compress_type);
             ret = FALSE;
@@ -239,8 +239,8 @@ free_merged_values(gpointer data)
 {
     GSList *element = (GSList *) data;
     for (; element; element=g_slist_next(element)) {
-        Package *pkg = (Package *) element->data;
-        package_free(pkg);
+        cr_Package *pkg = (cr_Package *) element->data;
+        cr_package_free(pkg);
     }
     g_slist_free((GSList *) data);
 }
@@ -272,7 +272,7 @@ destroy_merged_metadata_hashtable(GHashTable *hashtable)
 //  1 = Package was added
 //  2 = Package replaced old package
 int
-add_package(Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_list,
+add_package(cr_Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_list,
                 MergeMethod merge_method, gboolean include_all)
 {
     GSList *list, *element;
@@ -315,7 +315,7 @@ add_package(Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_list
     // Check if package with the architecture isn't in the list already
 
     for (element=list; element; element=g_slist_next(element)) {
-        Package *c_pkg = (Package *) element->data;
+        cr_Package *c_pkg = (cr_Package *) element->data;
         if (!g_strcmp0(pkg->arch, c_pkg->arch)) {
 
             if (!include_all) {
@@ -333,7 +333,7 @@ add_package(Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_list
                 } else if (merge_method == MM_TIMESTAMP) {
                     if (pkg->time_file > c_pkg->time_file) {
                         // Remove older package
-                        package_free(c_pkg);
+                        cr_package_free(c_pkg);
                         // Replace package in element
                         if (!pkg->location_base)
                             pkg->location_base = g_string_chunk_insert(pkg->chunk, repopath);
@@ -346,13 +346,13 @@ add_package(Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_list
 
                 // NVR merge method
                 } else if (merge_method == MM_NVR) {
-                    int cmp_res = cmp_version_string(pkg->version, c_pkg->version);
+                    int cmp_res = cr_cmp_version_string(pkg->version, c_pkg->version);
                     long pkg_release   = (pkg->release)   ? strtol(pkg->release, NULL, 10)   : 0;
                     long c_pkg_release = (c_pkg->release) ? strtol(c_pkg->release, NULL, 10) : 0;
 
                     if (cmp_res == 1 || (cmp_res == 0 && pkg_release > c_pkg_release)) {
                         // Remove older package
-                        package_free(c_pkg);
+                        cr_package_free(c_pkg);
                         // Replace package in element
                         if (!pkg->location_base)
                             pkg->location_base = g_string_chunk_insert(pkg->chunk, repopath);
@@ -368,7 +368,7 @@ add_package(Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_list
 
                 // Two packages has same name and arch but all param is used
 
-                int cmp_res = cmp_version_string(pkg->version, c_pkg->version);
+                int cmp_res = cr_cmp_version_string(pkg->version, c_pkg->version);
                 long pkg_release   = (pkg->release)   ? strtol(pkg->release, NULL, 10)   : 0;
                 long c_pkg_release = (c_pkg->release) ? strtol(c_pkg->release, NULL, 10) : 0;
 
@@ -411,20 +411,20 @@ merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list, MergeMetho
     for (element = repo_list; element; element = g_slist_next(element)) {
         GHashTable *tmp_hashtable;
 
-        tmp_hashtable = new_metadata_hashtable();
-        struct MetadataLocation *ml = (struct MetadataLocation *) element->data;
+        tmp_hashtable = cr_new_metadata_hashtable();
+        struct cr_MetadataLocation *ml = (struct cr_MetadataLocation *) element->data;
 
         // Base paths in output of original createrepo doesn't have trailing '/'
-        gchar *repopath = normalize_dir_path(ml->original_url);
+        gchar *repopath = cr_normalize_dir_path(ml->original_url);
         if (repopath && strlen(repopath) > 1) {
             repopath[strlen(repopath)-1] = '\0';
         }
 
         g_debug("Processing: %s", repopath);
 
-        if (load_xml_metadata(tmp_hashtable, ml, HT_KEY_HASH) == LOAD_METADATA_ERR) {
+        if (cr_load_xml_metadata(tmp_hashtable, ml, CR_HT_KEY_HASH) == CR_LOAD_METADATA_ERR) {
             g_critical("Cannot load repo: \"%s\"", ml->repomd);
-            destroy_metadata_hashtable(tmp_hashtable);
+            cr_destroy_metadata_hashtable(tmp_hashtable);
             break;
         }
 
@@ -438,12 +438,12 @@ merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list, MergeMetho
         g_hash_table_iter_init (&iter, tmp_hashtable);
         while (g_hash_table_iter_next (&iter, &key, &value)) {
             int ret;
-            Package *pkg = (Package *) value;
+            cr_Package *pkg = (cr_Package *) value;
 
             // Lookup a package in the noarch_hashtable
             gboolean noarch_pkg_used = FALSE;
             if (noarch_hashtable && !g_strcmp0(pkg->arch, "noarch")) {
-                Package *noarch_pkg;
+                cr_Package *noarch_pkg;
                 noarch_pkg = g_hash_table_lookup(noarch_hashtable, pkg->location_href);
                 if (noarch_pkg) {
                     pkg = noarch_pkg;
@@ -471,7 +471,7 @@ merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list, MergeMetho
         }
 
         loaded_packages += repo_loaded_packages;
-        destroy_metadata_hashtable(tmp_hashtable);
+        cr_destroy_metadata_hashtable(tmp_hashtable);
         g_debug("Repo: %s (Loaded: %ld Used: %ld)", repopath, (unsigned long) original_size, repo_loaded_packages);
         g_free(repopath);
     }
@@ -495,12 +495,12 @@ dump_merged_metadata(GHashTable *merged_hashtable, long packages,
 {
     // Create/Open output xml files
 
-    CW_FILE *pri_f;
-    CW_FILE *fil_f;
-    CW_FILE *oth_f;
+    CR_FILE *pri_f;
+    CR_FILE *fil_f;
+    CR_FILE *oth_f;
 
-    const char *db_suffix = get_suffix(cmd_options->db_compression_type);
-    const char *groupfile_suffix = get_suffix(cmd_options->groupfile_compression_type);
+    const char *db_suffix = cr_get_suffix(cmd_options->db_compression_type);
+    const char *groupfile_suffix = cr_get_suffix(cmd_options->groupfile_compression_type);
 
     gchar *pri_xml_filename = g_strconcat(cmd_options->out_repo, "/primary.xml.gz", NULL);
     gchar *fil_xml_filename = g_strconcat(cmd_options->out_repo, "/filelists.xml.gz", NULL);
@@ -511,7 +511,7 @@ dump_merged_metadata(GHashTable *merged_hashtable, long packages,
                                             "/updateinfo.xml",
                                             groupfile_suffix, NULL);
 
-    if ((pri_f = cw_open(pri_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
+    if ((pri_f = cr_open(pri_xml_filename, CR_CW_MODE_WRITE, CR_CW_GZ_COMPRESSION)) == NULL) {
         g_critical("Cannot open file: %s", pri_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
@@ -520,36 +520,36 @@ dump_merged_metadata(GHashTable *merged_hashtable, long packages,
         return 0;
     }
 
-    if ((fil_f = cw_open(fil_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
+    if ((fil_f = cr_open(fil_xml_filename, CR_CW_MODE_WRITE, CR_CW_GZ_COMPRESSION)) == NULL) {
         g_critical("Cannot open file: %s", fil_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
         g_free(update_info_filename);
-        cw_close(pri_f);
+        cr_close(pri_f);
         return 0;
     }
 
-    if ((oth_f = cw_open(oth_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
+    if ((oth_f = cr_open(oth_xml_filename, CR_CW_MODE_WRITE, CR_CW_GZ_COMPRESSION)) == NULL) {
         g_critical("Cannot open file: %s", oth_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
         g_free(update_info_filename);
-        cw_close(fil_f);
-        cw_close(pri_f);
+        cr_close(fil_f);
+        cr_close(pri_f);
         return 0;
     }
 
 
     // Write xml headers
 
-    cw_printf(pri_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-        "<metadata xmlns=\""XML_COMMON_NS"\" xmlns:rpm=\""XML_RPM_NS"\" packages=\"%d\">\n", packages);
-    cw_printf(fil_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-        "<filelists xmlns=\""XML_FILELISTS_NS"\" packages=\"%d\">\n", packages);
-    cw_printf(oth_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-        "<otherdata xmlns=\""XML_OTHER_NS"\" packages=\"%d\">\n", packages);
+    cr_printf(pri_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        "<metadata xmlns=\""CR_XML_COMMON_NS"\" xmlns:rpm=\""CR_XML_RPM_NS"\" packages=\"%d\">\n", packages);
+    cr_printf(fil_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        "<filelists xmlns=\""CR_XML_FILELISTS_NS"\" packages=\"%d\">\n", packages);
+    cr_printf(oth_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+        "<otherdata xmlns=\""CR_XML_OTHER_NS"\" packages=\"%d\">\n", packages);
 
 
     // Prepare sqlite if needed
@@ -560,22 +560,22 @@ dump_merged_metadata(GHashTable *merged_hashtable, long packages,
     sqlite3 *pri_db = NULL;
     sqlite3 *fil_db = NULL;
     sqlite3 *oth_db = NULL;
-    DbPrimaryStatements pri_statements = NULL;
-    DbFilelistsStatements fil_statements = NULL;
-    DbOtherStatements oth_statements = NULL;
+    cr_DbPrimaryStatements pri_statements = NULL;
+    cr_DbFilelistsStatements fil_statements = NULL;
+    cr_DbOtherStatements oth_statements = NULL;
 
     if (!cmd_options->no_database) {
         pri_db_filename = g_strconcat(cmd_options->out_repo, "/primary.sqlite", NULL);
         fil_db_filename = g_strconcat(cmd_options->out_repo, "/filelists.sqlite", NULL);
         oth_db_filename = g_strconcat(cmd_options->out_repo, "/other.sqlite", NULL);
 
-        pri_db = open_primary_db(pri_db_filename, NULL);
-        fil_db = open_filelists_db(fil_db_filename, NULL);
-        oth_db = open_other_db(oth_db_filename, NULL);
+        pri_db = cr_open_primary_db(pri_db_filename, NULL);
+        fil_db = cr_open_filelists_db(fil_db_filename, NULL);
+        oth_db = cr_open_other_db(oth_db_filename, NULL);
 
-        pri_statements = prepare_primary_db_statements(pri_db, NULL);
-        fil_statements = prepare_filelists_db_statements(fil_db, NULL);
-        oth_statements = prepare_other_db_statements(oth_db, NULL);
+        pri_statements = cr_prepare_primary_db_statements(pri_db, NULL);
+        fil_statements = cr_prepare_filelists_db_statements(fil_db, NULL);
+        oth_statements = cr_prepare_other_db_statements(oth_db, NULL);
     }
 
 
@@ -587,20 +587,20 @@ dump_merged_metadata(GHashTable *merged_hashtable, long packages,
     while (g_hash_table_iter_next (&iter, &key, &value)) {
         GSList *element = (GSList *) value;
         for (; element; element=g_slist_next(element)) {
-            struct XmlStruct res;
-            Package *pkg;
+            struct cr_XmlStruct res;
+            cr_Package *pkg;
 
-            pkg = (Package *) element->data;
-            res = xml_dump(pkg);
+            pkg = (cr_Package *) element->data;
+            res = cr_xml_dump(pkg);
 
-            cw_puts(pri_f, (const char *) res.primary);
-            cw_puts(fil_f, (const char *) res.filelists);
-            cw_puts(oth_f, (const char *) res.other);
+            cr_puts(pri_f, (const char *) res.primary);
+            cr_puts(fil_f, (const char *) res.filelists);
+            cr_puts(oth_f, (const char *) res.other);
 
             if (!cmd_options->no_database) {
-                add_primary_pkg_db(pri_statements, pkg);
-                add_filelists_pkg_db(fil_statements, pkg);
-                add_other_pkg_db(oth_statements, pkg);
+                cr_add_primary_pkg_db(pri_statements, pkg);
+                cr_add_filelists_pkg_db(fil_statements, pkg);
+                cr_add_other_pkg_db(oth_statements, pkg);
             }
 
             free(res.primary);
@@ -612,26 +612,26 @@ dump_merged_metadata(GHashTable *merged_hashtable, long packages,
 
     // Write xml footers
 
-    cw_puts(pri_f, "</metadata>");
-    cw_puts(fil_f, "</filelists>");
-    cw_puts(oth_f, "</otherdata>");
+    cr_puts(pri_f, "</metadata>");
+    cr_puts(fil_f, "</filelists>");
+    cr_puts(oth_f, "</otherdata>");
 
 
     // Close files
 
-    cw_close(pri_f);
-    cw_close(fil_f);
-    cw_close(oth_f);
+    cr_close(pri_f);
+    cr_close(fil_f);
+    cr_close(oth_f);
 
 
     // Write updateinfo.xml
     // TODO
 
     if (!cmd_options->noupdateinfo) {
-        CW_FILE *update_info = NULL;
-        if ((update_info = cw_open(update_info_filename, CW_MODE_WRITE, cmd_options->groupfile_compression_type))) {
-            cw_puts(update_info, "<?xml version=\"1.0\"?>\n<updates></updates>\n");
-            cw_close(update_info);
+        CR_FILE *update_info = NULL;
+        if ((update_info = cr_open(update_info_filename, CR_CW_MODE_WRITE, cmd_options->groupfile_compression_type))) {
+            cr_puts(update_info, "<?xml version=\"1.0\"?>\n<updates></updates>\n");
+            cr_close(update_info);
         } else {
             g_warning("Cannot open file: %s", update_info_filename);
         }
@@ -642,33 +642,33 @@ dump_merged_metadata(GHashTable *merged_hashtable, long packages,
 
     char *out_dir = cmd_options->out_dir;
 
-    RepomdRecord pri_xml_rec = new_repomdrecord("repodata/primary.xml.gz");
-    RepomdRecord fil_xml_rec = new_repomdrecord("repodata/filelists.xml.gz");
-    RepomdRecord oth_xml_rec = new_repomdrecord("repodata/other.xml.gz");
-    RepomdRecord pri_db_rec               = NULL;
-    RepomdRecord fil_db_rec               = NULL;
-    RepomdRecord oth_db_rec               = NULL;
-    RepomdRecord groupfile_rec            = NULL;
-    RepomdRecord compressed_groupfile_rec = NULL;
-    RepomdRecord update_info_rec          = NULL;
+    cr_RepomdRecord pri_xml_rec = cr_new_repomdrecord("repodata/primary.xml.gz");
+    cr_RepomdRecord fil_xml_rec = cr_new_repomdrecord("repodata/filelists.xml.gz");
+    cr_RepomdRecord oth_xml_rec = cr_new_repomdrecord("repodata/other.xml.gz");
+    cr_RepomdRecord pri_db_rec               = NULL;
+    cr_RepomdRecord fil_db_rec               = NULL;
+    cr_RepomdRecord oth_db_rec               = NULL;
+    cr_RepomdRecord groupfile_rec            = NULL;
+    cr_RepomdRecord compressed_groupfile_rec = NULL;
+    cr_RepomdRecord update_info_rec          = NULL;
 
 
     // XML
 
-    fill_missing_data(out_dir, pri_xml_rec, NULL);
-    fill_missing_data(out_dir, fil_xml_rec, NULL);
-    fill_missing_data(out_dir, oth_xml_rec, NULL);
+    cr_fill_missing_data(out_dir, pri_xml_rec, NULL);
+    cr_fill_missing_data(out_dir, fil_xml_rec, NULL);
+    cr_fill_missing_data(out_dir, oth_xml_rec, NULL);
 
 
     // Groupfile
 
     if (groupfile) {
-        gchar *groupfile_name = g_strconcat("repodata/", get_filename(groupfile), NULL);
-        groupfile_rec = new_repomdrecord(groupfile_name);
-        compressed_groupfile_rec = new_repomdrecord(groupfile_name);
+        gchar *groupfile_name = g_strconcat("repodata/", cr_get_filename(groupfile), NULL);
+        groupfile_rec = cr_new_repomdrecord(groupfile_name);
+        compressed_groupfile_rec = cr_new_repomdrecord(groupfile_name);
 
-        process_groupfile(out_dir, groupfile_rec, compressed_groupfile_rec,
-                          NULL, cmd_options->groupfile_compression_type);
+        cr_process_groupfile(out_dir, groupfile_rec, compressed_groupfile_rec,
+                             NULL, cmd_options->groupfile_compression_type);
         g_free(groupfile_name);
     }
 
@@ -677,8 +677,8 @@ dump_merged_metadata(GHashTable *merged_hashtable, long packages,
 
     if (!cmd_options->noupdateinfo) {
         gchar *update_info_name = g_strconcat("repodata/updateinfo.xml", groupfile_suffix, NULL);
-        update_info_rec = new_repomdrecord(update_info_name);
-        fill_missing_data(out_dir, update_info_rec, NULL);
+        update_info_rec = cr_new_repomdrecord(update_info_name);
+        cr_fill_missing_data(out_dir, update_info_rec, NULL);
         g_free(update_info_name);
     }
 
@@ -687,23 +687,23 @@ dump_merged_metadata(GHashTable *merged_hashtable, long packages,
 
     if (!cmd_options->no_database) {
         // Insert XML checksums into the dbs
-        dbinfo_update(pri_db, pri_xml_rec->checksum, NULL);
-        dbinfo_update(fil_db, fil_xml_rec->checksum, NULL);
-        dbinfo_update(oth_db, oth_xml_rec->checksum, NULL);
+        cr_dbinfo_update(pri_db, pri_xml_rec->checksum, NULL);
+        cr_dbinfo_update(fil_db, fil_xml_rec->checksum, NULL);
+        cr_dbinfo_update(oth_db, oth_xml_rec->checksum, NULL);
 
         // Close dbs
-        destroy_primary_db_statements(pri_statements);
-        destroy_filelists_db_statements(fil_statements);
-        destroy_other_db_statements(oth_statements);
+        cr_destroy_primary_db_statements(pri_statements);
+        cr_destroy_filelists_db_statements(fil_statements);
+        cr_destroy_other_db_statements(oth_statements);
 
-        close_primary_db(pri_db, NULL);
-        close_filelists_db(fil_db, NULL);
-        close_other_db(oth_db, NULL);
+        cr_close_primary_db(pri_db, NULL);
+        cr_close_filelists_db(fil_db, NULL);
+        cr_close_other_db(oth_db, NULL);
 
         // Compress dbs
-        compress_file(pri_db_filename, NULL, cmd_options->db_compression_type);
-        compress_file(fil_db_filename, NULL, cmd_options->db_compression_type);
-        compress_file(oth_db_filename, NULL, cmd_options->db_compression_type);
+        cr_compress_file(pri_db_filename, NULL, cmd_options->db_compression_type);
+        cr_compress_file(fil_db_filename, NULL, cmd_options->db_compression_type);
+        cr_compress_file(oth_db_filename, NULL, cmd_options->db_compression_type);
 
         remove(pri_db_filename);
         remove(fil_db_filename);
@@ -714,39 +714,39 @@ dump_merged_metadata(GHashTable *merged_hashtable, long packages,
         gchar *fil_db_name = g_strconcat("repodata/filelists.sqlite", db_suffix, NULL);
         gchar *oth_db_name = g_strconcat("repodata/other.sqlite", db_suffix, NULL);
 
-        pri_db_rec = new_repomdrecord(pri_db_name);
-        fil_db_rec = new_repomdrecord(fil_db_name);
-        oth_db_rec = new_repomdrecord(oth_db_name);
+        pri_db_rec = cr_new_repomdrecord(pri_db_name);
+        fil_db_rec = cr_new_repomdrecord(fil_db_name);
+        oth_db_rec = cr_new_repomdrecord(oth_db_name);
 
         g_free(pri_db_name);
         g_free(fil_db_name);
         g_free(oth_db_name);
 
-        fill_missing_data(out_dir, pri_db_rec, NULL);
-        fill_missing_data(out_dir, fil_db_rec, NULL);
-        fill_missing_data(out_dir, oth_db_rec, NULL);
+        cr_fill_missing_data(out_dir, pri_db_rec, NULL);
+        cr_fill_missing_data(out_dir, fil_db_rec, NULL);
+        cr_fill_missing_data(out_dir, oth_db_rec, NULL);
     }
 
 
     // Add checksums into files names
 
-    rename_file(out_dir, pri_xml_rec);
-    rename_file(out_dir, fil_xml_rec);
-    rename_file(out_dir, oth_xml_rec);
-    rename_file(out_dir, pri_db_rec);
-    rename_file(out_dir, fil_db_rec);
-    rename_file(out_dir, oth_db_rec);
-    rename_file(out_dir, groupfile_rec);
-    rename_file(out_dir, compressed_groupfile_rec);
-    rename_file(out_dir, update_info_rec);
+    cr_rename_file(out_dir, pri_xml_rec);
+    cr_rename_file(out_dir, fil_xml_rec);
+    cr_rename_file(out_dir, oth_xml_rec);
+    cr_rename_file(out_dir, pri_db_rec);
+    cr_rename_file(out_dir, fil_db_rec);
+    cr_rename_file(out_dir, oth_db_rec);
+    cr_rename_file(out_dir, groupfile_rec);
+    cr_rename_file(out_dir, compressed_groupfile_rec);
+    cr_rename_file(out_dir, update_info_rec);
 
 
     // Gen repomd.xml content
 
-    char *repomd_xml = xml_repomd(out_dir, pri_xml_rec,
-                                  fil_xml_rec, oth_xml_rec, pri_db_rec,
-                                  fil_db_rec, oth_db_rec, groupfile_rec,
-                                  compressed_groupfile_rec, update_info_rec);
+    char *repomd_xml = cr_xml_repomd(out_dir, pri_xml_rec,
+                                     fil_xml_rec, oth_xml_rec, pri_db_rec,
+                                     fil_db_rec, oth_db_rec, groupfile_rec,
+                                     compressed_groupfile_rec, update_info_rec);
 
     if (repomd_xml) {
         gchar *repomd_path = g_strconcat(cmd_options->out_repo, "repomd.xml", NULL);
@@ -765,15 +765,15 @@ dump_merged_metadata(GHashTable *merged_hashtable, long packages,
 
     g_free(repomd_xml);
 
-    free_repomdrecord(pri_xml_rec);
-    free_repomdrecord(fil_xml_rec);
-    free_repomdrecord(oth_xml_rec);
-    free_repomdrecord(pri_db_rec);
-    free_repomdrecord(fil_db_rec);
-    free_repomdrecord(oth_db_rec);
-    free_repomdrecord(groupfile_rec);
-    free_repomdrecord(compressed_groupfile_rec);
-    free_repomdrecord(update_info_rec);
+    cr_free_repomdrecord(pri_xml_rec);
+    cr_free_repomdrecord(fil_xml_rec);
+    cr_free_repomdrecord(oth_xml_rec);
+    cr_free_repomdrecord(pri_db_rec);
+    cr_free_repomdrecord(fil_db_rec);
+    cr_free_repomdrecord(oth_db_rec);
+    cr_free_repomdrecord(groupfile_rec);
+    cr_free_repomdrecord(compressed_groupfile_rec);
+    cr_free_repomdrecord(update_info_rec);
 
     g_free(pri_xml_filename);
     g_free(fil_xml_filename);
@@ -808,7 +808,9 @@ main(int argc, char **argv)
     }
 
     if (cmd_options->version) {
-        printf("Version: %d.%d.%d\n", MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION);
+        printf("Version: %d.%d.%d\n", CR_MAJOR_VERSION,
+                                      CR_MINOR_VERSION,
+                                      CR_PATCH_VERSION);
         free_options(cmd_options);
         exit(0);
     }
@@ -817,32 +819,32 @@ main(int argc, char **argv)
         free_options(cmd_options);
         fprintf(stderr, "Usage: %s [options]\n\n"
                         "%s: take 2 or more repositories and merge their metadata into a new repo\n\n",
-                        get_filename(argv[0]), get_filename(argv[0]));
+                        cr_get_filename(argv[0]), cr_get_filename(argv[0]));
         return 1;
     }
 
 
     // Set logging
 
-    g_log_set_default_handler (log_function, NULL);
+    g_log_set_default_handler (cr_log_function, NULL);
 
     if (cmd_options->verbose) {
         // Verbose mode
         GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
-        g_log_set_handler(NULL, levels, log_function, NULL);
-        g_log_set_handler("C_CREATEREPOLIB", levels, log_function, NULL);
+        g_log_set_handler(NULL, levels, cr_log_function, NULL);
+        g_log_set_handler("C_CREATEREPOLIB", levels, cr_log_function, NULL);
     } else {
         // Standard mode
         GLogLevelFlags levels = G_LOG_LEVEL_DEBUG;
-        g_log_set_handler(NULL, levels, black_hole_log_function, NULL);
-        g_log_set_handler("C_CREATEREPOLIB", levels, black_hole_log_function, NULL);
+        g_log_set_handler(NULL, levels, cr_black_hole_log_function, NULL);
+        g_log_set_handler("C_CREATEREPOLIB", levels, cr_black_hole_log_function, NULL);
     }
 
 
     // Prepare out_repo
 
     if (g_file_test(cmd_options->out_repo, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
-        remove_dir(cmd_options->out_repo);
+        cr_remove_dir(cmd_options->out_repo);
     }
 
     if(g_mkdir_with_parents(cmd_options->out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
@@ -857,23 +859,23 @@ main(int argc, char **argv)
     GSList *local_repos = NULL;
     GSList *element = NULL;
     gchar *groupfile = NULL;
-    gboolean download_failed = FALSE;
+    gboolean cr_download_failed = FALSE;
 
     for (element = cmd_options->repo_list; element; element = g_slist_next(element)) {
-        struct MetadataLocation *loc = get_metadata_location((gchar *) element->data, 1);
+        struct cr_MetadataLocation *loc = cr_get_metadata_location((gchar *) element->data, 1);
         if (!loc) {
-            download_failed = TRUE;
+            cr_download_failed = TRUE;
             break;
         }
         local_repos = g_slist_prepend(local_repos, loc);
     }
 
-    if (download_failed) {
+    if (cr_download_failed) {
         g_warning("Downloading of repodata failed");
         // Remove downloaded metadata and free structures
         for (element = local_repos; element; element = g_slist_next(element)) {
-            struct MetadataLocation *loc = (struct MetadataLocation  *) element->data;
-            free_metadata_location(loc);
+            struct cr_MetadataLocation *loc = (struct cr_MetadataLocation  *) element->data;
+            cr_free_metadata_location(loc);
         }
         return 1;
     }
@@ -882,10 +884,10 @@ main(int argc, char **argv)
     // Get first groupfile
 
     for (element = local_repos; element; element = g_slist_next(element)) {
-        struct MetadataLocation *loc = (struct MetadataLocation  *) element->data;
+        struct cr_MetadataLocation *loc = (struct cr_MetadataLocation  *) element->data;
         if (!groupfile && loc->groupfile_href) {
-            if (copy_file(loc->groupfile_href, cmd_options->out_repo) == CR_COPY_OK) {
-                groupfile = g_strconcat(cmd_options->out_repo, get_filename(loc->groupfile_href), NULL);
+            if (cr_copy_file(loc->groupfile_href, cmd_options->out_repo) == CR_COPY_OK) {
+                groupfile = g_strconcat(cmd_options->out_repo, cr_get_filename(loc->groupfile_href), NULL);
                 break;
             }
         }
@@ -894,28 +896,28 @@ main(int argc, char **argv)
 
     // Load noarch repo
 
-    GHashTable *noarch_hashtable = NULL; // Key is HT_KEY_FILENAME
+    GHashTable *noarch_hashtable = NULL; // Key is CR_HT_KEY_FILENAME
 
     if (cmd_options->noarch_repo_url) {
-        struct MetadataLocation *noarch_ml;
+        struct cr_MetadataLocation *noarch_ml;
 
-        noarch_ml = get_metadata_location(cmd_options->noarch_repo_url, 1);
-        noarch_hashtable = new_metadata_hashtable();
+        noarch_ml = cr_get_metadata_location(cmd_options->noarch_repo_url, 1);
+        noarch_hashtable = cr_new_metadata_hashtable();
 
         // Base paths in output of original createrepo doesn't have trailing '/'
-        gchar *noarch_repopath = normalize_dir_path(noarch_ml->original_url);
+        gchar *noarch_repopath = cr_normalize_dir_path(noarch_ml->original_url);
         if (noarch_repopath && strlen(noarch_repopath) > 1) {
             noarch_repopath[strlen(noarch_repopath)-1] = '\0';
         }
 
         g_debug("Loading noarch_repo: %s", noarch_repopath);
 
-        if (load_xml_metadata(noarch_hashtable, noarch_ml, HT_KEY_FILENAME) == LOAD_METADATA_ERR) {
+        if (cr_load_xml_metadata(noarch_hashtable, noarch_ml, CR_HT_KEY_FILENAME) == CR_LOAD_METADATA_ERR) {
             g_error("Cannot load noarch repo: \"%s\"", noarch_ml->repomd);
-            destroy_metadata_hashtable(noarch_hashtable);
+            cr_destroy_metadata_hashtable(noarch_hashtable);
             noarch_hashtable = NULL;
             // TODO cleanup
-            free_metadata_location(noarch_ml);
+            cr_free_metadata_location(noarch_ml);
             return 1;
         }
 
@@ -925,14 +927,14 @@ main(int argc, char **argv)
 
         g_hash_table_iter_init (&iter, noarch_hashtable);
         while (g_hash_table_iter_next (&iter, &p_key, &p_value)) {
-            Package *pkg = (Package *) p_value;
+            cr_Package *pkg = (cr_Package *) p_value;
             if (!pkg->location_base) {
                 pkg->location_base = g_string_chunk_insert(pkg->chunk, noarch_repopath);
             }
         }
 
         g_free(noarch_repopath);
-        free_metadata_location(noarch_ml);
+        cr_free_metadata_location(noarch_ml);
     }
 
 
@@ -953,8 +955,8 @@ main(int argc, char **argv)
     // Remove downloaded repos and free repo location structures
 
     for (element = local_repos; element; element = g_slist_next(element)) {
-        struct MetadataLocation *loc = (struct MetadataLocation  *) element->data;
-        free_metadata_location(loc);
+        struct cr_MetadataLocation *loc = (struct cr_MetadataLocation  *) element->data;
+        cr_free_metadata_location(loc);
     }
 
     g_slist_free (local_repos);
@@ -962,7 +964,7 @@ main(int argc, char **argv)
     // Cleanup
 
     g_free(groupfile);
-    destroy_metadata_hashtable(noarch_hashtable);
+    cr_destroy_metadata_hashtable(noarch_hashtable);
     destroy_merged_metadata_hashtable(merged_hashtable);
     free_options(cmd_options);
     return 0;

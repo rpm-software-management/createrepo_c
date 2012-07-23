@@ -42,7 +42,7 @@
 #define SIZE_STR_MAX_LEN    32
 
 
-void dump_pco(xmlNodePtr root, Package *package, int pcotype)
+void dump_pco(xmlNodePtr root, cr_Package *package, int pcotype)
 {
     const char *elem_name;
     GSList *files = NULL;
@@ -84,7 +84,7 @@ void dump_pco(xmlNodePtr root, Package *package, int pcotype)
     GSList *element = NULL;
     for(element = files; element; element=element->next) {
 
-        Dependency *entry = (Dependency*) element->data;
+        cr_Dependency *entry = (cr_Dependency*) element->data;
 
         assert(entry);
 
@@ -127,7 +127,7 @@ void dump_pco(xmlNodePtr root, Package *package, int pcotype)
 
 
 
-void dump_base_items(xmlNodePtr root, Package *package)
+void dump_base_items(xmlNodePtr root, cr_Package *package)
 {
     /***********************************
      Element: package
@@ -337,12 +337,12 @@ void dump_base_items(xmlNodePtr root, Package *package)
     dump_pco(format,   package, REQUIRES);
     dump_pco(format,   package, CONFLICTS);
     dump_pco(format,   package, OBSOLETES);
-    dump_files(format, package, 1);
+    cr_dump_files(format, package, 1);
 }
 
 
 
-char *xml_dump_primary(Package *package)
+char *cr_xml_dump_primary(cr_Package *package)
 {
     if (!package)
         return NULL;

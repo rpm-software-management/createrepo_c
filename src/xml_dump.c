@@ -29,7 +29,7 @@
 #define MODULE "xml_dump: "
 
 
-void dump_files(xmlNodePtr node, Package *package, int primary)
+void cr_dump_files(xmlNodePtr node, cr_Package *package, int primary)
 {
     if (!node || !package->files) {
         return;
@@ -38,7 +38,7 @@ void dump_files(xmlNodePtr node, Package *package, int primary)
 
     GSList *element = NULL;
     for(element = package->files; element; element=element->next) {
-        PackageFile *entry = (PackageFile*) element->data;
+        cr_PackageFile *entry = (cr_PackageFile*) element->data;
 
 
         // File without name or path is suspicious => Skip it
@@ -60,7 +60,7 @@ void dump_files(xmlNodePtr node, Package *package, int primary)
 
         // Skip a file if we want primary files and the file is not one
 
-        if (primary && !is_primary(fullname)) {
+        if (primary && !cr_is_primary(fullname)) {
             g_free(fullname);
             continue;
         }
@@ -83,9 +83,9 @@ void dump_files(xmlNodePtr node, Package *package, int primary)
 
 
 
-struct XmlStruct xml_dump(Package *pkg)
+struct cr_XmlStruct cr_xml_dump(cr_Package *pkg)
 {
-    struct XmlStruct result;
+    struct cr_XmlStruct result;
 
     if (!pkg) {
         result.primary   = NULL;
@@ -94,9 +94,9 @@ struct XmlStruct xml_dump(Package *pkg)
         return result;
     }
 
-    result.primary   = xml_dump_primary(pkg);
-    result.filelists = xml_dump_filelists(pkg);
-    result.other     = xml_dump_other(pkg);
+    result.primary   = cr_xml_dump_primary(pkg);
+    result.filelists = cr_xml_dump_filelists(pkg);
+    result.other     = cr_xml_dump_other(pkg);
 
     return result;
 }

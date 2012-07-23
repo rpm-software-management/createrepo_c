@@ -13,7 +13,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #include <glib.h>
@@ -43,17 +44,17 @@
 
 
 struct UserData {
-    CW_FILE *pri_f;
-    CW_FILE *fil_f;
-    CW_FILE *oth_f;
-    DbPrimaryStatements pri_statements;
-    DbFilelistsStatements fil_statements;
-    DbOtherStatements oth_statements;
+    CR_FILE *pri_f;
+    CR_FILE *fil_f;
+    CR_FILE *oth_f;
+    cr_DbPrimaryStatements pri_statements;
+    cr_DbFilelistsStatements fil_statements;
+    cr_DbOtherStatements oth_statements;
     int changelog_limit;
     const char *location_base;
     int repodir_name_len;
     const char *checksum_type_str;
-    ChecksumType checksum_type;
+    cr_ChecksumType checksum_type;
     gboolean quiet;
     gboolean verbose;
     gboolean skip_symlinks;
@@ -79,10 +80,10 @@ char *tmp_repodata_path = NULL;
 // Signal handler
 void sigint_catcher(int sig)
 {
-    UNUSED(sig);
+    CR_UNUSED(sig);
     g_message("SIGINT catched: Terminating...");
     if (tmp_repodata_path) {
-        remove_dir(tmp_repodata_path);
+        cr_remove_dir(tmp_repodata_path);
     }
     exit(1);
 }
@@ -139,16 +140,16 @@ void dumper_thread(gpointer data, gpointer user_data) {
         }
     }
 
-    struct XmlStruct res;
+    struct cr_XmlStruct res;
 
     // Update stuff
     gboolean old_used = FALSE;
-    Package *md = NULL;
-    Package *pkg = NULL;
+    cr_Package *md = NULL;
+    cr_Package *pkg = NULL;
 
     if (udata->old_metadata) {
         // We have old metadata
-        md = (Package *) g_hash_table_lookup (udata->old_metadata, task->filename);
+        md = (cr_Package *) g_hash_table_lookup (udata->old_metadata, task->filename);
         if (md) {
             // CACHE HIT!
 
@@ -174,40 +175,40 @@ void dumper_thread(gpointer data, gpointer user_data) {
     }
 
     if (!old_used) {
-        pkg = package_from_file(task->full_path, udata->checksum_type,
-                                location_href, udata->location_base,
-                                udata->changelog_limit, NULL);
+        pkg = cr_package_from_file(task->full_path, udata->checksum_type,
+                                   location_href, udata->location_base,
+                                   udata->changelog_limit, NULL);
         if (!pkg) {
             g_warning("Cannot read package: %s", task->full_path);
             goto task_cleanup;
         }
-        res = xml_dump(pkg);
+        res = cr_xml_dump(pkg);
     } else {
         pkg = md;
-        res = xml_dump(md);
+        res = cr_xml_dump(md);
     }
 
     // Write primary data
     G_LOCK(LOCK_PRI);
-    cw_puts(udata->pri_f, (const char *) res.primary);
+    cr_puts(udata->pri_f, (const char *) res.primary);
     if (udata->pri_statements) {
-        add_primary_pkg_db(udata->pri_statements, pkg);
+        cr_add_primary_pkg_db(udata->pri_statements, pkg);
     }
     G_UNLOCK(LOCK_PRI);
 
     // Write fielists data
     G_LOCK(LOCK_FIL);
-    cw_puts(udata->fil_f, (const char *) res.filelists);
+    cr_puts(udata->fil_f, (const char *) res.filelists);
     if (udata->fil_statements) {
-        add_filelists_pkg_db(udata->fil_statements, pkg);
+        cr_add_filelists_pkg_db(udata->fil_statements, pkg);
     }
     G_UNLOCK(LOCK_FIL);
 
     // Write other data
     G_LOCK(LOCK_OTH);
-    cw_puts(udata->oth_f, (const char *) res.other);
+    cr_puts(udata->oth_f, (const char *) res.other);
     if (udata->oth_statements) {
-        add_other_pkg_db(udata->oth_statements, pkg);
+        cr_add_other_pkg_db(udata->oth_statements, pkg);
     }
     G_UNLOCK(LOCK_OTH);
 
@@ -215,7 +216,7 @@ void dumper_thread(gpointer data, gpointer user_data) {
     // Clean up
 
     if (pkg != md) {
-        package_free(pkg);
+        cr_package_free(pkg);
     }
 
     free(res.primary);
@@ -248,12 +249,15 @@ int main(int argc, char **argv) {
     // Arguments pre-check
 
     if (cmd_options->version) {
-        printf("Version: %d.%d.%d\n", MAJOR_VERSION, MINOR_VERSION, PATCH_VERSION);
+        printf("Version: %d.%d.%d\n", CR_MAJOR_VERSION,
+                                      CR_MINOR_VERSION,
+                                      CR_PATCH_VERSION);
         free_options(cmd_options);
         exit(0);
     } else if (argc != 2) {
         fprintf(stderr, "Must specify exactly one directory to index.\n");
-        fprintf(stderr, "Usage: %s [options] <directory_to_index>\n\n", get_filename(argv[0]));
+        fprintf(stderr, "Usage: %s [options] <directory_to_index>\n\n",
+                         cr_get_filename(argv[0]));
         free_options(cmd_options);
         exit(1);
     }
@@ -267,7 +271,7 @@ int main(int argc, char **argv) {
     gchar *out_repo = NULL;     // path/to/out_repo/repodata/
     gchar *tmp_out_repo = NULL; // path/to/out_repo/.repodata/
 
-    in_dir = normalize_dir_path(argv[1]);
+    in_dir = cr_normalize_dir_path(argv[1]);
     cmd_options->input_dir = g_strdup(in_dir);
 
 
@@ -292,23 +296,23 @@ int main(int argc, char **argv) {
 
     // Set logging stuff
 
-    g_log_set_default_handler (log_function, NULL);
+    g_log_set_default_handler (cr_log_function, NULL);
 
     if (cmd_options->quiet) {
         // Quiet mode
         GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
-        g_log_set_handler(NULL, levels, black_hole_log_function, NULL);
-        g_log_set_handler("C_CREATEREPOLIB", levels, black_hole_log_function, NULL);
+        g_log_set_handler(NULL, levels, cr_black_hole_log_function, NULL);
+        g_log_set_handler("C_CREATEREPOLIB", levels, cr_black_hole_log_function, NULL);
     } else if (cmd_options->verbose) {
         // Verbose mode
         GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
-        g_log_set_handler(NULL, levels, log_function, NULL);
-        g_log_set_handler("C_CREATEREPOLIB", levels, log_function, NULL);
+        g_log_set_handler(NULL, levels, cr_log_function, NULL);
+        g_log_set_handler("C_CREATEREPOLIB", levels, cr_log_function, NULL);
     } else {
         // Standard mode
         GLogLevelFlags levels = G_LOG_LEVEL_DEBUG;
-        g_log_set_handler(NULL, levels, black_hole_log_function, NULL);
-        g_log_set_handler("C_CREATEREPOLIB", levels, black_hole_log_function, NULL);
+        g_log_set_handler(NULL, levels, cr_black_hole_log_function, NULL);
+        g_log_set_handler("C_CREATEREPOLIB", levels, cr_black_hole_log_function, NULL);
     }
 
 
@@ -317,7 +321,7 @@ int main(int argc, char **argv) {
     in_repo = g_strconcat(in_dir, "repodata/", NULL);
 
     if (cmd_options->outputdir) {
-        out_dir = normalize_dir_path(cmd_options->outputdir);
+        out_dir = cr_normalize_dir_path(cmd_options->outputdir);
         out_repo = g_strconcat(out_dir, "repodata/", NULL);
         tmp_out_repo = g_strconcat(out_dir, ".repodata/", NULL);
     } else {
@@ -360,9 +364,9 @@ int main(int argc, char **argv) {
 
     gchar *groupfile = NULL;
     if (cmd_options->groupfile_fullpath) {
-        groupfile = g_strconcat(tmp_out_repo, get_filename(cmd_options->groupfile_fullpath), NULL);
+        groupfile = g_strconcat(tmp_out_repo, cr_get_filename(cmd_options->groupfile_fullpath), NULL);
         g_debug("Copy groupfile %s -> %s", cmd_options->groupfile_fullpath, groupfile);
-        if (better_copy_file(cmd_options->groupfile_fullpath, groupfile) != CR_COPY_OK) {
+        if (cr_better_copy_file(cmd_options->groupfile_fullpath, groupfile) != CR_COPY_OK) {
             g_critical("Error while copy %s -> %s", cmd_options->groupfile_fullpath, groupfile);
         }
     }
@@ -374,13 +378,13 @@ int main(int argc, char **argv) {
     if (cmd_options->update) {
 
         int ret;
-        old_metadata = new_metadata_hashtable();
+        old_metadata = cr_new_metadata_hashtable();
 
         // Load data from output dir if output dir is specified
         // This is default behaviour of classic createrepo
         if (cmd_options->outputdir) {
-            ret = locate_and_load_xml_metadata(old_metadata, out_dir, HT_KEY_FILENAME);
-            if (ret == LOAD_METADATA_OK) {
+            ret = cr_locate_and_load_xml_metadata(old_metadata, out_dir, CR_HT_KEY_FILENAME);
+            if (ret == CR_LOAD_METADATA_OK) {
                 g_debug("Old metadata from: %s - loaded", out_dir);
             } else {
                 g_debug("Old metadata from %s - loading failed", out_dir);
@@ -390,8 +394,8 @@ int main(int argc, char **argv) {
         // Load local repodata
         // Classic createrepo doesn't load this metadata if --outputdir option is used,
         // but createrepo_c does.
-        ret = locate_and_load_xml_metadata(old_metadata, in_dir, HT_KEY_FILENAME);
-        if (ret == LOAD_METADATA_OK) {
+        ret = cr_locate_and_load_xml_metadata(old_metadata, in_dir, CR_HT_KEY_FILENAME);
+        if (ret == CR_LOAD_METADATA_OK) {
             g_debug("Old metadata from: %s - loaded", in_dir);
         } else {
             g_debug("Old metadata from %s - loading failed", in_dir);
@@ -402,8 +406,8 @@ int main(int argc, char **argv) {
         for (element = cmd_options->l_update_md_paths; element; element = g_slist_next(element)) {
             char *path = (char *) element->data;
             g_message("Loading metadata from: %s", path);
-            int ret = locate_and_load_xml_metadata(old_metadata, path, HT_KEY_FILENAME);
-            if (ret == LOAD_METADATA_OK) {
+            int ret = cr_locate_and_load_xml_metadata(old_metadata, path, CR_HT_KEY_FILENAME);
+            if (ret == CR_LOAD_METADATA_OK) {
                 g_debug("Old metadata from md-path %s - loaded", path);
             } else {
                 g_warning("Old metadata from md-path %s - loading failed", path);
@@ -417,27 +421,27 @@ int main(int argc, char **argv) {
     // Setup compression types
 
     const char *sqlite_compression_suffix = NULL;
-    CompressionType sqlite_compression = BZ2_COMPRESSION;
-    CompressionType groupfile_compression = GZ_COMPRESSION;
+    cr_CompressionType sqlite_compression = CR_CW_BZ2_COMPRESSION;
+    cr_CompressionType groupfile_compression = CR_CW_GZ_COMPRESSION;
 
-    if (cmd_options->compression_type != UNKNOWN_COMPRESSION) {
+    if (cmd_options->compression_type != CR_CW_UNKNOWN_COMPRESSION) {
         sqlite_compression    = cmd_options->compression_type;
         groupfile_compression = cmd_options->compression_type;
     }
 
     if (cmd_options->xz_compression) {
-        sqlite_compression    = XZ_COMPRESSION;
-        groupfile_compression = XZ_COMPRESSION;
+        sqlite_compression    = CR_CW_XZ_COMPRESSION;
+        groupfile_compression = CR_CW_XZ_COMPRESSION;
     }
 
-    sqlite_compression_suffix = get_suffix(sqlite_compression);
+    sqlite_compression_suffix = cr_get_suffix(sqlite_compression);
 
 
     // Create and open new compressed files
 
-    CW_FILE *pri_cw_file;
-    CW_FILE *fil_cw_file;
-    CW_FILE *oth_cw_file;
+    CR_FILE *pri_cr_file;
+    CR_FILE *fil_cr_file;
+    CR_FILE *oth_cr_file;
 
     g_message("Temporary output repo path: %s", tmp_out_repo);
     g_debug("Creating .xml.gz files");
@@ -446,7 +450,7 @@ int main(int argc, char **argv) {
     gchar *fil_xml_filename = g_strconcat(tmp_out_repo, "/filelists.xml.gz", NULL);
     gchar *oth_xml_filename = g_strconcat(tmp_out_repo, "/other.xml.gz", NULL);
 
-    if ((pri_cw_file = cw_open(pri_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
+    if ((pri_cr_file = cr_open(pri_xml_filename, CR_CW_MODE_WRITE, CR_CW_GZ_COMPRESSION)) == NULL) {
         g_critical("Cannot open file: %s", pri_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
@@ -454,22 +458,22 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    if ((fil_cw_file = cw_open(fil_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
+    if ((fil_cr_file = cr_open(fil_xml_filename, CR_CW_MODE_WRITE, CR_CW_GZ_COMPRESSION)) == NULL) {
         g_critical("Cannot open file: %s", fil_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
-        cw_close(pri_cw_file);
+        cr_close(pri_cr_file);
         exit(1);
     }
 
-    if ((oth_cw_file = cw_open(oth_xml_filename, CW_MODE_WRITE, GZ_COMPRESSION)) == NULL) {
+    if ((oth_cr_file = cr_open(oth_xml_filename, CR_CW_MODE_WRITE, CR_CW_GZ_COMPRESSION)) == NULL) {
         g_critical("Cannot open file: %s", oth_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
-        cw_close(fil_cw_file);
-        cw_close(pri_cw_file);
+        cr_close(fil_cr_file);
+        cr_close(pri_cr_file);
         exit(1);
     }
 
@@ -482,41 +486,41 @@ int main(int argc, char **argv) {
     sqlite3 *pri_db = NULL;
     sqlite3 *fil_db = NULL;
     sqlite3 *oth_db = NULL;
-    DbPrimaryStatements pri_statements   = NULL;
-    DbFilelistsStatements fil_statements = NULL;
-    DbOtherStatements oth_statements     = NULL;
+    cr_DbPrimaryStatements pri_statements   = NULL;
+    cr_DbFilelistsStatements fil_statements = NULL;
+    cr_DbOtherStatements oth_statements     = NULL;
 
     if (!cmd_options->no_database) {
         g_debug("Creating .xml.gz files");
         pri_db_filename = g_strconcat(tmp_out_repo, "/primary.sqlite", NULL);
         fil_db_filename = g_strconcat(tmp_out_repo, "/filelists.sqlite", NULL);
         oth_db_filename = g_strconcat(tmp_out_repo, "/other.sqlite", NULL);
-        pri_db = open_primary_db(pri_db_filename, NULL);
-        fil_db = open_filelists_db(fil_db_filename, NULL);
-        oth_db = open_other_db(oth_db_filename, NULL);
-        pri_statements = prepare_primary_db_statements(pri_db, NULL);
-        fil_statements = prepare_filelists_db_statements(fil_db, NULL);
-        oth_statements = prepare_other_db_statements(oth_db, NULL);
+        pri_db = cr_open_primary_db(pri_db_filename, NULL);
+        fil_db = cr_open_filelists_db(fil_db_filename, NULL);
+        oth_db = cr_open_other_db(oth_db_filename, NULL);
+        pri_statements = cr_prepare_primary_db_statements(pri_db, NULL);
+        fil_statements = cr_prepare_filelists_db_statements(fil_db, NULL);
+        oth_statements = cr_prepare_other_db_statements(oth_db, NULL);
     }
 
 
     // Init package parser
 
-    package_parser_init();
+    cr_package_parser_init();
 
 
     // Thread pool - User data initialization
 
     struct UserData user_data;
-    user_data.pri_f             = pri_cw_file;
-    user_data.fil_f             = fil_cw_file;
-    user_data.oth_f             = oth_cw_file;
+    user_data.pri_f             = pri_cr_file;
+    user_data.fil_f             = fil_cr_file;
+    user_data.oth_f             = oth_cr_file;
     user_data.pri_statements    = pri_statements;
     user_data.fil_statements    = fil_statements;
     user_data.oth_statements    = oth_statements;
     user_data.changelog_limit   = cmd_options->changelog_limit;
     user_data.location_base     = cmd_options->location_base;
-    user_data.checksum_type_str = get_checksum_name_str(cmd_options->checksum_type);
+    user_data.checksum_type_str = cr_get_checksum_name_str(cmd_options->checksum_type);
     user_data.checksum_type     = cmd_options->checksum_type;
     user_data.quiet             = cmd_options->quiet;
     user_data.verbose           = cmd_options->verbose;
@@ -660,12 +664,12 @@ int main(int argc, char **argv) {
 
     g_debug("Writing xml headers");
 
-    cw_printf(user_data.pri_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-          "<metadata xmlns=\""XML_COMMON_NS"\" xmlns:rpm=\""XML_RPM_NS"\" packages=\"%d\">\n", package_count);
-    cw_printf(user_data.fil_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-          "<filelists xmlns=\""XML_FILELISTS_NS"\" packages=\"%d\">\n", package_count);
-    cw_printf(user_data.oth_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-          "<otherdata xmlns=\""XML_OTHER_NS"\" packages=\"%d\">\n", package_count);
+    cr_printf(user_data.pri_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+          "<metadata xmlns=\""CR_XML_COMMON_NS"\" xmlns:rpm=\""CR_XML_RPM_NS"\" packages=\"%d\">\n", package_count);
+    cr_printf(user_data.fil_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+          "<filelists xmlns=\""CR_XML_FILELISTS_NS"\" packages=\"%d\">\n", package_count);
+    cr_printf(user_data.oth_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+          "<otherdata xmlns=\""CR_XML_OTHER_NS"\" packages=\"%d\">\n", package_count);
 
 
     // Start pool
@@ -680,24 +684,24 @@ int main(int argc, char **argv) {
     g_thread_pool_free(pool, FALSE, TRUE);
     g_message("Pool finished");
 
-    cw_puts(user_data.pri_f, "</metadata>");
-    cw_puts(user_data.fil_f, "</filelists>");
-    cw_puts(user_data.oth_f, "</otherdata>");
+    cr_puts(user_data.pri_f, "</metadata>");
+    cr_puts(user_data.fil_f, "</filelists>");
+    cr_puts(user_data.oth_f, "</otherdata>");
 
-    cw_close(user_data.pri_f);
-    cw_close(user_data.fil_f);
-    cw_close(user_data.oth_f);
+    cr_close(user_data.pri_f);
+    cr_close(user_data.fil_f);
+    cr_close(user_data.oth_f);
 
 
     // Close db
 
-    destroy_primary_db_statements(user_data.pri_statements);
-    destroy_filelists_db_statements(user_data.fil_statements);
-    destroy_other_db_statements(user_data.oth_statements);
+    cr_destroy_primary_db_statements(user_data.pri_statements);
+    cr_destroy_filelists_db_statements(user_data.fil_statements);
+    cr_destroy_other_db_statements(user_data.oth_statements);
 
-    close_primary_db(pri_db, NULL);
-    close_filelists_db(fil_db, NULL);
-    close_other_db(oth_db, NULL);
+    cr_close_primary_db(pri_db, NULL);
+    cr_close_filelists_db(fil_db, NULL);
+    cr_close_other_db(oth_db, NULL);
 
 
     // Move files from out_repo into tmp_out_repo
@@ -707,7 +711,7 @@ int main(int argc, char **argv) {
 
         // Delete old metadata
         g_debug("Removing old metadata from %s", out_repo);
-        remove_metadata(out_dir);
+        cr_remove_metadata(out_dir);
 
         // Move files from out_repo to tmp_out_repo
         GDir *dirp;
@@ -755,32 +759,33 @@ int main(int argc, char **argv) {
 
     g_debug("Generating repomd.xml");
 
-    RepomdRecord pri_xml_rec = new_repomdrecord("repodata/primary.xml.gz");
-    RepomdRecord fil_xml_rec = new_repomdrecord("repodata/filelists.xml.gz");
-    RepomdRecord oth_xml_rec = new_repomdrecord("repodata/other.xml.gz");
-    RepomdRecord pri_db_rec               = NULL;
-    RepomdRecord fil_db_rec               = NULL;
-    RepomdRecord oth_db_rec               = NULL;
-    RepomdRecord groupfile_rec            = NULL;
-    RepomdRecord compressed_groupfile_rec = NULL;
+    cr_RepomdRecord pri_xml_rec = cr_new_repomdrecord("repodata/primary.xml.gz");
+    cr_RepomdRecord fil_xml_rec = cr_new_repomdrecord("repodata/filelists.xml.gz");
+    cr_RepomdRecord oth_xml_rec = cr_new_repomdrecord("repodata/other.xml.gz");
+    cr_RepomdRecord pri_db_rec               = NULL;
+    cr_RepomdRecord fil_db_rec               = NULL;
+    cr_RepomdRecord oth_db_rec               = NULL;
+    cr_RepomdRecord groupfile_rec            = NULL;
+    cr_RepomdRecord compressed_groupfile_rec = NULL;
 
 
     // XML
 
-    fill_missing_data(out_dir, pri_xml_rec, &(cmd_options->checksum_type));
-    fill_missing_data(out_dir, fil_xml_rec, &(cmd_options->checksum_type));
-    fill_missing_data(out_dir, oth_xml_rec, &(cmd_options->checksum_type));
+    cr_fill_missing_data(out_dir, pri_xml_rec, &(cmd_options->checksum_type));
+    cr_fill_missing_data(out_dir, fil_xml_rec, &(cmd_options->checksum_type));
+    cr_fill_missing_data(out_dir, oth_xml_rec, &(cmd_options->checksum_type));
 
 
     // Groupfile
 
     if (groupfile) {
-        gchar *groupfile_name = g_strconcat("repodata/", get_filename(groupfile), NULL);
-        groupfile_rec = new_repomdrecord(groupfile_name);
-        compressed_groupfile_rec = new_repomdrecord(groupfile_name);
+        gchar *groupfile_name = g_strconcat("repodata/", cr_get_filename(groupfile), NULL);
+        groupfile_rec = cr_new_repomdrecord(groupfile_name);
+        compressed_groupfile_rec = cr_new_repomdrecord(groupfile_name);
 
-        process_groupfile(out_dir, groupfile_rec, compressed_groupfile_rec,
-                      &(cmd_options->checksum_type), groupfile_compression);
+        cr_process_groupfile(out_dir, groupfile_rec, compressed_groupfile_rec,
+                             &(cmd_options->checksum_type),
+                             groupfile_compression);
         g_free(groupfile_name);
     }
 
@@ -808,9 +813,9 @@ int main(int argc, char **argv) {
         sqlite3_open(tmp_fil_db_path, &fil_db);
         sqlite3_open(tmp_oth_db_path, &oth_db);
 
-        dbinfo_update(pri_db, pri_xml_rec->checksum, NULL);
-        dbinfo_update(fil_db, fil_xml_rec->checksum, NULL);
-        dbinfo_update(oth_db, oth_xml_rec->checksum, NULL);
+        cr_dbinfo_update(pri_db, pri_xml_rec->checksum, NULL);
+        cr_dbinfo_update(fil_db, fil_xml_rec->checksum, NULL);
+        cr_dbinfo_update(oth_db, oth_xml_rec->checksum, NULL);
 
         sqlite3_close(pri_db);
         sqlite3_close(fil_db);
@@ -819,9 +824,9 @@ int main(int argc, char **argv) {
 
         // Compress dbs
 
-        compress_file(tmp_pri_db_path, NULL, sqlite_compression);
-        compress_file(tmp_fil_db_path, NULL, sqlite_compression);
-        compress_file(tmp_oth_db_path, NULL, sqlite_compression);
+        cr_compress_file(tmp_pri_db_path, NULL, sqlite_compression);
+        cr_compress_file(tmp_fil_db_path, NULL, sqlite_compression);
+        cr_compress_file(tmp_oth_db_path, NULL, sqlite_compression);
 
         remove(tmp_pri_db_path);
         remove(tmp_fil_db_path);
@@ -834,13 +839,13 @@ int main(int argc, char **argv) {
 
         // Prepare repomd records
 
-        pri_db_rec = new_repomdrecord(pri_db_name);
-        fil_db_rec = new_repomdrecord(fil_db_name);
-        oth_db_rec = new_repomdrecord(oth_db_name);
+        pri_db_rec = cr_new_repomdrecord(pri_db_name);
+        fil_db_rec = cr_new_repomdrecord(fil_db_name);
+        oth_db_rec = cr_new_repomdrecord(oth_db_name);
 
-        fill_missing_data(out_dir, pri_db_rec, &(cmd_options->checksum_type));
-        fill_missing_data(out_dir, fil_db_rec, &(cmd_options->checksum_type));
-        fill_missing_data(out_dir, oth_db_rec, &(cmd_options->checksum_type));
+        cr_fill_missing_data(out_dir, pri_db_rec, &(cmd_options->checksum_type));
+        cr_fill_missing_data(out_dir, fil_db_rec, &(cmd_options->checksum_type));
+        cr_fill_missing_data(out_dir, oth_db_rec, &(cmd_options->checksum_type));
 
         g_free(pri_db_name);
         g_free(fil_db_name);
@@ -851,23 +856,23 @@ int main(int argc, char **argv) {
     // Add checksums into files names
 
     if (cmd_options->unique_md_filenames) {
-        rename_file(out_dir, pri_xml_rec);
-        rename_file(out_dir, fil_xml_rec);
-        rename_file(out_dir, oth_xml_rec);
-        rename_file(out_dir, pri_db_rec);
-        rename_file(out_dir, fil_db_rec);
-        rename_file(out_dir, oth_db_rec);
-        rename_file(out_dir, groupfile_rec);
-        rename_file(out_dir, compressed_groupfile_rec);
+        cr_rename_file(out_dir, pri_xml_rec);
+        cr_rename_file(out_dir, fil_xml_rec);
+        cr_rename_file(out_dir, oth_xml_rec);
+        cr_rename_file(out_dir, pri_db_rec);
+        cr_rename_file(out_dir, fil_db_rec);
+        cr_rename_file(out_dir, oth_db_rec);
+        cr_rename_file(out_dir, groupfile_rec);
+        cr_rename_file(out_dir, compressed_groupfile_rec);
     }
 
 
     // Gen xml
 
-    char *repomd_xml = xml_repomd(out_dir, pri_xml_rec, fil_xml_rec,
-                                  oth_xml_rec, pri_db_rec, fil_db_rec,
-                                  oth_db_rec, groupfile_rec,
-                                  compressed_groupfile_rec, NULL);
+    char *repomd_xml = cr_xml_repomd(out_dir, pri_xml_rec, fil_xml_rec,
+                                     oth_xml_rec, pri_db_rec, fil_db_rec,
+                                     oth_db_rec, groupfile_rec,
+                                     compressed_groupfile_rec, NULL);
     gchar *repomd_path = g_strconcat(out_repo, "repomd.xml", NULL);
 
 
@@ -883,14 +888,14 @@ int main(int argc, char **argv) {
     g_free(repomd_xml);
     g_free(repomd_path);
 
-    free_repomdrecord(pri_xml_rec);
-    free_repomdrecord(fil_xml_rec);
-    free_repomdrecord(oth_xml_rec);
-    free_repomdrecord(pri_db_rec);
-    free_repomdrecord(fil_db_rec);
-    free_repomdrecord(oth_db_rec);
-    free_repomdrecord(groupfile_rec);
-    free_repomdrecord(compressed_groupfile_rec);
+    cr_free_repomdrecord(pri_xml_rec);
+    cr_free_repomdrecord(fil_xml_rec);
+    cr_free_repomdrecord(oth_xml_rec);
+    cr_free_repomdrecord(pri_db_rec);
+    cr_free_repomdrecord(fil_db_rec);
+    cr_free_repomdrecord(oth_db_rec);
+    cr_free_repomdrecord(groupfile_rec);
+    cr_free_repomdrecord(compressed_groupfile_rec);
 
 
     // Clean up
@@ -898,7 +903,7 @@ int main(int argc, char **argv) {
     g_debug("Memory cleanup");
 
     if (old_metadata) {
-        destroy_metadata_hashtable(old_metadata);
+        cr_destroy_metadata_hashtable(old_metadata);
     }
 
     g_free(in_repo);
@@ -916,7 +921,7 @@ int main(int argc, char **argv) {
     g_free(groupfile);
 
     free_options(cmd_options);
-    package_parser_shutdown();
+    cr_package_parser_shutdown();
 
     g_debug("All done");
     return 0;

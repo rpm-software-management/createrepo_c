@@ -40,15 +40,16 @@ inline gchar *safe_string_chunk_insert(GStringChunk *chunk, const char *str)
 
 
 
-Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksum,
-                        const char *checksum_type, const char *location_href,
-                        const char *location_base, int changelog_limit,
-                        gint64 hdr_start, gint64 hdr_end)
+cr_Package *cr_parse_header(Header hdr, gint64 mtime, gint64 size,
+                            const char *checksum, const char *checksum_type,
+                            const char *location_href,
+                            const char *location_base, int changelog_limit,
+                            gint64 hdr_start, gint64 hdr_end)
 {
     // Create new package structure
 
-    Package *pkg = NULL;
-    pkg = package_new();
+    cr_Package *pkg = NULL;
+    pkg = cr_package_new();
 
 
     // Create rpm tag data container
@@ -155,7 +156,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                (rpmtdNext(fileflags) != -1) &&
                (rpmtdNext(filemodes) != -1))
         {
-            PackageFile *packagefile = package_file_new();
+            cr_PackageFile *packagefile = cr_package_file_new();
             packagefile->name = safe_string_chunk_insert(pkg->chunk, rpmtdGetString(filenames));
             packagefile->path = (dir_list) ? dir_list[(int) rpmtdGetNumber(indexes)] : "";
 
@@ -239,7 +240,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
 
             // Because we have to select only libc.so with highest version
             // e.g. libc.so.6(GLIBC_2.4)
-            Dependency *libc_require_highest = NULL;
+            cr_Dependency *libc_require_highest = NULL;
 
             rpmtdInit(filenames);
             rpmtdInit(fileflags);
@@ -251,7 +252,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                 int pre = 0;
                 const char *filename = rpmtdGetString(filenames);
                 guint64 num_flags = rpmtdGetNumber(fileflags);
-                const char *flags = flag_to_string(num_flags);
+                const char *flags = cr_flag_to_string(num_flags);
                 const char *full_version = rpmtdGetString(fileversions);
 
                 // Requires specific stuff
@@ -263,7 +264,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
 
                     // Skip package primary files
                     if (g_hash_table_lookup_extended(filenames_hashtable, filename, NULL, NULL)) {
-                        if (is_primary(filename)) {
+                        if (cr_is_primary(filename)) {
                             continue;
                         }
                     }
@@ -295,10 +296,10 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                 }
 
                 // Create dynamic dependency object
-                Dependency *dependency = dependency_new();
+                cr_Dependency *dependency = cr_dependency_new();
                 dependency->name = safe_string_chunk_insert(pkg->chunk, filename);
                 dependency->flags = safe_string_chunk_insert(pkg->chunk, flags);
-                struct EVR evr = string_to_version(full_version, pkg->chunk);
+                struct cr_EVR evr = cr_string_to_version(full_version, pkg->chunk);
                 dependency->epoch = evr.epoch;
                 dependency->version = evr.version;
                 dependency->release = evr.release;
@@ -477,7 +478,7 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
         {
             gint64 time = rpmtdGetNumber(changelogtimes);
 
-            ChangelogEntry *changelog = changelog_entry_new();
+            cr_ChangelogEntry *changelog = cr_changelog_entry_new();
             changelog->author    = safe_string_chunk_insert(pkg->chunk, rpmtdGetString(changelognames));
             changelog->date      = time;
             changelog->changelog = safe_string_chunk_insert(pkg->chunk, rpmtdGetString(changelogtexts));
@@ -504,8 +505,8 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
                 int tmp_time = time;
                 GSList *previous = pkg->changelogs;
                 while ((previous = g_slist_next(previous)) != NULL &&
-                       ((ChangelogEntry *) (previous->data))->date == tmp_time) {
-                    ((ChangelogEntry *) (previous->data))->date++;
+                       ((cr_ChangelogEntry *) (previous->data))->date == tmp_time) {
+                    ((cr_ChangelogEntry *) (previous->data))->date++;
                     tmp_time++;
                 }
             } else {
@@ -530,21 +531,25 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size, const char *checksu
 
 
 
-struct XmlStruct xml_from_header(Header hdr, gint64 mtime, gint64 size,
-                        const char *checksum, const char *checksum_type,
-                        const char *location_href, const char *location_base,
-                        int changelog_limit, gint64 hdr_start, gint64 hdr_end)
+struct cr_XmlStruct cr_xml_from_header(Header hdr, gint64 mtime, gint64 size,
+                                       const char *checksum,
+                                       const char *checksum_type,
+                                       const char *location_href,
+                                       const char *location_base,
+                                       int changelog_limit,
+                                       gint64 hdr_start, gint64 hdr_end)
 {
-    Package *pkg = parse_header(hdr, mtime, size, checksum, checksum_type, location_href,
-                                location_base, changelog_limit, hdr_start, hdr_end);
+    cr_Package *pkg = cr_parse_header(hdr, mtime, size, checksum, checksum_type,
+                                      location_href, location_base,
+                                      changelog_limit, hdr_start, hdr_end);
 
-    struct XmlStruct result;
-    result.primary = xml_dump_primary(pkg);
-    result.filelists = xml_dump_filelists(pkg);
-    result.other = xml_dump_other(pkg);
+    struct cr_XmlStruct result;
+    result.primary   = cr_xml_dump_primary(pkg);
+    result.filelists = cr_xml_dump_filelists(pkg);
+    result.other     = cr_xml_dump_other(pkg);
 
     // Cleanup
-    package_free(pkg);
+    cr_package_free(pkg);
 
     return result;
 }

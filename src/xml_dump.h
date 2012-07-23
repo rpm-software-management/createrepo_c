@@ -31,52 +31,52 @@ extern "C" {
 
 /**@{*/
 /** Default namespace for primary.xml */
-#define XML_COMMON_NS           "http://linux.duke.edu/metadata/common"
+#define CR_XML_COMMON_NS           "http://linux.duke.edu/metadata/common"
 /** Default namespace for filelists.xml */
-#define XML_FILELISTS_NS        "http://linux.duke.edu/metadata/filelists"
+#define CR_XML_FILELISTS_NS        "http://linux.duke.edu/metadata/filelists"
 /** Default namespace for other.xml */
-#define XML_OTHER_NS            "http://linux.duke.edu/metadata/other"
+#define CR_XML_OTHER_NS            "http://linux.duke.edu/metadata/other"
 /** Namespace used in primary.xml */
-#define XML_RPM_NS              "http://linux.duke.edu/metadata/rpm"
+#define CR_XML_RPM_NS              "http://linux.duke.edu/metadata/rpm"
 /**@}*/
 
 
 /** \ingroup xml_dump
  * Xml chunks for primary.xml, filelists.xml and other.xml.
  */
-struct XmlStruct{
+struct cr_XmlStruct {
     char *primary;      /*!< XML chunk for primary.xml */
     char *filelists;    /*!< XML chunk for filelists.xml */
     char *other;        /*!< XML chunk for other.xml */
 };
 
 /** \ingroup xml_dump
- * Generate primary xml chunk from Package.
- * @param package       Package
+ * Generate primary xml chunk from cr_Package.
+ * @param package       cr_Package
  * @return              xml chunk string or NULL on error
  */
-char *xml_dump_primary(Package *package);
+char *cr_xml_dump_primary(cr_Package *package);
 
 /** \ingroup xml_dump
- * Generate filelists xml chunk from Package.
- * @param package       Package
+ * Generate filelists xml chunk from cr_Package.
+ * @param package       cr_Package
  * @return              xml chunk string or NULL on error
  */
-char *xml_dump_filelists(Package *package);
+char *cr_xml_dump_filelists(cr_Package *package);
 
 /** \ingroup xml_dump
- * Generate other xml chunk from Package.
- * @param package       Package
+ * Generate other xml chunk from cr_Package.
+ * @param package       cr_Package
  * @return              xml chunk string or NULL on error
  */
-char *xml_dump_other(Package *package);
+char *cr_xml_dump_other(cr_Package *package);
 
 /** \ingroup xml_dump
- * Generate all three xml chunks (primary, filelists, other) from Package.
- * @param package       Package
- * @return              XmlStruct
+ * Generate all three xml chunks (primary, filelists, other) from cr_Package.
+ * @param package       cr_Package
+ * @return              cr_XmlStruct
  */
-struct XmlStruct xml_dump(Package *package);
+struct cr_XmlStruct cr_xml_dump(cr_Package *package);
 
 #ifdef __cplusplus
 }

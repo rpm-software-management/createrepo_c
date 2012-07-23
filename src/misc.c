@@ -39,7 +39,7 @@
 
 
 const char *
-flag_to_string(gint64 flags)
+cr_flag_to_string(gint64 flags)
 {
     flags &= 0xf;
     switch(flags) {
@@ -74,10 +74,10 @@ flag_to_string(gint64 flags)
  * Returned structure had all string inserted in the passed chunk.
  *
  */
-struct EVR
-string_to_version(const char *string, GStringChunk *chunk)
+struct cr_EVR
+cr_string_to_version(const char *string, GStringChunk *chunk)
 {
-    struct EVR evr;
+    struct cr_EVR evr;
     evr.epoch = NULL;
     evr.version = NULL;
     evr.release = NULL;
@@ -156,7 +156,7 @@ string_to_version(const char *string, GStringChunk *chunk)
 
 /*
 inline int
-is_primary(const char *filename)
+cr_is_primary(const char *filename)
 {
 
     This optimal piece of code cannot be used because of yum...
@@ -219,7 +219,7 @@ is_primary(const char *filename)
 
 
 char *
-compute_file_checksum(const char *filename, ChecksumType type)
+cr_compute_file_checksum(const char *filename, cr_ChecksumType type)
 {
     GChecksumType gchecksumtype;
 
@@ -239,13 +239,13 @@ compute_file_checksum(const char *filename, ChecksumType type)
     // Convert our checksum type into glib type
 
     switch (type) {
-        case PKG_CHECKSUM_MD5:
+        case CR_CHECKSUM_MD5:
             gchecksumtype = G_CHECKSUM_MD5;
             break;
-        case PKG_CHECKSUM_SHA1:
+        case CR_CHECKSUM_SHA1:
             gchecksumtype = G_CHECKSUM_SHA1;
             break;
-        case PKG_CHECKSUM_SHA256:
+        case CR_CHECKSUM_SHA256:
             gchecksumtype = G_CHECKSUM_SHA256;
             break;
         default:
@@ -299,15 +299,15 @@ compute_file_checksum(const char *filename, ChecksumType type)
 
 #define VAL_LEN         4       // Len of numeric values in rpm
 
-struct HeaderRangeStruct
-get_header_byte_range(const char *filename)
+struct cr_HeaderRangeStruct
+cr_get_header_byte_range(const char *filename)
 {
     /* Values readed by fread are 4 bytes long and stored as big-endian.
      * So there is htonl function to convert this big-endian number into host
      * byte order.
      */
 
-    struct HeaderRangeStruct results;
+    struct cr_HeaderRangeStruct results;
 
     results.start = 0;
     results.end   = 0;
@@ -378,18 +378,18 @@ get_header_byte_range(const char *filename)
 
 
 const char *
-get_checksum_name_str(ChecksumType type)
+cr_get_checksum_name_str(cr_ChecksumType type)
 {
     char *name = NULL;
 
     switch (type) {
-        case PKG_CHECKSUM_MD5:
+        case CR_CHECKSUM_MD5:
             name = "md5";
             break;
-        case PKG_CHECKSUM_SHA1:
+        case CR_CHECKSUM_SHA1:
             name = "sha1";
             break;
-        case PKG_CHECKSUM_SHA256:
+        case CR_CHECKSUM_SHA256:
             name = "sha256";
             break;
         default:
@@ -402,7 +402,7 @@ get_checksum_name_str(ChecksumType type)
 
 
 char *
-get_filename(const char *filepath)
+cr_get_filename(const char *filepath)
 {
     char *filename = NULL;
 
@@ -424,7 +424,7 @@ get_filename(const char *filepath)
 
 
 int
-copy_file(const char *src, const char *in_dst)
+cr_copy_file(const char *src, const char *in_dst)
 {
     size_t readed;
     char buf[BUFFER_SIZE];
@@ -440,7 +440,7 @@ copy_file(const char *src, const char *in_dst)
     // If destination is dir use filename from src
     gchar *dst = (gchar *) in_dst;
     if (g_str_has_suffix(in_dst, "/")) {
-        dst = g_strconcat(in_dst, get_filename(src), NULL);
+        dst = g_strconcat(in_dst, cr_get_filename(src), NULL);
     }
 
     if ((orig = fopen(src, "r")) == NULL) {
@@ -487,21 +487,21 @@ copy_file(const char *src, const char *in_dst)
 
 
 int
-compress_file(const char *src, const char *in_dst, CompressionType compression)
+cr_compress_file(const char *src, const char *in_dst, cr_CompressionType compression)
 {
     int readed;
     char buf[BUFFER_SIZE];
 
     FILE *orig;
-    CW_FILE *new;
+    CR_FILE *new;
 
     if (!src) {
         g_debug(MODULE"%s: File name cannot be NULL", __func__);
         return CR_COPY_ERR;
     }
 
-    if (compression == AUTO_DETECT_COMPRESSION ||
-        compression == UNKNOWN_COMPRESSION) {
+    if (compression == CR_CW_AUTO_DETECT_COMPRESSION ||
+        compression == CR_CW_UNKNOWN_COMPRESSION) {
         g_debug(MODULE"%s: Bad compression type", __func__);
         return CR_COPY_ERR;
     }
@@ -517,13 +517,13 @@ compress_file(const char *src, const char *in_dst, CompressionType compression)
     gchar *dst = (gchar *) in_dst;
     if (!dst) {
         // If destination is NULL, use src + compression suffix
-        const gchar *suffix = get_suffix(compression);
+        const gchar *suffix = cr_get_suffix(compression);
         dst = g_strconcat(src, suffix, NULL);
     } else {
         // If destination is dir use filename from src + compression suffix
         if (g_str_has_suffix(in_dst, "/")) {
-            const gchar *suffix = get_suffix(compression);
-            dst = g_strconcat(in_dst, get_filename(src), suffix, NULL);
+            const gchar *suffix = cr_get_suffix(compression);
+            dst = g_strconcat(in_dst, cr_get_filename(src), suffix, NULL);
         }
     }
 
@@ -533,16 +533,16 @@ compress_file(const char *src, const char *in_dst, CompressionType compression)
         return CR_COPY_ERR;
     }
 
-    if ((new = cw_open(dst, CW_MODE_WRITE, compression)) == NULL) {
+    if ((new = cr_open(dst, CR_CW_MODE_WRITE, compression)) == NULL) {
         g_debug(MODULE"%s: Cannot open destination file %s", __func__, dst);
         fclose(orig);
         return CR_COPY_ERR;
     }
 
     while ((readed = fread(buf, 1, BUFFER_SIZE, orig)) > 0) {
-        if (cw_write(new, buf, readed) != readed) {
+        if (cr_write(new, buf, readed) != readed) {
             g_debug(MODULE"%s: Error while copy %s -> %s", __func__, src, dst);
-            cw_close(new);
+            cr_close(new);
             fclose(orig);
             return CR_COPY_ERR;
         }
@@ -550,7 +550,7 @@ compress_file(const char *src, const char *in_dst, CompressionType compression)
         if (readed != BUFFER_SIZE && ferror(orig)) {
             g_debug(MODULE"%s: Error while copy %s -> %s (%s)", __func__, src,
                     dst, strerror(errno));
-            cw_close(new);
+            cr_close(new);
             fclose(orig);
             return CR_COPY_ERR;
         }
@@ -560,7 +560,7 @@ compress_file(const char *src, const char *in_dst, CompressionType compression)
         g_free(dst);
     }
 
-    cw_close(new);
+    cr_close(new);
     fclose(orig);
 
     return CR_COPY_OK;
@@ -569,7 +569,7 @@ compress_file(const char *src, const char *in_dst, CompressionType compression)
 
 
 void
-download(CURL *handle, const char *url, const char *in_dst, char **error)
+cr_download(CURL *handle, const char *url, const char *in_dst, char **error)
 {
     CURLcode rcode;
     FILE *file = NULL;
@@ -579,9 +579,9 @@ download(CURL *handle, const char *url, const char *in_dst, char **error)
 
     gchar *dst = NULL;
     if (g_str_has_suffix(in_dst, "/")) {
-        dst = g_strconcat(in_dst, get_filename(url), NULL);
+        dst = g_strconcat(in_dst, cr_get_filename(url), NULL);
     } else if (g_file_test(in_dst, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR))) {
-        dst = g_strconcat(in_dst, "/", get_filename(url), NULL);
+        dst = g_strconcat(in_dst, "/", cr_get_filename(url), NULL);
     } else {
         dst = g_strdup(in_dst);
     }
@@ -639,16 +639,16 @@ download(CURL *handle, const char *url, const char *in_dst, char **error)
 
 
 int
-better_copy_file(const char *src, const char *in_dst)
+cr_better_copy_file(const char *src, const char *in_dst)
 {
     if (!strstr(src, "://")) {
         // Probably local path
-        return copy_file(src, in_dst);
+        return cr_copy_file(src, in_dst);
     }
 
     char *error = NULL;
     CURL *handle = curl_easy_init();
-    download(handle, src, in_dst, &error);
+    cr_download(handle, src, in_dst, &error);
     curl_easy_cleanup(handle);
     if (error) {
         g_debug(MODULE"%s: Error while downloading %s: %s", __func__, src,
@@ -661,12 +661,12 @@ better_copy_file(const char *src, const char *in_dst)
 
 
 int
-remove_dir_cb(const char *fpath, const struct stat *sb, int typeflag,
+cr_remove_dir_cb(const char *fpath, const struct stat *sb, int typeflag,
               struct FTW *ftwbuf)
 {
-    UNUSED(sb);
-    UNUSED(typeflag);
-    UNUSED(ftwbuf);
+    CR_UNUSED(sb);
+    CR_UNUSED(typeflag);
+    CR_UNUSED(ftwbuf);
     int rv = remove(fpath);
     if (rv)
         g_warning("%s: Cannot remove: %s: %s", __func__, fpath, strerror(errno));
@@ -676,15 +676,15 @@ remove_dir_cb(const char *fpath, const struct stat *sb, int typeflag,
 
 
 int
-remove_dir(const char *path)
+cr_remove_dir(const char *path)
 {
-    return nftw(path, remove_dir_cb, 64, FTW_DEPTH | FTW_PHYS);
+    return nftw(path, cr_remove_dir_cb, 64, FTW_DEPTH | FTW_PHYS);
 }
 
 
 // Return path with exactly one trailing '/'
 char *
-normalize_dir_path(const char *path)
+cr_normalize_dir_path(const char *path)
 {
     char *normalized = NULL;
 
@@ -709,12 +709,12 @@ normalize_dir_path(const char *path)
 }
 
 
-struct Version
-str_to_version(const char *str)
+struct cr_Version
+cr_str_to_version(const char *str)
 {
     char *endptr;
     const char *ptr = str;
-    struct Version ver;
+    struct cr_Version ver;
     ver.version = 0;
     ver.release = 0;
     ver.patch   = 0;
@@ -784,17 +784,17 @@ str_to_version(const char *str)
 // 1 - first string is bigger version
 // 2 - second string is bigger version
 int
-cmp_version_string(const char* str1, const char *str2)
+cr_cmp_version_string(const char* str1, const char *str2)
 {
-    struct Version ver1, ver2;
+    struct cr_Version ver1, ver2;
 
     if (!str1 && !str2) {
         return 0;
     }
 
     // Get version
-    ver1 = str_to_version(str1);
-    ver2 = str_to_version(str2);
+    ver1 = cr_str_to_version(str1);
+    ver2 = cr_str_to_version(str2);
 
     if (ver1.version > ver2.version) {
         return 1;
@@ -825,22 +825,22 @@ cmp_version_string(const char* str1, const char *str2)
 
 
 void
-black_hole_log_function (const gchar *log_domain, GLogLevelFlags log_level,
-                         const gchar *message, gpointer user_data)
+cr_black_hole_log_function(const gchar *log_domain, GLogLevelFlags log_level,
+                           const gchar *message, gpointer user_data)
 {
-    UNUSED(log_domain);
-    UNUSED(log_level);
-    UNUSED(message);
-    UNUSED(user_data);
+    CR_UNUSED(log_domain);
+    CR_UNUSED(log_level);
+    CR_UNUSED(message);
+    CR_UNUSED(user_data);
     return;
 }
 
 
 void
-log_function (const gchar *log_domain, GLogLevelFlags log_level,
+cr_log_function (const gchar *log_domain, GLogLevelFlags log_level,
               const gchar *message, gpointer user_data)
 {
-    UNUSED(user_data);
+    CR_UNUSED(user_data);
 
     if (log_domain)
         printf("%s: ", log_domain);

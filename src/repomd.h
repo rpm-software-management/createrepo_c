@@ -33,14 +33,14 @@ extern "C" {
  */
 
 /** \ingroup misc
- * RepomdRecord object
+ * cr_RepomdRecord object
  */
-typedef struct _RepomdRecord * RepomdRecord;
+typedef struct _cr_RepomdRecord * cr_RepomdRecord;
 
 /** \ingroup misc
- * Internal representation of RepomdRecord object
+ * Internal representation of cr_RepomdRecord object
  */
-struct _RepomdRecord {
+struct _cr_RepomdRecord {
     const char *location_href;  /*!< location of the file */
     char *checksum;             /*!< checksum of file */
     char *checksum_type;        /*!< checksum type */
@@ -55,83 +55,84 @@ struct _RepomdRecord {
 };
 
 /** \ingroup repomd
- * Creates (alloc) new RepomdRecord object
+ * Creates (alloc) new cr_RepomdRecord object
  * @param path                  path to the compressed file
  */
-RepomdRecord new_repomdrecord(const char *path);
+cr_RepomdRecord cr_new_repomdrecord(const char *path);
 
 /** \ingroup repomd
- * Destroy RepomdRecord object
- * @param record                RepomdRecord object
+ * Destroy cr_RepomdRecord object
+ * @param record                cr_RepomdRecord object
  */
-void free_repomdrecord(RepomdRecord record);
+void cr_free_repomdrecord(cr_RepomdRecord record);
 
 /** \ingroup repomd
- * Fill unfilled items in the RepomdRecord (calculate checksums,
+ * Fill unfilled items in the cr_RepomdRecord (calculate checksums,
  * get file size before/after compression, etc.).
- * Note: For groupfile you shoud use process_groupfile function.
+ * Note: For groupfile you shoud use cr_process_groupfile function.
  * @param base_path             path to repo (to directory with repodata subdir)
- * @param record                RepomdRecord object
+ * @param record                cr_RepomdRecord object
  * @param checksum_type         type of checksum to use
  */
-int fill_missing_data(const char *base_path,
-                      RepomdRecord record,
-                      ChecksumType *checksum_type);
+int cr_fill_missing_data(const char *base_path,
+                         cr_RepomdRecord record,
+                         cr_ChecksumType *checksum_type);
 
 /** \ingroup repomd
- * Analogue of fill_missing_data but for groupfile.
+ * Analogue of cr_fill_missing_data but for groupfile.
  * Groupfile must be set with the path to existing non compressed groupfile.
  * Compressed group file will be created and compressed_groupfile record
  * updated.
  * @param base_path             path to repo (to directory with repodata subdir)
- * @groupfile                   RepomdRecord initialized to anexisting groupfile
- * @compressed_groupfile        RepomdRecord object that will by filled
- * @checksum_type               type of checksums
- * @compression                 type of compression
+ * @param groupfile             cr_RepomdRecord initialized to an existing
+ *                              groupfile
+ * @param compressed_groupfile  cr_RepomdRecord object that will by filled
+ * @param checksum_type         type of checksums
+ * @param compression           type of compression
  */
-void process_groupfile(const char *base_path,
-                       RepomdRecord groupfile,
-                       RepomdRecord compressed_groupfile,
-                       ChecksumType *checksum_type,
-                       CompressionType compression);
+void cr_process_groupfile(const char *base_path,
+                          cr_RepomdRecord groupfile,
+                          cr_RepomdRecord compressed_groupfile,
+                          cr_ChecksumType *checksum_type,
+                          cr_CompressionType compression);
 
 /** \ingroup repomd
  * Add a hash as prefix to the filename.
- * @base_path                   path to repo (to directory with repodata/
+ * @param base_path             path to repo (to directory with repodata/
  *                              subdir)
- * @record                      RepomdRecord of file to be renamed
+ * @param record                cr_RepomdRecord of file to be renamed
  */
-void rename_file(const char *base_path, RepomdRecord record);
+void cr_rename_file(const char *base_path, cr_RepomdRecord record);
 
 /** \ingroup repomd
  * Generate repomd.xml content.
  * @param path                  path to repository (to the directory contains
  *                              repodata/ subdir)
- * @param pri_xml               RepomdRecord of primary.xml.gz (relative
+ * @param pri_xml               cr_RepomdRecord of primary.xml.gz (relative
  *                              towards to the path param)
- * @param fil_xml               RepomdRecord of filelists.xml.gz (relative
+ * @param fil_xml               cr_RepomdRecord of filelists.xml.gz (relative
  *                              towards to the path param)
- * @param oth_xml               RepomdRecord of other.xml.gz (relative towards
- *                              to the path param)
- * @param pri_sqlite            RepomdRecord of primary.sqlite.* (relative
+ * @param oth_xml               cr_RepomdRecord of other.xml.gz (relative
  *                              towards to the path param)
- * @param fil_sqlite            RepomdRecord of filelists.sqlite.* (relative
+ * @param pri_sqlite            cr_RepomdRecord of primary.sqlite.* (relative
  *                              towards to the path param)
- * @param oth_sqlite            RepomdRecord of other.sqlite.* (relative
+ * @param fil_sqlite            cr_RepomdRecord of filelists.sqlite.* (relative
  *                              towards to the path param)
- * @param groupfile             RepomdRecord of *.xml (relative towards to
+ * @param oth_sqlite            cr_RepomdRecord of other.sqlite.* (relative
+ *                              towards to the path param)
+ * @param groupfile             cr_RepomdRecord of *.xml (relative towards to
  *                              the path param)
- * @param cgroupfile            RepomdRecord of *.xml.* (relative towards to
+ * @param cgroupfile            cr_RepomdRecord of *.xml.* (relative towards to
  *                              the path param)
- * @param update_info           RepomdRecord of updateinfo.xml.* (relative
+ * @param update_info           cr_RepomdRecord of updateinfo.xml.* (relative
  *                              towards to the path param)
  * @return                      string with repomd.xml content
  */
-gchar * xml_repomd(const char *path, RepomdRecord pri_xml,
-                   RepomdRecord fil_xml, RepomdRecord oth_xml,
-                   RepomdRecord pri_sqlite, RepomdRecord fil_sqlite,
-                   RepomdRecord oth_sqlite, RepomdRecord groupfile,
-                   RepomdRecord cgroupfile, RepomdRecord update_info);
+gchar * cr_xml_repomd(const char *path, cr_RepomdRecord pri_xml,
+                      cr_RepomdRecord fil_xml, cr_RepomdRecord oth_xml,
+                      cr_RepomdRecord pri_sqlite, cr_RepomdRecord fil_sqlite,
+                      cr_RepomdRecord oth_sqlite, cr_RepomdRecord groupfile,
+                      cr_RepomdRecord cgroupfile, cr_RepomdRecord update_info);
 
 #ifdef __cplusplus
 }

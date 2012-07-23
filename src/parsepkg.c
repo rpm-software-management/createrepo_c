@@ -13,7 +13,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #include <glib.h>
@@ -36,16 +37,16 @@
 #define MODULE "parsepkg: "
 
 
-volatile short initialized = 0;
+volatile short cr_initialized = 0;
 rpmts ts = NULL;
 
 
 
-void package_parser_init()
+void cr_package_parser_init()
 {
-    if (initialized)
+    if (cr_initialized)
         return;
-    initialized = 1;
+    cr_initialized = 1;
     rpmReadConfigFiles(NULL, NULL);
     ts = rpmtsCreate();
     if (!ts) {
@@ -61,7 +62,7 @@ void package_parser_init()
 
 
 
-void package_parser_shutdown()
+void cr_package_parser_shutdown()
 {
     if (ts) {
         rpmtsFree(ts);
@@ -72,23 +73,26 @@ void package_parser_shutdown()
 }
 
 
-Package *package_from_file(const char *filename, ChecksumType checksum_type,
-                           const char *location_href, const char *location_base,
-                           int changelog_limit, struct stat *stat_buf)
+cr_Package *cr_package_from_file(const char *filename,
+                                 cr_ChecksumType checksum_type,
+                                 const char *location_href,
+                                 const char *location_base,
+                                 int changelog_limit,
+                                 struct stat *stat_buf)
 {
-    Package *result = NULL;
+    cr_Package *result = NULL;
     const char *checksum_type_str;
 
     // Set checksum type
 
     switch (checksum_type) {
-        case PKG_CHECKSUM_MD5:
+        case CR_CHECKSUM_MD5:
             checksum_type_str = "md5";
             break;
-        case PKG_CHECKSUM_SHA1:
+        case CR_CHECKSUM_SHA1:
              checksum_type_str = "sha1";
             break;
-        case PKG_CHECKSUM_SHA256:
+        case CR_CHECKSUM_SHA256:
             checksum_type_str = "sha256";
             break;
         default:
@@ -153,18 +157,19 @@ Package *package_from_file(const char *filename, ChecksumType checksum_type,
 
     // Compute checksum
 
-    char *checksum = compute_file_checksum(filename, checksum_type);
+    char *checksum = cr_compute_file_checksum(filename, checksum_type);
 
 
     // Get header range
 
-    struct HeaderRangeStruct hdr_r = get_header_byte_range(filename);
+    struct cr_HeaderRangeStruct hdr_r = cr_get_header_byte_range(filename);
 
 
     // Get package object
 
-    result = parse_header(hdr, mtime, size, checksum, checksum_type_str, location_href,
-                          location_base, changelog_limit, hdr_r.start, hdr_r.end);
+    result = cr_parse_header(hdr, mtime, size, checksum, checksum_type_str,
+                             location_href, location_base, changelog_limit,
+                             hdr_r.start, hdr_r.end);
 
 
     // Cleanup
@@ -177,13 +182,16 @@ Package *package_from_file(const char *filename, ChecksumType checksum_type,
 
 
 
-struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checksum_type,
-                const char *location_href, const char *location_base, int changelog_limit,
-                struct stat *stat_buf)
+struct cr_XmlStruct cr_xml_from_package_file(const char *filename,
+                                          cr_ChecksumType checksum_type,
+                                          const char *location_href,
+                                          const char *location_base,
+                                          int changelog_limit,
+                                          struct stat *stat_buf)
 {
     const char *checksum_type_str;
 
-    struct XmlStruct result;
+    struct cr_XmlStruct result;
     result.primary   = NULL;
     result.filelists = NULL;
     result.other     = NULL;
@@ -192,13 +200,13 @@ struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checks
     // Set checksum type
 
     switch (checksum_type) {
-        case PKG_CHECKSUM_MD5:
+        case CR_CHECKSUM_MD5:
             checksum_type_str = "md5";
             break;
-        case PKG_CHECKSUM_SHA1:
+        case CR_CHECKSUM_SHA1:
              checksum_type_str = "sha1";
             break;
-        case PKG_CHECKSUM_SHA256:
+        case CR_CHECKSUM_SHA256:
             checksum_type_str = "sha256";
             break;
         default:
@@ -263,18 +271,19 @@ struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checks
 
     // Compute checksum
 
-    char *checksum = compute_file_checksum(filename, checksum_type);
+    char *checksum = cr_compute_file_checksum(filename, checksum_type);
 
 
     // Get header range
 
-    struct HeaderRangeStruct hdr_r = get_header_byte_range(filename);
+    struct cr_HeaderRangeStruct hdr_r = cr_get_header_byte_range(filename);
 
 
     // Gen XML
 
-    result = xml_from_header(hdr, mtime, size, checksum, checksum_type_str, location_href,
-                                location_base, changelog_limit, hdr_r.start, hdr_r.end);
+    result = cr_xml_from_header(hdr, mtime, size, checksum, checksum_type_str,
+                                location_href, location_base, changelog_limit,
+                                hdr_r.start, hdr_r.end);
 
 
     // Cleanup

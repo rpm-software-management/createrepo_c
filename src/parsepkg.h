@@ -36,19 +36,19 @@ extern "C" {
 /** \ingroup parsepkg
  * Status of initialization of global structures for package parsing.
  */
-extern short initialized;
+extern short cr_initialized;
 
 /** \ingroup parsepkg
  * Initialize global structures for package parsing.
  * This function call rpmReadConfigFiles() and create global transaction set.
  * This function should be called only once! This function is not thread safe!
  */
-void package_parser_init();
+void cr_package_parser_init();
 
 /** \ingroup parsepkg
  * Free global structures for package parsing.
  */
-void package_parser_shutdown();
+void cr_package_parser_shutdown();
 
 /** \ingroup parsepkg
  * Generate package object from package file.
@@ -60,9 +60,12 @@ void package_parser_shutdown();
  * @param stat_buf              struct stat of the filename
  *                              (optional - could be NULL)
  */
-Package *package_from_file(const char *filename, ChecksumType checksum_type,
-                        const char *location_href, const char *location_base,
-                        int changelog_limit, struct stat *stat_buf);
+cr_Package *cr_package_from_file(const char *filename,
+                                 cr_ChecksumType checksum_type,
+                                 const char *location_href,
+                                 const char *location_base,
+                                 int changelog_limit,
+                                 struct stat *stat_buf);
 
 /** \ingroup parsepkg
  * Generate XML for the specified package.
@@ -74,9 +77,12 @@ Package *package_from_file(const char *filename, ChecksumType checksum_type,
  * @param stat_buf              struct stat of the filename
  *                              (optional - could be NULL)
  */
-struct XmlStruct xml_from_package_file(const char *filename, ChecksumType checksum_type,
-                        const char *location_href, const char *location_base,
-                        int changelog_limit, struct stat *stat_buf);
+struct cr_XmlStruct cr_xml_from_package_file(const char *filename,
+                                             cr_ChecksumType checksum_type,
+                                             const char *location_href,
+                                             const char *location_base,
+                                             int changelog_limit,
+                                             struct stat *stat_buf);
 
 #ifdef __cplusplus
 }

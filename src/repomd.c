@@ -32,7 +32,7 @@
 
 
 #define DEFAULT_CHECKSUM                "sha256"
-#define DEFAULT_CHECKSUM_ENUM_VAL        PKG_CHECKSUM_SHA256
+#define DEFAULT_CHECKSUM_ENUM_VAL        CR_CHECKSUM_SHA256
 
 #define DEFAULT_DATABASE_VERSION        10
 
@@ -49,19 +49,16 @@
 #define REPOMD_ERR      1
 
 
-typedef struct _RepomdRecord * RepomdRecord;
-
-
 typedef struct _contentStat {
     char *checksum;
     long size;
 } contentStat;
 
 
-RepomdRecord
-new_repomdrecord(const char *path)
+cr_RepomdRecord
+cr_new_repomdrecord(const char *path)
 {
-    RepomdRecord md = (RepomdRecord) g_malloc0(sizeof(*md));
+    cr_RepomdRecord md = (cr_RepomdRecord) g_malloc0(sizeof(*md));
     md->chunk = g_string_chunk_new(1024);
     if (path)
         md->location_href = g_string_chunk_insert(md->chunk, path);
@@ -71,7 +68,7 @@ new_repomdrecord(const char *path)
 
 
 void
-free_repomdrecord(RepomdRecord md)
+cr_free_repomdrecord(cr_RepomdRecord md)
 {
     if (!md)
         return;
@@ -82,7 +79,7 @@ free_repomdrecord(RepomdRecord md)
 
 
 contentStat *
-get_compressed_content_stat(const char *filename, ChecksumType checksum_type)
+get_compressed_content_stat(const char *filename, cr_ChecksumType checksum_type)
 {
     if (!g_file_test(filename, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR)) {
         return NULL;
@@ -91,8 +88,8 @@ get_compressed_content_stat(const char *filename, ChecksumType checksum_type)
 
     // Open compressed file
 
-    CW_FILE *cwfile;
-    if (!(cwfile = cw_open(filename, CW_MODE_READ, AUTO_DETECT_COMPRESSION))) {
+    CR_FILE *cwfile;
+    if (!(cwfile = cr_open(filename, CR_CW_MODE_READ, CR_CW_AUTO_DETECT_COMPRESSION))) {
         return NULL;
     }
 
@@ -101,13 +98,13 @@ get_compressed_content_stat(const char *filename, ChecksumType checksum_type)
 
     GChecksumType gchecksumtype;
     switch (checksum_type) {
-        case PKG_CHECKSUM_MD5:
+        case CR_CHECKSUM_MD5:
             gchecksumtype = G_CHECKSUM_MD5;
             break;
-        case PKG_CHECKSUM_SHA1:
+        case CR_CHECKSUM_SHA1:
             gchecksumtype = G_CHECKSUM_SHA1;
             break;
-        case PKG_CHECKSUM_SHA256:
+        case CR_CHECKSUM_SHA256:
             gchecksumtype = G_CHECKSUM_SHA256;
             break;
         default:
@@ -129,8 +126,8 @@ get_compressed_content_stat(const char *filename, ChecksumType checksum_type)
     unsigned char buffer[BUFFER_SIZE];
 
     do {
-        readed = cw_read(cwfile, (void *) buffer, BUFFER_SIZE);
-        if (readed == CW_ERR) {
+        readed = cr_read(cwfile, (void *) buffer, BUFFER_SIZE);
+        if (readed == CR_CW_ERR) {
             g_debug(MODULE"%s: Error while read compressed file: %s", __func__, filename);
             break;
         }
@@ -151,7 +148,7 @@ get_compressed_content_stat(const char *filename, ChecksumType checksum_type)
     // Clean up
 
     g_checksum_free(checksum);
-    cw_close(cwfile);
+    cr_close(cwfile);
 
     return result;
 }
@@ -159,7 +156,8 @@ get_compressed_content_stat(const char *filename, ChecksumType checksum_type)
 
 
 int
-fill_missing_data(const char *base_path, RepomdRecord md, ChecksumType *checksum_type)
+cr_fill_missing_data(const char *base_path, cr_RepomdRecord md,
+                     cr_ChecksumType *checksum_type)
 {
     if (!md || !(md->location_href) || !strlen(md->location_href)) {
         // Nothing to do
@@ -167,10 +165,10 @@ fill_missing_data(const char *base_path, RepomdRecord md, ChecksumType *checksum
     }
 
     const char *checksum_str = DEFAULT_CHECKSUM;
-    ChecksumType checksum_t = DEFAULT_CHECKSUM_ENUM_VAL;
+    cr_ChecksumType checksum_t = DEFAULT_CHECKSUM_ENUM_VAL;
 
     if (checksum_type) {
-        checksum_str = get_checksum_name_str(*checksum_type);
+        checksum_str = cr_get_checksum_name_str(*checksum_type);
         checksum_t = *checksum_type;
     }
 
@@ -188,7 +186,7 @@ fill_missing_data(const char *base_path, RepomdRecord md, ChecksumType *checksum
     if (!md->checksum_type || !md->checksum) {
         gchar *chksum;
         md->checksum_type = g_string_chunk_insert(md->chunk, checksum_str);
-        chksum = compute_file_checksum(path, checksum_t);
+        chksum = cr_compute_file_checksum(path, checksum_t);
         md->checksum = g_string_chunk_insert(md->chunk, chksum);
         g_free(chksum);
     }
@@ -197,8 +195,8 @@ fill_missing_data(const char *base_path, RepomdRecord md, ChecksumType *checksum
     // Compute checksum of non compressed content and its size
 
     if (!md->checksum_open_type || !md->checksum_open || !md->size_open) {
-        if (detect_compression(path) != UNKNOWN_COMPRESSION &&
-            detect_compression(path) != NO_COMPRESSION)
+        if (cr_detect_compression(path) != CR_CW_UNKNOWN_COMPRESSION &&
+            cr_detect_compression(path) != CR_CW_NO_COMPRESSION)
         {
             // File compressed by supported algorithm
             contentStat *open_stat = NULL;
@@ -250,9 +248,10 @@ fill_missing_data(const char *base_path, RepomdRecord md, ChecksumType *checksum
 
 
 void
-process_groupfile(const char *base_path, RepomdRecord groupfile,
-                       RepomdRecord cgroupfile, ChecksumType *checksum_type,
-                       CompressionType groupfile_compression)
+cr_process_groupfile(const char *base_path, cr_RepomdRecord groupfile,
+                     cr_RepomdRecord cgroupfile,
+                     cr_ChecksumType *checksum_type,
+                     cr_CompressionType groupfile_compression)
 {
     if (!groupfile || !(groupfile->location_href) || !strlen(groupfile->location_href) || !cgroupfile) {
         return;
@@ -262,17 +261,17 @@ process_groupfile(const char *base_path, RepomdRecord groupfile,
     // Checksum stuff
 
     const char *checksum_str = DEFAULT_CHECKSUM;
-    ChecksumType checksum_t = DEFAULT_CHECKSUM_ENUM_VAL;
+    cr_ChecksumType checksum_t = DEFAULT_CHECKSUM_ENUM_VAL;
 
     if (checksum_type) {
-        checksum_str = get_checksum_name_str(*checksum_type);
+        checksum_str = cr_get_checksum_name_str(*checksum_type);
         checksum_t = *checksum_type;
     }
 
 
     // Paths
 
-    const char *suffix = get_suffix(groupfile_compression);
+    const char *suffix = cr_get_suffix(groupfile_compression);
 
     gchar *clocation_href = g_strconcat(groupfile->location_href, suffix, NULL);
     cgroupfile->location_href = g_string_chunk_insert(cgroupfile->chunk, clocation_href);
@@ -294,23 +293,23 @@ process_groupfile(const char *base_path, RepomdRecord groupfile,
 
     int readed;
     char buf[BUFFER_SIZE];
-    CW_FILE *cw_plain;
-    CW_FILE *cw_compressed;
+    CR_FILE *cw_plain;
+    CR_FILE *cw_compressed;
 
-    cw_plain = cw_open(path, CW_MODE_READ, NO_COMPRESSION);
-    cw_compressed = cw_open(cpath, CW_MODE_WRITE, groupfile_compression);
+    cw_plain = cr_open(path, CR_CW_MODE_READ, CR_CW_NO_COMPRESSION);
+    cw_compressed = cr_open(cpath, CR_CW_MODE_WRITE, groupfile_compression);
 
-    while ((readed = cw_read(cw_plain, buf, BUFFER_SIZE)) > 0) {
-        if (cw_write(cw_compressed, buf, (unsigned int) readed) == CW_ERR) {
+    while ((readed = cr_read(cw_plain, buf, BUFFER_SIZE)) > 0) {
+        if (cr_write(cw_compressed, buf, (unsigned int) readed) == CR_CW_ERR) {
             g_debug(MODULE"%s: Error while groupfile compression", __func__);
             break;
         }
     }
 
-    cw_close(cw_compressed);
-    cw_close(cw_plain);
+    cr_close(cw_compressed);
+    cr_close(cw_plain);
 
-    if (readed == CW_ERR) {
+    if (readed == CR_CW_ERR) {
         g_debug(MODULE"%s: Error while groupfile compression", __func__);
     }
 
@@ -319,8 +318,8 @@ process_groupfile(const char *base_path, RepomdRecord groupfile,
 
     gchar *checksum;
     gchar *cchecksum;
-    checksum = compute_file_checksum(path, checksum_t);
-    cchecksum = compute_file_checksum(cpath, checksum_t);
+    checksum = cr_compute_file_checksum(path, checksum_t);
+    cchecksum = cr_compute_file_checksum(cpath, checksum_t);
 
 
     // Get stats
@@ -370,7 +369,7 @@ process_groupfile(const char *base_path, RepomdRecord groupfile,
 
 
 void
-dump_data_items(xmlNodePtr root, RepomdRecord md, const xmlChar *type)
+dump_data_items(xmlNodePtr root, cr_RepomdRecord md, const xmlChar *type)
 {
     xmlNodePtr data, node;
     gchar str_buffer[STR_BUFFER_SIZE];
@@ -413,11 +412,11 @@ dump_data_items(xmlNodePtr root, RepomdRecord md, const xmlChar *type)
 
 
 char *
-repomd_xml_dump(long revision, RepomdRecord pri_xml, RepomdRecord fil_xml,
-                      RepomdRecord oth_xml, RepomdRecord pri_sqlite,
-                      RepomdRecord fil_sqlite, RepomdRecord oth_sqlite,
-                      RepomdRecord groupfile, RepomdRecord cgroupfile,
-                      RepomdRecord update_info)
+repomd_xml_dump(long revision, cr_RepomdRecord pri_xml, cr_RepomdRecord fil_xml,
+                      cr_RepomdRecord oth_xml, cr_RepomdRecord pri_sqlite,
+                      cr_RepomdRecord fil_sqlite, cr_RepomdRecord oth_sqlite,
+                      cr_RepomdRecord groupfile, cr_RepomdRecord cgroupfile,
+                      cr_RepomdRecord update_info)
 {
     xmlDocPtr doc;
     xmlNodePtr root;
@@ -462,7 +461,7 @@ repomd_xml_dump(long revision, RepomdRecord pri_xml, RepomdRecord fil_xml,
 
 
 void
-rename_file(const char *base_path, RepomdRecord md)
+cr_rename_file(const char *base_path, cr_RepomdRecord md)
 {
     if (!md || !(md->location_href) || !strlen(md->location_href)) {
         return;
@@ -517,11 +516,11 @@ rename_file(const char *base_path, RepomdRecord md)
 
 
 gchar *
-xml_repomd(const char *path, RepomdRecord pri_xml,
-           RepomdRecord fil_xml, RepomdRecord oth_xml,
-           RepomdRecord pri_sqlite, RepomdRecord fil_sqlite,
-           RepomdRecord oth_sqlite, RepomdRecord groupfile,
-           RepomdRecord cgroupfile, RepomdRecord update_info)
+cr_xml_repomd(const char *path, cr_RepomdRecord pri_xml,
+              cr_RepomdRecord fil_xml, cr_RepomdRecord oth_xml,
+              cr_RepomdRecord pri_sqlite, cr_RepomdRecord fil_sqlite,
+              cr_RepomdRecord oth_sqlite, cr_RepomdRecord groupfile,
+              cr_RepomdRecord cgroupfile, cr_RepomdRecord update_info)
 {
     if (!path) {
         return NULL;

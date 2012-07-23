@@ -30,11 +30,11 @@ extern "C" {
 /**
  * Dump files from the package and append them to the node as childrens.
  * @param node          parent xml node
- * @param package       Package
- * @param primary       process only primary files (see is_primary() function
+ * @param package       cr_Package
+ * @param primary       process only primary files (see cr_is_primary() function
  *                      in the misc module)
  */
-void dump_files(xmlNodePtr node, Package *package, int primary);
+void cr_dump_files(xmlNodePtr node, cr_Package *package, int primary);
 
 #ifdef __cplusplus
 }

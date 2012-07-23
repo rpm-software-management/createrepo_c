@@ -21,49 +21,49 @@
 
 #define PACKAGE_CHUNK_SIZE 2048
 
-Dependency *
-dependency_new (void)
+cr_Dependency *
+cr_dependency_new (void)
 {
-    Dependency *dep;
+    cr_Dependency *dep;
 
-    dep = g_new0 (Dependency, 1);
+    dep = g_new0 (cr_Dependency, 1);
 
     return dep;
 }
 
-PackageFile *
-package_file_new (void)
+cr_PackageFile *
+cr_package_file_new (void)
 {
-    PackageFile *file;
+    cr_PackageFile *file;
 
-    file = g_new0 (PackageFile, 1);
+    file = g_new0 (cr_PackageFile, 1);
 
     return file;
 }
 
-ChangelogEntry *
-changelog_entry_new (void)
+cr_ChangelogEntry *
+cr_changelog_entry_new (void)
 {
-    ChangelogEntry *entry;
+    cr_ChangelogEntry *entry;
 
-    entry = g_new0 (ChangelogEntry, 1);
+    entry = g_new0 (cr_ChangelogEntry, 1);
 
     return entry;
 }
 
-Package *
-package_new (void)
+cr_Package *
+cr_package_new (void)
 {
-    Package *package;
+    cr_Package *package;
 
-    package = g_new0 (Package, 1);
+    package = g_new0 (cr_Package, 1);
     package->chunk = g_string_chunk_new (PACKAGE_CHUNK_SIZE);
 
     return package;
 }
 
 void
-package_free (Package *package)
+cr_package_free (cr_Package *package)
 {
     g_string_chunk_free (package->chunk);
 

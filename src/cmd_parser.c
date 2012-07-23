@@ -13,7 +13,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #include <string.h>
@@ -33,8 +34,8 @@ struct CmdOptions _cmd_options = {
         .checksum            = NULL,
         .workers             = DEFAULT_WORKERS,
         .unique_md_filenames = DEFAULT_UNIQUE_MD_FILENAMES,
-        .checksum_type       = PKG_CHECKSUM_SHA256,
-        .compression_type    = UNKNOWN_COMPRESSION
+        .checksum_type       = CR_CHECKSUM_SHA256,
+        .compression_type    = CR_CW_UNKNOWN_COMPRESSION
     };
 
 
@@ -153,11 +154,11 @@ gboolean check_arguments(struct CmdOptions *options)
     if (options->checksum) {
         GString *checksum_str = g_string_ascii_down(g_string_new(options->checksum));
         if (!strcmp(checksum_str->str, "sha256")) {
-            options->checksum_type = PKG_CHECKSUM_SHA256;
+            options->checksum_type = CR_CHECKSUM_SHA256;
         } else if (!strcmp(checksum_str->str, "sha1")) {
-            options->checksum_type = PKG_CHECKSUM_SHA1;
+            options->checksum_type = CR_CHECKSUM_SHA1;
         } else if (!strcmp(checksum_str->str, "md5")) {
-            options->checksum_type = PKG_CHECKSUM_MD5;
+            options->checksum_type = CR_CHECKSUM_MD5;
         } else {
             g_string_free(checksum_str, TRUE);
             g_critical("Unknown/Unsupported checksum type \"%s\"", options->checksum);
@@ -170,11 +171,11 @@ gboolean check_arguments(struct CmdOptions *options)
     if (options->compress_type) {
         GString *compress_str = g_string_ascii_down(g_string_new(options->compress_type));
         if (!strcmp(compress_str->str, "gz")) {
-            options->compression_type = GZ_COMPRESSION;
+            options->compression_type = CR_CW_GZ_COMPRESSION;
         } else if (!strcmp(compress_str->str, "bz2")) {
-            options->compression_type = BZ2_COMPRESSION;
+            options->compression_type = CR_CW_BZ2_COMPRESSION;
         } else if (!strcmp(compress_str->str, "xz")) {
-            options->compression_type = XZ_COMPRESSION;
+            options->compression_type = CR_CW_XZ_COMPRESSION;
         } else {
             g_string_free(compress_str, TRUE);
             g_critical("Unknown/Unsupported compression type \"%s\"", options->compress_type);

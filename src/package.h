@@ -34,13 +34,13 @@ extern "C" {
  */
 typedef struct {
     char *name;                 /*!< name */
-    char *flags;                /*!< flags (value returned by flag_to_string()
+    char *flags;                /*!< flags (value returned by cr_flag_to_string()
                                      from misc module) */
     char *epoch;                /*!< epoch */
     char *version;              /*!< version */
     char *release;              /*!< release */
     gboolean pre;               /*!< preinstall */
-} Dependency;
+} cr_Dependency;
 
 /** \ingroup package
  * File in package.
@@ -49,7 +49,7 @@ typedef struct {
     char *type;                 /*!< one of "" (regular file), "dir", "ghost" */
     char *path;                 /*!< path to file */
     char *name;                 /*!< filename */
-} PackageFile;
+} cr_PackageFile;
 
 /** \ingroup package
  * Changelog entry.
@@ -58,7 +58,7 @@ typedef struct {
     char *author;               /*!< author of changelog */
     gint64 date;                /*!< date of changelog - seconds since epoch */
     char *changelog;            /*!< text of changelog */
-} ChangelogEntry;
+} cr_ChangelogEntry;
 
 /** \ingroup package
  * Package
@@ -95,51 +95,51 @@ typedef struct {
     char *checksum_type;        /*!< type of checksum used ("sha1", "sha256",
                                      "md5", ..) */
 
-    GSList *requires;           /*!< requires (list of Dependency structs) */
-    GSList *provides;           /*!< provides (list of Dependency structs) */
-    GSList *conflicts;          /*!< conflicts (list of Dependency structs) */
-    GSList *obsoletes;          /*!< obsoletes (list of Dependency structs) */
+    GSList *requires;           /*!< requires (list of cr_Dependency structs) */
+    GSList *provides;           /*!< provides (list of cr_Dependency structs) */
+    GSList *conflicts;          /*!< conflicts (list of cr_Dependency structs) */
+    GSList *obsoletes;          /*!< obsoletes (list of cr_Dependency structs) */
 
-    GSList *files;              /*!< files in the package (list of PackageFile
-                                     structs) */
-    GSList *changelogs;         /*!< changelogs (list of ChangelogEntry
+    GSList *files;              /*!< files in the package (list of
+                                     cr_PackageFile structs) */
+    GSList *changelogs;         /*!< changelogs (list of cr_ChangelogEntry
                                      structs) */
 
     GStringChunk *chunk;        /*!< string chunk for store all package strings
                                      on the single place */
-} Package;
+} cr_Package;
 
-typedef void (*PackageFn) (Package *pkg, gpointer data);
+typedef void (*cr_PackageFn) (cr_Package *pkg, gpointer data);
 
 /** \ingroup package
  * Create new (empty) dependency structure.
- * @return              new empty Dependency
+ * @return              new empty cr_Dependency
  */
-Dependency     *dependency_new      (void);
+cr_Dependency *cr_dependency_new(void);
 
 /** \ingroup package
  * Create new (empty) package file structure.
- * @return              new emtpy PackageFile
+ * @return              new emtpy cr_PackageFile
  */
-PackageFile    *package_file_new    (void);
+cr_PackageFile *cr_package_file_new(void);
 
 /** \ingroup package
  * Create new (empty) changelog structure.
- * @return              new empty ChangelogEntry
+ * @return              new empty cr_ChangelogEntry
  */
-ChangelogEntry *changelog_entry_new (void);
+cr_ChangelogEntry *cr_changelog_entry_new(void);
 
 /** \ingroup package
  * Create new (empty) package structure.
- * @return              new empty Package
+ * @return              new empty cr_Package
  */
-Package        *package_new         (void);
+cr_Package *cr_package_new(void);
 
 /** \ingroup package
  * Free package structure and all its structures.
- * @param package       Package
+ * @param package       cr_Package
  */
-void            package_free        (Package *package);
+void cr_package_free(cr_Package *package);
 
 #ifdef __cplusplus
 }

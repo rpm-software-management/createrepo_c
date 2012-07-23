@@ -73,8 +73,8 @@ struct CmdOptions {
                                      includepkg options and pkglist file) */
     GSList *l_update_md_paths;  /*!< list of repos from update_md_paths
                                      (remote repos are downloaded) */
-    ChecksumType checksum_type; /*!< checksum type */
-    CompressionType compression_type; /*!< compression type */
+    cr_ChecksumType checksum_type;          /*!< checksum type */
+    cr_CompressionType compression_type;    /*!< compression type */
 
 };
 

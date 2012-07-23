@@ -35,7 +35,7 @@
 #define DATE_MAX_LEN    32
 
 
-void dump_changelog(xmlNodePtr root, Package *package)
+void dump_changelog(xmlNodePtr root, cr_Package *package)
 {
     if (!package->changelogs) {
         return;
@@ -44,7 +44,7 @@ void dump_changelog(xmlNodePtr root, Package *package)
     GSList *element = NULL;
     for(element = package->changelogs; element; element=element->next) {
 
-        ChangelogEntry *entry = (ChangelogEntry*) element->data;
+        cr_ChangelogEntry *entry = (cr_ChangelogEntry*) element->data;
 
         assert(entry);
 
@@ -69,7 +69,7 @@ void dump_changelog(xmlNodePtr root, Package *package)
 }
 
 
-void dump_other_items(xmlNodePtr root, Package *package)
+void dump_other_items(xmlNodePtr root, cr_Package *package)
 {
     /***********************************
      Element: package
@@ -110,7 +110,7 @@ void dump_other_items(xmlNodePtr root, Package *package)
 }
 
 
-char *xml_dump_other(Package *package)
+char *cr_xml_dump_other(cr_Package *package)
 {
     if (!package)
         return NULL;

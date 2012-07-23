@@ -36,7 +36,8 @@
 
 
 
-void free_metadata_location(struct MetadataLocation *ml)
+void
+cr_free_metadata_location(struct cr_MetadataLocation *ml)
 {
     if (!ml) {
         return;
@@ -44,7 +45,7 @@ void free_metadata_location(struct MetadataLocation *ml)
 
     if (ml->tmp_dir) {
         g_debug(MODULE"%s: Removing %s", __func__,  ml->tmp_dir);
-        remove_dir(ml->tmp_dir);
+        cr_remove_dir(ml->tmp_dir);
     }
 
     g_free(ml->pri_xml_href);
@@ -64,7 +65,7 @@ void free_metadata_location(struct MetadataLocation *ml)
 
 
 
-struct MetadataLocation *
+struct cr_MetadataLocation *
 parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite)
 {
     int ret;
@@ -120,8 +121,8 @@ parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite)
         return NULL;
     }
 
-    struct MetadataLocation *mdloc;
-    mdloc = g_malloc0(sizeof(struct MetadataLocation));
+    struct cr_MetadataLocation *mdloc;
+    mdloc = g_malloc0(sizeof(struct cr_MetadataLocation));
     mdloc->repomd = g_strdup(repomd_path);
     mdloc->local_path = g_strdup(repopath);
 
@@ -197,9 +198,10 @@ parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite)
 
 
 
-struct MetadataLocation *get_local_metadata(const char *in_repopath, int ignore_sqlite)
+struct cr_MetadataLocation *
+get_local_metadata(const char *in_repopath, int ignore_sqlite)
 {
-    struct MetadataLocation *ret = NULL;
+    struct cr_MetadataLocation *ret = NULL;
 
     if (!in_repopath) {
         return ret;
@@ -237,7 +239,8 @@ struct MetadataLocation *get_local_metadata(const char *in_repopath, int ignore_
 
 
 
-struct MetadataLocation *get_remote_metadata(const char *repopath, int ignore_sqlite)
+struct cr_MetadataLocation *
+get_remote_metadata(const char *repopath, int ignore_sqlite)
 {
     gchar *url = NULL;
     gchar *tmp_repomd = NULL;
@@ -247,8 +250,8 @@ struct MetadataLocation *get_remote_metadata(const char *repopath, int ignore_sq
     CURLcode rcode;
     char errorbuf[CURL_ERROR_SIZE];
     gchar tmp_dir[] = TMPDIR_PATTERN;
-    struct MetadataLocation *r_location = NULL;
-    struct MetadataLocation *ret = NULL;
+    struct cr_MetadataLocation *r_location = NULL;
+    struct cr_MetadataLocation *ret = NULL;
 
     if (!repopath) {
         return ret;
@@ -337,21 +340,21 @@ struct MetadataLocation *get_remote_metadata(const char *repopath, int ignore_sq
     char *error = NULL;
 
     if (r_location->pri_xml_href)
-        download(handle, r_location->pri_xml_href, tmp_repodata, &error);
+        cr_download(handle, r_location->pri_xml_href, tmp_repodata, &error);
     if (!error && r_location->fil_xml_href)
-        download(handle, r_location->fil_xml_href, tmp_repodata, &error);
+        cr_download(handle, r_location->fil_xml_href, tmp_repodata, &error);
     if (!error && r_location->oth_xml_href)
-        download(handle, r_location->oth_xml_href, tmp_repodata, &error);
+        cr_download(handle, r_location->oth_xml_href, tmp_repodata, &error);
     if (!error && r_location->pri_sqlite_href)
-        download(handle, r_location->pri_sqlite_href, tmp_repodata, &error);
+        cr_download(handle, r_location->pri_sqlite_href, tmp_repodata, &error);
     if (!error && r_location->fil_sqlite_href)
-        download(handle, r_location->fil_sqlite_href, tmp_repodata, &error);
+        cr_download(handle, r_location->fil_sqlite_href, tmp_repodata, &error);
     if (!error && r_location->oth_sqlite_href)
-        download(handle, r_location->oth_sqlite_href, tmp_repodata, &error);
+        cr_download(handle, r_location->oth_sqlite_href, tmp_repodata, &error);
     if (!error && r_location->groupfile_href)
-        download(handle, r_location->groupfile_href, tmp_repodata, &error);
+        cr_download(handle, r_location->groupfile_href, tmp_repodata, &error);
     if (!error && r_location->cgroupfile_href)
-        download(handle, r_location->cgroupfile_href, tmp_repodata, &error);
+        cr_download(handle, r_location->cgroupfile_href, tmp_repodata, &error);
 
     if (error) {
         g_critical(MODULE"%s: Error while downloadig files: %s", __func__, error);
@@ -377,17 +380,18 @@ get_remote_metadata_cleanup:
     g_free(tmp_repodata);
     g_free(url);
     curl_easy_cleanup(handle);
-    if (!ret) remove_dir(tmp_dir);
-    if (r_location) free_metadata_location(r_location);
+    if (!ret) cr_remove_dir(tmp_dir);
+    if (r_location) cr_free_metadata_location(r_location);
 
     return ret;
 }
 
 
 
-struct MetadataLocation *get_metadata_location(const char *in_repopath, int ignore_sqlite)
+struct cr_MetadataLocation *
+cr_get_metadata_location(const char *in_repopath, int ignore_sqlite)
 {
-    struct MetadataLocation *ret = NULL;
+    struct cr_MetadataLocation *ret = NULL;
 
     // repopath must ends with slash
 
@@ -423,7 +427,7 @@ struct MetadataLocation *get_metadata_location(const char *in_repopath, int igno
 
 
 // Return list of non-null pointers on strings in the passed structure
-GSList *get_list_of_md_locations (struct MetadataLocation *ml)
+GSList *get_list_of_md_locations (struct cr_MetadataLocation *ml)
 {
     GSList *list = NULL;
 
@@ -455,7 +459,7 @@ void free_list_of_md_locations(GSList *list)
 
 
 
-int remove_metadata(const char *repopath)
+int cr_remove_metadata(const char *repopath)
 {
     if (!repopath || !g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
         g_debug(MODULE"%s: remove_old_metadata: Cannot remove %s", __func__, repopath);
@@ -477,8 +481,8 @@ int remove_metadata(const char *repopath)
 
     int removed_files = 0;
 
-    struct MetadataLocation *ml;
-    ml = get_metadata_location(repopath, 0);
+    struct cr_MetadataLocation *ml;
+    ml = cr_get_metadata_location(repopath, 0);
     if (ml) {
         GSList *list = get_list_of_md_locations(ml);
         GSList *element;
@@ -496,7 +500,7 @@ int remove_metadata(const char *repopath)
         }
 
         free_list_of_md_locations(list);
-        free_metadata_location(ml);
+        cr_free_metadata_location(ml);
     }
 
 

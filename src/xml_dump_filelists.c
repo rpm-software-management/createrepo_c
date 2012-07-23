@@ -34,7 +34,7 @@
 #define FORMAT_LEVEL    0
 
 
-void dump_filelists_items(xmlNodePtr root, Package *package)
+void dump_filelists_items(xmlNodePtr root, cr_Package *package)
 {
     /***********************************
      Element: package
@@ -71,11 +71,11 @@ void dump_filelists_items(xmlNodePtr root, Package *package)
 
     // Files dump
 
-    dump_files(root, package, 0);
+    cr_dump_files(root, package, 0);
 }
 
 
-char *xml_dump_filelists(Package *package)
+char *cr_xml_dump_filelists(cr_Package *package)
 {
     if (!package)
         return NULL;

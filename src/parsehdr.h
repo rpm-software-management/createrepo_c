@@ -33,7 +33,7 @@ extern "C" {
  */
 
 /** \ingroup parsehdr
- * Read data from header and return filled Package structure.
+ * Read data from header and return filled cr_Package structure.
  * @param hdr                   Header
  * @param mtime                 mtime of rpm file
  * @param size                  size of rpm file (in bytes)
@@ -44,15 +44,21 @@ extern "C" {
  * @param changelog_limit       number of changelog entries
  * @param hdr_start             start byte of header
  * @param hdr_end               last byte of header
- * @return                      Package
+ * @return                      cr_Package
  */
-Package *parse_header(Header hdr, gint64 mtime, gint64 size,
-                        const char *checksum, const char *checksum_type,
-                        const char *location_href, const char *location_base,
-                        int changelog_limit, gint64 hdr_start, gint64 hdr_end);
+cr_Package *cr_parse_header(Header hdr,
+                            gint64 mtime,
+                            gint64 size,
+                            const char *checksum,
+                            const char *checksum_type,
+                            const char *location_href,
+                            const char *location_base,
+                            int changelog_limit,
+                            gint64 hdr_start,
+                            gint64 hdr_end);
 
 /** \ingroup parsehdr
- * Read data from header and return struct XmlStruct.
+ * Read data from header and return struct cr_XmlStruct.
  * @param hdr                   Header
  * @param mtime                 mtime of rpm file
  * @param size                  size of rpm file (in bytes)
@@ -64,12 +70,18 @@ Package *parse_header(Header hdr, gint64 mtime, gint64 size,
  * @param hdr_start             start byte of header
  * @param hdr_end               last byte of header
  * @return                      XML chunks for primary, filelists and other
- *                              (in struct XmlStruct)
+ *                              (in struct cr_XmlStruct)
  */
-struct XmlStruct xml_from_header(Header hdr, gint64 mtime, gint64 size,
-                        const char *checksum, const char *checksum_type,
-                        const char *location_href, const char *location_base,
-                        int changelog_limit, gint64 hdr_start, gint64 hdr_end);
+struct cr_XmlStruct cr_xml_from_header(Header hdr,
+                                       gint64 mtime,
+                                       gint64 size,
+                                       const char *checksum,
+                                       const char *checksum_type,
+                                       const char *location_href,
+                                       const char *location_base,
+                                       int changelog_limit,
+                                       gint64 hdr_start,
+                                       gint64 hdr_end);
 
 #ifdef __cplusplus
 }

@@ -42,14 +42,14 @@ typedef struct {
 } TestData;
 
 
-Package *
+cr_Package *
 get_package()
 {
-    Package *p;
-    Dependency *dep;
-    PackageFile *file;
+    cr_Package *p;
+    cr_Dependency *dep;
+    cr_PackageFile *file;
 
-    p = package_new();
+    p = cr_package_new();
     p->pkgId = "123456";
     p->name = "foo";
     p->arch = "x86_64";
@@ -76,25 +76,25 @@ get_package()
     p->location_base = NULL;
     p->checksum_type = "sha256";
 
-    dep = dependency_new();
+    dep = cr_dependency_new();
     dep->name = "foobar_dep";
     dep->flags = NULL;
     dep->pre = FALSE;
     p->requires = (g_slist_prepend(p->requires, dep));
 
-    dep = dependency_new();
+    dep = cr_dependency_new();
     dep->name = "foobar_pre_dep";
     dep->flags = "LE";
     dep->pre = TRUE;
     p->requires = g_slist_prepend(p->requires, dep);
 
-    file = package_file_new();
+    file = cr_package_file_new();
     file->type = "";
     file->path = "/bin/";
     file->name = "foo";
     p->files = g_slist_prepend(p->files, file);
 
-    file = package_file_new();
+    file = cr_package_file_new();
     file->type = "dir";
     file->path = "/var/foo/";
     file->name = NULL;
@@ -105,29 +105,29 @@ get_package()
 
 
 
-Package *
+cr_Package *
 get_empty_package()
 {
-    Package *p;
-    Dependency *dep;
-    PackageFile *file;
+    cr_Package *p;
+    cr_Dependency *dep;
+    cr_PackageFile *file;
 
-    p = package_new();
+    p = cr_package_new();
     p->name = "foo";
 
-    dep = dependency_new();
+    dep = cr_dependency_new();
     dep->name   = NULL;
     dep->flags  = NULL;
     dep->pre    = FALSE;
     p->requires = (g_slist_prepend(p->requires, dep));
 
-    dep = dependency_new();
+    dep = cr_dependency_new();
     dep->name   = NULL;
     dep->flags  = NULL;
     dep->pre    = TRUE;
     p->requires = g_slist_prepend(p->requires, dep);
 
-    file = package_file_new();
+    file = cr_package_file_new();
     file->type = NULL;
     file->path = NULL;
     file->name = NULL;
@@ -140,7 +140,7 @@ get_empty_package()
 static void
 testdata_setup(TestData *testdata, gconstpointer test_data)
 {
-    UNUSED(test_data);
+    CR_UNUSED(test_data);
     testdata->tmp_dir = g_strdup(TMP_DIR_PATTERN);
     mkdtemp(testdata->tmp_dir);
 }
@@ -149,16 +149,16 @@ testdata_setup(TestData *testdata, gconstpointer test_data)
 static void
 testdata_teardown(TestData *testdata, gconstpointer test_data)
 {
-    UNUSED(test_data);
-    remove_dir(testdata->tmp_dir);
+    CR_UNUSED(test_data);
+    cr_remove_dir(testdata->tmp_dir);
     g_free(testdata->tmp_dir);
 }
 
 
 static void
-test_open_db(TestData *testdata, gconstpointer test_data)
+test_cr_open_db(TestData *testdata, gconstpointer test_data)
 {
-    UNUSED(test_data);
+    CR_UNUSED(test_data);
 
     GError *err = NULL;
     gchar *path = NULL;
@@ -167,43 +167,43 @@ test_open_db(TestData *testdata, gconstpointer test_data)
     // Create new db
 
     path = g_strconcat(testdata->tmp_dir, "/", TMP_PRIMARY_NAME, NULL);
-    db = open_primary_db(path, &err);
+    db = cr_open_primary_db(path, &err);
     g_assert(db);
     g_assert(!err);
     g_assert(g_file_test(path, G_FILE_TEST_EXISTS));
     g_free(path);
-    close_primary_db(db, &err);
+    cr_close_primary_db(db, &err);
     g_assert(!err);
 
     path = g_strconcat(testdata->tmp_dir, "/", TMP_FILELISTS_NAME, NULL);
-    db = open_filelists_db(path, &err);
+    db = cr_open_filelists_db(path, &err);
     g_assert(db);
     g_assert(!err);
     g_assert(g_file_test(path, G_FILE_TEST_EXISTS));
     g_free(path);
-    close_filelists_db(db, &err);
+    cr_close_filelists_db(db, &err);
     g_assert(!err);
 
     path = g_strconcat(testdata->tmp_dir, "/", TMP_OTHER_NAME, NULL);
-    db = open_other_db(path, &err);
+    db = cr_open_other_db(path, &err);
     g_assert(db);
     g_assert(!err);
     g_assert(g_file_test(path, G_FILE_TEST_EXISTS));
     g_free(path);
-    close_other_db(db, &err);
+    cr_close_other_db(db, &err);
     g_assert(!err);
 }
 
 
 static void
-test_add_primary_pkg_db(TestData *testdata, gconstpointer test_data)
+test_cr_add_primary_pkg_db(TestData *testdata, gconstpointer test_data)
 {
-    UNUSED(test_data);
+    CR_UNUSED(test_data);
 
     GError *err = NULL;
     gchar *path;
     sqlite3 *db;
-    Package *pkg;
+    cr_Package *pkg;
 
     GTimer *timer = g_timer_new();
     gdouble topen, tprepare, tadd, tclean, tmp;
@@ -212,7 +212,7 @@ test_add_primary_pkg_db(TestData *testdata, gconstpointer test_data)
 
     path = g_strconcat(testdata->tmp_dir, "/", TMP_PRIMARY_NAME, NULL);
     g_timer_start(timer);
-    db = open_primary_db(path, &err);
+    db = cr_open_primary_db(path, &err);
     topen = g_timer_elapsed(timer, NULL);
     g_assert(db);
     g_assert(!err);
@@ -224,20 +224,20 @@ test_add_primary_pkg_db(TestData *testdata, gconstpointer test_data)
 
     // Add package
 
-    DbPrimaryStatements pri_stmts;
+    cr_DbPrimaryStatements pri_stmts;
 
     tmp = g_timer_elapsed(timer, NULL);
-    pri_stmts = prepare_primary_db_statements(db, &err);
+    pri_stmts = cr_prepare_primary_db_statements(db, &err);
     tprepare = g_timer_elapsed(timer, NULL) - tmp;
     g_assert(!err);
 
     tmp = g_timer_elapsed(timer, NULL);
-    add_primary_pkg_db(pri_stmts, pkg);
+    cr_add_primary_pkg_db(pri_stmts, pkg);
     tadd = g_timer_elapsed(timer, NULL) - tmp;
 
     tmp = g_timer_elapsed(timer, NULL);
-    destroy_primary_db_statements(pri_stmts);
-    close_primary_db(db, &err);
+    cr_destroy_primary_db_statements(pri_stmts);
+    cr_close_primary_db(db, &err);
     tclean = g_timer_elapsed(timer, NULL) - tmp;
 
     printf("Stats:\nOpen:    %f\nPrepare: %f\nAdd:     %f\nCleanup: %f\nSum:     %f\n",
@@ -253,26 +253,26 @@ test_add_primary_pkg_db(TestData *testdata, gconstpointer test_data)
 
 
 static void
-test_dbinfo_update(TestData *testdata, gconstpointer test_data)
+test_cr_dbinfo_update(TestData *testdata, gconstpointer test_data)
 {
-    UNUSED(test_data);
+    CR_UNUSED(test_data);
 
     GError *err = NULL;
     gchar *path;
     sqlite3 *db;
-    Package *pkg;
+    cr_Package *pkg;
 
     // Create new db
 
     path = g_strconcat(testdata->tmp_dir, "/", TMP_PRIMARY_NAME, NULL);
-    db = open_primary_db(path, &err);
+    db = cr_open_primary_db(path, &err);
     g_assert(db);
     g_assert(!err);
     g_assert(g_file_test(path, G_FILE_TEST_EXISTS));
 
-    // Try dbinfo_update
+    // Try cr_dbinfo_update
 
-    dbinfo_update(db, "foochecksum", &err);
+    cr_dbinfo_update(db, "foochecksum", &err);
     g_assert(!err);
 
     // Load package
@@ -281,25 +281,25 @@ test_dbinfo_update(TestData *testdata, gconstpointer test_data)
 
     // Add package
 
-    DbPrimaryStatements pri_stmts;
+    cr_DbPrimaryStatements pri_stmts;
 
-    pri_stmts = prepare_primary_db_statements(db, &err);
+    pri_stmts = cr_prepare_primary_db_statements(db, &err);
     g_assert(!err);
 
-    add_primary_pkg_db(pri_stmts, pkg);
+    cr_add_primary_pkg_db(pri_stmts, pkg);
 
-    destroy_primary_db_statements(pri_stmts);
+    cr_destroy_primary_db_statements(pri_stmts);
 
-    // Try dbinfo_update again
+    // Try cr_dbinfo_update again
 
-    dbinfo_update(db, "foochecksum", &err);
+    cr_dbinfo_update(db, "foochecksum", &err);
     g_assert(!err);
 
     // Cleanup
 
-    package_free(pkg);
+    cr_package_free(pkg);
     g_free(path);
-    close_primary_db(db, &err);
+    cr_close_primary_db(db, &err);
     g_assert(!err);
 }
 
@@ -308,58 +308,58 @@ test_dbinfo_update(TestData *testdata, gconstpointer test_data)
 static void
 test_all(TestData *testdata, gconstpointer test_data)
 {
-    UNUSED(test_data);
+    CR_UNUSED(test_data);
 
     GError *err = NULL;
     gchar *path;
     sqlite3 *db = NULL;
-    Package *pkg, *pkg2 = NULL;
+    cr_Package *pkg, *pkg2 = NULL;
 
     // Create new db
 
     path = g_strconcat(testdata->tmp_dir, "/", TMP_PRIMARY_NAME, NULL);
-    db = open_primary_db(path, &err);
+    db = cr_open_primary_db(path, &err);
     g_assert(db);
     g_assert(!err);
     g_assert(g_file_test(path, G_FILE_TEST_EXISTS));
 
-    // Try dbinfo_update
+    // Try cr_dbinfo_update
 
-    dbinfo_update(db, "foochecksum", &err);
+    cr_dbinfo_update(db, "foochecksum", &err);
     g_assert(!err);
 
     // Load package
 
-    init_package_parser();
-    pkg = package_from_file(EMPTY_PKG, PKG_CHECKSUM_SHA256, EMPTY_PKG, NULL, 5, NULL);
+    cr_package_parser_init();
+    pkg = cr_package_from_file(EMPTY_PKG, CR_CHECKSUM_SHA256, EMPTY_PKG, NULL, 5, NULL);
     g_assert(pkg);
-    free_package_parser();
+    cr_package_parser_shutdown();
 
     pkg2 = get_empty_package();
 
     // Add package
 
-    DbPrimaryStatements pri_stmts;
+    cr_DbPrimaryStatements pri_stmts;
 
-    pri_stmts = prepare_primary_db_statements(db, &err);
+    pri_stmts = cr_prepare_primary_db_statements(db, &err);
     g_assert(!err);
 
-    add_primary_pkg_db(pri_stmts, pkg);
-    add_primary_pkg_db(pri_stmts, pkg2);
+    cr_add_primary_pkg_db(pri_stmts, pkg);
+    cr_add_primary_pkg_db(pri_stmts, pkg2);
 
-    destroy_primary_db_statements(pri_stmts);
+    cr_destroy_primary_db_statements(pri_stmts);
 
-    // Try dbinfo_update again
+    // Try cr_dbinfo_update again
 
-    dbinfo_update(db, "foochecksum", &err);
+    cr_dbinfo_update(db, "foochecksum", &err);
     g_assert(!err);
 
 
     // Cleanup
 
-    package_free(pkg);
-    package_free(pkg2);
-    close_primary_db(db, &err);
+    cr_package_free(pkg);
+    cr_package_free(pkg2);
+    cr_close_primary_db(db, &err);
     g_assert(!err);
     g_free(path);
 }
@@ -371,9 +371,9 @@ main(int argc, char *argv[])
 {
     g_test_init(&argc, &argv, NULL);
 
-    g_test_add("/sqlite/test_open_db", TestData, NULL, testdata_setup, test_open_db, testdata_teardown);
-    g_test_add("/sqlite/test_add_primary_pkg_db", TestData, NULL, testdata_setup, test_add_primary_pkg_db, testdata_teardown);
-    g_test_add("/sqlite/test_dbinfo_update", TestData, NULL, testdata_setup, test_dbinfo_update, testdata_teardown);
+    g_test_add("/sqlite/test_cr_open_db", TestData, NULL, testdata_setup, test_cr_open_db, testdata_teardown);
+    g_test_add("/sqlite/test_cr_add_primary_pkg_db", TestData, NULL, testdata_setup, test_cr_add_primary_pkg_db, testdata_teardown);
+    g_test_add("/sqlite/test_cr_dbinfo_update", TestData, NULL, testdata_setup, test_cr_dbinfo_update, testdata_teardown);
     g_test_add("/sqlite/test_all", TestData, NULL, testdata_setup, test_all, testdata_teardown);
 
     return g_test_run();

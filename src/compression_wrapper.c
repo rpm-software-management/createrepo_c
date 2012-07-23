@@ -13,7 +13,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #include <glib.h>
@@ -33,12 +34,12 @@
 #define MODULE "compression_wrapper: "
 
 /*
-#define Z_NO_COMPRESSION         0
+#define Z_CR_CW_NO_COMPRESSION         0
 #define Z_BEST_SPEED             1
 #define Z_BEST_COMPRESSION       9
 #define Z_DEFAULT_COMPRESSION  (-1)
 */
-#define GZ_COMPRESSION_LEVEL    Z_DEFAULT_COMPRESSION
+#define CR_CW_GZ_COMPRESSION_LEVEL    Z_DEFAULT_COMPRESSION
 
 /*
 #define Z_FILTERED            1
@@ -62,7 +63,7 @@ or
 LZMA_PRESET_DEFAULT default preset
 LZMA_PRESET_EXTREME significantly slower, improving the compression ratio marginally
 */
-#define XZ_COMPRESSION_LEVEL    5
+#define CR_CW_XZ_COMPRESSION_LEVEL    5
 
 /*
 LZMA_CHECK_NONE
@@ -91,9 +92,9 @@ typedef struct {
 
 
 
-CompressionType detect_compression(const char *filename)
+cr_CompressionType cr_detect_compression(const char *filename)
 {
-    CompressionType type = UNKNOWN_COMPRESSION;
+    cr_CompressionType type = CR_CW_UNKNOWN_COMPRESSION;
 
     if (!g_file_test(filename, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR)) {
         g_debug(MODULE"%s: File %s doesn't exists or it's not a regular file", __func__, filename);
@@ -106,17 +107,17 @@ CompressionType detect_compression(const char *filename)
         g_str_has_suffix(filename, ".gzip") ||
         g_str_has_suffix(filename, ".gunzip"))
     {
-        return GZ_COMPRESSION;
+        return CR_CW_GZ_COMPRESSION;
     } else if (g_str_has_suffix(filename, ".bz2") ||
                g_str_has_suffix(filename, ".bzip2"))
     {
-        return BZ2_COMPRESSION;
+        return CR_CW_BZ2_COMPRESSION;
     } else if (g_str_has_suffix(filename, ".xz"))
     {
-        return XZ_COMPRESSION;
+        return CR_CW_XZ_COMPRESSION;
     } else if (g_str_has_suffix(filename, ".xml"))
     {
-        return NO_COMPRESSION;
+        return CR_CW_NO_COMPRESSION;
     }
 
 
@@ -145,7 +146,7 @@ CompressionType detect_compression(const char *filename)
             g_str_has_prefix(mime_type, "application/x-gunzip") ||
             g_str_has_prefix(mime_type, "multipart/x-gzip"))
         {
-            type = GZ_COMPRESSION;
+            type = CR_CW_GZ_COMPRESSION;
         }
 
         else if (g_str_has_prefix(mime_type, "application/x-bzip2") ||
@@ -153,12 +154,12 @@ CompressionType detect_compression(const char *filename)
                  g_str_has_prefix(mime_type, "application/bzip2") ||
                  g_str_has_prefix(mime_type, "application/bz2"))
         {
-            type = BZ2_COMPRESSION;
+            type = CR_CW_BZ2_COMPRESSION;
         }
 
         else if (g_str_has_prefix(mime_type, "application/x-xz"))
         {
-            type = XZ_COMPRESSION;
+            type = CR_CW_XZ_COMPRESSION;
         }
 
         else if (g_str_has_prefix(mime_type, "text/plain") ||
@@ -168,7 +169,7 @@ CompressionType detect_compression(const char *filename)
                  g_str_has_prefix(mime_type, "application/x-empty") ||
                  g_str_has_prefix(mime_type, "inode/x-empty"))
         {
-            type = NO_COMPRESSION;
+            type = CR_CW_NO_COMPRESSION;
         }
     } else {
         g_debug(MODULE"%s: Mime type not detected! (%s)", __func__, filename);
@@ -177,9 +178,9 @@ CompressionType detect_compression(const char *filename)
 
     // Xml detection
 
-    if (type == UNKNOWN_COMPRESSION && g_str_has_suffix(filename, ".xml"))
+    if (type == CR_CW_UNKNOWN_COMPRESSION && g_str_has_suffix(filename, ".xml"))
     {
-        type = NO_COMPRESSION;
+        type = CR_CW_NO_COMPRESSION;
     }
 
     magic_close(myt);
@@ -188,15 +189,15 @@ CompressionType detect_compression(const char *filename)
 }
 
 
-const char *get_suffix(CompressionType comtype)
+const char *cr_get_suffix(cr_CompressionType comtype)
 {
     char *suffix = NULL;
     switch (comtype) {
-        case GZ_COMPRESSION:
+        case CR_CW_GZ_COMPRESSION:
             suffix = ".gz"; break;
-        case BZ2_COMPRESSION:
+        case CR_CW_BZ2_COMPRESSION:
             suffix = ".bz2"; break;
-        case XZ_COMPRESSION:
+        case CR_CW_XZ_COMPRESSION:
             suffix = ".xz"; break;
         default:
             break;
@@ -206,12 +207,12 @@ const char *get_suffix(CompressionType comtype)
 }
 
 
-CW_FILE *cw_open(const char *filename, OpenMode mode, CompressionType comtype)
+CR_FILE *cr_open(const char *filename, cr_OpenMode mode, cr_CompressionType comtype)
 {
-    CW_FILE *file = NULL;
-    CompressionType type;
+    CR_FILE *file = NULL;
+    cr_CompressionType type;
 
-    if (!filename || (mode != CW_MODE_READ && mode != CW_MODE_WRITE)) {
+    if (!filename || (mode != CR_CW_MODE_READ && mode != CR_CW_MODE_WRITE)) {
         g_debug(MODULE"%s: Filename is NULL or bad mode value", __func__);
         return NULL;
     }
@@ -219,26 +220,26 @@ CW_FILE *cw_open(const char *filename, OpenMode mode, CompressionType comtype)
 
     // Compression type detection
 
-    if (mode == CW_MODE_WRITE) {
-        if (comtype == AUTO_DETECT_COMPRESSION) {
-            g_debug(MODULE"%s: AUTO_DETECT_COMPRESSION cannot be used if mode is CW_MODE_WRITE", __func__);
+    if (mode == CR_CW_MODE_WRITE) {
+        if (comtype == CR_CW_AUTO_DETECT_COMPRESSION) {
+            g_debug(MODULE"%s: CR_CW_AUTO_DETECT_COMPRESSION cannot be used if mode is CR_CW_MODE_WRITE", __func__);
             return NULL;
         }
 
-        if (comtype == UNKNOWN_COMPRESSION) {
-            g_debug(MODULE"%s: UNKNOWN_COMPRESSION cannot be used if mode is CW_MODE_WRITE", __func__);
+        if (comtype == CR_CW_UNKNOWN_COMPRESSION) {
+            g_debug(MODULE"%s: CR_CW_UNKNOWN_COMPRESSION cannot be used if mode is CR_CW_MODE_WRITE", __func__);
             return NULL;
         }
     }
 
 
-    if (comtype != AUTO_DETECT_COMPRESSION) {
+    if (comtype != CR_CW_AUTO_DETECT_COMPRESSION) {
         type = comtype;
     } else {
-        type = detect_compression(filename);
+        type = cr_detect_compression(filename);
     }
 
-    if (type == UNKNOWN_COMPRESSION) {
+    if (type == CR_CW_UNKNOWN_COMPRESSION) {
         g_debug(MODULE"%s: Cannot detect compression type", __func__);
         return NULL;
     }
@@ -246,25 +247,25 @@ CW_FILE *cw_open(const char *filename, OpenMode mode, CompressionType comtype)
 
     // Open file
 
-    file = g_malloc0(sizeof(CW_FILE));
+    file = g_malloc0(sizeof(CR_FILE));
     file->mode = mode;
 
     switch (type) {
 
-        case (NO_COMPRESSION): // ----------------------------------------------
-            file->type = NO_COMPRESSION;
-            if (mode == CW_MODE_WRITE) {
+        case (CR_CW_NO_COMPRESSION): // ----------------------------------------------
+            file->type = CR_CW_NO_COMPRESSION;
+            if (mode == CR_CW_MODE_WRITE) {
                 file->FILE = (void *) fopen(filename, "w");
             } else {
                 file->FILE = (void *) fopen(filename, "r");
             }
             break;
 
-        case (GZ_COMPRESSION): // ----------------------------------------------
-            file->type = GZ_COMPRESSION;
-            if (mode == CW_MODE_WRITE) {
+        case (CR_CW_GZ_COMPRESSION): // ----------------------------------------------
+            file->type = CR_CW_GZ_COMPRESSION;
+            if (mode == CR_CW_MODE_WRITE) {
                 file->FILE = (void *) gzopen(filename, "wb");
-                gzsetparams((gzFile) file->FILE, GZ_COMPRESSION_LEVEL, GZ_STRATEGY);
+                gzsetparams((gzFile) file->FILE, CR_CW_GZ_COMPRESSION_LEVEL, GZ_STRATEGY);
             } else {
                 file->FILE = (void *) gzopen(filename, "rb");
             }
@@ -274,10 +275,10 @@ CW_FILE *cw_open(const char *filename, OpenMode mode, CompressionType comtype)
             }
             break;
 
-        case (BZ2_COMPRESSION): // ---------------------------------------------
-            file->type = BZ2_COMPRESSION;
+        case (CR_CW_BZ2_COMPRESSION): // ---------------------------------------------
+            file->type = CR_CW_BZ2_COMPRESSION;
             FILE *f;
-            if (mode == CW_MODE_WRITE) {
+            if (mode == CR_CW_MODE_WRITE) {
                 f = fopen(filename, "wb");
                 if (f) {
                     file->FILE = (void *) BZ2_bzWriteOpen(NULL, f, BZ2_BLOCKSIZE100K, BZ2_VERBOSITY, BZ2_WORK_FACTOR);
@@ -290,8 +291,8 @@ CW_FILE *cw_open(const char *filename, OpenMode mode, CompressionType comtype)
             }
             break;
 
-        case (XZ_COMPRESSION): // ----------------------------------------------
-            file->type = XZ_COMPRESSION;
+        case (CR_CW_XZ_COMPRESSION): // ----------------------------------------------
+            file->type = CR_CW_XZ_COMPRESSION;
             XzFile *xz_file = g_malloc(sizeof(XzFile));
             lzma_stream *stream = &(xz_file->stream);
             memset(stream, 0, sizeof(lzma_stream));
@@ -305,8 +306,8 @@ CW_FILE *cw_open(const char *filename, OpenMode mode, CompressionType comtype)
             // Prepare coder/decoder
 
             int ret;
-            if (mode == CW_MODE_WRITE)
-                ret = lzma_easy_encoder(stream, XZ_COMPRESSION_LEVEL, XZ_CHECK);
+            if (mode == CR_CW_MODE_WRITE)
+                ret = lzma_easy_encoder(stream, CR_CW_XZ_COMPRESSION_LEVEL, XZ_CHECK);
             else
                 ret = lzma_auto_decoder(stream, XZ_MEMORY_USAGE_LIMIT, XZ_DECODER_FLAGS);
 
@@ -330,7 +331,7 @@ CW_FILE *cw_open(const char *filename, OpenMode mode, CompressionType comtype)
 
             // Open input/output file
 
-            if (mode == CW_MODE_WRITE)
+            if (mode == CR_CW_MODE_WRITE)
                 xz_file->file = fopen(filename, "wb");
             else
                 xz_file->file = fopen(filename, "rb");
@@ -359,49 +360,49 @@ CW_FILE *cw_open(const char *filename, OpenMode mode, CompressionType comtype)
 
 
 
-int cw_close(CW_FILE *cw_file)
+int cr_close(CR_FILE *cr_file)
 {
-    if (!cw_file) {
-        return CW_ERR;
+    if (!cr_file) {
+        return CR_CW_ERR;
     }
 
 
     int ret;
-    int cw_ret = CW_ERR;
+    int cw_ret = CR_CW_ERR;
 
-    switch (cw_file->type) {
+    switch (cr_file->type) {
 
-        case (NO_COMPRESSION): // ----------------------------------------------
-            ret = fclose((FILE *) cw_file->FILE);
+        case (CR_CW_NO_COMPRESSION): // ----------------------------------------------
+            ret = fclose((FILE *) cr_file->FILE);
             if (ret == 0) {
-                cw_ret = CW_OK;
+                cw_ret = CR_CW_OK;
             }
             break;
 
-        case (GZ_COMPRESSION): // ----------------------------------------------
-            ret = gzclose((gzFile) cw_file->FILE);
+        case (CR_CW_GZ_COMPRESSION): // ----------------------------------------------
+            ret = gzclose((gzFile) cr_file->FILE);
             if (ret == Z_OK) {
-                cw_ret = CW_OK;
+                cw_ret = CR_CW_OK;
             }
             break;
 
-        case (BZ2_COMPRESSION): // ---------------------------------------------
-            if (cw_file->mode == CW_MODE_READ) {
-                BZ2_bzReadClose(&ret, (BZFILE *) cw_file->FILE);
+        case (CR_CW_BZ2_COMPRESSION): // ---------------------------------------------
+            if (cr_file->mode == CR_CW_MODE_READ) {
+                BZ2_bzReadClose(&ret, (BZFILE *) cr_file->FILE);
             } else {
-                BZ2_bzWriteClose(&ret, (BZFILE *) cw_file->FILE, BZ2_SKIP_FFLUSH, NULL, NULL);
+                BZ2_bzWriteClose(&ret, (BZFILE *) cr_file->FILE, BZ2_SKIP_FFLUSH, NULL, NULL);
             }
 
             if (ret == BZ_OK) {
-                cw_ret = CW_OK;
+                cw_ret = CR_CW_OK;
             }
             break;
 
-        case (XZ_COMPRESSION): { // --------------------------------------------
-            XzFile *xz_file = (XzFile *) cw_file->FILE;
+        case (CR_CW_XZ_COMPRESSION): { // --------------------------------------------
+            XzFile *xz_file = (XzFile *) cr_file->FILE;
             lzma_stream *stream = &(xz_file->stream);
 
-            if (cw_file->mode == CW_MODE_WRITE) {
+            if (cr_file->mode == CR_CW_MODE_WRITE) {
                 // Write out rest of buffer
                 while (1) {
                     int ret;
@@ -422,12 +423,12 @@ int cw_close(CW_FILE *cw_file)
 
                     if(ret == LZMA_STREAM_END) {
                         // Everything all right
-                        cw_ret = CW_OK;
+                        cw_ret = CR_CW_OK;
                         break;
                     }
                 }
             } else {
-                cw_ret = CW_OK;
+                cw_ret = CR_CW_OK;
             }
 
             fclose(xz_file->file);
@@ -440,48 +441,48 @@ int cw_close(CW_FILE *cw_file)
             break;
     }
 
-    g_free(cw_file);
+    g_free(cr_file);
 
     return cw_ret;
 }
 
 
 
-int cw_read(CW_FILE *cw_file, void *buffer, unsigned int len)
+int cr_read(CR_FILE *cr_file, void *buffer, unsigned int len)
 {
-    if (!cw_file || !buffer || cw_file->mode != CW_MODE_READ) {
-        return CW_ERR;
+    if (!cr_file || !buffer || cr_file->mode != CR_CW_MODE_READ) {
+        return CR_CW_ERR;
     }
 
 
     int bzerror;
     int ret;
 
-    switch (cw_file->type) {
+    switch (cr_file->type) {
 
-        case (NO_COMPRESSION): // ----------------------------------------------
-            ret = fread(buffer, 1, len, (FILE *) cw_file->FILE);
-            if ((ret != (int) len) && !feof((FILE *) cw_file->FILE)) {
-                ret = CW_ERR;
+        case (CR_CW_NO_COMPRESSION): // ----------------------------------------------
+            ret = fread(buffer, 1, len, (FILE *) cr_file->FILE);
+            if ((ret != (int) len) && !feof((FILE *) cr_file->FILE)) {
+                ret = CR_CW_ERR;
             }
             break;
 
-        case (GZ_COMPRESSION): // ----------------------------------------------
-            return gzread((gzFile) cw_file->FILE, buffer, len);
+        case (CR_CW_GZ_COMPRESSION): // ----------------------------------------------
+            return gzread((gzFile) cr_file->FILE, buffer, len);
             break;
 
-        case (BZ2_COMPRESSION): // ---------------------------------------------
-            ret = BZ2_bzRead(&bzerror, (BZFILE *) cw_file->FILE, buffer, len);
+        case (CR_CW_BZ2_COMPRESSION): // ---------------------------------------------
+            ret = BZ2_bzRead(&bzerror, (BZFILE *) cr_file->FILE, buffer, len);
             if (!ret && bzerror == BZ_SEQUENCE_ERROR)
                 // Next read after BZ_STREAM_END (EOF)
                 return 0;
             if (bzerror != BZ_OK && bzerror != BZ_STREAM_END) {
-                return CW_ERR;
+                return CR_CW_ERR;
             }
             break;
 
-        case (XZ_COMPRESSION): { // --------------------------------------------
-            XzFile *xz_file = (XzFile *) cw_file->FILE;
+        case (CR_CW_XZ_COMPRESSION): { // --------------------------------------------
+            XzFile *xz_file = (XzFile *) cr_file->FILE;
             lzma_stream *stream = &(xz_file->stream);
 
             stream->next_out = buffer;
@@ -494,7 +495,7 @@ int cw_read(CW_FILE *cw_file, void *buffer, unsigned int len)
                 if (stream->avail_in == 0) {
                     if ((lret = fread(xz_file->buffer, 1, XZ_BUFFER_SIZE, xz_file->file)) < 0) {
                         g_debug(MODULE"%s: XZ: Error while fread", __func__);
-                        return CW_ERR;   // Error while reading input file
+                        return CR_CW_ERR;   // Error while reading input file
                     } else if (lret == 0) {
                         g_debug(MODULE"%s: EOF", __func__);
                         break;   // EOF
@@ -507,7 +508,7 @@ int cw_read(CW_FILE *cw_file, void *buffer, unsigned int len)
                 lret = lzma_code(stream, LZMA_RUN);
                 if (lret != LZMA_OK && lret != LZMA_STREAM_END) {
                     g_debug(MODULE"%s: XZ: Error while decoding (%d)", __func__, lret);
-                    return CW_ERR;  // Error while decoding
+                    return CR_CW_ERR;  // Error while decoding
                 }
                 if (lret == LZMA_STREAM_END) {
                     break;
@@ -519,7 +520,7 @@ int cw_read(CW_FILE *cw_file, void *buffer, unsigned int len)
         }
 
         default: // ------------------------------------------------------------
-            ret = CW_ERR;
+            ret = CR_CW_ERR;
             break;
     }
 
@@ -528,45 +529,45 @@ int cw_read(CW_FILE *cw_file, void *buffer, unsigned int len)
 
 
 
-int cw_write(CW_FILE *cw_file, const void *buffer, unsigned int len)
+int cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len)
 {
-    if (!cw_file || !buffer || cw_file->mode != CW_MODE_WRITE) {
-        return CW_ERR;
+    if (!cr_file || !buffer || cr_file->mode != CR_CW_MODE_WRITE) {
+        return CR_CW_ERR;
     }
 
 
     int bzerror;
-    int ret = CW_ERR;
+    int ret = CR_CW_ERR;
 
-    switch (cw_file->type) {
+    switch (cr_file->type) {
 
-        case (NO_COMPRESSION): // ----------------------------------------------
-            if ((ret = (int) fwrite(buffer, 1, len, (FILE *) cw_file->FILE)) != (int) len) {
-                ret = CW_ERR;
+        case (CR_CW_NO_COMPRESSION): // ----------------------------------------------
+            if ((ret = (int) fwrite(buffer, 1, len, (FILE *) cr_file->FILE)) != (int) len) {
+                ret = CR_CW_ERR;
             }
             break;
 
-        case (GZ_COMPRESSION): // ----------------------------------------------
+        case (CR_CW_GZ_COMPRESSION): // ----------------------------------------------
             if (len == 0) {
                 ret = 0;
                 break;
             }
-            if ((ret = gzwrite((gzFile) cw_file->FILE, buffer, len)) == 0) {
-                ret = CW_ERR;
+            if ((ret = gzwrite((gzFile) cr_file->FILE, buffer, len)) == 0) {
+                ret = CR_CW_ERR;
             }
             break;
 
-        case (BZ2_COMPRESSION): // ---------------------------------------------
-            BZ2_bzWrite(&bzerror, (BZFILE *) cw_file->FILE, (void *) buffer, len);
+        case (CR_CW_BZ2_COMPRESSION): // ---------------------------------------------
+            BZ2_bzWrite(&bzerror, (BZFILE *) cr_file->FILE, (void *) buffer, len);
             if (bzerror == BZ_OK) {
                 ret = len;
             } else {
-                ret = CW_ERR;
+                ret = CR_CW_ERR;
             }
             break;
 
-        case (XZ_COMPRESSION): { // --------------------------------------------
-            XzFile *xz_file = (XzFile *) cw_file->FILE;
+        case (CR_CW_XZ_COMPRESSION): { // --------------------------------------------
+            XzFile *xz_file = (XzFile *) cr_file->FILE;
             lzma_stream *stream = &(xz_file->stream);
 
             ret = len;
@@ -579,13 +580,13 @@ int cw_write(CW_FILE *cw_file, const void *buffer, unsigned int len)
                 stream->avail_out = XZ_BUFFER_SIZE;
                 lret = lzma_code(stream, LZMA_RUN);
                 if (lret != LZMA_OK) {
-                    ret = CW_ERR;
+                    ret = CR_CW_ERR;
                     break;   // Error while coding
                 }
 
                 size_t out_len = XZ_BUFFER_SIZE - stream->avail_out;
                 if ((fwrite(xz_file->buffer, 1, out_len, xz_file->file)) != out_len) {
-                    ret = CW_ERR;
+                    ret = CR_CW_ERR;
                     break;   // Error while writing
                 }
             }
@@ -602,48 +603,48 @@ int cw_write(CW_FILE *cw_file, const void *buffer, unsigned int len)
 
 
 
-int cw_puts(CW_FILE *cw_file, const char *str)
+int cr_puts(CR_FILE *cr_file, const char *str)
 {
-    if (!cw_file || !str || cw_file->mode != CW_MODE_WRITE) {
-        return CW_ERR;
+    if (!cr_file || !str || cr_file->mode != CR_CW_MODE_WRITE) {
+        return CR_CW_ERR;
     }
 
 
     size_t len;
     int bzerror;
-    int ret = CW_ERR;
+    int ret = CR_CW_ERR;
 
-    switch (cw_file->type) {
+    switch (cr_file->type) {
 
-        case (NO_COMPRESSION): // ----------------------------------------------
-            if (fputs(str, (FILE *) cw_file->FILE) != EOF) {
-                ret = CW_OK;
+        case (CR_CW_NO_COMPRESSION): // ----------------------------------------------
+            if (fputs(str, (FILE *) cr_file->FILE) != EOF) {
+                ret = CR_CW_OK;
             }
             break;
 
-        case (GZ_COMPRESSION): // ----------------------------------------------
-            if (gzputs((gzFile) cw_file->FILE, str) != -1) {
-                ret = CW_OK;
+        case (CR_CW_GZ_COMPRESSION): // ----------------------------------------------
+            if (gzputs((gzFile) cr_file->FILE, str) != -1) {
+                ret = CR_CW_OK;
             }
             break;
 
-        case (BZ2_COMPRESSION): // ---------------------------------------------
+        case (CR_CW_BZ2_COMPRESSION): // ---------------------------------------------
             len = strlen(str);
-            BZ2_bzWrite(&bzerror, (BZFILE *) cw_file->FILE, (void *) str, len);
+            BZ2_bzWrite(&bzerror, (BZFILE *) cr_file->FILE, (void *) str, len);
             if (bzerror == BZ_OK) {
-                ret = CW_OK;
+                ret = CR_CW_OK;
             } else {
-                ret = CW_ERR;
+                ret = CR_CW_ERR;
             }
             break;
 
-        case (XZ_COMPRESSION): // ----------------------------------------------
+        case (CR_CW_XZ_COMPRESSION): // ----------------------------------------------
             len = strlen(str);
-            ret = cw_write(cw_file, str, len);
+            ret = cr_write(cr_file, str, len);
             if (ret == (int) len) {
-                ret = CW_OK;
+                ret = CR_CW_OK;
             } else {
-                ret = CW_ERR;
+                ret = CR_CW_ERR;
             }
             break;
 
@@ -656,10 +657,10 @@ int cw_puts(CW_FILE *cw_file, const char *str)
 
 
 
-int cw_printf(CW_FILE *cw_file, const char *format, ...)
+int cr_printf(CR_FILE *cr_file, const char *format, ...)
 {
-    if (!cw_file || !format || cw_file->mode != CW_MODE_WRITE) {
-        return CW_ERR;
+    if (!cr_file || !format || cr_file->mode != CR_CW_MODE_WRITE) {
+        return CR_CW_ERR;
     }
 
     va_list vl;
@@ -674,43 +675,43 @@ int cw_printf(CW_FILE *cw_file, const char *format, ...)
 
     if (ret < 0) {
         g_debug(MODULE"%s: vasprintf() call failed", __func__);
-        return CW_ERR;
+        return CR_CW_ERR;
     }
 
     assert(buf);
 
     int tmp_ret;
 
-    switch (cw_file->type) {
+    switch (cr_file->type) {
 
-        case (NO_COMPRESSION): // ----------------------------------------------
-            if ((ret = fwrite(buf, 1, ret, cw_file->FILE)) < 0) {
-                ret = CW_ERR;
+        case (CR_CW_NO_COMPRESSION): // ----------------------------------------------
+            if ((ret = fwrite(buf, 1, ret, cr_file->FILE)) < 0) {
+                ret = CR_CW_ERR;
             }
             break;
 
-        case (GZ_COMPRESSION): // ----------------------------------------------
-            if (gzputs((gzFile) cw_file->FILE, buf) == -1) {
-                ret = CW_ERR;
+        case (CR_CW_GZ_COMPRESSION): // ----------------------------------------------
+            if (gzputs((gzFile) cr_file->FILE, buf) == -1) {
+                ret = CR_CW_ERR;
             }
             break;
 
-        case (BZ2_COMPRESSION): // ---------------------------------------------
-            BZ2_bzWrite(&tmp_ret, (BZFILE *) cw_file->FILE, buf, ret);
+        case (CR_CW_BZ2_COMPRESSION): // ---------------------------------------------
+            BZ2_bzWrite(&tmp_ret, (BZFILE *) cr_file->FILE, buf, ret);
             if (tmp_ret != BZ_OK) {
-                ret = CW_ERR;
+                ret = CR_CW_ERR;
             }
             break;
 
-        case (XZ_COMPRESSION): // ----------------------------------------------
-            tmp_ret = cw_write(cw_file, buf, ret);
+        case (CR_CW_XZ_COMPRESSION): // ----------------------------------------------
+            tmp_ret = cr_write(cr_file, buf, ret);
             if (tmp_ret != (int) ret) {
-                ret = CW_ERR;
+                ret = CR_CW_ERR;
             }
             break;
 
         default: // ------------------------------------------------------------
-            ret = CW_ERR;
+            ret = CR_CW_ERR;
             break;
     }
 

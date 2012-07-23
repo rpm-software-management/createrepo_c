@@ -30,7 +30,7 @@ extern "C" {
 /** \ingroup locate_metadata
  * Structure representing metadata location.
  */
-struct MetadataLocation {
+struct cr_MetadataLocation {
     char *pri_xml_href;         /*!< path to primary.xml */
     char *fil_xml_href;         /*!< path to filelists.xml */
     char *oth_xml_href;         /*!< path to other.xml */
@@ -48,22 +48,23 @@ struct MetadataLocation {
 };
 
 /** \ingroup locate_metadata
- * Parses repomd.xml and returns a filled MetadataLocation structure.
+ * Parses repomd.xml and returns a filled cr_MetadataLocation structure.
  * Remote repodata (repopath with prefix "ftp://" or "http://") are dowloaded
- * into a temporary directory and removed when the free_metadata_location()
- * is called on the MetadataLocation.
+ * into a temporary directory and removed when the cr_free_metadata_location()
+ * is called on the cr_MetadataLocation.
  * @param repopath      path to directory with repodata/ subdirectory
  * @param ignore_sqlite if ignore_sqlite != 0 sqlite dbs are ignored
- * @return              filled MetadataLocation structure
+ * @return              filled cr_MetadataLocation structure
  */
-struct MetadataLocation *get_metadata_location(const char *repopath, int ignore_sqlite);
+struct cr_MetadataLocation *cr_get_metadata_location(const char *repopath,
+                                                     int ignore_sqlite);
 
 /** \ingroup locate_metadata
- * Free MetadataLocation. If repodata were downloaded remove
+ * Free cr_MetadataLocation. If repodata were downloaded remove
  * a temporary directory with repodata.
  * @param ml            MeatadaLocation
  */
-void free_metadata_location(struct MetadataLocation *ml);
+void cr_free_metadata_location(struct cr_MetadataLocation *ml);
 
 /** \ingroup locate_metadata
  * Remove files related to repodata from the specified path.
@@ -73,7 +74,7 @@ void free_metadata_location(struct MetadataLocation *ml);
  * @param repopath      path to directory with repodata/ subdirectory
  * @return              number of removed files
  */
-int remove_metadata(const char *repopath);
+int cr_remove_metadata(const char *repopath);
 
 #ifdef __cplusplus
 }

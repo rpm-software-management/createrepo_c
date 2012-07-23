@@ -28,10 +28,10 @@ extern "C" {
  * Checksum type.
  */
 typedef enum {
-    PKG_CHECKSUM_MD5,           /*!< MD5 checksum */
-    PKG_CHECKSUM_SHA1,          /*!< SHA1 checksum */
-    PKG_CHECKSUM_SHA256         /*!< SHA256 checksum */
-} ChecksumType;
+    CR_CHECKSUM_MD5,           /*!< MD5 checksum */
+    CR_CHECKSUM_SHA1,          /*!< SHA1 checksum */
+    CR_CHECKSUM_SHA256         /*!< SHA256 checksum */
+} cr_ChecksumType;
 
 #ifdef __cplusplus
 }

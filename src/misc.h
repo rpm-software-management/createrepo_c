@@ -35,19 +35,19 @@ extern "C" {
 /** \ingroup misc
  * Macro for supress compiler warning about unused param.
  */
-#define UNUSED(x) (void)(x) /* Suppress compiler warning about unused param */
+#define CR_UNUSED(x) (void)(x) /* Suppress compiler warning about unused param */
 
 /** \ingroup misc
  * Convert flags from RPM header to a string representation.
  * @param flags         flags
  * @return              flags as constant string
  */
-const char *flag_to_string(gint64 flags);
+const char *cr_flag_to_string(gint64 flags);
 
 /** \ingroup misc
  * Epoch-Version-Release representation.
  */
-struct EVR {
+struct cr_EVR {
     char *epoch;        /*!< epoch */
     char *version;      /*!< version */
     char *release;      /*!< release */
@@ -57,7 +57,7 @@ struct EVR {
  * Version representation
  * e.g. for openssl-devel-1.0.0i = version: 1, release: 0, patch: 0, suffix: i
  */
-struct Version {
+struct cr_Version {
     long version;       /*!< version */
     long release;       /*!< release */
     long patch;         /*!< patch */
@@ -66,7 +66,7 @@ struct Version {
 
 
 /** \ingroup misc
- * Convert epoch-version-release string into EVR structure.
+ * Convert epoch-version-release string into cr_EVR structure.
  * If no GStringChunk passed, all non NULL items in returned structure
  * are malloced and in that case, you have to free all non-NULL element
  * yourself.
@@ -74,7 +74,7 @@ struct Version {
  * @param chunk         string chunk for strings (optional - could be NULL)
  * @return              filled NVR
  */
-struct EVR string_to_version(const char *string, GStringChunk *chunk);
+struct cr_EVR cr_string_to_version(const char *string, GStringChunk *chunk);
 
 /** \ingroup misc
  * Check if the filename match pattern for primary files (files listed
@@ -82,7 +82,7 @@ struct EVR string_to_version(const char *string, GStringChunk *chunk);
  * @param filename      full path to file
  * @return              1 if it is primary file, otherwise 0
  */
-static inline int is_primary(const char *filename) {
+static inline int cr_is_primary(const char *filename) {
     if (!strncmp(filename, "/etc/", 5))
         return 1;
     if (!strcmp(filename, "/usr/lib/sendmail"))
@@ -99,12 +99,12 @@ static inline int is_primary(const char *filename) {
  * @return              malloced null terminated string with checksum
  *                      or NULL on error
  */
-char *compute_file_checksum(const char *filename, ChecksumType type);
+char *cr_compute_file_checksum(const char *filename, cr_ChecksumType type);
 
 /** \ingroup misc
  * Header range
  */
-struct HeaderRangeStruct {
+struct cr_HeaderRangeStruct {
     unsigned int start;         /*!< First byte of header */
     unsigned int end;           /*!< Last byte of header */
 };
@@ -114,7 +114,7 @@ struct HeaderRangeStruct {
  * @param filename      filename
  * @return              header range (start = end = 0 on error)
  */
-struct HeaderRangeStruct get_header_byte_range(const char *filename);
+struct cr_HeaderRangeStruct cr_get_header_byte_range(const char *filename);
 
 /** \ingroup misc
  * Return checksum name.
@@ -122,7 +122,7 @@ struct HeaderRangeStruct get_header_byte_range(const char *filename);
  * @return              constant null terminated string with checksum name
  *                      or NULL on error
  */
-const char *get_checksum_name_str(ChecksumType type);
+const char *cr_get_checksum_name_str(cr_ChecksumType type);
 
 /** \ingroup misc
  * Return pointer to rest of string after last '/'.
@@ -130,7 +130,7 @@ const char *get_checksum_name_str(ChecksumType type);
  * @param filepath      path
  * @return              pointer into the path
  */
-char *get_filename(const char *filepath);
+char *cr_get_filename(const char *filepath);
 
 /**@{*/
 #define CR_COPY_OK              0       /*!< Copy successfully finished */
@@ -147,8 +147,8 @@ char *get_filename(const char *filepath);
  * @param error         pointer to string pointer for error message
  *                      (mandatory argument!)
  */
-void download(CURL *handle, const char *url, const char *destination,
-              char **error);
+void cr_download(CURL *handle, const char *url, const char *destination,
+                 char **error);
 
 /** \ingroup misc
  * Copy file.
@@ -156,7 +156,7 @@ void download(CURL *handle, const char *url, const char *destination,
  * @param dst           destination (if dst is dir, filename of src is used)
  * @return              CR_COPY_OK or CR_COPY_ERR on error
  */
-int copy_file(const char *src, const char *dst);
+int cr_copy_file(const char *src, const char *dst);
 
 /** \ingroup misc
  * Compress file.
@@ -166,9 +166,9 @@ int copy_file(const char *src, const char *dst);
  *                      If dst is NULL, src + compression suffix is used)
  * @return              CR_COPY_OK or CR_COPY_ERR on error
  */
-int compress_file(const char *src,
-                  const char *dst,
-                  CompressionType compression);
+int cr_compress_file(const char *src,
+                     const char *dst,
+                     cr_CompressionType compression);
 
 /** \ingroup misc
  * Better copy file. Source (src) could be remote address (http:// or ftp://).
@@ -176,28 +176,28 @@ int compress_file(const char *src,
  * @param dst           destination (if dst is dir, filename of src is used)
  * @return              CR_COPY_OK or CR_COPY_ERR on error
  */
-int better_copy_file(const char *src, const char *dst);
+int cr_better_copy_file(const char *src, const char *dst);
 
 /** \ingroup misc
  * Recursively remove directory.
  * @param path          filepath
  * @return              0 on success, nonzero on failure (errno is set)
  */
-int remove_dir(const char *path);
+int cr_remove_dir(const char *path);
 
 /** \ingroup misc
  * Normalize path (Path with exactly one trailing '/').
  *@param path           path
  *@return               mallocated string with normalized path or NULL
  */
-char *normalize_dir_path(const char *path);
+char *cr_normalize_dir_path(const char *path);
 
 /** \ingroup misc
- * Convert version string into Version struct.
+ * Convert version string into cr_Version struct.
  * @param str           version string
- * @return              Version
+ * @return              cr_Version
  */
-struct Version str_to_version(const char *str);
+struct cr_Version cr_str_to_version(const char *str);
 
 /** \ingroup misc
  * Compare two version string.
@@ -206,7 +206,7 @@ struct Version str_to_version(const char *str);
  * @return              0 - versions are same, 1 - first string is bigger
  *                      version, 2 - second string is bigger version
  */
-int cmp_version_string(const char* str1, const char *str2);
+int cr_cmp_version_string(const char* str1, const char *str2);
 
 /** \ingroup misc
  * Logging function with no output.
@@ -215,10 +215,10 @@ int cmp_version_string(const char* str1, const char *str2);
  * @param message       message
  * @param user_data     user data
  */
-void black_hole_log_function (const gchar *log_domain,
-                              GLogLevelFlags log_level,
-                              const gchar *message,
-                              gpointer user_data);
+void cr_black_hole_log_function(const gchar *log_domain,
+                                GLogLevelFlags log_level,
+                                const gchar *message,
+                                gpointer user_data);
 
 /** \ingroup misc
  * Createrepo_c library standard logging function.
@@ -227,8 +227,8 @@ void black_hole_log_function (const gchar *log_domain,
  * @param message       message
  * @param user_data     user data
  */
-void log_function (const gchar *log_domain, GLogLevelFlags log_level,
-                   const gchar *message, gpointer user_data);
+void cr_log_function(const gchar *log_domain, GLogLevelFlags log_level,
+                     const gchar *message, gpointer user_data);
 
 #ifdef __cplusplus
 }

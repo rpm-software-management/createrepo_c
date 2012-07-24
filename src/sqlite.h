@@ -136,7 +136,8 @@ sqlite3 *cr_open_db(const char *path, cr_DatabaseType db_type, GError **err);
  * @param err                   **GError
  * @return                      cr_DbPrimaryStatements object
  */
-cr_DbPrimaryStatements cr_prepare_primary_db_statements(sqlite3 *db, GError **err);
+cr_DbPrimaryStatements cr_prepare_primary_db_statements(sqlite3 *db,
+                                                        GError **err);
 
 /** \ingroup sqlite
  * Prepare compiled statements for use in the cr_add_filelists_pkg_db function.
@@ -145,7 +146,7 @@ cr_DbPrimaryStatements cr_prepare_primary_db_statements(sqlite3 *db, GError **er
  * @return                      cr_DbFilelistsStatements object
  */
 cr_DbFilelistsStatements cr_prepare_filelists_db_statements(sqlite3 *db,
-                                                         GError **err);
+                                                            GError **err);
 
 /** \ingroup sqlite
  * Prepare compiled statements for use in the cr_add_other_pkg_db function.

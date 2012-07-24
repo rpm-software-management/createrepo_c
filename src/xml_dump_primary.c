@@ -13,7 +13,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #include <glib.h>
@@ -42,7 +43,8 @@
 #define SIZE_STR_MAX_LEN    32
 
 
-void dump_pco(xmlNodePtr root, cr_Package *package, int pcotype)
+void
+dump_pco(xmlNodePtr root, cr_Package *package, int pcotype)
 {
     const char *elem_name;
     GSList *files = NULL;
@@ -127,7 +129,8 @@ void dump_pco(xmlNodePtr root, cr_Package *package, int pcotype)
 
 
 
-void dump_base_items(xmlNodePtr root, cr_Package *package)
+void
+dump_base_items(xmlNodePtr root, cr_Package *package)
 {
     /***********************************
      Element: package
@@ -141,14 +144,16 @@ void dump_base_items(xmlNodePtr root, cr_Package *package)
      Element: name
     ************************************/
 
-    xmlNewTextChild(root, NULL,  BAD_CAST "name", BAD_CAST ((package->name) ? package->name : ""));
+    xmlNewTextChild(root, NULL,  BAD_CAST "name",
+                    BAD_CAST ((package->name) ? package->name : ""));
 
 
     /***********************************
      Element: arch
     ************************************/
 
-    xmlNewTextChild(root, NULL,  BAD_CAST "arch", BAD_CAST ((package->arch) ? package->arch : ""));
+    xmlNewTextChild(root, NULL,  BAD_CAST "arch",
+                    BAD_CAST ((package->arch) ? package->arch : ""));
 
 
     /***********************************
@@ -161,13 +166,16 @@ void dump_base_items(xmlNodePtr root, cr_Package *package)
     version = xmlNewChild(root, NULL, BAD_CAST "version", NULL);
 
     // Write version attribute epoch
-    xmlNewProp(version, BAD_CAST "epoch", BAD_CAST ((package->epoch) ? package->epoch : ""));
+    xmlNewProp(version, BAD_CAST "epoch",
+               BAD_CAST ((package->epoch) ? package->epoch : ""));
 
     // Write version attribute ver
-    xmlNewProp(version, BAD_CAST "ver", BAD_CAST ((package->version) ? package->version : ""));
+    xmlNewProp(version, BAD_CAST "ver",
+               BAD_CAST ((package->version) ? package->version : ""));
 
     // Write version attribute rel
-    xmlNewProp(version, BAD_CAST "rel", BAD_CAST ((package->release) ? package->release : ""));
+    xmlNewProp(version, BAD_CAST "rel",
+               BAD_CAST ((package->release) ? package->release : ""));
 
 
     /***********************************
@@ -176,10 +184,12 @@ void dump_base_items(xmlNodePtr root, cr_Package *package)
 
     xmlNodePtr checksum;
 
-    checksum = xmlNewTextChild(root, NULL,  BAD_CAST "checksum", BAD_CAST ((package->pkgId) ? package->pkgId : ""));
+    checksum = xmlNewTextChild(root, NULL,  BAD_CAST "checksum",
+                               BAD_CAST ((package->pkgId) ? package->pkgId : ""));
 
     // Write checksum attribute checksum_type
-    xmlNewProp(checksum, BAD_CAST "type", BAD_CAST ((package->checksum_type) ? package->checksum_type : ""));
+    xmlNewProp(checksum, BAD_CAST "type",
+               BAD_CAST ((package->checksum_type) ? package->checksum_type : ""));
 
     // Write checksum attribute pkgid
     xmlNewProp(checksum, BAD_CAST "pkgid", BAD_CAST "YES");
@@ -189,28 +199,32 @@ void dump_base_items(xmlNodePtr root, cr_Package *package)
      Element: summary
     ************************************/
 
-    xmlNewTextChild(root, NULL,  BAD_CAST "summary", BAD_CAST ((package->summary) ? package->summary : ""));
+    xmlNewTextChild(root, NULL,  BAD_CAST "summary",
+                    BAD_CAST ((package->summary) ? package->summary : ""));
 
 
     /***********************************
     Element: description
     ************************************/
 
-    xmlNewTextChild(root, NULL,  BAD_CAST "description", BAD_CAST ((package->description) ? package->description : ""));
+    xmlNewTextChild(root, NULL,  BAD_CAST "description",
+                    BAD_CAST ((package->description) ? package->description : ""));
 
 
     /***********************************
      Element: packager
     ************************************/
 
-    xmlNewTextChild(root, NULL,  BAD_CAST "packager", BAD_CAST ((package->rpm_packager) ? package->rpm_packager : ""));
+    xmlNewTextChild(root, NULL,  BAD_CAST "packager",
+                    BAD_CAST ((package->rpm_packager) ? package->rpm_packager : ""));
 
 
     /***********************************
      Element: url
     ************************************/
 
-    xmlNewTextChild(root, NULL,  BAD_CAST "url", BAD_CAST ((package->url) ? package->url : ""));
+    xmlNewTextChild(root, NULL,  BAD_CAST "url",
+                    BAD_CAST ((package->url) ? package->url : ""));
 
 
     /***********************************
@@ -223,11 +237,13 @@ void dump_base_items(xmlNodePtr root, cr_Package *package)
     time = xmlNewChild(root, NULL, BAD_CAST "time", NULL);
 
     // Write time attribute file
-    g_snprintf(date_str, DATE_STR_MAX_LEN, "%lld", (long long int) package->time_file);
+    g_snprintf(date_str, DATE_STR_MAX_LEN, "%lld",
+               (long long int) package->time_file);
     xmlNewProp(time, BAD_CAST "file", BAD_CAST date_str);
 
     // Write time attribute build
-    g_snprintf(date_str, DATE_STR_MAX_LEN, "%lld", (long long int) package->time_build);
+    g_snprintf(date_str, DATE_STR_MAX_LEN, "%lld",
+               (long long int) package->time_build);
     xmlNewProp(time, BAD_CAST "build", BAD_CAST date_str);
 
 
@@ -241,15 +257,18 @@ void dump_base_items(xmlNodePtr root, cr_Package *package)
     size = xmlNewChild(root, NULL, BAD_CAST "size", NULL);
 
     // Write size attribute package
-    g_snprintf(size_str, SIZE_STR_MAX_LEN, "%lld", (long long int) package->size_package);
+    g_snprintf(size_str, SIZE_STR_MAX_LEN, "%lld",
+               (long long int) package->size_package);
     xmlNewProp(size, BAD_CAST "package", BAD_CAST size_str);
 
     // Write size attribute installed
-    g_snprintf(size_str, SIZE_STR_MAX_LEN, "%lld", (long long int) package->size_installed);
+    g_snprintf(size_str, SIZE_STR_MAX_LEN, "%lld",
+               (long long int) package->size_installed);
     xmlNewProp(size, BAD_CAST "installed", BAD_CAST size_str);
 
     // Write size attribute archive
-    g_snprintf(size_str, SIZE_STR_MAX_LEN, "%lld", (long long int) package->size_archive);
+    g_snprintf(size_str, SIZE_STR_MAX_LEN, "%lld",
+               (long long int) package->size_archive);
     xmlNewProp(size, BAD_CAST "archive", BAD_CAST size_str);
 
 
@@ -261,13 +280,16 @@ void dump_base_items(xmlNodePtr root, cr_Package *package)
 
     location = xmlNewChild(root, NULL, BAD_CAST "location", NULL);
 
-// Write location attribute base
+    // Write location attribute base
     if (package->location_base && package->location_base[0] != '\0') {
-        xmlNewProp(location, BAD_CAST "xml:base", BAD_CAST package->location_base);
+        xmlNewProp(location,
+                   BAD_CAST "xml:base",
+                   BAD_CAST package->location_base);
     }
 
     // Write location attribute href
-    xmlNewProp(location, BAD_CAST "href", BAD_CAST ((package->location_href) ? package->location_href : ""));
+    xmlNewProp(location, BAD_CAST "href",
+               BAD_CAST ((package->location_href) ? package->location_href : ""));
 
 
     /***********************************
@@ -283,35 +305,40 @@ void dump_base_items(xmlNodePtr root, cr_Package *package)
      Element: license
     ************************************/
 
-    xmlNewTextChild(format, NULL,  BAD_CAST "rpm:license", BAD_CAST ((package->rpm_license) ? package->rpm_license : ""));
+    xmlNewTextChild(format, NULL,  BAD_CAST "rpm:license",
+                    BAD_CAST ((package->rpm_license) ? package->rpm_license : ""));
 
 
     /***********************************
      Element: vendor
     ************************************/
 
-    xmlNewTextChild(format, NULL,  BAD_CAST "rpm:vendor", BAD_CAST ((package->rpm_vendor) ? package->rpm_vendor : ""));
+    xmlNewTextChild(format, NULL,  BAD_CAST "rpm:vendor",
+                    BAD_CAST ((package->rpm_vendor) ? package->rpm_vendor : ""));
 
 
     /***********************************
      Element: group
     ************************************/
 
-    xmlNewTextChild(format, NULL,  BAD_CAST "rpm:group", BAD_CAST ((package->rpm_group) ? package->rpm_group : ""));
+    xmlNewTextChild(format, NULL,  BAD_CAST "rpm:group",
+                    BAD_CAST ((package->rpm_group) ? package->rpm_group : ""));
 
 
     /***********************************
      Element: buildhost
     ************************************/
 
-    xmlNewTextChild(format, NULL,  BAD_CAST "rpm:buildhost", BAD_CAST ((package->rpm_buildhost) ? package->rpm_buildhost : ""));
+    xmlNewTextChild(format, NULL,  BAD_CAST "rpm:buildhost",
+                    BAD_CAST ((package->rpm_buildhost) ? package->rpm_buildhost : ""));
 
 
     /***********************************
      Element: sourcerpm
     ************************************/
 
-    xmlNewTextChild(format, NULL,  BAD_CAST "rpm:sourcerpm", BAD_CAST ((package->rpm_sourcerpm) ? package->rpm_sourcerpm : ""));
+    xmlNewTextChild(format, NULL,  BAD_CAST "rpm:sourcerpm",
+                    BAD_CAST ((package->rpm_sourcerpm) ? package->rpm_sourcerpm : ""));
 
 
     /***********************************
@@ -323,11 +350,17 @@ void dump_base_items(xmlNodePtr root, cr_Package *package)
     header_range = xmlNewChild(format, NULL, BAD_CAST "rpm:header-range", NULL);
 
     // Write header-range attribute hdrstart
-    g_snprintf(size_str, SIZE_STR_MAX_LEN, "%lld", (long long int) package->rpm_header_start);
+    g_snprintf(size_str,
+               SIZE_STR_MAX_LEN,
+               "%lld",
+               (long long int) package->rpm_header_start);
     xmlNewProp(header_range, BAD_CAST "start", BAD_CAST size_str);
 
     // Write header-range attribute hdrend
-    g_snprintf(size_str, SIZE_STR_MAX_LEN, "%lld", (long long int) package->rpm_header_end);
+    g_snprintf(size_str,
+               SIZE_STR_MAX_LEN,
+               "%lld",
+               (long long int) package->rpm_header_end);
     xmlNewProp(header_range, BAD_CAST "end", BAD_CAST size_str);
 
 
@@ -342,7 +375,8 @@ void dump_base_items(xmlNodePtr root, cr_Package *package)
 
 
 
-char *cr_xml_dump_primary(cr_Package *package)
+char *
+cr_xml_dump_primary(cr_Package *package)
 {
     if (!package)
         return NULL;
@@ -364,7 +398,7 @@ char *cr_xml_dump_primary(cr_Package *package)
     // Seems to be little bit faster than xmlDocDumpFormatMemory
     xmlNodeDump(buf, NULL, root, FORMAT_LEVEL, FORMAT_XML);
     assert(buf->content);
-    result = g_strndup((char *) buf->content, (buf->use+1)); // g_strndup allocate (buf->use+1)+1
+    result = g_strndup((char *) buf->content, (buf->use+1));
     result[buf->use]     = '\n';
     result[buf->use+1]   = '\0';
     xmlBufferFree(buf);

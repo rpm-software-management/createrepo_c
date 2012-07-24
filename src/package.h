@@ -1,5 +1,7 @@
 /* createrepo_c - Library of routines for manipulation with repodata
  * Copyright (C) 2012  Tomas Mlcoch
+ * Copyright (C) 2007  James Bowes
+ * Copyright (C) 2006  Seth Vidal
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public

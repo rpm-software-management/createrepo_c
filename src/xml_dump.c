@@ -13,7 +13,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #include <glib.h>
@@ -29,7 +30,8 @@
 #define MODULE "xml_dump: "
 
 
-void cr_dump_files(xmlNodePtr node, cr_Package *package, int primary)
+void
+cr_dump_files(xmlNodePtr node, cr_Package *package, int primary)
 {
     if (!node || !package->files) {
         return;
@@ -71,7 +73,10 @@ void cr_dump_files(xmlNodePtr node, cr_Package *package, int primary)
         // ************************************
 
         xmlNodePtr file_node;
-        file_node = xmlNewTextChild(node, NULL, BAD_CAST "file", BAD_CAST fullname);
+        file_node = xmlNewTextChild(node,
+                                    NULL,
+                                    BAD_CAST "file",
+                                    BAD_CAST fullname);
         g_free(fullname);
 
         // Write type (skip type if type value is empty of "file")
@@ -83,7 +88,8 @@ void cr_dump_files(xmlNodePtr node, cr_Package *package, int primary)
 
 
 
-struct cr_XmlStruct cr_xml_dump(cr_Package *pkg)
+struct cr_XmlStruct
+cr_xml_dump(cr_Package *pkg)
 {
     struct cr_XmlStruct result;
 

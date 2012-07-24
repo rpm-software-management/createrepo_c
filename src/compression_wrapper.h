@@ -68,7 +68,7 @@ typedef struct {
  * @param comtype       compression type
  * @return              common file suffix
  */
-const char *cr_get_suffix(cr_CompressionType comtype);
+const char *cr_compression_suffix(cr_CompressionType comtype);
 
 /** \ingroup compression_wrapper
  * Detect a compression type of the specified file.
@@ -84,7 +84,9 @@ cr_CompressionType cr_detect_compression(const char* filename);
  * @param comtype       type of compression
  * @return              pointer to a CR_FILE or NULL
  */
-CR_FILE *cr_open(const char *filename, cr_OpenMode mode, cr_CompressionType comtype);
+CR_FILE *cr_open(const char *filename,
+                 cr_OpenMode mode,
+                 cr_CompressionType comtype);
 
 /** \ingroup compression_wrapper
  * Reads an array of len bytes from the CR_FILE.
@@ -100,7 +102,8 @@ int cr_read(CR_FILE *cr_file, void *buffer, unsigned int len);
  * @param CR_FILE       CR_FILE pointer
  * @param buffer        source buffer
  * @param len           number of bytes to read
- * @return              number of uncompressed bytes readed (0 = EOF) or CR_CW_ERR
+ * @return              number of uncompressed bytes readed (0 = EOF)
+ *                      or CR_CW_ERR
  */
 int cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len);
 

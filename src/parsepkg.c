@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <rpm/rpmts.h>
 #include <rpm/rpmfi.h>
+#include <rpm/rpmlib.h>
 #include <rpm/rpmmacro.h>
 #include "logging.h"
 #include "constants.h"
@@ -42,7 +43,8 @@ rpmts ts = NULL;
 
 
 
-void cr_package_parser_init()
+void
+cr_package_parser_init()
 {
     if (cr_initialized)
         return;
@@ -62,7 +64,8 @@ void cr_package_parser_init()
 
 
 
-void cr_package_parser_shutdown()
+void
+cr_package_parser_shutdown()
 {
     if (ts) {
         rpmtsFree(ts);
@@ -73,12 +76,13 @@ void cr_package_parser_shutdown()
 }
 
 
-cr_Package *cr_package_from_file(const char *filename,
-                                 cr_ChecksumType checksum_type,
-                                 const char *location_href,
-                                 const char *location_base,
-                                 int changelog_limit,
-                                 struct stat *stat_buf)
+cr_Package *
+cr_package_from_file(const char *filename,
+                     cr_ChecksumType checksum_type,
+                     const char *location_href,
+                     const char *location_base,
+                     int changelog_limit,
+                     struct stat *stat_buf)
 {
     cr_Package *result = NULL;
     const char *checksum_type_str;
@@ -107,7 +111,8 @@ cr_Package *cr_package_from_file(const char *filename,
     FD_t fd = NULL;
     fd = Fopen(filename, "r.ufdio");
     if (!fd) {
-        g_warning(MODULE"%s: Fopen of %s failed %s", __func__, filename, strerror(errno));
+        g_warning(MODULE"%s: Fopen of %s failed %s",
+                  __func__, filename, strerror(errno));
         return result;
     }
 
@@ -119,13 +124,16 @@ cr_Package *cr_package_from_file(const char *filename,
     if (rc != RPMRC_OK) {
         switch (rc) {
             case RPMRC_NOKEY:
-                g_debug(MODULE"%s: %s: Public key is unavailable.", __func__, filename);
+                g_debug(MODULE"%s: %s: Public key is unavailable.",
+                        __func__, filename);
                 break;
             case RPMRC_NOTTRUSTED:
-                g_debug(MODULE"%s:  %s: Signature is OK, but key is not trusted.", __func__, filename);
+                g_debug(MODULE"%s:  %s: Signature is OK, but key is not trusted.",
+                        __func__, filename);
                 break;
             default:
-                g_warning(MODULE"%s: rpmReadPackageFile() error (%s)", __func__, strerror(errno));
+                g_warning(MODULE"%s: rpmReadPackageFile() error (%s)",
+                          __func__, strerror(errno));
                 return result;
         }
     }
@@ -182,12 +190,13 @@ cr_Package *cr_package_from_file(const char *filename,
 
 
 
-struct cr_XmlStruct cr_xml_from_package_file(const char *filename,
-                                          cr_ChecksumType checksum_type,
-                                          const char *location_href,
-                                          const char *location_base,
-                                          int changelog_limit,
-                                          struct stat *stat_buf)
+struct cr_XmlStruct
+cr_xml_from_package_file(const char *filename,
+                         cr_ChecksumType checksum_type,
+                         const char *location_href,
+                         const char *location_base,
+                         int changelog_limit,
+                         struct stat *stat_buf)
 {
     const char *checksum_type_str;
 
@@ -233,13 +242,16 @@ struct cr_XmlStruct cr_xml_from_package_file(const char *filename,
     if (rc != RPMRC_OK) {
         switch (rc) {
             case RPMRC_NOKEY:
-                g_debug(MODULE"%s: %s: Public key is unavailable.", __func__, filename);
+                g_debug(MODULE"%s: %s: Public key is unavailable.",
+                        __func__, filename);
                 break;
             case RPMRC_NOTTRUSTED:
-                g_debug(MODULE"%s:  %s: Signature is OK, but key is not trusted.", __func__, filename);
+                g_debug(MODULE"%s:  %s: Signature is OK, but key is not trusted.",
+                        __func__, filename);
                 break;
             default:
-                g_warning(MODULE"%s: rpmReadPackageFile() error (%s)", __func__, strerror(errno));
+                g_warning(MODULE"%s: rpmReadPackageFile() error (%s)",
+                          __func__, strerror(errno));
                 return result;
         }
     }

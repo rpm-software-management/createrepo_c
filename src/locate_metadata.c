@@ -13,7 +13,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #include <glib.h>
@@ -83,7 +84,8 @@ parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite)
     ret = xmlTextReaderRead(reader);
     name = xmlTextReaderName(reader);
     if (g_strcmp0((char *) name, "repomd")) {
-        g_warning(MODULE"%s: Bad xml - missing repomd element? (%s)", __func__, name);
+        g_warning(MODULE"%s: Bad xml - missing repomd element? (%s)",
+                  __func__, name);
         xmlFree(name);
         xmlFreeTextReader(reader);
         return NULL;
@@ -93,7 +95,8 @@ parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite)
     ret = xmlTextReaderRead(reader);
     name = xmlTextReaderName(reader);
     if (g_strcmp0((char *) name, "revision")) {
-        g_warning(MODULE"%s: Bad xml - missing revision element? (%s)", __func__, name);
+        g_warning(MODULE"%s: Bad xml - missing revision element? (%s)",
+                  __func__, name);
         xmlFree(name);
         xmlFreeTextReader(reader);
         return NULL;
@@ -177,7 +180,8 @@ parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite)
             mdloc->oth_sqlite_href = full_location_href;
         } else if (!g_strcmp0((char *) data_type, "group")) {
             mdloc->groupfile_href = full_location_href;
-        } else if (!g_strcmp0((char *) data_type, "group_gz")) { // even with a createrepo param --xz this name has a _gz suffix
+        } else if (!g_strcmp0((char *) data_type, "group_gz")) {
+            // even with a createrepo param --xz this name has a _gz suffix
             mdloc->cgroupfile_href = full_location_href;
         }
 
@@ -261,7 +265,8 @@ get_remote_metadata(const char *repopath, int ignore_sqlite)
     // Create temporary repo in /tmp
 
     if(!mkdtemp(tmp_dir)) {
-        g_critical(MODULE"%s: Cannot create a temporary directory: %s", __func__, strerror(errno));
+        g_critical(MODULE"%s: Cannot create a temporary directory: %s",
+                   __func__, strerror(errno));
         return ret;
     }
 
@@ -427,7 +432,8 @@ cr_get_metadata_location(const char *in_repopath, int ignore_sqlite)
 
 
 // Return list of non-null pointers on strings in the passed structure
-GSList *get_list_of_md_locations (struct cr_MetadataLocation *ml)
+GSList *
+get_list_of_md_locations (struct cr_MetadataLocation *ml)
 {
     GSList *list = NULL;
 
@@ -450,7 +456,8 @@ GSList *get_list_of_md_locations (struct cr_MetadataLocation *ml)
 
 
 
-void free_list_of_md_locations(GSList *list)
+void
+free_list_of_md_locations(GSList *list)
 {
     if (list) {
         g_slist_free(list);
@@ -459,7 +466,8 @@ void free_list_of_md_locations(GSList *list)
 
 
 
-int cr_remove_metadata(const char *repopath)
+int
+cr_remove_metadata(const char *repopath)
 {
     if (!repopath || !g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
         g_debug(MODULE"%s: remove_old_metadata: Cannot remove %s", __func__, repopath);

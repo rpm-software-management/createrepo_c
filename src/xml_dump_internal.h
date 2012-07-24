@@ -24,7 +24,6 @@
 extern "C" {
 #endif
 
-#include <libxml/xmlwriter.h>
 #include "package.h"
 
 /**

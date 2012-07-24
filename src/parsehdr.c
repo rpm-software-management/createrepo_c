@@ -13,7 +13,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #include <glib.h>
@@ -29,7 +30,8 @@
 #define MODULE "parsehdr: "
 
 
-inline gchar *safe_string_chunk_insert(GStringChunk *chunk, const char *str)
+inline gchar *
+safe_string_chunk_insert(GStringChunk *chunk, const char *str)
 {
     if (!chunk || !str) {
         return NULL;
@@ -40,11 +42,11 @@ inline gchar *safe_string_chunk_insert(GStringChunk *chunk, const char *str)
 
 
 
-cr_Package *cr_parse_header(Header hdr, gint64 mtime, gint64 size,
-                            const char *checksum, const char *checksum_type,
-                            const char *location_href,
-                            const char *location_base, int changelog_limit,
-                            gint64 hdr_start, gint64 hdr_end)
+cr_Package *
+cr_parse_header(Header hdr, gint64 mtime, gint64 size,
+                const char *checksum, const char *checksum_type,
+                const char *location_href, const char *location_base,
+                int changelog_limit, gint64 hdr_start, gint64 hdr_end)
 {
     // Create new package structure
 
@@ -157,7 +159,8 @@ cr_Package *cr_parse_header(Header hdr, gint64 mtime, gint64 size,
                (rpmtdNext(filemodes) != -1))
         {
             cr_PackageFile *packagefile = cr_package_file_new();
-            packagefile->name = safe_string_chunk_insert(pkg->chunk, rpmtdGetString(filenames));
+            packagefile->name = safe_string_chunk_insert(pkg->chunk,
+                                                         rpmtdGetString(filenames));
             packagefile->path = (dir_list) ? dir_list[(int) rpmtdGetNumber(indexes)] : "";
 
             if (S_ISDIR(rpmtdGetNumber(filemodes))) {
@@ -171,7 +174,9 @@ cr_Package *cr_parse_header(Header hdr, gint64 mtime, gint64 size,
                 packagefile->type = safe_string_chunk_insert(pkg->chunk, "");
             }
 
-            g_hash_table_replace(filenames_hashtable, (gpointer) rpmtdGetString(full_filenames), (gpointer) rpmtdGetString(full_filenames));
+            g_hash_table_replace(filenames_hashtable,
+                                 (gpointer) rpmtdGetString(full_filenames),
+                                 (gpointer) rpmtdGetString(full_filenames));
             pkg->files = g_slist_prepend(pkg->files, packagefile);
         }
         pkg->files = g_slist_reverse (pkg->files);
@@ -229,7 +234,10 @@ cr_Package *cr_parse_header(Header hdr, gint64 mtime, gint64 size,
     GHashTable *provided_hashtable = g_hash_table_new(g_str_hash, g_str_equal);
 
     // Hashtable with already processed files from requires
-    GHashTable *ap_hashtable = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, free);
+    GHashTable *ap_hashtable = g_hash_table_new_full(g_str_hash,
+                                                     g_str_equal,
+                                                     NULL,
+                                                     free);
 
     int pcor_type;
     for (pcor_type=0; pcor_type <= REQUIRES; pcor_type++) {
@@ -479,9 +487,11 @@ cr_Package *cr_parse_header(Header hdr, gint64 mtime, gint64 size,
             gint64 time = rpmtdGetNumber(changelogtimes);
 
             cr_ChangelogEntry *changelog = cr_changelog_entry_new();
-            changelog->author    = safe_string_chunk_insert(pkg->chunk, rpmtdGetString(changelognames));
+            changelog->author    = safe_string_chunk_insert(pkg->chunk,
+                                            rpmtdGetString(changelognames));
             changelog->date      = time;
-            changelog->changelog = safe_string_chunk_insert(pkg->chunk, rpmtdGetString(changelogtexts));
+            changelog->changelog = safe_string_chunk_insert(pkg->chunk,
+                                            rpmtdGetString(changelogtexts));
 
             // Remove space from end of author name
             if (changelog->author) {
@@ -531,7 +541,8 @@ cr_Package *cr_parse_header(Header hdr, gint64 mtime, gint64 size,
 
 
 
-struct cr_XmlStruct cr_xml_from_header(Header hdr, gint64 mtime, gint64 size,
+struct cr_XmlStruct
+cr_xml_from_header(Header hdr, gint64 mtime, gint64 size,
                                        const char *checksum,
                                        const char *checksum_type,
                                        const char *location_href,

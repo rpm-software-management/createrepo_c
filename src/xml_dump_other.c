@@ -13,7 +13,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #include <glib.h>
@@ -35,7 +36,8 @@
 #define DATE_MAX_LEN    32
 
 
-void dump_changelog(xmlNodePtr root, cr_Package *package)
+void
+dump_changelog(xmlNodePtr root, cr_Package *package)
 {
     if (!package->changelogs) {
         return;
@@ -56,10 +58,15 @@ void dump_changelog(xmlNodePtr root, cr_Package *package)
         xmlNodePtr changelog;
 
         // Add changelog element
-        changelog = xmlNewTextChild(root, NULL, BAD_CAST "changelog", BAD_CAST ((entry->changelog) ? entry->changelog : ""));
+        changelog = xmlNewTextChild(root,
+                                    NULL,
+                                    BAD_CAST "changelog",
+                                    BAD_CAST ((entry->changelog) ? entry->changelog : ""));
 
         // Write param author
-        xmlNewProp(changelog, BAD_CAST "author", BAD_CAST ((entry->author) ? entry->author : ""));
+        xmlNewProp(changelog,
+                   BAD_CAST "author",
+                   BAD_CAST ((entry->author) ? entry->author : ""));
 
         // Write param date
         char date_str[DATE_MAX_LEN];
@@ -69,20 +76,24 @@ void dump_changelog(xmlNodePtr root, cr_Package *package)
 }
 
 
-void dump_other_items(xmlNodePtr root, cr_Package *package)
+void
+dump_other_items(xmlNodePtr root, cr_Package *package)
 {
     /***********************************
      Element: package
     ************************************/
 
     // Add pkgid attribute
-    xmlNewProp(root, BAD_CAST "pkgid", BAD_CAST ((package->pkgId) ? package->pkgId : ""));
+    xmlNewProp(root, BAD_CAST "pkgid",
+               BAD_CAST ((package->pkgId) ? package->pkgId : ""));
 
     // Add name attribute
-    xmlNewProp(root, BAD_CAST "name", BAD_CAST ((package->name) ? package->name : ""));
+    xmlNewProp(root, BAD_CAST "name",
+               BAD_CAST ((package->name) ? package->name : ""));
 
     // Add arch attribute
-    xmlNewProp(root, BAD_CAST "arch", BAD_CAST ((package->arch) ? package->arch : ""));
+    xmlNewProp(root, BAD_CAST "arch",
+               BAD_CAST ((package->arch) ? package->arch : ""));
 
 
     /***********************************
@@ -95,13 +106,16 @@ void dump_other_items(xmlNodePtr root, cr_Package *package)
     version = xmlNewChild(root, NULL, BAD_CAST "version", NULL);
 
     // Write version attribute epoch
-    xmlNewProp(version, BAD_CAST "epoch", BAD_CAST ((package->epoch) ? package->epoch : ""));
+    xmlNewProp(version, BAD_CAST "epoch",
+               BAD_CAST ((package->epoch) ? package->epoch : ""));
 
     // Write version attribute ver
-    xmlNewProp(version, BAD_CAST "ver", BAD_CAST ((package->version) ? package->version : ""));
+    xmlNewProp(version, BAD_CAST "ver",
+               BAD_CAST ((package->version) ? package->version : ""));
 
     // Write version attribute rel
-    xmlNewProp(version, BAD_CAST "rel", BAD_CAST ((package->release) ? package->release : ""));
+    xmlNewProp(version, BAD_CAST "rel",
+               BAD_CAST ((package->release) ? package->release : ""));
 
 
     // Changelog dump
@@ -110,7 +124,8 @@ void dump_other_items(xmlNodePtr root, cr_Package *package)
 }
 
 
-char *cr_xml_dump_other(cr_Package *package)
+char *
+cr_xml_dump_other(cr_Package *package)
 {
     if (!package)
         return NULL;
@@ -132,7 +147,7 @@ char *cr_xml_dump_other(cr_Package *package)
     // Seems to be little bit faster than xmlDocDumpFormatMemory
     xmlNodeDump(buf, NULL, root, FORMAT_LEVEL, FORMAT_XML);
     assert(buf->content);
-    result = g_strndup((char *) buf->content, (buf->use+1)); // g_strndup allocate (buf->use+1
+    result = g_strndup((char *) buf->content, (buf->use+1));
     result[buf->use]     = '\n';
     result[buf->use+1]   = '\0';
     xmlBufferFree(buf);

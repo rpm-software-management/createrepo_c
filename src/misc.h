@@ -25,6 +25,7 @@ extern "C" {
 #endif
 
 #include <glib.h>
+#include <string.h>
 #include <curl/curl.h>
 #include "compression_wrapper.h"
 #include "constants.h"
@@ -35,7 +36,7 @@ extern "C" {
 /** \ingroup misc
  * Macro for supress compiler warning about unused param.
  */
-#define CR_UNUSED(x) (void)(x) /* Suppress compiler warning about unused param */
+#define CR_UNUSED(x) (void)(x)
 
 /** \ingroup misc
  * Convert flags from RPM header to a string representation.
@@ -122,10 +123,10 @@ struct cr_HeaderRangeStruct cr_get_header_byte_range(const char *filename);
  * @return              constant null terminated string with checksum name
  *                      or NULL on error
  */
-const char *cr_get_checksum_name_str(cr_ChecksumType type);
+const char *cr_checksum_name_str(cr_ChecksumType type);
 
 /** \ingroup misc
- * Return pointer to rest of string after last '/'.
+ * Return pointer to the rest of string after last '/'.
  * (e.g. for "/foo/bar" returns "bar")
  * @param filepath      path
  * @return              pointer into the path
@@ -147,7 +148,9 @@ char *cr_get_filename(const char *filepath);
  * @param error         pointer to string pointer for error message
  *                      (mandatory argument!)
  */
-void cr_download(CURL *handle, const char *url, const char *destination,
+void cr_download(CURL *handle,
+                 const char *url,
+                 const char *destination,
                  char **error);
 
 /** \ingroup misc
@@ -227,8 +230,10 @@ void cr_black_hole_log_function(const gchar *log_domain,
  * @param message       message
  * @param user_data     user data
  */
-void cr_log_function(const gchar *log_domain, GLogLevelFlags log_level,
-                     const gchar *message, gpointer user_data);
+void cr_log_function(const gchar *log_domain,
+                     GLogLevelFlags log_level,
+                     const gchar *message,
+                     gpointer user_data);
 
 #ifdef __cplusplus
 }

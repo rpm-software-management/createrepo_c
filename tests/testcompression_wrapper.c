@@ -52,26 +52,26 @@
 
 
 
-static void test_cr_get_suffix(void)
+static void test_cr_compression_suffix(void)
 {
     const char *suffix;
 
-    suffix = cr_get_suffix(CR_CW_AUTO_DETECT_COMPRESSION);
+    suffix = cr_compression_suffix(CR_CW_AUTO_DETECT_COMPRESSION);
     g_assert(!suffix);
 
-    suffix = cr_get_suffix(CR_CW_UNKNOWN_COMPRESSION);
+    suffix = cr_compression_suffix(CR_CW_UNKNOWN_COMPRESSION);
     g_assert(!suffix);
 
-    suffix = cr_get_suffix(CR_CW_NO_COMPRESSION);
+    suffix = cr_compression_suffix(CR_CW_NO_COMPRESSION);
     g_assert(!suffix);
 
-    suffix = cr_get_suffix(CR_CW_GZ_COMPRESSION);
+    suffix = cr_compression_suffix(CR_CW_GZ_COMPRESSION);
     g_assert_cmpstr(suffix, ==, ".gz");
 
-    suffix = cr_get_suffix(CR_CW_BZ2_COMPRESSION);
+    suffix = cr_compression_suffix(CR_CW_BZ2_COMPRESSION);
     g_assert_cmpstr(suffix, ==, ".bz2");
 
-    suffix = cr_get_suffix(CR_CW_XZ_COMPRESSION);
+    suffix = cr_compression_suffix(CR_CW_XZ_COMPRESSION);
     g_assert_cmpstr(suffix, ==, ".xz");
 }
 
@@ -318,7 +318,7 @@ int main(int argc, char *argv[])
 {
     g_test_init(&argc, &argv, NULL);
 
-    g_test_add_func("/compression_wrapper/test_cr_get_suffix", test_cr_get_suffix);
+    g_test_add_func("/compression_wrapper/test_cr_compression_suffix", test_cr_compression_suffix);
     g_test_add_func("/compression_wrapper/test_cr_detect_compression", test_cr_detect_compression);
     g_test_add_func("/compression_wrapper/test_cr_detect_compression_bad_suffix", test_cr_detect_compression_bad_suffix);
     g_test_add_func("/compression_wrapper/test_cr_read_with_autodetection", test_cr_read_with_autodetection);

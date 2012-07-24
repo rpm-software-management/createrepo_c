@@ -421,20 +421,20 @@ static void test_cr_get_header_byte_range(void)
 }
 
 
-static void test_cr_get_checksum_name_str(void)
+static void test_cr_checksum_name_str(void)
 {
     const char *checksum_name;
 
-    checksum_name = cr_get_checksum_name_str(CR_CHECKSUM_MD5);
+    checksum_name = cr_checksum_name_str(CR_CHECKSUM_MD5);
     g_assert_cmpstr(checksum_name, ==, "md5");
 
-    checksum_name = cr_get_checksum_name_str(CR_CHECKSUM_SHA1);
+    checksum_name = cr_checksum_name_str(CR_CHECKSUM_SHA1);
     g_assert_cmpstr(checksum_name, ==, "sha1");
 
-    checksum_name = cr_get_checksum_name_str(CR_CHECKSUM_SHA256);
+    checksum_name = cr_checksum_name_str(CR_CHECKSUM_SHA256);
     g_assert_cmpstr(checksum_name, ==, "sha256");
 
-    checksum_name = cr_get_checksum_name_str(244);
+    checksum_name = cr_checksum_name_str(244);
     g_assert_cmpstr(checksum_name, ==, NULL);
 }
 
@@ -950,7 +950,7 @@ int main(int argc, char *argv[])
     g_test_add_func("/misc/test_cr_is_primary", test_cr_is_primary);
     g_test_add_func("/misc/test_cr_compute_file_checksum", test_cr_compute_file_checksum);
     g_test_add_func("/misc/test_cr_get_header_byte_range", test_cr_get_header_byte_range);
-    g_test_add_func("/misc/test_cr_get_checksum_name_str", test_cr_get_checksum_name_str);
+    g_test_add_func("/misc/test_cr_checksum_name_str", test_cr_checksum_name_str);
     g_test_add_func("/misc/test_cr_get_filename", test_cr_get_filename);
     g_test_add("/misc/copyfiletest_test_empty_file", Copyfiletest, NULL, copyfiletest_setup, copyfiletest_test_empty_file, copyfiletest_teardown);
     g_test_add("/misc/copyfiletest_test_text_file", Copyfiletest, NULL, copyfiletest_setup, copyfiletest_test_text_file, copyfiletest_teardown);

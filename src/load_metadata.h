@@ -64,7 +64,7 @@ void cr_destroy_metadata_hashtable(GHashTable *hashtable);
  * @param hashtable     destination metadata hashtable
  * @param ml            metadata location
  * @param key           hashtable key
- * @return              return code (CR_LOAD_METADATA_OK or CR_LOAD_METADATA_ERR)
+ * @return              return code CR_LOAD_METADATA_OK or CR_LOAD_METADATA_ERR
  */
 int cr_load_xml_metadata(GHashTable *hashtable,
                          struct cr_MetadataLocation *ml,
@@ -75,7 +75,7 @@ int cr_load_xml_metadata(GHashTable *hashtable,
  * @param hashtable     destination metadata hashtable
  * @param repopath      path to repo (to directory with repodata/ subdir)
  * @param key           hashtable key
- * @return              return code (CR_LOAD_METADATA_OK or CR_LOAD_METADATA_ERR)
+ * @return              return code CR_LOAD_METADATA_OK or CR_LOAD_METADATA_ERR
  */
 int cr_locate_and_load_xml_metadata(GHashTable *hashtable,
                                     const char *repopath,

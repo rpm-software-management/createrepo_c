@@ -383,8 +383,13 @@ db_index_primary_tables (sqlite3 *db, GError **err)
         return;
     }
 
-    const char *deps[] = { "requires", "provides", "conflicts", "obsoletes", NULL };
     int i;
+    const char *deps[] = { "requires",
+                           "provides",
+                           "conflicts",
+                           "obsoletes",
+                           NULL
+                         };
 
     const char *pkgindexsql = "CREATE INDEX IF NOT EXISTS pkg%s on %s (pkgKey)";
     const char *nameindexsql = "CREATE INDEX IF NOT EXISTS %sname ON %s (name)";

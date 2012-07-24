@@ -1,5 +1,6 @@
 /* createrepo_c - Library of routines for manipulation with repodata
  * Copyright (C) 2012  Tomas Mlcoch
+ * Copyright (C) 2006  Seth Vidal
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -22,7 +23,7 @@
 #define PACKAGE_CHUNK_SIZE 2048
 
 cr_Dependency *
-cr_dependency_new (void)
+cr_dependency_new(void)
 {
     cr_Dependency *dep;
 
@@ -32,7 +33,7 @@ cr_dependency_new (void)
 }
 
 cr_PackageFile *
-cr_package_file_new (void)
+cr_package_file_new(void)
 {
     cr_PackageFile *file;
 
@@ -42,7 +43,7 @@ cr_package_file_new (void)
 }
 
 cr_ChangelogEntry *
-cr_changelog_entry_new (void)
+cr_changelog_entry_new(void)
 {
     cr_ChangelogEntry *entry;
 
@@ -52,7 +53,7 @@ cr_changelog_entry_new (void)
 }
 
 cr_Package *
-cr_package_new (void)
+cr_package_new(void)
 {
     cr_Package *package;
 
@@ -63,7 +64,7 @@ cr_package_new (void)
 }
 
 void
-cr_package_free (cr_Package *package)
+cr_package_free(cr_Package *package)
 {
     g_string_chunk_free (package->chunk);
 

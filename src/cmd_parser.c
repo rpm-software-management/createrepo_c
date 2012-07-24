@@ -125,7 +125,8 @@ struct CmdOptions *parse_arguments(int *argc, char ***argv)
 
 
 
-gboolean check_arguments(struct CmdOptions *options)
+gboolean
+check_arguments(struct CmdOptions *options)
 {
     // Check outputdir
     if (options->outputdir && !g_file_test(options->outputdir, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
@@ -264,7 +265,8 @@ gboolean check_arguments(struct CmdOptions *options)
 
 
 
-void free_options(struct CmdOptions *options)
+void
+free_options(struct CmdOptions *options)
 {
     g_free(options->input_dir);
     g_free(options->location_base);

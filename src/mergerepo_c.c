@@ -13,10 +13,13 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #include <glib.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <sys/stat.h>
 #include <errno.h>
@@ -88,19 +91,35 @@ struct CmdOptions _cmd_options = {
 
 static GOptionEntry cmd_entries[] =
 {
-    { "version", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.version), "Show program's version number and exit", NULL },
-    { "repo", 'r', 0, G_OPTION_ARG_FILENAME_ARRAY, &(_cmd_options.repos), "Repo url", "REPOS" },
-    { "archlist", 'a', 0, G_OPTION_ARG_STRING, &(_cmd_options.archlist), "Defaults to all arches - otherwise specify arches", "ARCHLIST" },
-    { "database", 'd', 0, G_OPTION_ARG_NONE, &(_cmd_options.database), "", NULL },
-    { "no-database", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.no_database), "", NULL },
-    { "verbose", 'v', 0, G_OPTION_ARG_NONE, &(_cmd_options.verbose), "", NULL },
-    { "outputdir", 'o', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.outputdir), "Location to create the repository", "OUTPUTDIR" },
-    { "nogroups", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.nogroups), "Do not merge group (comps) metadata", NULL },
-    { "noupdateinfo", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.noupdateinfo), "Do not merge updateinfo metadata", NULL },
-    { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type), "Which compression type to use", "COMPRESS_TYPE" },
-    { "method", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.merge_method_str), "Specify merge method for packages with the same name and arch (available merge methods: repo (default), ts, nvr)", "MERGE_METHOD" },
-    { "all", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.all), "Include all packages with the same name and arch if version or release is different. If used --method argument is ignored!", NULL },
-    { "noarch-repo", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.noarch_repo_url), "Packages with noarch architecture will be replaced by package from this repo if exists in it.", "URL" },
+    { "version", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.version),
+      "Show program's version number and exit", NULL },
+    { "repo", 'r', 0, G_OPTION_ARG_FILENAME_ARRAY, &(_cmd_options.repos),
+      "Repo url", "REPOS" },
+    { "archlist", 'a', 0, G_OPTION_ARG_STRING, &(_cmd_options.archlist),
+      "Defaults to all arches - otherwise specify arches", "ARCHLIST" },
+    { "database", 'd', 0, G_OPTION_ARG_NONE, &(_cmd_options.database),
+      "", NULL },
+    { "no-database", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.no_database),
+      "", NULL },
+    { "verbose", 'v', 0, G_OPTION_ARG_NONE, &(_cmd_options.verbose),
+      "", NULL },
+    { "outputdir", 'o', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.outputdir),
+      "Location to create the repository", "OUTPUTDIR" },
+    { "nogroups", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.nogroups),
+      "Do not merge group (comps) metadata", NULL },
+    { "noupdateinfo", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.noupdateinfo),
+      "Do not merge updateinfo metadata", NULL },
+    { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type),
+      "Which compression type to use", "COMPRESS_TYPE" },
+    { "method", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.merge_method_str),
+      "Specify merge method for packages with the same name and arch (available"
+      " merge methods: repo (default), ts, nvr)", "MERGE_METHOD" },
+    { "all", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.all),
+      "Include all packages with the same name and arch if version or release "
+      "is different. If used --method argument is ignored!", NULL },
+    { "noarch-repo", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.noarch_repo_url),
+      "Packages with noarch architecture will be replaced by package from this "
+      "repo if exists in it.", "URL" },
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
 };
 
@@ -140,7 +159,8 @@ check_arguments(struct CmdOptions *options)
         while (arch_set && arch_set[x] != NULL) {
             gchar *arch = arch_set[x];
             if (arch[0] != '\0') {
-                options->arch_list = g_slist_prepend(options->arch_list, (gpointer) g_strdup(arch));
+                options->arch_list = g_slist_prepend(options->arch_list,
+                                                     (gpointer) g_strdup(arch));
             }
             x++;
         }
@@ -159,7 +179,8 @@ check_arguments(struct CmdOptions *options)
             options->db_compression_type = CR_CW_XZ_COMPRESSION;
             options->groupfile_compression_type = CR_CW_XZ_COMPRESSION;
         } else {
-            g_critical("Compression %s not available: Please choose from: gz or bz2 or xz", options->compress_type);
+            g_critical("Compression %s not available: Please choose from: "
+                       "gz or bz2 or xz", options->compress_type);
             ret = FALSE;
         }
     }
@@ -188,7 +209,8 @@ parse_arguments(int *argc, char ***argv)
     GError *error = NULL;
     GOptionContext *context;
 
-    context = g_option_context_new(": take 2 or more repositories and merge their metadata into a new repo");
+    context = g_option_context_new(": take 2 or more repositories and merge "
+                                   "their metadata into a new repo");
     g_option_context_add_main_entries(context, cmd_entries, NULL);
 
     gboolean ret = g_option_context_parse(context, argc, argv, &error);
@@ -250,7 +272,10 @@ free_merged_values(gpointer data)
 GHashTable *
 new_merged_metadata_hashtable()
 {
-    GHashTable *hashtable = g_hash_table_new_full(g_str_hash, g_str_equal, NULL, free_merged_values); // TODO!!
+    GHashTable *hashtable = g_hash_table_new_full(g_str_hash,
+                                                  g_str_equal,
+                                                  NULL,
+                                                  free_merged_values); // TODO!!
     return hashtable;
 }
 
@@ -272,8 +297,12 @@ destroy_merged_metadata_hashtable(GHashTable *hashtable)
 //  1 = Package was added
 //  2 = Package replaced old package
 int
-add_package(cr_Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_list,
-                MergeMethod merge_method, gboolean include_all)
+add_package(cr_Package *pkg,
+            gchar *repopath,
+            GHashTable *merged,
+            GSList *arch_list,
+            MergeMethod merge_method,
+            gboolean include_all)
 {
     GSList *list, *element;
 
@@ -321,12 +350,14 @@ add_package(cr_Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_l
             if (!include_all) {
 
                 // Two packages has same name and arch
-                // Use selected merge method to determine which package should be included
+                // Use selected merge method to determine which package should
+                // be included
 
                 // REPO merge method
                 if (merge_method == MM_REPO) {
                     // Package with the same arch already exists
-                    g_debug("Package %s (%s) already exists", pkg->name, pkg->arch);
+                    g_debug("Package %s (%s) already exists",
+                            pkg->name, pkg->arch);
                     return 0;
 
                 // TS merge method
@@ -336,11 +367,13 @@ add_package(cr_Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_l
                         cr_package_free(c_pkg);
                         // Replace package in element
                         if (!pkg->location_base)
-                            pkg->location_base = g_string_chunk_insert(pkg->chunk, repopath);
+                            pkg->location_base = g_string_chunk_insert(pkg->chunk,
+                                                                       repopath);
                         element->data = pkg;
                         return 2;
                     } else {
-                        g_debug("Newer package %s (%s) already exists", pkg->name, pkg->arch);
+                        g_debug("Newer package %s (%s) already exists",
+                                pkg->name, pkg->arch);
                         return 0;
                     }
 
@@ -359,7 +392,8 @@ add_package(cr_Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_l
                         element->data = pkg;
                         return 2;
                     } else {
-                        g_debug("Newer version of package %s (%s) already exists", pkg->name, pkg->arch);
+                        g_debug("Newer version of package %s (%s) already exists",
+                                pkg->name, pkg->arch);
                         return 0;
                     }
                 }
@@ -373,8 +407,10 @@ add_package(cr_Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_l
                 long c_pkg_release = (c_pkg->release) ? strtol(c_pkg->release, NULL, 10) : 0;
 
                 if (cmp_res == 0 && pkg_release == c_pkg_release) {
-                    // Package with same name, arch, version and release is already listed
-                    g_debug("Same version of package %s (%s) already exists", pkg->name, pkg->arch);
+                    // Package with same name, arch, version and release
+                    // is already listed
+                    g_debug("Same version of package %s (%s) already exists",
+                            pkg->name, pkg->arch);
                     return 0;
                 }
             }
@@ -389,8 +425,8 @@ add_package(cr_Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_l
     }
 
     // XXX: The first list element (pointed from hashtable) must stay first!
-    // g_slist_append() is suitable but non effective, insert a new element right after
-    // first element is optimal (at least for now)
+    // g_slist_append() is suitable but non effective, insert a new element
+    // right after first element is optimal (at least for now)
     assert(g_slist_insert(list, pkg, 1) == list);
 
     return 1;
@@ -399,8 +435,13 @@ add_package(cr_Package *pkg, gchar *repopath, GHashTable *merged, GSList *arch_l
 
 
 long
-merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list, MergeMethod merge_method,
-                 gboolean include_all, GHashTable *noarch_hashtable) {
+merge_repos(GHashTable *merged,
+            GSList *repo_list,
+            GSList *arch_list,
+            MergeMethod merge_method,
+            gboolean include_all,
+            GHashTable *noarch_hashtable)
+{
 
     long loaded_packages = 0;
     GSList *used_noarch_keys = NULL;
@@ -461,7 +502,8 @@ merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list, MergeMetho
                 } else {
                     // Package from noarch repo was added - do not remove record, just make note
                     used_noarch_keys = g_slist_prepend(used_noarch_keys, pkg->location_href);
-                    g_debug("Package: %s (from: %s) has been replaced by noarch package", pkg->location_href, repopath);
+                    g_debug("Package: %s (from: %s) has been replaced by noarch package",
+                            pkg->location_href, repopath);
                 }
 
                 if (ret == 1) {
@@ -472,7 +514,8 @@ merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list, MergeMetho
 
         loaded_packages += repo_loaded_packages;
         cr_destroy_metadata_hashtable(tmp_hashtable);
-        g_debug("Repo: %s (Loaded: %ld Used: %ld)", repopath, (unsigned long) original_size, repo_loaded_packages);
+        g_debug("Repo: %s (Loaded: %ld Used: %ld)", repopath,
+                (unsigned long) original_size, repo_loaded_packages);
         g_free(repopath);
     }
 
@@ -490,8 +533,10 @@ merge_repos(GHashTable *merged, GSList *repo_list, GSList *arch_list, MergeMetho
 
 
 int
-dump_merged_metadata(GHashTable *merged_hashtable, long packages,
-                         gchar *groupfile, struct CmdOptions *cmd_options)
+dump_merged_metadata(GHashTable *merged_hashtable,
+                     long packages,
+                     gchar *groupfile,
+                     struct CmdOptions *cmd_options)
 {
     // Create/Open output xml files
 
@@ -499,8 +544,8 @@ dump_merged_metadata(GHashTable *merged_hashtable, long packages,
     CR_FILE *fil_f;
     CR_FILE *oth_f;
 
-    const char *db_suffix = cr_get_suffix(cmd_options->db_compression_type);
-    const char *groupfile_suffix = cr_get_suffix(cmd_options->groupfile_compression_type);
+    const char *db_suffix = cr_compression_suffix(cmd_options->db_compression_type);
+    const char *groupfile_suffix = cr_compression_suffix(cmd_options->groupfile_compression_type);
 
     gchar *pri_xml_filename = g_strconcat(cmd_options->out_repo, "/primary.xml.gz", NULL);
     gchar *fil_xml_filename = g_strconcat(cmd_options->out_repo, "/filelists.xml.gz", NULL);
@@ -545,11 +590,14 @@ dump_merged_metadata(GHashTable *merged_hashtable, long packages,
     // Write xml headers
 
     cr_printf(pri_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-        "<metadata xmlns=\""CR_XML_COMMON_NS"\" xmlns:rpm=\""CR_XML_RPM_NS"\" packages=\"%d\">\n", packages);
+              "<metadata xmlns=\""CR_XML_COMMON_NS"\" xmlns:rpm=\""
+              CR_XML_RPM_NS"\" packages=\"%d\">\n", packages);
     cr_printf(fil_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-        "<filelists xmlns=\""CR_XML_FILELISTS_NS"\" packages=\"%d\">\n", packages);
+              "<filelists xmlns=\""CR_XML_FILELISTS_NS"\" packages=\"%d\">\n",
+              packages);
     cr_printf(oth_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-        "<otherdata xmlns=\""CR_XML_OTHER_NS"\" packages=\"%d\">\n", packages);
+              "<otherdata xmlns=\""CR_XML_OTHER_NS"\" packages=\"%d\">\n",
+              packages);
 
 
     // Prepare sqlite if needed
@@ -663,7 +711,8 @@ dump_merged_metadata(GHashTable *merged_hashtable, long packages,
     // Groupfile
 
     if (groupfile) {
-        gchar *groupfile_name = g_strconcat("repodata/", cr_get_filename(groupfile), NULL);
+        gchar *groupfile_name = g_strconcat("repodata/",
+                                            cr_get_filename(groupfile), NULL);
         groupfile_rec = cr_new_repomdrecord(groupfile_name);
         compressed_groupfile_rec = cr_new_repomdrecord(groupfile_name);
 
@@ -676,7 +725,8 @@ dump_merged_metadata(GHashTable *merged_hashtable, long packages,
     // Update info
 
     if (!cmd_options->noupdateinfo) {
-        gchar *update_info_name = g_strconcat("repodata/updateinfo.xml", groupfile_suffix, NULL);
+        gchar *update_info_name = g_strconcat("repodata/updateinfo.xml",
+                                              groupfile_suffix, NULL);
         update_info_rec = cr_new_repomdrecord(update_info_name);
         cr_fill_missing_data(out_dir, update_info_rec, NULL);
         g_free(update_info_name);
@@ -818,7 +868,8 @@ main(int argc, char **argv)
     if (g_slist_length(cmd_options->repo_list) < 2) {
         free_options(cmd_options);
         fprintf(stderr, "Usage: %s [options]\n\n"
-                        "%s: take 2 or more repositories and merge their metadata into a new repo\n\n",
+                        "%s: take 2 or more repositories and merge their "
+                        "metadata into a new repo\n\n",
                         cr_get_filename(argv[0]), cr_get_filename(argv[0]));
         return 1;
     }

@@ -13,7 +13,8 @@
  *
  * You should have received a copy of the GNU Lesser General Public
  * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
  */
 
 #include <glib.h>
@@ -22,6 +23,8 @@
 #include <time.h>
 #include <zlib.h>
 #include <assert.h>
+#include <libxml/encoding.h>
+#include <libxml/xmlwriter.h>
 #include "logging.h"
 #include "misc.h"
 #include "repomd.h"
@@ -128,7 +131,8 @@ get_compressed_content_stat(const char *filename, cr_ChecksumType checksum_type)
     do {
         readed = cr_read(cwfile, (void *) buffer, BUFFER_SIZE);
         if (readed == CR_CW_ERR) {
-            g_debug(MODULE"%s: Error while read compressed file: %s", __func__, filename);
+            g_debug(MODULE"%s: Error while read compressed file: %s",
+                    __func__, filename);
             break;
         }
         g_checksum_update (checksum, buffer, readed);
@@ -168,7 +172,7 @@ cr_fill_missing_data(const char *base_path, cr_RepomdRecord md,
     cr_ChecksumType checksum_t = DEFAULT_CHECKSUM_ENUM_VAL;
 
     if (checksum_type) {
-        checksum_str = cr_get_checksum_name_str(*checksum_type);
+        checksum_str = cr_checksum_name_str(*checksum_type);
         checksum_t = *checksum_type;
     }
 
@@ -210,9 +214,11 @@ cr_fill_missing_data(const char *base_path, cr_RepomdRecord md,
             g_free(open_stat);
         } else {
             // Unknown compression
-            g_warning(MODULE"%s: File \"%s\" compressed by an unsupported type of compression", __func__, path);
+            g_warning(MODULE"%s: File \"%s\" compressed by an unsupported type"
+                      " of compression", __func__, path);
             md->checksum_open_type = g_string_chunk_insert(md->chunk, "UNKNOWN");
-            md->checksum_open = g_string_chunk_insert(md->chunk, "file_compressed_by_an_unsupported_type_of_compression");
+            md->checksum_open = g_string_chunk_insert(md->chunk,
+                        "file_compressed_by_an_unsupported_type_of_compression");
             md->size_open = -1;
         }
     }
@@ -264,17 +270,18 @@ cr_process_groupfile(const char *base_path, cr_RepomdRecord groupfile,
     cr_ChecksumType checksum_t = DEFAULT_CHECKSUM_ENUM_VAL;
 
     if (checksum_type) {
-        checksum_str = cr_get_checksum_name_str(*checksum_type);
+        checksum_str = cr_checksum_name_str(*checksum_type);
         checksum_t = *checksum_type;
     }
 
 
     // Paths
 
-    const char *suffix = cr_get_suffix(groupfile_compression);
+    const char *suffix = cr_compression_suffix(groupfile_compression);
 
     gchar *clocation_href = g_strconcat(groupfile->location_href, suffix, NULL);
-    cgroupfile->location_href = g_string_chunk_insert(cgroupfile->chunk, clocation_href);
+    cgroupfile->location_href = g_string_chunk_insert(cgroupfile->chunk,
+                                                      clocation_href);
     g_free(clocation_href);
 
     gchar *path = g_strconcat(base_path, "/", groupfile->location_href, NULL);
@@ -382,11 +389,13 @@ dump_data_items(xmlNodePtr root, cr_RepomdRecord md, const xmlChar *type)
     xmlNewProp(data, BAD_CAST "type", BAD_CAST type);
 
 
-    node = xmlNewTextChild(data, NULL, BAD_CAST "checksum", BAD_CAST md->checksum);
+    node = xmlNewTextChild(data, NULL, BAD_CAST "checksum",
+                           BAD_CAST md->checksum);
     xmlNewProp(node, BAD_CAST "type", BAD_CAST md->checksum_type);
 
     if (md->checksum_open) {
-        node = xmlNewTextChild(data, NULL, BAD_CAST "open-checksum", BAD_CAST md->checksum_open);
+        node = xmlNewTextChild(data, NULL, BAD_CAST "open-checksum",
+                               BAD_CAST md->checksum_open);
         xmlNewProp(node, BAD_CAST "type", BAD_CAST md->checksum_open_type);
     }
 
@@ -406,17 +415,18 @@ dump_data_items(xmlNodePtr root, cr_RepomdRecord md, const xmlChar *type)
 
     if (g_str_has_suffix((char *)type, "_db")) {
         g_snprintf(str_buffer, STR_BUFFER_SIZE, "%d", md->db_ver);
-        xmlNewChild(data, NULL, BAD_CAST "database_version", BAD_CAST str_buffer);
+        xmlNewChild(data, NULL, BAD_CAST "database_version",
+                    BAD_CAST str_buffer);
     }
 }
 
 
 char *
 repomd_xml_dump(long revision, cr_RepomdRecord pri_xml, cr_RepomdRecord fil_xml,
-                      cr_RepomdRecord oth_xml, cr_RepomdRecord pri_sqlite,
-                      cr_RepomdRecord fil_sqlite, cr_RepomdRecord oth_sqlite,
-                      cr_RepomdRecord groupfile, cr_RepomdRecord cgroupfile,
-                      cr_RepomdRecord update_info)
+                cr_RepomdRecord oth_xml, cr_RepomdRecord pri_sqlite,
+                cr_RepomdRecord fil_sqlite, cr_RepomdRecord oth_sqlite,
+                cr_RepomdRecord groupfile, cr_RepomdRecord cgroupfile,
+                cr_RepomdRecord update_info)
 {
     xmlDocPtr doc;
     xmlNodePtr root;
@@ -448,8 +458,11 @@ repomd_xml_dump(long revision, cr_RepomdRecord pri_xml, cr_RepomdRecord fil_xml,
     // Dump IT!
 
     char *result;
-    //xmlDocDumpFormatMemory(doc, (xmlChar **) &result, NULL, FORMAT_XML);
-    xmlDocDumpFormatMemoryEnc(doc, (xmlChar **) &result, NULL, XML_ENC, FORMAT_XML);
+    xmlDocDumpFormatMemoryEnc(doc,
+                              (xmlChar **) &result,
+                              NULL,
+                              XML_ENC,
+                              FORMAT_XML);
 
 
     // Clean up
@@ -484,7 +497,11 @@ cr_rename_file(const char *base_path, cr_RepomdRecord md)
         }
     }
 
-    gchar *new_location_href = g_strconcat(location_href_path_prefix, md->checksum, "-", location_href_filename_only, NULL);
+    gchar *new_location_href = g_strconcat(location_href_path_prefix,
+                                           md->checksum,
+                                           "-",
+                                           location_href_filename_only,
+                                           NULL);
     gchar *new_path = g_strconcat(base_path, "/", new_location_href, NULL);
 
     g_free(location_href_path_prefix);
@@ -527,5 +544,14 @@ cr_xml_repomd(const char *path, cr_RepomdRecord pri_xml,
     }
 
     long revision = (long) time(NULL);
-    return repomd_xml_dump(revision, pri_xml, fil_xml, oth_xml, pri_sqlite, fil_sqlite, oth_sqlite, groupfile, cgroupfile, update_info);
+    return repomd_xml_dump(revision,
+                           pri_xml,
+                           fil_xml,
+                           oth_xml,
+                           pri_sqlite,
+                           fil_sqlite,
+                           oth_sqlite,
+                           groupfile,
+                           cgroupfile,
+                           update_info);
 }

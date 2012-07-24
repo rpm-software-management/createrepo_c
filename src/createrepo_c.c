@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -78,7 +79,8 @@ char *tmp_repodata_path = NULL;
 
 
 // Signal handler
-void sigint_catcher(int sig)
+void
+sigint_catcher(int sig)
 {
     CR_UNUSED(sig);
     g_message("SIGINT catched: Terminating...");
@@ -90,7 +92,8 @@ void sigint_catcher(int sig)
 
 
 
-int allowed_file(const gchar *filename, struct CmdOptions *options)
+int
+allowed_file(const gchar *filename, struct CmdOptions *options)
 {
     // Check file against exclude glob masks
     if (options->exclude_masks) {
@@ -121,12 +124,15 @@ G_LOCK_DEFINE (LOCK_FIL);
 G_LOCK_DEFINE (LOCK_OTH);
 
 
-void dumper_thread(gpointer data, gpointer user_data) {
+void
+dumper_thread(gpointer data, gpointer user_data)
+{
 
     struct UserData *udata = (struct UserData *) user_data;
     struct PoolTask *task = (struct PoolTask *) data;
 
-    // get location_href without leading part of path (path to repo) including '/' char
+    // get location_href without leading part of path (path to repo)
+    // including '/' char
     const char *location_href = task->full_path + udata->repodir_name_len;
 
     const char *location_base = udata->location_base;
@@ -168,7 +174,7 @@ void dumper_thread(gpointer data, gpointer user_data) {
         }
 
         if (old_used) {
-            // We have usable old data, but we have to set locations (href and base)
+            // We have usable old data, but we have to set proper locations
             md->location_href = (char *) location_href;
             md->location_base = (char *) location_base;
         }
@@ -234,9 +240,9 @@ task_cleanup:
 
 
 
-int main(int argc, char **argv) {
-
-
+int
+main(int argc, char **argv)
+{
     // Arguments parsing
 
     struct CmdOptions *cmd_options;
@@ -335,9 +341,11 @@ int main(int argc, char **argv) {
 
     if (g_mkdir (tmp_out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
         if (errno == EEXIST) {
-            g_critical("Temporary repodata directory: %s already exists! (Another createrepo process is running?)", tmp_out_repo);
+            g_critical("Temporary repodata directory: %s already exists! ("
+                       "Another createrepo process is running?)", tmp_out_repo);
         } else {
-            g_critical("Error while creating temporary repodata directory %s: %s", tmp_out_repo, strerror(errno));
+            g_critical("Error while creating temporary repodata directory %s: %s",
+                       tmp_out_repo, strerror(errno));
         }
 
         exit(1);
@@ -434,7 +442,7 @@ int main(int argc, char **argv) {
         groupfile_compression = CR_CW_XZ_COMPRESSION;
     }
 
-    sqlite_compression_suffix = cr_get_suffix(sqlite_compression);
+    sqlite_compression_suffix = cr_compression_suffix(sqlite_compression);
 
 
     // Create and open new compressed files
@@ -520,7 +528,7 @@ int main(int argc, char **argv) {
     user_data.oth_statements    = oth_statements;
     user_data.changelog_limit   = cmd_options->changelog_limit;
     user_data.location_base     = cmd_options->location_base;
-    user_data.checksum_type_str = cr_get_checksum_name_str(cmd_options->checksum_type);
+    user_data.checksum_type_str = cr_checksum_name_str(cmd_options->checksum_type);
     user_data.checksum_type     = cmd_options->checksum_type;
     user_data.quiet             = cmd_options->quiet;
     user_data.verbose           = cmd_options->verbose;
@@ -535,7 +543,11 @@ int main(int argc, char **argv) {
     // Thread pool - Creation
 
     g_thread_init(NULL);
-    GThreadPool *pool = g_thread_pool_new(dumper_thread, &user_data, 0, TRUE, NULL);
+    GThreadPool *pool = g_thread_pool_new(dumper_thread,
+                                          &user_data,
+                                          0,
+                                          TRUE,
+                                          NULL);
 
     g_debug("Thread pool ready");
 
@@ -552,7 +564,11 @@ int main(int argc, char **argv) {
         size_t in_dir_len = strlen(in_dir);
         GStringChunk *sub_dirs_chunk = g_string_chunk_new(1024);
         GQueue *sub_dirs = g_queue_new();
-        gchar *input_dir_stripped = g_string_chunk_insert_len(sub_dirs_chunk, in_dir, in_dir_len-1);
+        gchar *input_dir_stripped;
+
+        input_dir_stripped = g_string_chunk_insert_len(sub_dirs_chunk,
+                                                       in_dir,
+                                                       in_dir_len-1);
         g_queue_push_head(sub_dirs, input_dir_stripped);
 
         char *dirname;
@@ -576,7 +592,9 @@ int main(int argc, char **argv) {
                         g_file_test(full_path, G_FILE_TEST_IS_DIR))
                     {
                         // Directory
-                        gchar *sub_dir_in_chunk = g_string_chunk_insert (sub_dirs_chunk, full_path);
+                        gchar *sub_dir_in_chunk;
+                        sub_dir_in_chunk = g_string_chunk_insert(sub_dirs_chunk,
+                                                                 full_path);
                         g_queue_push_head(sub_dirs, sub_dir_in_chunk);
                         g_debug("Dir to scan: %s", sub_dir_in_chunk);
                     }
@@ -602,7 +620,8 @@ int main(int argc, char **argv) {
                     struct PoolTask *task = g_malloc(sizeof(struct PoolTask));
                     task->full_path = full_path;
                     task->filename = g_strdup(filename);
-                    task->path = g_strdup(dirname);  // TODO: One common path for all tasks with the same path??
+                    task->path = g_strdup(dirname);
+                    // TODO: One common path for all tasks with the same path?
                     g_thread_pool_push(pool, task, NULL);
                     package_count++;
                 }
@@ -621,9 +640,11 @@ int main(int argc, char **argv) {
 
         GSList *element;
         for (element=cmd_options->include_pkgs; element; element=g_slist_next(element)) {
-            gchar *relative_path = (gchar *) element->data;   // path from pkglist e.g. packages/i386/foobar.rpm
-            gchar *full_path = g_strconcat(in_dir, relative_path, NULL);   // /path/to/in_repo/packages/i386/foobar.rpm
-            gchar *dirname;  // packages/i386/
+            gchar *relative_path = (gchar *) element->data;
+            //     ^^^ path from pkglist e.g. packages/i386/foobar.rpm
+            gchar *full_path = g_strconcat(in_dir, relative_path, NULL);
+            //     ^^^ /path/to/in_repo/packages/i386/foobar.rpm
+            gchar *dirname;   // packages/i386/
             gchar *filename;  // foobar.rpm
 
             // Get index of last '/'
@@ -665,11 +686,14 @@ int main(int argc, char **argv) {
     g_debug("Writing xml headers");
 
     cr_printf(user_data.pri_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-          "<metadata xmlns=\""CR_XML_COMMON_NS"\" xmlns:rpm=\""CR_XML_RPM_NS"\" packages=\"%d\">\n", package_count);
+              "<metadata xmlns=\""CR_XML_COMMON_NS"\" xmlns:rpm=\""
+              CR_XML_RPM_NS"\" packages=\"%d\">\n", package_count);
     cr_printf(user_data.fil_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-          "<filelists xmlns=\""CR_XML_FILELISTS_NS"\" packages=\"%d\">\n", package_count);
+              "<filelists xmlns=\""CR_XML_FILELISTS_NS"\" packages=\"%d\">\n",
+              package_count);
     cr_printf(user_data.oth_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-          "<otherdata xmlns=\""CR_XML_OTHER_NS"\" packages=\"%d\">\n", package_count);
+              "<otherdata xmlns=\""CR_XML_OTHER_NS"\" packages=\"%d\">\n",
+              package_count);
 
 
     // Start pool
@@ -779,7 +803,9 @@ int main(int argc, char **argv) {
     // Groupfile
 
     if (groupfile) {
-        gchar *groupfile_name = g_strconcat("repodata/", cr_get_filename(groupfile), NULL);
+        gchar *groupfile_name = g_strconcat("repodata/",
+                                            cr_get_filename(groupfile),
+                                            NULL);
         groupfile_rec = cr_new_repomdrecord(groupfile_name);
         compressed_groupfile_rec = cr_new_repomdrecord(groupfile_name);
 
@@ -793,9 +819,12 @@ int main(int argc, char **argv) {
     // Sqlite db
 
     if (!cmd_options->no_database) {
-        gchar *pri_db_name = g_strconcat("repodata/primary.sqlite", sqlite_compression_suffix, NULL);
-        gchar *fil_db_name = g_strconcat("repodata/filelists.sqlite", sqlite_compression_suffix, NULL);
-        gchar *oth_db_name = g_strconcat("repodata/other.sqlite", sqlite_compression_suffix, NULL);
+        gchar *pri_db_name = g_strconcat("repodata/primary.sqlite",
+                                         sqlite_compression_suffix, NULL);
+        gchar *fil_db_name = g_strconcat("repodata/filelists.sqlite",
+                                         sqlite_compression_suffix, NULL);
+        gchar *oth_db_name = g_strconcat("repodata/other.sqlite",
+                                         sqlite_compression_suffix, NULL);
 
         gchar *tmp_pri_db_path;
         gchar *tmp_fil_db_path;

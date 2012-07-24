@@ -34,6 +34,7 @@ extern "C" {
 
 /** \ingroup parsehdr
  * Read data from header and return filled cr_Package structure.
+ * All const char * params could be NULL.
  * @param hdr                   Header
  * @param mtime                 mtime of rpm file
  * @param size                  size of rpm file (in bytes)
@@ -59,6 +60,7 @@ cr_Package *cr_parse_header(Header hdr,
 
 /** \ingroup parsehdr
  * Read data from header and return struct cr_XmlStruct.
+ * All const char * params could be NULL.
  * @param hdr                   Header
  * @param mtime                 mtime of rpm file
  * @param size                  size of rpm file (in bytes)

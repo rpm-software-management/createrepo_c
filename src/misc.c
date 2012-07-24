@@ -378,7 +378,7 @@ cr_get_header_byte_range(const char *filename)
 
 
 const char *
-cr_get_checksum_name_str(cr_ChecksumType type)
+cr_checksum_name_str(cr_ChecksumType type)
 {
     char *name = NULL;
 
@@ -487,7 +487,9 @@ cr_copy_file(const char *src, const char *in_dst)
 
 
 int
-cr_compress_file(const char *src, const char *in_dst, cr_CompressionType compression)
+cr_compress_file(const char *src,
+                 const char *in_dst,
+                 cr_CompressionType compression)
 {
     int readed;
     char buf[BUFFER_SIZE];
@@ -517,12 +519,12 @@ cr_compress_file(const char *src, const char *in_dst, cr_CompressionType compres
     gchar *dst = (gchar *) in_dst;
     if (!dst) {
         // If destination is NULL, use src + compression suffix
-        const gchar *suffix = cr_get_suffix(compression);
+        const gchar *suffix = cr_compression_suffix(compression);
         dst = g_strconcat(src, suffix, NULL);
     } else {
         // If destination is dir use filename from src + compression suffix
         if (g_str_has_suffix(in_dst, "/")) {
-            const gchar *suffix = cr_get_suffix(compression);
+            const gchar *suffix = cr_compression_suffix(compression);
             dst = g_strconcat(in_dst, cr_get_filename(src), suffix, NULL);
         }
     }
@@ -661,8 +663,10 @@ cr_better_copy_file(const char *src, const char *in_dst)
 
 
 int
-cr_remove_dir_cb(const char *fpath, const struct stat *sb, int typeflag,
-              struct FTW *ftwbuf)
+cr_remove_dir_cb(const char *fpath,
+                 const struct stat *sb,
+                 int typeflag,
+                 struct FTW *ftwbuf)
 {
     CR_UNUSED(sb);
     CR_UNUSED(typeflag);
@@ -825,8 +829,10 @@ cr_cmp_version_string(const char* str1, const char *str2)
 
 
 void
-cr_black_hole_log_function(const gchar *log_domain, GLogLevelFlags log_level,
-                           const gchar *message, gpointer user_data)
+cr_black_hole_log_function(const gchar *log_domain,
+                           GLogLevelFlags log_level,
+                           const gchar *message,
+                           gpointer user_data)
 {
     CR_UNUSED(log_domain);
     CR_UNUSED(log_level);
@@ -837,8 +843,10 @@ cr_black_hole_log_function(const gchar *log_domain, GLogLevelFlags log_level,
 
 
 void
-cr_log_function (const gchar *log_domain, GLogLevelFlags log_level,
-              const gchar *message, gpointer user_data)
+cr_log_function(const gchar *log_domain,
+                GLogLevelFlags log_level,
+                const gchar *message,
+                gpointer user_data)
 {
     CR_UNUSED(user_data);
 

@@ -94,14 +94,16 @@ struct ParserData {
 
 
 
-void free_values(gpointer data)
+void
+free_values(gpointer data)
 {
     cr_package_free((cr_Package *) data);
 }
 
 
 
-GHashTable *cr_new_metadata_hashtable()
+GHashTable *
+cr_new_metadata_hashtable()
 {
     GHashTable *hashtable = g_hash_table_new_full(g_str_hash, g_str_equal,
                                                   NULL, free_values);
@@ -110,7 +112,8 @@ GHashTable *cr_new_metadata_hashtable()
 
 
 
-void cr_destroy_metadata_hashtable(GHashTable *hashtable)
+void
+cr_destroy_metadata_hashtable(GHashTable *hashtable)
 {
     if (hashtable) {
         g_hash_table_destroy (hashtable);
@@ -120,7 +123,8 @@ void cr_destroy_metadata_hashtable(GHashTable *hashtable)
 
 
 inline gchar *
-chunk_insert_len_or_null (GStringChunk *chunk, const gchar *str, gssize len) {
+chunk_insert_len_or_null (GStringChunk *chunk, const gchar *str, gssize len)
+{
     if (!str || len <= 0)
         return NULL;
 
@@ -131,7 +135,9 @@ chunk_insert_len_or_null (GStringChunk *chunk, const gchar *str, gssize len) {
 
 // primary.xml parser handlers
 
-void pri_start_handler(void *data, const char *el, const char **attr) {
+void
+pri_start_handler(void *data, const char *el, const char **attr)
+{
     struct ParserData *ppd = (struct ParserData *) data;
     cr_Package *pkg = ppd->pkg;
     int i;
@@ -412,7 +418,9 @@ void pri_start_handler(void *data, const char *el, const char **attr) {
 
 
 
-void pri_char_handler(void *data, const char *txt, int txtlen) {
+void
+pri_char_handler(void *data, const char *txt, int txtlen)
+{
     struct ParserData *ppd = (struct ParserData *) data;
     cr_Package *pkg = ppd->pkg;
 
@@ -450,7 +458,9 @@ void pri_char_handler(void *data, const char *txt, int txtlen) {
 
 
 
-void pri_end_handler(void *data, const char *el) {
+void
+pri_end_handler(void *data, const char *el)
+{
     struct ParserData *ppd = (struct ParserData *) data;
     cr_Package *pkg = ppd->pkg;
 
@@ -552,7 +562,9 @@ void pri_end_handler(void *data, const char *el) {
 
 // filelists.xml parser handlers
 
-void fil_start_handler(void *data, const char *el, const char **attr) {
+void
+fil_start_handler(void *data, const char *el, const char **attr)
+{
     int i;
     struct ParserData *ppd = (struct ParserData *) data;
     cr_Package *pkg = ppd->pkg;
@@ -604,7 +616,8 @@ void fil_start_handler(void *data, const char *el, const char **attr) {
         }
 
         if (key) {
-            ppd->pkg = (cr_Package *) g_hash_table_lookup(ppd->hashtable, (gconstpointer) key);
+            ppd->pkg = (cr_Package *) g_hash_table_lookup(ppd->hashtable,
+                                                          (gconstpointer) key);
             if (!ppd->pkg) {
                 ppd->error = TRUE;
                 g_critical(MODULE"%s: Unknown package (package ID: %s)",
@@ -638,7 +651,9 @@ void fil_start_handler(void *data, const char *el, const char **attr) {
 
 
 
-void fil_char_handler(void *data, const char *txt, int txtlen) {
+void
+fil_char_handler(void *data, const char *txt, int txtlen)
+{
     struct ParserData *ppd = (struct ParserData *) data;
     cr_Package *pkg = ppd->pkg;
 
@@ -662,7 +677,9 @@ void fil_char_handler(void *data, const char *txt, int txtlen) {
 
 
 
-void fil_end_handler(void *data, const char *el) {
+void
+fil_end_handler(void *data, const char *el)
+{
     struct ParserData *ppd = (struct ParserData *) data;
     cr_Package *pkg = ppd->pkg;
 
@@ -734,7 +751,9 @@ void fil_end_handler(void *data, const char *el) {
 
 // other.xml parser handlers
 
-void oth_start_handler(void *data, const char *el, const char **attr) {
+void
+oth_start_handler(void *data, const char *el, const char **attr)
+{
     int i;
     struct ParserData *ppd = (struct ParserData *) data;
     cr_Package *pkg = ppd->pkg;
@@ -828,7 +847,9 @@ void oth_start_handler(void *data, const char *el, const char **attr) {
 
 
 
-void oth_char_handler(void *data, const char *txt, int txtlen) {
+void
+oth_char_handler(void *data, const char *txt, int txtlen)
+{
     struct ParserData *ppd = (struct ParserData *) data;
     cr_Package *pkg = ppd->pkg;
 
@@ -850,7 +871,9 @@ void oth_char_handler(void *data, const char *txt, int txtlen) {
 
 
 
-void oth_end_handler(void *data, const char *el) {
+void
+oth_end_handler(void *data, const char *el)
+{
     struct ParserData *ppd = (struct ParserData *) data;
     cr_Package *pkg = ppd->pkg;
 
@@ -898,8 +921,9 @@ void oth_end_handler(void *data, const char *el) {
 
 
 
-int load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
-                   const char *filelists_xml_path, const char *other_xml_path)
+int
+load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
+               const char *filelists_xml_path, const char *other_xml_path)
 {
     cr_CompressionType compression_type;
     CR_FILE *pri_xml_cwfile, *fil_xml_cwfile, *oth_xml_cwfile;

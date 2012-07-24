@@ -24,8 +24,6 @@
 extern "C" {
 #endif
 
-#include <libxml/encoding.h>
-#include <libxml/xmlwriter.h>
 #include "compression_wrapper.h"
 #include "package.h"
 

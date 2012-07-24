@@ -140,13 +140,13 @@ static void test_cr_locate_and_load_xml_metadata_detailed(void)
     g_assert_cmpint(pkg->time_file, ==, 1334667003);
     g_assert_cmpint(pkg->time_build, ==, 1334667003);
     g_assert_cmpstr(pkg->rpm_license, ==, "LGPLv2");
-    g_assert_cmpstr(pkg->rpm_vendor, ==, "");
+    g_assert_cmpstr(pkg->rpm_vendor, ==, NULL);
     g_assert_cmpstr(pkg->rpm_group, ==, "Applications/System");
     g_assert_cmpstr(pkg->rpm_buildhost, ==, "localhost.localdomain");
     g_assert_cmpstr(pkg->rpm_sourcerpm, ==, "super_kernel-6.0.1-2.src.rpm");
     g_assert_cmpint(pkg->rpm_header_start, ==, 280);
     g_assert_cmpint(pkg->rpm_header_end, ==, 2637);
-    g_assert_cmpstr(pkg->rpm_packager, ==, "");
+    g_assert_cmpstr(pkg->rpm_packager, ==, NULL);
     g_assert_cmpint(pkg->size_package, ==, 2845);
     g_assert_cmpint(pkg->size_installed, ==, 0);
     g_assert_cmpint(pkg->size_archive, ==, 404);

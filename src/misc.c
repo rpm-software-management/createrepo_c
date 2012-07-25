@@ -830,10 +830,10 @@ cr_cmp_version_str(const char* str1, const char *str2)
 
 
 void
-cr_black_hole_log_function(const gchar *log_domain,
-                           GLogLevelFlags log_level,
-                           const gchar *message,
-                           gpointer user_data)
+cr_null_log_fn(const gchar *log_domain,
+               GLogLevelFlags log_level,
+               const gchar *message,
+               gpointer user_data)
 {
     CR_UNUSED(log_domain);
     CR_UNUSED(log_level);
@@ -844,10 +844,10 @@ cr_black_hole_log_function(const gchar *log_domain,
 
 
 void
-cr_log_function(const gchar *log_domain,
-                GLogLevelFlags log_level,
-                const gchar *message,
-                gpointer user_data)
+cr_log_fn(const gchar *log_domain,
+          GLogLevelFlags log_level,
+          const gchar *message,
+          gpointer user_data)
 {
     CR_UNUSED(user_data);
 

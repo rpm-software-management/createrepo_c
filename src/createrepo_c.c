@@ -100,9 +100,11 @@ allowed_file(const gchar *filename, struct CmdOptions *options)
         int str_len = strlen(filename);
         gchar *reversed_filename = g_utf8_strreverse(filename, str_len);
 
-        GSList *element;
-        for (element=options->exclude_masks; element; element=g_slist_next(element)) {
-            if (g_pattern_match((GPatternSpec *) element->data, str_len, filename, reversed_filename)) {
+        GSList *element = options->exclude_masks;
+        for (; element; element=g_slist_next(element)) {
+            if (g_pattern_match((GPatternSpec *) element->data,
+                                str_len, filename, reversed_filename))
+            {
                 g_free(reversed_filename);
                 g_debug("Exclude masks hit - skipping: %s", filename);
                 return FALSE;
@@ -155,7 +157,9 @@ dumper_thread(gpointer data, gpointer user_data)
 
     if (udata->old_metadata) {
         // We have old metadata
-        md = (cr_Package *) g_hash_table_lookup (udata->old_metadata, task->filename);
+        md = (cr_Package *) g_hash_table_lookup (udata->old_metadata,
+                                                 task->filename);
+
         if (md) {
             // CACHE HIT!
 
@@ -169,7 +173,8 @@ dumper_thread(gpointer data, gpointer user_data)
             {
                 old_used = TRUE;
             } else {
-                g_debug("%s metadata are obsolete -> generating new", task->filename);
+                g_debug("%s metadata are obsolete -> generating new",
+                        task->filename);
             }
         }
 
@@ -271,11 +276,11 @@ main(int argc, char **argv)
 
     // Dirs
 
-    gchar *in_dir   = NULL;     // path/to/repo/
-    gchar *in_repo  = NULL;     // path/to/repo/repodata/
-    gchar *out_dir  = NULL;     // path/to/out_repo/
-    gchar *out_repo = NULL;     // path/to/out_repo/repodata/
-    gchar *tmp_out_repo = NULL; // path/to/out_repo/.repodata/
+    gchar *in_dir       = NULL;  // path/to/repo/
+    gchar *in_repo      = NULL;  // path/to/repo/repodata/
+    gchar *out_dir      = NULL;  // path/to/out_repo/
+    gchar *out_repo     = NULL;  // path/to/out_repo/repodata/
+    gchar *tmp_out_repo = NULL;  // path/to/out_repo/.repodata/
 
     in_dir = cr_normalize_dir_path(argv[1]);
     cmd_options->input_dir = g_strdup(in_dir);
@@ -283,8 +288,8 @@ main(int argc, char **argv)
 
     // Check if inputdir exists
 
-    if (!g_file_test(cmd_options->input_dir, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
-        g_warning("Directory %s must exist", cmd_options->input_dir);
+    if (!g_file_test(in_dir, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
+        g_warning("Directory %s must exist", in_dir);
         g_free(in_dir);
         free_options(cmd_options);
         exit(1);
@@ -302,23 +307,25 @@ main(int argc, char **argv)
 
     // Set logging stuff
 
-    g_log_set_default_handler (cr_log_function, NULL);
+    g_log_set_default_handler (cr_log_fn, NULL);
 
     if (cmd_options->quiet) {
         // Quiet mode
-        GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
-        g_log_set_handler(NULL, levels, cr_black_hole_log_function, NULL);
-        g_log_set_handler("C_CREATEREPOLIB", levels, cr_black_hole_log_function, NULL);
+        GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO |
+                                G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
+        g_log_set_handler(NULL, levels, cr_null_log_fn, NULL);
+        g_log_set_handler("C_CREATEREPOLIB", levels, cr_null_log_fn, NULL);
     } else if (cmd_options->verbose) {
         // Verbose mode
-        GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
-        g_log_set_handler(NULL, levels, cr_log_function, NULL);
-        g_log_set_handler("C_CREATEREPOLIB", levels, cr_log_function, NULL);
+        GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO |
+                                G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
+        g_log_set_handler(NULL, levels, cr_log_fn, NULL);
+        g_log_set_handler("C_CREATEREPOLIB", levels, cr_log_fn, NULL);
     } else {
         // Standard mode
         GLogLevelFlags levels = G_LOG_LEVEL_DEBUG;
-        g_log_set_handler(NULL, levels, cr_black_hole_log_function, NULL);
-        g_log_set_handler("C_CREATEREPOLIB", levels, cr_black_hole_log_function, NULL);
+        g_log_set_handler(NULL, levels, cr_null_log_fn, NULL);
+        g_log_set_handler("C_CREATEREPOLIB", levels, cr_null_log_fn, NULL);
     }
 
 
@@ -372,10 +379,17 @@ main(int argc, char **argv)
 
     gchar *groupfile = NULL;
     if (cmd_options->groupfile_fullpath) {
-        groupfile = g_strconcat(tmp_out_repo, cr_get_filename(cmd_options->groupfile_fullpath), NULL);
-        g_debug("Copy groupfile %s -> %s", cmd_options->groupfile_fullpath, groupfile);
-        if (cr_better_copy_file(cmd_options->groupfile_fullpath, groupfile) != CR_COPY_OK) {
-            g_critical("Error while copy %s -> %s", cmd_options->groupfile_fullpath, groupfile);
+        groupfile = g_strconcat(tmp_out_repo,
+                              cr_get_filename(cmd_options->groupfile_fullpath),
+                              NULL);
+        g_debug("Copy groupfile %s -> %s", 
+                cmd_options->groupfile_fullpath, groupfile);
+
+        int ret;
+        ret = cr_better_copy_file(cmd_options->groupfile_fullpath, groupfile);
+        if (ret != CR_COPY_OK) {
+            g_critical("Error while copy %s -> %s",
+                       cmd_options->groupfile_fullpath, groupfile);
         }
     }
 
@@ -391,7 +405,9 @@ main(int argc, char **argv)
         // Load data from output dir if output dir is specified
         // This is default behaviour of classic createrepo
         if (cmd_options->outputdir) {
-            ret = cr_locate_and_load_xml_metadata(old_metadata, out_dir, CR_HT_KEY_FILENAME);
+            ret = cr_locate_and_load_xml_metadata(old_metadata,
+                                                  out_dir,
+                                                  CR_HT_KEY_FILENAME);
             if (ret == CR_LOAD_METADATA_OK) {
                 g_debug("Old metadata from: %s - loaded", out_dir);
             } else {
@@ -400,9 +416,11 @@ main(int argc, char **argv)
         }
 
         // Load local repodata
-        // Classic createrepo doesn't load this metadata if --outputdir option is used,
-        // but createrepo_c does.
-        ret = cr_locate_and_load_xml_metadata(old_metadata, in_dir, CR_HT_KEY_FILENAME);
+        // Classic createrepo with --outputdir specified doesn't load this
+        // metadata, but createrepo_c does.
+        ret = cr_locate_and_load_xml_metadata(old_metadata,
+                                              in_dir,
+                                              CR_HT_KEY_FILENAME);
         if (ret == CR_LOAD_METADATA_OK) {
             g_debug("Old metadata from: %s - loaded", in_dir);
         } else {
@@ -410,19 +428,21 @@ main(int argc, char **argv)
         }
 
         // Load repodata from --update-md-path
-        GSList *element;
-        for (element = cmd_options->l_update_md_paths; element; element = g_slist_next(element)) {
+        GSList *element = cmd_options->l_update_md_paths;
+        for (; element; element = g_slist_next(element)) {
             char *path = (char *) element->data;
             g_message("Loading metadata from: %s", path);
-            int ret = cr_locate_and_load_xml_metadata(old_metadata, path, CR_HT_KEY_FILENAME);
-            if (ret == CR_LOAD_METADATA_OK) {
-                g_debug("Old metadata from md-path %s - loaded", path);
-            } else {
-                g_warning("Old metadata from md-path %s - loading failed", path);
-            }
+            int ret = cr_locate_and_load_xml_metadata(old_metadata,
+                                                      path,
+                                                      CR_HT_KEY_FILENAME);
+            if (ret == CR_LOAD_METADATA_OK)
+                g_debug("Metadata from md-path %s - loaded", path);
+            else
+                g_warning("Metadata from md-path %s - loading failed", path);
         }
 
-        g_message("Loaded information about %d packages", g_hash_table_size(old_metadata));
+        g_message("Loaded information about %d packages",
+                  g_hash_table_size(old_metadata));
     }
 
 
@@ -451,14 +471,21 @@ main(int argc, char **argv)
     CR_FILE *fil_cr_file;
     CR_FILE *oth_cr_file;
 
+    gchar *pri_xml_filename;
+    gchar *fil_xml_filename;
+    gchar *oth_xml_filename;
+
     g_message("Temporary output repo path: %s", tmp_out_repo);
     g_debug("Creating .xml.gz files");
 
-    gchar *pri_xml_filename = g_strconcat(tmp_out_repo, "/primary.xml.gz", NULL);
-    gchar *fil_xml_filename = g_strconcat(tmp_out_repo, "/filelists.xml.gz", NULL);
-    gchar *oth_xml_filename = g_strconcat(tmp_out_repo, "/other.xml.gz", NULL);
+    pri_xml_filename = g_strconcat(tmp_out_repo, "/primary.xml.gz", NULL);
+    fil_xml_filename = g_strconcat(tmp_out_repo, "/filelists.xml.gz", NULL);
+    oth_xml_filename = g_strconcat(tmp_out_repo, "/other.xml.gz", NULL);
 
-    if ((pri_cr_file = cr_open(pri_xml_filename, CR_CW_MODE_WRITE, CR_CW_GZ_COMPRESSION)) == NULL) {
+    pri_cr_file = cr_open(pri_xml_filename,
+                          CR_CW_MODE_WRITE,
+                          CR_CW_GZ_COMPRESSION);
+    if (!pri_cr_file) {
         g_critical("Cannot open file: %s", pri_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
@@ -466,7 +493,10 @@ main(int argc, char **argv)
         exit(1);
     }
 
-    if ((fil_cr_file = cr_open(fil_xml_filename, CR_CW_MODE_WRITE, CR_CW_GZ_COMPRESSION)) == NULL) {
+    fil_cr_file = cr_open(fil_xml_filename,
+                          CR_CW_MODE_WRITE,
+                          CR_CW_GZ_COMPRESSION);
+    if (!fil_cr_file) {
         g_critical("Cannot open file: %s", fil_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
@@ -475,7 +505,10 @@ main(int argc, char **argv)
         exit(1);
     }
 
-    if ((oth_cr_file = cr_open(oth_xml_filename, CR_CW_MODE_WRITE, CR_CW_GZ_COMPRESSION)) == NULL) {
+    oth_cr_file = cr_open(oth_xml_filename,
+                          CR_CW_MODE_WRITE,
+                          CR_CW_GZ_COMPRESSION);
+    if (!oth_cr_file) {
         g_critical("Cannot open file: %s", oth_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
@@ -604,7 +637,9 @@ main(int argc, char **argv)
                 }
 
                 // Skip symbolic links if --skip-symlinks arg is used
-                if (cmd_options->skip_symlinks && g_file_test(full_path, G_FILE_TEST_IS_SYMLINK)) {
+                if (cmd_options->skip_symlinks
+                    && g_file_test(full_path, G_FILE_TEST_IS_SYMLINK))
+                {
                     g_debug("Skipped symlink: %s", full_path);
                     g_free(full_path);
                     continue;
@@ -612,7 +647,8 @@ main(int argc, char **argv)
 
                 // Check filename against exclude glob masks
                 const gchar *repo_relative_path = filename;
-                if (in_dir_len < strlen(full_path))  // This probably should be always true
+                if (in_dir_len < strlen(full_path))
+                    // This probably should be always true
                     repo_relative_path = full_path + in_dir_len;
 
                 if (allowed_file(repo_relative_path, cmd_options)) {
@@ -639,8 +675,8 @@ main(int argc, char **argv)
 
         g_debug("Skipping dir walk - using pkglist");
 
-        GSList *element;
-        for (element=cmd_options->include_pkgs; element; element=g_slist_next(element)) {
+        GSList *element = cmd_options->include_pkgs;
+        for (; element; element=g_slist_next(element)) {
             gchar *relative_path = (gchar *) element->data;
             //     ^^^ path from pkglist e.g. packages/i386/foobar.rpm
             gchar *full_path = g_strconcat(in_dir, relative_path, NULL);

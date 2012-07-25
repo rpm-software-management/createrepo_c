@@ -54,7 +54,7 @@ struct cr_MetadataLocation {
  * is called on the cr_MetadataLocation.
  * @param repopath      path to directory with repodata/ subdirectory
  * @param ignore_sqlite if ignore_sqlite != 0 sqlite dbs are ignored
- * @return              filled cr_MetadataLocation structure
+ * @return              filled cr_MetadataLocation structure or NULL
  */
 struct cr_MetadataLocation *cr_get_metadata_location(const char *repopath,
                                                      int ignore_sqlite);

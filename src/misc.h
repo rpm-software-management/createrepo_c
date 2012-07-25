@@ -219,10 +219,10 @@ int cr_cmp_version_str(const char* str1, const char *str2);
  * @param message       message
  * @param user_data     user data
  */
-void cr_black_hole_log_function(const gchar *log_domain,
-                                GLogLevelFlags log_level,
-                                const gchar *message,
-                                gpointer user_data);
+void cr_null_log_fn(const gchar *log_domain,
+                    GLogLevelFlags log_level,
+                    const gchar *message,
+                    gpointer user_data);
 
 /** \ingroup misc
  * Createrepo_c library standard logging function.
@@ -231,10 +231,10 @@ void cr_black_hole_log_function(const gchar *log_domain,
  * @param message       message
  * @param user_data     user data
  */
-void cr_log_function(const gchar *log_domain,
-                     GLogLevelFlags log_level,
-                     const gchar *message,
-                     gpointer user_data);
+void cr_log_fn(const gchar *log_domain,
+               GLogLevelFlags log_level,
+               const gchar *message,
+               gpointer user_data);
 
 #ifdef __cplusplus
 }

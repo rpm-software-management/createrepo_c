@@ -156,8 +156,7 @@ INCLUDE(CPack)
 # Other files
 
 SET(CMAKE_INSTALL_PREFIX "/")
-INSTALL(FILES README
-        COPYING
+INSTALL(FILES README COPYING
         DESTINATION "/usr/share/doc/createrepo_c-${VERSION}")
 INSTALL(FILES createrepo_c.bash
         DESTINATION "/etc/bash_completion.d")

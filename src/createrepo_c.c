@@ -499,7 +499,8 @@ main(int argc, char **argv)
     cr_DbOtherStatements oth_statements     = NULL;
 
     if (!cmd_options->no_database) {
-        g_debug("Creating .xml.gz files");
+        g_message("Preparing sqlite DBs");
+        g_debug("Creating databases");
         pri_db_filename = g_strconcat(tmp_out_repo, "/primary.sqlite", NULL);
         fil_db_filename = g_strconcat(tmp_out_repo, "/filelists.sqlite", NULL);
         oth_db_filename = g_strconcat(tmp_out_repo, "/other.sqlite", NULL);
@@ -678,7 +679,7 @@ main(int argc, char **argv)
     }
 
     g_debug("Package count: %d", package_count);
-    g_message("Directory walk done");
+    g_message("Directory walk done - %d packages", package_count);
 
 
     // Write XML header

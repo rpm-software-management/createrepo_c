@@ -43,7 +43,7 @@ extern "C" {
  * @param flags         flags
  * @return              flags as constant string
  */
-const char *cr_flag_to_string(gint64 flags);
+const char *cr_flag_to_str(gint64 flags);
 
 /** \ingroup misc
  * Epoch-Version-Release representation.
@@ -75,7 +75,7 @@ struct cr_Version {
  * @param chunk         string chunk for strings (optional - could be NULL)
  * @return              filled NVR
  */
-struct cr_EVR cr_string_to_version(const char *string, GStringChunk *chunk);
+struct cr_EVR cr_str_to_evr(const char *string, GStringChunk *chunk);
 
 /** \ingroup misc
  * Check if the filename match pattern for primary files (files listed
@@ -167,6 +167,7 @@ int cr_copy_file(const char *src, const char *dst);
  * @param dst           destination (If dst is dir, filename of src +
  *                      compression suffix is used.
  *                      If dst is NULL, src + compression suffix is used)
+ * @param compression   type of compression
  * @return              CR_COPY_OK or CR_COPY_ERR on error
  */
 int cr_compress_file(const char *src,
@@ -209,7 +210,7 @@ struct cr_Version cr_str_to_version(const char *str);
  * @return              0 - versions are same, 1 - first string is bigger
  *                      version, 2 - second string is bigger version
  */
-int cr_cmp_version_string(const char* str1, const char *str2);
+int cr_cmp_version_str(const char* str1, const char *str2);
 
 /** \ingroup misc
  * Logging function with no output.

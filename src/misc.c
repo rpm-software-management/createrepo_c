@@ -40,7 +40,7 @@
 
 
 const char *
-cr_flag_to_string(gint64 flags)
+cr_flag_to_str(gint64 flags)
 {
     flags &= 0xf;
     switch(flags) {
@@ -76,7 +76,7 @@ cr_flag_to_string(gint64 flags)
  *
  */
 struct cr_EVR
-cr_string_to_version(const char *string, GStringChunk *chunk)
+cr_str_to_evr(const char *string, GStringChunk *chunk)
 {
     struct cr_EVR evr;
     evr.epoch = NULL;
@@ -789,7 +789,7 @@ cr_str_to_version(const char *str)
 // 1 - first string is bigger version
 // 2 - second string is bigger version
 int
-cr_cmp_version_string(const char* str1, const char *str2)
+cr_cmp_version_str(const char* str1, const char *str2)
 {
     struct cr_Version ver1, ver2;
 

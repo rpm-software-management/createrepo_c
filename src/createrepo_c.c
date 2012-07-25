@@ -795,9 +795,9 @@ main(int argc, char **argv)
 
     // XML
 
-    cr_fill_missing_data(out_dir, pri_xml_rec, &(cmd_options->checksum_type));
-    cr_fill_missing_data(out_dir, fil_xml_rec, &(cmd_options->checksum_type));
-    cr_fill_missing_data(out_dir, oth_xml_rec, &(cmd_options->checksum_type));
+    cr_fill_repomdrecord(out_dir, pri_xml_rec, &(cmd_options->checksum_type));
+    cr_fill_repomdrecord(out_dir, fil_xml_rec, &(cmd_options->checksum_type));
+    cr_fill_repomdrecord(out_dir, oth_xml_rec, &(cmd_options->checksum_type));
 
 
     // Groupfile
@@ -809,9 +809,11 @@ main(int argc, char **argv)
         groupfile_rec = cr_new_repomdrecord(groupfile_name);
         compressed_groupfile_rec = cr_new_repomdrecord(groupfile_name);
 
-        cr_process_groupfile(out_dir, groupfile_rec, compressed_groupfile_rec,
-                             &(cmd_options->checksum_type),
-                             groupfile_compression);
+        cr_process_groupfile_repomdrecord(out_dir,
+                                          groupfile_rec,
+                                          compressed_groupfile_rec,
+                                          &(cmd_options->checksum_type),
+                                          groupfile_compression);
         g_free(groupfile_name);
     }
 
@@ -872,9 +874,9 @@ main(int argc, char **argv)
         fil_db_rec = cr_new_repomdrecord(fil_db_name);
         oth_db_rec = cr_new_repomdrecord(oth_db_name);
 
-        cr_fill_missing_data(out_dir, pri_db_rec, &(cmd_options->checksum_type));
-        cr_fill_missing_data(out_dir, fil_db_rec, &(cmd_options->checksum_type));
-        cr_fill_missing_data(out_dir, oth_db_rec, &(cmd_options->checksum_type));
+        cr_fill_repomdrecord(out_dir, pri_db_rec, &(cmd_options->checksum_type));
+        cr_fill_repomdrecord(out_dir, fil_db_rec, &(cmd_options->checksum_type));
+        cr_fill_repomdrecord(out_dir, oth_db_rec, &(cmd_options->checksum_type));
 
         g_free(pri_db_name);
         g_free(fil_db_name);
@@ -885,23 +887,29 @@ main(int argc, char **argv)
     // Add checksums into files names
 
     if (cmd_options->unique_md_filenames) {
-        cr_rename_file(out_dir, pri_xml_rec);
-        cr_rename_file(out_dir, fil_xml_rec);
-        cr_rename_file(out_dir, oth_xml_rec);
-        cr_rename_file(out_dir, pri_db_rec);
-        cr_rename_file(out_dir, fil_db_rec);
-        cr_rename_file(out_dir, oth_db_rec);
-        cr_rename_file(out_dir, groupfile_rec);
-        cr_rename_file(out_dir, compressed_groupfile_rec);
+        cr_rename_repomdrecord_file(out_dir, pri_xml_rec);
+        cr_rename_repomdrecord_file(out_dir, fil_xml_rec);
+        cr_rename_repomdrecord_file(out_dir, oth_xml_rec);
+        cr_rename_repomdrecord_file(out_dir, pri_db_rec);
+        cr_rename_repomdrecord_file(out_dir, fil_db_rec);
+        cr_rename_repomdrecord_file(out_dir, oth_db_rec);
+        cr_rename_repomdrecord_file(out_dir, groupfile_rec);
+        cr_rename_repomdrecord_file(out_dir, compressed_groupfile_rec);
     }
 
 
     // Gen xml
 
-    char *repomd_xml = cr_xml_repomd(out_dir, pri_xml_rec, fil_xml_rec,
-                                     oth_xml_rec, pri_db_rec, fil_db_rec,
-                                     oth_db_rec, groupfile_rec,
-                                     compressed_groupfile_rec, NULL);
+    char *repomd_xml = cr_generate_repomd_xml(out_dir,
+                                              pri_xml_rec,
+                                              fil_xml_rec,
+                                              oth_xml_rec,
+                                              pri_db_rec,
+                                              fil_db_rec,
+                                              oth_db_rec,
+                                              groupfile_rec,
+                                              compressed_groupfile_rec,
+                                              NULL);
     gchar *repomd_path = g_strconcat(out_repo, "repomd.xml", NULL);
 
 

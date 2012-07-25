@@ -30,12 +30,12 @@ extern "C" {
 /** \defgroup repomd            Repomd API.
  */
 
-/** \ingroup misc
+/** \ingroup repomd
  * cr_RepomdRecord object
  */
 typedef struct _cr_RepomdRecord * cr_RepomdRecord;
 
-/** \ingroup misc
+/** \ingroup repomd
  * Internal representation of cr_RepomdRecord object
  */
 struct _cr_RepomdRecord {
@@ -67,32 +67,32 @@ void cr_free_repomdrecord(cr_RepomdRecord record);
 /** \ingroup repomd
  * Fill unfilled items in the cr_RepomdRecord (calculate checksums,
  * get file size before/after compression, etc.).
- * Note: For groupfile you shoud use cr_process_groupfile function.
+ * Note: For groupfile you shoud use cr_process_groupfile_repomdrecord function.
  * @param base_path             path to repo (to directory with repodata subdir)
  * @param record                cr_RepomdRecord object
  * @param checksum_type         type of checksum to use
  */
-int cr_fill_missing_data(const char *base_path,
+int cr_fill_repomdrecord(const char *base_path,
                          cr_RepomdRecord record,
                          cr_ChecksumType *checksum_type);
 
 /** \ingroup repomd
- * Analogue of cr_fill_missing_data but for groupfile.
+ * Analogue of cr_fill_repomdrecord but for groupfile.
  * Groupfile must be set with the path to existing non compressed groupfile.
  * Compressed group file will be created and compressed_groupfile record
  * updated.
  * @param base_path             path to repo (to directory with repodata subdir)
  * @param groupfile             cr_RepomdRecord initialized to an existing
  *                              groupfile
- * @param compressed_groupfile  cr_RepomdRecord object that will by filled
+ * @param compressed_groupfile  empty cr_RepomdRecord object that will by filled
  * @param checksum_type         type of checksums
  * @param compression           type of compression
  */
-void cr_process_groupfile(const char *base_path,
-                          cr_RepomdRecord groupfile,
-                          cr_RepomdRecord compressed_groupfile,
-                          cr_ChecksumType *checksum_type,
-                          cr_CompressionType compression);
+void cr_process_groupfile_repomdrecord(const char *base_path,
+                                       cr_RepomdRecord groupfile,
+                                       cr_RepomdRecord compressed_groupfile,
+                                       cr_ChecksumType *checksum_type,
+                                       cr_CompressionType compression);
 
 /** \ingroup repomd
  * Add a hash as prefix to the filename.
@@ -100,7 +100,7 @@ void cr_process_groupfile(const char *base_path,
  *                              subdir)
  * @param record                cr_RepomdRecord of file to be renamed
  */
-void cr_rename_file(const char *base_path, cr_RepomdRecord record);
+void cr_rename_repomdrecord_file(const char *base_path, cr_RepomdRecord record);
 
 /** \ingroup repomd
  * Generate repomd.xml content.
@@ -126,11 +126,16 @@ void cr_rename_file(const char *base_path, cr_RepomdRecord record);
  *                              towards to the path param)
  * @return                      string with repomd.xml content
  */
-gchar * cr_xml_repomd(const char *path, cr_RepomdRecord pri_xml,
-                      cr_RepomdRecord fil_xml, cr_RepomdRecord oth_xml,
-                      cr_RepomdRecord pri_sqlite, cr_RepomdRecord fil_sqlite,
-                      cr_RepomdRecord oth_sqlite, cr_RepomdRecord groupfile,
-                      cr_RepomdRecord cgroupfile, cr_RepomdRecord update_info);
+gchar *cr_generate_repomd_xml(const char *path,
+                              cr_RepomdRecord pri_xml,
+                              cr_RepomdRecord fil_xml,
+                              cr_RepomdRecord oth_xml,
+                              cr_RepomdRecord pri_sqlite,
+                              cr_RepomdRecord fil_sqlite,
+                              cr_RepomdRecord oth_sqlite,
+                              cr_RepomdRecord groupfile,
+                              cr_RepomdRecord cgroupfile,
+                              cr_RepomdRecord update_info);
 
 #ifdef __cplusplus
 }

@@ -186,7 +186,7 @@ void cr_add_primary_pkg_db(cr_DbPrimaryStatements stmts, cr_Package *pkg);
  * @param stmts                 object with compiled statements
  * @param pkg                   package object
  */
-void cr_add_filelists_pkg_db(cr_DbFilelistsStatements, cr_Package *pkg);
+void cr_add_filelists_pkg_db(cr_DbFilelistsStatements stmts, cr_Package *pkg);
 
 /** \ingroup sqlite
  * Add package into the database.
@@ -197,9 +197,9 @@ void cr_add_other_pkg_db(cr_DbOtherStatements stmts, cr_Package *pkg);
 
 /** \ingroup sqlite
  * Insert record into the updateinfo table
- * @param                       open db connection
- * @checksum                    compressed xml file checksum
- * @err                         **GError
+ * @param db                    open db connection
+ * @param checksum              compressed xml file checksum
+ * @param err                   **GError
  */
 void cr_dbinfo_update(sqlite3 *db, const char *checksum, GError **err);
 

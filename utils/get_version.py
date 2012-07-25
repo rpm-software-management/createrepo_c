@@ -16,9 +16,9 @@ def parse(root_dir):
 
     content = open(path, "r").read()
     ver = {}
-    ver['major'] = re.search('#define\s+CR_MAJOR_VERSION\s+(\d)', content).group(1)
-    ver['minor'] = re.search('#define\s+CR_MINOR_VERSION\s+(\d)', content).group(1)
-    ver['patch'] = re.search('#define\s+CR_PATCH_VERSION\s+(\d)', content).group(1)
+    ver['major'] = re.search('#define\s+CR_MAJOR_VERSION\s+(\d).*', content).group(1)
+    ver['minor'] = re.search('#define\s+CR_MINOR_VERSION\s+(\d).*', content).group(1)
+    ver['patch'] = re.search('#define\s+CR_PATCH_VERSION\s+(\d).*', content).group(1)
     return ver
 
 

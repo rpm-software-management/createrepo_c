@@ -90,7 +90,7 @@ CR_FILE *cr_open(const char *filename,
 
 /** \ingroup compression_wrapper
  * Reads an array of len bytes from the CR_FILE.
- * @param CR_FILE       CR_FILE pointer
+ * @param cr_file       CR_FILE pointer
  * @param buffer        target buffer
  * @param len           number of bytes to read
  * @return              CR_CW_OK or CR_CW_ERR
@@ -99,7 +99,7 @@ int cr_read(CR_FILE *cr_file, void *buffer, unsigned int len);
 
 /** \ingroup compression_wrapper
  * Writes the array of len bytes from buffer to the cr_file.
- * @param CR_FILE       CR_FILE pointer
+ * @param cr_file       CR_FILE pointer
  * @param buffer        source buffer
  * @param len           number of bytes to read
  * @return              number of uncompressed bytes readed (0 = EOF)
@@ -109,7 +109,7 @@ int cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len);
 
 /** \ingroup compression_wrapper
  * Writes the string pointed by str into the cr_file.
- * @param CR_FILE       CR_FILE pointer
+ * @param cr_file       CR_FILE pointer
  * @param str           null terminated ('\0') string
  * @return              number of uncompressed bytes writed or CR_CW_ERR
  */
@@ -117,7 +117,7 @@ int cr_puts(CR_FILE *cr_file, const char *str);
 
 /** \ingroup compression_wrapper
  * Writes a formatted string into the cr_file.
- * @param CR_FILE       CR_FILE pointer
+ * @param cr_file       CR_FILE pointer
  * @param format        format string
  * @param ...           list of additional arguments as specified in format
  * @return              CR_CW_OK or CR_CW_ERR
@@ -126,7 +126,7 @@ int cr_printf(CR_FILE *cr_file, const char *format, ...);
 
 /** \ingroup compression_wrapper
  * Closes the CR_FILE.
- * @param CR_FILE       CR_FILE pointer
+ * @param cr_file       CR_FILE pointer
  * @return              CR_CW_OK or CR_CW_ERR
  */
 int cr_close(CR_FILE *cr_file);

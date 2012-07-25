@@ -160,7 +160,7 @@ get_compressed_content_stat(const char *filename, cr_ChecksumType checksum_type)
 
 
 int
-cr_fill_missing_data(const char *base_path, cr_RepomdRecord md,
+cr_fill_repomdrecord(const char *base_path, cr_RepomdRecord md,
                      cr_ChecksumType *checksum_type)
 {
     if (!md || !(md->location_href) || !strlen(md->location_href)) {
@@ -254,10 +254,11 @@ cr_fill_missing_data(const char *base_path, cr_RepomdRecord md,
 
 
 void
-cr_process_groupfile(const char *base_path, cr_RepomdRecord groupfile,
-                     cr_RepomdRecord cgroupfile,
-                     cr_ChecksumType *checksum_type,
-                     cr_CompressionType groupfile_compression)
+cr_process_groupfile_repomdrecord(const char *base_path,
+                                  cr_RepomdRecord groupfile,
+                                  cr_RepomdRecord cgroupfile,
+                                  cr_ChecksumType *checksum_type,
+                                  cr_CompressionType groupfile_compression)
 {
     if (!groupfile || !(groupfile->location_href) || !strlen(groupfile->location_href) || !cgroupfile) {
         return;
@@ -474,7 +475,7 @@ repomd_xml_dump(long revision, cr_RepomdRecord pri_xml, cr_RepomdRecord fil_xml,
 
 
 void
-cr_rename_file(const char *base_path, cr_RepomdRecord md)
+cr_rename_repomdrecord_file(const char *base_path, cr_RepomdRecord md)
 {
     if (!md || !(md->location_href) || !strlen(md->location_href)) {
         return;
@@ -533,11 +534,11 @@ cr_rename_file(const char *base_path, cr_RepomdRecord md)
 
 
 gchar *
-cr_xml_repomd(const char *path, cr_RepomdRecord pri_xml,
-              cr_RepomdRecord fil_xml, cr_RepomdRecord oth_xml,
-              cr_RepomdRecord pri_sqlite, cr_RepomdRecord fil_sqlite,
-              cr_RepomdRecord oth_sqlite, cr_RepomdRecord groupfile,
-              cr_RepomdRecord cgroupfile, cr_RepomdRecord update_info)
+cr_generate_repomd_xml(const char *path, cr_RepomdRecord pri_xml,
+                       cr_RepomdRecord fil_xml, cr_RepomdRecord oth_xml,
+                       cr_RepomdRecord pri_sqlite, cr_RepomdRecord fil_sqlite,
+                       cr_RepomdRecord oth_sqlite, cr_RepomdRecord groupfile,
+                       cr_RepomdRecord cgroupfile, cr_RepomdRecord update_info)
 {
     if (!path) {
         return NULL;

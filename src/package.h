@@ -36,7 +36,7 @@ extern "C" {
  */
 typedef struct {
     char *name;                 /*!< name */
-    char *flags;                /*!< flags (value returned by cr_flag_to_string()
+    char *flags;                /*!< flags (value returned by cr_flag_to_str()
                                      from misc module) */
     char *epoch;                /*!< epoch */
     char *version;              /*!< version */

@@ -260,7 +260,7 @@ cr_parse_header(Header hdr, gint64 mtime, gint64 size,
                 int pre = 0;
                 const char *filename = rpmtdGetString(filenames);
                 guint64 num_flags = rpmtdGetNumber(fileflags);
-                const char *flags = cr_flag_to_string(num_flags);
+                const char *flags = cr_flag_to_str(num_flags);
                 const char *full_version = rpmtdGetString(fileversions);
 
                 // Requires specific stuff
@@ -307,7 +307,7 @@ cr_parse_header(Header hdr, gint64 mtime, gint64 size,
                 cr_Dependency *dependency = cr_dependency_new();
                 dependency->name = safe_string_chunk_insert(pkg->chunk, filename);
                 dependency->flags = safe_string_chunk_insert(pkg->chunk, flags);
-                struct cr_EVR evr = cr_string_to_version(full_version, pkg->chunk);
+                struct cr_EVR evr = cr_str_to_evr(full_version, pkg->chunk);
                 dependency->epoch = evr.epoch;
                 dependency->version = evr.version;
                 dependency->release = evr.release;

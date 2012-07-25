@@ -379,7 +379,7 @@ add_package(cr_Package *pkg,
 
                 // NVR merge method
                 } else if (merge_method == MM_NVR) {
-                    int cmp_res = cr_cmp_version_string(pkg->version, c_pkg->version);
+                    int cmp_res = cr_cmp_version_str(pkg->version, c_pkg->version);
                     long pkg_release   = (pkg->release)   ? strtol(pkg->release, NULL, 10)   : 0;
                     long c_pkg_release = (c_pkg->release) ? strtol(c_pkg->release, NULL, 10) : 0;
 
@@ -402,7 +402,7 @@ add_package(cr_Package *pkg,
 
                 // Two packages has same name and arch but all param is used
 
-                int cmp_res = cr_cmp_version_string(pkg->version, c_pkg->version);
+                int cmp_res = cr_cmp_version_str(pkg->version, c_pkg->version);
                 long pkg_release   = (pkg->release)   ? strtol(pkg->release, NULL, 10)   : 0;
                 long c_pkg_release = (c_pkg->release) ? strtol(c_pkg->release, NULL, 10) : 0;
 
@@ -703,9 +703,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     // XML
 
-    cr_fill_missing_data(out_dir, pri_xml_rec, NULL);
-    cr_fill_missing_data(out_dir, fil_xml_rec, NULL);
-    cr_fill_missing_data(out_dir, oth_xml_rec, NULL);
+    cr_fill_repomdrecord(out_dir, pri_xml_rec, NULL);
+    cr_fill_repomdrecord(out_dir, fil_xml_rec, NULL);
+    cr_fill_repomdrecord(out_dir, oth_xml_rec, NULL);
 
 
     // Groupfile
@@ -716,8 +716,11 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         groupfile_rec = cr_new_repomdrecord(groupfile_name);
         compressed_groupfile_rec = cr_new_repomdrecord(groupfile_name);
 
-        cr_process_groupfile(out_dir, groupfile_rec, compressed_groupfile_rec,
-                             NULL, cmd_options->groupfile_compression_type);
+        cr_process_groupfile_repomdrecord(out_dir,
+                                          groupfile_rec,
+                                          compressed_groupfile_rec,
+                                          NULL,
+                                          cmd_options->groupfile_compression_type);
         g_free(groupfile_name);
     }
 
@@ -728,7 +731,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         gchar *update_info_name = g_strconcat("repodata/updateinfo.xml",
                                               groupfile_suffix, NULL);
         update_info_rec = cr_new_repomdrecord(update_info_name);
-        cr_fill_missing_data(out_dir, update_info_rec, NULL);
+        cr_fill_repomdrecord(out_dir, update_info_rec, NULL);
         g_free(update_info_name);
     }
 
@@ -772,31 +775,37 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         g_free(fil_db_name);
         g_free(oth_db_name);
 
-        cr_fill_missing_data(out_dir, pri_db_rec, NULL);
-        cr_fill_missing_data(out_dir, fil_db_rec, NULL);
-        cr_fill_missing_data(out_dir, oth_db_rec, NULL);
+        cr_fill_repomdrecord(out_dir, pri_db_rec, NULL);
+        cr_fill_repomdrecord(out_dir, fil_db_rec, NULL);
+        cr_fill_repomdrecord(out_dir, oth_db_rec, NULL);
     }
 
 
     // Add checksums into files names
 
-    cr_rename_file(out_dir, pri_xml_rec);
-    cr_rename_file(out_dir, fil_xml_rec);
-    cr_rename_file(out_dir, oth_xml_rec);
-    cr_rename_file(out_dir, pri_db_rec);
-    cr_rename_file(out_dir, fil_db_rec);
-    cr_rename_file(out_dir, oth_db_rec);
-    cr_rename_file(out_dir, groupfile_rec);
-    cr_rename_file(out_dir, compressed_groupfile_rec);
-    cr_rename_file(out_dir, update_info_rec);
+    cr_rename_repomdrecord_file(out_dir, pri_xml_rec);
+    cr_rename_repomdrecord_file(out_dir, fil_xml_rec);
+    cr_rename_repomdrecord_file(out_dir, oth_xml_rec);
+    cr_rename_repomdrecord_file(out_dir, pri_db_rec);
+    cr_rename_repomdrecord_file(out_dir, fil_db_rec);
+    cr_rename_repomdrecord_file(out_dir, oth_db_rec);
+    cr_rename_repomdrecord_file(out_dir, groupfile_rec);
+    cr_rename_repomdrecord_file(out_dir, compressed_groupfile_rec);
+    cr_rename_repomdrecord_file(out_dir, update_info_rec);
 
 
     // Gen repomd.xml content
 
-    char *repomd_xml = cr_xml_repomd(out_dir, pri_xml_rec,
-                                     fil_xml_rec, oth_xml_rec, pri_db_rec,
-                                     fil_db_rec, oth_db_rec, groupfile_rec,
-                                     compressed_groupfile_rec, update_info_rec);
+    char *repomd_xml = cr_generate_repomd_xml(out_dir,
+                                              pri_xml_rec,
+                                              fil_xml_rec,
+                                              oth_xml_rec,
+                                              pri_db_rec,
+                                              fil_db_rec,
+                                              oth_db_rec,
+                                              groupfile_rec,
+                                              compressed_groupfile_rec,
+                                              update_info_rec);
 
     if (repomd_xml) {
         gchar *repomd_path = g_strconcat(cmd_options->out_repo, "repomd.xml", NULL);

@@ -57,6 +57,7 @@ cr_free_metadata_location(struct cr_MetadataLocation *ml)
     g_free(ml->oth_sqlite_href);
     g_free(ml->groupfile_href);
     g_free(ml->cgroupfile_href);
+    g_free(ml->updateinfo_href);
     g_free(ml->repomd);
     g_free(ml->original_url);
     g_free(ml->local_path);
@@ -195,6 +196,8 @@ parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite)
         } else if (!g_strcmp0((char *) data_type, "group_gz")) {
             // even with a createrepo param --xz this name has a _gz suffix
             mdloc->cgroupfile_href = full_location_href;
+        } else if (!g_strcmp0((char *) data_type, "updateinfo")) {
+            mdloc->updateinfo_href = full_location_href;
         } else {
             g_warning("Unknown data in repomd.xml \"%s\"", data_type);
             g_free(full_location_href);
@@ -375,6 +378,8 @@ get_remote_metadata(const char *repopath, int ignore_sqlite)
         cr_download(handle, r_location->groupfile_href, tmp_repodata, &error);
     if (!error && r_location->cgroupfile_href)
         cr_download(handle, r_location->cgroupfile_href, tmp_repodata, &error);
+    if (!error && r_location->updateinfo_href)
+        cr_download(handle, r_location->updateinfo_href, tmp_repodata, &error);
 
     if (error) {
         g_critical(MODULE"%s: Error while downloadig files: %s", __func__, error);
@@ -464,6 +469,7 @@ get_list_of_md_locations (struct cr_MetadataLocation *ml)
     if (ml->oth_sqlite_href) list = g_slist_prepend(list, (gpointer) ml->oth_sqlite_href);
     if (ml->groupfile_href)  list = g_slist_prepend(list, (gpointer) ml->groupfile_href);
     if (ml->cgroupfile_href) list = g_slist_prepend(list, (gpointer) ml->cgroupfile_href);
+    if (ml->updateinfo_href) list = g_slist_prepend(list, (gpointer) ml->updateinfo_href);
     if (ml->repomd)          list = g_slist_prepend(list, (gpointer) ml->repomd);
 
     return list;
@@ -543,6 +549,7 @@ cr_remove_metadata(const char *repopath)
             g_str_has_suffix(file, "primary.xml") ||
             g_str_has_suffix(file, "filelists.xml") ||
             g_str_has_suffix(file, "other.xml") ||
+            g_str_has_suffix(file, "updateinfo.xml") ||
             !g_strcmp0(file, "repomd.xml"))
         {
             gchar *path;

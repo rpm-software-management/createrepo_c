@@ -39,6 +39,7 @@ struct cr_MetadataLocation {
     char *oth_sqlite_href;      /*!< path to other.sqlite */
     char *groupfile_href;       /*!< path to groupfile */
     char *cgroupfile_href;      /*!< path to compressed groupfile */
+    char *updateinfo_href;      /*!< path to updateinfo */
     char *repomd;               /*!< path to repomd.xml */
     char *original_url;         /*!< original path of repo from commandline
                                      param */

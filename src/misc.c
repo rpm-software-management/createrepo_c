@@ -868,7 +868,7 @@ cr_log_fn(const gchar *log_domain,
             printf("- %s\n", message);
             break;
         default:
-        printf("> %s\n", message);
+            printf("> %s\n", message);
     }
 
     return;

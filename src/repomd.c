@@ -493,11 +493,40 @@ cr_rename_repomdrecord_file(const char *base_path, cr_RepomdRecord md)
     for (; x > 0; x--) {
         if (md->location_href[x] == '/') {
             location_href_path_prefix = g_strndup(md->location_href, x+1);
-            location_href_filename_only = md->location_href + x + 1;
+            location_href_filename_only = cr_get_filename(md->location_href+x+1);
             break;
         }
     }
 
+    // Check if the rename is necessary
+    // During update with --keep-all-metadata some files (groupfile,
+    // updateinfo, ..) could already have checksum in filenames
+    if (g_str_has_prefix(location_href_filename_only, md->checksum)) {
+        // The filename constains checksum and it is current
+        g_free(location_href_path_prefix);
+        g_free(path);
+        return;
+    }
+
+    // Skip existing obsolete checksum in the name if there is any
+    int len = strlen(location_href_filename_only);
+    if (len > 32) {
+        // The filename is long -> it could contains a checksum
+        for (x = 0; x < len; x++) {
+            if (location_href_filename_only[x] == '-' && (
+                   x == 32  // Prefix is MD5 checksum
+                || x == 40  // Prefix is SHA1 checksum
+                || x == 64  // Prefix is SHA256 checksum
+                || x == 128 // Prefix is SHA512 checksum
+               ))
+            {
+                location_href_filename_only = location_href_filename_only + x + 1;
+                break;
+            }
+        }
+    }
+
+    // Prepare new name and path
     gchar *new_location_href = g_strconcat(location_href_path_prefix,
                                            md->checksum,
                                            "-",
@@ -507,7 +536,6 @@ cr_rename_repomdrecord_file(const char *base_path, cr_RepomdRecord md)
 
     g_free(location_href_path_prefix);
 
-    // Rename
     if (g_file_test (new_path, G_FILE_TEST_EXISTS)) {
         if (remove(new_path)) {
             g_critical(MODULE"%s: Cannot delete old %s", __func__, new_path);

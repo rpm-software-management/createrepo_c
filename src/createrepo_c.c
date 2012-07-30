@@ -374,40 +374,22 @@ main(int argc, char **argv)
     }
 
 
-
-    // Copy groupfile
-
-    gchar *groupfile = NULL;
-    if (cmd_options->groupfile_fullpath) {
-        groupfile = g_strconcat(tmp_out_repo,
-                              cr_get_filename(cmd_options->groupfile_fullpath),
-                              NULL);
-        g_debug("Copy groupfile %s -> %s", 
-                cmd_options->groupfile_fullpath, groupfile);
-
-        int ret;
-        ret = cr_better_copy_file(cmd_options->groupfile_fullpath, groupfile);
-        if (ret != CR_COPY_OK) {
-            g_critical("Error while copy %s -> %s",
-                       cmd_options->groupfile_fullpath, groupfile);
-        }
-    }
-
-
     // Load old metadata if --update
 
     GHashTable *old_metadata = NULL;
-    if (cmd_options->update) {
+    struct cr_MetadataLocation *old_metadata_location = NULL;
 
+    if (cmd_options->update) {
         int ret;
         old_metadata = cr_new_metadata_hashtable();
 
         // Load data from output dir if output dir is specified
         // This is default behaviour of classic createrepo
         if (cmd_options->outputdir) {
-            ret = cr_locate_and_load_xml_metadata(old_metadata,
-                                                  out_dir,
-                                                  CR_HT_KEY_FILENAME);
+            old_metadata_location = cr_get_metadata_location(out_dir, 1);
+            ret = cr_load_xml_metadata(old_metadata,
+                                       old_metadata_location,
+                                       CR_HT_KEY_FILENAME);
             if (ret == CR_LOAD_METADATA_OK) {
                 g_debug("Old metadata from: %s - loaded", out_dir);
             } else {
@@ -418,9 +400,17 @@ main(int argc, char **argv)
         // Load local repodata
         // Classic createrepo with --outputdir specified doesn't load this
         // metadata, but createrepo_c does.
-        ret = cr_locate_and_load_xml_metadata(old_metadata,
-                                              in_dir,
-                                              CR_HT_KEY_FILENAME);
+        if (!cmd_options->outputdir) {
+            old_metadata_location = cr_get_metadata_location(in_dir, 1);
+            ret = cr_load_xml_metadata(old_metadata,
+                                       old_metadata_location,
+                                       CR_HT_KEY_FILENAME);
+        } else {
+            ret = cr_locate_and_load_xml_metadata(old_metadata,
+                                                  in_dir,
+                                                  CR_HT_KEY_FILENAME);
+        }
+
         if (ret == CR_LOAD_METADATA_OK) {
             g_debug("Old metadata from: %s - loaded", in_dir);
         } else {
@@ -444,6 +434,46 @@ main(int argc, char **argv)
         g_message("Loaded information about %d packages",
                   g_hash_table_size(old_metadata));
     }
+
+    // Copy groupfile
+
+    gchar *groupfile = NULL;
+
+    if (cmd_options->groupfile_fullpath) {
+        // Groupfile specified as argument
+
+        groupfile = g_strconcat(tmp_out_repo,
+                              cr_get_filename(cmd_options->groupfile_fullpath),
+                              NULL);
+        g_debug("Copy groupfile %s -> %s",
+                cmd_options->groupfile_fullpath, groupfile);
+
+        int ret;
+        ret = cr_better_copy_file(cmd_options->groupfile_fullpath, groupfile);
+        if (ret != CR_COPY_OK) {
+            g_critical("Error while copy %s -> %s",
+                       cmd_options->groupfile_fullpath, groupfile);
+        }
+    } else if (cmd_options->update && cmd_options->keep_all_metadata &&
+               old_metadata_location && old_metadata_location->groupfile_href)
+    {
+        // Old groupfile exists
+
+        g_message("Using groupfile from target repo");
+
+        gchar *src_groupfile = old_metadata_location->groupfile_href;
+        groupfile = g_strconcat(tmp_out_repo,
+                                cr_get_filename(src_groupfile),
+                                NULL);
+
+        g_debug("Copy groupfile %s -> %s", src_groupfile, groupfile);
+
+        if (cr_better_copy_file(src_groupfile, groupfile) != CR_COPY_OK)
+            g_critical("Error while copy %s -> %s", src_groupfile, groupfile);
+    }
+
+    cr_free_metadata_location(old_metadata_location);
+    old_metadata_location = NULL;
 
 
     // Setup compression types
@@ -622,7 +652,7 @@ main(int argc, char **argv)
 
                 // Non .rpm files
                 if (!g_str_has_suffix (filename, ".rpm")) {
-                    if (!g_file_test(full_path, G_FILE_TEST_IS_REGULAR) && 
+                    if (!g_file_test(full_path, G_FILE_TEST_IS_REGULAR) &&
                         g_file_test(full_path, G_FILE_TEST_IS_DIR))
                     {
                         // Directory
@@ -768,6 +798,7 @@ main(int argc, char **argv)
     // Move files from out_repo into tmp_out_repo
 
     g_debug("Moving data from %s", out_repo);
+
     if (g_file_test(out_repo, G_FILE_TEST_EXISTS)) {
 
         // Delete old metadata
@@ -840,12 +871,12 @@ main(int argc, char **argv)
     // Groupfile
 
     if (groupfile) {
-        gchar *groupfile_name = g_strconcat("repodata/",
-                                            cr_get_filename(groupfile),
-                                            NULL);
+        gchar *groupfile_name;
+        groupfile_name = g_strconcat("repodata/",
+                                     cr_get_filename(groupfile),
+                                     NULL);
         groupfile_rec = cr_new_repomdrecord(groupfile_name);
         compressed_groupfile_rec = cr_new_repomdrecord(groupfile_name);
-
         cr_process_groupfile_repomdrecord(out_dir,
                                           groupfile_rec,
                                           compressed_groupfile_rec,

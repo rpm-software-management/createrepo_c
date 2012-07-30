@@ -172,17 +172,32 @@ parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite)
             mdloc->fil_xml_href = full_location_href;
         } else if (!g_strcmp0((char *) data_type, "other")) {
             mdloc->oth_xml_href = full_location_href;
-        } else if (!ignore_sqlite && !g_strcmp0((char *) data_type, "primary_db")) {
+        } else if (!g_strcmp0((char *) data_type, "primary_db")) {
+            if (ignore_sqlite) {
+                g_free(full_location_href);
+                full_location_href = NULL;
+            }
             mdloc->pri_sqlite_href = full_location_href;
-        } else if (!ignore_sqlite && !g_strcmp0((char *) data_type, "filelists_db")) {
+        } else if (!g_strcmp0((char *) data_type, "filelists_db")) {
+            if (ignore_sqlite) {
+                g_free(full_location_href);
+                full_location_href = NULL;
+            }
             mdloc->fil_sqlite_href = full_location_href;
-        } else if (!ignore_sqlite && !g_strcmp0((char *) data_type, "other_db")) {
+        } else if (!g_strcmp0((char *) data_type, "other_db")) {
+            if (ignore_sqlite) {
+                g_free(full_location_href);
+                full_location_href = NULL;
+            }
             mdloc->oth_sqlite_href = full_location_href;
         } else if (!g_strcmp0((char *) data_type, "group")) {
             mdloc->groupfile_href = full_location_href;
         } else if (!g_strcmp0((char *) data_type, "group_gz")) {
             // even with a createrepo param --xz this name has a _gz suffix
             mdloc->cgroupfile_href = full_location_href;
+        } else {
+            g_warning("Unknown data in repomd.xml \"%s\"", data_type);
+            g_free(full_location_href);
         }
 
 

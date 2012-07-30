@@ -63,6 +63,8 @@ struct CmdOptions {
                                              checksums) */
     int workers;                /*!< number of threads to spawn */
     gboolean xz_compression;    /*!< use xz for repodata compression */
+    gboolean keep_all_metadata; /*!< keep groupfile and updateinfo from source
+                                     repo during update */
 
     /* Items filled by check_arguments() */
 

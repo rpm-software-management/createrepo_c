@@ -51,9 +51,9 @@ static GOptionEntry cmd_entries[] =
     { "excludes", 'x', 0, G_OPTION_ARG_FILENAME_ARRAY, &(_cmd_options.excludes),
       "File globs to exclude, can be specified multiple times.", "<packages>" },
     { "pkglist", 'i', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.pkglist),
-      "Specify a text file which contains the complete list of files to include"
-      " in the repository from the set found in the directory. File format is"
-      " one package per line, no wildcards or globs.", "<filename>" },
+      "Specify a text file which contains the complete list of files to "
+      "include in the repository from the set found in the directory. File "
+      "format is one package per line, no wildcards or globs.", "<filename>" },
     { "includepkg", 'n', 0, G_OPTION_ARG_FILENAME_ARRAY, &(_cmd_options.includepkg),
       "Specify pkgs to include on the command line. Takes urls as well as local paths.",
       "<packages>" },
@@ -65,15 +65,17 @@ static GOptionEntry cmd_entries[] =
     { "verbose", 'v', 0, G_OPTION_ARG_NONE, &(_cmd_options.verbose),
       "Run verbosely.", NULL },
     { "update", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.update),
-      "If metadata already exists in the outputdir and an rpm is unchanged (based on file size "
-      "and mtime) since the metadata was generated, reuse the existing metadata rather than "
-      "recalculating it. In the case of a large repository with only a few new or modified rpms"
+      "If metadata already exists in the outputdir and an rpm is unchanged "
+      "(based on file size and mtime) since the metadata was generated, reuse "
+      "the existing metadata rather than recalculating it. In the case of a "
+      "large repository with only a few new or modified rpms "
       "this can significantly reduce I/O and processing time.", NULL },
     { "update-md-path", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &(_cmd_options.update_md_paths),
       "Use the existing repodata for --update from this path.", NULL },
     { "skip-stat", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.skip_stat),
-      "Skip the stat() call on a --update, assumes if the filename is the same then the file is"
-      "still the same (only use this if you're fairly trusting or gullible).", NULL },
+      "Skip the stat() call on a --update, assumes if the filename is the same "
+      "then the file is still the same (only use this if you're fairly "
+      "trusting or gullible).", NULL },
     { "version", 'V', 0, G_OPTION_ARG_NONE, &(_cmd_options.version),
       "Output version.", NULL},
     { "database", 'd', 0, G_OPTION_ARG_NONE, &(_cmd_options.database),
@@ -83,8 +85,8 @@ static GOptionEntry cmd_entries[] =
     { "skip-symlinks", 'S', 0, G_OPTION_ARG_NONE, &(_cmd_options.skip_symlinks),
       "Ignore symlinks of packages.", NULL},
     { "checksum", 's', 0, G_OPTION_ARG_STRING, &(_cmd_options.checksum),
-      "Choose the checksum type used in repomd.xml and for packages in the metadata."
-      "The default is now \"sha256\".", "<checksum_type>" },
+      "Choose the checksum type used in repomd.xml and for packages in the "
+      "metadata. The default is now \"sha256\".", "<checksum_type>" },
     { "changelog-limit", 0, 0, G_OPTION_ARG_INT, &(_cmd_options.changelog_limit),
       "Only import the last N changelog entries, from each rpm, into the metadata.",
       "<number>" },
@@ -99,6 +101,8 @@ static GOptionEntry cmd_entries[] =
       "Use xz for repodata compression.", NULL },
     { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type),
       "Which compression type to use.", "<compress_type>" },
+    { "keep-all-metadata", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.keep_all_metadata),
+      "Keep groupfile and updateinfo from source repo during update.", NULL },
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
 };
 
@@ -109,7 +113,9 @@ struct CmdOptions *parse_arguments(int *argc, char ***argv)
     GError *error = NULL;
     GOptionContext *context;
 
-    context = g_option_context_new("- program that creates a repomd (xml-based rpm metadata) repository from a set of rpms.");
+    context = g_option_context_new("- program that creates a repomd (xml-based"
+                                   " rpm metadata) repository from a set of"
+                                   " rpms.");
     g_option_context_add_main_entries(context, cmd_entries, NULL);
 
     gboolean ret = g_option_context_parse(context, argc, argv, &error);
@@ -179,7 +185,8 @@ check_arguments(struct CmdOptions *options)
             options->compression_type = CR_CW_XZ_COMPRESSION;
         } else {
             g_string_free(compress_str, TRUE);
-            g_critical("Unknown/Unsupported compression type \"%s\"", options->compress_type);
+            g_critical("Unknown/Unsupported compression type \"%s\"",
+                       options->compress_type);
             return FALSE;
         }
         g_string_free(compress_str, TRUE);
@@ -191,14 +198,16 @@ check_arguments(struct CmdOptions *options)
     x = 0;
     while (options->excludes && options->excludes[x] != NULL) {
         GPatternSpec *pattern = g_pattern_spec_new(options->excludes[x]);
-        options->exclude_masks = g_slist_prepend(options->exclude_masks, (gpointer) pattern);
+        options->exclude_masks = g_slist_prepend(options->exclude_masks,
+                                                 (gpointer) pattern);
         x++;
     }
 
     // Process includepkgs
     x = 0;
     while (options->includepkg && options->includepkg[x] != NULL) {
-        options->include_pkgs = g_slist_prepend(options->include_pkgs, (gpointer) options->includepkg[x]);
+        options->include_pkgs = g_slist_prepend(options->include_pkgs,
+                                                (gpointer) options->includepkg[x]);
         x++;
     }
 
@@ -216,7 +225,9 @@ check_arguments(struct CmdOptions *options)
             options->groupfile_fullpath = g_strdup(options->groupfile);
         } else {
             // Relative path (from intput_dir)
-            options->groupfile_fullpath = g_strconcat(options->input_dir, options->groupfile, NULL);
+            options->groupfile_fullpath = g_strconcat(options->input_dir,
+                                                      options->groupfile,
+                                                      NULL);
         }
 
         if (!remote && !g_file_test(options->groupfile_fullpath, G_FILE_TEST_IS_REGULAR|G_FILE_TEST_EXISTS)) {
@@ -241,12 +252,14 @@ check_arguments(struct CmdOptions *options)
                 char **pkgs = g_strsplit(content, "\n", 0);
                 while (pkgs && pkgs[x] != NULL) {
                     if (strlen(pkgs[x])) {
-                        options->include_pkgs = g_slist_prepend(options->include_pkgs, (gpointer) pkgs[x]);
+                        options->include_pkgs = g_slist_prepend(options->include_pkgs,
+                                                                (gpointer) pkgs[x]);
                     }
                     x++;
                 }
 
-                g_free(pkgs);  // Free pkgs array, pointers from array are already stored in include_pkgs list
+                g_free(pkgs);  // Free pkgs array, pointers from array are
+                               // already stored in include_pkgs list
                 g_free(content);
             }
         }
@@ -256,8 +269,14 @@ check_arguments(struct CmdOptions *options)
     x = 0;
     while (options->update_md_paths && options->update_md_paths[x] != NULL) {
         char *path = options->update_md_paths[x];
-        options->l_update_md_paths = g_slist_prepend(options->l_update_md_paths, (gpointer) path);
+        options->l_update_md_paths = g_slist_prepend(options->l_update_md_paths,
+                                                     (gpointer) path);
         x++;
+    }
+
+    // Check keep-all-metadata
+    if (options->keep_all_metadata && !options->update) {
+        g_warning("--keep-all-metadata has no effect (--update is not used)");
     }
 
     return TRUE;

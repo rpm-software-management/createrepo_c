@@ -435,6 +435,7 @@ main(int argc, char **argv)
                   g_hash_table_size(old_metadata));
     }
 
+
     // Copy groupfile
 
     gchar *groupfile = NULL;
@@ -470,6 +471,25 @@ main(int argc, char **argv)
 
         if (cr_better_copy_file(src_groupfile, groupfile) != CR_COPY_OK)
             g_critical("Error while copy %s -> %s", src_groupfile, groupfile);
+    }
+
+
+    // Copy update info
+
+    char *updateinfo = NULL;
+
+    if (cmd_options->update && cmd_options->keep_all_metadata &&
+        old_metadata_location && old_metadata_location->updateinfo_href)
+    {
+        gchar *src_updateinfo = old_metadata_location->updateinfo_href;
+        updateinfo = g_strconcat(tmp_out_repo,
+                                 cr_get_filename(src_updateinfo),
+                                 NULL);
+
+        g_debug("Copy updateinfo %s -> %s", src_updateinfo, updateinfo);
+
+        if (cr_better_copy_file(src_updateinfo, updateinfo) != CR_COPY_OK)
+            g_critical("Error while copy %s -> %s", src_updateinfo, updateinfo);
     }
 
     cr_free_metadata_location(old_metadata_location);
@@ -859,6 +879,7 @@ main(int argc, char **argv)
     cr_RepomdRecord oth_db_rec               = NULL;
     cr_RepomdRecord groupfile_rec            = NULL;
     cr_RepomdRecord compressed_groupfile_rec = NULL;
+    cr_RepomdRecord updateinfo_rec           = NULL;
 
 
     // XML
@@ -883,6 +904,19 @@ main(int argc, char **argv)
                                           &(cmd_options->checksum_type),
                                           groupfile_compression);
         g_free(groupfile_name);
+    }
+
+
+    // Updateinfo
+
+    if (updateinfo) {
+        gchar *updateinfo_name;
+        updateinfo_name = g_strconcat("repodata/",
+                                      cr_get_filename(updateinfo),
+                                      NULL);
+        updateinfo_rec = cr_new_repomdrecord(updateinfo_name);
+        cr_fill_repomdrecord(out_dir, updateinfo_rec, &(cmd_options->checksum_type));
+        g_free(updateinfo_name);
     }
 
 
@@ -963,6 +997,7 @@ main(int argc, char **argv)
         cr_rename_repomdrecord_file(out_dir, oth_db_rec);
         cr_rename_repomdrecord_file(out_dir, groupfile_rec);
         cr_rename_repomdrecord_file(out_dir, compressed_groupfile_rec);
+        cr_rename_repomdrecord_file(out_dir, updateinfo_rec);
     }
 
 
@@ -977,7 +1012,7 @@ main(int argc, char **argv)
                                               oth_db_rec,
                                               groupfile_rec,
                                               compressed_groupfile_rec,
-                                              NULL);
+                                              updateinfo_rec);
     gchar *repomd_path = g_strconcat(out_repo, "repomd.xml", NULL);
 
 
@@ -1001,6 +1036,7 @@ main(int argc, char **argv)
     cr_free_repomdrecord(oth_db_rec);
     cr_free_repomdrecord(groupfile_rec);
     cr_free_repomdrecord(compressed_groupfile_rec);
+    cr_free_repomdrecord(updateinfo_rec);
 
 
     // Clean up
@@ -1024,6 +1060,7 @@ main(int argc, char **argv)
     g_free(fil_db_filename);
     g_free(oth_db_filename);
     g_free(groupfile);
+    g_free(updateinfo);
 
     free_options(cmd_options);
     cr_package_parser_shutdown();

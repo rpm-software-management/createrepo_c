@@ -23,7 +23,7 @@ _cr_createrepo()
             COMPREPLY=( $( compgen -f -o plusdirs -X '!*.xml' -- "$2" ) )
             return 0
             ;;
-        -s|--sumtype)
+        -s|--checksum)
             COMPREPLY=( $( compgen -W 'md5 sha1 sha256' -- "$2" ) )
             return 0
             ;;
@@ -61,7 +61,8 @@ _cr_createrepo()
             --no-database --update --update-md-path --database
             --skip-stat --pkglist --includepkg --outputdir
             --skip-symlinks --changelog-limit --unique-md-filenames
-            --simple-md-filenames --workers --xz --compress-type' -- "$2" ) )
+            --simple-md-filenames --workers --xz --compress-type
+            --keep-all-metadata' -- "$2" ) )
     else
         COMPREPLY=( $( compgen -d -- "$2" ) )
     fi

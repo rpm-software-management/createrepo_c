@@ -209,7 +209,7 @@ check_arguments(struct CmdOptions *options)
     x = 0;
     while (options->includepkg && options->includepkg[x] != NULL) {
         options->include_pkgs = g_slist_prepend(options->include_pkgs,
-                                                (gpointer) options->includepkg[x]);
+                                  (gpointer) g_strdup(options->includepkg[x]));
         x++;
     }
 
@@ -255,13 +255,12 @@ check_arguments(struct CmdOptions *options)
                 while (pkgs && pkgs[x] != NULL) {
                     if (strlen(pkgs[x])) {
                         options->include_pkgs = g_slist_prepend(options->include_pkgs,
-                                                                (gpointer) pkgs[x]);
+                                                 (gpointer) g_strdup(pkgs[x]));
                     }
                     x++;
                 }
 
-                g_free(pkgs);  // Free pkgs array, pointers from array are
-                               // already stored in include_pkgs list
+                g_strfreev(pkgs);
                 g_free(content);
             }
         }
@@ -305,8 +304,7 @@ free_options(struct CmdOptions *options)
 
     GSList *element = NULL;
 
-    // Items of include_pkgs are referenced from options->includepkg
-    g_slist_free(options->include_pkgs);
+    g_slist_free_full(options->include_pkgs, g_free);
 
     // Free glob exclude masks GSList
     for (element = options->exclude_masks; element; element = g_slist_next(element)) {

@@ -44,6 +44,8 @@ struct CmdOptions _cmd_options = {
 
 static GOptionEntry cmd_entries[] =
 {
+    { "basedir", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.basedir),
+      "Basedir for path to directories.", "<basedir>" },
     { "baseurl", 'u', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.location_base),
       "Optional base URL location for all files.", "<URL>" },
     { "outputdir", 'o', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.outputdir),
@@ -287,6 +289,7 @@ check_arguments(struct CmdOptions *options)
 void
 free_options(struct CmdOptions *options)
 {
+    g_free(options->basedir);
     g_free(options->input_dir);
     g_free(options->location_base);
     g_free(options->outputdir);

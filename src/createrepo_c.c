@@ -282,7 +282,14 @@ main(int argc, char **argv)
     gchar *out_repo     = NULL;  // path/to/out_repo/repodata/
     gchar *tmp_out_repo = NULL;  // path/to/out_repo/.repodata/
 
-    in_dir = cr_normalize_dir_path(argv[1]);
+    if (cmd_options->basedir && !g_str_has_prefix(argv[1], "/")) {
+        gchar *tmp = cr_normalize_dir_path(argv[1]);
+        in_dir = g_build_filename(cmd_options->basedir, tmp, NULL);
+        g_free(tmp);
+    } else {
+        in_dir = cr_normalize_dir_path(argv[1]);
+    }
+
     cmd_options->input_dir = g_strdup(in_dir);
 
 

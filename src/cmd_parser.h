@@ -37,6 +37,7 @@ struct CmdOptions {
 
     /* Items filled by cmd option parser */
 
+    char *basedir;              /*!< basedir for path to directories */
     char *location_base;        /*!< base URL location */
     char *outputdir;            /*!< output directory */
     char **excludes;            /*!< list of file globs to exclude */

@@ -97,11 +97,11 @@ static GOptionEntry cmd_entries[] =
       NULL },
     { "simple-md-filenames", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.simple_md_filenames),
       "Do not include the file's checksum in the metadata filename.", NULL },
-    { "distro", 0, 0, G_OPTION_ARG_STRING_ARRAY, &(_cmd_options.distros),
+    { "distro", 0, 0, G_OPTION_ARG_STRING_ARRAY, &(_cmd_options.distro_tags),
       "Distro tag and optional cpeid: --distro'cpeid,textname'.", "DISTRO" },
-    { "content", 0, 0, G_OPTION_ARG_STRING_ARRAY, &(_cmd_options.contents),
+    { "content", 0, 0, G_OPTION_ARG_STRING_ARRAY, &(_cmd_options.content_tags),
       "Tags for the content in the repository.", "CONTENT_TAGS" },
-    { "repo", 0, 0, G_OPTION_ARG_STRING_ARRAY, &(_cmd_options.repos),
+    { "repo", 0, 0, G_OPTION_ARG_STRING_ARRAY, &(_cmd_options.repo_tags),
       "Tags to describe the repository itself.", "REPO_TAGS" },
     { "revision", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.revision),
       "User-specified revision for this repository.", "REVISION" },
@@ -290,17 +290,17 @@ check_arguments(struct CmdOptions *options)
 
     // Process --distro tags
     x = 0;
-    while (options->distros && options->distros[x]) {
-        if (!strchr(options->distros[x], ',')) {
+    while (options->distro_tags && options->distro_tags[x]) {
+        if (!strchr(options->distro_tags[x], ',')) {
             options->distro_cpeids = g_slist_append(options->distro_cpeids,
                                                     NULL);
             options->distro_values = g_slist_append(options->distro_values,
-                                                g_strdup(options->distros[x]));
+                                        g_strdup(options->distro_tags[x]));
             x++;
             continue;
         }
 
-        gchar **items = g_strsplit(options->distros[x++], ",", 2);
+        gchar **items = g_strsplit(options->distro_tags[x++], ",", 2);
         if (!items) continue;
         if (!items[0] || !items[1] || items[1][0] == '\0') {
             g_strfreev(items);
@@ -339,9 +339,9 @@ free_options(struct CmdOptions *options)
 
     g_strfreev(options->excludes);
     g_strfreev(options->includepkg);
-    g_strfreev(options->distros);
-    g_strfreev(options->contents);
-    g_strfreev(options->repos);
+    g_strfreev(options->distro_tags);
+    g_strfreev(options->content_tags);
+    g_strfreev(options->repo_tags);
 
     g_slist_free_full(options->include_pkgs, g_free);
     g_slist_free_full(options->exclude_masks,

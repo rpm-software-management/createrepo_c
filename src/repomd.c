@@ -466,20 +466,20 @@ repomd_xml_dump(cr_Repomd repomd)
 
     // Tags
 
-    if (repomd->repos || repomd->distros || repomd->contents) {
+    if (repomd->repo_tags || repomd->distro_tags || repomd->content_tags) {
         GSList *element;
         xmlNodePtr tags = xmlNewChild(root, NULL, BAD_CAST "tags", NULL);
-        element = repomd->contents;
+        element = repomd->content_tags;
         for (; element; element = g_slist_next(element))
             xmlNewChild(tags, NULL,
                         BAD_CAST "content",
                         BAD_CAST (element->data ? element->data : ""));
-        element = repomd->repos;
+        element = repomd->repo_tags;
         for (; element; element = g_slist_next(element))
             xmlNewChild(tags, NULL,
                         BAD_CAST "repo",
                         BAD_CAST (element->data ? element->data : ""));
-        element = repomd->distros;
+        element = repomd->distro_tags;
         for (; element; element = g_slist_next(element)) {
             xmlNodePtr distro_elem;
             cr_Distro distro = (cr_Distro) element->data;
@@ -630,9 +630,9 @@ cr_free_repomd(cr_Repomd repomd)
     cr_free_repomdrecord(repomd->groupfile);
     cr_free_repomdrecord(repomd->cgroupfile);
     cr_free_repomdrecord(repomd->updateinfo);
-    g_slist_free_full(repomd->repos, g_free);
-    g_slist_free_full(repomd->distros, (GDestroyNotify) cr_free_distro);
-    g_slist_free_full(repomd->contents, g_free);
+    g_slist_free_full(repomd->repo_tags, g_free);
+    g_slist_free_full(repomd->distro_tags, (GDestroyNotify) cr_free_distro);
+    g_slist_free_full(repomd->content_tags, g_free);
     g_free(repomd->revision);
     g_free(repomd);
 }
@@ -678,30 +678,31 @@ cr_repomd_set_revision(cr_Repomd repomd, const char *revision)
 
 
 void
-cr_repomd_add_distro_tag(cr_Repomd repomd, const char *cpeid, const char *val)
+cr_repomd_add_distro_tag(cr_Repomd repomd, const char *cpeid, const char *tag)
 {
     cr_Distro distro;
-    if (!repomd || !val) return;
+    if (!repomd || !tag) return;
     distro = cr_new_distro();
     distro->cpeid = g_strdup(cpeid);
-    distro->val   = g_strdup(val);
-    repomd->distros = g_slist_prepend(repomd->distros, (gpointer) distro);
+    distro->val   = g_strdup(tag);
+    repomd->distro_tags = g_slist_prepend(repomd->distro_tags,
+                                          (gpointer) distro);
 }
 
 
 void
-cr_repomd_add_repo_tag(cr_Repomd repomd, const char *repo)
+cr_repomd_add_repo_tag(cr_Repomd repomd, const char *tag)
 {
     if (!repomd) return;
-    repomd->repos = g_slist_append(repomd->repos, g_strdup(repo));
+    repomd->repo_tags = g_slist_append(repomd->repo_tags, g_strdup(tag));
 }
 
 
 void
-cr_repomd_add_content_tag(cr_Repomd repomd, const char *content)
+cr_repomd_add_content_tag(cr_Repomd repomd, const char *tag)
 {
     if (!repomd) return;
-    repomd->contents = g_slist_append(repomd->contents, g_strdup(content));
+    repomd->content_tags = g_slist_append(repomd->content_tags, g_strdup(tag));
 }
 
 

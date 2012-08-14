@@ -62,9 +62,9 @@ struct CmdOptions {
                                              the filenames */
     gboolean simple_md_filenames;       /*!< simple filenames (names without
                                              checksums) */
-    char **distros;             /*!< distro tag and optional cpeid */
-    char **contents;            /*!< tags for the content in the repository */
-    char **repos;               /*!< tags to describe the repository itself */
+    char **distro_tags;         /*!< distro tag and optional cpeid */
+    char **content_tags;        /*!< tags for the content in the repository */
+    char **repo_tags;           /*!< tags to describe the repo_tagsitory itself */
     char *revision;             /*!< user-specified revision */
     int workers;                /*!< number of threads to spawn */
     gboolean xz_compression;    /*!< use xz for repodata compression */
@@ -78,8 +78,8 @@ struct CmdOptions {
                                      (list of GPatternSpec pointers) */
     GSList *include_pkgs;       /*!< list of packages to include (build from
                                      includepkg options and pkglist file) */
-    GSList *l_update_md_paths;  /*!< list of repos from update_md_paths
-                                     (remote repos are downloaded) */
+    GSList *l_update_md_paths;  /*!< list of repo from update_md_paths
+                                     (remote repo are downloaded) */
     GSList *distro_cpeids;      /*!< CPEIDs from --distro params */
     GSList *distro_values;      /*!< values from --distro params */
     cr_ChecksumType checksum_type;          /*!< checksum type */

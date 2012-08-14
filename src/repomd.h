@@ -31,12 +31,12 @@ extern "C" {
  */
 
 /** \ingroup repomd
- * cr_RepomdRecord object
+ * cr_RepomdRecord - object representing an item from repomd.xml
  */
 typedef struct _cr_RepomdRecord * cr_RepomdRecord;
 
 /** \ingroup repomd
- * cr_Repomd object - object representing repomd.xml
+ * cr_Repomd - object representing repomd.xml
  */
 typedef struct _cr_Repomd * cr_Repomd;
 
@@ -70,12 +70,15 @@ struct _cr_Repomd {
     cr_RepomdRecord groupfile;
     cr_RepomdRecord cgroupfile;
     cr_RepomdRecord updateinfo;
-    GSList *repos;
-    GSList *distros;
-    GSList *contents;
+    GSList *repo_tags;
+    GSList *distro_tags;
+    GSList *content_tags;
     gchar *revision;
 };
 
+/** \ingroup repomd
+ * Enum of repomd record types
+ */
 typedef enum {
     CR_MD_PRIMARY_XML,
     CR_MD_FILELISTS_XML,
@@ -140,16 +143,51 @@ void cr_process_groupfile_repomdrecord(const char *base_path,
  */
 void cr_rename_repomdrecord_file(const char *base_path, cr_RepomdRecord record);
 
+/** \ingroup repomd
+ * Create new empty cr_Repomd object wich represents content of repomd.xml.
+ */
 cr_Repomd cr_new_repomd();
+
+/** \ingroup repomd
+ * Set cr_Repomd record into cr_Repomd object.
+ * @param repomd                cr_Repomd object
+ * @param record                cr_RepomdRecord object
+ * @param type                  type of cr_RepomdRecord object
+ */
 void cr_repomd_set_record(cr_Repomd repomd,
                           cr_RepomdRecord record,
                           cr_RepomdRecordType type);
+
+/** \ingroup repomd
+ * Set custom revision string of repomd.
+ * @param repomd                cr_Repomd object
+ * @param revision              revision string
+ */
 void cr_repomd_set_revision(cr_Repomd repomd, const char *revision);
+
+/** \ingroup repomd
+ * Add distro tag.
+ * @param repomd                cr_Repomd object
+ * @param cpeid                 cpeid string (could be NULL)
+ * @param tag                   distro tag string
+ */
 void cr_repomd_add_distro_tag(cr_Repomd repomd,
                               const char *cpeid,
-                              const char *val);
-void cr_repomd_add_repo_tag(cr_Repomd repomd, const char *repo);
-void cr_repomd_add_content_tag(cr_Repomd repomd, const char *content);
+                              const char *tag);
+
+/** \ingroup repomd
+ * Add repo tag.
+ * @param repomd                cr_Repomd object
+ * @param repo                  repo tag
+ */
+void cr_repomd_add_repo_tag(cr_Repomd repomd, const char *tag);
+
+/** \ingroup repomd
+ * Add content tag.
+ * @param repomd                cr_Repomd object
+ * @param content               content tag
+ */
+void cr_repomd_add_content_tag(cr_Repomd repomd, const char *tag);
 
 /** \ingroup repomd
  * Frees cr_Repomd object and all its cr_RepomdRecord objects
@@ -160,26 +198,7 @@ void cr_free_repomd(cr_Repomd repomd);
 
 /** \ingroup repomd
  * Generate repomd.xml content.
- * @param path                  path to repository (to the directory contains
- *                              repodata/ subdir)
- * @param pri_xml               cr_RepomdRecord of primary.xml.gz (relative
- *                              towards to the path param)
- * @param fil_xml               cr_RepomdRecord of filelists.xml.gz (relative
- *                              towards to the path param)
- * @param oth_xml               cr_RepomdRecord of other.xml.gz (relative
- *                              towards to the path param)
- * @param pri_sqlite            cr_RepomdRecord of primary.sqlite.* (relative
- *                              towards to the path param)
- * @param fil_sqlite            cr_RepomdRecord of filelists.sqlite.* (relative
- *                              towards to the path param)
- * @param oth_sqlite            cr_RepomdRecord of other.sqlite.* (relative
- *                              towards to the path param)
- * @param groupfile             cr_RepomdRecord of *.xml (relative towards to
- *                              the path param)
- * @param cgroupfile            cr_RepomdRecord of *.xml.* (relative towards to
- *                              the path param)
- * @param update_info           cr_RepomdRecord of updateinfo.xml.* (relative
- *                              towards to the path param)
+ * @param repomd                cr_Repomd object
  * @return                      string with repomd.xml content
  */
 gchar *cr_generate_repomd_xml(cr_Repomd repomd);

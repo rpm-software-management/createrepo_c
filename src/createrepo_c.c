@@ -1029,12 +1029,12 @@ main(int argc, char **argv)
     cr_repomd_set_record(repomd_obj, updateinfo_rec, CR_MD_UPDATEINFO);
 
     int i = 0;
-    while (cmd_options->repos && cmd_options->repos[i])
-        cr_repomd_add_repo_tag(repomd_obj, cmd_options->repos[i++]);
+    while (cmd_options->repo_tags && cmd_options->repo_tags[i])
+        cr_repomd_add_repo_tag(repomd_obj, cmd_options->repo_tags[i++]);
 
     i = 0;
-    while (cmd_options->contents && cmd_options->contents[i])
-        cr_repomd_add_content_tag(repomd_obj, cmd_options->contents[i++]);
+    while (cmd_options->content_tags && cmd_options->content_tags[i])
+        cr_repomd_add_content_tag(repomd_obj, cmd_options->content_tags[i++]);
 
     if (cmd_options->distro_cpeids && cmd_options->distro_values) {
         GSList *cpeid = cmd_options->distro_cpeids;

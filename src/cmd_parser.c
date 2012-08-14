@@ -44,28 +44,28 @@ struct CmdOptions _cmd_options = {
 
 static GOptionEntry cmd_entries[] =
 {
-    { "basedir", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.basedir),
-      "Basedir for path to directories.", "<basedir>" },
-    { "baseurl", 'u', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.location_base),
-      "Optional base URL location for all files.", "<URL>" },
-    { "outputdir", 'o', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.outputdir),
-      "Optional output directory.", "<URL>" },
-    { "excludes", 'x', 0, G_OPTION_ARG_FILENAME_ARRAY, &(_cmd_options.excludes),
-      "File globs to exclude, can be specified multiple times.", "<packages>" },
-    { "pkglist", 'i', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.pkglist),
-      "Specify a text file which contains the complete list of files to "
-      "include in the repository from the set found in the directory. File "
-      "format is one package per line, no wildcards or globs.", "<filename>" },
-    { "includepkg", 'n', 0, G_OPTION_ARG_FILENAME_ARRAY, &(_cmd_options.includepkg),
-      "Specify pkgs to include on the command line. Takes urls as well as local paths.",
-      "<packages>" },
-    { "groupfile", 'g', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.groupfile),
-      "Path to groupfile to include in metadata.",
-      "GROUPFILE" },
+    { "version", 'V', 0, G_OPTION_ARG_NONE, &(_cmd_options.version),
+      "Show program's version number and exit.", NULL},
     { "quiet", 'q', 0, G_OPTION_ARG_NONE, &(_cmd_options.quiet),
       "Run quietly.", NULL },
     { "verbose", 'v', 0, G_OPTION_ARG_NONE, &(_cmd_options.verbose),
       "Run verbosely.", NULL },
+    { "excludes", 'x', 0, G_OPTION_ARG_FILENAME_ARRAY, &(_cmd_options.excludes),
+      "File globs to exclude, can be specified multiple times.", "<packages>" },
+    { "basedir", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.basedir),
+      "Basedir for path to directories.", "<basedir>" },
+    { "baseurl", 'u', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.location_base),
+      "Optional base URL location for all files.", "<URL>" },
+    { "groupfile", 'g', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.groupfile),
+      "Path to groupfile to include in metadata.",
+      "GROUPFILE" },
+    { "checksum", 's', 0, G_OPTION_ARG_STRING, &(_cmd_options.checksum),
+      "Choose the checksum type used in repomd.xml and for packages in the "
+      "metadata. The default is now \"sha256\".", "<checksum_type>" },
+    { "database", 'd', 0, G_OPTION_ARG_NONE, &(_cmd_options.database),
+      "Generate sqlite databases for use with yum.", NULL },
+    { "no-database", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.no_database),
+      "Do not generate sqlite databases in the repository.", NULL },
     { "update", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.update),
       "If metadata already exists in the outputdir and an rpm is unchanged "
       "(based on file size and mtime) since the metadata was generated, reuse "
@@ -78,17 +78,17 @@ static GOptionEntry cmd_entries[] =
       "Skip the stat() call on a --update, assumes if the filename is the same "
       "then the file is still the same (only use this if you're fairly "
       "trusting or gullible).", NULL },
-    { "version", 'V', 0, G_OPTION_ARG_NONE, &(_cmd_options.version),
-      "Output version.", NULL},
-    { "database", 'd', 0, G_OPTION_ARG_NONE, &(_cmd_options.database),
-      "Generate sqlite databases for use with yum.", NULL },
-    { "no-database", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.no_database),
-      "Do not generate sqlite databases in the repository.", NULL },
+    { "pkglist", 'i', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.pkglist),
+      "Specify a text file which contains the complete list of files to "
+      "include in the repository from the set found in the directory. File "
+      "format is one package per line, no wildcards or globs.", "<filename>" },
+    { "includepkg", 'n', 0, G_OPTION_ARG_FILENAME_ARRAY, &(_cmd_options.includepkg),
+      "Specify pkgs to include on the command line. Takes urls as well as local paths.",
+      "<packages>" },
+    { "outputdir", 'o', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.outputdir),
+      "Optional output directory.", "<URL>" },
     { "skip-symlinks", 'S', 0, G_OPTION_ARG_NONE, &(_cmd_options.skip_symlinks),
       "Ignore symlinks of packages.", NULL},
-    { "checksum", 's', 0, G_OPTION_ARG_STRING, &(_cmd_options.checksum),
-      "Choose the checksum type used in repomd.xml and for packages in the "
-      "metadata. The default is now \"sha256\".", "<checksum_type>" },
     { "changelog-limit", 0, 0, G_OPTION_ARG_INT, &(_cmd_options.changelog_limit),
       "Only import the last N changelog entries, from each rpm, into the metadata.",
       "<number>" },
@@ -105,7 +105,7 @@ static GOptionEntry cmd_entries[] =
       "Which compression type to use.", "<compress_type>" },
     { "keep-all-metadata", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.keep_all_metadata),
       "Keep groupfile and updateinfo from source repo during update.", NULL },
-    { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
+    { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL },
 };
 
 

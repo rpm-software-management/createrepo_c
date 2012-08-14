@@ -718,7 +718,8 @@ main(int argc, char **argv)
                     // TODO: One common path for all tasks with the same path?
                     g_thread_pool_push(pool, task, NULL);
                     package_count++;
-                }
+                } else
+                    g_free(full_path);
             }
 
             // Cleanup
@@ -767,6 +768,9 @@ main(int argc, char **argv)
                 task->path = dirname;
                 g_thread_pool_push(pool, task, NULL);
                 package_count++;
+            } else {
+                g_free(dirname);
+                g_free(full_path);
             }
         }
     }

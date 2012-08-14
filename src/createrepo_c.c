@@ -1014,6 +1014,7 @@ main(int argc, char **argv)
     }
 
 
+
     // Gen xml
 
     cr_repomd_set_record(repomd_obj, pri_xml_rec,    CR_MD_PRIMARY_XML);
@@ -1026,6 +1027,27 @@ main(int argc, char **argv)
     cr_repomd_set_record(repomd_obj, compressed_groupfile_rec,
                          CR_MD_COMPRESSED_GROUPFILE);
     cr_repomd_set_record(repomd_obj, updateinfo_rec, CR_MD_UPDATEINFO);
+
+    int i = 0;
+    while (cmd_options->repos && cmd_options->repos[i])
+        cr_repomd_add_repo_tag(repomd_obj, cmd_options->repos[i++]);
+
+    i = 0;
+    while (cmd_options->contents && cmd_options->contents[i])
+        cr_repomd_add_content_tag(repomd_obj, cmd_options->contents[i++]);
+
+    if (cmd_options->distro_cpeids && cmd_options->distro_values) {
+        GSList *cpeid = cmd_options->distro_cpeids;
+        GSList *val   = cmd_options->distro_values;
+        while (cpeid && val) {
+            cr_repomd_add_distro_tag(repomd_obj, cpeid->data, val->data);
+            cpeid = g_slist_next(cpeid);
+            val   = g_slist_next(val);
+        }
+    }
+
+    if (cmd_options->revision)
+        cr_repomd_set_revision(repomd_obj, cmd_options->revision);
 
     char *repomd_xml = cr_generate_repomd_xml(repomd_obj);
 

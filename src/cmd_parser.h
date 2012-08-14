@@ -62,6 +62,10 @@ struct CmdOptions {
                                              the filenames */
     gboolean simple_md_filenames;       /*!< simple filenames (names without
                                              checksums) */
+    char **distros;             /*!< distro tag and optional cpeid */
+    char **contents;            /*!< tags for the content in the repository */
+    char **repos;               /*!< tags to describe the repository itself */
+    char *revision;             /*!< user-specified revision */
     int workers;                /*!< number of threads to spawn */
     gboolean xz_compression;    /*!< use xz for repodata compression */
     gboolean keep_all_metadata; /*!< keep groupfile and updateinfo from source
@@ -76,6 +80,8 @@ struct CmdOptions {
                                      includepkg options and pkglist file) */
     GSList *l_update_md_paths;  /*!< list of repos from update_md_paths
                                      (remote repos are downloaded) */
+    GSList *distro_cpeids;      /*!< CPEIDs from --distro params */
+    GSList *distro_values;      /*!< values from --distro params */
     cr_ChecksumType checksum_type;          /*!< checksum type */
     cr_CompressionType compression_type;    /*!< compression type */
 

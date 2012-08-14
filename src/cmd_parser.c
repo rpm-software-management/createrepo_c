@@ -97,6 +97,14 @@ static GOptionEntry cmd_entries[] =
       NULL },
     { "simple-md-filenames", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.simple_md_filenames),
       "Do not include the file's checksum in the metadata filename.", NULL },
+    { "distro", 0, 0, G_OPTION_ARG_STRING_ARRAY, &(_cmd_options.distros),
+      "Distro tag and optional cpeid: --distro'cpeid,textname'.", "DISTRO" },
+    { "content", 0, 0, G_OPTION_ARG_STRING_ARRAY, &(_cmd_options.contents),
+      "Tags for the content in the repository.", "CONTENT_TAGS" },
+    { "repo", 0, 0, G_OPTION_ARG_STRING_ARRAY, &(_cmd_options.repos),
+      "Tags to describe the repository itself.", "REPO_TAGS" },
+    { "revision", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.revision),
+      "User-specified revision for this repository.", "REVISION" },
     { "workers", 0, 0, G_OPTION_ARG_INT, &(_cmd_options.workers),
       "Number of workers to spawn to read rpms.", NULL },
     { "xz", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.xz_compression),
@@ -280,6 +288,36 @@ check_arguments(struct CmdOptions *options)
         g_warning("--keep-all-metadata has no effect (--update is not used)");
     }
 
+    // Process --distro tags
+    x = 0;
+    while (options->distros && options->distros[x]) {
+        if (!strchr(options->distros[x], ',')) {
+            options->distro_cpeids = g_slist_append(options->distro_cpeids,
+                                                    NULL);
+            options->distro_values = g_slist_append(options->distro_values,
+                                                g_strdup(options->distros[x]));
+            x++;
+            continue;
+        }
+
+        gchar **items = g_strsplit(options->distros[x++], ",", 2);
+        if (!items) continue;
+        if (!items[0] || !items[1] || items[1][0] == '\0') {
+            g_strfreev(items);
+            continue;
+        }
+
+        if (items[0][0] != '\0')
+            options->distro_cpeids = g_slist_append(options->distro_cpeids,
+                                                    g_strdup(items[0]));
+        else
+            options->distro_cpeids = g_slist_append(options->distro_cpeids,
+                                                    NULL);
+        options->distro_values = g_slist_append(options->distro_values,
+                                                g_strdup(items[1]));
+        g_strfreev(items);
+    }
+
     return TRUE;
 }
 
@@ -297,24 +335,18 @@ free_options(struct CmdOptions *options)
     g_free(options->compress_type);
     g_free(options->groupfile);
     g_free(options->groupfile_fullpath);
+    g_free(options->revision);
 
-    // Free excludes string list
     g_strfreev(options->excludes);
     g_strfreev(options->includepkg);
-
-    GSList *element = NULL;
+    g_strfreev(options->distros);
+    g_strfreev(options->contents);
+    g_strfreev(options->repos);
 
     g_slist_free_full(options->include_pkgs, g_free);
-
-    // Free glob exclude masks GSList
-    for (element = options->exclude_masks; element; element = g_slist_next(element)) {
-        g_pattern_spec_free( (GPatternSpec *) element->data );
-    }
-    g_slist_free(options->exclude_masks);
-
-    // Free l_update_md_paths GSList
-    for (element = options->l_update_md_paths; element; element = g_slist_next(element)) {
-        g_free( (gchar *) element->data );
-    }
-    g_slist_free(options->l_update_md_paths);
+    g_slist_free_full(options->exclude_masks,
+                      (GDestroyNotify) g_pattern_spec_free);
+    g_slist_free_full(options->l_update_md_paths, g_free);
+    g_slist_free_full(options->distro_cpeids, g_free);
+    g_slist_free_full(options->distro_values, g_free);
 }

@@ -878,6 +878,8 @@ main(int argc, char **argv)
 
     g_debug("Generating repomd.xml");
 
+    cr_Repomd repomd_obj = cr_new_repomd();
+
     cr_RepomdRecord pri_xml_rec = cr_new_repomdrecord("repodata/primary.xml.gz");
     cr_RepomdRecord fil_xml_rec = cr_new_repomdrecord("repodata/filelists.xml.gz");
     cr_RepomdRecord oth_xml_rec = cr_new_repomdrecord("repodata/other.xml.gz");
@@ -1010,21 +1012,24 @@ main(int argc, char **argv)
 
     // Gen xml
 
-    char *repomd_xml = cr_generate_repomd_xml(out_dir,
-                                              pri_xml_rec,
-                                              fil_xml_rec,
-                                              oth_xml_rec,
-                                              pri_db_rec,
-                                              fil_db_rec,
-                                              oth_db_rec,
-                                              groupfile_rec,
-                                              compressed_groupfile_rec,
-                                              updateinfo_rec);
-    gchar *repomd_path = g_strconcat(out_repo, "repomd.xml", NULL);
+    cr_repomd_set_record(repomd_obj, pri_xml_rec,    CR_MD_PRIMARY_XML);
+    cr_repomd_set_record(repomd_obj, fil_xml_rec,    CR_MD_FILELISTS_XML);
+    cr_repomd_set_record(repomd_obj, oth_xml_rec,    CR_MD_OTHER_XML);
+    cr_repomd_set_record(repomd_obj, pri_db_rec,     CR_MD_PRIMARY_SQLITE);
+    cr_repomd_set_record(repomd_obj, fil_db_rec,     CR_MD_FILELISTS_SQLITE);
+    cr_repomd_set_record(repomd_obj, oth_db_rec,     CR_MD_OTHER_SQLITE);
+    cr_repomd_set_record(repomd_obj, groupfile_rec,  CR_MD_GROUPFILE);
+    cr_repomd_set_record(repomd_obj, compressed_groupfile_rec,
+                         CR_MD_COMPRESSED_GROUPFILE);
+    cr_repomd_set_record(repomd_obj, updateinfo_rec, CR_MD_UPDATEINFO);
 
+    char *repomd_xml = cr_generate_repomd_xml(repomd_obj);
+
+    cr_free_repomd(repomd_obj);
 
     // Write repomd.xml
 
+    gchar *repomd_path = g_strconcat(out_repo, "repomd.xml", NULL);
     FILE *frepomd = fopen(repomd_path, "w");
     if (!frepomd || !repomd_xml) {
         g_critical("Generate of repomd.xml failed");
@@ -1034,16 +1039,6 @@ main(int argc, char **argv)
     fclose(frepomd);
     g_free(repomd_xml);
     g_free(repomd_path);
-
-    cr_free_repomdrecord(pri_xml_rec);
-    cr_free_repomdrecord(fil_xml_rec);
-    cr_free_repomdrecord(oth_xml_rec);
-    cr_free_repomdrecord(pri_db_rec);
-    cr_free_repomdrecord(fil_db_rec);
-    cr_free_repomdrecord(oth_db_rec);
-    cr_free_repomdrecord(groupfile_rec);
-    cr_free_repomdrecord(compressed_groupfile_rec);
-    cr_free_repomdrecord(updateinfo_rec);
 
 
     // Clean up

@@ -58,6 +58,30 @@ typedef struct _contentStat {
 } contentStat;
 
 
+typedef struct _cr_Distro * cr_Distro;
+struct _cr_Distro {
+    gchar *cpeid;
+    gchar *val;
+};
+
+
+cr_Distro
+cr_new_distro()
+{
+    return (cr_Distro) g_malloc0(sizeof(struct _cr_Distro));
+}
+
+
+void
+cr_free_distro(cr_Distro distro)
+{
+    if (!distro) return;
+    g_free(distro->cpeid);
+    g_free(distro->val);
+    g_free(distro);
+}
+
+
 cr_RepomdRecord
 cr_new_repomdrecord(const char *path)
 {
@@ -423,11 +447,7 @@ dump_data_items(xmlNodePtr root, cr_RepomdRecord md, const xmlChar *type)
 
 
 char *
-repomd_xml_dump(long revision, cr_RepomdRecord pri_xml, cr_RepomdRecord fil_xml,
-                cr_RepomdRecord oth_xml, cr_RepomdRecord pri_sqlite,
-                cr_RepomdRecord fil_sqlite, cr_RepomdRecord oth_sqlite,
-                cr_RepomdRecord groupfile, cr_RepomdRecord cgroupfile,
-                cr_RepomdRecord update_info)
+repomd_xml_dump(cr_Repomd repomd)
 {
     xmlDocPtr doc;
     xmlNodePtr root;
@@ -441,19 +461,48 @@ repomd_xml_dump(long revision, cr_RepomdRecord pri_xml, cr_RepomdRecord fil_xml,
     xmlNewNs(root, BAD_CAST RPM_NS, BAD_CAST "rpm");
     xmlDocSetRootElement(doc, root);
 
-    gchar str_revision[32];
-    g_snprintf(str_revision, 32, "%ld", revision);
-    xmlNewChild(root, NULL, BAD_CAST "revision", BAD_CAST str_revision);
+    xmlNewChild(root, NULL, BAD_CAST "revision", BAD_CAST repomd->revision);
 
-    dump_data_items(root, pri_xml, (const xmlChar *) "primary");
-    dump_data_items(root, fil_xml, (const xmlChar *) "filelists");
-    dump_data_items(root, oth_xml, (const xmlChar *) "other");
-    dump_data_items(root, pri_sqlite, (const xmlChar *) "primary_db");
-    dump_data_items(root, fil_sqlite, (const xmlChar *) "filelists_db");
-    dump_data_items(root, oth_sqlite, (const xmlChar *) "other_db");
-    dump_data_items(root, groupfile, (const xmlChar *) "group");
-    dump_data_items(root, cgroupfile, (const xmlChar *) "group_gz");
-    dump_data_items(root, update_info, (const xmlChar *) "updateinfo");
+
+    // Tags
+
+    if (repomd->repos || repomd->distros || repomd->contents) {
+        GSList *element;
+        xmlNodePtr tags = xmlNewChild(root, NULL, BAD_CAST "tags", NULL);
+        element = repomd->contents;
+        for (; element; element = g_slist_next(element))
+            xmlNewChild(tags, NULL,
+                        BAD_CAST "content",
+                        BAD_CAST (element->data ? element->data : ""));
+        element = repomd->repos;
+        for (; element; element = g_slist_next(element))
+            xmlNewChild(tags, NULL,
+                        BAD_CAST "repo",
+                        BAD_CAST (element->data ? element->data : ""));
+        element = repomd->distros;
+        for (; element; element = g_slist_next(element)) {
+            xmlNodePtr distro_elem;
+            cr_Distro distro = (cr_Distro) element->data;
+            distro_elem = xmlNewChild(tags,
+                                      NULL,
+                                      BAD_CAST "distro",
+                                      BAD_CAST (distro->val ? distro->val : ""));
+            if (distro->cpeid)
+                xmlNewProp(distro_elem,
+                           BAD_CAST "cpeid",
+                           BAD_CAST distro->cpeid);
+        }
+    }
+
+    dump_data_items(root, repomd->pri_xml, (const xmlChar *) "primary");
+    dump_data_items(root, repomd->fil_xml, (const xmlChar *) "filelists");
+    dump_data_items(root, repomd->oth_xml, (const xmlChar *) "other");
+    dump_data_items(root, repomd->pri_sql, (const xmlChar *) "primary_db");
+    dump_data_items(root, repomd->fil_sql, (const xmlChar *) "filelists_db");
+    dump_data_items(root, repomd->oth_sql, (const xmlChar *) "other_db");
+    dump_data_items(root, repomd->groupfile, (const xmlChar *) "group");
+    dump_data_items(root, repomd->cgroupfile, (const xmlChar *) "group_gz");
+    dump_data_items(root, repomd->updateinfo, (const xmlChar *) "updateinfo");
 
 
     // Dump IT!
@@ -561,26 +610,109 @@ cr_rename_repomdrecord_file(const char *base_path, cr_RepomdRecord md)
 }
 
 
-gchar *
-cr_generate_repomd_xml(const char *path, cr_RepomdRecord pri_xml,
-                       cr_RepomdRecord fil_xml, cr_RepomdRecord oth_xml,
-                       cr_RepomdRecord pri_sqlite, cr_RepomdRecord fil_sqlite,
-                       cr_RepomdRecord oth_sqlite, cr_RepomdRecord groupfile,
-                       cr_RepomdRecord cgroupfile, cr_RepomdRecord update_info)
+cr_Repomd
+cr_new_repomd()
 {
-    if (!path) {
-        return NULL;
+    return (cr_Repomd) g_malloc0(sizeof(struct _cr_Repomd));
+}
+
+
+void
+cr_free_repomd(cr_Repomd repomd)
+{
+    if (!repomd) return;
+    cr_free_repomdrecord(repomd->pri_xml);
+    cr_free_repomdrecord(repomd->fil_xml);
+    cr_free_repomdrecord(repomd->oth_xml);
+    cr_free_repomdrecord(repomd->pri_sql);
+    cr_free_repomdrecord(repomd->fil_sql);
+    cr_free_repomdrecord(repomd->oth_sql);
+    cr_free_repomdrecord(repomd->groupfile);
+    cr_free_repomdrecord(repomd->cgroupfile);
+    cr_free_repomdrecord(repomd->updateinfo);
+    g_slist_free_full(repomd->repos, g_free);
+    g_slist_free_full(repomd->distros, (GDestroyNotify) cr_free_distro);
+    g_slist_free_full(repomd->contents, g_free);
+    g_free(repomd->revision);
+    g_free(repomd);
+}
+
+
+void
+cr_repomd_set_record(cr_Repomd repomd,
+                     cr_RepomdRecord record,
+                     cr_RepomdRecordType type)
+{
+    cr_RepomdRecord *rec;
+
+    if (!repomd || !record) return;
+
+    switch (type) {
+        case CR_MD_PRIMARY_XML:          rec = &(repomd->pri_xml);    break;
+        case CR_MD_FILELISTS_XML:        rec = &(repomd->fil_xml);    break;
+        case CR_MD_OTHER_XML:            rec = &(repomd->oth_xml);    break;
+        case CR_MD_PRIMARY_SQLITE:       rec = &(repomd->pri_sql);    break;
+        case CR_MD_FILELISTS_SQLITE:     rec = &(repomd->fil_sql);    break;
+        case CR_MD_OTHER_SQLITE:         rec = &(repomd->oth_sql);    break;
+        case CR_MD_GROUPFILE:            rec = &(repomd->groupfile);  break;
+        case CR_MD_COMPRESSED_GROUPFILE: rec = &(repomd->cgroupfile); break;
+        case CR_MD_UPDATEINFO:           rec = &(repomd->updateinfo); break;
+        default: return;
     }
 
-    long revision = (long) time(NULL);
-    return repomd_xml_dump(revision,
-                           pri_xml,
-                           fil_xml,
-                           oth_xml,
-                           pri_sqlite,
-                           fil_sqlite,
-                           oth_sqlite,
-                           groupfile,
-                           cgroupfile,
-                           update_info);
+    if (*rec)  // A record already exists
+        cr_free_repomdrecord(*rec);
+
+    *rec = record;
+}
+
+
+void
+cr_repomd_set_revision(cr_Repomd repomd, const char *revision)
+{
+    if (!repomd) return;
+    if (repomd->revision)  // A revision string already exists
+        g_free(repomd->revision);
+    repomd->revision = g_strdup(revision);
+}
+
+
+void
+cr_repomd_add_distro_tag(cr_Repomd repomd, const char *cpeid, const char *val)
+{
+    cr_Distro distro;
+    if (!repomd || !val) return;
+    distro = cr_new_distro();
+    distro->cpeid = g_strdup(cpeid);
+    distro->val   = g_strdup(val);
+    repomd->distros = g_slist_prepend(repomd->distros, (gpointer) distro);
+}
+
+
+void
+cr_repomd_add_repo_tag(cr_Repomd repomd, const char *repo)
+{
+    if (!repomd) return;
+    repomd->repos = g_slist_append(repomd->repos, g_strdup(repo));
+}
+
+
+void
+cr_repomd_add_content_tag(cr_Repomd repomd, const char *content)
+{
+    if (!repomd) return;
+    repomd->contents = g_slist_append(repomd->contents, g_strdup(content));
+}
+
+
+gchar *
+cr_generate_repomd_xml(cr_Repomd repomd)
+{
+    if (!repomd->revision) {
+        gchar *rev = g_strdup_printf("%ld", time(NULL));
+        cr_repomd_set_revision(repomd, rev);
+        g_free(rev);
+    }
+
+    return repomd_xml_dump(repomd);
 }

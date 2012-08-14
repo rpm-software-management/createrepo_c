@@ -36,6 +36,11 @@ extern "C" {
 typedef struct _cr_RepomdRecord * cr_RepomdRecord;
 
 /** \ingroup repomd
+ * cr_Repomd object - object representing repomd.xml
+ */
+typedef struct _cr_Repomd * cr_Repomd;
+
+/** \ingroup repomd
  * Internal representation of cr_RepomdRecord object
  */
 struct _cr_RepomdRecord {
@@ -53,13 +58,46 @@ struct _cr_RepomdRecord {
 };
 
 /** \ingroup repomd
+ * Internal representation of cr_Repomd object
+ */
+struct _cr_Repomd {
+    cr_RepomdRecord pri_xml;
+    cr_RepomdRecord fil_xml;
+    cr_RepomdRecord oth_xml;
+    cr_RepomdRecord pri_sql;
+    cr_RepomdRecord fil_sql;
+    cr_RepomdRecord oth_sql;
+    cr_RepomdRecord groupfile;
+    cr_RepomdRecord cgroupfile;
+    cr_RepomdRecord updateinfo;
+    GSList *repos;
+    GSList *distros;
+    GSList *contents;
+    gchar *revision;
+};
+
+typedef enum {
+    CR_MD_PRIMARY_XML,
+    CR_MD_FILELISTS_XML,
+    CR_MD_OTHER_XML,
+    CR_MD_PRIMARY_SQLITE,
+    CR_MD_FILELISTS_SQLITE,
+    CR_MD_OTHER_SQLITE,
+    CR_MD_GROUPFILE,
+    CR_MD_COMPRESSED_GROUPFILE,
+    CR_MD_UPDATEINFO
+} cr_RepomdRecordType;
+
+/** \ingroup repomd
  * Creates (alloc) new cr_RepomdRecord object
  * @param path                  path to the compressed file
  */
 cr_RepomdRecord cr_new_repomdrecord(const char *path);
 
 /** \ingroup repomd
- * Destroy cr_RepomdRecord object
+ * Destroy cr_RepomdRecord object.
+ * NOTE: Do NOT use this function on objects attached to cr_Repomd
+ * (by cr_repomd_set_record).
  * @param record                cr_RepomdRecord object
  */
 void cr_free_repomdrecord(cr_RepomdRecord record);
@@ -102,6 +140,24 @@ void cr_process_groupfile_repomdrecord(const char *base_path,
  */
 void cr_rename_repomdrecord_file(const char *base_path, cr_RepomdRecord record);
 
+cr_Repomd cr_new_repomd();
+void cr_repomd_set_record(cr_Repomd repomd,
+                          cr_RepomdRecord record,
+                          cr_RepomdRecordType type);
+void cr_repomd_set_revision(cr_Repomd repomd, const char *revision);
+void cr_repomd_add_distro_tag(cr_Repomd repomd,
+                              const char *cpeid,
+                              const char *val);
+void cr_repomd_add_repo_tag(cr_Repomd repomd, const char *repo);
+void cr_repomd_add_content_tag(cr_Repomd repomd, const char *content);
+
+/** \ingroup repomd
+ * Frees cr_Repomd object and all its cr_RepomdRecord objects
+ * @param repomd                cr_Repomd object
+ */
+void cr_free_repomd(cr_Repomd repomd);
+
+
 /** \ingroup repomd
  * Generate repomd.xml content.
  * @param path                  path to repository (to the directory contains
@@ -126,16 +182,7 @@ void cr_rename_repomdrecord_file(const char *base_path, cr_RepomdRecord record);
  *                              towards to the path param)
  * @return                      string with repomd.xml content
  */
-gchar *cr_generate_repomd_xml(const char *path,
-                              cr_RepomdRecord pri_xml,
-                              cr_RepomdRecord fil_xml,
-                              cr_RepomdRecord oth_xml,
-                              cr_RepomdRecord pri_sqlite,
-                              cr_RepomdRecord fil_sqlite,
-                              cr_RepomdRecord oth_sqlite,
-                              cr_RepomdRecord groupfile,
-                              cr_RepomdRecord cgroupfile,
-                              cr_RepomdRecord update_info);
+gchar *cr_generate_repomd_xml(cr_Repomd repomd);
 
 #ifdef __cplusplus
 }

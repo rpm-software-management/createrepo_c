@@ -248,6 +248,7 @@ get_local_metadata(const char *in_repopath, int ignore_sqlite)
     if (!g_file_test(repomd, G_FILE_TEST_EXISTS)) {
         g_debug(MODULE"%s: %s doesn't exists", __func__, repomd);
         g_free(repomd);
+        g_free(repopath);
         return ret;
     }
 

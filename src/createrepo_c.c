@@ -144,7 +144,7 @@ dumper_thread(gpointer data, gpointer user_data)
     if (udata->old_metadata && !(udata->skip_stat)) {
         if (stat(task->full_path, &stat_buf) == -1) {
             g_critical("Stat() on %s: %s", task->full_path, strerror(errno));
-            return;
+            goto task_cleanup;
         }
     }
 
@@ -737,19 +737,14 @@ main(int argc, char **argv)
         for (; element; element=g_slist_next(element)) {
             gchar *relative_path = (gchar *) element->data;
             //     ^^^ path from pkglist e.g. packages/i386/foobar.rpm
-            gchar *full_path = g_strconcat(in_dir, relative_path, NULL);
-            //     ^^^ /path/to/in_repo/packages/i386/foobar.rpm
-            gchar *dirname;   // packages/i386/
             gchar *filename;  // foobar.rpm
 
             // Get index of last '/'
             int rel_path_len = strlen(relative_path);
             int x = rel_path_len;
-            for (; x > 0; x--) {
-                if (relative_path[x] == '/') {
+            for (; x > 0; x--)
+                if (relative_path[x] == '/')
                     break;
-                }
-            }
 
             if (!x) {
                 // There was no '/' in path
@@ -757,20 +752,18 @@ main(int argc, char **argv)
             } else {
                 filename = relative_path + x + 1;
             }
-            dirname  = strndup(relative_path, x);
 
             if (allowed_file(filename, cmd_options)) {
                 // Check filename against exclude glob masks
+                gchar *full_path = g_strconcat(in_dir, relative_path, NULL);
+                //     ^^^ /path/to/in_repo/packages/i386/foobar.rpm
                 g_debug("Adding pkg: %s", full_path);
                 struct PoolTask *task = g_malloc(sizeof(struct PoolTask));
                 task->full_path = full_path;
-                task->filename = g_strdup(filename);
-                task->path = dirname;
+                task->filename  = g_strdup(filename);         // foobar.rpm
+                task->path      = strndup(relative_path, x);  // packages/i386/
                 g_thread_pool_push(pool, task, NULL);
                 package_count++;
-            } else {
-                g_free(dirname);
-                g_free(full_path);
             }
         }
     }

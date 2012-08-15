@@ -178,14 +178,14 @@ void cr_repomd_add_distro_tag(cr_Repomd repomd,
 /** \ingroup repomd
  * Add repo tag.
  * @param repomd                cr_Repomd object
- * @param repo                  repo tag
+ * @param tag                   repo tag
  */
 void cr_repomd_add_repo_tag(cr_Repomd repomd, const char *tag);
 
 /** \ingroup repomd
  * Add content tag.
  * @param repomd                cr_Repomd object
- * @param content               content tag
+ * @param tag                   content tag
  */
 void cr_repomd_add_content_tag(cr_Repomd repomd, const char *tag);
 

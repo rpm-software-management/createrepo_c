@@ -41,6 +41,78 @@ safe_string_chunk_insert(GStringChunk *chunk, const char *str)
 }
 
 
+inline int
+compare_dependency(const char *dep1, const char *dep2)
+{
+    /* Compares two dependency by name
+     * NOTE: The function assume first parts must be same!
+     * libc.so.6() < libc.so.6(GLIBC_2.3.4)(64 bit) < libc.so.6(GLIBC_2.4)
+     * Return values: 0 - same; 1 - first is bigger; 2 - second is bigger,
+     * -1 - error
+     */
+    int ret1, ret2;
+    char *ver1, *ver2, *ver1_e, *ver2_e;
+
+    if (dep1 == dep2) return 0;
+
+    ver1 = strchr(dep1, '('); // libc.so.6(...
+    ver2 = strchr(dep2, '('); //    verX  ^
+
+    // There is no '('
+    if (!ver1 && !ver2) return 0;
+    if (!ver1) return 2;
+    if (!ver2) return 1;
+
+    ver1_e = strchr(ver1, ')'); // libc.so.6(xxx)...
+    ver2_e = strchr(ver2, ')'); //       verX_e ^
+
+    // If there is no ')'
+    if (!ver1_e && !ver2_e) return -1;
+    if (!ver1_e) return 2;
+    if (!ver2_e) return 1;
+
+    // Go to char next to '('
+    ver1++; // libc.so.6(...
+    ver2++; //      verX ^
+
+    // If parentheses have no content - libc.so.6()... == libc.so.6()...
+    if (ver1 == ver1_e && ver2 == ver2_e) return 0;
+    if (ver1 == ver1_e) return 2;
+    if (ver2 == ver2_e) return 1;
+
+    // Go to first number
+    for (; *ver1 && (*ver1 < '0' || *ver1 > '9'); ver1++); // libc.so.6(GLIBC_2...
+    for (; *ver2 && (*ver2 < '0' || *ver2 > '9'); ver2++); //            verX ^
+
+    // Too far
+    // libc.so.6(xxx)(64bit)
+    //           verX ^
+    if (ver1 > ver1_e && ver2 > ver2_e) return 0;
+    if (ver1 > ver1_e) return 2;
+    if (ver2 > ver2_e) return 1;
+
+/*  XXX: This piece of code could be removed in future 
+    // Check if version is really version and not an architecture
+    // case: libc.so.6(64bit) = 64 is not a version!
+    ret1 = strncmp(ver1, "64bit", 5);
+    ret2 = strncmp(ver2, "64bit", 5);
+    if (!ret1 && !ret2) return 0;
+    if (!ret1) return 2;
+    if (!ret2) return 1;
+*/
+    // Get version string
+    ver1 = g_strndup(ver1, (ver1_e - ver1));
+    ver2 = g_strndup(ver2, (ver2_e - ver2));
+
+    // Compare versions
+    ret1 = rpmvercmp(ver1, ver2);
+    if (ret1 == -1) ret1 = 2;
+
+    g_free(ver1);
+    g_free(ver2);
+    return ret1;
+}
+
 
 cr_Package *
 cr_parse_header(Header hdr, gint64 mtime, gint64 size,
@@ -326,98 +398,22 @@ cr_parse_header(Header hdr, gint64 mtime, gint64 size,
                     case REQUIRES:
                         dependency->pre = pre;
 
-                        // XXX: Ugly libc.so filtering ////////////////////////////////
+                        // XXX: libc.so filtering ////////////////////////////
                         if (g_str_has_prefix(dependency->name, "libc.so.6")) {
-                            if (!libc_require_highest) {
+                            if (!libc_require_highest)
                                 libc_require_highest = dependency;
-                            } else {
-                                // Only highest version can survive! Death figh!
-                                // libc.so.6, libc.so.6(GLIBC_2.3.4), libc.so.6(GLIBC_2.4), ...
-                                char *old_name = libc_require_highest->name;
-                                char *new_name = dependency->name;
-                                int old_len = strlen(old_name);
-                                int new_len = strlen(new_name);
-
-                                if (old_len == 9 && new_len > 9) {
-                                    // Old name is probably only "libc.so.6"
+                            else {
+                                if (compare_dependency(libc_require_highest->name,
+                                                       dependency->name) == 2)
+                                {
                                     g_free(libc_require_highest);
                                     libc_require_highest = dependency;
-                                } else if (old_len > 16 && new_len > 16) {
-                                    // We have two long names, keep only highest version
-                                    int new_i = 16;
-                                    int old_i = 16;
-                                    do {
-                                        // Compare version
-                                        if (g_ascii_isdigit(old_name[old_i]) &&
-                                            g_ascii_isdigit(new_name[new_i]))
-                                        {
-                                            // Everything is ok, compare two numbers
-                                            int new_v = atoi(new_name + new_i);
-                                            int old_v = atoi(old_name + old_i);
-                                            if (new_v > old_v) {
-                                                g_free(libc_require_highest);
-                                                libc_require_highest = dependency;
-                                                break;
-                                            } else if (new_v < old_v) {
-                                                g_free(dependency);
-                                                break;
-                                            }
-                                        } else {
-                                            // we probably got something like libc.so.6()(64bit)
-                                            if (!g_ascii_isdigit(old_name[old_i])) {
-                                                // replace current libc.so.6()(64bit) with
-                                                // the new one libc.so.6...
-                                                g_free(libc_require_highest);
-                                                libc_require_highest = dependency;
-                                            }
-                                            break;
-                                        }
-
-                                        // Find next digit in new
-                                        int dot = 0;
-                                        while (1) {
-                                            new_i++;
-                                            if (new_name[new_i] == '\0') {
-                                                // End of string
-                                                g_free(dependency);
-                                                break;
-                                            }
-                                            if (new_name[new_i] == '.') {
-                                                // '.' is separator between digits
-                                                dot = 1;
-                                            } else if (dot && g_ascii_isdigit(new_name[new_i])) {
-                                                // We got next digit!
-                                                break;
-                                            }
-                                        }
-
-                                        // Find next digit in old
-                                        dot = 0;
-                                        while (1) {
-                                            old_i++;
-                                            if (old_name[old_i] == '\0') {
-                                                // End of string
-                                                g_free(libc_require_highest);
-                                                libc_require_highest = dependency;
-                                                break;
-                                            }
-                                            if (new_name[old_i] == '.') {
-                                                // '.' is separator between digits
-                                                dot = 1;
-                                            } else if (dot && g_ascii_isdigit(old_name[old_i])) {
-                                                // We got next digit!
-                                                break;
-                                            }
-                                        }
-                                    } while (new_name[new_i] != '\0' && old_name[old_i] != '\0');
-                                } else {
-                                    // Do not touch anything
+                                } else
                                     g_free(dependency);
-                                }
                             }
                             break;
                         }
-                        // XXX: Ugly libc.so filtering - END ////////////////////////////////
+                        // XXX: libc.so filtering - END ///////////////////////
 
                         pkg->requires = g_slist_prepend(pkg->requires, dependency);
 
@@ -427,15 +423,14 @@ cr_parse_header(Header hdr, gint64 mtime, gint64 size,
                         value->version = full_version;
                         value->pre = dependency->pre;
                         g_hash_table_replace(ap_hashtable, dependency->name, value);
-                        break;
+                        break; //case REQUIRES end
                 } // Switch end
             } // While end
 
-            // XXX: Ugly libc.so filtering ////////////////////////////////
-            if (pcor_type == REQUIRES && libc_require_highest) {
+            // XXX: libc.so filtering ////////////////////////////////
+            if (pcor_type == REQUIRES && libc_require_highest)
                 pkg->requires = g_slist_prepend(pkg->requires, libc_require_highest);
-            }
-            // XXX: Ugly libc.so filtering - END ////////////////////////////////
+            // XXX: libc.so filtering - END ////////////////////////////////
         }
 
         rpmtdFreeData(filenames);
@@ -462,6 +457,7 @@ cr_parse_header(Header hdr, gint64 mtime, gint64 size,
 
     rpmtdFreeData(full_filenames);
     rpmtdFree(full_filenames);
+
 
     //
     // Changelogs

@@ -66,7 +66,7 @@ def parse_arguments_from_c_file(filename):
         print "Error: Cannot open file %s" % filename
         return args
 
-    re_cmd_entries = re.compile(r"static[ ]+GOptionEntry[^{]*{(?P<entries>.*)\s*NULL\s*}\s*};", re.MULTILINE|re.DOTALL)
+    re_cmd_entries = re.compile(r"static[ ]+GOptionEntry[^{]*{(?P<entries>.*)\s*NULL\s*}[,]?\s*};", re.MULTILINE|re.DOTALL)
     match = re_cmd_entries.search(content)
     if not match:
         print "Warning: Cannot find GOptionEntry section in %s" % filename

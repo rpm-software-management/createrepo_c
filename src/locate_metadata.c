@@ -491,27 +491,28 @@ free_list_of_md_locations(GSList *list)
 int
 cr_remove_metadata(const char *repopath)
 {
+    int removed_files = 0;
+    gchar *full_repopath;
+    const gchar *file;
+    GDir *repodir;
+    struct cr_MetadataLocation *ml;
+
     if (!repopath || !g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
         g_debug(MODULE"%s: remove_old_metadata: Cannot remove %s", __func__, repopath);
         return -1;
     }
 
-    gchar *full_repopath;
     full_repopath = g_strconcat(repopath, "/repodata/", NULL);
-
-    GDir *repodir;
     repodir = g_dir_open(full_repopath, 0, NULL);
     if (!repodir) {
         g_debug(MODULE"%s: Path %s doesn't exists", __func__, repopath);
+        g_free(full_repopath);
         return -1;
     }
 
 
     // Remove all metadata listed in repomd.xml
 
-    int removed_files = 0;
-
-    struct cr_MetadataLocation *ml;
     ml = cr_get_metadata_location(repopath, 0);
     if (ml) {
         GSList *list = get_list_of_md_locations(ml);
@@ -536,7 +537,6 @@ cr_remove_metadata(const char *repopath)
 
     // (Just for sure) List dir and remove all files which could be related to an old metadata
 
-    const gchar *file;
     while ((file = g_dir_read_name (repodir))) {
         if (g_str_has_suffix(file, "primary.xml.gz") ||
             g_str_has_suffix(file, "filelists.xml.gz") ||
@@ -553,16 +553,12 @@ cr_remove_metadata(const char *repopath)
             g_str_has_suffix(file, "updateinfo.xml") ||
             !g_strcmp0(file, "repomd.xml"))
         {
-            gchar *path;
-            path = g_strconcat(full_repopath, file, NULL);
-
+            gchar *path = g_strconcat(full_repopath, file, NULL);
             g_debug(MODULE"%s: Removing: %s", __func__, path);
-            if (g_remove(path) == -1) {
+            if (g_remove(path) == -1)
                 g_warning(MODULE"%s: Cannot remove %s", __func__, path);
-            } else {
+            else
                 removed_files++;
-            }
-
             g_free(path);
         }
     }
@@ -571,4 +567,139 @@ cr_remove_metadata(const char *repopath)
     g_free(full_repopath);
 
     return removed_files;
+}
+
+
+typedef struct _old_file {
+    time_t mtime;
+    gchar  *path;
+} OldFile;
+
+
+void
+free_old_file(gpointer data)
+{
+    OldFile *old_file = (OldFile *) data;
+    g_free(old_file->path);
+    g_free(old_file);
+}
+
+
+gint
+cmp_old_repodata_files(gconstpointer a, gconstpointer b)
+{
+    if (((OldFile *) a)->mtime < ((OldFile *) b)->mtime)
+        return 1;
+    if (((OldFile *) a)->mtime > ((OldFile *) b)->mtime)
+        return -1;
+    return 0;
+}
+
+
+void
+stat_and_insert(const gchar *dirname, const gchar *filename, GSList **list)
+{
+    GStatBuf buf;
+    OldFile *old_file;
+    gchar *path = g_strconcat(dirname, filename, NULL);
+    if (g_stat(path, &buf))
+        buf.st_mtime = 1;
+    old_file = g_malloc0(sizeof(OldFile));
+    old_file->mtime = buf.st_mtime;
+    old_file->path  = path;
+    *list = g_slist_insert_sorted(*list, old_file, cmp_old_repodata_files);
+}
+
+
+int
+remove_listed_files(GSList *list, int retain)
+{
+    int removed = 0;
+    GSList *el;
+
+    if (retain < 0) retain = 0;
+
+    el = g_slist_nth(list, retain);
+    for (; el; el = g_slist_next(el)) {
+        OldFile *of = (OldFile *) el->data;
+        g_debug(MODULE"%s: Removing: %s", __func__, of->path);
+        if (g_remove(of->path) == -1)
+            g_warning(MODULE"%s: Cannot remove %s", __func__, of->path);
+        else
+            removed++;
+    }
+    return removed;
+}
+
+
+int
+cr_remove_metadata_classic(const char *repopath, int retain)
+{
+    gchar *full_repopath;
+    GDir *repodir;
+    const gchar *file;
+    GSList *pri_lst = NULL, *pri_db_lst = NULL;
+    GSList *fil_lst = NULL, *fil_db_lst = NULL;
+    GSList *oth_lst = NULL, *oth_db_lst = NULL;
+
+    if (!repopath || !g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
+        g_debug(MODULE"%s: remove_old_metadata: Cannot remove %s", __func__, repopath);
+        return -1;
+    }
+
+    full_repopath = g_strconcat(repopath, "/repodata/", NULL);
+    repodir = g_dir_open(full_repopath, 0, NULL);
+    if (!repodir) {
+        g_debug(MODULE"%s: Path %s doesn't exists", __func__, repopath);
+        g_free(full_repopath);
+        return -1;
+    }
+
+
+    // Create sorted (by mtime) lists of old metadata files
+    // More recent files are first
+
+    while ((file = g_dir_read_name (repodir))) {
+        // Get filename without suffix
+        gchar *name_without_suffix, *dot = NULL, *i = file;
+        for (; *i != '\0'; i++) if (*i == '.') dot = i;
+        if (!dot) continue;  // Filename doesn't contain '.'
+        name_without_suffix = g_strndup(file, (dot - file));
+
+        if (g_str_has_suffix(name_without_suffix, "primary.xml")) {
+            stat_and_insert(full_repopath, file, &pri_lst);
+        } else if (g_str_has_suffix(name_without_suffix, "primary.sqlite")) {
+            stat_and_insert(full_repopath, file, &pri_db_lst);
+        } else if (g_str_has_suffix(name_without_suffix, "filelists.xml")) {
+            stat_and_insert(full_repopath, file, &fil_lst);
+        } else if (g_str_has_suffix(name_without_suffix, "filelists.sqlite")) {
+            stat_and_insert(full_repopath, file, &fil_db_lst);
+        } else if (g_str_has_suffix(name_without_suffix, "other.xml")) {
+            stat_and_insert(full_repopath, file, &oth_lst);
+        } else if (g_str_has_suffix(name_without_suffix, "other.sqlite")) {
+            stat_and_insert(full_repopath, file, &oth_db_lst);
+        }
+        g_free(name_without_suffix);
+    }
+
+    g_dir_close(repodir);
+    g_free(full_repopath);
+
+    // Remove old metadata
+
+    remove_listed_files(pri_lst, retain);
+    remove_listed_files(pri_db_lst, retain);
+    remove_listed_files(fil_lst, retain);
+    remove_listed_files(fil_db_lst, retain);
+    remove_listed_files(oth_lst, retain);
+    remove_listed_files(oth_db_lst, retain);
+
+    g_slist_free_full(pri_lst, free_old_file);
+    g_slist_free_full(pri_db_lst, free_old_file);
+    g_slist_free_full(fil_lst, free_old_file);
+    g_slist_free_full(fil_db_lst, free_old_file);
+    g_slist_free_full(oth_lst, free_old_file);
+    g_slist_free_full(oth_db_lst, free_old_file);
+
+    return 0;
 }

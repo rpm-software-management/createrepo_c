@@ -381,6 +381,20 @@ main(int argc, char **argv)
     }
 
 
+    // Open package list
+
+    FILE *output_pkg_list = NULL;
+    if (cmd_options->read_pkgs_list) {
+        output_pkg_list = fopen(cmd_options->read_pkgs_list, "w");
+        if (!output_pkg_list) {
+            g_critical("Cannot open \"%s\" for writing",
+                       cmd_options->read_pkgs_list);
+            exit(1);
+        }
+    }
+
+
+
     // Load old metadata if --update
 
     GHashTable *old_metadata = NULL;
@@ -715,6 +729,8 @@ main(int argc, char **argv)
                     task->full_path = full_path;
                     task->filename = g_strdup(filename);
                     task->path = g_strdup(dirname);
+                    fputs(repo_relative_path, output_pkg_list);
+                    fputs("\n", output_pkg_list);
                     // TODO: One common path for all tasks with the same path?
                     g_thread_pool_push(pool, task, NULL);
                     package_count++;
@@ -762,6 +778,8 @@ main(int argc, char **argv)
                 task->full_path = full_path;
                 task->filename  = g_strdup(filename);         // foobar.rpm
                 task->path      = strndup(relative_path, x);  // packages/i386/
+                fputs(relative_path, output_pkg_list);
+                fputs("\n", output_pkg_list);
                 g_thread_pool_push(pool, task, NULL);
                 package_count++;
             }
@@ -771,6 +789,8 @@ main(int argc, char **argv)
     g_debug("Package count: %d", package_count);
     g_message("Directory walk done - %d packages", package_count);
 
+    if (output_pkg_list)
+        fclose(output_pkg_list);
 
     // Write XML header
 

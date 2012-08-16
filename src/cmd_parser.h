@@ -67,6 +67,7 @@ struct CmdOptions {
     char **content_tags;        /*!< tags for the content in the repository */
     char **repo_tags;           /*!< tags to describe the repo_tagsitory itself */
     char *revision;             /*!< user-specified revision */
+    char *read_pkgs_list;       /*!< output the paths to pkgs actually read */
     int workers;                /*!< number of threads to spawn */
     gboolean xz_compression;    /*!< use xz for repodata compression */
     gboolean keep_all_metadata; /*!< keep groupfile and updateinfo from source

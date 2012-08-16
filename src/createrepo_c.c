@@ -729,8 +729,8 @@ main(int argc, char **argv)
                     task->full_path = full_path;
                     task->filename = g_strdup(filename);
                     task->path = g_strdup(dirname);
-                    fputs(repo_relative_path, output_pkg_list);
-                    fputs("\n", output_pkg_list);
+                    if (output_pkg_list)
+                        fprintf(output_pkg_list, "%s\n", repo_relative_path);
                     // TODO: One common path for all tasks with the same path?
                     g_thread_pool_push(pool, task, NULL);
                     package_count++;
@@ -778,8 +778,8 @@ main(int argc, char **argv)
                 task->full_path = full_path;
                 task->filename  = g_strdup(filename);         // foobar.rpm
                 task->path      = strndup(relative_path, x);  // packages/i386/
-                fputs(relative_path, output_pkg_list);
-                fputs("\n", output_pkg_list);
+                if (output_pkg_list)
+                    fprintf(output_pkg_list, "%s\n", relative_path);
                 g_thread_pool_push(pool, task, NULL);
                 package_count++;
             }

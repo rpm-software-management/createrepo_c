@@ -97,6 +97,8 @@ static GOptionEntry cmd_entries[] =
       NULL },
     { "simple-md-filenames", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.simple_md_filenames),
       "Do not include the file's checksum in the metadata filename.", NULL },
+    { "retain-old-md", 0, 0, G_OPTION_ARG_INT, &(_cmd_options.retain_old),
+      "Keep around the latest (by timestamp) N copies of the old repodata.", NULL },
     { "distro", 0, 0, G_OPTION_ARG_STRING_ARRAY, &(_cmd_options.distro_tags),
       "Distro tag and optional cpeid: --distro'cpeid,textname'.", "DISTRO" },
     { "content", 0, 0, G_OPTION_ARG_STRING_ARRAY, &(_cmd_options.content_tags),

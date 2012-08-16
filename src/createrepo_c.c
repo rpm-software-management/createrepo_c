@@ -827,7 +827,7 @@ main(int argc, char **argv)
 
         // Delete old metadata
         g_debug("Removing old metadata from %s", out_repo);
-        cr_remove_metadata(out_dir);
+        cr_remove_metadata_classic(out_dir, cmd_options->retain_old);
 
         // Move files from out_repo to tmp_out_repo
         GDir *dirp;

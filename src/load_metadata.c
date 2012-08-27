@@ -34,6 +34,7 @@
 #undef MODULE
 #define MODULE "load_metadata: "
 
+#define STRINGCHUNK_SIZE        16384
 #define CHUNK_SIZE              8192
 #define PKGS_REALLOC_STEP       2000
 
@@ -89,6 +90,8 @@ struct ParserData {
     ParserContext context;
     TextElement last_elem;
 
+    GStringChunk *chunk;
+
     gboolean error;
 };
 
@@ -115,9 +118,35 @@ cr_new_metadata_hashtable()
 void
 cr_destroy_metadata_hashtable(GHashTable *hashtable)
 {
-    if (hashtable) {
+    if (hashtable)
         g_hash_table_destroy (hashtable);
-    }
+}
+
+
+
+cr_Metadata
+cr_new_metadata(cr_HashTableKey key, int use_single_chunk)
+{
+    cr_Metadata md = g_malloc0(sizeof(*md));
+    md->key = key;
+    md->ht = cr_new_metadata_hashtable();
+    if (use_single_chunk)
+        md->chunk = g_string_chunk_new(STRINGCHUNK_SIZE);
+    return md;
+}
+
+
+
+void
+cr_destroy_metadata(cr_Metadata md)
+{
+    if (!md)
+        return;
+
+    cr_destroy_metadata_hashtable(md->ht);
+    if (md->chunk)
+        g_string_chunk_free(md->chunk);
+    g_free(md);
 }
 
 
@@ -218,7 +247,11 @@ pri_start_handler(void *data, const char *el, const char **attr)
         }
 
         ppd->context = PACKAGE;
-        ppd->pkg = cr_package_new();
+        if (ppd->chunk) {
+            ppd->pkg = cr_package_new_without_chunk();
+            ppd->pkg->chunk = ppd->chunk;
+        } else
+            ppd->pkg = cr_package_new();
 
     // <name>
     } else if (!strcmp(el, "name")) {
@@ -538,6 +571,9 @@ pri_end_handler(void *data, const char *el)
             // Update ParserData
             ppd->pkg = NULL;
 
+            if (ppd->chunk)
+                pkg->chunk = NULL;
+
             // Reverse lists
             pkg->requires  = g_slist_reverse(pkg->requires);
             pkg->provides  = g_slist_reverse(pkg->provides);
@@ -627,6 +663,9 @@ fil_start_handler(void *data, const char *el, const char **attr)
             ppd->error = TRUE;
             g_critical(MODULE"%s: Package withou pkgid attribute found!", __func__);
         }
+
+        if (ppd->chunk)
+            ppd->pkg->chunk = ppd->chunk;
 
     // <version>
     } else if (!strcmp(el, "version")) {
@@ -741,6 +780,8 @@ fil_end_handler(void *data, const char *el)
             // Reverse list of files
             pkg->files = g_slist_reverse(pkg->files);
             ppd->pkg = NULL;
+            if (ppd->chunk)
+                pkg->chunk = NULL;
         }
 
     } else if (!strcmp(el, "filelists")) {
@@ -823,6 +864,9 @@ oth_start_handler(void *data, const char *el, const char **attr)
             g_critical(MODULE"%s: Package withou pkgid attribute found!",
                        __func__);
         }
+
+        if (ppd->chunk)
+            ppd->pkg->chunk = ppd->chunk;
 
     // <version>
     } else if (!strcmp(el, "version")) {
@@ -912,6 +956,8 @@ oth_end_handler(void *data, const char *el)
             // Reverse list of changelogs
             pkg->changelogs = g_slist_reverse(pkg->changelogs);
             ppd->pkg = NULL;
+            if (ppd->chunk)
+                pkg->chunk = NULL;
         }
 
     } else if (!strcmp(el, "otherdata")) {
@@ -923,7 +969,8 @@ oth_end_handler(void *data, const char *el)
 
 int
 load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
-               const char *filelists_xml_path, const char *other_xml_path)
+               const char *filelists_xml_path, const char *other_xml_path,
+               GStringChunk *chunk)
 {
     cr_CompressionType compression_type;
     CR_FILE *pri_xml_cwfile, *fil_xml_cwfile, *oth_xml_cwfile;
@@ -966,6 +1013,7 @@ load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
     parser_data.context = ROOT;
     parser_data.last_elem = NONE_ELEM;
     parser_data.error = FALSE;
+    parser_data.chunk = chunk;
 
     pri_p = XML_ParserCreate(NULL);
     XML_SetUserData(pri_p, (void *) &parser_data);
@@ -1111,19 +1159,14 @@ cleanup:
 
 
 int
-cr_load_xml_metadata(GHashTable *hashtable,
-                     struct cr_MetadataLocation *ml,
-                     cr_HashTableKey key)
+cr_load_xml_metadata(cr_Metadata md, struct cr_MetadataLocation *ml)
 {
-    if (!hashtable || !ml) {
+    if (!md || !ml)
         return CR_LOAD_METADATA_ERR;
-    }
 
-    if (!ml->pri_xml_href || !ml->fil_xml_href || !ml->oth_xml_href) {
+    if (!ml->pri_xml_href || !ml->fil_xml_href || !ml->oth_xml_href)
         // Some file(s) is/are missing
-        cr_free_metadata_location(ml);
         return CR_LOAD_METADATA_ERR;
-    }
 
 
     // Load metadata
@@ -1133,7 +1176,7 @@ cr_load_xml_metadata(GHashTable *hashtable,
 
     intern_hashtable = cr_new_metadata_hashtable();
     result = load_xml_files(intern_hashtable, ml->pri_xml_href,
-                            ml->fil_xml_href, ml->oth_xml_href);
+                            ml->fil_xml_href, ml->oth_xml_href, md->chunk);
 
     if (result == CR_LOAD_METADATA_ERR) {
         g_critical(MODULE"%s: Error encountered while parsing", __func__);
@@ -1155,7 +1198,7 @@ cr_load_xml_metadata(GHashTable *hashtable,
         cr_Package *pkg = (cr_Package *) p_value;
         gpointer new_key;
 
-        switch (key) {
+        switch (md->key) {
             case CR_HT_KEY_FILENAME:
                 new_key = cr_get_filename(pkg->location_href);
                 break;
@@ -1172,12 +1215,12 @@ cr_load_xml_metadata(GHashTable *hashtable,
                 break;
         }
 
-        if (g_hash_table_lookup(hashtable, new_key)) {
+        if (g_hash_table_lookup(md->ht, new_key)) {
             g_debug(MODULE"%s: Key \"%s\" already exists in hashtable",
                     __func__, (char *) new_key);
             g_hash_table_iter_remove(&iter);
         } else {
-            g_hash_table_insert(hashtable, new_key, p_value);
+            g_hash_table_insert(md->ht, new_key, p_value);
             g_hash_table_iter_steal(&iter);
         }
     }
@@ -1193,20 +1236,16 @@ cr_load_xml_metadata(GHashTable *hashtable,
 
 
 int
-cr_locate_and_load_xml_metadata(GHashTable *hashtable,
-                                const char *repopath,
-                                cr_HashTableKey key)
+cr_locate_and_load_xml_metadata(cr_Metadata md, const char *repopath)
 {
-    if (!hashtable || !repopath) {
+    if (!md || !repopath)
         return CR_LOAD_METADATA_ERR;
-    }
 
     int ret;
-    struct cr_MetadataLocation *ml;
-
-    ml = cr_get_metadata_location(repopath, 1);
-    ret = cr_load_xml_metadata(hashtable, ml, key);
+    struct cr_MetadataLocation *ml = cr_get_metadata_location(repopath, 1);
+    ret = cr_load_xml_metadata(md, ml);
     cr_free_metadata_location(ml);
 
     return ret;
 }
+

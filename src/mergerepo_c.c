@@ -450,9 +450,9 @@ merge_repos(GHashTable *merged,
 
     GSList *element = NULL;
     for (element = repo_list; element; element = g_slist_next(element)) {
-        GHashTable *tmp_hashtable;
+        cr_Metadata tmp_metadata;
 
-        tmp_hashtable = cr_new_metadata_hashtable();
+        tmp_metadata = cr_new_metadata(CR_HT_KEY_HASH, 0);
         struct cr_MetadataLocation *ml = (struct cr_MetadataLocation *) element->data;
 
         // Base paths in output of original createrepo doesn't have trailing '/'
@@ -463,9 +463,9 @@ merge_repos(GHashTable *merged,
 
         g_debug("Processing: %s", repopath);
 
-        if (cr_load_xml_metadata(tmp_hashtable, ml, CR_HT_KEY_HASH) == CR_LOAD_METADATA_ERR) {
+        if (cr_load_xml_metadata(tmp_metadata, ml) == CR_LOAD_METADATA_ERR) {
             g_critical("Cannot load repo: \"%s\"", ml->repomd);
-            cr_destroy_metadata_hashtable(tmp_hashtable);
+            cr_destroy_metadata(tmp_metadata);
             break;
         }
 
@@ -474,9 +474,9 @@ merge_repos(GHashTable *merged,
         guint original_size;
         long repo_loaded_packages = 0;
 
-        original_size = g_hash_table_size(tmp_hashtable);
+        original_size = g_hash_table_size(tmp_metadata->ht);
 
-        g_hash_table_iter_init (&iter, tmp_hashtable);
+        g_hash_table_iter_init (&iter, tmp_metadata->ht);
         while (g_hash_table_iter_next (&iter, &key, &value)) {
             int ret;
             cr_Package *pkg = (cr_Package *) value;
@@ -513,7 +513,7 @@ merge_repos(GHashTable *merged,
         }
 
         loaded_packages += repo_loaded_packages;
-        cr_destroy_metadata_hashtable(tmp_hashtable);
+        cr_destroy_metadata(tmp_metadata);
         g_debug("Repo: %s (Loaded: %ld Used: %ld)", repopath,
                 (unsigned long) original_size, repo_loaded_packages);
         g_free(repopath);
@@ -951,13 +951,13 @@ main(int argc, char **argv)
 
     // Load noarch repo
 
-    GHashTable *noarch_hashtable = NULL; // Key is CR_HT_KEY_FILENAME
+    cr_Metadata noarch_metadata = NULL; // Key is CR_HT_KEY_FILENAME
 
     if (cmd_options->noarch_repo_url) {
         struct cr_MetadataLocation *noarch_ml;
 
         noarch_ml = cr_get_metadata_location(cmd_options->noarch_repo_url, 1);
-        noarch_hashtable = cr_new_metadata_hashtable();
+        noarch_metadata = cr_new_metadata(CR_HT_KEY_FILENAME, 0);
 
         // Base paths in output of original createrepo doesn't have trailing '/'
         gchar *noarch_repopath = cr_normalize_dir_path(noarch_ml->original_url);
@@ -967,10 +967,9 @@ main(int argc, char **argv)
 
         g_debug("Loading noarch_repo: %s", noarch_repopath);
 
-        if (cr_load_xml_metadata(noarch_hashtable, noarch_ml, CR_HT_KEY_FILENAME) == CR_LOAD_METADATA_ERR) {
+        if (cr_load_xml_metadata(noarch_metadata, noarch_ml) == CR_LOAD_METADATA_ERR) {
             g_error("Cannot load noarch repo: \"%s\"", noarch_ml->repomd);
-            cr_destroy_metadata_hashtable(noarch_hashtable);
-            noarch_hashtable = NULL;
+            cr_destroy_metadata(noarch_metadata);
             // TODO cleanup
             cr_free_metadata_location(noarch_ml);
             return 1;
@@ -980,12 +979,12 @@ main(int argc, char **argv)
         GHashTableIter iter;
         gpointer p_key, p_value;
 
-        g_hash_table_iter_init (&iter, noarch_hashtable);
+        g_hash_table_iter_init (&iter, noarch_metadata->ht);
         while (g_hash_table_iter_next (&iter, &p_key, &p_value)) {
             cr_Package *pkg = (cr_Package *) p_value;
-            if (!pkg->location_base) {
-                pkg->location_base = g_string_chunk_insert(pkg->chunk, noarch_repopath);
-            }
+            if (!pkg->location_base)
+                pkg->location_base = g_string_chunk_insert(pkg->chunk,
+                                                           noarch_repopath);
         }
 
         g_free(noarch_repopath);
@@ -997,9 +996,10 @@ main(int argc, char **argv)
 
     long loaded_packages;
     GHashTable *merged_hashtable = new_merged_metadata_hashtable();
-    loaded_packages = merge_repos(merged_hashtable, local_repos, cmd_options->arch_list,
+    loaded_packages = merge_repos(merged_hashtable, local_repos,
+                                  cmd_options->arch_list,
                                   cmd_options->merge_method, cmd_options->all,
-                                  noarch_hashtable);
+                                  noarch_metadata ? noarch_metadata->ht : NULL);
 
 
     // Dump metadata
@@ -1019,7 +1019,7 @@ main(int argc, char **argv)
     // Cleanup
 
     g_free(groupfile);
-    cr_destroy_metadata_hashtable(noarch_hashtable);
+    cr_destroy_metadata(noarch_metadata);
     destroy_merged_metadata_hashtable(merged_hashtable);
     free_options(cmd_options);
     return 0;

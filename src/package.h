@@ -138,6 +138,12 @@ cr_ChangelogEntry *cr_changelog_entry_new(void);
 cr_Package *cr_package_new(void);
 
 /** \ingroup package
+ * Create new (empty) package structure without initialized string chunk.
+ * @return              new empty cr_Package
+ */
+cr_Package *cr_package_new_without_chunk(void);
+
+/** \ingroup package
  * Free package structure and all its structures.
  * @param package       cr_Package
  */

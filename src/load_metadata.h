@@ -41,6 +41,20 @@ typedef enum {
                                              ->location_href) */
 } cr_HashTableKey;
 
+/** \ingroup load_metadata
+ * Structure for loaded metadata
+ */
+struct _cr_Metadata {
+    cr_HashTableKey key;    /*!< key used in hashtable */
+    GHashTable *ht;         /*!< hashtable with packages */
+    GStringChunk *chunk;    /*!< NULL or string chunk with strings from htn */
+};
+
+/** \ingroup load_metadata
+ * Pointer to structure with loaded metadata
+ */
+typedef struct _cr_Metadata *cr_Metadata;
+
 /**@{*/
 #define CR_LOAD_METADATA_OK        0  /*!< Metadata loaded successfully */
 #define CR_LOAD_METADATA_ERR       1  /*!< Error while loading metadata */
@@ -48,38 +62,37 @@ typedef enum {
 
 /** \ingroup load_metadata
  * Create new (empty) metadata hashtable.
- * @return              empty metadata hashtable
+ * @param key               key specifies which value will be (is) used as key
+ *                          in hash table
+ * @param use_single_chunk  use only one string chunk (all loaded packages
+ *                          share one string chunk in the cr_Metadata object)
+ *                          Packages will be not standalone objects.
+ *                          This option leads to less memory consumption.
+ * @return                  empty cr_Metadata object
  */
-GHashTable *cr_new_metadata_hashtable();
+cr_Metadata cr_new_metadata(cr_HashTableKey key, int use_single_chunk);
 
 /** \ingroup load_metadata
- * Destroys all keys and values in the metadata hash table and decrements
- * its reference count by 1.
- * @param hashtable     metadata hashtable
+ * Destroy metadata.
+ * @param md            cr_Metadata object
  */
-void cr_destroy_metadata_hashtable(GHashTable *hashtable);
+void cr_destroy_metadata(cr_Metadata md);
 
 /** \ingroup load_metadata
  * Load metadata from the specified location.
- * @param hashtable     destination metadata hashtable
+ * @param md            metadata object
  * @param ml            metadata location
- * @param key           hashtable key
  * @return              return code CR_LOAD_METADATA_OK or CR_LOAD_METADATA_ERR
  */
-int cr_load_xml_metadata(GHashTable *hashtable,
-                         struct cr_MetadataLocation *ml,
-                         cr_HashTableKey key);
+int cr_load_xml_metadata(cr_Metadata md, struct cr_MetadataLocation *ml);
 
 /** \ingroup load_metadata
  * Locate and load metadata from the specified path.
- * @param hashtable     destination metadata hashtable
+ * @param md            metadata object
  * @param repopath      path to repo (to directory with repodata/ subdir)
- * @param key           hashtable key
  * @return              return code CR_LOAD_METADATA_OK or CR_LOAD_METADATA_ERR
  */
-int cr_locate_and_load_xml_metadata(GHashTable *hashtable,
-                                    const char *repopath,
-                                    cr_HashTableKey key);
+int cr_locate_and_load_xml_metadata(cr_Metadata md, const char *repopath);
 
 #ifdef __cplusplus
 }

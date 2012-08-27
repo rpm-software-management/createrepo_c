@@ -63,7 +63,7 @@ struct UserData {
 
     // Update stuff
     gboolean skip_stat;
-    GHashTable *old_metadata;
+    cr_Metadata old_metadata;
 };
 
 
@@ -157,7 +157,7 @@ dumper_thread(gpointer data, gpointer user_data)
 
     if (udata->old_metadata) {
         // We have old metadata
-        md = (cr_Package *) g_hash_table_lookup (udata->old_metadata,
+        md = (cr_Package *) g_hash_table_lookup (udata->old_metadata->ht,
                                                  task->filename);
 
         if (md) {
@@ -397,25 +397,22 @@ main(int argc, char **argv)
 
     // Load old metadata if --update
 
-    GHashTable *old_metadata = NULL;
+    cr_Metadata old_metadata = NULL;
     struct cr_MetadataLocation *old_metadata_location = NULL;
 
     if (cmd_options->update) {
         int ret;
-        old_metadata = cr_new_metadata_hashtable();
+        old_metadata = cr_new_metadata(CR_HT_KEY_FILENAME, 1);
 
         // Load data from output dir if output dir is specified
         // This is default behaviour of classic createrepo
         if (cmd_options->outputdir) {
             old_metadata_location = cr_get_metadata_location(out_dir, 1);
-            ret = cr_load_xml_metadata(old_metadata,
-                                       old_metadata_location,
-                                       CR_HT_KEY_FILENAME);
-            if (ret == CR_LOAD_METADATA_OK) {
+            ret = cr_load_xml_metadata(old_metadata, old_metadata_location);
+            if (ret == CR_LOAD_METADATA_OK)
                 g_debug("Old metadata from: %s - loaded", out_dir);
-            } else {
+            else
                 g_debug("Old metadata from %s - loading failed", out_dir);
-            }
         }
 
         // Load local repodata
@@ -423,29 +420,21 @@ main(int argc, char **argv)
         // metadata, but createrepo_c does.
         if (!cmd_options->outputdir) {
             old_metadata_location = cr_get_metadata_location(in_dir, 1);
-            ret = cr_load_xml_metadata(old_metadata,
-                                       old_metadata_location,
-                                       CR_HT_KEY_FILENAME);
-        } else {
-            ret = cr_locate_and_load_xml_metadata(old_metadata,
-                                                  in_dir,
-                                                  CR_HT_KEY_FILENAME);
-        }
+            ret = cr_load_xml_metadata(old_metadata, old_metadata_location);
+        } else
+            ret = cr_locate_and_load_xml_metadata(old_metadata, in_dir);
 
-        if (ret == CR_LOAD_METADATA_OK) {
+        if (ret == CR_LOAD_METADATA_OK)
             g_debug("Old metadata from: %s - loaded", in_dir);
-        } else {
+        else
             g_debug("Old metadata from %s - loading failed", in_dir);
-        }
 
         // Load repodata from --update-md-path
         GSList *element = cmd_options->l_update_md_paths;
         for (; element; element = g_slist_next(element)) {
             char *path = (char *) element->data;
             g_message("Loading metadata from: %s", path);
-            int ret = cr_locate_and_load_xml_metadata(old_metadata,
-                                                      path,
-                                                      CR_HT_KEY_FILENAME);
+            int ret = cr_locate_and_load_xml_metadata(old_metadata, path);
             if (ret == CR_LOAD_METADATA_OK)
                 g_debug("Metadata from md-path %s - loaded", path);
             else
@@ -453,7 +442,7 @@ main(int argc, char **argv)
         }
 
         g_message("Loaded information about %d packages",
-                  g_hash_table_size(old_metadata));
+                  g_hash_table_size(old_metadata->ht));
     }
 
 
@@ -1084,9 +1073,8 @@ main(int argc, char **argv)
 
     g_debug("Memory cleanup");
 
-    if (old_metadata) {
-        cr_destroy_metadata_hashtable(old_metadata);
-    }
+    if (old_metadata)
+        cr_destroy_metadata(old_metadata);
 
     g_free(in_repo);
     g_free(out_repo);

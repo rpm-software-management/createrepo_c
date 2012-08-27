@@ -64,10 +64,16 @@ cr_package_new(void)
     return package;
 }
 
+cr_Package *
+cr_package_new_without_chunk(void)
+{
+    return g_new0(cr_Package, 1);
+}
+
 void
 cr_package_free(cr_Package *package)
 {
-    g_string_chunk_free (package->chunk);
+    if (package->chunk) g_string_chunk_free (package->chunk);
 
 /* Note: Since glib 2.28
  * g_slist_foreach && g_slist_free could be replaced with one function:

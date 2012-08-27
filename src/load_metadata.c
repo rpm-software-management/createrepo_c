@@ -705,8 +705,8 @@ fil_end_handler(void *data, const char *el)
                 file = cr_package_file_new();
                 filename = cr_get_filename(txt);
                 file->name = g_string_chunk_insert(pkg->chunk, filename);
-                file->path = g_string_chunk_insert_len(pkg->chunk, txt,
-                                                (txtlen - strlen(filename)));
+                txt[txtlen-strlen(filename)] = '\0';
+                file->path = g_string_chunk_insert_const(pkg->chunk, txt);
 
                 if (ppd->last_elem == FILE_ELEM) {
                     file->type = NULL; // "file";

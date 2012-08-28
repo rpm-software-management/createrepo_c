@@ -129,6 +129,11 @@ G_LOCK_DEFINE (LOCK_OTH);
 void
 dumper_thread(gpointer data, gpointer user_data)
 {
+    gboolean old_used = FALSE;
+    cr_Package *md = NULL;
+    cr_Package *pkg = NULL;
+    struct stat stat_buf;
+    struct cr_XmlStruct res;
 
     struct UserData *udata = (struct UserData *) user_data;
     struct PoolTask *task = (struct PoolTask *) data;
@@ -136,11 +141,9 @@ dumper_thread(gpointer data, gpointer user_data)
     // get location_href without leading part of path (path to repo)
     // including '/' char
     const char *location_href = task->full_path + udata->repodir_name_len;
-
     const char *location_base = udata->location_base;
 
     // Get stat info about file
-    struct stat stat_buf;
     if (udata->old_metadata && !(udata->skip_stat)) {
         if (stat(task->full_path, &stat_buf) == -1) {
             g_critical("Stat() on %s: %s", task->full_path, strerror(errno));
@@ -148,21 +151,13 @@ dumper_thread(gpointer data, gpointer user_data)
         }
     }
 
-    struct cr_XmlStruct res;
-
     // Update stuff
-    gboolean old_used = FALSE;
-    cr_Package *md = NULL;
-    cr_Package *pkg = NULL;
-
     if (udata->old_metadata) {
         // We have old metadata
         md = (cr_Package *) g_hash_table_lookup (udata->old_metadata->ht,
                                                  task->filename);
 
         if (md) {
-            // CACHE HIT!
-
             g_debug("CACHE HIT %s", task->filename);
 
             if (udata->skip_stat) {
@@ -226,13 +221,12 @@ dumper_thread(gpointer data, gpointer user_data)
 
     // Clean up
 
-    if (pkg != md) {
+    if (pkg != md)
         cr_package_free(pkg);
-    }
 
-    free(res.primary);
-    free(res.filelists);
-    free(res.other);
+    g_free(res.primary);
+    g_free(res.filelists);
+    g_free(res.other);
 
 task_cleanup:
     g_free(task->full_path);

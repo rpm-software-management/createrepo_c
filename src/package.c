@@ -73,7 +73,11 @@ cr_package_new_without_chunk(void)
 void
 cr_package_free(cr_Package *package)
 {
-    if (package->chunk) g_string_chunk_free (package->chunk);
+    if (!package)
+        return;
+
+    if (package->chunk)
+        g_string_chunk_free (package->chunk);
 
 /* Note: Since glib 2.28
  * g_slist_foreach && g_slist_free could be replaced with one function:

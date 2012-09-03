@@ -546,7 +546,10 @@ main(int argc, char **argv)
     cr_Metadata old_metadata = NULL;
     struct cr_MetadataLocation *old_metadata_location = NULL;
 
-    if (cmd_options->update) {
+    if (!package_count)
+        g_debug("No packages found - skipping metadata loading");
+
+    if (package_count && cmd_options->update) {
         int ret;
         old_metadata = cr_new_metadata(CR_HT_KEY_FILENAME, 1);
 

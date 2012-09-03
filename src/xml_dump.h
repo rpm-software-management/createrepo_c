@@ -51,6 +51,16 @@ struct cr_XmlStruct {
 };
 
 /** \ingroup xml_dump
+ * Initialize dumping part of library (Initialize libxml2).
+ */
+void cr_dumper_init();
+
+/** \ingroup xml_dump
+ * Cleanup initialized dumping part of library
+ */
+void cr_dumper_cleanup();
+
+/** \ingroup xml_dump
  * Generate primary xml chunk from cr_Package.
  * @param package       cr_Package
  * @return              xml chunk string or NULL on error

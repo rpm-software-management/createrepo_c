@@ -143,6 +143,7 @@ dumper_thread(gpointer data, gpointer user_data)
     const char *location_href = task->full_path + udata->repodir_name_len;
     const char *location_base = udata->location_base;
 
+
     // Get stat info about file
     if (udata->old_metadata && !(udata->skip_stat)) {
         if (stat(task->full_path, &stat_buf) == -1) {
@@ -745,6 +746,7 @@ main(int argc, char **argv)
     // Init package parser
 
     cr_package_parser_init();
+    cr_dumper_init();
 
 
     // Thread pool - User data initialization
@@ -795,6 +797,8 @@ main(int argc, char **argv)
 
     g_thread_pool_free(pool, FALSE, TRUE);
     g_message("Pool finished");
+
+    cr_dumper_cleanup();
 
     cr_puts(user_data.pri_f, "</metadata>");
     cr_puts(user_data.fil_f, "</filelists>");

@@ -20,6 +20,7 @@
 #include <glib.h>
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
+#include <libxml/parser.h>
 #include <string.h>
 #include "logging.h"
 #include "misc.h"
@@ -28,6 +29,20 @@
 
 #undef MODULE
 #define MODULE "xml_dump: "
+
+
+void
+cr_dumper_init()
+{
+    xmlInitParser();
+}
+
+
+void
+cr_dumper_cleanup()
+{
+    xmlCleanupParser();
+}
 
 
 void

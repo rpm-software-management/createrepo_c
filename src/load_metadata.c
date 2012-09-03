@@ -91,6 +91,7 @@ struct ParserData {
     TextElement last_elem;
 
     GStringChunk *chunk;
+    GHashTable *pkglist;
 
     gboolean error;
 };
@@ -560,25 +561,39 @@ pri_end_handler(void *data, const char *el)
         ppd->context = METADATA;
 
         if (ppd->pkg) {
-            // Store package into the hashtable
-            char *key = pkg->pkgId;
-            if (key && key[0] != '\0') {
-                g_hash_table_replace(ppd->hashtable, key, ppd->pkg);
-            } else {
-                g_warning(MODULE"%s: Empty hashtable key!", __func__);
-            }
+            gboolean store = TRUE;
 
-            // Update ParserData
-            ppd->pkg = NULL;
+            // Check if packages should be stored
+            if (ppd->pkglist && pkg->location_href) {
+                gchar *basename = cr_get_filename(pkg->location_href);
+                store = g_hash_table_lookup_extended(ppd->pkglist,
+                                                     basename,
+                                                     NULL,
+                                                     NULL);
+            }
 
             if (ppd->chunk)
                 pkg->chunk = NULL;
 
-            // Reverse lists
-            pkg->requires  = g_slist_reverse(pkg->requires);
-            pkg->provides  = g_slist_reverse(pkg->provides);
-            pkg->conflicts = g_slist_reverse(pkg->conflicts);
-            pkg->obsoletes  = g_slist_reverse(pkg->obsoletes);
+            if (store) {
+                // Store package into the hashtable
+                char *key = pkg->pkgId;
+                if (key && key[0] != '\0') {
+                    g_hash_table_replace(ppd->hashtable, key, ppd->pkg);
+                } else {
+                    g_warning(MODULE"%s: Empty hashtable key!", __func__);
+                }
+
+                // Reverse lists
+                pkg->requires  = g_slist_reverse(pkg->requires);
+                pkg->provides  = g_slist_reverse(pkg->provides);
+                pkg->conflicts = g_slist_reverse(pkg->conflicts);
+                pkg->obsoletes = g_slist_reverse(pkg->obsoletes);
+            } else
+                cr_package_free(pkg);
+
+            // Update ParserData
+            ppd->pkg = NULL;
         }
     } else if (!strcmp(el, "rpm:provides")) {
         ppd->context = FORMAT;
@@ -605,10 +620,20 @@ fil_start_handler(void *data, const char *el, const char **attr)
     struct ParserData *ppd = (struct ParserData *) data;
     cr_Package *pkg = ppd->pkg;
 
+    if (!pkg && ppd->context == PACKAGE) {
+        // There is no pkg object -> no need to parse package element
+        return;
+    }
 
     // <file>
     if (!strcmp(el, "file")) {
         ppd->last_elem = FILE_ELEM;
+
+        if (ppd->context != PACKAGE) {
+            ppd->error = TRUE;
+            g_critical(MODULE"%s: Bad context of <file> element!", __func__);
+            return;
+        }
 
         if (!pkg) {
             ppd->error = TRUE;
@@ -654,17 +679,21 @@ fil_start_handler(void *data, const char *el, const char **attr)
         if (key) {
             ppd->pkg = (cr_Package *) g_hash_table_lookup(ppd->hashtable,
                                                           (gconstpointer) key);
-            if (!ppd->pkg) {
-                ppd->error = TRUE;
-                g_critical(MODULE"%s: Unknown package (package ID: %s)",
-                           __func__, key);
-            }
+            // The package could not be in the hashtable. If the ppd->pkglist
+            // is used and the package is not listed in it, then no record
+            // in the hastable was created during parsing primary.xml.
+
+            //if (!ppd->pkg) {
+            //    ppd->error = TRUE;
+            //    g_critical(MODULE"%s: Unknown package (package ID: %s)",
+            //               __func__, key);
+            //}
         } else {
             ppd->error = TRUE;
             g_critical(MODULE"%s: Package withou pkgid attribute found!", __func__);
         }
 
-        if (ppd->chunk)
+        if (ppd->pkg && ppd->chunk)
             ppd->pkg->chunk = ppd->chunk;
 
     // <version>
@@ -799,10 +828,20 @@ oth_start_handler(void *data, const char *el, const char **attr)
     struct ParserData *ppd = (struct ParserData *) data;
     cr_Package *pkg = ppd->pkg;
 
+    if (!pkg && ppd->context == PACKAGE) {
+        // There is no pkg object -> no need to parse package element
+        return;
+    }
 
     // <changelog>
     if (!strcmp(el, "changelog")) {
         ppd->last_elem = CHANGELOG_ELEM;
+
+        if (ppd->context != PACKAGE) {
+            ppd->error = TRUE;
+            g_critical(MODULE"%s: Bad context of <changelog> element!", __func__);
+            return;
+        }
 
         if (!pkg) {
             ppd->error = TRUE;
@@ -854,18 +893,23 @@ oth_start_handler(void *data, const char *el, const char **attr)
         if (key) {
             ppd->pkg = (cr_Package *) g_hash_table_lookup(ppd->hashtable,
                                                        (gconstpointer) key);
-            if (!ppd->pkg) {
-                ppd->error = TRUE;
-                g_critical(MODULE"%s: Unknown package (package ID: %s)",
-                           __func__, key);
-            }
+
+            // The package could not be in the hashtable. If the ppd->pkglist
+            // is used and the package is not listed in it, then no record
+            // in the hastable was created during parsing primary.xml.
+
+            //if (!ppd->pkg) {
+            //    ppd->error = TRUE;
+            //    g_critical(MODULE"%s: Unknown package (package ID: %s)",
+            //               __func__, key);
+            //}
         } else {
             ppd->error = TRUE;
             g_critical(MODULE"%s: Package withou pkgid attribute found!",
                        __func__);
         }
 
-        if (ppd->chunk)
+        if (ppd->pkg && ppd->chunk)
             ppd->pkg->chunk = ppd->chunk;
 
     // <version>
@@ -970,7 +1014,7 @@ oth_end_handler(void *data, const char *el)
 int
 load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
                const char *filelists_xml_path, const char *other_xml_path,
-               GStringChunk *chunk)
+               GStringChunk *chunk, GHashTable *pkglist)
 {
     cr_CompressionType compression_type;
     CR_FILE *pri_xml_cwfile, *fil_xml_cwfile, *oth_xml_cwfile;
@@ -1014,6 +1058,7 @@ load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
     parser_data.last_elem = NONE_ELEM;
     parser_data.error = FALSE;
     parser_data.chunk = chunk;
+    parser_data.pkglist = pkglist;
 
     pri_p = XML_ParserCreate(NULL);
     XML_SetUserData(pri_p, (void *) &parser_data);
@@ -1159,7 +1204,9 @@ cleanup:
 
 
 int
-cr_load_xml_metadata(cr_Metadata md, struct cr_MetadataLocation *ml)
+cr_load_xml_metadata(cr_Metadata md,
+                     struct cr_MetadataLocation *ml,
+                     GHashTable *pkglist)
 {
     if (!md || !ml)
         return CR_LOAD_METADATA_ERR;
@@ -1176,7 +1223,8 @@ cr_load_xml_metadata(cr_Metadata md, struct cr_MetadataLocation *ml)
 
     intern_hashtable = cr_new_metadata_hashtable();
     result = load_xml_files(intern_hashtable, ml->pri_xml_href,
-                            ml->fil_xml_href, ml->oth_xml_href, md->chunk);
+                            ml->fil_xml_href, ml->oth_xml_href,
+                            md->chunk, pkglist);
 
     if (result == CR_LOAD_METADATA_ERR) {
         g_critical(MODULE"%s: Error encountered while parsing", __func__);
@@ -1236,14 +1284,16 @@ cr_load_xml_metadata(cr_Metadata md, struct cr_MetadataLocation *ml)
 
 
 int
-cr_locate_and_load_xml_metadata(cr_Metadata md, const char *repopath)
+cr_locate_and_load_xml_metadata(cr_Metadata md,
+                                const char *repopath,
+                                GHashTable *pkglist)
 {
     if (!md || !repopath)
         return CR_LOAD_METADATA_ERR;
 
     int ret;
     struct cr_MetadataLocation *ml = cr_get_metadata_location(repopath, 1);
-    ret = cr_load_xml_metadata(md, ml);
+    ret = cr_load_xml_metadata(md, ml, pkglist);
     cr_free_metadata_location(ml);
 
     return ret;

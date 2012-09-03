@@ -388,6 +388,157 @@ main(int argc, char **argv)
     }
 
 
+    // Thread pool - Creation
+
+    struct UserData user_data;
+    g_thread_init(NULL);
+    GThreadPool *pool = g_thread_pool_new(dumper_thread,
+                                          &user_data,
+                                          0,
+                                          TRUE,
+                                          NULL);
+    g_debug("Thread pool ready");
+
+
+    // Recursive walk
+
+    GHashTable *pkglist_ht = g_hash_table_new(g_str_hash, g_str_equal);
+    /* ^^^ Hashtable with basenames of files which will be processed */
+    int package_count = 0;
+
+    if (!(cmd_options->include_pkgs)) {
+        // --pkglist (or --includepkg) is not supplied -> do dir walk
+
+        g_message("Directory walk started");
+
+        size_t in_dir_len = strlen(in_dir);
+        GStringChunk *sub_dirs_chunk = g_string_chunk_new(1024);
+        GQueue *sub_dirs = g_queue_new();
+        gchar *input_dir_stripped;
+
+        input_dir_stripped = g_string_chunk_insert_len(sub_dirs_chunk,
+                                                       in_dir,
+                                                       in_dir_len-1);
+        g_queue_push_head(sub_dirs, input_dir_stripped);
+
+        char *dirname;
+        while ((dirname = g_queue_pop_head(sub_dirs))) {
+            // Open dir
+            GDir *dirp;
+            dirp = g_dir_open (dirname, 0, NULL);
+            if (!dirp) {
+                g_warning("Cannot open directory: %s", dirname);
+                continue;
+            }
+
+            const gchar *filename;
+            while ((filename = g_dir_read_name(dirp))) {
+
+                gchar *full_path = g_strconcat(dirname, "/", filename, NULL);
+
+                // Non .rpm files
+                if (!g_str_has_suffix (filename, ".rpm")) {
+                    if (!g_file_test(full_path, G_FILE_TEST_IS_REGULAR) &&
+                        g_file_test(full_path, G_FILE_TEST_IS_DIR))
+                    {
+                        // Directory
+                        gchar *sub_dir_in_chunk;
+                        sub_dir_in_chunk = g_string_chunk_insert(sub_dirs_chunk,
+                                                                 full_path);
+                        g_queue_push_head(sub_dirs, sub_dir_in_chunk);
+                        g_debug("Dir to scan: %s", sub_dir_in_chunk);
+                    }
+                    g_free(full_path);
+                    continue;
+                }
+
+                // Skip symbolic links if --skip-symlinks arg is used
+                if (cmd_options->skip_symlinks
+                    && g_file_test(full_path, G_FILE_TEST_IS_SYMLINK))
+                {
+                    g_debug("Skipped symlink: %s", full_path);
+                    g_free(full_path);
+                    continue;
+                }
+
+                // Check filename against exclude glob masks
+                const gchar *repo_relative_path = filename;
+                if (in_dir_len < strlen(full_path))
+                    // This probably should be always true
+                    repo_relative_path = full_path + in_dir_len;
+
+                if (allowed_file(repo_relative_path, cmd_options)) {
+                    // FINALLY! Add file into pool
+                    g_debug("Adding pkg: %s", full_path);
+                    struct PoolTask *task = g_malloc(sizeof(struct PoolTask));
+                    task->full_path = full_path;
+                    task->filename = g_strdup(filename);
+                    task->path = g_strdup(dirname);
+                    if (output_pkg_list)
+                        fprintf(output_pkg_list, "%s\n", repo_relative_path);
+                    g_hash_table_insert(pkglist_ht, task->filename, NULL);
+                    // TODO: One common path for all tasks with the same path?
+                    g_thread_pool_push(pool, task, NULL);
+                    package_count++;
+                } else
+                    g_free(full_path);
+            }
+
+            // Cleanup
+            g_dir_close (dirp);
+        }
+
+        g_string_chunk_free (sub_dirs_chunk);
+        g_queue_free(sub_dirs);
+    } else {
+        // pkglist is supplied - use only files in pkglist
+
+        g_debug("Skipping dir walk - using pkglist");
+
+        GSList *element = cmd_options->include_pkgs;
+        for (; element; element=g_slist_next(element)) {
+            gchar *relative_path = (gchar *) element->data;
+            //     ^^^ path from pkglist e.g. packages/i386/foobar.rpm
+            gchar *filename;  // foobar.rpm
+
+            // Get index of last '/'
+            int rel_path_len = strlen(relative_path);
+            int x = rel_path_len;
+            for (; x > 0; x--)
+                if (relative_path[x] == '/')
+                    break;
+
+            if (!x) {
+                // There was no '/' in path
+                filename = relative_path;
+            } else {
+                filename = relative_path + x + 1;
+            }
+
+            if (allowed_file(filename, cmd_options)) {
+                // Check filename against exclude glob masks
+                gchar *full_path = g_strconcat(in_dir, relative_path, NULL);
+                //     ^^^ /path/to/in_repo/packages/i386/foobar.rpm
+                g_debug("Adding pkg: %s", full_path);
+                struct PoolTask *task = g_malloc(sizeof(struct PoolTask));
+                task->full_path = full_path;
+                task->filename  = g_strdup(filename);         // foobar.rpm
+                task->path      = strndup(relative_path, x);  // packages/i386/
+                if (output_pkg_list)
+                    fprintf(output_pkg_list, "%s\n", relative_path);
+                g_hash_table_insert(pkglist_ht, task->filename, NULL);
+                g_thread_pool_push(pool, task, NULL);
+                package_count++;
+            }
+        }
+    }
+
+    g_debug("Package count: %d", package_count);
+    g_message("Directory walk done - %d packages", package_count);
+
+    if (output_pkg_list)
+        fclose(output_pkg_list);
+
 
     // Load old metadata if --update
 
@@ -398,37 +549,25 @@ main(int argc, char **argv)
         int ret;
         old_metadata = cr_new_metadata(CR_HT_KEY_FILENAME, 1);
 
-        // Load data from output dir if output dir is specified
-        // This is default behaviour of classic createrepo
-        if (cmd_options->outputdir) {
+        if (cmd_options->outputdir)
             old_metadata_location = cr_get_metadata_location(out_dir, 1);
-            ret = cr_load_xml_metadata(old_metadata, old_metadata_location);
-            if (ret == CR_LOAD_METADATA_OK)
-                g_debug("Old metadata from: %s - loaded", out_dir);
-            else
-                g_debug("Old metadata from %s - loading failed", out_dir);
-        }
-
-        // Load local repodata
-        // Classic createrepo with --outputdir specified doesn't load this
-        // metadata, but createrepo_c does.
-        if (!cmd_options->outputdir) {
-            old_metadata_location = cr_get_metadata_location(in_dir, 1);
-            ret = cr_load_xml_metadata(old_metadata, old_metadata_location);
-        } else
-            ret = cr_locate_and_load_xml_metadata(old_metadata, in_dir);
-
-        if (ret == CR_LOAD_METADATA_OK)
-            g_debug("Old metadata from: %s - loaded", in_dir);
         else
-            g_debug("Old metadata from %s - loading failed", in_dir);
+            old_metadata_location = cr_get_metadata_location(in_dir, 1);
+
+        ret = cr_load_xml_metadata(old_metadata, old_metadata_location, pkglist_ht);
+        if (ret == CR_LOAD_METADATA_OK)
+            g_debug("Old metadata from: %s - loaded", out_dir);
+        else
+            g_debug("Old metadata from %s - loading failed", out_dir);
 
         // Load repodata from --update-md-path
         GSList *element = cmd_options->l_update_md_paths;
         for (; element; element = g_slist_next(element)) {
             char *path = (char *) element->data;
             g_message("Loading metadata from: %s", path);
-            int ret = cr_locate_and_load_xml_metadata(old_metadata, path);
+            ret = cr_locate_and_load_xml_metadata(old_metadata,
+                                                  path,
+                                                  pkglist_ht);
             if (ret == CR_LOAD_METADATA_OK)
                 g_debug("Metadata from md-path %s - loaded", path);
             else
@@ -438,6 +577,9 @@ main(int argc, char **argv)
         g_message("Loaded information about %d packages",
                   g_hash_table_size(old_metadata->ht));
     }
+
+    g_hash_table_destroy(pkglist_ht);
+    pkglist_ht = NULL;
 
 
     // Copy groupfile
@@ -607,7 +749,6 @@ main(int argc, char **argv)
 
     // Thread pool - User data initialization
 
-    struct UserData user_data;
     user_data.pri_f             = pri_cr_file;
     user_data.fil_f             = fil_cr_file;
     user_data.oth_f             = oth_cr_file;
@@ -624,156 +765,10 @@ main(int argc, char **argv)
     user_data.skip_stat         = cmd_options->skip_stat;
     user_data.old_metadata      = old_metadata;
     user_data.repodir_name_len  = strlen(in_dir);
+    user_data.package_count = package_count;
 
     g_debug("Thread pool user data ready");
 
-
-    // Thread pool - Creation
-
-    g_thread_init(NULL);
-    GThreadPool *pool = g_thread_pool_new(dumper_thread,
-                                          &user_data,
-                                          0,
-                                          TRUE,
-                                          NULL);
-
-    g_debug("Thread pool ready");
-
-
-    // Recursive walk
-
-    int package_count = 0;
-
-    if (!(cmd_options->include_pkgs)) {
-        // --pkglist (or --includepkg) is not supplied -> do dir walk
-
-        g_message("Directory walk started");
-
-        size_t in_dir_len = strlen(in_dir);
-        GStringChunk *sub_dirs_chunk = g_string_chunk_new(1024);
-        GQueue *sub_dirs = g_queue_new();
-        gchar *input_dir_stripped;
-
-        input_dir_stripped = g_string_chunk_insert_len(sub_dirs_chunk,
-                                                       in_dir,
-                                                       in_dir_len-1);
-        g_queue_push_head(sub_dirs, input_dir_stripped);
-
-        char *dirname;
-        while ((dirname = g_queue_pop_head(sub_dirs))) {
-            // Open dir
-            GDir *dirp;
-            dirp = g_dir_open (dirname, 0, NULL);
-            if (!dirp) {
-                g_warning("Cannot open directory: %s", dirname);
-                continue;
-            }
-
-            const gchar *filename;
-            while ((filename = g_dir_read_name(dirp))) {
-
-                gchar *full_path = g_strconcat(dirname, "/", filename, NULL);
-
-                // Non .rpm files
-                if (!g_str_has_suffix (filename, ".rpm")) {
-                    if (!g_file_test(full_path, G_FILE_TEST_IS_REGULAR) &&
-                        g_file_test(full_path, G_FILE_TEST_IS_DIR))
-                    {
-                        // Directory
-                        gchar *sub_dir_in_chunk;
-                        sub_dir_in_chunk = g_string_chunk_insert(sub_dirs_chunk,
-                                                                 full_path);
-                        g_queue_push_head(sub_dirs, sub_dir_in_chunk);
-                        g_debug("Dir to scan: %s", sub_dir_in_chunk);
-                    }
-                    g_free(full_path);
-                    continue;
-                }
-
-                // Skip symbolic links if --skip-symlinks arg is used
-                if (cmd_options->skip_symlinks
-                    && g_file_test(full_path, G_FILE_TEST_IS_SYMLINK))
-                {
-                    g_debug("Skipped symlink: %s", full_path);
-                    g_free(full_path);
-                    continue;
-                }
-
-                // Check filename against exclude glob masks
-                const gchar *repo_relative_path = filename;
-                if (in_dir_len < strlen(full_path))
-                    // This probably should be always true
-                    repo_relative_path = full_path + in_dir_len;
-
-                if (allowed_file(repo_relative_path, cmd_options)) {
-                    // FINALLY! Add file into pool
-                    g_debug("Adding pkg: %s", full_path);
-                    struct PoolTask *task = g_malloc(sizeof(struct PoolTask));
-                    task->full_path = full_path;
-                    task->filename = g_strdup(filename);
-                    task->path = g_strdup(dirname);
-                    if (output_pkg_list)
-                        fprintf(output_pkg_list, "%s\n", repo_relative_path);
-                    // TODO: One common path for all tasks with the same path?
-                    g_thread_pool_push(pool, task, NULL);
-                    package_count++;
-                } else
-                    g_free(full_path);
-            }
-
-            // Cleanup
-            g_dir_close (dirp);
-        }
-
-        g_string_chunk_free (sub_dirs_chunk);
-        g_queue_free(sub_dirs);
-    } else {
-        // pkglist is supplied - use only files in pkglist
-
-        g_debug("Skipping dir walk - using pkglist");
-
-        GSList *element = cmd_options->include_pkgs;
-        for (; element; element=g_slist_next(element)) {
-            gchar *relative_path = (gchar *) element->data;
-            //     ^^^ path from pkglist e.g. packages/i386/foobar.rpm
-            gchar *filename;  // foobar.rpm
-
-            // Get index of last '/'
-            int rel_path_len = strlen(relative_path);
-            int x = rel_path_len;
-            for (; x > 0; x--)
-                if (relative_path[x] == '/')
-                    break;
-
-            if (!x) {
-                // There was no '/' in path
-                filename = relative_path;
-            } else {
-                filename = relative_path + x + 1;
-            }
-
-            if (allowed_file(filename, cmd_options)) {
-                // Check filename against exclude glob masks
-                gchar *full_path = g_strconcat(in_dir, relative_path, NULL);
-                //     ^^^ /path/to/in_repo/packages/i386/foobar.rpm
-                g_debug("Adding pkg: %s", full_path);
-                struct PoolTask *task = g_malloc(sizeof(struct PoolTask));
-                task->full_path = full_path;
-                task->filename  = g_strdup(filename);         // foobar.rpm
-                task->path      = strndup(relative_path, x);  // packages/i386/
-                if (output_pkg_list)
-                    fprintf(output_pkg_list, "%s\n", relative_path);
-                g_thread_pool_push(pool, task, NULL);
-                package_count++;
-            }
-        }
-    }
-
-    g_debug("Package count: %d", package_count);
-    g_message("Directory walk done - %d packages", package_count);
-
-    if (output_pkg_list)
-        fclose(output_pkg_list);
 
     // Write XML header
 
@@ -792,7 +787,6 @@ main(int argc, char **argv)
 
     // Start pool
 
-    user_data.package_count = package_count;
     g_thread_pool_set_max_threads(pool, cmd_options->workers, NULL);
     g_message("Pool started (with %d workers)", cmd_options->workers);
 

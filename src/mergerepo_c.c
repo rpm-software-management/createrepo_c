@@ -463,7 +463,7 @@ merge_repos(GHashTable *merged,
 
         g_debug("Processing: %s", repopath);
 
-        if (cr_load_xml_metadata(tmp_metadata, ml) == CR_LOAD_METADATA_ERR) {
+        if (cr_load_xml_metadata(tmp_metadata, ml, NULL) == CR_LOAD_METADATA_ERR) {
             g_critical("Cannot load repo: \"%s\"", ml->repomd);
             cr_destroy_metadata(tmp_metadata);
             break;
@@ -967,7 +967,7 @@ main(int argc, char **argv)
 
         g_debug("Loading noarch_repo: %s", noarch_repopath);
 
-        if (cr_load_xml_metadata(noarch_metadata, noarch_ml) == CR_LOAD_METADATA_ERR) {
+        if (cr_load_xml_metadata(noarch_metadata, noarch_ml, NULL) == CR_LOAD_METADATA_ERR) {
             g_error("Cannot load noarch repo: \"%s\"", noarch_ml->repomd);
             cr_destroy_metadata(noarch_metadata);
             // TODO cleanup

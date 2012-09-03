@@ -661,7 +661,7 @@ cr_remove_metadata_classic(const char *repopath, int retain)
 
     while ((file = g_dir_read_name (repodir))) {
         // Get filename without suffix
-        gchar *name_without_suffix, *dot = NULL, *i = file;
+        gchar *name_without_suffix, *dot = NULL, *i = (gchar *) file;
         for (; *i != '\0'; i++) if (*i == '.') dot = i;
         if (!dot) continue;  // Filename doesn't contain '.'
         name_without_suffix = g_strndup(file, (dot - file));

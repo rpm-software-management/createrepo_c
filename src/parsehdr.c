@@ -50,7 +50,7 @@ compare_dependency(const char *dep1, const char *dep2)
      * Return values: 0 - same; 1 - first is bigger; 2 - second is bigger,
      * -1 - error
      */
-    int ret1, ret2;
+    int ret1;
     char *ver1, *ver2, *ver1_e, *ver2_e;
 
     if (dep1 == dep2) return 0;

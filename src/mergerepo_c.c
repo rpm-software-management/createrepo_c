@@ -452,7 +452,7 @@ merge_repos(GHashTable *merged,
     for (element = repo_list; element; element = g_slist_next(element)) {
         cr_Metadata tmp_metadata;
 
-        tmp_metadata = cr_new_metadata(CR_HT_KEY_HASH, 0);
+        tmp_metadata = cr_new_metadata(CR_HT_KEY_HASH, 0, NULL);
         struct cr_MetadataLocation *ml = (struct cr_MetadataLocation *) element->data;
 
         // Base paths in output of original createrepo doesn't have trailing '/'
@@ -463,7 +463,7 @@ merge_repos(GHashTable *merged,
 
         g_debug("Processing: %s", repopath);
 
-        if (cr_load_xml_metadata(tmp_metadata, ml, NULL) == CR_LOAD_METADATA_ERR) {
+        if (cr_load_xml_metadata(tmp_metadata, ml) == CR_LOAD_METADATA_ERR) {
             g_critical("Cannot load repo: \"%s\"", ml->repomd);
             cr_destroy_metadata(tmp_metadata);
             break;
@@ -957,7 +957,7 @@ main(int argc, char **argv)
         struct cr_MetadataLocation *noarch_ml;
 
         noarch_ml = cr_get_metadata_location(cmd_options->noarch_repo_url, 1);
-        noarch_metadata = cr_new_metadata(CR_HT_KEY_FILENAME, 0);
+        noarch_metadata = cr_new_metadata(CR_HT_KEY_FILENAME, 0, NULL);
 
         // Base paths in output of original createrepo doesn't have trailing '/'
         gchar *noarch_repopath = cr_normalize_dir_path(noarch_ml->original_url);
@@ -967,7 +967,7 @@ main(int argc, char **argv)
 
         g_debug("Loading noarch_repo: %s", noarch_repopath);
 
-        if (cr_load_xml_metadata(noarch_metadata, noarch_ml, NULL) == CR_LOAD_METADATA_ERR) {
+        if (cr_load_xml_metadata(noarch_metadata, noarch_ml) == CR_LOAD_METADATA_ERR) {
             g_error("Cannot load noarch repo: \"%s\"", noarch_ml->repomd);
             cr_destroy_metadata(noarch_metadata);
             // TODO cleanup

@@ -551,16 +551,14 @@ main(int argc, char **argv)
 
     if (package_count && cmd_options->update) {
         int ret;
-        old_metadata = cr_new_metadata(CR_HT_KEY_FILENAME, 1);
+        old_metadata = cr_new_metadata(CR_HT_KEY_FILENAME, 1, current_pkglist);
 
         if (cmd_options->outputdir)
             old_metadata_location = cr_get_metadata_location(out_dir, 1);
         else
             old_metadata_location = cr_get_metadata_location(in_dir, 1);
 
-        ret = cr_load_xml_metadata(old_metadata,
-                                   old_metadata_location,
-                                   current_pkglist);
+        ret = cr_load_xml_metadata(old_metadata, old_metadata_location);
         if (ret == CR_LOAD_METADATA_OK)
             g_debug("Old metadata from: %s - loaded", out_dir);
         else
@@ -570,10 +568,8 @@ main(int argc, char **argv)
         GSList *element = cmd_options->l_update_md_paths;
         for (; element; element = g_slist_next(element)) {
             char *path = (char *) element->data;
-            g_message("Loading metadata from: %s", path);
-            ret = cr_locate_and_load_xml_metadata(old_metadata,
-                                                  path,
-                                                  current_pkglist);
+            g_message("Loading metadata from md-path: %s", path);
+            ret = cr_locate_and_load_xml_metadata(old_metadata, path);
             if (ret == CR_LOAD_METADATA_OK)
                 g_debug("Metadata from md-path %s - loaded", path);
             else

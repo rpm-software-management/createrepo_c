@@ -39,6 +39,24 @@
 #define PKGS_REALLOC_STEP       2000
 
 
+/** TODO:
+ * This module has one known issue about a memory management.
+ * The issue acts in cases when you are using one single string chunk
+ * for all parsed packages.
+ * (use_single_chunk != 0 during call of cr_new_metadata())
+ *
+ * Description of issue:
+ * During parsing of primary.xml, all string from obtained during parsing are
+ * stored into the chunk. When we have all the information from primary.xml and
+ * we found out that we don't want the package (according the pkglist passed
+ * via cr_new_metadata) and we drop the package (package is not inserted
+ * into the hashtable of metadatas), all strings from primary.xml are yet
+ * stored in the chunk and they remains there!
+ *
+ * This issue is not so important, but it shoud be fixed in future.
+ *                                                      Tomas
+ **/
+
 typedef enum {
     NONE_ELEM,
     NAME_ELEM,

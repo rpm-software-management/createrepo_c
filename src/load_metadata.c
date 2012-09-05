@@ -570,6 +570,9 @@ pri_end_handler(void *data, const char *el)
                                                      basename,
                                                      NULL,
                                                      NULL);
+                if (store)
+                    // remove pkg from allowed packages
+                    g_hash_table_remove(ppd->pkglist, basename);
             }
 
             if (ppd->chunk)
@@ -1014,12 +1017,13 @@ oth_end_handler(void *data, const char *el)
 int
 load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
                const char *filelists_xml_path, const char *other_xml_path,
-               GStringChunk *chunk, GHashTable *pkglist)
+               GStringChunk *chunk, GSList *pkglist)
 {
     cr_CompressionType compression_type;
     CR_FILE *pri_xml_cwfile, *fil_xml_cwfile, *oth_xml_cwfile;
     XML_Parser pri_p, fil_p, oth_p;
     struct ParserData parser_data;
+    GHashTable *pkglist_ht = NULL;
 
 
     // Detect compression type
@@ -1049,6 +1053,22 @@ load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
     }
 
 
+    // Create hashtable from pkglist
+    // This hashtable is used for checking if the metadata of the package
+    // should be included.
+    // Purpose is to save memory - We load only metadata about
+    // packages which we probably will use
+    // This hashtable is modified "on the fly" - If we found and load
+    // a metadata about the package, we remove its record from the hashtable.
+    // So if we met the metadata for this package again we will ignore it.
+
+    if (pkglist) {
+        GSList *elem;
+        pkglist_ht = g_hash_table_new(g_str_hash, g_str_equal);
+        for (elem = pkglist; elem; elem = g_slist_next(elem))
+            g_hash_table_insert(pkglist_ht, elem->data, NULL);
+    }
+
     // Prepare parsers
 
     parser_data.current_string = g_string_sized_new(1024);
@@ -1058,7 +1078,7 @@ load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
     parser_data.last_elem = NONE_ELEM;
     parser_data.error = FALSE;
     parser_data.chunk = chunk;
-    parser_data.pkglist = pkglist;
+    parser_data.pkglist = pkglist_ht;
 
     pri_p = XML_ParserCreate(NULL);
     XML_SetUserData(pri_p, (void *) &parser_data);
@@ -1184,6 +1204,7 @@ cleanup:
 
     // Cleanup
 
+    if (pkglist_ht) g_hash_table_destroy(pkglist_ht);
     XML_ParserFree(pri_p);
     XML_ParserFree(fil_p);
     XML_ParserFree(oth_p);
@@ -1206,7 +1227,7 @@ cleanup:
 int
 cr_load_xml_metadata(cr_Metadata md,
                      struct cr_MetadataLocation *ml,
-                     GHashTable *pkglist)
+                     GSList *pkglist)
 {
     if (!md || !ml)
         return CR_LOAD_METADATA_ERR;
@@ -1286,7 +1307,7 @@ cr_load_xml_metadata(cr_Metadata md,
 int
 cr_locate_and_load_xml_metadata(cr_Metadata md,
                                 const char *repopath,
-                                GHashTable *pkglist)
+                                GSList *pkglist)
 {
     if (!md || !repopath)
         return CR_LOAD_METADATA_ERR;

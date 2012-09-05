@@ -403,8 +403,8 @@ main(int argc, char **argv)
 
     // Recursive walk
 
-    GHashTable *pkglist_ht = g_hash_table_new(g_str_hash, g_str_equal);
-    /* ^^^ Hashtable with basenames of files which will be processed */
+    GSList *current_pkglist = NULL;
+    /* ^^^ List with basenames of files which will be processed */
     int package_count = 0;
 
     if (!(cmd_options->include_pkgs)) {
@@ -477,7 +477,7 @@ main(int argc, char **argv)
                     task->path = g_strdup(dirname);
                     if (output_pkg_list)
                         fprintf(output_pkg_list, "%s\n", repo_relative_path);
-                    g_hash_table_insert(pkglist_ht, task->filename, NULL);
+                    current_pkglist = g_slist_prepend(current_pkglist, task->filename);
                     // TODO: One common path for all tasks with the same path?
                     g_thread_pool_push(pool, task, NULL);
                     package_count++;
@@ -527,7 +527,7 @@ main(int argc, char **argv)
                 task->path      = strndup(relative_path, x);  // packages/i386/
                 if (output_pkg_list)
                     fprintf(output_pkg_list, "%s\n", relative_path);
-                g_hash_table_insert(pkglist_ht, task->filename, NULL);
+                current_pkglist = g_slist_prepend(current_pkglist, task->filename);
                 g_thread_pool_push(pool, task, NULL);
                 package_count++;
             }
@@ -558,7 +558,9 @@ main(int argc, char **argv)
         else
             old_metadata_location = cr_get_metadata_location(in_dir, 1);
 
-        ret = cr_load_xml_metadata(old_metadata, old_metadata_location, pkglist_ht);
+        ret = cr_load_xml_metadata(old_metadata,
+                                   old_metadata_location,
+                                   current_pkglist);
         if (ret == CR_LOAD_METADATA_OK)
             g_debug("Old metadata from: %s - loaded", out_dir);
         else
@@ -571,7 +573,7 @@ main(int argc, char **argv)
             g_message("Loading metadata from: %s", path);
             ret = cr_locate_and_load_xml_metadata(old_metadata,
                                                   path,
-                                                  pkglist_ht);
+                                                  current_pkglist);
             if (ret == CR_LOAD_METADATA_OK)
                 g_debug("Metadata from md-path %s - loaded", path);
             else
@@ -582,8 +584,8 @@ main(int argc, char **argv)
                   g_hash_table_size(old_metadata->ht));
     }
 
-    g_hash_table_destroy(pkglist_ht);
-    pkglist_ht = NULL;
+    g_slist_free(current_pkglist);
+    current_pkglist = NULL;
 
 
     // Copy groupfile

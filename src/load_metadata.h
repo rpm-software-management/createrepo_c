@@ -83,27 +83,25 @@ void cr_destroy_metadata(cr_Metadata md);
  * Load metadata from the specified location.
  * @param md            metadata object
  * @param ml            metadata location
- * @param pkglist       load only packages which base filename is as a key
- *                      in this hashtable (value is ignored). If param is
- *                      NULL all packages are loaded.
+ * @param pkglist       load only packages which base filename is in this
+ *                      list. If param is NULL all packages are loaded.
  * @return              return code CR_LOAD_METADATA_OK or CR_LOAD_METADATA_ERR
  */
 int cr_load_xml_metadata(cr_Metadata md,
                          struct cr_MetadataLocation *ml,
-                         GHashTable *pkglist);
+                         GSList *pkglist);
 
 /** \ingroup load_metadata
  * Locate and load metadata from the specified path.
  * @param md            metadata object
  * @param repopath      path to repo (to directory with repodata/ subdir)
- * @param pkglist       load only packages which base filename is as a key
- *                      in this hashtable (value is ignored). If param is
- *                      NULL all packages are loaded.
+ * @param pkglist       load only packages which base filename is in this
+ *                      list. If param is NULL all packages are loaded.
  * @return              return code CR_LOAD_METADATA_OK or CR_LOAD_METADATA_ERR
  */
 int cr_locate_and_load_xml_metadata(cr_Metadata md,
                                     const char *repopath,
-                                    GHashTable *pkglist);
+                                    GSList *pkglist);
 
 #ifdef __cplusplus
 }

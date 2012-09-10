@@ -62,6 +62,8 @@ static GOptionEntry cmd_entries[] =
     { "checksum", 's', 0, G_OPTION_ARG_STRING, &(_cmd_options.checksum),
       "Choose the checksum type used in repomd.xml and for packages in the "
       "metadata. The default is now \"sha256\".", "<checksum_type>" },
+    { "pretty", 'p', 0, G_OPTION_ARG_NONE, &(_cmd_options.pretty),
+      "Make sure all xml generated is formatted (default)", NULL },
     { "database", 'd', 0, G_OPTION_ARG_NONE, &(_cmd_options.database),
       "Generate sqlite databases for use with yum.", NULL },
     { "no-database", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.no_database),

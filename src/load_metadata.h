@@ -63,6 +63,9 @@ typedef struct _cr_Metadata *cr_Metadata;
 
 /** \ingroup load_metadata
  * Create new (empty) metadata hashtable.
+ * It is NOT thread safe to load data into single cr_Metadata
+ * from multiple threads. But non modifying access to the loaded data
+ * in cr_Metadata is thread safe.
  * @param key               key specifies which value will be (is) used as key
  *                          in hash table
  * @param use_single_chunk  use only one string chunk (all loaded packages

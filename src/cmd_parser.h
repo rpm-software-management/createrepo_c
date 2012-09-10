@@ -47,6 +47,7 @@ struct CmdOptions {
     gboolean quiet;             /*!< quiet mode */
     gboolean verbose;           /*!< verbosely more than usual (debug) */
     gboolean update;            /*!< update repo if metadata already exists */
+    gboolean pretty;            /*!< generate pretty xml (just for compatibility) */
     char **update_md_paths;     /*!< list of paths to repositories which should
                                      be used for update */
     gboolean skip_stat;         /*!< skip stat() call during --update */

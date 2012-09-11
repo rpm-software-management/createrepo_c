@@ -599,10 +599,10 @@ cmp_old_repodata_files(gconstpointer a, gconstpointer b)
 void
 stat_and_insert(const gchar *dirname, const gchar *filename, GSList **list)
 {
-    GStatBuf buf;
+    struct stat buf;
     OldFile *old_file;
     gchar *path = g_strconcat(dirname, filename, NULL);
-    if (g_stat(path, &buf))
+    if (stat(path, &buf) == -1)
         buf.st_mtime = 1;
     old_file = g_malloc0(sizeof(OldFile));
     old_file->mtime = buf.st_mtime;
@@ -694,12 +694,12 @@ cr_remove_metadata_classic(const char *repopath, int retain)
     remove_listed_files(oth_lst, retain);
     remove_listed_files(oth_db_lst, retain);
 
-    g_slist_free_full(pri_lst, free_old_file);
-    g_slist_free_full(pri_db_lst, free_old_file);
-    g_slist_free_full(fil_lst, free_old_file);
-    g_slist_free_full(fil_db_lst, free_old_file);
-    g_slist_free_full(oth_lst, free_old_file);
-    g_slist_free_full(oth_db_lst, free_old_file);
+    cr_slist_free_full(pri_lst, free_old_file);
+    cr_slist_free_full(pri_db_lst, free_old_file);
+    cr_slist_free_full(fil_lst, free_old_file);
+    cr_slist_free_full(fil_db_lst, free_old_file);
+    cr_slist_free_full(oth_lst, free_old_file);
+    cr_slist_free_full(oth_db_lst, free_old_file);
 
     return 0;
 }

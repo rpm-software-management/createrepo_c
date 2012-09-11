@@ -236,6 +236,16 @@ void cr_log_fn(const gchar *log_domain,
                const gchar *message,
                gpointer user_data);
 
+/** \ingroup misc
+ * Frees all the memory used by a GSList, and calls the specified destroy
+ * function on every element's data.
+ * This is the same function as g_slist_free_full(). The original function
+ * is implemented in glib since 2.28 but we need to support the older glib too.
+ * @param list          pointer to GSList
+ * @param free_f        the function to be called to free each element's data
+ */
+void cr_slist_free_full(GSList *list, GDestroyNotify free_f);
+
 #ifdef __cplusplus
 }
 #endif

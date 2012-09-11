@@ -350,10 +350,10 @@ free_options(struct CmdOptions *options)
     g_strfreev(options->content_tags);
     g_strfreev(options->repo_tags);
 
-    g_slist_free_full(options->include_pkgs, g_free);
-    g_slist_free_full(options->exclude_masks,
+    cr_slist_free_full(options->include_pkgs, g_free);
+    cr_slist_free_full(options->exclude_masks,
                       (GDestroyNotify) g_pattern_spec_free);
-    g_slist_free_full(options->l_update_md_paths, g_free);
-    g_slist_free_full(options->distro_cpeids, g_free);
-    g_slist_free_full(options->distro_values, g_free);
+    cr_slist_free_full(options->l_update_md_paths, g_free);
+    cr_slist_free_full(options->distro_cpeids, g_free);
+    cr_slist_free_full(options->distro_values, g_free);
 }

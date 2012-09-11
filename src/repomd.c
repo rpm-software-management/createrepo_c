@@ -630,9 +630,9 @@ cr_free_repomd(cr_Repomd repomd)
     cr_free_repomdrecord(repomd->groupfile);
     cr_free_repomdrecord(repomd->cgroupfile);
     cr_free_repomdrecord(repomd->updateinfo);
-    g_slist_free_full(repomd->repo_tags, g_free);
-    g_slist_free_full(repomd->distro_tags, (GDestroyNotify) cr_free_distro);
-    g_slist_free_full(repomd->content_tags, g_free);
+    cr_slist_free_full(repomd->repo_tags, g_free);
+    cr_slist_free_full(repomd->distro_tags, (GDestroyNotify) cr_free_distro);
+    cr_slist_free_full(repomd->content_tags, g_free);
     g_free(repomd->revision);
     g_free(repomd);
 }

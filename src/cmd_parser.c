@@ -181,6 +181,8 @@ check_arguments(struct CmdOptions *options)
             options->checksum_type = CR_CHECKSUM_SHA256;
         } else if (!strcmp(checksum_str->str, "sha1")) {
             options->checksum_type = CR_CHECKSUM_SHA1;
+        } else if (!strcmp(checksum_str->str, "sha")) {
+            options->checksum_type = CR_CHECKSUM_SHA1;
         } else if (!strcmp(checksum_str->str, "md5")) {
             options->checksum_type = CR_CHECKSUM_MD5;
         } else {

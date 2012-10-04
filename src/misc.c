@@ -27,6 +27,7 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 #include <ftw.h>
+#include <time.h>
 #include <curl/curl.h>
 #include "logging.h"
 #include "constants.h"
@@ -851,24 +852,35 @@ cr_log_fn(const gchar *log_domain,
 {
     CR_UNUSED(user_data);
 
-    if (log_domain)
-        printf("%s: ", log_domain);
 
     switch(log_level) {
         case G_LOG_LEVEL_ERROR:
-            printf("Error: %s\n", message);
+            if (log_domain) fprintf(stderr, "%s: ", log_domain);
+            fprintf(stderr, "Error: %s\n", message);
             break;
         case G_LOG_LEVEL_CRITICAL:
-            printf("Critical: %s\n", message);
+            if (log_domain) fprintf(stderr, "%s: ", log_domain);
+            fprintf(stderr, "Critical: %s\n", message);
             break;
         case G_LOG_LEVEL_WARNING:
-            printf("Warning: %s\n", message);
+            if (log_domain) fprintf(stderr, "%s: ", log_domain);
+            fprintf(stderr, "Warning: %s\n", message);
             break;
-        case G_LOG_LEVEL_DEBUG:
-            printf("- %s\n", message);
+        case G_LOG_LEVEL_DEBUG: {
+            time_t rawtime;
+            struct tm * timeinfo;
+            char buffer[80];
+
+            time ( &rawtime );
+            timeinfo = localtime ( &rawtime );
+            strftime (buffer, 80, "%H:%M:%S", timeinfo);
+
+            if (log_domain) fprintf(stderr, "%s: ", log_domain);
+            fprintf(stderr, "%s: %s\n", buffer, message);
             break;
+        }
         default:
-            printf("> %s\n", message);
+            printf("%s\n", message);
     }
 
     return;

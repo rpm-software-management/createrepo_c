@@ -18,6 +18,7 @@
  */
 
 #include <glib.h>
+#include <glib/gstdio.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -73,6 +74,7 @@ struct CmdOptions {
 
     char *out_dir;
     char *out_repo;
+    char *tmp_out_repo;
     GSList *repo_list;
     GSList *arch_list;
     cr_CompressionType db_compression_type;
@@ -137,6 +139,7 @@ check_arguments(struct CmdOptions *options)
     }
 
     options->out_repo = g_strconcat(options->out_dir, "repodata/", NULL);
+    options->tmp_out_repo = g_strconcat(options->out_dir, ".repodata/", NULL);
 
     // Process repos
     x = 0;
@@ -238,6 +241,7 @@ free_options(struct CmdOptions *options)
     g_strfreev(options->repos);
     g_free(options->out_dir);
     g_free(options->out_repo);
+    g_free(options->tmp_out_repo);
 
     GSList *element = NULL;
 
@@ -547,12 +551,12 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     const char *db_suffix = cr_compression_suffix(cmd_options->db_compression_type);
     const char *groupfile_suffix = cr_compression_suffix(cmd_options->groupfile_compression_type);
 
-    gchar *pri_xml_filename = g_strconcat(cmd_options->out_repo, "/primary.xml.gz", NULL);
-    gchar *fil_xml_filename = g_strconcat(cmd_options->out_repo, "/filelists.xml.gz", NULL);
-    gchar *oth_xml_filename = g_strconcat(cmd_options->out_repo, "/other.xml.gz", NULL);
+    gchar *pri_xml_filename = g_strconcat(cmd_options->tmp_out_repo, "/primary.xml.gz", NULL);
+    gchar *fil_xml_filename = g_strconcat(cmd_options->tmp_out_repo, "/filelists.xml.gz", NULL);
+    gchar *oth_xml_filename = g_strconcat(cmd_options->tmp_out_repo, "/other.xml.gz", NULL);
     gchar *update_info_filename = NULL;
     if (!cmd_options->noupdateinfo)
-        update_info_filename  = g_strconcat(cmd_options->out_repo,
+        update_info_filename  = g_strconcat(cmd_options->tmp_out_repo,
                                             "/updateinfo.xml",
                                             groupfile_suffix, NULL);
 
@@ -602,10 +606,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     // Prepare sqlite if needed
 
-    gchar *pri_db_filename = NULL;
-    gchar *fil_db_filename = NULL;
-    gchar *oth_db_filename = NULL;
-    sqlite3 *pri_db = NULL;
+   sqlite3 *pri_db = NULL;
     sqlite3 *fil_db = NULL;
     sqlite3 *oth_db = NULL;
     cr_DbPrimaryStatements pri_statements = NULL;
@@ -613,13 +614,21 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_DbOtherStatements oth_statements = NULL;
 
     if (!cmd_options->no_database) {
-        pri_db_filename = g_strconcat(cmd_options->out_repo, "/primary.sqlite", NULL);
-        fil_db_filename = g_strconcat(cmd_options->out_repo, "/filelists.sqlite", NULL);
-        oth_db_filename = g_strconcat(cmd_options->out_repo, "/other.sqlite", NULL);
+        gchar *pri_db_filename = NULL;
+        gchar *fil_db_filename = NULL;
+        gchar *oth_db_filename = NULL;
+
+        pri_db_filename = g_strconcat(cmd_options->tmp_out_repo, "/primary.sqlite", NULL);
+        fil_db_filename = g_strconcat(cmd_options->tmp_out_repo, "/filelists.sqlite", NULL);
+        oth_db_filename = g_strconcat(cmd_options->tmp_out_repo, "/other.sqlite", NULL);
 
         pri_db = cr_open_primary_db(pri_db_filename, NULL);
         fil_db = cr_open_filelists_db(fil_db_filename, NULL);
         oth_db = cr_open_other_db(oth_db_filename, NULL);
+
+        g_free(pri_db_filename);
+        g_free(fil_db_filename);
+        g_free(oth_db_filename);
 
         pri_statements = cr_prepare_primary_db_statements(pri_db, NULL);
         fil_statements = cr_prepare_filelists_db_statements(fil_db, NULL);
@@ -684,6 +693,55 @@ dump_merged_metadata(GHashTable *merged_hashtable,
             g_warning("Cannot open file: %s", update_info_filename);
         }
     }
+
+
+    // Move files from out_repo into tmp_out_repo
+
+    g_debug("Moving data from %s", cmd_options->out_repo);
+
+    if (g_file_test(cmd_options->out_repo, G_FILE_TEST_EXISTS)) {
+
+        // Move files from out_repo to tmp_out_repo
+        GDir *dirp;
+        dirp = g_dir_open (cmd_options->out_repo, 0, NULL);
+        if (!dirp) {
+            g_critical("Cannot open directory: %s", cmd_options->out_repo);
+            exit(1);
+        }
+
+        const gchar *filename;
+        while ((filename = g_dir_read_name(dirp))) {
+            gchar *full_path = g_strconcat(cmd_options->out_repo, filename, NULL);
+            gchar *new_full_path = g_strconcat(cmd_options->tmp_out_repo, filename, NULL);
+
+            if (g_rename(full_path, new_full_path) == -1) {
+                g_critical("Cannot move file %s -> %s", full_path, new_full_path);
+            } else {
+                g_debug("Moved %s -> %s", full_path, new_full_path);
+            }
+
+            g_free(full_path);
+            g_free(new_full_path);
+        }
+
+        g_dir_close(dirp);
+
+        // Remove out_repo
+        if (g_rmdir(cmd_options->out_repo) == -1) {
+            g_critical("Cannot remove %s", cmd_options->out_repo);
+        } else {
+            g_debug("Old out repo %s removed", cmd_options->out_repo);
+        }
+    }
+
+
+    // Rename tmp_out_repo to out_repo
+    if (g_rename(cmd_options->tmp_out_repo, cmd_options->out_repo) == -1) {
+        g_critical("Cannot rename %s -> %s", cmd_options->tmp_out_repo, cmd_options->out_repo);
+    } else {
+        g_debug("Renamed %s -> %s", cmd_options->tmp_out_repo, cmd_options->out_repo);
+    }
+
 
 
     // Prepare repomd records
@@ -754,6 +812,11 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         cr_close_other_db(oth_db, NULL);
 
         // Compress dbs
+
+        gchar *pri_db_filename = g_strconcat(cmd_options->out_repo, "/primary.sqlite", NULL);
+        gchar *fil_db_filename = g_strconcat(cmd_options->out_repo, "/filelists.sqlite", NULL);
+        gchar *oth_db_filename = g_strconcat(cmd_options->out_repo, "/other.sqlite", NULL);
+
         cr_compress_file(pri_db_filename, NULL, cmd_options->db_compression_type);
         cr_compress_file(fil_db_filename, NULL, cmd_options->db_compression_type);
         cr_compress_file(oth_db_filename, NULL, cmd_options->db_compression_type);
@@ -761,6 +824,10 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         remove(pri_db_filename);
         remove(fil_db_filename);
         remove(oth_db_filename);
+
+        g_free(pri_db_filename);
+        g_free(fil_db_filename);
+        g_free(oth_db_filename);
 
         // Prepare repomd records
         gchar *pri_db_name = g_strconcat("repodata/primary.sqlite", db_suffix, NULL);
@@ -833,9 +900,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     g_free(fil_xml_filename);
     g_free(oth_xml_filename);
     g_free(update_info_filename);
-    g_free(pri_db_filename);
-    g_free(fil_db_filename);
-    g_free(oth_db_filename);
+
 
     return 1;
 }
@@ -898,12 +963,17 @@ main(int argc, char **argv)
 
     // Prepare out_repo
 
-    if (g_file_test(cmd_options->out_repo, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
-        cr_remove_dir(cmd_options->out_repo);
+    if (g_file_test(cmd_options->tmp_out_repo, G_FILE_TEST_EXISTS)) {
+        g_critical("Temporary repodata directory: %s already exists! ("
+                    "Another createrepo process is running?)", cmd_options->tmp_out_repo);
+        free_options(cmd_options);
+        return 1;
     }
 
-    if(g_mkdir_with_parents(cmd_options->out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
-        g_critical("Cannot create out_repo \"%s\" (%s)", cmd_options->out_repo, strerror(errno));
+    if (g_mkdir_with_parents (cmd_options->tmp_out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
+        g_critical("Error while creating temporary repodata directory %s: %s",
+                    cmd_options->tmp_out_repo, strerror(errno));
+
         free_options(cmd_options);
         return 1;
     }
@@ -941,8 +1011,8 @@ main(int argc, char **argv)
     for (element = local_repos; element; element = g_slist_next(element)) {
         struct cr_MetadataLocation *loc = (struct cr_MetadataLocation  *) element->data;
         if (!groupfile && loc->groupfile_href) {
-            if (cr_copy_file(loc->groupfile_href, cmd_options->out_repo) == CR_COPY_OK) {
-                groupfile = g_strconcat(cmd_options->out_repo, cr_get_filename(loc->groupfile_href), NULL);
+            if (cr_copy_file(loc->groupfile_href, cmd_options->tmp_out_repo) == CR_COPY_OK) {
+                groupfile = g_strconcat(cmd_options->tmp_out_repo, cr_get_filename(loc->groupfile_href), NULL);
                 break;
             }
         }

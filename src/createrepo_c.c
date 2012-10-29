@@ -40,43 +40,69 @@
 #include "sqlite.h"
 
 
-#define G_LOG_DOMAIN    ((gchar*) 0)
-
+#define G_LOG_DOMAIN        ((gchar*) 0)
+#define MAX_TASK_BUFFER_LEN 20
 
 
 struct UserData {
-    CR_FILE *pri_f;
-    CR_FILE *fil_f;
-    CR_FILE *oth_f;
-    cr_DbPrimaryStatements pri_statements;
-    cr_DbFilelistsStatements fil_statements;
-    cr_DbOtherStatements oth_statements;
-    int changelog_limit;
-    const char *location_base;
-    int repodir_name_len;
-    const char *checksum_type_str;
-    cr_ChecksumType checksum_type;
-    gboolean quiet;
-    gboolean verbose;
-    gboolean skip_symlinks;
-    int package_count;
+    GThreadPool *pool;              // thread pool
+    CR_FILE *pri_f;                 // Opened compressed primary.xml.*
+    CR_FILE *fil_f;                 // Opened compressed filelists.xml.*
+    CR_FILE *oth_f;                 // Opened compressed other.xml.*
+    cr_DbPrimaryStatements pri_statements;  // Opened connection to primary.sqlite
+    cr_DbFilelistsStatements fil_statements;// Opened connection to filelists.sqlite
+    cr_DbOtherStatements oth_statements;    // Opened connection to other.sqlite
+    int changelog_limit;            // Max number of changelogs for a package
+    const char *location_base;      // Base location url
+    int repodir_name_len;           // Len of path to repo /foo/bar/repodata
+                                    //       This part     |<----->|
+    const char *checksum_type_str;  // Name of selected checksum
+    cr_ChecksumType checksum_type;  // Constant representing selected checksum
+    gboolean skip_symlinks;         // Skip symlinks
+    int package_count;              // Total number of packages to process
 
     // Update stuff
-    gboolean skip_stat;
-    cr_Metadata old_metadata;
+    gboolean skip_stat;             // Skip stat() while updating
+    cr_Metadata old_metadata;       // Loaded metadata
+
+    // Thread serialization
+    GMutex *mutex_pri;              // Mutex for primary metadata
+    GMutex *mutex_fil;              // Mutex for filelists metadata
+    GMutex *mutex_oth;              // Mutex for other metadata
+    GCond *cond_pri;                // Condition for primary metadata
+    GCond *cond_fil;                // Condition for filelists metadata
+    GCond *cond_oth;                // Condition for other metadata
+    volatile long id_pri;           // ID of task on turn (write primary metadata)
+    volatile long id_fil;           // ID of task on turn (write filelists metadata)
+    volatile long id_oth;           // ID of task on turn (write other metadata)
+
+    // Buffering
+    GQueue *buffer;                 // Buffer for done tasks
+    GMutex *mutex_buffer;           // Mutex for accessing the buffer
 };
 
 
 struct PoolTask {
-    char* full_path;
-    char* filename;
-    char* path;
-    long  id;
+    long  id;                       // ID of the task
+    char* full_path;                // Complete path - /foo/bar/packages/foo.rpm
+    char* filename;                 // Just filename - foo.rpm
+    char* path;                     // Just path     - /foo/bar/packages
+};
+
+
+struct BufferedTask {
+    long id;                        // ID of the task
+    struct cr_XmlStruct res;        // XML for primary, filelists and other
+    cr_Package *pkg;                // Package structure
+    int pkg_from_md;                // If true - package structure if from
+                                    // old metadata and must not be freed!
+                                    // If false - package is from file and
+                                    // it must be freed!
 };
 
 
 // Global variables used by signal handler
-char *tmp_repodata_path = NULL;
+char *tmp_repodata_path = NULL;     // Path to temporary dir - /foo/bar/.repodata
 
 
 // Signal handler
@@ -85,12 +111,10 @@ sigint_catcher(int sig)
 {
     CR_UNUSED(sig);
     g_message("SIGINT catched: Terminating...");
-    if (tmp_repodata_path) {
+    if (tmp_repodata_path)
         cr_remove_dir(tmp_repodata_path);
-    }
     exit(1);
 }
-
 
 
 int
@@ -117,43 +141,81 @@ allowed_file(const gchar *filename, struct CmdOptions *options)
 }
 
 
+gint
+buf_task_sort_func(gconstpointer a, gconstpointer b, gpointer data)
+{
+    CR_UNUSED(data);
+    const struct BufferedTask *task_a = a;
+    const struct BufferedTask *task_b = b;
+    if (task_a->id < task_b->id)  return -1;
+    if (task_a->id == task_b->id) return 0;
+    return 1;
+}
 
-#define LOCK_PRI        0
-#define LOCK_FIL        1
-#define LOCK_OTH        2
 
-GMutex mutex_pri;
-GMutex mutex_fil;
-GMutex mutex_oth;
+void
+write_pkg(long id,
+          struct cr_XmlStruct res,
+          cr_Package *pkg,
+          struct UserData *udata)
+{
 
-GCond cond_pri;
-GCond cond_fil;
-GCond cond_oth;
+    // Write primary data
+    g_mutex_lock(udata->mutex_pri);
+    while (udata->id_pri != id)
+        g_cond_wait (udata->cond_pri, udata->mutex_pri);
+    udata->id_pri++;
+    cr_puts(udata->pri_f, (const char *) res.primary);
+    if (udata->pri_statements)
+        cr_add_primary_pkg_db(udata->pri_statements, pkg);
+    g_mutex_unlock(udata->mutex_pri);
+    g_cond_broadcast(udata->cond_pri);
 
-volatile int id_pri = 0;
-volatile int id_fil = 0;
-volatile int id_oth = 0;
+    // Write fielists data
+    g_mutex_lock(udata->mutex_fil);
+    while (udata->id_fil != id)
+        g_cond_wait (udata->cond_fil, udata->mutex_fil);
+    udata->id_fil++;
+    cr_puts(udata->fil_f, (const char *) res.filelists);
+    if (udata->fil_statements) {
+        cr_add_filelists_pkg_db(udata->fil_statements, pkg);
+    }
+    g_mutex_unlock(udata->mutex_fil);
+    g_cond_broadcast(udata->cond_fil);
+
+    // Write other data
+    g_mutex_lock(udata->mutex_oth);
+    while (udata->id_oth != id)
+        g_cond_wait (udata->cond_oth, udata->mutex_oth);
+    udata->id_oth++;
+    cr_puts(udata->oth_f, (const char *) res.other);
+    if (udata->oth_statements) {
+        cr_add_other_pkg_db(udata->oth_statements, pkg);
+    }
+    g_mutex_unlock(udata->mutex_oth);
+    g_cond_broadcast(udata->cond_oth);
+}
 
 
 void
 dumper_thread(gpointer data, gpointer user_data)
 {
-    gboolean old_used = FALSE;
-    cr_Package *md = NULL;
-    cr_Package *pkg = NULL;
-    struct stat stat_buf;
-    struct cr_XmlStruct res;
+    gboolean old_used = FALSE;  // To use old metadata?
+    cr_Package *md  = NULL;     // Package from loaded MetaData
+    cr_Package *pkg = NULL;     // Package from file
+    struct stat stat_buf;       // Struct with info from stat() on file
+    struct cr_XmlStruct res;    // Structure for generated XML
 
     struct UserData *udata = (struct UserData *) user_data;
-    struct PoolTask *task = (struct PoolTask *) data;
-
-//    printf("Mam task: %ld\n", task->id);
+    struct PoolTask *task  = (struct PoolTask *) data;
 
     // get location_href without leading part of path (path to repo)
     // including '/' char
     const char *location_href = task->full_path + udata->repodir_name_len;
     const char *location_base = udata->location_base;
 
+    GThread *self = g_thread_self();
+    printf("%p: mam task: %ld - %s\n", self, task->id, task->path);
 
     // Get stat info about file
     if (udata->old_metadata && !(udata->skip_stat)) {
@@ -192,7 +254,9 @@ dumper_thread(gpointer data, gpointer user_data)
         }
     }
 
+    // Load package and gen XML metadata
     if (!old_used) {
+        // Load package from file
         pkg = cr_package_from_file(task->full_path, udata->checksum_type,
                                    location_href, udata->location_base,
                                    udata->changelog_limit, NULL);
@@ -202,81 +266,102 @@ dumper_thread(gpointer data, gpointer user_data)
         }
         res = cr_xml_dump(pkg);
     } else {
+        // Just gen XML from old loaded metadata
         pkg = md;
         res = cr_xml_dump(md);
     }
 
-    // Write primary data
-    g_mutex_lock(&mutex_pri);
-//    printf("Current PRI ID: %d\n", id_pri);
-    while (id_pri != task->id)
-        g_cond_wait (&cond_pri, &mutex_pri);
-    id_pri++;
-    cr_puts(udata->pri_f, (const char *) res.primary);
-    if (udata->pri_statements)
-        cr_add_primary_pkg_db(udata->pri_statements, pkg);
-    g_mutex_unlock(&mutex_pri);
-    g_cond_broadcast(&cond_pri);
+    g_mutex_lock(udata->mutex_buffer);
+    if (g_queue_get_length(udata->buffer) < MAX_TASK_BUFFER_LEN
+        && udata->id_pri != task->id
+        && udata->package_count != (task->id + 1))
+    {
+        // If it isn't our turn and buffer isn't full and this isn't
+        // last task -> save task to buffer
+        printf("%p: Vkladam do bufferu: %ld\n", self, task->id);
 
-    // Write fielists data
-    g_mutex_lock(&mutex_fil);
-//    printf("Current FIL ID: %d\n", id_fil);
-    while (id_fil != task->id)
-        g_cond_wait (&cond_fil, &mutex_fil);
-    id_fil++;
-    cr_puts(udata->fil_f, (const char *) res.filelists);
-    if (udata->fil_statements) {
-        cr_add_filelists_pkg_db(udata->fil_statements, pkg);
+        struct BufferedTask *buf_task = malloc(sizeof(struct BufferedTask));
+        buf_task->id  = task->id;
+        buf_task->res = res;
+        buf_task->pkg = pkg;
+        buf_task->pkg_from_md = (pkg == md) ? 1 : 0;
+
+        g_queue_insert_sorted(udata->buffer, buf_task, buf_task_sort_func, NULL);
+        g_mutex_unlock(udata->mutex_buffer);
+
+        g_free(task->full_path);
+        g_free(task->filename);
+        g_free(task->path);
+        g_free(task);
+
+        return;
     }
-    g_mutex_unlock(&mutex_fil);
-    g_cond_broadcast(&cond_fil);
+    g_mutex_unlock(udata->mutex_buffer);
 
-    // Write other data
-    g_mutex_lock(&mutex_oth);
-//    printf("Current OTH ID: %d\n", id_oth);
-    while (id_oth != task->id)
-        g_cond_wait (&cond_oth, &mutex_oth);
-    id_oth++;
-    cr_puts(udata->oth_f, (const char *) res.other);
-    if (udata->oth_statements) {
-        cr_add_other_pkg_db(udata->oth_statements, pkg);
-    }
-    g_mutex_unlock(&mutex_oth);
-    g_cond_broadcast(&cond_oth);
-
+    printf("%p: chci zapsat task: %ld\n", self, task->id);
+    // Dump XML and SQLite
+    write_pkg(task->id, res, pkg, udata);
+    printf("%p: zapsan task: %ld\n", self, task->id);
 
     // Clean up
-
     if (pkg != md)
         cr_package_free(pkg);
-
     g_free(res.primary);
     g_free(res.filelists);
     g_free(res.other);
 
+    // Try to write all results from buffer which was waiting for us
+    while (1) {
+        struct BufferedTask *buf_task;
+        g_mutex_lock(udata->mutex_buffer);
+        buf_task = g_queue_peek_head(udata->buffer);
+        if (buf_task && buf_task->id == udata->id_pri) {
+            printf("%p: Zpracovavam z bufferu: %ld\n", self, buf_task->id);
+            buf_task = g_queue_pop_head (udata->buffer);
+            g_mutex_unlock(udata->mutex_buffer);
+            // Dump XML and SQLite
+            write_pkg(buf_task->id, buf_task->res, buf_task->pkg, udata);
+            // Clean up
+            if (!buf_task->pkg_from_md)
+                cr_package_free(buf_task->pkg);
+            g_free(buf_task->res.primary);
+            g_free(buf_task->res.filelists);
+            g_free(buf_task->res.other);
+            g_free(buf_task);
+        } else {
+            if (buf_task)
+                printf("%p: Task z bufferu neni na rade: %ld\n", self, buf_task->id);
+            else
+                printf("%p: Buffer je prazdny\n", self);
+            g_mutex_unlock(udata->mutex_buffer);
+            break;
+        }
+    }
+
+
 task_cleanup:
-    if (id_pri <= task->id) {
+    if (udata->id_pri <= task->id) {
         // An error was encountered and we have to wait to increment counters
-        g_mutex_lock(&mutex_pri);
-        while (id_pri != task->id)
-            g_cond_wait (&cond_pri, &mutex_pri);
-        id_pri++;
-        g_mutex_unlock(&mutex_pri);
-        g_cond_broadcast(&cond_pri);
+        g_mutex_lock(udata->mutex_pri);
+        while (udata->id_pri != task->id)
+            g_cond_wait (udata->cond_pri, udata->mutex_pri);
+        udata->id_pri++;
+        g_mutex_unlock(udata->mutex_pri);
+        g_cond_broadcast(udata->cond_pri);
 
-        g_mutex_lock(&mutex_fil);
-        while (id_fil != task->id)
-            g_cond_wait (&cond_fil, &mutex_fil);
-        id_fil++;
-        g_mutex_unlock(&mutex_fil);
-        g_cond_broadcast(&cond_fil);
+        g_mutex_lock(udata->mutex_fil);
+        while (udata->id_fil != task->id)
+            g_cond_wait (udata->cond_fil, udata->mutex_fil);
+        udata->id_fil++;
+        g_mutex_unlock(udata->mutex_fil);
+        g_cond_broadcast(udata->cond_fil);
 
-        g_mutex_lock(&mutex_oth);
-        while (id_oth != task->id)
-            g_cond_wait (&cond_oth, &mutex_oth);
-        id_oth++;
-        g_mutex_unlock(&mutex_oth);
-        g_cond_broadcast(&cond_oth);
+        g_mutex_lock(udata->mutex_oth);
+        while (udata->id_oth != task->id)
+            g_cond_wait (udata->cond_oth, udata->mutex_oth);
+        udata->id_oth++;
+        g_mutex_unlock(udata->mutex_oth);
+        g_cond_broadcast(udata->cond_oth);
     }
 
     g_free(task->full_path);
@@ -288,6 +373,8 @@ task_cleanup:
 }
 
 
+// Function used to sort pool tasks - this function is responsible for
+// order of packages in metadata
 int
 task_cmp(gconstpointer a_p, gconstpointer b_p, gpointer user_data)
 {
@@ -385,7 +472,6 @@ fill_pool(GThreadPool *pool,
                         fprintf(output_pkg_list, "%s\n", repo_relative_path);
                     *current_pkglist = g_slist_prepend(*current_pkglist, task->filename);
                     // TODO: One common path for all tasks with the same path?
-//                    g_thread_pool_push(pool, task, NULL);
                     g_queue_insert_sorted(&queue, task, task_cmp, NULL);
                 } else
                     g_free(full_path);
@@ -434,7 +520,6 @@ fill_pool(GThreadPool *pool,
                 if (output_pkg_list)
                     fprintf(output_pkg_list, "%s\n", relative_path);
                 *current_pkglist = g_slist_prepend(*current_pkglist, task->filename);
-//                g_thread_pool_push(pool, task, NULL);
                 g_queue_insert_sorted(&queue, task, task_cmp, NULL);
             }
         }
@@ -852,13 +937,22 @@ main(int argc, char **argv)
     user_data.location_base     = cmd_options->location_base;
     user_data.checksum_type_str = cr_checksum_name_str(cmd_options->checksum_type);
     user_data.checksum_type     = cmd_options->checksum_type;
-    user_data.quiet             = cmd_options->quiet;
-    user_data.verbose           = cmd_options->verbose;
     user_data.skip_symlinks     = cmd_options->skip_symlinks;
     user_data.skip_stat         = cmd_options->skip_stat;
     user_data.old_metadata      = old_metadata;
     user_data.repodir_name_len  = strlen(in_dir);
-    user_data.package_count = package_count;
+    user_data.package_count     = package_count;
+    user_data.buffer            = g_queue_new();
+    user_data.mutex_buffer      = g_mutex_new();
+    user_data.mutex_pri         = g_mutex_new();
+    user_data.mutex_fil         = g_mutex_new();
+    user_data.mutex_oth         = g_mutex_new();
+    user_data.cond_pri          = g_cond_new();
+    user_data.cond_fil          = g_cond_new();
+    user_data.cond_oth          = g_cond_new();
+    user_data.id_pri            = 0;
+    user_data.id_fil            = 0;
+    user_data.id_oth            = 0;
 
     g_debug("Thread pool user data ready");
 
@@ -898,6 +992,15 @@ main(int argc, char **argv)
     cr_close(user_data.pri_f);
     cr_close(user_data.fil_f);
     cr_close(user_data.oth_f);
+
+    g_queue_free(user_data.buffer);
+    g_mutex_free(user_data.mutex_buffer);
+    g_cond_free(user_data.cond_pri);
+    g_cond_free(user_data.cond_fil);
+    g_cond_free(user_data.cond_oth);
+    g_mutex_free(user_data.mutex_pri);
+    g_mutex_free(user_data.mutex_fil);
+    g_mutex_free(user_data.mutex_oth);
 
 
     // Close db

@@ -454,22 +454,23 @@ merge_repos(GHashTable *merged,
 
     GSList *element = NULL;
     for (element = repo_list; element; element = g_slist_next(element)) {
-        cr_Metadata tmp_metadata;
+        gchar *repopath;                    // base url of current repodata
+        cr_Metadata metadata;               // current repodata
+        struct cr_MetadataLocation *ml;     // location of current repodata
 
-        tmp_metadata = cr_new_metadata(CR_HT_KEY_HASH, 0, NULL);
-        struct cr_MetadataLocation *ml = (struct cr_MetadataLocation *) element->data;
+        metadata = cr_new_metadata(CR_HT_KEY_HASH, 0, NULL);
+        repopath = cr_normalize_dir_path(ml->original_url);
+        ml       = (struct cr_MetadataLocation *) element->data;
 
         // Base paths in output of original createrepo doesn't have trailing '/'
-        gchar *repopath = cr_normalize_dir_path(ml->original_url);
-        if (repopath && strlen(repopath) > 1) {
+        if (repopath && strlen(repopath) > 1)
             repopath[strlen(repopath)-1] = '\0';
-        }
 
         g_debug("Processing: %s", repopath);
 
-        if (cr_load_xml_metadata(tmp_metadata, ml) == CR_LOAD_METADATA_ERR) {
+        if (cr_load_xml_metadata(metadata, ml) == CR_LOAD_METADATA_ERR) {
+            cr_destroy_metadata(metadata);
             g_critical("Cannot load repo: \"%s\"", ml->repomd);
-            cr_destroy_metadata(tmp_metadata);
             break;
         }
 
@@ -478,9 +479,9 @@ merge_repos(GHashTable *merged,
         guint original_size;
         long repo_loaded_packages = 0;
 
-        original_size = g_hash_table_size(tmp_metadata->ht);
+        original_size = g_hash_table_size(metadata->ht);
 
-        g_hash_table_iter_init (&iter, tmp_metadata->ht);
+        g_hash_table_iter_init (&iter, metadata->ht);
         while (g_hash_table_iter_next (&iter, &key, &value)) {
             int ret;
             cr_Package *pkg = (cr_Package *) value;
@@ -497,27 +498,34 @@ merge_repos(GHashTable *merged,
             }
 
             // Add package
-            ret = add_package(pkg, repopath, merged, arch_list, merge_method, include_all);
+            ret = add_package(pkg,
+                              repopath,
+                              merged,
+                              arch_list,
+                              merge_method,
+                              include_all);
 
             if (ret > 0) {
                 if (!noarch_pkg_used) {
-                    // Original package was added - remove only record from hashtable
+                    // Original package was added
+                    // => remove only record from hashtable
                     g_hash_table_iter_steal(&iter);
                 } else {
-                    // Package from noarch repo was added - do not remove record, just make note
-                    used_noarch_keys = g_slist_prepend(used_noarch_keys, pkg->location_href);
+                    // Package from noarch repo was added
+                    // => do not remove record, just make note
+                    used_noarch_keys = g_slist_prepend(used_noarch_keys,
+                                                       pkg->location_href);
                     g_debug("Package: %s (from: %s) has been replaced by noarch package",
                             pkg->location_href, repopath);
                 }
 
-                if (ret == 1) {
+                if (ret == 1)
                     repo_loaded_packages++;
-                }
             }
         }
 
         loaded_packages += repo_loaded_packages;
-        cr_destroy_metadata(tmp_metadata);
+        cr_destroy_metadata(metadata);
         g_debug("Repo: %s (Loaded: %ld Used: %ld)", repopath,
                 (unsigned long) original_size, repo_loaded_packages);
         g_free(repopath);
@@ -526,9 +534,8 @@ merge_repos(GHashTable *merged,
 
     // Steal used keys from noarch_hashtable
 
-    for (element = used_noarch_keys; element; element = g_slist_next(element)) {
+    for (element = used_noarch_keys; element; element = g_slist_next(element))
         g_hash_table_steal(noarch_hashtable, (gconstpointer) element->data);
-    }
     g_slist_free(used_noarch_keys);
 
     return loaded_packages;

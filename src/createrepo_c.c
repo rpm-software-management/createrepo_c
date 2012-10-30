@@ -384,8 +384,7 @@ task_cmp(gconstpointer a_p, gconstpointer b_p, gpointer user_data)
     CR_UNUSED(user_data);
     ret = g_strcmp0(a->filename, b->filename);
     if (ret) return ret;
-    ret = g_strcmp0(a->path, b->path);
-    return ret;
+    return g_strcmp0(a->path, b->path);
 }
 
 

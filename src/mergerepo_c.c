@@ -537,6 +537,18 @@ merge_repos(GHashTable *merged,
 
 
 int
+package_cmp(gconstpointer a_p, gconstpointer b_p)
+{
+    int ret;
+    const cr_Package *pkg_a = a_p;
+    const cr_Package *pkg_b = b_p;
+    ret = g_strcmp0(pkg_a->location_href, pkg_b->location_href);
+    if (ret) return ret;
+    return g_strcmp0(pkg_a->location_base, pkg_b->location_base);
+}
+
+
+int
 dump_merged_metadata(GHashTable *merged_hashtable,
                      long packages,
                      gchar *groupfile,
@@ -606,7 +618,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     // Prepare sqlite if needed
 
-   sqlite3 *pri_db = NULL;
+    sqlite3 *pri_db = NULL;
     sqlite3 *fil_db = NULL;
     sqlite3 *oth_db = NULL;
     cr_DbPrimaryStatements pri_statements = NULL;
@@ -638,11 +650,14 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     // Dump hashtable
 
-    GHashTableIter iter;
-    gpointer key, value;
-    g_hash_table_iter_init (&iter, merged_hashtable);
-    while (g_hash_table_iter_next (&iter, &key, &value)) {
+    GList *keys, *key;
+    keys = g_hash_table_get_keys(merged_hashtable);
+    keys = g_list_sort(keys, (GCompareFunc) g_strcmp0);
+
+    for (key = keys; key; key = g_list_next(key)) {
+        gpointer value = g_hash_table_lookup(merged_hashtable, key->data);
         GSList *element = (GSList *) value;
+        element = g_slist_sort(element, package_cmp);
         for (; element; element=g_slist_next(element)) {
             struct cr_XmlStruct res;
             cr_Package *pkg;
@@ -666,6 +681,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         }
     }
 
+    g_list_free(keys);
 
     // Write xml footers
 
@@ -1021,7 +1037,10 @@ main(int argc, char **argv)
 
     // Load noarch repo
 
-    cr_Metadata noarch_metadata = NULL; // Key is CR_HT_KEY_FILENAME
+    cr_Metadata noarch_metadata = NULL;
+    // noarch_metadata->ht:
+    //   Key: CR_HT_KEY_FILENAME aka pkg->location_href
+    //   Value: package
 
     if (cmd_options->noarch_repo_url) {
         struct cr_MetadataLocation *noarch_ml;
@@ -1066,6 +1085,10 @@ main(int argc, char **argv)
 
     long loaded_packages;
     GHashTable *merged_hashtable = new_merged_metadata_hashtable();
+    // merged_hashtable:
+    //   Key: pkg->name
+    //   Value: GSList with packages with the same name
+
     loaded_packages = merge_repos(merged_hashtable, local_repos,
                                   cmd_options->arch_list,
                                   cmd_options->merge_method, cmd_options->all,

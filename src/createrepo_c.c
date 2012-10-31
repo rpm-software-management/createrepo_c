@@ -214,9 +214,6 @@ dumper_thread(gpointer data, gpointer user_data)
     const char *location_href = task->full_path + udata->repodir_name_len;
     const char *location_base = udata->location_base;
 
-    GThread *self = g_thread_self();
-    printf("%p: mam task: %ld - %s\n", self, task->id, task->path);
-
     // Get stat info about file
     if (udata->old_metadata && !(udata->skip_stat)) {
         if (stat(task->full_path, &stat_buf) == -1) {
@@ -278,8 +275,6 @@ dumper_thread(gpointer data, gpointer user_data)
     {
         // If it isn't our turn and buffer isn't full and this isn't
         // last task -> save task to buffer
-        printf("%p: Vkladam do bufferu: %ld\n", self, task->id);
-
         struct BufferedTask *buf_task = malloc(sizeof(struct BufferedTask));
         buf_task->id  = task->id;
         buf_task->res = res;
@@ -298,10 +293,8 @@ dumper_thread(gpointer data, gpointer user_data)
     }
     g_mutex_unlock(udata->mutex_buffer);
 
-    printf("%p: chci zapsat task: %ld\n", self, task->id);
     // Dump XML and SQLite
     write_pkg(task->id, res, pkg, udata);
-    printf("%p: zapsan task: %ld\n", self, task->id);
 
     // Clean up
     if (pkg != md)
@@ -316,7 +309,6 @@ dumper_thread(gpointer data, gpointer user_data)
         g_mutex_lock(udata->mutex_buffer);
         buf_task = g_queue_peek_head(udata->buffer);
         if (buf_task && buf_task->id == udata->id_pri) {
-            printf("%p: Zpracovavam z bufferu: %ld\n", self, buf_task->id);
             buf_task = g_queue_pop_head (udata->buffer);
             g_mutex_unlock(udata->mutex_buffer);
             // Dump XML and SQLite
@@ -329,10 +321,6 @@ dumper_thread(gpointer data, gpointer user_data)
             g_free(buf_task->res.other);
             g_free(buf_task);
         } else {
-            if (buf_task)
-                printf("%p: Task z bufferu neni na rade: %ld\n", self, buf_task->id);
-            else
-                printf("%p: Buffer je prazdny\n", self);
             g_mutex_unlock(udata->mutex_buffer);
             break;
         }

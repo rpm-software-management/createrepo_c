@@ -47,30 +47,20 @@ static const char *REPO_FILENAME_KEYS_02[] = {"super_kernel-6.0.1-2.x86_64.rpm",
 
 
 
-static void test_cr_new_metadata_hashtable(void)
+static void test_cr_new_metadata(void)
 {
     guint len;
-    GHashTable *hashtable = NULL;
+    cr_Metadata metadata = NULL;
 
-    // Get new hashtable
-    hashtable = cr_new_metadata_hashtable();
-    g_assert(hashtable);
+    // Get new metadata object
+    metadata = cr_new_metadata(CR_HT_KEY_DEFAULT, 0, NULL);
+    g_assert(metadata);
 
     // Check if it is empty
-    len = g_hash_table_size(hashtable);
+    len = g_hash_table_size(metadata->ht);
     g_assert_cmpint(len, ==, 0);
 
-    cr_destroy_metadata_hashtable(hashtable);
-}
-
-
-static void test_cr_destroy_metadata_hashtable(void)
-{
-    GHashTable *hashtable = cr_new_metadata_hashtable();
-    g_assert(hashtable);
-    cr_destroy_metadata_hashtable(hashtable);
-
-    cr_destroy_metadata_hashtable(NULL);
+    cr_destroy_metadata(metadata);
 }
 
 
@@ -80,20 +70,21 @@ void test_helper_check_keys(const char *repopath, cr_HashTableKey key, guint rep
     guint i;
     guint size;
     gpointer value;
-    GHashTable *hashtable;
+    cr_Metadata metadata;
 
-    hashtable = cr_new_metadata_hashtable();
-    g_assert(hashtable);
-    ret = cr_locate_and_load_xml_metadata(hashtable, repopath, key);
+    metadata = cr_new_metadata(key, 0, NULL);
+    g_assert(metadata);
+    g_assert(metadata->ht);
+    ret = cr_locate_and_load_xml_metadata(metadata, repopath);
     g_assert_cmpint(ret, ==, CR_LOAD_METADATA_OK);
-    size = g_hash_table_size(hashtable);
+    size = g_hash_table_size(metadata->ht);
     g_assert_cmpuint(size, ==, repo_size);
     for (i=0; i < repo_size; i++) {
-        value = g_hash_table_lookup(hashtable, (gconstpointer) keys[i]);
+        value = g_hash_table_lookup(metadata->ht, (gconstpointer) keys[i]);
         if (!value)
             g_critical("Key \"%s\" not present!", keys[i]);
     }
-    cr_destroy_metadata_hashtable(hashtable);
+    cr_destroy_metadata(metadata);
 }
 
 
@@ -118,15 +109,15 @@ static void test_cr_locate_and_load_xml_metadata_detailed(void)
     int ret;
     guint size;
     cr_Package *pkg;
-    GHashTable *hashtable;
+    cr_Metadata metadata;
 
-    hashtable = cr_new_metadata_hashtable();
-    g_assert(hashtable);
-    ret = cr_locate_and_load_xml_metadata(hashtable, REPO_PATH_01, CR_HT_KEY_NAME);
+    metadata = cr_new_metadata(CR_HT_KEY_NAME, 0, NULL);
+    g_assert(metadata);
+    ret = cr_locate_and_load_xml_metadata(metadata, REPO_PATH_01);
     g_assert_cmpint(ret, ==, CR_LOAD_METADATA_OK);
-    size = g_hash_table_size(hashtable);
+    size = g_hash_table_size(metadata->ht);
     g_assert_cmpuint(size, ==, REPO_SIZE_01);
-    pkg = (cr_Package *) g_hash_table_lookup(hashtable, "super_kernel");
+    pkg = (cr_Package *) g_hash_table_lookup(metadata->ht, "super_kernel");
     g_assert(pkg);
 
     g_assert_cmpstr(pkg->pkgId, ==, "152824bff2aa6d54f429d43e87a3ff3a0286505c6d93ec87692b5e3a9e3b97bf");
@@ -155,7 +146,7 @@ static void test_cr_locate_and_load_xml_metadata_detailed(void)
     g_assert(!pkg->location_base);
     g_assert_cmpstr(pkg->checksum_type, ==, "sha256");
 
-    cr_destroy_metadata_hashtable(hashtable);
+    cr_destroy_metadata(metadata);
 }
 
 
@@ -163,8 +154,7 @@ int main(int argc, char *argv[])
 {
     g_test_init(&argc, &argv, NULL);
 
-    g_test_add_func("/load_metadata/test_cr_new_metadata_hashtable", test_cr_new_metadata_hashtable);
-    g_test_add_func("/load_metadata/test_cr_destroy_metadata_hashtable", test_cr_destroy_metadata_hashtable);
+    g_test_add_func("/load_metadata/test_cr_new_metadata", test_cr_new_metadata);
     g_test_add_func("/load_metadata/test_cr_locate_and_load_xml_metadata", test_cr_locate_and_load_xml_metadata);
     g_test_add_func("/load_metadata/test_cr_locate_and_load_xml_metadata_detailed", test_cr_locate_and_load_xml_metadata_detailed);
 

@@ -70,7 +70,7 @@ typedef struct _cr_Metadata *cr_Metadata;
  *                          in hash table
  * @param use_single_chunk  use only one string chunk (all loaded packages
  *                          share one string chunk in the cr_Metadata object)
- *                          Packages will be not standalone objects.
+ *                          Packages will not be standalone objects.
  *                          This option leads to less memory consumption.
  * @param pkglist           load only packages which base filename is in this
  *                          list. If param is NULL all packages are loaded.

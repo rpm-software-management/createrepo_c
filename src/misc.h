@@ -54,6 +54,14 @@ struct cr_EVR {
     char *release;      /*!< release */
 };
 
+struct cr_NVREA {
+    char *name;         /*!< name */
+    char *version;      /*!< version */
+    char *release;      /*!< release */
+    char *epoch;        /*!< epoch */
+    char *arch;         /*!< arch */
+};
+
 /** \ingroup misc
  * Version representation
  * e.g. for openssl-devel-1.0.0i = version: 1, release: 0, patch: 0, suffix: i
@@ -245,6 +253,9 @@ void cr_log_fn(const gchar *log_domain,
  * @param free_f        the function to be called to free each element's data
  */
 void cr_slist_free_full(GSList *list, GDestroyNotify free_f);
+
+struct cr_NVREA *cr_split_rpm_filename(const char *filename);
+void cr_nvrea_free(struct cr_NVREA *);
 
 #ifdef __cplusplus
 }

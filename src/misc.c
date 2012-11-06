@@ -817,14 +817,15 @@ cr_cmp_version_str(const char* str1, const char *str2)
     }
 
     int strcmp_res = g_strcmp0(ver1.suffix, ver2.suffix);
+
+    g_free(ver1.suffix);
+    g_free(ver2.suffix);
+
     if (strcmp_res > 0) {
         return 1;
     } else if (strcmp_res < 0) {
         return 2;
     }
-
-    g_free(ver1.suffix);
-    g_free(ver2.suffix);
 
     return 0;
 }
@@ -894,3 +895,83 @@ cr_slist_free_full(GSList *list, GDestroyNotify free_f)
     g_slist_free(list);
 }
 
+
+struct cr_NVREA *
+cr_split_rpm_filename(const char *filename)
+{
+    struct cr_NVREA *res = NULL;
+    gchar *str, *copy;
+    size_t len;
+    int i;
+
+    if (!filename)
+        return res;
+
+    res = g_malloc0(sizeof(struct cr_NVREA));
+    str = g_strdup(filename);
+    copy = str;
+    len = strlen(str);
+
+    // Get rid off .rpm suffix
+    if (len >= 4 && !strcmp(str+(len-4), ".rpm")) {
+        len -= 4;
+        str[len] = '\0';
+    }
+
+    // Get arch
+    for (i = len-1; i >= 0; i--)
+        if (str[i] == '.') {
+            res->arch = g_strdup(str+i+1);
+            str[i] = '\0';
+            len = i;
+            break;
+        }
+
+    // Get release
+    for (i = len-1; i >= 0; i--)
+        if (str[i] == '-') {
+            res->release = g_strdup(str+i+1);
+            str[i] = '\0';
+            len = i;
+            break;
+        }
+
+    // Get version
+    for (i = len-1; i >= 0; i--)
+        if (str[i] == '-') {
+            res->version = g_strdup(str+i+1);
+            str[i] = '\0';
+            len = i;
+            break;
+        }
+
+    // Get epoch
+    for (i = 0; i < (int) len; i++)
+        if (str[i] == ':') {
+            str[i] = '\0';
+            res->epoch = g_strdup(str);
+            str += i + 1;
+            break;
+        }
+
+    // Get name
+    res->name = g_strdup(str);
+    g_free(copy);
+
+    return res;
+}
+
+
+void
+cr_nvrea_free(struct cr_NVREA *nvrea)
+{
+    if (!nvrea)
+        return;
+
+    g_free(nvrea->name);
+    g_free(nvrea->version);
+    g_free(nvrea->release);
+    g_free(nvrea->epoch);
+    g_free(nvrea->arch);
+    g_free(nvrea);
+}

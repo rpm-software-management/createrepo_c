@@ -640,6 +640,7 @@ static void test_cr_download_invalid_url(Copyfiletest *copyfiletest, gconstpoint
     cr_download(handle, INVALID_URL, copyfiletest->dst_file, &error);
     curl_easy_cleanup(handle);
     g_assert(error);
+    free(error);
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
 }
 
@@ -940,6 +941,49 @@ static void test_cr_cmp_version_str(void)
     g_assert_cmpint(ret, ==, 2);
 }
 
+static void test_cr_split_rpm_filename(void)
+{
+    struct cr_NVREA *res;
+
+    res = cr_split_rpm_filename(NULL);
+    g_assert(!res);
+
+    res = cr_split_rpm_filename("foo-1.0-1.i386.rpm");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "foo");
+    g_assert_cmpstr(res->version, ==, "1.0");
+    g_assert_cmpstr(res->release, ==, "1");
+    g_assert(!res->epoch);
+    g_assert_cmpstr(res->arch, ==, "i386");
+    cr_nvrea_free(res);
+
+    res = cr_split_rpm_filename("1:bar-9-123a.ia64.rpm");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "bar");
+    g_assert_cmpstr(res->version, ==, "9");
+    g_assert_cmpstr(res->release, ==, "123a");
+    g_assert_cmpstr(res->epoch, ==, "1");
+    g_assert_cmpstr(res->arch, ==, "ia64");
+    cr_nvrea_free(res);
+
+    res = cr_split_rpm_filename(":a--.");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "a");
+    g_assert_cmpstr(res->version, ==, "");
+    g_assert_cmpstr(res->release, ==, "");
+    g_assert_cmpstr(res->epoch, ==, "");
+    g_assert_cmpstr(res->arch, ==, "");
+    cr_nvrea_free(res);
+
+    res = cr_split_rpm_filename("b");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "b");
+    g_assert(!res->version);
+    g_assert(!res->release);
+    g_assert(!res->epoch);
+    g_assert(!res->arch);
+    cr_nvrea_free(res);
+}
 
 
 int main(int argc, char *argv[])
@@ -968,6 +1012,7 @@ int main(int argc, char *argv[])
     g_test_add_func("/misc/test_cr_remove_dir", test_cr_remove_dir);
     g_test_add_func("/misc/test_cr_str_to_version", test_cr_str_to_version);
     g_test_add_func("/misc/test_cr_cmp_version_str", test_cr_cmp_version_str);
+    g_test_add_func("/misc/test_cr_split_rpm_filename", test_cr_split_rpm_filename);
 
     return g_test_run();
 }

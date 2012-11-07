@@ -116,3 +116,10 @@ cr_package_free(cr_Package *package)
 
     g_free (package);
 }
+
+gchar *
+cr_package_nvra(cr_Package *package)
+{
+    return g_strdup_printf("%s-%s-%s.%s", package->name, package->version,
+                                          package->release, package->arch);
+}

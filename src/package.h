@@ -149,6 +149,13 @@ cr_Package *cr_package_new_without_chunk(void);
  */
 void cr_package_free(cr_Package *package);
 
+/** \ingroup package
+ * Get NVRA package string
+ * @param package       cr_Package
+ * @return              nvra string
+ */
+gchar *cr_package_nvra(cr_Package *package);
+
 #ifdef __cplusplus
 }
 #endif

@@ -29,6 +29,7 @@
 #include <ftw.h>
 #include <time.h>
 #include <curl/curl.h>
+#include <rpm/rpmlib.h>
 #include "logging.h"
 #include "constants.h"
 #include "misc.h"
@@ -789,6 +790,9 @@ cr_str_to_version(const char *str)
 // 0 - versions are same
 // 1 - first string is bigger version
 // 2 - second string is bigger version
+// Examples:
+// "6.3.2azb" > "6.3.2abc"
+// "2.1" < "2.1.3"
 int
 cr_cmp_version_str(const char* str1, const char *str2)
 {
@@ -974,4 +978,35 @@ cr_nvrea_free(struct cr_NVREA *nvrea)
     g_free(nvrea->epoch);
     g_free(nvrea->arch);
     g_free(nvrea);
+}
+
+
+int
+cr_compare_values(const char *str1, const char *str2)
+{
+    if (!str1 && !str2)
+        return 0;
+    else if (str1 && !str2)
+        return 1;
+    else if (!str1 && str2)
+        return -1;
+    return rpmvercmp(str1, str2);
+}
+
+
+int
+cr_cmp_evr(const char *e1, const char *v1, const char *r1,
+           const char *e2, const char *v2, const char *r2)
+{
+    int rc;
+
+    if (e1 == NULL) e1 = "0";
+    if (e2 == NULL) e2 = "0";
+
+    rc = cr_compare_values(e1, e2);
+    if (rc) return rc;
+    rc = cr_compare_values(v1, v2);
+    if (rc) return rc;
+    rc = cr_compare_values(r1, r2);
+    return rc;
 }

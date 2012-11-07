@@ -257,6 +257,28 @@ void cr_slist_free_full(GSList *list, GDestroyNotify free_f);
 struct cr_NVREA *cr_split_rpm_filename(const char *filename);
 void cr_nvrea_free(struct cr_NVREA *);
 
+/** \ingroup misc
+ * Compare evr of two cr_NVREA. Name and arch are ignored.
+ * @param A     pointer to first cr_NVREA
+ * @param B     pointer to second cr_NVREA
+ * @return      0 = same, 1 = first is newer, -1 = second is newer
+ */
+#define cr_cmp_nvrea(A, B) (cr_cmp_evr((A)->epoch, (A)->version, (A)->release,\
+                                        (B)->epoch, (B)->version, (B)->release))
+
+/** \ingroup misc
+ * Compare two version strings splited into evr chunks.
+ * param e1     1. epoch
+ * param v1     1. version
+ * param r1     1. release
+ * param e2     2. epoch
+ * param v2     2. version
+ * param r2     2. release
+ * return       0 = same, 1 = first is newer, -1 = second is newer
+ */
+int cr_cmp_evr(const char *e1, const char *v1, const char *r1,
+               const char *e2, const char *v2, const char *r2);
+
 #ifdef __cplusplus
 }
 #endif

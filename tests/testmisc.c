@@ -939,6 +939,9 @@ static void test_cr_cmp_version_str(void)
 
     ret = cr_cmp_version_str("c", "f");
     g_assert_cmpint(ret, ==, 2);
+
+    ret = cr_cmp_version_str("2.1", "2.1.3");
+    g_assert_cmpint(ret, ==, 2);
 }
 
 static void test_cr_split_rpm_filename(void)
@@ -986,6 +989,44 @@ static void test_cr_split_rpm_filename(void)
 }
 
 
+static void test_cr_cmp_evr(void)
+{
+    int res;
+
+    res = cr_cmp_evr(NULL, "2", "1",
+                     "0", "2", "1");
+    g_assert_cmpint(res, ==, 0);
+
+    res = cr_cmp_evr(NULL, "2", "2",
+                     "0", "2", "1");
+    g_assert_cmpint(res, ==, 1);
+
+    res = cr_cmp_evr("0", "2", "2",
+                     "1", "2", "1");
+    g_assert_cmpint(res, ==, -1);
+
+    res = cr_cmp_evr(NULL, "22", "2",
+                     "0", "2", "2");
+    g_assert_cmpint(res, ==, 1);
+
+    res = cr_cmp_evr(NULL, "13", "2",
+                     "0", "2", "2");
+    g_assert_cmpint(res, ==, 1);
+
+    res = cr_cmp_evr(NULL, "55", "2",
+                     NULL, "55", "2");
+    g_assert_cmpint(res, ==, 0);
+
+    res = cr_cmp_evr(NULL, "0", "2a",
+                     "0", "0", "2b");
+    g_assert_cmpint(res, ==, -1);
+
+    res = cr_cmp_evr(NULL, "0", "2",
+                     "0", NULL, "3");
+    g_assert_cmpint(res, ==, 1);
+}
+
+
 int main(int argc, char *argv[])
 {
     g_test_init(&argc, &argv, NULL);
@@ -1013,6 +1054,7 @@ int main(int argc, char *argv[])
     g_test_add_func("/misc/test_cr_str_to_version", test_cr_str_to_version);
     g_test_add_func("/misc/test_cr_cmp_version_str", test_cr_cmp_version_str);
     g_test_add_func("/misc/test_cr_split_rpm_filename", test_cr_split_rpm_filename);
+    g_test_add_func("/misc/test_cr_cmp_evr", test_cr_cmp_evr);
 
     return g_test_run();
 }

@@ -36,12 +36,66 @@
 #include "sqlite.h"
 
 
+// TODO:
+//  - rozvijet architekturu na listy tak jak to dela mergedrepo
+
+
 #define G_LOG_DOMAIN    ((gchar*) 0)
 
 #define DEFAULT_OUTPUTDIR               "merged_repo/"
 #define DEFAULT_DB_COMPRESSION_TYPE             CR_CW_BZ2_COMPRESSION
 #define DEFAULT_GROUPFILE_COMPRESSION_TYPE      CR_CW_GZ_COMPRESSION
 
+// struct KojiMergedReposStuff
+// contains information needed to simulate sort_and_filter() method from
+// mergerepos script from Koji.
+//
+// sort_and_filter() method description:
+// ------------------------------------
+// For each package object, check if the srpm name has ever been seen before.
+// If is has not, keep the package.  If it has, check if the srpm name was first
+// seen in the same repo as the current package.  If so, keep the package from
+// the srpm with the highest NVR.  If not, keep the packages from the first
+// srpm we found, and delete packages from all other srpms.
+//
+// Packages with matching NVRs in multiple repos will be taken from the first
+// repo.
+//
+// If the srpm name appears in the blocked package list, any packages generated
+// from the srpm will be deleted from the package sack as well.
+//
+// This method will also generate a file called "pkgorigins" and add it to the
+// repo metadata. This is a tab-separated map of package E:N-V-R.A to repo URL
+// (as specified on the command-line). This allows a package to be tracked back
+// to its origin, even if the location field in the repodata does not match the
+// original repo location.
+
+struct srpm_val {
+    int repo_id;        // id of repository
+    char *sourcerpm;    // pkg->rpm_sourcerpm
+};
+
+struct KojiMergedReposStuff {
+    GHashTable *blocked_srpms;
+    // blocked_srpms:
+    // Names of sprms which will be skipped
+    //   Key: srpm name
+    //   Value: NULL (not important)
+    GHashTable *include_srpms;
+    // include_srpms:
+    // Only packages from srpms included in this table will be included
+    // in output merged metadata.
+    //   Key: srpm name
+    //   Value: struct srpm_val
+    GHashTable *seen_rpms;
+    // seen_rpms:
+    // List of packages already included into the output metadata.
+    // Purpose of this list is to avoid a duplicit packages in output.
+    //   Key: string with package n-v-r.a
+    //   Value: NULL (not important)
+    CR_FILE *pkgorigins;
+    // Every element has format: pkg_nvra\trepourl
+};
 
 typedef enum {
     MM_DEFAULT,
@@ -70,6 +124,11 @@ struct CmdOptions {
     gboolean all;
     char *noarch_repo_url;
 
+    // Koji mergerepos specific options
+    gboolean koji;
+    char *groupfile;
+    char *blocked;
+
     // Items filled by check_arguments()
 
     char *out_dir;
@@ -80,7 +139,6 @@ struct CmdOptions {
     cr_CompressionType db_compression_type;
     cr_CompressionType groupfile_compression_type;
     MergeMethod merge_method;
-
 };
 
 
@@ -126,6 +184,81 @@ static GOptionEntry cmd_entries[] =
 };
 
 
+static GOptionEntry cmd_koji_entries[] =
+{
+    { "koji", 'k', 0, G_OPTION_ARG_NONE, &(_cmd_options.koji),
+       "Enable koji mergerepos behaviour.", NULL},
+    { "groupfile", 'g', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.groupfile),
+      "Path to groupfile to include in metadata.", "GROUPFILE" },
+    { "blocked", 'b', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.blocked),
+      "A file containing a list of srpm names to exclude from the merged repo.",
+      "FILE" },
+    { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
+};
+
+
+GSList *
+append_arch(GSList *list, gchar *arch, gboolean koji)
+{
+    GSList *elem;
+
+    // Try to find arch in the list
+    for (elem = list; elem; elem = g_slist_next(elem)) {
+        if (!strcmp(elem->data, arch))
+            return list;  // Arch already exists
+    }
+
+    list = g_slist_prepend(list, g_strdup(arch));
+
+    if (koji) {
+        // expand arch
+        if (!strcmp(arch, "i386")) {
+            list = append_arch(list, "i486", FALSE);
+            list = append_arch(list, "i586", FALSE);
+            list = append_arch(list, "geode", FALSE);
+            list = append_arch(list, "i686", FALSE);
+            list = append_arch(list, "athlon", FALSE);
+        } else if (!strcmp(arch, "x86_64")) {
+            list = append_arch(list, "ia32e", FALSE);
+            list = append_arch(list, "amd64", FALSE);
+        } else if (!strcmp(arch, "ppc64")) {
+            list = append_arch(list, "ppc64pseries", FALSE);
+            list = append_arch(list, "ppc64iseries", FALSE);
+        } else if (!strcmp(arch, "sparc64")) {
+            list = append_arch(list, "sparc64v", FALSE);
+            list = append_arch(list, "sparc64v2", FALSE);
+        } else if (!strcmp(arch, "sparc")) {
+            list = append_arch(list, "sparcv8", FALSE);
+            list = append_arch(list, "sparcv9", FALSE);
+            list = append_arch(list, "sparcv9v", FALSE);
+            list = append_arch(list, "sparcv9v2", FALSE);
+        } else if (!strcmp(arch, "alpha")) {
+            list = append_arch(list, "alphaev4", FALSE);
+            list = append_arch(list, "alphaev45", FALSE);
+            list = append_arch(list, "alphaev5", FALSE);
+            list = append_arch(list, "alphaev56", FALSE);
+            list = append_arch(list, "alphapca56", FALSE);
+            list = append_arch(list, "alphaev6", FALSE);
+            list = append_arch(list, "alphaev67", FALSE);
+            list = append_arch(list, "alphaev68", FALSE);
+            list = append_arch(list, "alphaev7", FALSE);
+        } else if (!strcmp(arch, "armhfp")) {
+            list = append_arch(list, "armv7hl", FALSE);
+            list = append_arch(list, "armv7hnl", FALSE);
+        } else if (!strcmp(arch, "arm")) {
+            list = append_arch(list, "rmv5tel", FALSE);
+            list = append_arch(list, "armv5tejl", FALSE);
+            list = append_arch(list, "armv6l", FALSE);
+            list = append_arch(list, "armv7l", FALSE);
+        } else if (!strcmp(arch, "sh4")) {
+            list = append_arch(list, "sh4a", FALSE);
+        }
+    }
+
+    return list;
+}
+
+
 gboolean
 check_arguments(struct CmdOptions *options)
 {
@@ -162,8 +295,9 @@ check_arguments(struct CmdOptions *options)
         while (arch_set && arch_set[x] != NULL) {
             gchar *arch = arch_set[x];
             if (arch[0] != '\0') {
-                options->arch_list = g_slist_prepend(options->arch_list,
-                                                     (gpointer) g_strdup(arch));
+                options->arch_list = append_arch(options->arch_list,
+                                                 arch,
+                                                 options->koji);
             }
             x++;
         }
@@ -202,6 +336,18 @@ check_arguments(struct CmdOptions *options)
         }
     }
 
+    // Koji arguments
+    if (options->blocked) {
+        if (!options->koji) {
+            g_critical("-b/--blocked cannot be used without -k/--koji argument");
+            ret = FALSE;
+        }
+        if (!g_file_test(options->blocked, G_FILE_TEST_EXISTS)) {
+            g_critical("File %s doesn't exists", options->blocked);
+            ret = FALSE;
+        }
+    }
+
     return ret;
 }
 
@@ -211,10 +357,19 @@ parse_arguments(int *argc, char ***argv)
 {
     GError *error = NULL;
     GOptionContext *context;
+    GOptionGroup *koji_group;
 
     context = g_option_context_new(": take 2 or more repositories and merge "
                                    "their metadata into a new repo");
     g_option_context_add_main_entries(context, cmd_entries, NULL);
+
+    koji_group = g_option_group_new("koji",
+                                    "Koji mergerepos options",
+                                    "Koji mergerepos options",
+                                    NULL,
+                                    NULL);
+    g_option_group_add_entries(koji_group, cmd_koji_entries);
+    g_option_context_add_group(context, koji_group);
 
     gboolean ret = g_option_context_parse(context, argc, argv, &error);
     g_option_context_free(context);
@@ -237,6 +392,9 @@ free_options(struct CmdOptions *options)
     g_free(options->compress_type);
     g_free(options->merge_method_str);
     g_free(options->noarch_repo_url);
+
+    g_free(options->groupfile);
+    g_free(options->blocked);
 
     g_strfreev(options->repos);
     g_free(options->out_dir);
@@ -279,7 +437,7 @@ new_merged_metadata_hashtable()
     GHashTable *hashtable = g_hash_table_new_full(g_str_hash,
                                                   g_str_equal,
                                                   NULL,
-                                                  free_merged_values); // TODO!!
+                                                  free_merged_values);
     return hashtable;
 }
 
@@ -291,6 +449,212 @@ destroy_merged_metadata_hashtable(GHashTable *hashtable)
     if (hashtable) {
         g_hash_table_destroy(hashtable);
     }
+}
+
+
+void
+cr_srpm_val_destroy(gpointer data)
+{
+    struct srpm_val *val = data;
+    g_free(val->sourcerpm);
+    g_free(val);
+}
+
+
+int
+koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
+                   struct CmdOptions *cmd_options,
+                   GSList *repos)
+{
+    struct KojiMergedReposStuff *koji_stuff;
+    gchar *pkgorigins_path = NULL;
+    GSList *element;
+    int repoid;
+
+    // Pointers to elements in the koji_stuff_ptr
+    GHashTable *blocked_srpms = NULL; // XXX
+    GHashTable *include_srpms = NULL; // XXX
+
+    koji_stuff = g_malloc0(sizeof(struct KojiMergedReposStuff));
+    *koji_stuff_ptr = koji_stuff;
+
+
+    // Prepare hashtables
+
+    koji_stuff->include_srpms = g_hash_table_new_full(g_str_hash,
+                                                      g_str_equal,
+                                                      g_free,
+                                                      cr_srpm_val_destroy);
+    koji_stuff->seen_rpms = g_hash_table_new_full(g_str_hash,
+                                                  g_str_equal,
+                                                  g_free,
+                                                  NULL);
+    include_srpms = koji_stuff->include_srpms;
+
+    // Load list of blocked srpm packages
+
+    if (cmd_options->blocked) {
+        int x = 0;
+        char *content = NULL;
+        char **names;
+        GError *err;
+
+        if (!g_file_get_contents(cmd_options->blocked, &content, NULL, &err)) {
+            g_critical("Error while reading blocked file: %s", err->message);
+            g_error_free(err);
+            g_free(content);
+            return 1;
+        }
+
+        koji_stuff->blocked_srpms = g_hash_table_new_full(g_str_hash,
+                                                          g_str_equal,
+                                                          g_free,
+                                                          NULL);
+        blocked_srpms = koji_stuff->blocked_srpms;
+
+        names = g_strsplit(content, "\n", 0);
+        while (names && names[x] != NULL) {
+            if (strlen(names[x]))
+                g_hash_table_replace(koji_stuff->blocked_srpms,
+                                     g_strdup(names[x]),
+                                     NULL);
+            x++;
+        }
+
+        g_strfreev(names);
+        g_free(content);
+    }
+
+
+    // Prepare pkgorigin file
+
+    pkgorigins_path = g_strconcat(cmd_options->tmp_out_repo, "pkgorigins.gz", NULL);
+    koji_stuff->pkgorigins = cr_open(pkgorigins_path,
+                                     CR_CW_MODE_WRITE,
+                                     CR_CW_GZ_COMPRESSION);
+    if (!koji_stuff->pkgorigins) {
+        g_critical("Cannot open file: %s", pkgorigins_path);
+        g_free(pkgorigins_path);
+        return 1;
+    }
+    g_free(pkgorigins_path);
+
+
+    // Iterate over every repo and fill include_srpms hashtable
+
+    repoid = 0;
+    for (element = repos; element; element = g_slist_next(element)) {
+        struct cr_MetadataLocation *ml;
+        cr_Metadata metadata;
+        GHashTableIter iter;
+        gpointer key, value;
+
+        metadata = cr_new_metadata(CR_HT_KEY_HASH, 0, NULL);
+        ml       = (struct cr_MetadataLocation *) element->data;
+
+        if (cr_load_xml_metadata(metadata, ml) == CR_LOAD_METADATA_ERR) {
+            cr_destroy_metadata(metadata);
+            g_critical("Cannot load repo: \"%s\"", ml->original_url);
+            repoid++;
+            break;
+        }
+
+        // Itarate over every package in repo and what "builds"
+        // we're allowing into the repo
+        g_hash_table_iter_init(&iter, cr_metadata_hashtable(metadata));
+        while (g_hash_table_iter_next(&iter, &key, &value)) {
+            cr_Package *pkg = (cr_Package *) value;
+            struct cr_NVREA *nvrea;
+            gpointer data;
+            gboolean blocked = FALSE;
+            struct srpm_val *value_new;
+
+            nvrea = cr_split_rpm_filename(pkg->rpm_sourcerpm);
+
+            if (blocked_srpms) {
+                // Check if srpm is blocked
+                blocked = g_hash_table_lookup_extended(blocked_srpms,
+                                                       nvrea->name,
+                                                       NULL,
+                                                       NULL);
+            }
+
+            if (blocked) {
+                g_debug("Srpm is blocked: %s", pkg->rpm_sourcerpm);
+                cr_nvrea_free(nvrea);
+                continue;
+            }
+
+            data = g_hash_table_lookup(include_srpms, nvrea->name);
+            if (data) {
+                // We have already seen build with the same name
+
+                int cmp;
+                struct cr_NVREA *nvrea_other;
+                struct srpm_val *value = data;
+
+                if (value->repo_id != repoid) {
+                    // We found a rpm built from an srpm with the same name in
+                    // a previous repo. The previous repo takes precendence,
+                    // so ignore the srpm found here.
+                    cr_nvrea_free(nvrea);
+                    g_debug("Srpm already loaded from previous repo %s",
+                            pkg->rpm_sourcerpm);
+                    continue;
+                }
+
+                // We're in the same repo, so compare srpm NVRs
+                nvrea_other = cr_split_rpm_filename(value->sourcerpm);
+                cmp = cr_cmp_nvrea(nvrea, nvrea_other);
+                cr_nvrea_free(nvrea_other);
+                if (cmp < 1) {
+                    // Existing package is from the newer srpm
+                    cr_nvrea_free(nvrea);
+                    g_debug("Srpm already exists in newer version %s",
+                            pkg->rpm_sourcerpm);
+                    continue;
+                }
+            }
+
+            // The current package we're processing is from a newer srpm
+            // than the existing srpm in the dict, so update the dict
+            // OR
+            // We found a new build so we add it to the dict
+
+            value_new = g_malloc0(sizeof(struct srpm_val));
+            value_new->repo_id = repoid;
+            value_new->sourcerpm = g_strdup(pkg->rpm_sourcerpm);
+            g_hash_table_replace(include_srpms,
+                                 g_strdup(nvrea->name),
+                                 value_new);
+            cr_nvrea_free(nvrea);
+        }
+
+        cr_destroy_metadata(metadata);
+        repoid++;
+    }
+
+
+    return 0;  // All ok
+}
+
+
+void
+koji_stuff_destroy(struct KojiMergedReposStuff **koji_stuff_ptr)
+{
+    struct KojiMergedReposStuff *koji_stuff;
+
+    if (!koji_stuff_ptr || !*koji_stuff_ptr)
+        return;
+
+    koji_stuff = *koji_stuff_ptr;
+
+    if (koji_stuff->blocked_srpms)
+        g_hash_table_destroy(koji_stuff->blocked_srpms);
+    g_hash_table_destroy(koji_stuff->include_srpms);
+    g_hash_table_destroy(koji_stuff->seen_rpms);
+    cr_close(koji_stuff->pkgorigins);
+    g_free(koji_stuff);
 }
 
 
@@ -306,7 +670,8 @@ add_package(cr_Package *pkg,
             GHashTable *merged,
             GSList *arch_list,
             MergeMethod merge_method,
-            gboolean include_all)
+            gboolean include_all,
+            struct KojiMergedReposStuff *koji_stuff)
 {
     GSList *list, *element;
 
@@ -327,6 +692,43 @@ add_package(cr_Package *pkg,
         }
     }
 
+
+    // Koji-mergerepos specific behaviour -----------------------
+    if (koji_stuff) {
+        struct cr_NVREA *nvrea;
+        struct srpm_val *value;
+        gchar *nvra;
+        gboolean seen;
+
+        // Check arch
+        // TODO
+
+        nvrea = cr_split_rpm_filename(pkg->rpm_sourcerpm);
+        value = g_hash_table_lookup(koji_stuff->include_srpms, nvrea->name);
+        cr_nvrea_free(nvrea);
+        if (!value || g_strcmp0(pkg->rpm_sourcerpm, value->sourcerpm)) {
+            // Srpm of the package is not allowed
+            g_debug("Package %s has forbidden srpm %s", pkg->name,
+                                                        pkg->rpm_sourcerpm);
+            return 0;
+        }
+
+        nvra = cr_package_nvra(pkg);;
+        seen = g_hash_table_lookup_extended(koji_stuff->seen_rpms,
+                                            nvra,
+                                            NULL,
+                                            NULL);
+        if (seen) {
+            // Similar package has been already added
+            g_debug("Package with same nvra (%s) has been already added",
+                    nvra);
+            g_free(nvra);
+            return 0;
+        }
+
+        g_hash_table_replace(koji_stuff->seen_rpms, nvra, NULL);
+    }
+    // Koji-mergerepos specifi behaviour end --------------------
 
     // Lookup package in the merged
 
@@ -444,9 +846,9 @@ merge_repos(GHashTable *merged,
             GSList *arch_list,
             MergeMethod merge_method,
             gboolean include_all,
-            GHashTable *noarch_hashtable)
+            GHashTable *noarch_hashtable,
+            struct KojiMergedReposStuff *koji_stuff)
 {
-
     long loaded_packages = 0;
     GSList *used_noarch_keys = NULL;
 
@@ -459,8 +861,8 @@ merge_repos(GHashTable *merged,
         struct cr_MetadataLocation *ml;     // location of current repodata
 
         metadata = cr_new_metadata(CR_HT_KEY_HASH, 0, NULL);
-        repopath = cr_normalize_dir_path(ml->original_url);
         ml       = (struct cr_MetadataLocation *) element->data;
+        repopath = cr_normalize_dir_path(ml->original_url);
 
         // Base paths in output of original createrepo doesn't have trailing '/'
         if (repopath && strlen(repopath) > 1)
@@ -479,9 +881,9 @@ merge_repos(GHashTable *merged,
         guint original_size;
         long repo_loaded_packages = 0;
 
-        original_size = g_hash_table_size(metadata->ht);
+        original_size = g_hash_table_size(cr_metadata_hashtable(metadata));
 
-        g_hash_table_iter_init (&iter, metadata->ht);
+        g_hash_table_iter_init (&iter, cr_metadata_hashtable(metadata));
         while (g_hash_table_iter_next (&iter, &key, &value)) {
             int ret;
             cr_Package *pkg = (cr_Package *) value;
@@ -503,7 +905,8 @@ merge_repos(GHashTable *merged,
                               merged,
                               arch_list,
                               merge_method,
-                              include_all);
+                              include_all,
+                              koji_stuff);
 
             if (ret > 0) {
                 if (!noarch_pkg_used) {
@@ -519,8 +922,18 @@ merge_repos(GHashTable *merged,
                             pkg->location_href, repopath);
                 }
 
-                if (ret == 1)
+                if (ret == 1) {
                     repo_loaded_packages++;
+                    // Koji-mergerepos specific behaviour -----------
+                    if (koji_stuff && koji_stuff->pkgorigins) {
+                        gchar *nvra = cr_package_nvra(pkg);
+                        cr_printf(koji_stuff->pkgorigins,
+                                  "%s\t%s\n",
+                                  nvra, ml->original_url);
+                        g_free(nvra);
+                    }
+                    // Koji-mergerepos specific behaviour - end -----
+                }
             }
         }
 
@@ -780,6 +1193,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_RepomdRecord groupfile_rec            = NULL;
     cr_RepomdRecord compressed_groupfile_rec = NULL;
     cr_RepomdRecord update_info_rec          = NULL;
+    cr_RepomdRecord pkgorigins_rec           = NULL;
 
 
     // XML
@@ -814,6 +1228,14 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         update_info_rec = cr_new_repomdrecord(update_info_name);
         cr_fill_repomdrecord(out_dir, update_info_rec, NULL);
         g_free(update_info_name);
+    }
+
+
+    // Pkgorigins
+
+    if (cmd_options->koji) {
+        pkgorigins_rec = cr_new_repomdrecord("repodata/pkgorigins.gz");
+        cr_fill_repomdrecord(out_dir, pkgorigins_rec, NULL);
     }
 
 
@@ -882,6 +1304,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_rename_repomdrecord_file(out_dir, groupfile_rec);
     cr_rename_repomdrecord_file(out_dir, compressed_groupfile_rec);
     cr_rename_repomdrecord_file(out_dir, update_info_rec);
+    cr_rename_repomdrecord_file(out_dir, pkgorigins_rec);
 
 
     // Gen repomd.xml content
@@ -897,6 +1320,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_repomd_set_record(repomd_obj, compressed_groupfile_rec,
                          CR_MD_COMPRESSED_GROUPFILE);
     cr_repomd_set_record(repomd_obj, update_info_rec, CR_MD_UPDATEINFO);
+    cr_repomd_set_record(repomd_obj, pkgorigins_rec, CR_MD_PKGORIGINS);
 
     char *repomd_xml = cr_generate_repomd_xml(repomd_obj);
 
@@ -1012,6 +1436,7 @@ main(int argc, char **argv)
     for (element = cmd_options->repo_list; element; element = g_slist_next(element)) {
         struct cr_MetadataLocation *loc = cr_get_metadata_location((gchar *) element->data, 1);
         if (!loc) {
+            g_warning("Downloading of repodata failed: %s", (gchar *) element->data);
             cr_download_failed = TRUE;
             break;
         }
@@ -1019,7 +1444,6 @@ main(int argc, char **argv)
     }
 
     if (cr_download_failed) {
-        g_warning("Downloading of repodata failed");
         // Remove downloaded metadata and free structures
         for (element = local_repos; element; element = g_slist_next(element)) {
             struct cr_MetadataLocation *loc = (struct cr_MetadataLocation  *) element->data;
@@ -1030,13 +1454,19 @@ main(int argc, char **argv)
 
 
     // Get first groupfile
+    // XXX: There must be a better logic
 
-    for (element = local_repos; element; element = g_slist_next(element)) {
-        struct cr_MetadataLocation *loc = (struct cr_MetadataLocation  *) element->data;
-        if (!groupfile && loc->groupfile_href) {
-            if (cr_copy_file(loc->groupfile_href, cmd_options->tmp_out_repo) == CR_COPY_OK) {
-                groupfile = g_strconcat(cmd_options->tmp_out_repo, cr_get_filename(loc->groupfile_href), NULL);
-                break;
+    if (!cmd_options->koji) {
+        for (element = local_repos; element; element = g_slist_next(element)) {
+            struct cr_MetadataLocation *loc;
+            loc = (struct cr_MetadataLocation  *) element->data;
+            if (!groupfile && loc->groupfile_href) {
+                if (cr_copy_file(loc->groupfile_href, cmd_options->tmp_out_repo) == CR_COPY_OK) {
+                    groupfile = g_strconcat(cmd_options->tmp_out_repo,
+                                            cr_get_filename(loc->groupfile_href),
+                                            NULL);
+                    break;
+                }
             }
         }
     }
@@ -1075,7 +1505,7 @@ main(int argc, char **argv)
         GHashTableIter iter;
         gpointer p_key, p_value;
 
-        g_hash_table_iter_init (&iter, noarch_metadata->ht);
+        g_hash_table_iter_init (&iter, cr_metadata_hashtable(noarch_metadata));
         while (g_hash_table_iter_next (&iter, &p_key, &p_value)) {
             cr_Package *pkg = (cr_Package *) p_value;
             if (!pkg->location_base)
@@ -1088,6 +1518,13 @@ main(int argc, char **argv)
     }
 
 
+    // Prepare Koji stuff if needed
+
+    struct KojiMergedReposStuff *koji_stuff = NULL;
+    if (cmd_options->koji)
+        koji_stuff_prepare(&koji_stuff, cmd_options, local_repos);
+
+
     // Load metadata
 
     long loaded_packages;
@@ -1096,10 +1533,20 @@ main(int argc, char **argv)
     //   Key: pkg->name
     //   Value: GSList with packages with the same name
 
-    loaded_packages = merge_repos(merged_hashtable, local_repos,
+    loaded_packages = merge_repos(merged_hashtable,
+                                  local_repos,
                                   cmd_options->arch_list,
-                                  cmd_options->merge_method, cmd_options->all,
-                                  noarch_metadata ? noarch_metadata->ht : NULL);
+                                  cmd_options->merge_method,
+                                  cmd_options->all,
+                                  noarch_metadata ?
+                                        cr_metadata_hashtable(noarch_metadata)
+                                      : NULL,
+                                  koji_stuff);
+
+    // Destroy koji stuff - we have to close pkgorigins file before dump
+
+    if (cmd_options->koji)
+        koji_stuff_destroy(&koji_stuff);
 
 
     // Dump metadata

@@ -70,6 +70,7 @@ struct _cr_Repomd {
     cr_RepomdRecord groupfile;
     cr_RepomdRecord cgroupfile;
     cr_RepomdRecord updateinfo;
+    cr_RepomdRecord pkgorigins;
     GSList *repo_tags;
     GSList *distro_tags;
     GSList *content_tags;
@@ -88,7 +89,8 @@ typedef enum {
     CR_MD_OTHER_SQLITE,
     CR_MD_GROUPFILE,
     CR_MD_COMPRESSED_GROUPFILE,
-    CR_MD_UPDATEINFO
+    CR_MD_UPDATEINFO,
+    CR_MD_PKGORIGINS
 } cr_RepomdRecordType;
 
 /** \ingroup repomd

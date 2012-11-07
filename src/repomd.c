@@ -503,6 +503,7 @@ repomd_xml_dump(cr_Repomd repomd)
     dump_data_items(root, repomd->groupfile, (const xmlChar *) "group");
     dump_data_items(root, repomd->cgroupfile, (const xmlChar *) "group_gz");
     dump_data_items(root, repomd->updateinfo, (const xmlChar *) "updateinfo");
+    dump_data_items(root, repomd->pkgorigins, (const xmlChar *) "origin");
 
 
     // Dump IT!
@@ -630,6 +631,7 @@ cr_free_repomd(cr_Repomd repomd)
     cr_free_repomdrecord(repomd->groupfile);
     cr_free_repomdrecord(repomd->cgroupfile);
     cr_free_repomdrecord(repomd->updateinfo);
+    cr_free_repomdrecord(repomd->pkgorigins);
     cr_slist_free_full(repomd->repo_tags, g_free);
     cr_slist_free_full(repomd->distro_tags, (GDestroyNotify) cr_free_distro);
     cr_slist_free_full(repomd->content_tags, g_free);
@@ -657,6 +659,7 @@ cr_repomd_set_record(cr_Repomd repomd,
         case CR_MD_GROUPFILE:            rec = &(repomd->groupfile);  break;
         case CR_MD_COMPRESSED_GROUPFILE: rec = &(repomd->cgroupfile); break;
         case CR_MD_UPDATEINFO:           rec = &(repomd->updateinfo); break;
+        case CR_MD_PKGORIGINS:           rec = &(repomd->pkgorigins); break;
         default: return;
     }
 

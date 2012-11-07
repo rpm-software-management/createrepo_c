@@ -41,6 +41,10 @@ typedef enum {
                                              ->location_href) */
 } cr_HashTableKey;
 
+#define cr_metadata_key(X)          ((X)->key)
+#define cr_metadata_hashtable(X)    ((X)->ht)
+#define cr_metadata_chunk(X)        ((X)->chunk)
+
 /** \ingroup load_metadata
  * Structure for loaded metadata
  */

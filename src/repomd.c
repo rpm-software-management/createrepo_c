@@ -33,6 +33,7 @@
 #undef MODULE
 #define MODULE "repomd: "
 
+#define LOCATION_HREF_PREFIX            "repodata/"
 
 #define DEFAULT_CHECKSUM                "sha256"
 #define DEFAULT_CHECKSUM_ENUM_VAL        CR_CHECKSUM_SHA256
@@ -87,8 +88,13 @@ cr_new_repomdrecord(const char *path)
 {
     cr_RepomdRecord md = (cr_RepomdRecord) g_malloc0(sizeof(*md));
     md->chunk = g_string_chunk_new(1024);
-    if (path)
-        md->location_href = g_string_chunk_insert(md->chunk, path);
+    if (path) {
+        gchar *filename = cr_get_filename(path);
+        gchar *location_href = g_strconcat(LOCATION_HREF_PREFIX, filename, NULL);
+        md->location_real = g_string_chunk_insert(md->chunk, path);
+        md->location_href = g_string_chunk_insert(md->chunk, location_href);
+        g_free(location_href);
+    }
     return md;
 }
 
@@ -184,23 +190,23 @@ get_compressed_content_stat(const char *filename, cr_ChecksumType checksum_type)
 
 
 int
-cr_fill_repomdrecord(const char *base_path, cr_RepomdRecord md,
-                     cr_ChecksumType *checksum_type)
+cr_fill_repomdrecord(cr_RepomdRecord md, cr_ChecksumType *checksum_type)
 {
-    if (!md || !(md->location_href) || !strlen(md->location_href)) {
+    const char *checksum_str = DEFAULT_CHECKSUM;
+    cr_ChecksumType checksum_t = DEFAULT_CHECKSUM_ENUM_VAL;
+    gchar *path;
+
+    if (!md || !(md->location_real) || !strlen(md->location_real)) {
         // Nothing to do
         return REPOMD_ERR;
     }
 
-    const char *checksum_str = DEFAULT_CHECKSUM;
-    cr_ChecksumType checksum_t = DEFAULT_CHECKSUM_ENUM_VAL;
+    path = md->location_real;
 
     if (checksum_type) {
         checksum_str = cr_checksum_name_str(*checksum_type);
         checksum_t = *checksum_type;
     }
-
-    gchar *path = g_strconcat(base_path, "/", md->location_href, NULL);
 
     if (!g_file_test(path, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR)) {
         // File doesn't exists
@@ -271,20 +277,30 @@ cr_fill_repomdrecord(const char *base_path, cr_RepomdRecord md,
         md->db_ver = DEFAULT_DATABASE_VERSION;
     }
 
-    g_free(path);
-
     return REPOMD_OK;
 }
 
 
 void
-cr_process_groupfile_repomdrecord(const char *base_path,
-                                  cr_RepomdRecord groupfile,
+cr_process_groupfile_repomdrecord(cr_RepomdRecord groupfile,
                                   cr_RepomdRecord cgroupfile,
                                   cr_ChecksumType *checksum_type,
                                   cr_CompressionType groupfile_compression)
 {
-    if (!groupfile || !(groupfile->location_href) || !strlen(groupfile->location_href) || !cgroupfile) {
+    const char *suffix;
+    gchar *path, *cpath;
+    gchar *clocation_real, *clocation_href;
+    gchar *checksum, *cchecksum;
+    int readed;
+    char buf[BUFFER_SIZE];
+    CR_FILE *cw_plain;
+    CR_FILE *cw_compressed;
+    long gf_size = -1, cgf_size = -1;
+    long gf_time = -1, cgf_time = -1;
+    struct stat gf_stat, cgf_stat;
+
+    if (!groupfile || !(groupfile->location_real)
+        || !strlen(groupfile->location_real) || !cgroupfile) {
         return;
     }
 
@@ -302,33 +318,30 @@ cr_process_groupfile_repomdrecord(const char *base_path,
 
     // Paths
 
-    const char *suffix = cr_compression_suffix(groupfile_compression);
+    suffix = cr_compression_suffix(groupfile_compression);
 
-    gchar *clocation_href = g_strconcat(groupfile->location_href, suffix, NULL);
+    clocation_real = g_strconcat(groupfile->location_real, suffix, NULL);
+    clocation_href = g_strconcat(groupfile->location_href, suffix, NULL);
+    cgroupfile->location_real = g_string_chunk_insert(cgroupfile->chunk,
+                                                      clocation_real);
     cgroupfile->location_href = g_string_chunk_insert(cgroupfile->chunk,
                                                       clocation_href);
+    g_free(clocation_real);
     g_free(clocation_href);
 
-    gchar *path = g_strconcat(base_path, "/", groupfile->location_href, NULL);
-    gchar *cpath = g_strconcat(base_path, "/", cgroupfile->location_href, NULL);
+    path  = groupfile->location_real;
+    cpath = cgroupfile->location_real;
 
     if (!g_file_test(path, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR)) {
         // File doesn't exists
         g_warning(MODULE"%s: File %s doesn't exists", __func__, path);
-        g_free(path);
-        g_free(cpath);
         return;
     }
 
 
     // Compress file + get size of non compressed file
 
-    int readed;
-    char buf[BUFFER_SIZE];
-    CR_FILE *cw_plain;
-    CR_FILE *cw_compressed;
-
-    cw_plain = cr_open(path, CR_CW_MODE_READ, CR_CW_NO_COMPRESSION);
+    cw_plain      = cr_open(path, CR_CW_MODE_READ, CR_CW_NO_COMPRESSION);
     cw_compressed = cr_open(cpath, CR_CW_MODE_WRITE, groupfile_compression);
 
     while ((readed = cr_read(cw_plain, buf, BUFFER_SIZE)) > 0) {
@@ -348,17 +361,11 @@ cr_process_groupfile_repomdrecord(const char *base_path,
 
     // Compute checksums
 
-    gchar *checksum;
-    gchar *cchecksum;
-    checksum = cr_compute_file_checksum(path, checksum_t);
+    checksum  = cr_compute_file_checksum(path, checksum_t);
     cchecksum = cr_compute_file_checksum(cpath, checksum_t);
 
 
     // Get stats
-
-    long gf_size = -1, cgf_size = -1;
-    long gf_time = -1, cgf_time = -1;
-    struct stat gf_stat, cgf_stat;
 
     if (stat(path, &gf_stat)) {
         g_debug(MODULE"%s: Error while stat() on %s", __func__, path);
@@ -395,8 +402,6 @@ cr_process_groupfile_repomdrecord(const char *base_path,
 
     g_free(checksum);
     g_free(cchecksum);
-    g_free(path);
-    g_free(cpath);
 }
 
 
@@ -525,25 +530,25 @@ repomd_xml_dump(cr_Repomd repomd)
 
 
 void
-cr_rename_repomdrecord_file(const char *base_path, cr_RepomdRecord md)
+cr_rename_repomdrecord_file(cr_RepomdRecord md)
 {
-    if (!md || !(md->location_href) || !strlen(md->location_href)) {
+    int x, len;
+    gchar *location_prefix = NULL;
+    const gchar *location_filename = NULL;
+    gchar *new_location_href;
+    gchar *new_location_real;
+
+    if (!md || !(md->location_real) || !strlen(md->location_real))
         return;
-    }
 
-    if (!md->checksum) {
+    if (!md->checksum)
         return;
-    }
 
-    gchar *path = g_strconcat(base_path, "/", md->location_href, NULL);
-    gchar *location_href_path_prefix = NULL;
-    const gchar *location_href_filename_only = NULL;
-
-    int x = strlen(md->location_href);
+    x = strlen(md->location_real);
     for (; x > 0; x--) {
-        if (md->location_href[x] == '/') {
-            location_href_path_prefix = g_strndup(md->location_href, x+1);
-            location_href_filename_only = cr_get_filename(md->location_href+x+1);
+        if (md->location_real[x] == '/') {
+            location_prefix = g_strndup(md->location_real, x+1);
+            location_filename = cr_get_filename(md->location_real+x+1);
             break;
         }
     }
@@ -551,62 +556,67 @@ cr_rename_repomdrecord_file(const char *base_path, cr_RepomdRecord md)
     // Check if the rename is necessary
     // During update with --keep-all-metadata some files (groupfile,
     // updateinfo, ..) could already have checksum in filenames
-    if (g_str_has_prefix(location_href_filename_only, md->checksum)) {
+    if (g_str_has_prefix(location_filename, md->checksum)) {
         // The filename constains checksum and it is current
-        g_free(location_href_path_prefix);
-        g_free(path);
+        g_free(location_prefix);
         return;
     }
 
     // Skip existing obsolete checksum in the name if there is any
-    int len = strlen(location_href_filename_only);
+    len = strlen(location_filename);
     if (len > 32) {
         // The filename is long -> it could contains a checksum
         for (x = 0; x < len; x++) {
-            if (location_href_filename_only[x] == '-' && (
+            if (location_filename[x] == '-' && (
                    x == 32  // Prefix is MD5 checksum
                 || x == 40  // Prefix is SHA1 checksum
                 || x == 64  // Prefix is SHA256 checksum
                 || x == 128 // Prefix is SHA512 checksum
                ))
             {
-                location_href_filename_only = location_href_filename_only + x + 1;
+                location_filename = location_filename + x + 1;
                 break;
             }
         }
     }
 
-    // Prepare new name and path
-    gchar *new_location_href = g_strconcat(location_href_path_prefix,
-                                           md->checksum,
-                                           "-",
-                                           location_href_filename_only,
-                                           NULL);
-    gchar *new_path = g_strconcat(base_path, "/", new_location_href, NULL);
+    // Prepare new name
+    new_location_real = g_strconcat(location_prefix,
+                                    md->checksum,
+                                    "-",
+                                    location_filename,
+                                    NULL);
+    g_free(location_prefix);
 
-    g_free(location_href_path_prefix);
-
-    if (g_file_test (new_path, G_FILE_TEST_EXISTS)) {
-        if (remove(new_path)) {
-            g_critical(MODULE"%s: Cannot delete old %s", __func__, new_path);
-            g_free(path);
-            g_free(new_location_href);
-            g_free(new_path);
+    // Rename file
+    if (g_file_test (new_location_real, G_FILE_TEST_EXISTS)) {
+        if (remove(new_location_real)) {
+            g_critical(MODULE"%s: Cannot delete old %s",
+                       __func__,
+                       new_location_real);
+            g_free(new_location_real);
             return;
         }
     }
-    if (rename(path, new_path)) {
-        g_critical(MODULE"%s: Cannot rename %s to %s", __func__, path, new_path);
-        g_free(path);
-        g_free(new_location_href);
-        g_free(new_path);
+    if (rename(md->location_real, new_location_real)) {
+        g_critical(MODULE"%s: Cannot rename %s to %s",
+                   __func__,
+                   md->location_real,
+                   new_location_real);
+        g_free(new_location_real);
         return;
     }
 
+    // Update locations in repomd record
+    md->location_real = g_string_chunk_insert(md->chunk, new_location_real);
+    new_location_href = g_strconcat(LOCATION_HREF_PREFIX,
+                                    md->checksum,
+                                    "-",
+                                    location_filename,
+                                    NULL);
     md->location_href = g_string_chunk_insert(md->chunk, new_location_href);
 
-    g_free(path);
-    g_free(new_path);
+    g_free(new_location_real);
     g_free(new_location_href);
 }
 

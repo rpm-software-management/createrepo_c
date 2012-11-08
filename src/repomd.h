@@ -44,7 +44,8 @@ typedef struct _cr_Repomd * cr_Repomd;
  * Internal representation of cr_RepomdRecord object
  */
 struct _cr_RepomdRecord {
-    const char *location_href;  /*!< location of the file */
+    char *location_real;        /*!< real path to the file */
+    char *location_href;        /*!< location of the file (in repomd.xml) */
     char *checksum;             /*!< checksum of file */
     char *checksum_type;        /*!< checksum type */
     char *checksum_open;        /*!< checksum of uncompressed file */
@@ -111,12 +112,10 @@ void cr_free_repomdrecord(cr_RepomdRecord record);
  * Fill unfilled items in the cr_RepomdRecord (calculate checksums,
  * get file size before/after compression, etc.).
  * Note: For groupfile you shoud use cr_process_groupfile_repomdrecord function.
- * @param base_path             path to repo (to directory with repodata subdir)
  * @param record                cr_RepomdRecord object
  * @param checksum_type         type of checksum to use
  */
-int cr_fill_repomdrecord(const char *base_path,
-                         cr_RepomdRecord record,
+int cr_fill_repomdrecord(cr_RepomdRecord record,
                          cr_ChecksumType *checksum_type);
 
 /** \ingroup repomd
@@ -124,26 +123,22 @@ int cr_fill_repomdrecord(const char *base_path,
  * Groupfile must be set with the path to existing non compressed groupfile.
  * Compressed group file will be created and compressed_groupfile record
  * updated.
- * @param base_path             path to repo (to directory with repodata subdir)
  * @param groupfile             cr_RepomdRecord initialized to an existing
  *                              groupfile
  * @param compressed_groupfile  empty cr_RepomdRecord object that will by filled
  * @param checksum_type         type of checksums
  * @param compression           type of compression
  */
-void cr_process_groupfile_repomdrecord(const char *base_path,
-                                       cr_RepomdRecord groupfile,
+void cr_process_groupfile_repomdrecord(cr_RepomdRecord groupfile,
                                        cr_RepomdRecord compressed_groupfile,
                                        cr_ChecksumType *checksum_type,
                                        cr_CompressionType compression);
 
 /** \ingroup repomd
  * Add a hash as prefix to the filename.
- * @param base_path             path to repo (to directory with repodata/
- *                              subdir)
  * @param record                cr_RepomdRecord of file to be renamed
  */
-void cr_rename_repomdrecord_file(const char *base_path, cr_RepomdRecord record);
+void cr_rename_repomdrecord_file(cr_RepomdRecord record);
 
 /** \ingroup repomd
  * Create new empty cr_Repomd object wich represents content of repomd.xml.

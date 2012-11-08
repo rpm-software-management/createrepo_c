@@ -990,15 +990,163 @@ main(int argc, char **argv)
     g_mutex_free(user_data.mutex_oth);
 
 
-    // Close db
+    // Create repomd records for each file
 
-    cr_destroy_primary_db_statements(user_data.pri_statements);
-    cr_destroy_filelists_db_statements(user_data.fil_statements);
-    cr_destroy_other_db_statements(user_data.oth_statements);
+    g_debug("Generating repomd.xml");
 
-    cr_close_primary_db(pri_db, NULL);
-    cr_close_filelists_db(fil_db, NULL);
-    cr_close_other_db(oth_db, NULL);
+    cr_Repomd repomd_obj = cr_new_repomd();
+
+    cr_RepomdRecord pri_xml_rec = cr_new_repomdrecord(pri_xml_filename);
+    cr_RepomdRecord fil_xml_rec = cr_new_repomdrecord(fil_xml_filename);
+    cr_RepomdRecord oth_xml_rec = cr_new_repomdrecord(oth_xml_filename);
+    cr_RepomdRecord pri_db_rec               = NULL;
+    cr_RepomdRecord fil_db_rec               = NULL;
+    cr_RepomdRecord oth_db_rec               = NULL;
+    cr_RepomdRecord groupfile_rec            = NULL;
+    cr_RepomdRecord compressed_groupfile_rec = NULL;
+    cr_RepomdRecord updateinfo_rec           = NULL;
+
+
+    // XML
+
+    cr_fill_repomdrecord(pri_xml_rec, &(cmd_options->checksum_type));
+    cr_fill_repomdrecord(fil_xml_rec, &(cmd_options->checksum_type));
+    cr_fill_repomdrecord(oth_xml_rec, &(cmd_options->checksum_type));
+
+
+    // Groupfile
+
+    if (groupfile) {
+        groupfile_rec = cr_new_repomdrecord(groupfile);
+        compressed_groupfile_rec = cr_new_repomdrecord(groupfile);
+        cr_process_groupfile_repomdrecord(groupfile_rec,
+                                          compressed_groupfile_rec,
+                                          &(cmd_options->checksum_type),
+                                          groupfile_compression);
+    }
+
+
+    // Updateinfo
+
+    if (updateinfo) {
+        updateinfo_rec = cr_new_repomdrecord(updateinfo);
+        cr_fill_repomdrecord(updateinfo_rec, &(cmd_options->checksum_type));
+    }
+
+
+    // Sqlite db
+
+    if (!cmd_options->no_database) {
+
+        gchar *pri_db_name = g_strconcat(pri_db_filename,
+                                         sqlite_compression_suffix, NULL);
+        gchar *fil_db_name = g_strconcat(fil_db_filename,
+                                         sqlite_compression_suffix, NULL);
+        gchar *oth_db_name = g_strconcat(oth_db_filename,
+                                         sqlite_compression_suffix, NULL);
+
+        cr_dbinfo_update(pri_db, pri_xml_rec->checksum, NULL);
+        cr_dbinfo_update(fil_db, fil_xml_rec->checksum, NULL);
+        cr_dbinfo_update(oth_db, oth_xml_rec->checksum, NULL);
+
+        cr_close_primary_db(pri_db, NULL);
+        cr_close_filelists_db(fil_db, NULL);
+        cr_close_other_db(oth_db, NULL);
+
+
+        // Compress dbs
+
+        cr_compress_file(pri_db_filename, NULL, sqlite_compression);
+        cr_compress_file(fil_db_filename, NULL, sqlite_compression);
+        cr_compress_file(oth_db_filename, NULL, sqlite_compression);
+
+        remove(pri_db_filename);
+        remove(fil_db_filename);
+        remove(oth_db_filename);
+
+
+        // Prepare repomd records
+
+        pri_db_rec = cr_new_repomdrecord(pri_db_name);
+        fil_db_rec = cr_new_repomdrecord(fil_db_name);
+        oth_db_rec = cr_new_repomdrecord(oth_db_name);
+
+        cr_fill_repomdrecord(pri_db_rec, &(cmd_options->checksum_type));
+        cr_fill_repomdrecord(fil_db_rec, &(cmd_options->checksum_type));
+        cr_fill_repomdrecord(oth_db_rec, &(cmd_options->checksum_type));
+
+        g_free(pri_db_name);
+        g_free(fil_db_name);
+        g_free(oth_db_name);
+    }
+
+
+    // Add checksums into files names
+
+    if (cmd_options->unique_md_filenames) {
+        cr_rename_repomdrecord_file(pri_xml_rec);
+        cr_rename_repomdrecord_file(fil_xml_rec);
+        cr_rename_repomdrecord_file(oth_xml_rec);
+        cr_rename_repomdrecord_file(pri_db_rec);
+        cr_rename_repomdrecord_file(fil_db_rec);
+        cr_rename_repomdrecord_file(oth_db_rec);
+        cr_rename_repomdrecord_file(groupfile_rec);
+        cr_rename_repomdrecord_file(compressed_groupfile_rec);
+        cr_rename_repomdrecord_file(updateinfo_rec);
+    }
+
+
+    // Gen xml
+
+    cr_repomd_set_record(repomd_obj, pri_xml_rec,    CR_MD_PRIMARY_XML);
+    cr_repomd_set_record(repomd_obj, fil_xml_rec,    CR_MD_FILELISTS_XML);
+    cr_repomd_set_record(repomd_obj, oth_xml_rec,    CR_MD_OTHER_XML);
+    cr_repomd_set_record(repomd_obj, pri_db_rec,     CR_MD_PRIMARY_SQLITE);
+    cr_repomd_set_record(repomd_obj, fil_db_rec,     CR_MD_FILELISTS_SQLITE);
+    cr_repomd_set_record(repomd_obj, oth_db_rec,     CR_MD_OTHER_SQLITE);
+    cr_repomd_set_record(repomd_obj, groupfile_rec,  CR_MD_GROUPFILE);
+    cr_repomd_set_record(repomd_obj, compressed_groupfile_rec,
+                         CR_MD_COMPRESSED_GROUPFILE);
+    cr_repomd_set_record(repomd_obj, updateinfo_rec, CR_MD_UPDATEINFO);
+
+    int i = 0;
+    while (cmd_options->repo_tags && cmd_options->repo_tags[i])
+        cr_repomd_add_repo_tag(repomd_obj, cmd_options->repo_tags[i++]);
+
+    i = 0;
+    while (cmd_options->content_tags && cmd_options->content_tags[i])
+        cr_repomd_add_content_tag(repomd_obj, cmd_options->content_tags[i++]);
+
+    if (cmd_options->distro_cpeids && cmd_options->distro_values) {
+        GSList *cpeid = cmd_options->distro_cpeids;
+        GSList *val   = cmd_options->distro_values;
+        while (cpeid && val) {
+            cr_repomd_add_distro_tag(repomd_obj, cpeid->data, val->data);
+            cpeid = g_slist_next(cpeid);
+            val   = g_slist_next(val);
+        }
+    }
+
+    if (cmd_options->revision)
+        cr_repomd_set_revision(repomd_obj, cmd_options->revision);
+
+    char *repomd_xml = cr_generate_repomd_xml(repomd_obj);
+
+    cr_free_repomd(repomd_obj);
+
+
+    // Write repomd.xml
+
+    gchar *repomd_path = g_strconcat(tmp_out_repo, "repomd.xml", NULL);
+    FILE *frepomd = fopen(repomd_path, "w");
+    if (!frepomd || !repomd_xml) {
+        g_critical("Generate of repomd.xml failed");
+        return 1;
+    }
+    fputs(repomd_xml, frepomd);
+    fclose(frepomd);
+    g_free(repomd_xml);
+    g_free(repomd_path);
 
 
     // Move files from out_repo into tmp_out_repo
@@ -1051,195 +1199,6 @@ main(int argc, char **argv)
     } else {
         g_debug("Renamed %s -> %s", tmp_out_repo, out_repo);
     }
-
-
-    // Create repomd records for each file
-
-    g_debug("Generating repomd.xml");
-
-    cr_Repomd repomd_obj = cr_new_repomd();
-
-    cr_RepomdRecord pri_xml_rec = cr_new_repomdrecord("repodata/primary.xml.gz");
-    cr_RepomdRecord fil_xml_rec = cr_new_repomdrecord("repodata/filelists.xml.gz");
-    cr_RepomdRecord oth_xml_rec = cr_new_repomdrecord("repodata/other.xml.gz");
-    cr_RepomdRecord pri_db_rec               = NULL;
-    cr_RepomdRecord fil_db_rec               = NULL;
-    cr_RepomdRecord oth_db_rec               = NULL;
-    cr_RepomdRecord groupfile_rec            = NULL;
-    cr_RepomdRecord compressed_groupfile_rec = NULL;
-    cr_RepomdRecord updateinfo_rec           = NULL;
-
-
-    // XML
-
-    cr_fill_repomdrecord(out_dir, pri_xml_rec, &(cmd_options->checksum_type));
-    cr_fill_repomdrecord(out_dir, fil_xml_rec, &(cmd_options->checksum_type));
-    cr_fill_repomdrecord(out_dir, oth_xml_rec, &(cmd_options->checksum_type));
-
-
-    // Groupfile
-
-    if (groupfile) {
-        gchar *groupfile_name;
-        groupfile_name = g_strconcat("repodata/",
-                                     cr_get_filename(groupfile),
-                                     NULL);
-        groupfile_rec = cr_new_repomdrecord(groupfile_name);
-        compressed_groupfile_rec = cr_new_repomdrecord(groupfile_name);
-        cr_process_groupfile_repomdrecord(out_dir,
-                                          groupfile_rec,
-                                          compressed_groupfile_rec,
-                                          &(cmd_options->checksum_type),
-                                          groupfile_compression);
-        g_free(groupfile_name);
-    }
-
-
-    // Updateinfo
-
-    if (updateinfo) {
-        gchar *updateinfo_name;
-        updateinfo_name = g_strconcat("repodata/",
-                                      cr_get_filename(updateinfo),
-                                      NULL);
-        updateinfo_rec = cr_new_repomdrecord(updateinfo_name);
-        cr_fill_repomdrecord(out_dir, updateinfo_rec, &(cmd_options->checksum_type));
-        g_free(updateinfo_name);
-    }
-
-
-    // Sqlite db
-
-    if (!cmd_options->no_database) {
-        gchar *pri_db_name = g_strconcat("repodata/primary.sqlite",
-                                         sqlite_compression_suffix, NULL);
-        gchar *fil_db_name = g_strconcat("repodata/filelists.sqlite",
-                                         sqlite_compression_suffix, NULL);
-        gchar *oth_db_name = g_strconcat("repodata/other.sqlite",
-                                         sqlite_compression_suffix, NULL);
-
-        gchar *tmp_pri_db_path;
-        gchar *tmp_fil_db_path;
-        gchar *tmp_oth_db_path;
-
-
-        // Open dbs again (but from the new (final) location)
-        // and insert XML checksums
-
-        tmp_pri_db_path = g_strconcat(out_dir, "repodata/primary.sqlite", NULL);
-        tmp_fil_db_path = g_strconcat(out_dir, "repodata/filelists.sqlite", NULL);
-        tmp_oth_db_path = g_strconcat(out_dir, "repodata/other.sqlite", NULL);
-
-        sqlite3_open(tmp_pri_db_path, &pri_db);
-        sqlite3_open(tmp_fil_db_path, &fil_db);
-        sqlite3_open(tmp_oth_db_path, &oth_db);
-
-        cr_dbinfo_update(pri_db, pri_xml_rec->checksum, NULL);
-        cr_dbinfo_update(fil_db, fil_xml_rec->checksum, NULL);
-        cr_dbinfo_update(oth_db, oth_xml_rec->checksum, NULL);
-
-        sqlite3_close(pri_db);
-        sqlite3_close(fil_db);
-        sqlite3_close(oth_db);
-
-
-        // Compress dbs
-
-        cr_compress_file(tmp_pri_db_path, NULL, sqlite_compression);
-        cr_compress_file(tmp_fil_db_path, NULL, sqlite_compression);
-        cr_compress_file(tmp_oth_db_path, NULL, sqlite_compression);
-
-        remove(tmp_pri_db_path);
-        remove(tmp_fil_db_path);
-        remove(tmp_oth_db_path);
-
-        g_free(tmp_pri_db_path);
-        g_free(tmp_fil_db_path);
-        g_free(tmp_oth_db_path);
-
-
-        // Prepare repomd records
-
-        pri_db_rec = cr_new_repomdrecord(pri_db_name);
-        fil_db_rec = cr_new_repomdrecord(fil_db_name);
-        oth_db_rec = cr_new_repomdrecord(oth_db_name);
-
-        cr_fill_repomdrecord(out_dir, pri_db_rec, &(cmd_options->checksum_type));
-        cr_fill_repomdrecord(out_dir, fil_db_rec, &(cmd_options->checksum_type));
-        cr_fill_repomdrecord(out_dir, oth_db_rec, &(cmd_options->checksum_type));
-
-        g_free(pri_db_name);
-        g_free(fil_db_name);
-        g_free(oth_db_name);
-    }
-
-
-    // Add checksums into files names
-
-    if (cmd_options->unique_md_filenames) {
-        cr_rename_repomdrecord_file(out_dir, pri_xml_rec);
-        cr_rename_repomdrecord_file(out_dir, fil_xml_rec);
-        cr_rename_repomdrecord_file(out_dir, oth_xml_rec);
-        cr_rename_repomdrecord_file(out_dir, pri_db_rec);
-        cr_rename_repomdrecord_file(out_dir, fil_db_rec);
-        cr_rename_repomdrecord_file(out_dir, oth_db_rec);
-        cr_rename_repomdrecord_file(out_dir, groupfile_rec);
-        cr_rename_repomdrecord_file(out_dir, compressed_groupfile_rec);
-        cr_rename_repomdrecord_file(out_dir, updateinfo_rec);
-    }
-
-
-
-    // Gen xml
-
-    cr_repomd_set_record(repomd_obj, pri_xml_rec,    CR_MD_PRIMARY_XML);
-    cr_repomd_set_record(repomd_obj, fil_xml_rec,    CR_MD_FILELISTS_XML);
-    cr_repomd_set_record(repomd_obj, oth_xml_rec,    CR_MD_OTHER_XML);
-    cr_repomd_set_record(repomd_obj, pri_db_rec,     CR_MD_PRIMARY_SQLITE);
-    cr_repomd_set_record(repomd_obj, fil_db_rec,     CR_MD_FILELISTS_SQLITE);
-    cr_repomd_set_record(repomd_obj, oth_db_rec,     CR_MD_OTHER_SQLITE);
-    cr_repomd_set_record(repomd_obj, groupfile_rec,  CR_MD_GROUPFILE);
-    cr_repomd_set_record(repomd_obj, compressed_groupfile_rec,
-                         CR_MD_COMPRESSED_GROUPFILE);
-    cr_repomd_set_record(repomd_obj, updateinfo_rec, CR_MD_UPDATEINFO);
-
-    int i = 0;
-    while (cmd_options->repo_tags && cmd_options->repo_tags[i])
-        cr_repomd_add_repo_tag(repomd_obj, cmd_options->repo_tags[i++]);
-
-    i = 0;
-    while (cmd_options->content_tags && cmd_options->content_tags[i])
-        cr_repomd_add_content_tag(repomd_obj, cmd_options->content_tags[i++]);
-
-    if (cmd_options->distro_cpeids && cmd_options->distro_values) {
-        GSList *cpeid = cmd_options->distro_cpeids;
-        GSList *val   = cmd_options->distro_values;
-        while (cpeid && val) {
-            cr_repomd_add_distro_tag(repomd_obj, cpeid->data, val->data);
-            cpeid = g_slist_next(cpeid);
-            val   = g_slist_next(val);
-        }
-    }
-
-    if (cmd_options->revision)
-        cr_repomd_set_revision(repomd_obj, cmd_options->revision);
-
-    char *repomd_xml = cr_generate_repomd_xml(repomd_obj);
-
-    cr_free_repomd(repomd_obj);
-
-    // Write repomd.xml
-
-    gchar *repomd_path = g_strconcat(out_repo, "repomd.xml", NULL);
-    FILE *frepomd = fopen(repomd_path, "w");
-    if (!frepomd || !repomd_xml) {
-        g_critical("Generate of repomd.xml failed");
-        return 1;
-    }
-    fputs(repomd_xml, frepomd);
-    fclose(frepomd);
-    g_free(repomd_xml);
-    g_free(repomd_path);
 
 
     // Clean up

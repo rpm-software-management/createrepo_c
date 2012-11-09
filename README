@@ -51,7 +51,8 @@ createrepo_c results:
 
 original createrepo result:
 - Some packages in metadata (which was same in our repo and in somebody
-  else's repo) have base path set to http://foo.com/i
+  else's repo) have base path set to http://foo.com/
+- (https://bugzilla.redhat.com/show_bug.cgi?id=875029)
 
 -----------------------------------------------
 

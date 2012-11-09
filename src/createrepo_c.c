@@ -1049,6 +1049,10 @@ main(int argc, char **argv)
         cr_dbinfo_update(fil_db, fil_xml_rec->checksum, NULL);
         cr_dbinfo_update(oth_db, oth_xml_rec->checksum, NULL);
 
+        cr_destroy_primary_db_statements(pri_statements);
+        cr_destroy_filelists_db_statements(fil_statements);
+        cr_destroy_other_db_statements(oth_statements);
+
         cr_close_primary_db(pri_db, NULL);
         cr_close_filelists_db(fil_db, NULL);
         cr_close_other_db(oth_db, NULL);

@@ -180,19 +180,16 @@ static GOptionEntry cmd_entries[] =
     { "noarch-repo", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.noarch_repo_url),
       "Packages with noarch architecture will be replaced by package from this "
       "repo if exists in it.", "URL" },
-    { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
-};
-
-
-static GOptionEntry cmd_koji_entries[] =
-{
+    // -- Options related to Koji-mergerepos behaviour
     { "koji", 'k', 0, G_OPTION_ARG_NONE, &(_cmd_options.koji),
        "Enable koji mergerepos behaviour.", NULL},
     { "groupfile", 'g', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.groupfile),
       "Path to groupfile to include in metadata.", "GROUPFILE" },
     { "blocked", 'b', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.blocked),
-      "A file containing a list of srpm names to exclude from the merged repo.",
+      "A file containing a list of srpm names to exclude from the merged repo. "
+      "Only works with combination with --koji/-k.",
       "FILE" },
+    // -- Options related to Koji-mergerepos behaviour - end
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
 };
 
@@ -357,19 +354,10 @@ parse_arguments(int *argc, char ***argv)
 {
     GError *error = NULL;
     GOptionContext *context;
-    GOptionGroup *koji_group;
 
     context = g_option_context_new(": take 2 or more repositories and merge "
                                    "their metadata into a new repo");
     g_option_context_add_main_entries(context, cmd_entries, NULL);
-
-    koji_group = g_option_group_new("koji",
-                                    "Koji mergerepos options",
-                                    "Koji mergerepos options",
-                                    NULL,
-                                    NULL);
-    g_option_group_add_entries(koji_group, cmd_koji_entries);
-    g_option_context_add_group(context, koji_group);
 
     gboolean ret = g_option_context_parse(context, argc, argv, &error);
     g_option_context_free(context);
@@ -1445,10 +1433,11 @@ main(int argc, char **argv)
     }
 
 
-    // Get first groupfile
+    // Groupfile
     // XXX: There must be a better logic
 
-    if (!cmd_options->koji) {
+    if (!cmd_options->groupfile) {
+        // Use first groupfile you find
         for (element = local_repos; element; element = g_slist_next(element)) {
             struct cr_MetadataLocation *loc;
             loc = (struct cr_MetadataLocation  *) element->data;
@@ -1457,12 +1446,21 @@ main(int argc, char **argv)
                     groupfile = g_strconcat(cmd_options->tmp_out_repo,
                                             cr_get_filename(loc->groupfile_href),
                                             NULL);
+                    g_debug("Using groupfile: %s", groupfile);
                     break;
                 }
             }
         }
+    } else {
+        // Use groupfile specified by user
+        if (cr_copy_file(cmd_options->groupfile, cmd_options->tmp_out_repo) == CR_COPY_OK) {
+            groupfile = g_strconcat(cmd_options->tmp_out_repo,
+                                    cr_get_filename(cmd_options->groupfile),
+                                    NULL);
+            g_debug("Using user specified groupfile: %s", groupfile);
+        } else
+            g_warning("Cannot copy groupfile %s", cmd_options->groupfile);
     }
-
 
     // Load noarch repo
 

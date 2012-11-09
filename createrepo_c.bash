@@ -56,13 +56,14 @@ _cr_createrepo()
     esac
 
     if [[ $2 == -* ]] ; then
-        COMPREPLY=( $( compgen -W '--version --help --quiet --verbose
-            --excludes --baseurl --groupfile --checksum
-            --no-database --update --update-md-path --database
+        COMPREPLY=( $( compgen -W '--help --version --quiet --verbose
+            --excludes --basedir --baseurl --groupfile --checksum
+            --pretty --database --no-database --update --update-md-path
             --skip-stat --pkglist --includepkg --outputdir
             --skip-symlinks --changelog-limit --unique-md-filenames
-            --simple-md-filenames --workers --xz --compress-type
-            --keep-all-metadata' -- "$2" ) )
+            --simple-md-filenames --retain-old-md --distro --content --repo
+            --revision --read-pkgs-list --update --workers --xz
+            --compress-type --keep-all-metadata' -- "$2" ) )
     else
         COMPREPLY=( $( compgen -d -- "$2" ) )
     fi
@@ -75,6 +76,10 @@ _cr_mergerepo()
 
     case $3 in
         --version|-h|--help|-a|--archlist)
+            return 0
+            ;;
+        -g|--groupfile|--blocked)
+            COMPREPLY=( $( compgen -f -o plusdirs -- "$2" ) )
             return 0
             ;;
         -r|--repo|-o|--outputdir|--noarch-repo)
@@ -91,9 +96,10 @@ _cr_mergerepo()
             ;;
     esac
 
-    COMPREPLY=( $( compgen -W '--version --help --repo --archlist --no-database
-        --outputdir --nogroups --noupdateinfo --compress-type --verbose --method
-        --all --noarch-repo --database' -- "$2" ) )
+    COMPREPLY=( $( compgen -W '--version --help --repo --archlist --database
+        --no-database --verbose --outputdir --nogroups --noupdateinfo
+        --compress-type --method --all --noarch-repo --koji --groupfile
+        --blocked' -- "$2" ) )
 } &&
 complete -F _cr_mergerepo -o filenames mergerepo_c
 

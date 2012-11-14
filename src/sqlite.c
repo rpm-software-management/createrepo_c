@@ -921,9 +921,17 @@ write_file (gpointer key, gpointer value, gpointer user_data)
     EncodedPackageFile *file = (EncodedPackageFile *) value;
     FileWriteInfo *info = (FileWriteInfo *) user_data;
     int rc;
+    size_t key_len;
+
+    key_len = strlen((const char *) key);
+    while (key_len > 1 && ((char *) key)[key_len-1] == '/') {
+        // Remove trailing '/' char(s)
+        // If there are only '/' symbols leave only the first one
+        key_len--;
+    }
 
     sqlite3_bind_int  (info->handle, 1, info->pkgKey);
-    sqlite3_bind_text (info->handle, 2, (const char *) key, -1, SQLITE_STATIC);
+    sqlite3_bind_text (info->handle, 2, (const char *) key, (int) key_len, SQLITE_STATIC);
     sqlite3_bind_text (info->handle, 3, file->files->str, -1, SQLITE_STATIC);
     sqlite3_bind_text (info->handle, 4, file->types->str, -1, SQLITE_STATIC);
 

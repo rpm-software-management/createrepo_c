@@ -242,12 +242,12 @@ dumper_thread(gpointer data, gpointer user_data)
                 g_debug("%s metadata are obsolete -> generating new",
                         task->filename);
             }
-        }
 
-        if (old_used) {
-            // We have usable old data, but we have to set proper locations
-            md->location_href = (char *) location_href;
-            md->location_base = (char *) location_base;
+            if (old_used) {
+                // We have usable old data, but we have to set proper locations
+                md->location_href = (char *) location_href;
+                md->location_base = (char *) location_base;
+            }
         }
     }
 

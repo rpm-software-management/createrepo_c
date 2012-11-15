@@ -116,7 +116,7 @@ void cr_free_repomdrecord(cr_RepomdRecord record);
  * @param checksum_type         type of checksum to use
  */
 int cr_fill_repomdrecord(cr_RepomdRecord record,
-                         cr_ChecksumType *checksum_type);
+                         cr_ChecksumType checksum_type);
 
 /** \ingroup repomd
  * Analogue of cr_fill_repomdrecord but for groupfile.
@@ -131,7 +131,7 @@ int cr_fill_repomdrecord(cr_RepomdRecord record,
  */
 void cr_process_groupfile_repomdrecord(cr_RepomdRecord groupfile,
                                        cr_RepomdRecord compressed_groupfile,
-                                       cr_ChecksumType *checksum_type,
+                                       cr_ChecksumType checksum_type,
                                        cr_CompressionType compression);
 
 /** \ingroup repomd

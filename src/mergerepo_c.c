@@ -1136,9 +1136,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     // XML
 
-    cr_fill_repomdrecord(pri_xml_rec, NULL);
-    cr_fill_repomdrecord(fil_xml_rec, NULL);
-    cr_fill_repomdrecord(oth_xml_rec, NULL);
+    cr_fill_repomdrecord(pri_xml_rec, CR_CHECKSUM_SHA256);
+    cr_fill_repomdrecord(fil_xml_rec, CR_CHECKSUM_SHA256);
+    cr_fill_repomdrecord(oth_xml_rec, CR_CHECKSUM_SHA256);
 
 
     // Groupfile
@@ -1148,7 +1148,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         compressed_groupfile_rec = cr_new_repomdrecord(groupfile);
         cr_process_groupfile_repomdrecord(groupfile_rec,
                                           compressed_groupfile_rec,
-                                          NULL,
+                                          CR_CHECKSUM_SHA256,
                                           cmd_options->groupfile_compression_type);
     }
 
@@ -1157,7 +1157,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     if (!cmd_options->noupdateinfo) {
         update_info_rec = cr_new_repomdrecord(update_info_filename);
-        cr_fill_repomdrecord(update_info_rec, NULL);
+        cr_fill_repomdrecord(update_info_rec, CR_CHECKSUM_SHA256);
     }
 
 
@@ -1166,7 +1166,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     if (cmd_options->koji) {
         gchar *pkgorigins_path = g_strconcat(cmd_options->tmp_out_repo, "pkgorigins.gz", NULL);
         pkgorigins_rec = cr_new_repomdrecord(pkgorigins_path);
-        cr_fill_repomdrecord(pkgorigins_rec, NULL);
+        cr_fill_repomdrecord(pkgorigins_rec, CR_CHECKSUM_SHA256);
         g_free(pkgorigins_path);
     }
 
@@ -1220,9 +1220,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         g_free(fil_db_c_filename);
         g_free(oth_db_c_filename);
 
-        cr_fill_repomdrecord(pri_db_rec, NULL);
-        cr_fill_repomdrecord(fil_db_rec, NULL);
-        cr_fill_repomdrecord(oth_db_rec, NULL);
+        cr_fill_repomdrecord(pri_db_rec, CR_CHECKSUM_SHA256);
+        cr_fill_repomdrecord(fil_db_rec, CR_CHECKSUM_SHA256);
+        cr_fill_repomdrecord(oth_db_rec, CR_CHECKSUM_SHA256);
     }
 
 

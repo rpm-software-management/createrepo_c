@@ -35,9 +35,6 @@
 
 #define LOCATION_HREF_PREFIX            "repodata/"
 
-#define DEFAULT_CHECKSUM                "sha256"
-#define DEFAULT_CHECKSUM_ENUM_VAL        CR_CHECKSUM_SHA256
-
 #define DEFAULT_DATABASE_VERSION        10
 
 #define STR_BUFFER_SIZE      32
@@ -190,10 +187,10 @@ get_compressed_content_stat(const char *filename, cr_ChecksumType checksum_type)
 
 
 int
-cr_fill_repomdrecord(cr_RepomdRecord md, cr_ChecksumType *checksum_type)
+cr_fill_repomdrecord(cr_RepomdRecord md, cr_ChecksumType checksum_type)
 {
-    const char *checksum_str = DEFAULT_CHECKSUM;
-    cr_ChecksumType checksum_t = DEFAULT_CHECKSUM_ENUM_VAL;
+    const char *checksum_str;
+    cr_ChecksumType checksum_t;
     gchar *path;
 
     if (!md || !(md->location_real) || !strlen(md->location_real)) {
@@ -203,10 +200,8 @@ cr_fill_repomdrecord(cr_RepomdRecord md, cr_ChecksumType *checksum_type)
 
     path = md->location_real;
 
-    if (checksum_type) {
-        checksum_str = cr_checksum_name_str(*checksum_type);
-        checksum_t = *checksum_type;
-    }
+    checksum_str = cr_checksum_name_str(checksum_type);
+    checksum_t = checksum_type;
 
     if (!g_file_test(path, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR)) {
         // File doesn't exists
@@ -284,7 +279,7 @@ cr_fill_repomdrecord(cr_RepomdRecord md, cr_ChecksumType *checksum_type)
 void
 cr_process_groupfile_repomdrecord(cr_RepomdRecord groupfile,
                                   cr_RepomdRecord cgroupfile,
-                                  cr_ChecksumType *checksum_type,
+                                  cr_ChecksumType checksum_type,
                                   cr_CompressionType groupfile_compression)
 {
     const char *suffix;
@@ -298,6 +293,8 @@ cr_process_groupfile_repomdrecord(cr_RepomdRecord groupfile,
     long gf_size = -1, cgf_size = -1;
     long gf_time = -1, cgf_time = -1;
     struct stat gf_stat, cgf_stat;
+    const char *checksum_str;
+    cr_ChecksumType checksum_t;
 
     if (!groupfile || !(groupfile->location_real)
         || !strlen(groupfile->location_real) || !cgroupfile) {
@@ -307,13 +304,8 @@ cr_process_groupfile_repomdrecord(cr_RepomdRecord groupfile,
 
     // Checksum stuff
 
-    const char *checksum_str = DEFAULT_CHECKSUM;
-    cr_ChecksumType checksum_t = DEFAULT_CHECKSUM_ENUM_VAL;
-
-    if (checksum_type) {
-        checksum_str = cr_checksum_name_str(*checksum_type);
-        checksum_t = *checksum_type;
-    }
+    checksum_str = cr_checksum_name_str(checksum_type);
+    checksum_t = checksum_type;
 
 
     // Paths

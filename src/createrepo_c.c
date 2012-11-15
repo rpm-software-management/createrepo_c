@@ -1009,9 +1009,9 @@ main(int argc, char **argv)
 
     // XML
 
-    cr_fill_repomdrecord(pri_xml_rec, &(cmd_options->checksum_type));
-    cr_fill_repomdrecord(fil_xml_rec, &(cmd_options->checksum_type));
-    cr_fill_repomdrecord(oth_xml_rec, &(cmd_options->checksum_type));
+    cr_fill_repomdrecord(pri_xml_rec, cmd_options->checksum_type);
+    cr_fill_repomdrecord(fil_xml_rec, cmd_options->checksum_type);
+    cr_fill_repomdrecord(oth_xml_rec, cmd_options->checksum_type);
 
 
     // Groupfile
@@ -1021,7 +1021,7 @@ main(int argc, char **argv)
         compressed_groupfile_rec = cr_new_repomdrecord(groupfile);
         cr_process_groupfile_repomdrecord(groupfile_rec,
                                           compressed_groupfile_rec,
-                                          &(cmd_options->checksum_type),
+                                          cmd_options->checksum_type,
                                           groupfile_compression);
     }
 
@@ -1030,7 +1030,7 @@ main(int argc, char **argv)
 
     if (updateinfo) {
         updateinfo_rec = cr_new_repomdrecord(updateinfo);
-        cr_fill_repomdrecord(updateinfo_rec, &(cmd_options->checksum_type));
+        cr_fill_repomdrecord(updateinfo_rec, cmd_options->checksum_type);
     }
 
 
@@ -1075,9 +1075,9 @@ main(int argc, char **argv)
         fil_db_rec = cr_new_repomdrecord(fil_db_name);
         oth_db_rec = cr_new_repomdrecord(oth_db_name);
 
-        cr_fill_repomdrecord(pri_db_rec, &(cmd_options->checksum_type));
-        cr_fill_repomdrecord(fil_db_rec, &(cmd_options->checksum_type));
-        cr_fill_repomdrecord(oth_db_rec, &(cmd_options->checksum_type));
+        cr_fill_repomdrecord(pri_db_rec, cmd_options->checksum_type);
+        cr_fill_repomdrecord(fil_db_rec, cmd_options->checksum_type);
+        cr_fill_repomdrecord(oth_db_rec, cmd_options->checksum_type);
 
         g_free(pri_db_name);
         g_free(fil_db_name);

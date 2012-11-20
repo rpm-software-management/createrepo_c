@@ -635,7 +635,7 @@ remove_listed_files(GSList *list, int retain)
 int
 cr_remove_metadata_classic(const char *repopath, int retain)
 {
-    gchar *full_repopath;
+    gchar *full_repopath, *repomd_path;
     GDir *repodir;
     const gchar *file;
     GSList *pri_lst = NULL, *pri_db_lst = NULL;
@@ -683,9 +683,14 @@ cr_remove_metadata_classic(const char *repopath, int retain)
     }
 
     g_dir_close(repodir);
-    g_free(full_repopath);
 
     // Remove old metadata
+
+    repomd_path = g_strconcat(full_repopath, "repomd.xml", NULL);
+    g_debug(MODULE"%s: Removing: %s", __func__, repomd_path);
+    g_remove(repomd_path);
+    g_free(repomd_path);
+    g_free(full_repopath);
 
     remove_listed_files(pri_lst, retain);
     remove_listed_files(pri_db_lst, retain);

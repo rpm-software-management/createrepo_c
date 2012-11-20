@@ -94,6 +94,7 @@ struct BufferedTask {
     long id;                        // ID of the task
     struct cr_XmlStruct res;        // XML for primary, filelists and other
     cr_Package *pkg;                // Package structure
+    char *location_href;            // location_href path
     int pkg_from_md;                // If true - package structure if from
                                     // old metadata and must not be freed!
                                     // If false - package is from file and
@@ -245,6 +246,8 @@ dumper_thread(gpointer data, gpointer user_data)
 
             if (old_used) {
                 // We have usable old data, but we have to set proper locations
+                // WARNING! This two lines destructively modifies content of
+                // packages in old metadata.
                 md->location_href = (char *) location_href;
                 md->location_base = (char *) location_base;
             }
@@ -279,7 +282,15 @@ dumper_thread(gpointer data, gpointer user_data)
         buf_task->id  = task->id;
         buf_task->res = res;
         buf_task->pkg = pkg;
+        buf_task->location_href = NULL;
         buf_task->pkg_from_md = (pkg == md) ? 1 : 0;
+        // We MUST store location_href for reused packages who goes to the buffer
+        // We don't need to store location_base because it is "alive" in
+        // user data during this function calls.
+        if (pkg == md) {
+            buf_task->location_href = g_strdup(location_href);
+            buf_task->pkg->location_href = buf_task->location_href;
+        }
 
         g_queue_insert_sorted(udata->buffer, buf_task, buf_task_sort_func, NULL);
         g_mutex_unlock(udata->mutex_buffer);
@@ -319,6 +330,7 @@ dumper_thread(gpointer data, gpointer user_data)
             g_free(buf_task->res.primary);
             g_free(buf_task->res.filelists);
             g_free(buf_task->res.other);
+            g_free(buf_task->location_href);
             g_free(buf_task);
         } else {
             g_mutex_unlock(udata->mutex_buffer);

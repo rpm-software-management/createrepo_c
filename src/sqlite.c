@@ -930,6 +930,12 @@ write_file (gpointer key, gpointer value, gpointer user_data)
         key_len--;
     }
 
+    if (key_len == 0) {
+        // Same directory is represented by '.' in database
+        key = ".";
+        key_len = 1;
+    }
+
     sqlite3_bind_int  (info->handle, 1, info->pkgKey);
     sqlite3_bind_text (info->handle, 2, (const char *) key, (int) key_len, SQLITE_STATIC);
     sqlite3_bind_text (info->handle, 3, file->files->str, -1, SQLITE_STATIC);

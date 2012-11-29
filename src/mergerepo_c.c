@@ -1277,6 +1277,10 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     g_debug("Moving data from %s", cmd_options->out_repo);
     if (g_file_test(cmd_options->out_repo, G_FILE_TEST_EXISTS)) {
 
+        // Delete old metadata
+        g_debug("Removing old metadata from %s", cmd_options->out_repo);
+        cr_remove_metadata_classic(cmd_options->out_dir, 0);
+
         // Move files from out_repo to tmp_out_repo
         GDir *dirp;
         dirp = g_dir_open (cmd_options->out_repo, 0, NULL);
@@ -1290,11 +1294,21 @@ dump_merged_metadata(GHashTable *merged_hashtable,
             gchar *full_path = g_strconcat(cmd_options->out_repo, filename, NULL);
             gchar *new_full_path = g_strconcat(cmd_options->tmp_out_repo, filename, NULL);
 
-            if (g_rename(full_path, new_full_path) == -1) {
-                g_critical("Cannot move file %s -> %s", full_path, new_full_path);
-            } else {
-                g_debug("Moved %s -> %s", full_path, new_full_path);
+            // Do not override new file with the old one
+            if (g_file_test(new_full_path, G_FILE_TEST_EXISTS)) {
+                g_debug("Skip move of: %s -> %s (the destination file already exists)",
+                        full_path, new_full_path);
+                g_debug("Removing: %s", full_path);
+                g_remove(full_path);
+                g_free(full_path);
+                g_free(new_full_path);
+                continue;
             }
+
+            if (g_rename(full_path, new_full_path) == -1)
+                g_critical("Cannot move file %s -> %s", full_path, new_full_path);
+            else
+                g_debug("Moved %s -> %s", full_path, new_full_path);
 
             g_free(full_path);
             g_free(new_full_path);

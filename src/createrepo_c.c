@@ -1168,7 +1168,6 @@ main(int argc, char **argv)
     // Move files from out_repo into tmp_out_repo
 
     g_debug("Moving data from %s", out_repo);
-
     if (g_file_test(out_repo, G_FILE_TEST_EXISTS)) {
 
         // Delete old metadata
@@ -1188,11 +1187,21 @@ main(int argc, char **argv)
             gchar *full_path = g_strconcat(out_repo, filename, NULL);
             gchar *new_full_path = g_strconcat(tmp_out_repo, filename, NULL);
 
-            if (g_rename(full_path, new_full_path) == -1) {
-                g_critical("Cannot move file %s -> %s", full_path, new_full_path);
-            } else {
-                g_debug("Moved %s -> %s", full_path, new_full_path);
+            // Do not override new file with the old one
+            if (g_file_test(new_full_path, G_FILE_TEST_EXISTS)) {
+                g_debug("Skip move of: %s -> %s (the destination file already exists)",
+                        full_path, new_full_path);
+                g_debug("Removing: %s", full_path);
+                g_remove(full_path);
+                g_free(full_path);
+                g_free(new_full_path);
+                continue;
             }
+
+            if (g_rename(full_path, new_full_path) == -1)
+                g_critical("Cannot move file %s -> %s", full_path, new_full_path);
+            else
+                g_debug("Moved %s -> %s", full_path, new_full_path);
 
             g_free(full_path);
             g_free(new_full_path);

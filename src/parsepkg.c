@@ -27,6 +27,7 @@
 #include <rpm/rpmfi.h>
 #include <rpm/rpmlib.h>
 #include <rpm/rpmmacro.h>
+#include <rpm/rpmkeyring.h>
 #include "logging.h"
 #include "constants.h"
 #include "parsehdr.h"
@@ -42,32 +43,43 @@ volatile short cr_initialized = 0;
 rpmts ts = NULL;
 
 
-
 void
 cr_package_parser_init()
 {
+    rpmKeyring keyring;
+
     if (cr_initialized)
         return;
     cr_initialized = 1;
     rpmReadConfigFiles(NULL, NULL);
     ts = rpmtsCreate();
-    if (!ts) {
+    if (!ts)
         g_critical(MODULE"%s: rpmtsCreate() failed", __func__);
-    }
 
     rpmVSFlags vsflags = 0;
     vsflags |= _RPMVSF_NODIGESTS;
     vsflags |= _RPMVSF_NOSIGNATURES;
     vsflags |= RPMVSF_NOHDRCHK;
     rpmtsSetVSFlags(ts, vsflags);
-}
 
+    // Set empty keyring
+    // Why? Because RPM is not thread-safe. Not only a little bit.
+    // RPM uses some internal states which makes it thread-*un*safe.
+    // This includes also reading the headers.
+    // Work around for this shoud be use empty keyring.
+    keyring = rpmKeyringNew();
+    if (rpmtsSetKeyring(ts, keyring) == -1)
+        g_critical(MODULE"%s: rpmtsSetKeyring() failed", __func__);
+}
 
 
 void
 cr_package_parser_shutdown()
 {
     if (ts) {
+        rpmKeyring keyring = rpmtsGetKeyring(ts, 0);
+        if (keyring)
+            rpmKeyringFree(keyring);
         rpmtsFree(ts);
     }
 

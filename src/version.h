@@ -30,7 +30,7 @@ extern "C" {
 /**@{*/
 #define CR_MAJOR_VERSION   0    /*!< major library version */
 #define CR_MINOR_VERSION   1    /*!< minor library version */
-#define CR_PATCH_VERSION   14   /*!< patch library version */
+#define CR_PATCH_VERSION   15   /*!< patch library version */
 /**@}*/
 
 #ifdef __cplusplus

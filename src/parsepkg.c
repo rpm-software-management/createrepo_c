@@ -70,18 +70,15 @@ cr_package_parser_init()
     keyring = rpmKeyringNew();
     if (rpmtsSetKeyring(ts, keyring) == -1)
         g_critical(MODULE"%s: rpmtsSetKeyring() failed", __func__);
+    rpmKeyringFree(keyring);
 }
 
 
 void
 cr_package_parser_shutdown()
 {
-    if (ts) {
-        rpmKeyring keyring = rpmtsGetKeyring(ts, 0);
-        if (keyring)
-            rpmKeyringFree(keyring);
+    if (ts)
         rpmtsFree(ts);
-    }
 
     rpmFreeMacros(NULL);
     rpmFreeRpmrc();

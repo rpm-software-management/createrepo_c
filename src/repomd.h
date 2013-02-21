@@ -62,37 +62,12 @@ struct _cr_RepomdRecord {
  * Internal representation of cr_Repomd object
  */
 struct _cr_Repomd {
-    cr_RepomdRecord pri_xml;
-    cr_RepomdRecord fil_xml;
-    cr_RepomdRecord oth_xml;
-    cr_RepomdRecord pri_sql;
-    cr_RepomdRecord fil_sql;
-    cr_RepomdRecord oth_sql;
-    cr_RepomdRecord groupfile;
-    cr_RepomdRecord cgroupfile;
-    cr_RepomdRecord updateinfo;
-    cr_RepomdRecord pkgorigins;
+    GHashTable *records;
     GSList *repo_tags;
     GSList *distro_tags;
     GSList *content_tags;
     gchar *revision;
 };
-
-/** \ingroup repomd
- * Enum of repomd record types
- */
-typedef enum {
-    CR_MD_PRIMARY_XML,
-    CR_MD_FILELISTS_XML,
-    CR_MD_OTHER_XML,
-    CR_MD_PRIMARY_SQLITE,
-    CR_MD_FILELISTS_SQLITE,
-    CR_MD_OTHER_SQLITE,
-    CR_MD_GROUPFILE,
-    CR_MD_COMPRESSED_GROUPFILE,
-    CR_MD_UPDATEINFO,
-    CR_MD_PKGORIGINS
-} cr_RepomdRecordType;
 
 /** \ingroup repomd
  * Creates (alloc) new cr_RepomdRecord object
@@ -149,11 +124,11 @@ cr_Repomd cr_new_repomd();
  * Set cr_Repomd record into cr_Repomd object.
  * @param repomd                cr_Repomd object
  * @param record                cr_RepomdRecord object
- * @param type                  type of cr_RepomdRecord object
+ * @param type                  type of record ("primary, "groupfile", ...)
  */
 void cr_repomd_set_record(cr_Repomd repomd,
                           cr_RepomdRecord record,
-                          cr_RepomdRecordType type);
+                          const char *type);
 
 /** \ingroup repomd
  * Set custom revision string of repomd.

@@ -1243,17 +1243,16 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     // Gen repomd.xml content
 
     cr_Repomd repomd_obj = cr_new_repomd();
-    cr_repomd_set_record(repomd_obj, pri_xml_rec,   CR_MD_PRIMARY_XML);
-    cr_repomd_set_record(repomd_obj, fil_xml_rec,   CR_MD_FILELISTS_XML);
-    cr_repomd_set_record(repomd_obj, oth_xml_rec,   CR_MD_OTHER_XML);
-    cr_repomd_set_record(repomd_obj, pri_db_rec,    CR_MD_PRIMARY_SQLITE);
-    cr_repomd_set_record(repomd_obj, fil_db_rec,    CR_MD_FILELISTS_SQLITE);
-    cr_repomd_set_record(repomd_obj, oth_db_rec,    CR_MD_OTHER_SQLITE);
-    cr_repomd_set_record(repomd_obj, groupfile_rec, CR_MD_GROUPFILE);
-    cr_repomd_set_record(repomd_obj, compressed_groupfile_rec,
-                         CR_MD_COMPRESSED_GROUPFILE);
-    cr_repomd_set_record(repomd_obj, update_info_rec, CR_MD_UPDATEINFO);
-    cr_repomd_set_record(repomd_obj, pkgorigins_rec, CR_MD_PKGORIGINS);
+    cr_repomd_set_record(repomd_obj, pri_xml_rec,   "primary");
+    cr_repomd_set_record(repomd_obj, fil_xml_rec,   "filelists");
+    cr_repomd_set_record(repomd_obj, oth_xml_rec,   "other");
+    cr_repomd_set_record(repomd_obj, pri_db_rec,    "primary_db");
+    cr_repomd_set_record(repomd_obj, fil_db_rec,    "filelists_db");
+    cr_repomd_set_record(repomd_obj, oth_db_rec,    "other_db");
+    cr_repomd_set_record(repomd_obj, groupfile_rec, "group");
+    cr_repomd_set_record(repomd_obj, compressed_groupfile_rec, "group_gz");
+    cr_repomd_set_record(repomd_obj, update_info_rec,"updateinfo");
+    cr_repomd_set_record(repomd_obj, pkgorigins_rec, "origin");
 
     char *repomd_xml = cr_generate_repomd_xml(repomd_obj);
 

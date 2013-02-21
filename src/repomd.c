@@ -448,6 +448,7 @@ repomd_xml_dump(cr_Repomd repomd)
 {
     xmlDocPtr doc;
     xmlNodePtr root;
+    GList *keys, *element;
 
 
     // Start of XML document
@@ -491,17 +492,18 @@ repomd_xml_dump(cr_Repomd repomd)
         }
     }
 
-    dump_data_items(root, repomd->pri_xml, (const xmlChar *) "primary");
-    dump_data_items(root, repomd->fil_xml, (const xmlChar *) "filelists");
-    dump_data_items(root, repomd->oth_xml, (const xmlChar *) "other");
-    dump_data_items(root, repomd->pri_sql, (const xmlChar *) "primary_db");
-    dump_data_items(root, repomd->fil_sql, (const xmlChar *) "filelists_db");
-    dump_data_items(root, repomd->oth_sql, (const xmlChar *) "other_db");
-    dump_data_items(root, repomd->groupfile, (const xmlChar *) "group");
-    dump_data_items(root, repomd->cgroupfile, (const xmlChar *) "group_gz");
-    dump_data_items(root, repomd->updateinfo, (const xmlChar *) "updateinfo");
-    dump_data_items(root, repomd->pkgorigins, (const xmlChar *) "origin");
+    // Records
 
+    keys = g_hash_table_get_keys(repomd->records);
+    keys = g_list_sort(keys, (GCompareFunc) g_strcmp0);
+
+    for (element = keys; element; element = g_list_next(element)) {
+        char *type = element->data;
+        cr_RepomdRecord rec = g_hash_table_lookup(repomd->records, type);
+        dump_data_items(root, rec, (const xmlChar *) type);
+    }
+
+    g_list_free(keys);
 
     // Dump IT!
 
@@ -549,7 +551,7 @@ cr_rename_repomdrecord_file(cr_RepomdRecord md)
     // During update with --keep-all-metadata some files (groupfile,
     // updateinfo, ..) could already have checksum in filenames
     if (g_str_has_prefix(location_filename, md->checksum)) {
-        // The filename constains checksum and it is current
+        // The filename constains valid checksum
         g_free(location_prefix);
         return;
     }
@@ -616,7 +618,12 @@ cr_rename_repomdrecord_file(cr_RepomdRecord md)
 cr_Repomd
 cr_new_repomd()
 {
-    return (cr_Repomd) g_malloc0(sizeof(struct _cr_Repomd));
+   cr_Repomd repomd = g_malloc0(sizeof(struct _cr_Repomd));
+   repomd->records = g_hash_table_new_full(g_str_hash,
+                                           g_str_equal,
+                                           g_free,
+                                           (GDestroyNotify) cr_free_repomdrecord);
+   return repomd;
 }
 
 
@@ -624,16 +631,7 @@ void
 cr_free_repomd(cr_Repomd repomd)
 {
     if (!repomd) return;
-    cr_free_repomdrecord(repomd->pri_xml);
-    cr_free_repomdrecord(repomd->fil_xml);
-    cr_free_repomdrecord(repomd->oth_xml);
-    cr_free_repomdrecord(repomd->pri_sql);
-    cr_free_repomdrecord(repomd->fil_sql);
-    cr_free_repomdrecord(repomd->oth_sql);
-    cr_free_repomdrecord(repomd->groupfile);
-    cr_free_repomdrecord(repomd->cgroupfile);
-    cr_free_repomdrecord(repomd->updateinfo);
-    cr_free_repomdrecord(repomd->pkgorigins);
+    g_hash_table_destroy(repomd->records);
     cr_slist_free_full(repomd->repo_tags, g_free);
     cr_slist_free_full(repomd->distro_tags, (GDestroyNotify) cr_free_distro);
     cr_slist_free_full(repomd->content_tags, g_free);
@@ -645,30 +643,10 @@ cr_free_repomd(cr_Repomd repomd)
 void
 cr_repomd_set_record(cr_Repomd repomd,
                      cr_RepomdRecord record,
-                     cr_RepomdRecordType type)
+                     const char *type)
 {
-    cr_RepomdRecord *rec;
-
     if (!repomd || !record) return;
-
-    switch (type) {
-        case CR_MD_PRIMARY_XML:          rec = &(repomd->pri_xml);    break;
-        case CR_MD_FILELISTS_XML:        rec = &(repomd->fil_xml);    break;
-        case CR_MD_OTHER_XML:            rec = &(repomd->oth_xml);    break;
-        case CR_MD_PRIMARY_SQLITE:       rec = &(repomd->pri_sql);    break;
-        case CR_MD_FILELISTS_SQLITE:     rec = &(repomd->fil_sql);    break;
-        case CR_MD_OTHER_SQLITE:         rec = &(repomd->oth_sql);    break;
-        case CR_MD_GROUPFILE:            rec = &(repomd->groupfile);  break;
-        case CR_MD_COMPRESSED_GROUPFILE: rec = &(repomd->cgroupfile); break;
-        case CR_MD_UPDATEINFO:           rec = &(repomd->updateinfo); break;
-        case CR_MD_PKGORIGINS:           rec = &(repomd->pkgorigins); break;
-        default: return;
-    }
-
-    if (*rec)  // A record already exists
-        cr_free_repomdrecord(*rec);
-
-    *rec = record;
+    g_hash_table_replace(repomd->records, g_strdup(type), record);
 }
 
 

@@ -43,7 +43,7 @@ TARGET_LINK_LIBRARIES(libcreaterepo_c ${SQLITE3_LIBRARIES})
 
 SET_TARGET_PROPERTIES(libcreaterepo_c PROPERTIES
                       OUTPUT_NAME "createrepo_c"
-                      SOVERSION ${CPACK_PACKAGE_VERSION_MAJOR}
+                      SOVERSION ${CR_MAJOR}
                       VERSION "${VERSION}")
 
 ADD_EXECUTABLE(createrepo_c createrepo_c.c cmd_parser.c)
@@ -58,9 +58,9 @@ TARGET_LINK_LIBRARIES(mergerepo_c
                       ${GLIB2_LIBRARIES}
                       ${GTHREAD2_LIBRARIES})
 
-CONFIGURE_FILE("createrepo_c.pc.cmake"
-               "${CMAKE_SOURCE_DIR}/src/createrepo_c.pc"
-               @ONLY)
+CONFIGURE_FILE("createrepo_c.pc.cmake" "${CMAKE_SOURCE_DIR}/src/createrepo_c.pc" @ONLY)
+CONFIGURE_FILE("version.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/version.h" @ONLY)
+
 INSTALL(FILES "createrepo_c.pc"
     DESTINATION "${LIB_INSTALL_DIR}/pkgconfig")
 INSTALL(TARGETS libcreaterepo_c

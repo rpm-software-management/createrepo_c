@@ -5,20 +5,20 @@ import sys
 import os.path
 from optparse import OptionParser
 
-VERSION_H_PATH = "src/version.h"
+VERSION_FILE_PATH = "VERSION.cmake"
 
 
 def parse(root_dir):
-    path = os.path.join(root_dir, VERSION_H_PATH)
+    path = os.path.join(root_dir, VERSION_FILE_PATH)
     if not os.path.exists(path):
         print "File %s doesn't exists" % path
         return None
 
     content = open(path, "r").read()
     ver = {}
-    ver['major'] = re.search('#define\s+CR_MAJOR_VERSION\s+(\d+).*', content).group(1)
-    ver['minor'] = re.search('#define\s+CR_MINOR_VERSION\s+(\d+).*', content).group(1)
-    ver['patch'] = re.search('#define\s+CR_PATCH_VERSION\s+(\d+).*', content).group(1)
+    ver['major'] = re.search('SET\s*\(CR_MAJOR\s+"(\d+)"', content).group(1)
+    ver['minor'] = re.search('SET\s*\(CR_MINOR\s+"(\d+)"', content).group(1)
+    ver['patch'] = re.search('SET\s*\(CR_PATCH\s+"(\d+)"', content).group(1)
     return ver
 
 

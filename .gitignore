@@ -18,3 +18,5 @@ CPackConfig.cmake
 CPackSourceConfig.cmake
 _CPack_Packages/
 *_
+src/version.h
+src/createrepo_c.pc

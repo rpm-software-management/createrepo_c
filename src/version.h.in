@@ -28,9 +28,9 @@ extern "C" {
 #endif
 
 /**@{*/
-#define CR_MAJOR_VERSION   0    /*!< major library version */
-#define CR_MINOR_VERSION   1    /*!< minor library version */
-#define CR_PATCH_VERSION   15   /*!< patch library version */
+#define CR_MAJOR_VERSION   @CR_MAJOR@    /*!< major library version */
+#define CR_MINOR_VERSION   @CR_MINOR@    /*!< minor library version */
+#define CR_PATCH_VERSION   @CR_PATCH@    /*!< patch library version */
 /**@}*/
 
 #ifdef __cplusplus

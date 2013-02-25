@@ -40,13 +40,13 @@
  * This module has one known issue about a memory management.
  * The issue acts in cases when you are using one single string chunk
  * for all parsed packages.
- * (use_single_chunk != 0 during call of cr_new_metadata())
+ * (use_single_chunk != 0 during call of cr_metadata_new())
  *
  * Description of issue:
  * During parsing of primary.xml, all string from obtained during parsing are
  * stored into the chunk. When we have all the information from primary.xml and
  * we found out that we don't want the package (according the pkglist passed
- * via cr_new_metadata) and we drop the package (package is not inserted
+ * via cr_metadata_new) and we drop the package (package is not inserted
  * into the hashtable of metadatas), all strings from primary.xml are yet
  * stored in the chunk and they remains there!
  *
@@ -114,7 +114,7 @@ struct ParserData {
 
 
 void
-free_values(gpointer data)
+cr_free_values(gpointer data)
 {
     cr_package_free((cr_Package *) data);
 }
@@ -125,7 +125,7 @@ GHashTable *
 cr_new_metadata_hashtable()
 {
     GHashTable *hashtable = g_hash_table_new_full(g_str_hash, g_str_equal,
-                                                  NULL, free_values);
+                                                  NULL, cr_free_values);
     return hashtable;
 }
 
@@ -141,7 +141,7 @@ cr_destroy_metadata_hashtable(GHashTable *hashtable)
 
 
 cr_Metadata
-cr_new_metadata(cr_HashTableKey key, int use_single_chunk, GSList *pkglist)
+cr_metadata_new(cr_HashTableKey key, int use_single_chunk, GSList *pkglist)
 {
     cr_Metadata md = g_malloc0(sizeof(*md));
     md->key = key;
@@ -171,7 +171,7 @@ cr_new_metadata(cr_HashTableKey key, int use_single_chunk, GSList *pkglist)
 
 
 void
-cr_destroy_metadata(cr_Metadata md)
+cr_metadata_free(cr_Metadata md)
 {
     if (!md)
         return;
@@ -187,7 +187,7 @@ cr_destroy_metadata(cr_Metadata md)
 
 
 inline gchar *
-chunk_insert_len_or_null (GStringChunk *chunk, const gchar *str, gssize len)
+cr_chunk_insert_len_or_null (GStringChunk *chunk, const gchar *str, gssize len)
 {
     if (!str || len <= 0)
         return NULL;
@@ -200,7 +200,7 @@ chunk_insert_len_or_null (GStringChunk *chunk, const gchar *str, gssize len)
 // primary.xml parser handlers
 
 void
-pri_start_handler(void *data, const char *el, const char **attr)
+cr_pri_start_handler(void *data, const char *el, const char **attr)
 {
     struct ParserData *ppd = (struct ParserData *) data;
     cr_Package *pkg = ppd->pkg;
@@ -487,7 +487,7 @@ pri_start_handler(void *data, const char *el, const char **attr)
 
 
 void
-pri_char_handler(void *data, const char *txt, int txtlen)
+cr_pri_char_handler(void *data, const char *txt, int txtlen)
 {
     struct ParserData *ppd = (struct ParserData *) data;
     cr_Package *pkg = ppd->pkg;
@@ -527,7 +527,7 @@ pri_char_handler(void *data, const char *txt, int txtlen)
 
 
 void
-pri_end_handler(void *data, const char *el)
+cr_pri_end_handler(void *data, const char *el)
 {
     struct ParserData *ppd = (struct ParserData *) data;
     cr_Package *pkg = ppd->pkg;
@@ -541,40 +541,40 @@ pri_end_handler(void *data, const char *el)
 
         switch (ppd->last_elem) {
             case NAME_ELEM:
-                pkg->name = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
+                pkg->name = cr_chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case ARCH_ELEM:
-                pkg->arch = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
+                pkg->arch = cr_chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case CHECKSUM_ELEM:
-                pkg->pkgId = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
+                pkg->pkgId = cr_chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case SUMMARY_ELEM:
-                pkg->summary = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
+                pkg->summary = cr_chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case DESCRIPTION_ELEM:
-                pkg->description = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
+                pkg->description = cr_chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case PACKAGER_ELEM:
-                pkg->rpm_packager = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
+                pkg->rpm_packager = cr_chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case URL_ELEM:
-                pkg->url = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
+                pkg->url = cr_chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case RPM_LICENSE_ELEM:
-                pkg->rpm_license = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
+                pkg->rpm_license = cr_chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case RPM_VENDOR_ELEM:
-                pkg->rpm_vendor = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
+                pkg->rpm_vendor = cr_chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case RPM_GROUP_ELEM:
-                pkg->rpm_group = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
+                pkg->rpm_group = cr_chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case RPM_BUILDHOST_ELEM:
-                pkg->rpm_buildhost = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
+                pkg->rpm_buildhost = cr_chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case RPM_SOURCERPM_ELEM:
-                pkg->rpm_sourcerpm = chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
+                pkg->rpm_sourcerpm = cr_chunk_insert_len_or_null(pkg->chunk, txt, txtlen);
                 break;
             case FILE_ELEM:
             case FILE_DIR_ELEM:
@@ -650,7 +650,7 @@ pri_end_handler(void *data, const char *el)
 // filelists.xml parser handlers
 
 void
-fil_start_handler(void *data, const char *el, const char **attr)
+cr_fil_start_handler(void *data, const char *el, const char **attr)
 {
     int i;
     struct ParserData *ppd = (struct ParserData *) data;
@@ -756,7 +756,7 @@ fil_start_handler(void *data, const char *el, const char **attr)
 
 
 void
-fil_char_handler(void *data, const char *txt, int txtlen)
+cr_fil_char_handler(void *data, const char *txt, int txtlen)
 {
     struct ParserData *ppd = (struct ParserData *) data;
     cr_Package *pkg = ppd->pkg;
@@ -782,7 +782,7 @@ fil_char_handler(void *data, const char *txt, int txtlen)
 
 
 void
-fil_end_handler(void *data, const char *el)
+cr_fil_end_handler(void *data, const char *el)
 {
     struct ParserData *ppd = (struct ParserData *) data;
     cr_Package *pkg = ppd->pkg;
@@ -858,7 +858,7 @@ fil_end_handler(void *data, const char *el)
 // other.xml parser handlers
 
 void
-oth_start_handler(void *data, const char *el, const char **attr)
+cr_oth_start_handler(void *data, const char *el, const char **attr)
 {
     int i;
     struct ParserData *ppd = (struct ParserData *) data;
@@ -972,7 +972,7 @@ oth_start_handler(void *data, const char *el, const char **attr)
 
 
 void
-oth_char_handler(void *data, const char *txt, int txtlen)
+cr_oth_char_handler(void *data, const char *txt, int txtlen)
 {
     struct ParserData *ppd = (struct ParserData *) data;
     cr_Package *pkg = ppd->pkg;
@@ -996,7 +996,7 @@ oth_char_handler(void *data, const char *txt, int txtlen)
 
 
 void
-oth_end_handler(void *data, const char *el)
+cr_oth_end_handler(void *data, const char *el)
 {
     struct ParserData *ppd = (struct ParserData *) data;
     cr_Package *pkg = ppd->pkg;
@@ -1048,7 +1048,7 @@ oth_end_handler(void *data, const char *el)
 
 
 int
-load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
+cr_load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
                const char *filelists_xml_path, const char *other_xml_path,
                GStringChunk *chunk, GHashTable *pkglist_ht)
 {
@@ -1098,18 +1098,18 @@ load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
 
     pri_p = XML_ParserCreate(NULL);
     XML_SetUserData(pri_p, (void *) &parser_data);
-    XML_SetElementHandler(pri_p, pri_start_handler, pri_end_handler);
-    XML_SetCharacterDataHandler(pri_p, pri_char_handler);
+    XML_SetElementHandler(pri_p, cr_pri_start_handler, cr_pri_end_handler);
+    XML_SetCharacterDataHandler(pri_p, cr_pri_char_handler);
 
     fil_p = XML_ParserCreate(NULL);
     XML_SetUserData(fil_p, (void *) &parser_data);
-    XML_SetElementHandler(fil_p, fil_start_handler, fil_end_handler);
-    XML_SetCharacterDataHandler(fil_p, fil_char_handler);
+    XML_SetElementHandler(fil_p, cr_fil_start_handler, cr_fil_end_handler);
+    XML_SetCharacterDataHandler(fil_p, cr_fil_char_handler);
 
     oth_p = XML_ParserCreate(NULL);
     XML_SetUserData(oth_p, (void *) &parser_data);
-    XML_SetElementHandler(oth_p, oth_start_handler, oth_end_handler);
-    XML_SetCharacterDataHandler(oth_p, oth_char_handler);
+    XML_SetElementHandler(oth_p, cr_oth_start_handler, cr_oth_end_handler);
+    XML_SetCharacterDataHandler(oth_p, cr_oth_char_handler);
 
 
     // Parse
@@ -1240,7 +1240,7 @@ cleanup:
 
 
 int
-cr_load_xml_metadata(cr_Metadata md, struct cr_MetadataLocation *ml)
+cr_metadata_load_xml(cr_Metadata md, struct cr_MetadataLocation *ml)
 {
     if (!md || !ml)
         return CR_LOAD_METADATA_ERR;
@@ -1256,7 +1256,7 @@ cr_load_xml_metadata(cr_Metadata md, struct cr_MetadataLocation *ml)
     GHashTable *intern_hashtable;  // key is checksum (pkgId)
 
     intern_hashtable = cr_new_metadata_hashtable();
-    result = load_xml_files(intern_hashtable, ml->pri_xml_href,
+    result = cr_load_xml_files(intern_hashtable, ml->pri_xml_href,
                             ml->fil_xml_href, ml->oth_xml_href,
                             md->chunk, md->pkglist_ht);
 
@@ -1318,14 +1318,14 @@ cr_load_xml_metadata(cr_Metadata md, struct cr_MetadataLocation *ml)
 
 
 int
-cr_locate_and_load_xml_metadata(cr_Metadata md, const char *repopath)
+cr_metadata_locate_and_load_xml(cr_Metadata md, const char *repopath)
 {
     if (!md || !repopath)
         return CR_LOAD_METADATA_ERR;
 
     int ret;
     struct cr_MetadataLocation *ml = cr_locate_metadata(repopath, 1);
-    ret = cr_load_xml_metadata(md, ml);
+    ret = cr_metadata_load_xml(md, ml);
     cr_metadatalocation_free(ml);
 
     return ret;

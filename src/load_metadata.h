@@ -79,21 +79,21 @@ typedef struct _cr_Metadata *cr_Metadata;
  *                          list. If param is NULL all packages are loaded.
  * @return                  empty cr_Metadata object
  */
-cr_Metadata cr_new_metadata(cr_HashTableKey key,
+cr_Metadata cr_metadata_new(cr_HashTableKey key,
                             int use_single_chunk,
                             GSList *pkglist);
 
 /** Destroy metadata.
  * @param md            cr_Metadata object
  */
-void cr_destroy_metadata(cr_Metadata md);
+void cr_metadata_free(cr_Metadata md);
 
 /** Load metadata from the specified location.
  * @param md            metadata object
  * @param ml            metadata location
  * @return              return code CR_LOAD_METADATA_OK or CR_LOAD_METADATA_ERR
  */
-int cr_load_xml_metadata(cr_Metadata md,
+int cr_metadata_load_xml(cr_Metadata md,
                          struct cr_MetadataLocation *ml);
 
 /** Locate and load metadata from the specified path.
@@ -101,7 +101,7 @@ int cr_load_xml_metadata(cr_Metadata md,
  * @param repopath      path to repo (to directory with repodata/ subdir)
  * @return              return code CR_LOAD_METADATA_OK or CR_LOAD_METADATA_ERR
  */
-int cr_locate_and_load_xml_metadata(cr_Metadata md,
+int cr_metadata_locate_and_load_xml(cr_Metadata md,
                                     const char *repopath);
 
 /** @} */

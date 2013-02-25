@@ -537,11 +537,11 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
         GHashTableIter iter;
         gpointer key, value;
 
-        metadata = cr_new_metadata(CR_HT_KEY_HASH, 0, NULL);
+        metadata = cr_metadata_new(CR_HT_KEY_HASH, 0, NULL);
         ml       = (struct cr_MetadataLocation *) element->data;
 
-        if (cr_load_xml_metadata(metadata, ml) == CR_LOAD_METADATA_ERR) {
-            cr_destroy_metadata(metadata);
+        if (cr_metadata_load_xml(metadata, ml) == CR_LOAD_METADATA_ERR) {
+            cr_metadata_free(metadata);
             g_critical("Cannot load repo: \"%s\"", ml->original_url);
             repoid++;
             break;
@@ -618,7 +618,7 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
             cr_nvrea_free(nvrea);
         }
 
-        cr_destroy_metadata(metadata);
+        cr_metadata_free(metadata);
         repoid++;
     }
 
@@ -848,7 +848,7 @@ merge_repos(GHashTable *merged,
         cr_Metadata metadata;               // current repodata
         struct cr_MetadataLocation *ml;     // location of current repodata
 
-        metadata = cr_new_metadata(CR_HT_KEY_HASH, 0, NULL);
+        metadata = cr_metadata_new(CR_HT_KEY_HASH, 0, NULL);
         ml       = (struct cr_MetadataLocation *) element->data;
         repopath = cr_normalize_dir_path(ml->original_url);
 
@@ -858,8 +858,8 @@ merge_repos(GHashTable *merged,
 
         g_debug("Processing: %s", repopath);
 
-        if (cr_load_xml_metadata(metadata, ml) == CR_LOAD_METADATA_ERR) {
-            cr_destroy_metadata(metadata);
+        if (cr_metadata_load_xml(metadata, ml) == CR_LOAD_METADATA_ERR) {
+            cr_metadata_free(metadata);
             g_critical("Cannot load repo: \"%s\"", ml->repomd);
             break;
         }
@@ -926,7 +926,7 @@ merge_repos(GHashTable *merged,
         }
 
         loaded_packages += repo_loaded_packages;
-        cr_destroy_metadata(metadata);
+        cr_metadata_free(metadata);
         g_debug("Repo: %s (Loaded: %ld Used: %ld)", repopath,
                 (unsigned long) original_size, repo_loaded_packages);
         g_free(repopath);
@@ -1486,7 +1486,7 @@ main(int argc, char **argv)
         struct cr_MetadataLocation *noarch_ml;
 
         noarch_ml = cr_locate_metadata(cmd_options->noarch_repo_url, 1);
-        noarch_metadata = cr_new_metadata(CR_HT_KEY_FILENAME, 0, NULL);
+        noarch_metadata = cr_metadata_new(CR_HT_KEY_FILENAME, 0, NULL);
 
         // Base paths in output of original createrepo doesn't have trailing '/'
         gchar *noarch_repopath = cr_normalize_dir_path(noarch_ml->original_url);
@@ -1496,9 +1496,9 @@ main(int argc, char **argv)
 
         g_debug("Loading noarch_repo: %s", noarch_repopath);
 
-        if (cr_load_xml_metadata(noarch_metadata, noarch_ml) == CR_LOAD_METADATA_ERR) {
+        if (cr_metadata_load_xml(noarch_metadata, noarch_ml) == CR_LOAD_METADATA_ERR) {
             g_error("Cannot load noarch repo: \"%s\"", noarch_ml->repomd);
-            cr_destroy_metadata(noarch_metadata);
+            cr_metadata_free(noarch_metadata);
             // TODO cleanup
             cr_metadatalocation_free(noarch_ml);
             return 1;
@@ -1569,7 +1569,7 @@ main(int argc, char **argv)
     // Cleanup
 
     g_free(groupfile);
-    cr_destroy_metadata(noarch_metadata);
+    cr_metadata_free(noarch_metadata);
     destroy_merged_metadata_hashtable(merged_hashtable);
     free_options(cmd_options);
     return 0;

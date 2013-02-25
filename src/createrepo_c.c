@@ -725,14 +725,14 @@ main(int argc, char **argv)
 
     if (package_count && cmd_options->update) {
         int ret;
-        old_metadata = cr_new_metadata(CR_HT_KEY_FILENAME, 1, current_pkglist);
+        old_metadata = cr_metadata_new(CR_HT_KEY_FILENAME, 1, current_pkglist);
 
         if (cmd_options->outputdir)
             old_metadata_location = cr_locate_metadata(out_dir, 1);
         else
             old_metadata_location = cr_locate_metadata(in_dir, 1);
 
-        ret = cr_load_xml_metadata(old_metadata, old_metadata_location);
+        ret = cr_metadata_load_xml(old_metadata, old_metadata_location);
         if (ret == CR_LOAD_METADATA_OK)
             g_debug("Old metadata from: %s - loaded", out_dir);
         else
@@ -743,7 +743,7 @@ main(int argc, char **argv)
         for (; element; element = g_slist_next(element)) {
             char *path = (char *) element->data;
             g_message("Loading metadata from md-path: %s", path);
-            ret = cr_locate_and_load_xml_metadata(old_metadata, path);
+            ret = cr_metadata_locate_and_load_xml(old_metadata, path);
             if (ret == CR_LOAD_METADATA_OK)
                 g_debug("Metadata from md-path %s - loaded", path);
             else
@@ -1230,7 +1230,7 @@ main(int argc, char **argv)
     g_debug("Memory cleanup");
 
     if (old_metadata)
-        cr_destroy_metadata(old_metadata);
+        cr_metadata_free(old_metadata);
 
     g_free(in_repo);
     g_free(out_repo);

@@ -21,70 +21,21 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
 # Find necessare libraries
 
-find_package(GLIB2 REQUIRED)
 find_package(BZip2 REQUIRED)
-find_package(GTHREAD2 REQUIRED)
-find_package(ZLIB REQUIRED)
-find_package(EXPAT REQUIRED)
-find_package(LibXml2 REQUIRED)
-find_package(Libmagic REQUIRED)
 find_package(CURL REQUIRED)
+find_package(EXPAT REQUIRED)
+find_package(GLIB2 REQUIRED)
+find_package(GTHREAD2 REQUIRED)
+find_package(Libmagic REQUIRED)
+find_package(LibXml2 REQUIRED)
 find_package(LZMA REQUIRED)
 find_package(Sqlite3 REQUIRED)
-
-
-# Check libraries
-
-IF (NOT GLIB2_FOUND)
-    MESSAGE(FATAL_ERROR "No GLIB2 library installed")
-ENDIF (NOT GLIB2_FOUND)
-
-IF (NOT BZIP2_FOUND)
-    MESSAGE(FATAL_ERROR "No BZip2 library installed")
-ENDIF (NOT BZIP2_FOUND)
-
-IF (NOT GTHREAD2_FOUND)
-    MESSAGE(FATAL_ERROR "No GTHREAD2 library installed")
-ENDIF (NOT GTHREAD2_FOUND)
-
-IF (NOT ZLIB_FOUND)
-    MESSAGE(FATAL_ERROR "No Zlib library installed")
-ENDIF (NOT ZLIB_FOUND)
-
-IF (NOT EXPAT_FOUND)
-    MESSAGE(FATAL_ERROR "No Expat library installed")
-ENDIF (NOT EXPAT_FOUND)
-
-IF (NOT LIBXML2_FOUND)
-    MESSAGE(FATAL_ERROR "No LibXml2 library installed")
-ENDIF (NOT LIBXML2_FOUND)
-
-IF (NOT Libmagic_FOUND)
-    MESSAGE(FATAL_ERROR "No Libmagic library installed")
-ENDIF (NOT Libmagic_FOUND)
-
-IF (NOT CURL_FOUND)
-    MESSAGE(FATAL_ERROR "No CURL library installed")
-ENDIF (NOT CURL_FOUND)
-
-IF (NOT LZMA_FOUND)
-    MESSAGE(FATAL_ERROR "No LZMA (xz) library installed")
-ENDIF (NOT LZMA_FOUND)
-
-IF (NOT SQLITE3_FOUND)
-    MESSAGE(FATAL_ERROR "No Sqlite3 library installed")
-ENDIF (NOT SQLITE3_FOUND)
+find_package(ZLIB REQUIRED)
 
 # Add include dirs
 
 include_directories(${GLIB2_INCLUDE_DIRS})
-include_directories(${BZIP2_INCLUDE_DIRS})
-include_directories(${GTHREAD2_INCLUDE_DIRS})
-include_directories(${ZLIB_INCLUDE_DIRS})
-include_directories(${EXPAT_INCLUDE_DIRS})
 include_directories(${LIBXML2_INCLUDE_DIR})
-include_directories(${CURL_INCLUDE_DIR})
-include_directories(${LZMA_INCLUDE_DIR})
 
 
 # rpm:
@@ -120,9 +71,9 @@ INCLUDE(InstallRequiredSystemLibraries)
 
 SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "C implementation of createrepo")
 SET(CPACK_PACKAGE_VENDOR "Fedora Project")
-SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README")
+SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING")
-SET(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README")
+SET(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
 SET(CPACK_PACKAGE_INSTALL_DIRECTORY "CMake ${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}")
 SET(CPACK_STRIP_FILES "usr/bin/createrepo_c")
 SET(CPACK_SOURCE_STRIP_FILES "")
@@ -142,9 +93,9 @@ INCLUDE(CPack)
 
 # Other files
 
-SET(CMAKE_INSTALL_PREFIX "/")
-INSTALL(FILES README COPYING
-        DESTINATION "/usr/share/doc/createrepo_c-${VERSION}")
+#SET(CMAKE_INSTALL_PREFIX "/")
+INSTALL(FILES README.md COPYING
+        DESTINATION "share/doc/createrepo_c-${VERSION}")
 INSTALL(FILES createrepo_c.bash
         DESTINATION "/etc/bash_completion.d")
 
@@ -154,7 +105,7 @@ INSTALL(FILES createrepo_c.bash
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
     add_custom_target(doc
-        ${DOXYGEN_EXECUTABLE} Doxyfile.in
+        ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in
         COMMENT "Generating API documentation with Doxygen" VERBATIM)
 endif(DOXYGEN_FOUND)
 
@@ -163,15 +114,6 @@ endif(DOXYGEN_FOUND)
 
 #message("Gen manpage")
 #execute_process(COMMAND bash gen_manpage.sh src/cmd_parser.c ../doc/ WORKING_DIRECTORY utils/)
-
-
-IF (NOT LIB_INSTALL_DIR)
-  SET (LIB_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/usr/lib")
-ENDIF (NOT LIB_INSTALL_DIR)
-
-IF (NOT INCLUDE_INSTALL_DIR)
-  SET (INCLUDE_INSTALL_DIR "${CMAKE_INSTALL_PREFIX}/usr/include")
-ENDIF (NOT INCLUDE_INSTALL_DIR)
 
 
 # Add custom target for tests

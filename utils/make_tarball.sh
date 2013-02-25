@@ -37,10 +37,11 @@ echo "Using root projekt dir: $PREFIX"
 
     cp --verbose CMakeLists.txt $DIRECTORY
     cp --verbose AUTHORS $DIRECTORY
-    cp --verbose README $DIRECTORY
+    cp --verbose README.md $DIRECTORY
     cp --verbose COPYING $DIRECTORY
     cp --verbose createrepo_c.bash $DIRECTORY
     cp --verbose Doxyfile.in $DIRECTORY
+    cp --verbose VERSION.cmake $DIRECTORY
 
     cp --verbose --parents cmake/Modules/* $DIRECTORY
 
@@ -52,6 +53,7 @@ echo "Using root projekt dir: $PREFIX"
     cp --verbose --parents src/createrepo_c.pc.cmake $DIRECTORY
     cp --verbose --parents src/*.c $DIRECTORY
     cp --verbose --parents src/*.h $DIRECTORY
+    cp --verbose --parents src/*.in $DIRECTORY
 
     cp --verbose --parents tests/CMakeLists.txt $DIRECTORY
     cp --verbose --parents tests/*.c $DIRECTORY

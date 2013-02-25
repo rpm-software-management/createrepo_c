@@ -20,3 +20,6 @@ _CPack_Packages/
 *_
 src/version.h
 src/createrepo_c.pc
+build/
+doc/html
+doc/latex

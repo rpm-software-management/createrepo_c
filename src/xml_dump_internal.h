@@ -33,7 +33,7 @@ extern "C" {
  * @param primary       process only primary files (see cr_is_primary() function
  *                      in the misc module)
  */
-void cr_dump_files(xmlNodePtr node, cr_Package *package, int primary);
+void cr_xml_dump_files(xmlNodePtr node, cr_Package *package, int primary);
 
 #ifdef __cplusplus
 }

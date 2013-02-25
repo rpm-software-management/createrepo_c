@@ -28,9 +28,6 @@
 #include "xml_dump.h"
 #include "xml_dump_internal.h"
 
-#undef MODULE
-#define MODULE "xml_dump_primary: "
-
 #define PROVIDES    0
 #define CONFLICTS   1
 #define OBSOLETES   2
@@ -44,7 +41,7 @@
 
 
 void
-dump_pco(xmlNodePtr root, cr_Package *package, int pcotype)
+cr_xml_dump_primary_dump_pco(xmlNodePtr root, cr_Package *package, int pcotype)
 {
     const char *elem_name;
     GSList *files = NULL;
@@ -130,7 +127,7 @@ dump_pco(xmlNodePtr root, cr_Package *package, int pcotype)
 
 
 void
-dump_base_items(xmlNodePtr root, cr_Package *package)
+cr_xml_dump_primary_base_items(xmlNodePtr root, cr_Package *package)
 {
     /***********************************
      Element: package
@@ -366,11 +363,11 @@ dump_base_items(xmlNodePtr root, cr_Package *package)
 
     // Files dump
 
-    dump_pco(format,   package, PROVIDES);
-    dump_pco(format,   package, REQUIRES);
-    dump_pco(format,   package, CONFLICTS);
-    dump_pco(format,   package, OBSOLETES);
-    cr_dump_files(format, package, 1);
+    cr_xml_dump_primary_dump_pco(format,   package, PROVIDES);
+    cr_xml_dump_primary_dump_pco(format,   package, REQUIRES);
+    cr_xml_dump_primary_dump_pco(format,   package, CONFLICTS);
+    cr_xml_dump_primary_dump_pco(format,   package, OBSOLETES);
+    cr_xml_dump_files(format, package, 1);
 }
 
 
@@ -387,12 +384,12 @@ cr_xml_dump_primary(cr_Package *package)
 
     // Dump IT!
 
-    dump_base_items(root, package);
+    cr_xml_dump_primary_base_items(root, package);
 
     char *result;
     xmlBufferPtr buf = xmlBufferCreate();
     if (buf == NULL) {
-        g_critical(MODULE"%s: Error creating the xml buffer", __func__);
+        g_critical("%s: Error creating the xml buffer", __func__);
         return NULL;
     }
     // Seems to be little bit faster than xmlDocDumpFormatMemory

@@ -27,9 +27,6 @@
 #include "package.h"
 #include "xml_dump.h"
 
-#undef MODULE
-#define MODULE "xml_dump_other: "
-
 #define FORMAT_XML      1
 #define FORMAT_LEVEL    0
 
@@ -37,7 +34,7 @@
 
 
 void
-dump_changelog(xmlNodePtr root, cr_Package *package)
+cr_xml_dump_other_changelog(xmlNodePtr root, cr_Package *package)
 {
     if (!package->changelogs) {
         return;
@@ -77,7 +74,7 @@ dump_changelog(xmlNodePtr root, cr_Package *package)
 
 
 void
-dump_other_items(xmlNodePtr root, cr_Package *package)
+cr_xml_dump_other_items(xmlNodePtr root, cr_Package *package)
 {
     /***********************************
      Element: package
@@ -120,7 +117,7 @@ dump_other_items(xmlNodePtr root, cr_Package *package)
 
     // Changelog dump
 
-    dump_changelog(root, package);
+    cr_xml_dump_other_changelog(root, package);
 }
 
 
@@ -136,12 +133,12 @@ cr_xml_dump_other(cr_Package *package)
 
     // Dump IT!
 
-    dump_other_items(root, package);
+    cr_xml_dump_other_items(root, package);
 
     char *result;
     xmlBufferPtr buf = xmlBufferCreate();
     if (buf == NULL) {
-        g_critical(MODULE"%s: Error creating the xml buffer", __func__);
+        g_critical("%s: Error creating the xml buffer", __func__);
         return NULL;
     }
     // Seems to be little bit faster than xmlDocDumpFormatMemory

@@ -28,15 +28,12 @@
 #include "xml_dump.h"
 #include "xml_dump_internal.h"
 
-#undef MODULE
-#define MODULE "xml_dump_filelists: "
-
 #define FORMAT_XML      1
 #define FORMAT_LEVEL    0
 
 
 void
-dump_filelists_items(xmlNodePtr root, cr_Package *package)
+cr_xml_dump_filelists_items(xmlNodePtr root, cr_Package *package)
 {
     /***********************************
      Element: package
@@ -79,7 +76,7 @@ dump_filelists_items(xmlNodePtr root, cr_Package *package)
 
     // Files dump
 
-    cr_dump_files(root, package, 0);
+    cr_xml_dump_files(root, package, 0);
 }
 
 
@@ -95,12 +92,12 @@ cr_xml_dump_filelists(cr_Package *package)
 
     // Dump IT!
 
-    dump_filelists_items(root, package);
+    cr_xml_dump_filelists_items(root, package);
 
     char *result;
     xmlBufferPtr buf = xmlBufferCreate();
     if (buf == NULL) {
-        g_critical(MODULE"%s: Error creating the xml buffer", __func__);
+        g_critical("%s: Error creating the xml buffer", __func__);
         return NULL;
     }
     // Seems to be little bit faster than xmlDocDumpFormatMemory

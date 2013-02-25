@@ -27,26 +27,23 @@
 #include "xml_dump.h"
 #include "xml_dump_internal.h"
 
-#undef MODULE
-#define MODULE "xml_dump: "
-
 
 void
-cr_dumper_init()
+cr_xml_dump_init()
 {
     xmlInitParser();
 }
 
 
 void
-cr_dumper_cleanup()
+cr_xml_dump_cleanup()
 {
     xmlCleanupParser();
 }
 
 
 void
-cr_dump_files(xmlNodePtr node, cr_Package *package, int primary)
+cr_xml_dump_files(xmlNodePtr node, cr_Package *package, int primary)
 {
     if (!node || !package->files) {
         return;
@@ -100,7 +97,6 @@ cr_dump_files(xmlNodePtr node, cr_Package *package, int primary)
         }
     }
 }
-
 
 
 struct cr_XmlStruct

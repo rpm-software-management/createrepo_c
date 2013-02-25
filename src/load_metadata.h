@@ -28,6 +28,28 @@ extern "C" {
 #endif
 
 /** \defgroup   load_metadata   Load metadata API.
+ *
+ * Module for loading yum xml metadata.
+ *
+ * Example:
+ *
+ * \code
+ * int ret;
+ * cr_Metadata oldmetadata;
+ * GHashTable hashtable;
+ *
+ * // Create new metadata object
+ * oldmetadata = cr_metadata_new(CR_HT_KEY_FILENAME, 1, NULL);
+ * // Load metadata (path to directory which contains repodata/ subdir)
+ * ret = cr_metadata_locate_and_load_xml(oldmetadata, "/foo/bar/repo/")
+ * // Check return code
+ * if (ret != CR_LOAD_METADATA_OK) exit(1);
+ * // Get hash table with all loaded packages (key is package relative path)
+ * hashtable = cr_metadata_hashtable(oldmetadata);
+ * // What to do with hashtable?
+ * // See: http://developer.gnome.org/glib/2.30/glib-Hash-Tables.html
+ * \endcode
+ *
  *  \addtogroup load_metadata
  *  @{
  */

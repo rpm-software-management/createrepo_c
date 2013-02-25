@@ -51,20 +51,20 @@ struct cr_MetadataLocation {
 
 /** Parses repomd.xml and returns a filled cr_MetadataLocation structure.
  * Remote repodata (repopath with prefix "ftp://" or "http://") are dowloaded
- * into a temporary directory and removed when the cr_free_metadata_location()
+ * into a temporary directory and removed when the cr_metadatalocation_free()
  * is called on the cr_MetadataLocation.
  * @param repopath      path to directory with repodata/ subdirectory
  * @param ignore_sqlite if ignore_sqlite != 0 sqlite dbs are ignored
  * @return              filled cr_MetadataLocation structure or NULL
  */
-struct cr_MetadataLocation *cr_get_metadata_location(const char *repopath,
+struct cr_MetadataLocation *cr_locate_metadata(const char *repopath,
                                                      int ignore_sqlite);
 
 /** Free cr_MetadataLocation. If repodata were downloaded remove
  * a temporary directory with repodata.
  * @param ml            MeatadaLocation
  */
-void cr_free_metadata_location(struct cr_MetadataLocation *ml);
+void cr_metadatalocation_free(struct cr_MetadataLocation *ml);
 
 
 /** Remove files related to repodata from the specified path.

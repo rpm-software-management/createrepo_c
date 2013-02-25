@@ -1427,7 +1427,7 @@ main(int argc, char **argv)
     gboolean cr_download_failed = FALSE;
 
     for (element = cmd_options->repo_list; element; element = g_slist_next(element)) {
-        struct cr_MetadataLocation *loc = cr_get_metadata_location((gchar *) element->data, 1);
+        struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) element->data, 1);
         if (!loc) {
             g_warning("Downloading of repodata failed: %s", (gchar *) element->data);
             cr_download_failed = TRUE;
@@ -1440,7 +1440,7 @@ main(int argc, char **argv)
         // Remove downloaded metadata and free structures
         for (element = local_repos; element; element = g_slist_next(element)) {
             struct cr_MetadataLocation *loc = (struct cr_MetadataLocation  *) element->data;
-            cr_free_metadata_location(loc);
+            cr_metadatalocation_free(loc);
         }
         return 1;
     }
@@ -1485,7 +1485,7 @@ main(int argc, char **argv)
     if (cmd_options->noarch_repo_url) {
         struct cr_MetadataLocation *noarch_ml;
 
-        noarch_ml = cr_get_metadata_location(cmd_options->noarch_repo_url, 1);
+        noarch_ml = cr_locate_metadata(cmd_options->noarch_repo_url, 1);
         noarch_metadata = cr_new_metadata(CR_HT_KEY_FILENAME, 0, NULL);
 
         // Base paths in output of original createrepo doesn't have trailing '/'
@@ -1500,7 +1500,7 @@ main(int argc, char **argv)
             g_error("Cannot load noarch repo: \"%s\"", noarch_ml->repomd);
             cr_destroy_metadata(noarch_metadata);
             // TODO cleanup
-            cr_free_metadata_location(noarch_ml);
+            cr_metadatalocation_free(noarch_ml);
             return 1;
         }
 
@@ -1517,7 +1517,7 @@ main(int argc, char **argv)
         }
 
         g_free(noarch_repopath);
-        cr_free_metadata_location(noarch_ml);
+        cr_metadatalocation_free(noarch_ml);
     }
 
 
@@ -1561,7 +1561,7 @@ main(int argc, char **argv)
 
     for (element = local_repos; element; element = g_slist_next(element)) {
         struct cr_MetadataLocation *loc = (struct cr_MetadataLocation  *) element->data;
-        cr_free_metadata_location(loc);
+        cr_metadatalocation_free(loc);
     }
 
     g_slist_free (local_repos);

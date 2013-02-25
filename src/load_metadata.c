@@ -1263,7 +1263,7 @@ cr_load_xml_metadata(cr_Metadata md, struct cr_MetadataLocation *ml)
     if (result == CR_LOAD_METADATA_ERR) {
         g_critical("%s: Error encountered while parsing", __func__);
         cr_destroy_metadata_hashtable(intern_hashtable);
-        cr_free_metadata_location(ml);
+        cr_metadatalocation_free(ml);
         return result;
     }
 
@@ -1324,9 +1324,9 @@ cr_locate_and_load_xml_metadata(cr_Metadata md, const char *repopath)
         return CR_LOAD_METADATA_ERR;
 
     int ret;
-    struct cr_MetadataLocation *ml = cr_get_metadata_location(repopath, 1);
+    struct cr_MetadataLocation *ml = cr_locate_metadata(repopath, 1);
     ret = cr_load_xml_metadata(md, ml);
-    cr_free_metadata_location(ml);
+    cr_metadatalocation_free(ml);
 
     return ret;
 }

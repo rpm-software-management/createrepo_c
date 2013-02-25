@@ -728,9 +728,9 @@ main(int argc, char **argv)
         old_metadata = cr_new_metadata(CR_HT_KEY_FILENAME, 1, current_pkglist);
 
         if (cmd_options->outputdir)
-            old_metadata_location = cr_get_metadata_location(out_dir, 1);
+            old_metadata_location = cr_locate_metadata(out_dir, 1);
         else
-            old_metadata_location = cr_get_metadata_location(in_dir, 1);
+            old_metadata_location = cr_locate_metadata(in_dir, 1);
 
         ret = cr_load_xml_metadata(old_metadata, old_metadata_location);
         if (ret == CR_LOAD_METADATA_OK)
@@ -814,7 +814,7 @@ main(int argc, char **argv)
             g_critical("Error while copy %s -> %s", src_updateinfo, updateinfo);
     }
 
-    cr_free_metadata_location(old_metadata_location);
+    cr_metadatalocation_free(old_metadata_location);
     old_metadata_location = NULL;
 
 

@@ -35,7 +35,7 @@
 
 
 void
-cr_free_metadata_location(struct cr_MetadataLocation *ml)
+cr_metadatalocation_free(struct cr_MetadataLocation *ml)
 {
     if (!ml) {
         return;
@@ -65,7 +65,7 @@ cr_free_metadata_location(struct cr_MetadataLocation *ml)
 
 
 struct cr_MetadataLocation *
-parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite)
+cr_parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite)
 {
     int ret;
     xmlChar *name;
@@ -218,7 +218,7 @@ parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite)
 
 
 struct cr_MetadataLocation *
-get_local_metadata(const char *in_repopath, int ignore_sqlite)
+cr_get_local_metadata(const char *in_repopath, int ignore_sqlite)
 {
     struct cr_MetadataLocation *ret = NULL;
 
@@ -249,7 +249,7 @@ get_local_metadata(const char *in_repopath, int ignore_sqlite)
         return ret;
     }
 
-    ret = parse_repomd(repomd, repopath, ignore_sqlite);
+    ret = cr_parse_repomd(repomd, repopath, ignore_sqlite);
 
     g_free(repomd);
     g_free(repopath);
@@ -260,7 +260,7 @@ get_local_metadata(const char *in_repopath, int ignore_sqlite)
 
 
 struct cr_MetadataLocation *
-get_remote_metadata(const char *repopath, int ignore_sqlite)
+cr_get_remote_metadata(const char *repopath, int ignore_sqlite)
 {
     gchar *url = NULL;
     gchar *tmp_repomd = NULL;
@@ -350,7 +350,7 @@ get_remote_metadata(const char *repopath, int ignore_sqlite)
 
     // Parse downloaded repomd.xml
 
-    r_location = parse_repomd(tmp_repomd, repopath, ignore_sqlite);
+    r_location = cr_parse_repomd(tmp_repomd, repopath, ignore_sqlite);
     if (!r_location) {
         g_critical("%s: repomd.xml parser failed on %s", __func__, tmp_repomd);
         goto get_remote_metadata_cleanup;
@@ -390,7 +390,7 @@ get_remote_metadata(const char *repopath, int ignore_sqlite)
 
     // Parse downloaded data
 
-    ret = get_local_metadata(tmp_dir, ignore_sqlite);
+    ret = cr_get_local_metadata(tmp_dir, ignore_sqlite);
     if (ret) {
         ret->tmp_dir = g_strdup(tmp_dir);
     }
@@ -404,7 +404,7 @@ get_remote_metadata_cleanup:
     g_free(url);
     curl_easy_cleanup(handle);
     if (!ret) cr_remove_dir(tmp_dir);
-    if (r_location) cr_free_metadata_location(r_location);
+    if (r_location) cr_metadatalocation_free(r_location);
 
     return ret;
 }
@@ -412,7 +412,7 @@ get_remote_metadata_cleanup:
 
 
 struct cr_MetadataLocation *
-cr_get_metadata_location(const char *in_repopath, int ignore_sqlite)
+cr_locate_metadata(const char *in_repopath, int ignore_sqlite)
 {
     struct cr_MetadataLocation *ret = NULL;
 
@@ -431,13 +431,13 @@ cr_get_metadata_location(const char *in_repopath, int ignore_sqlite)
         g_str_has_prefix(repopath, "https://"))
     {
         // Download data via curl
-        ret = get_remote_metadata(repopath, ignore_sqlite);
+        ret = cr_get_remote_metadata(repopath, ignore_sqlite);
     } else {
         const char *path = repopath;
         if (g_str_has_prefix(repopath, "file://")) {
             path = repopath+7;
         }
-        ret = get_local_metadata(path, ignore_sqlite);
+        ret = cr_get_local_metadata(path, ignore_sqlite);
     }
 
     if (ret) {
@@ -451,7 +451,7 @@ cr_get_metadata_location(const char *in_repopath, int ignore_sqlite)
 
 // Return list of non-null pointers on strings in the passed structure
 GSList *
-get_list_of_md_locations (struct cr_MetadataLocation *ml)
+cr_get_list_of_md_locations (struct cr_MetadataLocation *ml)
 {
     GSList *list = NULL;
 
@@ -476,7 +476,7 @@ get_list_of_md_locations (struct cr_MetadataLocation *ml)
 
 
 void
-free_list_of_md_locations(GSList *list)
+cr_free_list_of_md_locations(GSList *list)
 {
     if (list) {
         g_slist_free(list);
@@ -510,9 +510,9 @@ cr_remove_metadata(const char *repopath)
 
     // Remove all metadata listed in repomd.xml
 
-    ml = cr_get_metadata_location(repopath, 0);
+    ml = cr_locate_metadata(repopath, 0);
     if (ml) {
-        GSList *list = get_list_of_md_locations(ml);
+        GSList *list = cr_get_list_of_md_locations(ml);
         GSList *element;
 
         for (element=list; element; element=element->next) {
@@ -527,8 +527,8 @@ cr_remove_metadata(const char *repopath)
             }
         }
 
-        free_list_of_md_locations(list);
-        cr_free_metadata_location(ml);
+        cr_free_list_of_md_locations(list);
+        cr_metadatalocation_free(ml);
     }
 
 
@@ -574,7 +574,7 @@ typedef struct _old_file {
 
 
 void
-free_old_file(gpointer data)
+cr_free_old_file(gpointer data)
 {
     OldFile *old_file = (OldFile *) data;
     g_free(old_file->path);
@@ -583,7 +583,7 @@ free_old_file(gpointer data)
 
 
 gint
-cmp_old_repodata_files(gconstpointer a, gconstpointer b)
+cr_cmp_old_repodata_files(gconstpointer a, gconstpointer b)
 {
     if (((OldFile *) a)->mtime < ((OldFile *) b)->mtime)
         return 1;
@@ -594,7 +594,7 @@ cmp_old_repodata_files(gconstpointer a, gconstpointer b)
 
 
 void
-stat_and_insert(const gchar *dirname, const gchar *filename, GSList **list)
+cr_stat_and_insert(const gchar *dirname, const gchar *filename, GSList **list)
 {
     struct stat buf;
     OldFile *old_file;
@@ -604,12 +604,12 @@ stat_and_insert(const gchar *dirname, const gchar *filename, GSList **list)
     old_file = g_malloc0(sizeof(OldFile));
     old_file->mtime = buf.st_mtime;
     old_file->path  = path;
-    *list = g_slist_insert_sorted(*list, old_file, cmp_old_repodata_files);
+    *list = g_slist_insert_sorted(*list, old_file, cr_cmp_old_repodata_files);
 }
 
 
 int
-remove_listed_files(GSList *list, int retain)
+cr_remove_listed_files(GSList *list, int retain)
 {
     int removed = 0;
     GSList *el;
@@ -664,17 +664,17 @@ cr_remove_metadata_classic(const char *repopath, int retain)
         name_without_suffix = g_strndup(file, (dot - file));
 
         if (g_str_has_suffix(name_without_suffix, "primary.xml")) {
-            stat_and_insert(full_repopath, file, &pri_lst);
+            cr_stat_and_insert(full_repopath, file, &pri_lst);
         } else if (g_str_has_suffix(name_without_suffix, "primary.sqlite")) {
-            stat_and_insert(full_repopath, file, &pri_db_lst);
+            cr_stat_and_insert(full_repopath, file, &pri_db_lst);
         } else if (g_str_has_suffix(name_without_suffix, "filelists.xml")) {
-            stat_and_insert(full_repopath, file, &fil_lst);
+            cr_stat_and_insert(full_repopath, file, &fil_lst);
         } else if (g_str_has_suffix(name_without_suffix, "filelists.sqlite")) {
-            stat_and_insert(full_repopath, file, &fil_db_lst);
+            cr_stat_and_insert(full_repopath, file, &fil_db_lst);
         } else if (g_str_has_suffix(name_without_suffix, "other.xml")) {
-            stat_and_insert(full_repopath, file, &oth_lst);
+            cr_stat_and_insert(full_repopath, file, &oth_lst);
         } else if (g_str_has_suffix(name_without_suffix, "other.sqlite")) {
-            stat_and_insert(full_repopath, file, &oth_db_lst);
+            cr_stat_and_insert(full_repopath, file, &oth_db_lst);
         }
         g_free(name_without_suffix);
     }
@@ -689,19 +689,19 @@ cr_remove_metadata_classic(const char *repopath, int retain)
     g_free(repomd_path);
     g_free(full_repopath);
 
-    remove_listed_files(pri_lst, retain);
-    remove_listed_files(pri_db_lst, retain);
-    remove_listed_files(fil_lst, retain);
-    remove_listed_files(fil_db_lst, retain);
-    remove_listed_files(oth_lst, retain);
-    remove_listed_files(oth_db_lst, retain);
+    cr_remove_listed_files(pri_lst, retain);
+    cr_remove_listed_files(pri_db_lst, retain);
+    cr_remove_listed_files(fil_lst, retain);
+    cr_remove_listed_files(fil_db_lst, retain);
+    cr_remove_listed_files(oth_lst, retain);
+    cr_remove_listed_files(oth_db_lst, retain);
 
-    cr_slist_free_full(pri_lst, free_old_file);
-    cr_slist_free_full(pri_db_lst, free_old_file);
-    cr_slist_free_full(fil_lst, free_old_file);
-    cr_slist_free_full(fil_db_lst, free_old_file);
-    cr_slist_free_full(oth_lst, free_old_file);
-    cr_slist_free_full(oth_db_lst, free_old_file);
+    cr_slist_free_full(pri_lst, cr_free_old_file);
+    cr_slist_free_full(pri_db_lst, cr_free_old_file);
+    cr_slist_free_full(fil_lst, cr_free_old_file);
+    cr_slist_free_full(fil_db_lst, cr_free_old_file);
+    cr_slist_free_full(oth_lst, cr_free_old_file);
+    cr_slist_free_full(oth_db_lst, cr_free_old_file);
 
     return 0;
 }

@@ -29,10 +29,11 @@ extern "C" {
 #include <glib.h>
 
 /** \defgroup   package         Package representation.
+ *  \addtogroup package
+ *  @{
  */
 
-/** \ingroup package
- * Dependency (Provides, Conflicts, Obsoletes, Requires).
+/** Dependency (Provides, Conflicts, Obsoletes, Requires).
  */
 typedef struct {
     char *name;                 /*!< name */
@@ -44,8 +45,7 @@ typedef struct {
     gboolean pre;               /*!< preinstall */
 } cr_Dependency;
 
-/** \ingroup package
- * File in package.
+/** File in package.
  */
 typedef struct {
     char *type;                 /*!< one of "" (regular file), "dir", "ghost" */
@@ -53,8 +53,7 @@ typedef struct {
     char *name;                 /*!< filename */
 } cr_PackageFile;
 
-/** \ingroup package
- * Changelog entry.
+/** Changelog entry.
  */
 typedef struct {
     char *author;               /*!< author of changelog */
@@ -62,8 +61,7 @@ typedef struct {
     char *changelog;            /*!< text of changelog */
 } cr_ChangelogEntry;
 
-/** \ingroup package
- * Package
+/** Package
  */
 typedef struct {
     gint64 pkgKey;              /*!< used while inserting into sqlite db */
@@ -111,50 +109,43 @@ typedef struct {
                                      on the single place */
 } cr_Package;
 
-typedef void (*cr_PackageFn) (cr_Package *pkg, gpointer data);
-
-/** \ingroup package
- * Create new (empty) dependency structure.
+/** Create new (empty) dependency structure.
  * @return              new empty cr_Dependency
  */
 cr_Dependency *cr_dependency_new(void);
 
-/** \ingroup package
- * Create new (empty) package file structure.
+/** Create new (empty) package file structure.
  * @return              new emtpy cr_PackageFile
  */
 cr_PackageFile *cr_package_file_new(void);
 
-/** \ingroup package
- * Create new (empty) changelog structure.
+/** Create new (empty) changelog structure.
  * @return              new empty cr_ChangelogEntry
  */
 cr_ChangelogEntry *cr_changelog_entry_new(void);
 
-/** \ingroup package
- * Create new (empty) package structure.
+/** Create new (empty) package structure.
  * @return              new empty cr_Package
  */
 cr_Package *cr_package_new(void);
 
-/** \ingroup package
- * Create new (empty) package structure without initialized string chunk.
+/** Create new (empty) package structure without initialized string chunk.
  * @return              new empty cr_Package
  */
 cr_Package *cr_package_new_without_chunk(void);
 
-/** \ingroup package
- * Free package structure and all its structures.
+/** Free package structure and all its structures.
  * @param package       cr_Package
  */
 void cr_package_free(cr_Package *package);
 
-/** \ingroup package
- * Get NVRA package string
+/** Get NVRA package string
  * @param package       cr_Package
  * @return              nvra string
  */
 gchar *cr_package_nvra(cr_Package *package);
+
+/** @} */
 
 #ifdef __cplusplus
 }

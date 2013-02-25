@@ -25,10 +25,11 @@ extern "C" {
 #endif
 
 /** \defgroup   locate_metadata Locate metadata API.
+ *  \addtogroup locate_metadata
+ *  @{
  */
 
-/** \ingroup locate_metadata
- * Structure representing metadata location.
+/** Structure representing metadata location.
  */
 struct cr_MetadataLocation {
     char *pri_xml_href;         /*!< path to primary.xml */
@@ -48,8 +49,7 @@ struct cr_MetadataLocation {
                                      metadata were downloaded */
 };
 
-/** \ingroup locate_metadata
- * Parses repomd.xml and returns a filled cr_MetadataLocation structure.
+/** Parses repomd.xml and returns a filled cr_MetadataLocation structure.
  * Remote repodata (repopath with prefix "ftp://" or "http://") are dowloaded
  * into a temporary directory and removed when the cr_free_metadata_location()
  * is called on the cr_MetadataLocation.
@@ -60,16 +60,14 @@ struct cr_MetadataLocation {
 struct cr_MetadataLocation *cr_get_metadata_location(const char *repopath,
                                                      int ignore_sqlite);
 
-/** \ingroup locate_metadata
- * Free cr_MetadataLocation. If repodata were downloaded remove
+/** Free cr_MetadataLocation. If repodata were downloaded remove
  * a temporary directory with repodata.
  * @param ml            MeatadaLocation
  */
 void cr_free_metadata_location(struct cr_MetadataLocation *ml);
 
 
-/** \ingroup locate_metadata
- * Remove files related to repodata from the specified path.
+/** Remove files related to repodata from the specified path.
  * Files not listed in repomd.xml and with nonstandard names (standard names
  * are names with suffixes like primary.xml.*, primary.sqlite.*, other.xml.*,
  * etc.) are keep untouched (repodata/ subdirectory IS NOT removed!).
@@ -78,8 +76,7 @@ void cr_free_metadata_location(struct cr_MetadataLocation *ml);
  */
 int cr_remove_metadata(const char *repopath);
 
-/** \ingroup locate_metadata
- * Remove repodata in same manner as classic createrepo.
+/** Remove repodata in same manner as classic createrepo.
  * This function removes only (primary|filelists|other)[.sqlite].* files
  * from repodata.
  * @param repopath      path to directory with repodata/subdirectory
@@ -88,6 +85,8 @@ int cr_remove_metadata(const char *repopath);
  *                      If <1 no old files will be kept.
  */
 int cr_remove_metadata_classic(const char *repopath, int retain);
+
+/** @} */
 
 #ifdef __cplusplus
 }

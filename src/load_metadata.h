@@ -28,10 +28,11 @@ extern "C" {
 #endif
 
 /** \defgroup   load_metadata   Load metadata API.
+ *  \addtogroup load_metadata
+ *  @{
  */
 
-/** \ingroup load_metadata
- * Package attribute used as key in the hashtable.
+/** Package attribute used as key in the hashtable.
  */
 typedef enum {
     CR_HT_KEY_DEFAULT,                  /*!< default = pkg hash */
@@ -41,12 +42,14 @@ typedef enum {
                                              ->location_href) */
 } cr_HashTableKey;
 
+/** Return cr_HashTableKey from a cr_Metadata */
 #define cr_metadata_key(X)          ((X)->key)
+/** Return hashtable from a cr_Metadata */
 #define cr_metadata_hashtable(X)    ((X)->ht)
+/** Return GStringChunk from a cr_Metadata */
 #define cr_metadata_chunk(X)        ((X)->chunk)
 
-/** \ingroup load_metadata
- * Structure for loaded metadata
+/** Structure for loaded metadata
  */
 struct _cr_Metadata {
     cr_HashTableKey key;    /*!< key used in hashtable */
@@ -55,18 +58,14 @@ struct _cr_Metadata {
     GHashTable *pkglist_ht; /*!< list of allowed package basenames to load */
 };
 
-/** \ingroup load_metadata
- * Pointer to structure with loaded metadata
+/** Pointer to structure with loaded metadata
  */
 typedef struct _cr_Metadata *cr_Metadata;
 
-/**@{*/
 #define CR_LOAD_METADATA_OK        0  /*!< Metadata loaded successfully */
 #define CR_LOAD_METADATA_ERR       1  /*!< Error while loading metadata */
-/**@}*/
 
-/** \ingroup load_metadata
- * Create new (empty) metadata hashtable.
+/** Create new (empty) metadata hashtable.
  * It is NOT thread safe to load data into single cr_Metadata
  * from multiple threads. But non modifying access to the loaded data
  * in cr_Metadata is thread safe.
@@ -84,14 +83,12 @@ cr_Metadata cr_new_metadata(cr_HashTableKey key,
                             int use_single_chunk,
                             GSList *pkglist);
 
-/** \ingroup load_metadata
- * Destroy metadata.
+/** Destroy metadata.
  * @param md            cr_Metadata object
  */
 void cr_destroy_metadata(cr_Metadata md);
 
-/** \ingroup load_metadata
- * Load metadata from the specified location.
+/** Load metadata from the specified location.
  * @param md            metadata object
  * @param ml            metadata location
  * @return              return code CR_LOAD_METADATA_OK or CR_LOAD_METADATA_ERR
@@ -99,14 +96,15 @@ void cr_destroy_metadata(cr_Metadata md);
 int cr_load_xml_metadata(cr_Metadata md,
                          struct cr_MetadataLocation *ml);
 
-/** \ingroup load_metadata
- * Locate and load metadata from the specified path.
+/** Locate and load metadata from the specified path.
  * @param md            metadata object
  * @param repopath      path to repo (to directory with repodata/ subdir)
  * @return              return code CR_LOAD_METADATA_OK or CR_LOAD_METADATA_ERR
  */
 int cr_locate_and_load_xml_metadata(cr_Metadata md,
                                     const char *repopath);
+
+/** @} */
 
 #ifdef __cplusplus
 }

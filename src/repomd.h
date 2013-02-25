@@ -27,21 +27,20 @@ extern "C" {
 #include "compression_wrapper.h"
 #include "package.h"
 
-/** \defgroup repomd            Repomd API.
+/** \defgroup   repomd            Repomd API.
+ *  \addtogroup repomd
+ *  @{
  */
 
-/** \ingroup repomd
- * cr_RepomdRecord - object representing an item from repomd.xml
+/** cr_RepomdRecord - object representing an item from repomd.xml
  */
 typedef struct _cr_RepomdRecord * cr_RepomdRecord;
 
-/** \ingroup repomd
- * cr_Repomd - object representing repomd.xml
+/** cr_Repomd - object representing repomd.xml
  */
 typedef struct _cr_Repomd * cr_Repomd;
 
-/** \ingroup repomd
- * Internal representation of cr_RepomdRecord object
+/** Internal representation of cr_RepomdRecord object
  */
 struct _cr_RepomdRecord {
     char *location_real;        /*!< real path to the file */
@@ -58,8 +57,7 @@ struct _cr_RepomdRecord {
     GStringChunk *chunk;        /*!< string chunk */
 };
 
-/** \ingroup repomd
- * Internal representation of cr_Repomd object
+/** Internal representation of cr_Repomd object
  */
 struct _cr_Repomd {
     GHashTable *records;
@@ -69,22 +67,19 @@ struct _cr_Repomd {
     gchar *revision;
 };
 
-/** \ingroup repomd
- * Creates (alloc) new cr_RepomdRecord object
+/** Creates (alloc) new cr_RepomdRecord object
  * @param path                  path to the compressed file
  */
 cr_RepomdRecord cr_new_repomdrecord(const char *path);
 
-/** \ingroup repomd
- * Destroy cr_RepomdRecord object.
+/** Destroy cr_RepomdRecord object.
  * NOTE: Do NOT use this function on objects attached to cr_Repomd
  * (by cr_repomd_set_record).
  * @param record                cr_RepomdRecord object
  */
 void cr_free_repomdrecord(cr_RepomdRecord record);
 
-/** \ingroup repomd
- * Fill unfilled items in the cr_RepomdRecord (calculate checksums,
+/** Fill unfilled items in the cr_RepomdRecord (calculate checksums,
  * get file size before/after compression, etc.).
  * Note: For groupfile you shoud use cr_process_groupfile_repomdrecord function.
  * @param record                cr_RepomdRecord object
@@ -93,8 +88,7 @@ void cr_free_repomdrecord(cr_RepomdRecord record);
 int cr_fill_repomdrecord(cr_RepomdRecord record,
                          cr_ChecksumType checksum_type);
 
-/** \ingroup repomd
- * Analogue of cr_fill_repomdrecord but for groupfile.
+/** Analogue of cr_fill_repomdrecord but for groupfile.
  * Groupfile must be set with the path to existing non compressed groupfile.
  * Compressed group file will be created and compressed_groupfile record
  * updated.
@@ -109,19 +103,16 @@ void cr_process_groupfile_repomdrecord(cr_RepomdRecord groupfile,
                                        cr_ChecksumType checksum_type,
                                        cr_CompressionType compression);
 
-/** \ingroup repomd
- * Add a hash as prefix to the filename.
+/** Add a hash as prefix to the filename.
  * @param record                cr_RepomdRecord of file to be renamed
  */
 void cr_rename_repomdrecord_file(cr_RepomdRecord record);
 
-/** \ingroup repomd
- * Create new empty cr_Repomd object wich represents content of repomd.xml.
+/** Create new empty cr_Repomd object wich represents content of repomd.xml.
  */
 cr_Repomd cr_new_repomd();
 
-/** \ingroup repomd
- * Set cr_Repomd record into cr_Repomd object.
+/** Set cr_Repomd record into cr_Repomd object.
  * @param repomd                cr_Repomd object
  * @param record                cr_RepomdRecord object
  * @param type                  type of record ("primary, "groupfile", ...)
@@ -130,15 +121,13 @@ void cr_repomd_set_record(cr_Repomd repomd,
                           cr_RepomdRecord record,
                           const char *type);
 
-/** \ingroup repomd
- * Set custom revision string of repomd.
+/** Set custom revision string of repomd.
  * @param repomd                cr_Repomd object
  * @param revision              revision string
  */
 void cr_repomd_set_revision(cr_Repomd repomd, const char *revision);
 
-/** \ingroup repomd
- * Add distro tag.
+/** Add distro tag.
  * @param repomd                cr_Repomd object
  * @param cpeid                 cpeid string (could be NULL)
  * @param tag                   distro tag string
@@ -147,33 +136,31 @@ void cr_repomd_add_distro_tag(cr_Repomd repomd,
                               const char *cpeid,
                               const char *tag);
 
-/** \ingroup repomd
- * Add repo tag.
+/** Add repo tag.
  * @param repomd                cr_Repomd object
  * @param tag                   repo tag
  */
 void cr_repomd_add_repo_tag(cr_Repomd repomd, const char *tag);
 
-/** \ingroup repomd
- * Add content tag.
+/** Add content tag.
  * @param repomd                cr_Repomd object
  * @param tag                   content tag
  */
 void cr_repomd_add_content_tag(cr_Repomd repomd, const char *tag);
 
-/** \ingroup repomd
- * Frees cr_Repomd object and all its cr_RepomdRecord objects
+/** Frees cr_Repomd object and all its cr_RepomdRecord objects
  * @param repomd                cr_Repomd object
  */
 void cr_free_repomd(cr_Repomd repomd);
 
 
-/** \ingroup repomd
- * Generate repomd.xml content.
+/** Generate repomd.xml content.
  * @param repomd                cr_Repomd object
  * @return                      string with repomd.xml content
  */
 gchar *cr_generate_repomd_xml(cr_Repomd repomd);
+
+/** @} */
 
 #ifdef __cplusplus
 }

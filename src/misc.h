@@ -31,22 +31,21 @@ extern "C" {
 #include "constants.h"
 
 /** \defgroup   misc    Miscellaneous useful functions and macros.
+ *  \addtogroup misc
+ *  @{
  */
 
-/** \ingroup misc
- * Macro for supress compiler warning about unused param.
+/** Macro for supress compiler warning about unused param.
  */
 #define CR_UNUSED(x) (void)(x)
 
-/** \ingroup misc
- * Convert flags from RPM header to a string representation.
+/** Convert flags from RPM header to a string representation.
  * @param flags         flags
  * @return              flags as constant string
  */
 const char *cr_flag_to_str(gint64 flags);
 
-/** \ingroup misc
- * Epoch-Version-Release representation.
+/** Epoch-Version-Release representation.
  */
 struct cr_EVR {
     char *epoch;        /*!< epoch */
@@ -54,6 +53,8 @@ struct cr_EVR {
     char *release;      /*!< release */
 };
 
+/** Name-Version-Release-Epoch-Arch representation.
+ */
 struct cr_NVREA {
     char *name;         /*!< name */
     char *version;      /*!< version */
@@ -62,8 +63,7 @@ struct cr_NVREA {
     char *arch;         /*!< arch */
 };
 
-/** \ingroup misc
- * Version representation
+/** Version representation
  * e.g. for openssl-devel-1.0.0i = version: 1, release: 0, patch: 0, suffix: i
  */
 struct cr_Version {
@@ -74,8 +74,7 @@ struct cr_Version {
 };
 
 
-/** \ingroup misc
- * Convert epoch-version-release string into cr_EVR structure.
+/** Convert epoch-version-release string into cr_EVR structure.
  * If no GStringChunk passed, all non NULL items in returned structure
  * are malloced and in that case, you have to free all non-NULL element
  * yourself.
@@ -85,8 +84,7 @@ struct cr_Version {
  */
 struct cr_EVR cr_str_to_evr(const char *string, GStringChunk *chunk);
 
-/** \ingroup misc
- * Check if the filename match pattern for primary files (files listed
+/** Check if the filename match pattern for primary files (files listed
  *  in primary.xml).
  * @param filename      full path to file
  * @return              1 if it is primary file, otherwise 0
@@ -101,8 +99,7 @@ static inline int cr_is_primary(const char *filename) {
     return 0;
 };
 
-/** \ingroup misc
- * Compute file checksum.
+/** Compute file checksum.
  * @param filename      filename
  * @param type          type of checksum
  * @return              malloced null terminated string with checksum
@@ -110,44 +107,37 @@ static inline int cr_is_primary(const char *filename) {
  */
 char *cr_compute_file_checksum(const char *filename, cr_ChecksumType type);
 
-/** \ingroup misc
- * Header range
+/** Header range
  */
 struct cr_HeaderRangeStruct {
     unsigned int start;         /*!< First byte of header */
     unsigned int end;           /*!< Last byte of header */
 };
 
-/** \ingroup misc
- * Return header byte range.
+/** Return header byte range.
  * @param filename      filename
  * @return              header range (start = end = 0 on error)
  */
 struct cr_HeaderRangeStruct cr_get_header_byte_range(const char *filename);
 
-/** \ingroup misc
- * Return checksum name.
+/** Return checksum name.
  * @param type          checksum type
  * @return              constant null terminated string with checksum name
  *                      or NULL on error
  */
 const char *cr_checksum_name_str(cr_ChecksumType type);
 
-/** \ingroup misc
- * Return pointer to the rest of string after last '/'.
+/** Return pointer to the rest of string after last '/'.
  * (e.g. for "/foo/bar" returns "bar")
  * @param filepath      path
  * @return              pointer into the path
  */
 char *cr_get_filename(const char *filepath);
 
-/**@{*/
 #define CR_COPY_OK              0       /*!< Copy successfully finished */
 #define CR_COPY_ERR             1       /*!< Error while copy */
-/**@}*/
 
-/** \ingroup misc
- * Download a file from the URL into the in_dst via curl handle.
+/** Download a file from the URL into the in_dst via curl handle.
  * If *error == NULL then download was successfull.
  * @param handle        CURL handle
  * @param url           source url
@@ -161,16 +151,14 @@ void cr_download(CURL *handle,
                  const char *destination,
                  char **error);
 
-/** \ingroup misc
- * Copy file.
+/** Copy file.
  * @param src           source filename
  * @param dst           destination (if dst is dir, filename of src is used)
  * @return              CR_COPY_OK or CR_COPY_ERR on error
  */
 int cr_copy_file(const char *src, const char *dst);
 
-/** \ingroup misc
- * Compress file.
+/** Compress file.
  * @param src           source filename
  * @param dst           destination (If dst is dir, filename of src +
  *                      compression suffix is used.
@@ -182,37 +170,32 @@ int cr_compress_file(const char *src,
                      const char *dst,
                      cr_CompressionType compression);
 
-/** \ingroup misc
- * Better copy file. Source (src) could be remote address (http:// or ftp://).
+/** Better copy file. Source (src) could be remote address (http:// or ftp://).
  * @param src           source filename
  * @param dst           destination (if dst is dir, filename of src is used)
  * @return              CR_COPY_OK or CR_COPY_ERR on error
  */
 int cr_better_copy_file(const char *src, const char *dst);
 
-/** \ingroup misc
- * Recursively remove directory.
+/** Recursively remove directory.
  * @param path          filepath
  * @return              0 on success, nonzero on failure (errno is set)
  */
 int cr_remove_dir(const char *path);
 
-/** \ingroup misc
- * Normalize path (Path with exactly one trailing '/').
+/** Normalize path (Path with exactly one trailing '/').
  *@param path           path
  *@return               mallocated string with normalized path or NULL
  */
 char *cr_normalize_dir_path(const char *path);
 
-/** \ingroup misc
- * Convert version string into cr_Version struct.
+/** Convert version string into cr_Version struct.
  * @param str           version string
  * @return              cr_Version
  */
 struct cr_Version cr_str_to_version(const char *str);
 
-/** \ingroup misc
- * Compare two version string.
+/** Compare two version string.
  * @param str1          first version string
  * @param str2          second version string
  * @return              0 - versions are same, 1 - first string is bigger
@@ -220,8 +203,7 @@ struct cr_Version cr_str_to_version(const char *str);
  */
 int cr_cmp_version_str(const char* str1, const char *str2);
 
-/** \ingroup misc
- * Logging function with no output.
+/** Logging function with no output.
  * @param log_domain    logging domain
  * @param log_level     logging level
  * @param message       message
@@ -232,8 +214,7 @@ void cr_null_log_fn(const gchar *log_domain,
                     const gchar *message,
                     gpointer user_data);
 
-/** \ingroup misc
- * Createrepo_c library standard logging function.
+/** Createrepo_c library standard logging function.
  * @param log_domain    logging domain
  * @param log_level     logging level
  * @param message       message
@@ -244,8 +225,7 @@ void cr_log_fn(const gchar *log_domain,
                const gchar *message,
                gpointer user_data);
 
-/** \ingroup misc
- * Frees all the memory used by a GSList, and calls the specified destroy
+/** Frees all the memory used by a GSList, and calls the specified destroy
  * function on every element's data.
  * This is the same function as g_slist_free_full(). The original function
  * is implemented in glib since 2.28 but we need to support the older glib too.
@@ -254,11 +234,18 @@ void cr_log_fn(const gchar *log_domain,
  */
 void cr_slist_free_full(GSList *list, GDestroyNotify free_f);
 
+/** Split filename into the NVREA structure.
+ * @param filename      filename
+ * @return              struct cr_NVREA
+ */
 struct cr_NVREA *cr_split_rpm_filename(const char *filename);
-void cr_nvrea_free(struct cr_NVREA *);
 
-/** \ingroup misc
- * Compare evr of two cr_NVREA. Name and arch are ignored.
+/** Free struct cr_NVREA.
+ * @param nvrea         struct cr_NVREA
+ */
+void cr_nvrea_free(struct cr_NVREA *nvrea);
+
+/** Compare evr of two cr_NVREA. Name and arch are ignored.
  * @param A     pointer to first cr_NVREA
  * @param B     pointer to second cr_NVREA
  * @return      0 = same, 1 = first is newer, -1 = second is newer
@@ -266,8 +253,7 @@ void cr_nvrea_free(struct cr_NVREA *);
 #define cr_cmp_nvrea(A, B) (cr_cmp_evr((A)->epoch, (A)->version, (A)->release,\
                                         (B)->epoch, (B)->version, (B)->release))
 
-/** \ingroup misc
- * Compare two version strings splited into evr chunks.
+/** Compare two version strings splited into evr chunks.
  * param e1     1. epoch
  * param v1     1. version
  * param r1     1. release
@@ -278,6 +264,8 @@ void cr_nvrea_free(struct cr_NVREA *);
  */
 int cr_cmp_evr(const char *e1, const char *v1, const char *r1,
                const char *e2, const char *v2, const char *r2);
+
+/** @} */
 
 #ifdef __cplusplus
 }

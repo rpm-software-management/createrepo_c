@@ -25,10 +25,11 @@ extern "C" {
 #endif
 
 /** \defgroup   compression_wrapper     Wrapper for compressed file.
+ *  \addtogroup compression_wrapper
+ *  @{
  */
 
-/** \ingroup compression_wrapper
- * Compression type.
+/** Compression type.
  */
 typedef enum {
     CR_CW_AUTO_DETECT_COMPRESSION,    /*!< Autodetection */
@@ -39,8 +40,7 @@ typedef enum {
     CR_CW_XZ_COMPRESSION,             /*!< XZ compression */
 } cr_CompressionType;
 
-/** \ingroup compression_wrapper
- * Open modes.
+/** Open modes.
  */
 typedef enum {
     CR_CW_MODE_READ,               /*!< Read mode */
@@ -48,8 +48,7 @@ typedef enum {
 } cr_OpenMode;
 
 
-/** \ingroup compression_wrapper
- * Structure represents a compressed file.
+/** Structure represents a compressed file.
  */
 typedef struct {
     cr_CompressionType type;    /*!< Type of compression */
@@ -57,28 +56,22 @@ typedef struct {
     cr_OpenMode mode;           /*!< Mode */
 } CR_FILE;
 
-/**@{*/
 #define CR_CW_OK   0       /*!< Return value - Everything all right */
 #define CR_CW_ERR -1       /*!< Return value - Error */
-/**@}*/
 
-
-/** \ingroup compression_wrapper
- * Returns a common suffix for the specified cr_CompressionType.
+/** Returns a common suffix for the specified cr_CompressionType.
  * @param comtype       compression type
  * @return              common file suffix
  */
 const char *cr_compression_suffix(cr_CompressionType comtype);
 
-/** \ingroup compression_wrapper
- * Detect a compression type of the specified file.
+/** Detect a compression type of the specified file.
  * @param filename      filename
  * @return              detected type of compression
  */
 cr_CompressionType cr_detect_compression(const char* filename);
 
-/** \ingroup compression_wrapper
- * Open/Create the specified file.
+/** Open/Create the specified file.
  * @param filename      filename
  * @param mode          open mode
  * @param comtype       type of compression
@@ -88,8 +81,7 @@ CR_FILE *cr_open(const char *filename,
                  cr_OpenMode mode,
                  cr_CompressionType comtype);
 
-/** \ingroup compression_wrapper
- * Reads an array of len bytes from the CR_FILE.
+/** Reads an array of len bytes from the CR_FILE.
  * @param cr_file       CR_FILE pointer
  * @param buffer        target buffer
  * @param len           number of bytes to read
@@ -97,8 +89,7 @@ CR_FILE *cr_open(const char *filename,
  */
 int cr_read(CR_FILE *cr_file, void *buffer, unsigned int len);
 
-/** \ingroup compression_wrapper
- * Writes the array of len bytes from buffer to the cr_file.
+/** Writes the array of len bytes from buffer to the cr_file.
  * @param cr_file       CR_FILE pointer
  * @param buffer        source buffer
  * @param len           number of bytes to read
@@ -107,16 +98,14 @@ int cr_read(CR_FILE *cr_file, void *buffer, unsigned int len);
  */
 int cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len);
 
-/** \ingroup compression_wrapper
- * Writes the string pointed by str into the cr_file.
+/** Writes the string pointed by str into the cr_file.
  * @param cr_file       CR_FILE pointer
  * @param str           null terminated ('\0') string
  * @return              number of uncompressed bytes writed or CR_CW_ERR
  */
 int cr_puts(CR_FILE *cr_file, const char *str);
 
-/** \ingroup compression_wrapper
- * Writes a formatted string into the cr_file.
+/** Writes a formatted string into the cr_file.
  * @param cr_file       CR_FILE pointer
  * @param format        format string
  * @param ...           list of additional arguments as specified in format
@@ -124,12 +113,13 @@ int cr_puts(CR_FILE *cr_file, const char *str);
  */
 int cr_printf(CR_FILE *cr_file, const char *format, ...);
 
-/** \ingroup compression_wrapper
- * Closes the CR_FILE.
+/** Closes the CR_FILE.
  * @param cr_file       CR_FILE pointer
  * @return              CR_CW_OK or CR_CW_ERR
  */
 int cr_close(CR_FILE *cr_file);
+
+/** @} */
 
 #ifdef __cplusplus
 }

@@ -28,28 +28,26 @@ extern "C" {
 #include "constants.h"
 #include "package.h"
 
-/** \defgroup parsepkg  Package parser API.
+/** \defgroup   parsepkg    Package parser API.
+ *  \addtogroup parsepkg
+ *  @{
  */
 
-/** \ingroup parsepkg
- * Status of initialization of global structures for package parsing.
+/** Status of initialization of global structures for package parsing.
  */
 extern short cr_initialized;
 
-/** \ingroup parsepkg
- * Initialize global structures for package parsing.
+/** Initialize global structures for package parsing.
  * This function call rpmReadConfigFiles() and create global transaction set.
  * This function should be called only once! This function is not thread safe!
  */
 void cr_package_parser_init();
 
-/** \ingroup parsepkg
- * Free global structures for package parsing.
+/** Free global structures for package parsing.
  */
 void cr_package_parser_shutdown();
 
-/** \ingroup parsepkg
- * Generate package object from package file.
+/** Generate package object from package file.
  * @param filename              filename
  * @param checksum_type         type of checksum to be used
  * @param location_href         package location inside repository
@@ -65,8 +63,7 @@ cr_Package *cr_package_from_file(const char *filename,
                                  int changelog_limit,
                                  struct stat *stat_buf);
 
-/** \ingroup parsepkg
- * Generate XML for the specified package.
+/** Generate XML for the specified package.
  * @param filename              filename
  * @param checksum_type         type of checksum to be used
  * @param location_href         package location inside repository
@@ -81,6 +78,8 @@ struct cr_XmlStruct cr_xml_from_package_file(const char *filename,
                                              const char *location_base,
                                              int changelog_limit,
                                              struct stat *stat_buf);
+
+/** @} */
 
 #ifdef __cplusplus
 }

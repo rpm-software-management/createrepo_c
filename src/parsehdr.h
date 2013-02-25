@@ -29,11 +29,11 @@ extern "C" {
 #include "package.h"
 #include "xml_dump.h"
 
-/** \defgroup parsehdr         Header parser API.
+/** \defgroup   parsehdr         Header parser API.
+ *  \addtogroup parsehdr
  */
 
-/** \ingroup parsehdr
- * Read data from header and return filled cr_Package structure.
+/** Read data from header and return filled cr_Package structure.
  * All const char * params could be NULL.
  * @param hdr                   Header
  * @param mtime                 mtime of rpm file
@@ -58,8 +58,7 @@ cr_Package *cr_parse_header(Header hdr,
                             gint64 hdr_start,
                             gint64 hdr_end);
 
-/** \ingroup parsehdr
- * Read data from header and return struct cr_XmlStruct.
+/** Read data from header and return struct cr_XmlStruct.
  * All const char * params could be NULL.
  * @param hdr                   Header
  * @param mtime                 mtime of rpm file
@@ -84,6 +83,8 @@ struct cr_XmlStruct cr_xml_from_header(Header hdr,
                                        int changelog_limit,
                                        gint64 hdr_start,
                                        gint64 hdr_end);
+
+/** @} */
 
 #ifdef __cplusplus
 }

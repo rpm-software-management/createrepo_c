@@ -26,9 +26,6 @@
 #include "xml_dump.h"
 #include "misc.h"
 
-#undef MODULE
-#define MODULE "parsehdr: "
-
 
 inline gchar *
 safe_string_chunk_insert(GStringChunk *chunk, const char *str)

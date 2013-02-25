@@ -27,9 +27,6 @@
 #include "misc.h"
 #include "locate_metadata.h"
 
-#undef MODULE
-#define MODULE "locate_metadata: "
-
 #define TMPDIR_PATTERN  "/tmp/createrepo_c_tmp_repo_XXXXXX"
 
 #define FORMAT_XML      1
@@ -45,7 +42,7 @@ cr_free_metadata_location(struct cr_MetadataLocation *ml)
     }
 
     if (ml->tmp_dir) {
-        g_debug(MODULE"%s: Removing %s", __func__,  ml->tmp_dir);
+        g_debug("%s: Removing %s", __func__,  ml->tmp_dir);
         cr_remove_dir(ml->tmp_dir);
     }
 
@@ -78,14 +75,14 @@ parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite)
     // Parsing
     reader = xmlReaderForFile(repomd_path, NULL, XML_PARSE_NOBLANKS);
     if (!reader) {
-        g_warning(MODULE"%s: Error while xmlReaderForFile()", __func__);
+        g_warning("%s: Error while xmlReaderForFile()", __func__);
         return NULL;
     }
 
     ret = xmlTextReaderRead(reader);
     name = xmlTextReaderName(reader);
     if (g_strcmp0((char *) name, "repomd")) {
-        g_warning(MODULE"%s: Bad xml - missing repomd element? (%s)",
+        g_warning("%s: Bad xml - missing repomd element? (%s)",
                   __func__, name);
         xmlFree(name);
         xmlFreeTextReader(reader);
@@ -96,7 +93,7 @@ parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite)
     ret = xmlTextReaderRead(reader);
     name = xmlTextReaderName(reader);
     if (g_strcmp0((char *) name, "revision")) {
-        g_warning(MODULE"%s: Bad xml - missing revision element? (%s)",
+        g_warning("%s: Bad xml - missing revision element? (%s)",
                   __func__, name);
         xmlFree(name);
         xmlFreeTextReader(reader);
@@ -120,7 +117,7 @@ parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite)
 
     if (!ret) {
         // No elements left -> Bad xml
-        g_warning(MODULE"%s: Bad xml - missing data elements?", __func__);
+        g_warning("%s: Bad xml - missing data elements?", __func__);
         xmlFreeTextReader(reader);
         return NULL;
     }
@@ -230,7 +227,7 @@ get_local_metadata(const char *in_repopath, int ignore_sqlite)
     }
 
     if (!g_file_test(in_repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
-        g_warning(MODULE"%s: %s is not a directory", __func__, in_repopath);
+        g_warning("%s: %s is not a directory", __func__, in_repopath);
         return ret;
     }
 
@@ -246,7 +243,7 @@ get_local_metadata(const char *in_repopath, int ignore_sqlite)
     repomd = g_strconcat(repopath, "repodata/repomd.xml", NULL);
 
     if (!g_file_test(repomd, G_FILE_TEST_EXISTS)) {
-        g_debug(MODULE"%s: %s doesn't exists", __func__, repomd);
+        g_debug("%s: %s doesn't exists", __func__, repomd);
         g_free(repomd);
         g_free(repopath);
         return ret;
@@ -284,7 +281,7 @@ get_remote_metadata(const char *repopath, int ignore_sqlite)
     // Create temporary repo in /tmp
 
     if(!mkdtemp(tmp_dir)) {
-        g_critical(MODULE"%s: Cannot create a temporary directory: %s",
+        g_critical("%s: Cannot create a temporary directory: %s",
                    __func__, strerror(errno));
         return ret;
     }
@@ -292,7 +289,7 @@ get_remote_metadata(const char *repopath, int ignore_sqlite)
     tmp_repodata = g_strconcat(tmp_dir, "/repodata/", NULL);
 
     if (g_mkdir (tmp_repodata, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
-        g_critical(MODULE"%s: Cannot create a temporary directory", __func__);
+        g_critical("%s: Cannot create a temporary directory", __func__);
         return ret;
     }
 
@@ -302,11 +299,11 @@ get_remote_metadata(const char *repopath, int ignore_sqlite)
     tmp_repomd = g_strconcat(tmp_repodata, "repomd.xml", NULL);
     f_repomd = fopen(tmp_repomd, "w");
     if (!f_repomd) {
-        g_critical(MODULE"%s: Cannot open %s", __func__, tmp_repomd);
+        g_critical("%s: Cannot open %s", __func__, tmp_repomd);
         goto get_remote_metadata_cleanup;
     }
 
-    g_debug(MODULE"%s: Using tmp dir: %s", __func__, tmp_dir);
+    g_debug("%s: Using tmp dir: %s", __func__, tmp_dir);
 
 
     // Download repo files
@@ -316,25 +313,25 @@ get_remote_metadata(const char *repopath, int ignore_sqlite)
 
     // Set error buffer
     if (curl_easy_setopt(handle, CURLOPT_ERRORBUFFER, errorbuf) != CURLE_OK) {
-        g_critical(MODULE"%s: curl_easy_setopt(CURLOPT_ERRORBUFFER) error", __func__);
+        g_critical("%s: curl_easy_setopt(CURLOPT_ERRORBUFFER) error", __func__);
         goto get_remote_metadata_cleanup;
     }
 
     // Set URL
     if (curl_easy_setopt(handle, CURLOPT_URL, url) != CURLE_OK) {
-        g_critical(MODULE"%s: curl_easy_setopt(CURLOPT_URL) error", __func__);
+        g_critical("%s: curl_easy_setopt(CURLOPT_URL) error", __func__);
         goto get_remote_metadata_cleanup;
     }
 
     // Set output file descriptor
     if (curl_easy_setopt(handle, CURLOPT_WRITEDATA, f_repomd) != CURLE_OK) {
-        g_critical(MODULE"%s: curl_easy_setopt(CURLOPT_WRITEDATA) error", __func__);
+        g_critical("%s: curl_easy_setopt(CURLOPT_WRITEDATA) error", __func__);
         goto get_remote_metadata_cleanup;
     }
 
     // Fail on HTTP error (return code >= 400)
     if (curl_easy_setopt(handle, CURLOPT_FAILONERROR, 1) != CURLE_OK) {
-        g_critical(MODULE"%s: curl_easy_setopt(CURLOPT_FAILONERROR) error", __func__);
+        g_critical("%s: curl_easy_setopt(CURLOPT_FAILONERROR) error", __func__);
         goto get_remote_metadata_cleanup;
     }
 
@@ -343,7 +340,7 @@ get_remote_metadata(const char *repopath, int ignore_sqlite)
 
     rcode = curl_easy_perform(handle);
     if (rcode != 0) {
-        g_critical(MODULE"%s: curl_easy_perform() error: %s", __func__, errorbuf);
+        g_critical("%s: curl_easy_perform() error: %s", __func__, errorbuf);
         goto get_remote_metadata_cleanup;
     }
 
@@ -355,7 +352,7 @@ get_remote_metadata(const char *repopath, int ignore_sqlite)
 
     r_location = parse_repomd(tmp_repomd, repopath, ignore_sqlite);
     if (!r_location) {
-        g_critical(MODULE"%s: repomd.xml parser failed on %s", __func__, tmp_repomd);
+        g_critical("%s: repomd.xml parser failed on %s", __func__, tmp_repomd);
         goto get_remote_metadata_cleanup;
     }
 
@@ -383,12 +380,12 @@ get_remote_metadata(const char *repopath, int ignore_sqlite)
         cr_download(handle, r_location->updateinfo_href, tmp_repodata, &error);
 
     if (error) {
-        g_critical(MODULE"%s: Error while downloadig files: %s", __func__, error);
+        g_critical("%s: Error while downloadig files: %s", __func__, error);
         g_free(error);
         goto get_remote_metadata_cleanup;
     }
 
-    g_debug(MODULE"%s: Remote metadata was successfully downloaded", __func__);
+    g_debug("%s: Remote metadata was successfully downloaded", __func__);
 
 
     // Parse downloaded data
@@ -498,14 +495,14 @@ cr_remove_metadata(const char *repopath)
     struct cr_MetadataLocation *ml;
 
     if (!repopath || !g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
-        g_debug(MODULE"%s: remove_old_metadata: Cannot remove %s", __func__, repopath);
+        g_debug("%s: remove_old_metadata: Cannot remove %s", __func__, repopath);
         return -1;
     }
 
     full_repopath = g_strconcat(repopath, "/repodata/", NULL);
     repodir = g_dir_open(full_repopath, 0, NULL);
     if (!repodir) {
-        g_debug(MODULE"%s: Path %s doesn't exists", __func__, repopath);
+        g_debug("%s: Path %s doesn't exists", __func__, repopath);
         g_free(full_repopath);
         return -1;
     }
@@ -521,9 +518,9 @@ cr_remove_metadata(const char *repopath)
         for (element=list; element; element=element->next) {
             gchar *path = (char *) element->data;
 
-            g_debug(MODULE"%s: Removing: %s (path obtained from repomd.xml)", __func__, path);
+            g_debug("%s: Removing: %s (path obtained from repomd.xml)", __func__, path);
             if (g_remove(path) == -1) {
-                // g_warning(MODULE"%s: remove_old_metadata: Cannot remove %s", __func__, path);
+                // g_warning("%s: remove_old_metadata: Cannot remove %s", __func__, path);
                 ;
             } else {
                 removed_files++;
@@ -554,9 +551,9 @@ cr_remove_metadata(const char *repopath)
             !g_strcmp0(file, "repomd.xml"))
         {
             gchar *path = g_strconcat(full_repopath, file, NULL);
-            g_debug(MODULE"%s: Removing: %s", __func__, path);
+            g_debug("%s: Removing: %s", __func__, path);
             if (g_remove(path) == -1)
-                g_warning(MODULE"%s: Cannot remove %s", __func__, path);
+                g_warning("%s: Cannot remove %s", __func__, path);
             else
                 removed_files++;
             g_free(path);
@@ -622,9 +619,9 @@ remove_listed_files(GSList *list, int retain)
     el = g_slist_nth(list, retain);
     for (; el; el = g_slist_next(el)) {
         OldFile *of = (OldFile *) el->data;
-        g_debug(MODULE"%s: Removing: %s", __func__, of->path);
+        g_debug("%s: Removing: %s", __func__, of->path);
         if (g_remove(of->path) == -1)
-            g_warning(MODULE"%s: Cannot remove %s", __func__, of->path);
+            g_warning("%s: Cannot remove %s", __func__, of->path);
         else
             removed++;
     }
@@ -643,14 +640,14 @@ cr_remove_metadata_classic(const char *repopath, int retain)
     GSList *oth_lst = NULL, *oth_db_lst = NULL;
 
     if (!repopath || !g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
-        g_debug(MODULE"%s: remove_old_metadata: Cannot remove %s", __func__, repopath);
+        g_debug("%s: remove_old_metadata: Cannot remove %s", __func__, repopath);
         return -1;
     }
 
     full_repopath = g_strconcat(repopath, "/repodata/", NULL);
     repodir = g_dir_open(full_repopath, 0, NULL);
     if (!repodir) {
-        g_debug(MODULE"%s: Path %s doesn't exists", __func__, repopath);
+        g_debug("%s: Path %s doesn't exists", __func__, repopath);
         g_free(full_repopath);
         return -1;
     }
@@ -687,7 +684,7 @@ cr_remove_metadata_classic(const char *repopath, int retain)
     // Remove old metadata
 
     repomd_path = g_strconcat(full_repopath, "repomd.xml", NULL);
-    g_debug(MODULE"%s: Removing: %s", __func__, repomd_path);
+    g_debug("%s: Removing: %s", __func__, repomd_path);
     g_remove(repomd_path);
     g_free(repomd_path);
     g_free(full_repopath);

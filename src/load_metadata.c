@@ -31,9 +31,6 @@
 #include "compression_wrapper.h"
 #include "locate_metadata.h"
 
-#undef MODULE
-#define MODULE "load_metadata: "
-
 #define STRINGCHUNK_SIZE        16384
 #define CHUNK_SIZE              8192
 #define PKGS_REALLOC_STEP       2000
@@ -219,7 +216,7 @@ pri_start_handler(void *data, const char *el, const char **attr)
     } else if (!strcmp(el, "rpm:entry")) {
         if (!pkg) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Have <rpm:entry> but pkg object doesn't exist!",
+            g_critical("%s: Have <rpm:entry> but pkg object doesn't exist!",
                        __func__);
             return;
         }
@@ -245,7 +242,7 @@ pri_start_handler(void *data, const char *el, const char **attr)
                     dependency->pre = TRUE;
                 }
             } else {
-                g_warning(MODULE"%s: Unknown attribute \"%s\"", __func__, attr[i]);
+                g_warning("%s: Unknown attribute \"%s\"", __func__, attr[i]);
             }
         }
 
@@ -264,7 +261,7 @@ pri_start_handler(void *data, const char *el, const char **attr)
                 break;
             default:
                 g_free(dependency);
-                g_warning(MODULE"%s: Bad context (%d) for rpm:entry", __func__,
+                g_warning("%s: Bad context (%d) for rpm:entry", __func__,
                           ppd->context);
                 break;
         }
@@ -274,12 +271,12 @@ pri_start_handler(void *data, const char *el, const char **attr)
         // Check sanity
         if (ppd->context != METADATA) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Package element: Bad XML context!", __func__);
+            g_critical("%s: Package element: Bad XML context!", __func__);
             return;
         }
         if (ppd->pkg) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Package element: Pkg pointer is not NULL",
+            g_critical("%s: Package element: Pkg pointer is not NULL",
                        __func__);
             return;
         }
@@ -303,7 +300,7 @@ pri_start_handler(void *data, const char *el, const char **attr)
     } else if (!strcmp(el, "version")) {
         if (!pkg) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Have <version> but pkg object doesn't exist!",
+            g_critical("%s: Have <version> but pkg object doesn't exist!",
                        __func__);
             return;
         }
@@ -316,7 +313,7 @@ pri_start_handler(void *data, const char *el, const char **attr)
             } else if (!strcmp(attr[i], "rel")) {
                 pkg->release = g_string_chunk_insert(pkg->chunk, attr[i+1]);
             } else {
-                g_warning(MODULE"%s: Unknown attribute \"%s\"", __func__, attr[i]);
+                g_warning("%s: Unknown attribute \"%s\"", __func__, attr[i]);
             }
         }
 
@@ -326,7 +323,7 @@ pri_start_handler(void *data, const char *el, const char **attr)
 
         if (!pkg) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Have <checksum> but pkg object doesn't exist!",
+            g_critical("%s: Have <checksum> but pkg object doesn't exist!",
                        __func__);
             return;
         }
@@ -357,7 +354,7 @@ pri_start_handler(void *data, const char *el, const char **attr)
     } else if (!strcmp(el, "time")) {
         if (!pkg) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Have <time> but pkg object doesn't exist!", __func__);
+            g_critical("%s: Have <time> but pkg object doesn't exist!", __func__);
             return;
         }
 
@@ -367,7 +364,7 @@ pri_start_handler(void *data, const char *el, const char **attr)
             } else if (!strcmp(attr[i], "build")) {
                 pkg->time_build = g_ascii_strtoll(attr[i+1], NULL, 10);
             } else {
-                g_warning(MODULE"%s: Unknown attribute \"%s\"", __func__, attr[i]);
+                g_warning("%s: Unknown attribute \"%s\"", __func__, attr[i]);
             }
         }
 
@@ -375,7 +372,7 @@ pri_start_handler(void *data, const char *el, const char **attr)
     } else if (!strcmp(el, "size")) {
         if (!pkg) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Have <size> but pkg object doesn't exist!",
+            g_critical("%s: Have <size> but pkg object doesn't exist!",
                        __func__);
             return;
         }
@@ -388,7 +385,7 @@ pri_start_handler(void *data, const char *el, const char **attr)
             } else if (!strcmp(attr[i], "archive")) {
                 pkg->size_archive = g_ascii_strtoll(attr[i+1], NULL, 10);
             } else {
-                g_warning(MODULE"%s: Unknown attribute \"%s\"", __func__, attr[i]);
+                g_warning("%s: Unknown attribute \"%s\"", __func__, attr[i]);
             }
         }
 
@@ -396,7 +393,7 @@ pri_start_handler(void *data, const char *el, const char **attr)
     } else if (!strcmp(el, "location")) {
         if (!pkg) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Have <location> but pkg object doesn't exist!",
+            g_critical("%s: Have <location> but pkg object doesn't exist!",
                        __func__);
             return;
         }
@@ -407,7 +404,7 @@ pri_start_handler(void *data, const char *el, const char **attr)
             } else if (!strcmp(attr[i], "xml:base")) {
                 pkg->location_base = g_string_chunk_insert(pkg->chunk, attr[i+1]);
             } else {
-                g_warning(MODULE"%s: Unknown attribute \"%s\"", __func__, attr[i]);
+                g_warning("%s: Unknown attribute \"%s\"", __func__, attr[i]);
             }
         }
 
@@ -439,7 +436,7 @@ pri_start_handler(void *data, const char *el, const char **attr)
     } else if (!strcmp(el, "rpm:header-range")) {
         if (!pkg) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Have <rpm:header-range> but pkg object doesn't exist!",
+            g_critical("%s: Have <rpm:header-range> but pkg object doesn't exist!",
                        __func__);
             return;
         }
@@ -450,7 +447,7 @@ pri_start_handler(void *data, const char *el, const char **attr)
             } else if (!strcmp(attr[i], "end")) {
                 pkg->rpm_header_end = g_ascii_strtoll(attr[i+1], NULL, 10);
             } else {
-                g_warning(MODULE"%s: Unknown attribute \"%s\"", __func__, attr[i]);
+                g_warning("%s: Unknown attribute \"%s\"", __func__, attr[i]);
             }
         }
 
@@ -474,7 +471,7 @@ pri_start_handler(void *data, const char *el, const char **attr)
     } else if (!strcmp(el, "metadata")) {
         if (ppd->context != ROOT) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Bad context (%d) for %s element", __func__,
+            g_critical("%s: Bad context (%d) for %s element", __func__,
                        ppd->context, el);
             return;
         }
@@ -483,7 +480,7 @@ pri_start_handler(void *data, const char *el, const char **attr)
     // unknown element
     } else {
         ppd->error = TRUE;
-        g_warning(MODULE"%s: Unknown element: %s", __func__, el);
+        g_warning("%s: Unknown element: %s", __func__, el);
     }
 }
 
@@ -521,7 +518,7 @@ pri_char_handler(void *data, const char *txt, int txtlen)
             break;
         default:
             ppd->error = TRUE;
-            g_warning(MODULE"%s: Unknown xml element (%d) in primary.xml",
+            g_warning("%s: Unknown xml element (%d) in primary.xml",
                       __func__, ppd->last_elem);
             break;
     }
@@ -620,7 +617,7 @@ pri_end_handler(void *data, const char *el)
                 if (key && key[0] != '\0') {
                     g_hash_table_replace(ppd->hashtable, key, ppd->pkg);
                 } else {
-                    g_warning(MODULE"%s: Empty hashtable key!", __func__);
+                    g_warning("%s: Empty hashtable key!", __func__);
                 }
 
                 // Reverse lists
@@ -670,13 +667,13 @@ fil_start_handler(void *data, const char *el, const char **attr)
 
         if (ppd->context != PACKAGE) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Bad context of <file> element!", __func__);
+            g_critical("%s: Bad context of <file> element!", __func__);
             return;
         }
 
         if (!pkg) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Have <file> but pkg object doesn't exist!", __func__);
+            g_critical("%s: Have <file> but pkg object doesn't exist!", __func__);
             return;
         }
 
@@ -688,7 +685,7 @@ fil_start_handler(void *data, const char *el, const char **attr)
                     ppd->last_elem = FILE_GHOST_ELEM;
                 }
             } else {
-                g_warning(MODULE"%s: Unknown attribute \"%s\"", __func__, attr[i]);
+                g_warning("%s: Unknown attribute \"%s\"", __func__, attr[i]);
             }
         }
 
@@ -697,12 +694,12 @@ fil_start_handler(void *data, const char *el, const char **attr)
         // Check sanity
         if (ppd->context != FILELISTS) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Package element: Bad XML context!", __func__);
+            g_critical("%s: Package element: Bad XML context!", __func__);
             return;
         }
         if (ppd->pkg) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Package element: Pkg pointer is not NULL", __func__);
+            g_critical("%s: Package element: Pkg pointer is not NULL", __func__);
             return;
         }
 
@@ -724,12 +721,12 @@ fil_start_handler(void *data, const char *el, const char **attr)
 
             //if (!ppd->pkg) {
             //    ppd->error = TRUE;
-            //    g_critical(MODULE"%s: Unknown package (package ID: %s)",
+            //    g_critical("%s: Unknown package (package ID: %s)",
             //               __func__, key);
             //}
         } else {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Package withou pkgid attribute found!", __func__);
+            g_critical("%s: Package withou pkgid attribute found!", __func__);
         }
 
         if (ppd->pkg && ppd->chunk)
@@ -743,7 +740,7 @@ fil_start_handler(void *data, const char *el, const char **attr)
     } else if (!strcmp(el, "filelists")) {
         if (ppd->context != ROOT) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Bad context (%d) for %s element", __func__,
+            g_critical("%s: Bad context (%d) for %s element", __func__,
                        ppd->context, el);
             return;
         }
@@ -752,7 +749,7 @@ fil_start_handler(void *data, const char *el, const char **attr)
     // Unknown element
     } else {
         ppd->error = TRUE;
-        g_warning(MODULE"%s: Unknown element: %s", __func__, el);
+        g_warning("%s: Unknown element: %s", __func__, el);
     }
 }
 
@@ -776,7 +773,7 @@ fil_char_handler(void *data, const char *txt, int txtlen)
             break;
         default:
             ppd->error = TRUE;
-            g_warning(MODULE"%s: Unknown xml element (%d) in filelists.xml",
+            g_warning("%s: Unknown xml element (%d) in filelists.xml",
                       __func__, ppd->last_elem);
             break;
     }
@@ -804,7 +801,7 @@ fil_end_handler(void *data, const char *el)
             case FILE_DIR_ELEM:
             case FILE_GHOST_ELEM:
                 if (!txt || txtlen == 0) {
-                    g_warning(MODULE"%s: File with empty filename found!",
+                    g_warning("%s: File with empty filename found!",
                               __func__);
                     break;
                 }
@@ -828,7 +825,7 @@ fil_end_handler(void *data, const char *el)
 
             default:
                 ppd->error = TRUE;
-                g_warning(MODULE"%s: Bad last xml element state (%d) in filelists.xml",
+                g_warning("%s: Bad last xml element state (%d) in filelists.xml",
                           __func__, ppd->last_elem);
                 break;
         }
@@ -878,13 +875,13 @@ oth_start_handler(void *data, const char *el, const char **attr)
 
         if (ppd->context != PACKAGE) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Bad context of <changelog> element!", __func__);
+            g_critical("%s: Bad context of <changelog> element!", __func__);
             return;
         }
 
         if (!pkg) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Have <changelog> but pkg object doesn't exist!",
+            g_critical("%s: Have <changelog> but pkg object doesn't exist!",
                        __func__);
             return;
         }
@@ -898,7 +895,7 @@ oth_start_handler(void *data, const char *el, const char **attr)
             } else if (!strcmp(attr[i], "date")) {
                 changelog_entry->date = g_ascii_strtoll(attr[i+1], NULL, 10);;
             } else {
-                g_warning(MODULE"%s: Unknown attribute \"%s\"", __func__, attr[i]);
+                g_warning("%s: Unknown attribute \"%s\"", __func__, attr[i]);
             }
         }
 
@@ -909,13 +906,13 @@ oth_start_handler(void *data, const char *el, const char **attr)
         // Check sanity
         if (ppd->context != OTHERDATA) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Package element: Bad XML context (%d)!",
+            g_critical("%s: Package element: Bad XML context (%d)!",
                        __func__, ppd->context);
             return;
         }
         if (ppd->pkg) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Package element: Pkg pointer is not NULL",
+            g_critical("%s: Package element: Pkg pointer is not NULL",
                        __func__);
             return;
         }
@@ -939,12 +936,12 @@ oth_start_handler(void *data, const char *el, const char **attr)
 
             //if (!ppd->pkg) {
             //    ppd->error = TRUE;
-            //    g_critical(MODULE"%s: Unknown package (package ID: %s)",
+            //    g_critical("%s: Unknown package (package ID: %s)",
             //               __func__, key);
             //}
         } else {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Package withou pkgid attribute found!",
+            g_critical("%s: Package withou pkgid attribute found!",
                        __func__);
         }
 
@@ -959,7 +956,7 @@ oth_start_handler(void *data, const char *el, const char **attr)
     } else if (!strcmp(el, "otherdata")) {
         if (ppd->context != ROOT) {
             ppd->error = TRUE;
-            g_critical(MODULE"%s: Bad context (%d) for %s element", __func__,
+            g_critical("%s: Bad context (%d) for %s element", __func__,
                        ppd->context, el);
             return;
         }
@@ -968,7 +965,7 @@ oth_start_handler(void *data, const char *el, const char **attr)
     // Unknown element
     } else {
         ppd->error = TRUE;
-        g_warning(MODULE"%s: Unknown element: %s", __func__, el);
+        g_warning("%s: Unknown element: %s", __func__, el);
     }
 }
 
@@ -990,7 +987,7 @@ oth_char_handler(void *data, const char *txt, int txtlen)
             break;
         default:
             ppd->error = TRUE;
-            g_warning(MODULE"%s: Unknown xml element (%d) in other.xml",
+            g_warning("%s: Unknown xml element (%d) in other.xml",
                       __func__, ppd->last_elem);
             break;
     }
@@ -1019,7 +1016,7 @@ oth_end_handler(void *data, const char *el)
 
             default:
                 ppd->error = TRUE;
-                g_warning(MODULE"%s: Bad last xml element state (%d) in other.xml",
+                g_warning("%s: Bad last xml element state (%d) in other.xml",
                           __func__, ppd->last_elem);
                 break;
         }
@@ -1065,7 +1062,7 @@ load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
 
     compression_type = cr_detect_compression(primary_xml_path);
     if (compression_type == CR_CW_UNKNOWN_COMPRESSION) {
-        g_debug(MODULE"%s: Unknown compression", __func__);
+        g_debug("%s: Unknown compression", __func__);
         return CR_LOAD_METADATA_ERR;
     }
 
@@ -1073,17 +1070,17 @@ load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
     // Open files
 
     if (!(pri_xml_cwfile = cr_open(primary_xml_path, CR_CW_MODE_READ, compression_type))) {
-        g_debug(MODULE"%s: Cannot open file: %s", __func__, primary_xml_path);
+        g_debug("%s: Cannot open file: %s", __func__, primary_xml_path);
         return CR_LOAD_METADATA_ERR;
     }
 
     if (!(fil_xml_cwfile = cr_open(filelists_xml_path, CR_CW_MODE_READ, compression_type))) {
-        g_debug(MODULE"%s: Cannot open file: %s", __func__, filelists_xml_path);
+        g_debug("%s: Cannot open file: %s", __func__, filelists_xml_path);
         return CR_LOAD_METADATA_ERR;
     }
 
     if (!(oth_xml_cwfile = cr_open(other_xml_path, CR_CW_MODE_READ, compression_type))) {
-        g_debug(MODULE"%s: Cannot open file: %s", __func__, other_xml_path);
+        g_debug("%s: Cannot open file: %s", __func__, other_xml_path);
         return CR_LOAD_METADATA_ERR;
     }
 
@@ -1124,18 +1121,18 @@ load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
 
         pri_buff = XML_GetBuffer(pri_p, CHUNK_SIZE);
         if (!pri_buff) {
-            g_critical(MODULE"%s: Ran out of memory for parse", __func__);
+            g_critical("%s: Ran out of memory for parse", __func__);
             return CR_LOAD_METADATA_ERR;
         }
 
         pri_len = cr_read(pri_xml_cwfile, (void *) pri_buff, CHUNK_SIZE);
         if (pri_len < 0) {
-            g_critical(MODULE"%s: Read error", __func__);
+            g_critical("%s: Read error", __func__);
             return CR_LOAD_METADATA_ERR;
         }
 
         if (! XML_ParseBuffer(pri_p, pri_len, pri_len == 0)) {
-            g_critical(MODULE"%s: Parse error at line: %d (%s)", __func__,
+            g_critical("%s: Parse error at line: %d (%s)", __func__,
                                 (int) XML_GetCurrentLineNumber(pri_p),
                                 (char *) XML_ErrorString(XML_GetErrorCode(pri_p)));
             return CR_LOAD_METADATA_ERR;
@@ -1160,18 +1157,18 @@ load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
 
         fil_buff = XML_GetBuffer(fil_p, CHUNK_SIZE);
         if (!fil_buff) {
-            g_critical(MODULE"%s: Ran out of memory for parse", __func__);
+            g_critical("%s: Ran out of memory for parse", __func__);
             return CR_LOAD_METADATA_ERR;
         }
 
         fil_len = cr_read(fil_xml_cwfile, (void *) fil_buff, CHUNK_SIZE);
         if (fil_len < 0) {
-            g_critical(MODULE"%s: Read error", __func__);
+            g_critical("%s: Read error", __func__);
             return CR_LOAD_METADATA_ERR;
         }
 
         if (! XML_ParseBuffer(fil_p, fil_len, fil_len == 0)) {
-            g_critical(MODULE"%s: Parse error at line: %d (%s)", __func__,
+            g_critical("%s: Parse error at line: %d (%s)", __func__,
                                 (int) XML_GetCurrentLineNumber(fil_p),
                                 (char *) XML_ErrorString(XML_GetErrorCode(fil_p)));
             return CR_LOAD_METADATA_ERR;
@@ -1196,18 +1193,18 @@ load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
 
         oth_buff = XML_GetBuffer(oth_p, CHUNK_SIZE);
         if (!oth_buff) {
-            g_critical(MODULE"%s: Ran out of memory for parse", __func__);
+            g_critical("%s: Ran out of memory for parse", __func__);
             return CR_LOAD_METADATA_ERR;
         }
 
         oth_len = cr_read(oth_xml_cwfile, (void *) oth_buff, CHUNK_SIZE);
         if (oth_len < 0) {
-            g_critical(MODULE"%s: Read error", __func__);
+            g_critical("%s: Read error", __func__);
             return CR_LOAD_METADATA_ERR;
         }
 
         if (! XML_ParseBuffer(oth_p, oth_len, oth_len == 0)) {
-            g_critical(MODULE"%s: Parse error at line: %d (%s)", __func__,
+            g_critical("%s: Parse error at line: %d (%s)", __func__,
                                 (int) XML_GetCurrentLineNumber(oth_p),
                                 (char *) XML_ErrorString(XML_GetErrorCode(oth_p)));
             return CR_LOAD_METADATA_ERR;
@@ -1264,13 +1261,13 @@ cr_load_xml_metadata(cr_Metadata md, struct cr_MetadataLocation *ml)
                             md->chunk, md->pkglist_ht);
 
     if (result == CR_LOAD_METADATA_ERR) {
-        g_critical(MODULE"%s: Error encountered while parsing", __func__);
+        g_critical("%s: Error encountered while parsing", __func__);
         cr_destroy_metadata_hashtable(intern_hashtable);
         cr_free_metadata_location(ml);
         return result;
     }
 
-    g_debug(MODULE"%s: Parsed items: %d", __func__,
+    g_debug("%s: Parsed items: %d", __func__,
             g_hash_table_size(intern_hashtable));
 
     // Fill user hashtable and use user selected key
@@ -1294,14 +1291,14 @@ cr_load_xml_metadata(cr_Metadata md, struct cr_MetadataLocation *ml)
                 new_key = pkg->name;
                 break;
             default:
-                g_critical(MODULE"%s: Unknown hash table key selected",
+                g_critical("%s: Unknown hash table key selected",
                            __func__);
                 new_key = pkg->pkgId;
                 break;
         }
 
         if (g_hash_table_lookup(md->ht, new_key)) {
-            g_debug(MODULE"%s: Key \"%s\" already exists in hashtable",
+            g_debug("%s: Key \"%s\" already exists in hashtable",
                     __func__, (char *) new_key);
             g_hash_table_iter_remove(&iter);
         } else {

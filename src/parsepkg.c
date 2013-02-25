@@ -35,10 +35,6 @@
 #include "misc.h"
 #include "parsehdr.h"
 
-#undef MODULE
-#define MODULE "parsepkg: "
-
-
 volatile short cr_initialized = 0;
 rpmts ts = NULL;
 
@@ -54,7 +50,7 @@ cr_package_parser_init()
     rpmReadConfigFiles(NULL, NULL);
     ts = rpmtsCreate();
     if (!ts)
-        g_critical(MODULE"%s: rpmtsCreate() failed", __func__);
+        g_critical("%s: rpmtsCreate() failed", __func__);
 
     rpmVSFlags vsflags = 0;
     vsflags |= _RPMVSF_NODIGESTS;
@@ -69,7 +65,7 @@ cr_package_parser_init()
     // Work around for this shoud be use empty keyring.
     keyring = rpmKeyringNew();
     if (rpmtsSetKeyring(ts, keyring) == -1)
-        g_critical(MODULE"%s: rpmtsSetKeyring() failed", __func__);
+        g_critical("%s: rpmtsSetKeyring() failed", __func__);
     rpmKeyringFree(keyring);
 }
 
@@ -109,7 +105,7 @@ cr_package_from_file(const char *filename,
             checksum_type_str = "sha256";
             break;
         default:
-            g_warning(MODULE"%s: Unknown checksum type", __func__);
+            g_warning("%s: Unknown checksum type", __func__);
             return result;
             break;
     };
@@ -120,7 +116,7 @@ cr_package_from_file(const char *filename,
     FD_t fd = NULL;
     fd = Fopen(filename, "r.ufdio");
     if (!fd) {
-        g_warning(MODULE"%s: Fopen of %s failed %s",
+        g_warning("%s: Fopen of %s failed %s",
                   __func__, filename, strerror(errno));
         return result;
     }
@@ -133,15 +129,15 @@ cr_package_from_file(const char *filename,
     if (rc != RPMRC_OK) {
         switch (rc) {
             case RPMRC_NOKEY:
-                g_debug(MODULE"%s: %s: Public key is unavailable.",
+                g_debug("%s: %s: Public key is unavailable.",
                         __func__, filename);
                 break;
             case RPMRC_NOTTRUSTED:
-                g_debug(MODULE"%s:  %s: Signature is OK, but key is not trusted.",
+                g_debug("%s:  %s: Signature is OK, but key is not trusted.",
                         __func__, filename);
                 break;
             default:
-                g_warning(MODULE"%s: rpmReadPackageFile() error (%s)",
+                g_warning("%s: rpmReadPackageFile() error (%s)",
                           __func__, strerror(errno));
                 return result;
         }
@@ -161,7 +157,7 @@ cr_package_from_file(const char *filename,
     if (!stat_buf) {
         struct stat stat_buf_own;
         if (stat(filename, &stat_buf_own) == -1) {
-            g_warning(MODULE"%s: stat() error (%s)", __func__, strerror(errno));
+            g_warning("%s: stat() error (%s)", __func__, strerror(errno));
             return result;
         }
         mtime  = stat_buf_own.st_mtime;
@@ -228,7 +224,7 @@ cr_xml_from_package_file(const char *filename,
             checksum_type_str = "sha256";
             break;
         default:
-            g_warning(MODULE"%s: Unknown checksum type", __func__);
+            g_warning("%s: Unknown checksum type", __func__);
             return result;
             break;
     };
@@ -239,7 +235,7 @@ cr_xml_from_package_file(const char *filename,
     FD_t fd = NULL;
     fd = Fopen(filename, "r.ufdio");
     if (!fd) {
-        g_warning(MODULE"%s: Fopen failed %s", __func__, strerror(errno));
+        g_warning("%s: Fopen failed %s", __func__, strerror(errno));
         return result;
     }
 
@@ -251,15 +247,15 @@ cr_xml_from_package_file(const char *filename,
     if (rc != RPMRC_OK) {
         switch (rc) {
             case RPMRC_NOKEY:
-                g_debug(MODULE"%s: %s: Public key is unavailable.",
+                g_debug("%s: %s: Public key is unavailable.",
                         __func__, filename);
                 break;
             case RPMRC_NOTTRUSTED:
-                g_debug(MODULE"%s:  %s: Signature is OK, but key is not trusted.",
+                g_debug("%s:  %s: Signature is OK, but key is not trusted.",
                         __func__, filename);
                 break;
             default:
-                g_warning(MODULE"%s: rpmReadPackageFile() error (%s)",
+                g_warning("%s: rpmReadPackageFile() error (%s)",
                           __func__, strerror(errno));
                 return result;
         }
@@ -279,7 +275,7 @@ cr_xml_from_package_file(const char *filename,
     if (!stat_buf) {
         struct stat stat_buf_own;
         if (stat(filename, &stat_buf_own) == -1) {
-            g_warning(MODULE"%s: stat() error (%s)", __func__, strerror(errno));
+            g_warning("%s: stat() error (%s)", __func__, strerror(errno));
             return result;
         }
         mtime  = stat_buf_own.st_mtime;

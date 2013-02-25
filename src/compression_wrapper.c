@@ -30,9 +30,6 @@
 #include "logging.h"
 #include "compression_wrapper.h"
 
-#undef MODULE
-#define MODULE "compression_wrapper: "
-
 /*
 #define Z_CR_CW_NO_COMPRESSION         0
 #define Z_BEST_SPEED             1
@@ -100,7 +97,7 @@ cr_detect_compression(const char *filename)
     cr_CompressionType type = CR_CW_UNKNOWN_COMPRESSION;
 
     if (!g_file_test(filename, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR)) {
-        g_debug(MODULE"%s: File %s doesn't exists or it's not a regular file",
+        g_debug("%s: File %s doesn't exists or it's not a regular file",
                 __func__, filename);
         return type;
     }
@@ -131,14 +128,14 @@ cr_detect_compression(const char *filename)
     magic_t myt = magic_open(MAGIC_MIME);
     magic_load(myt, NULL);
     if (magic_check(myt, NULL) == -1) {
-        g_critical(MODULE"%s: magic_check() failed", __func__);
+        g_critical("%s: magic_check() failed", __func__);
         return type;
     }
 
     const char *mime_type = magic_file(myt, filename);
 
     if (mime_type) {
-        g_debug(MODULE"%s: Detected mime type: %s (%s)", __func__, mime_type,
+        g_debug("%s: Detected mime type: %s (%s)", __func__, mime_type,
                 filename);
 
         if (g_str_has_prefix(mime_type, "application/x-gzip") ||
@@ -177,7 +174,7 @@ cr_detect_compression(const char *filename)
             type = CR_CW_NO_COMPRESSION;
         }
     } else {
-        g_debug(MODULE"%s: Mime type not detected! (%s)", __func__, filename);
+        g_debug("%s: Mime type not detected! (%s)", __func__, filename);
     }
 
 
@@ -220,7 +217,7 @@ cr_open(const char *filename, cr_OpenMode mode, cr_CompressionType comtype)
     cr_CompressionType type;
 
     if (!filename || (mode != CR_CW_MODE_READ && mode != CR_CW_MODE_WRITE)) {
-        g_debug(MODULE"%s: Filename is NULL or bad mode value", __func__);
+        g_debug("%s: Filename is NULL or bad mode value", __func__);
         return NULL;
     }
 
@@ -229,13 +226,13 @@ cr_open(const char *filename, cr_OpenMode mode, cr_CompressionType comtype)
 
     if (mode == CR_CW_MODE_WRITE) {
         if (comtype == CR_CW_AUTO_DETECT_COMPRESSION) {
-            g_debug(MODULE"%s: CR_CW_AUTO_DETECT_COMPRESSION cannot be used if "
+            g_debug("%s: CR_CW_AUTO_DETECT_COMPRESSION cannot be used if "
                     "mode is CR_CW_MODE_WRITE", __func__);
             return NULL;
         }
 
         if (comtype == CR_CW_UNKNOWN_COMPRESSION) {
-            g_debug(MODULE"%s: CR_CW_UNKNOWN_COMPRESSION cannot be used if mode"
+            g_debug("%s: CR_CW_UNKNOWN_COMPRESSION cannot be used if mode"
             " is CR_CW_MODE_WRITE", __func__);
             return NULL;
         }
@@ -249,7 +246,7 @@ cr_open(const char *filename, cr_OpenMode mode, cr_CompressionType comtype)
     }
 
     if (type == CR_CW_UNKNOWN_COMPRESSION) {
-        g_debug(MODULE"%s: Cannot detect compression type", __func__);
+        g_debug("%s: Cannot detect compression type", __func__);
         return NULL;
     }
 
@@ -282,7 +279,7 @@ cr_open(const char *filename, cr_OpenMode mode, cr_CompressionType comtype)
             }
 
             if (gzbuffer((gzFile) file->FILE, GZ_BUFFER_SIZE) == -1) {
-                g_debug(MODULE"%s: gzbuffer() call failed", __func__);
+                g_debug("%s: gzbuffer() call failed", __func__);
             }
             break;
 
@@ -335,20 +332,20 @@ cr_open(const char *filename, cr_OpenMode mode, cr_CompressionType comtype)
             if (ret != LZMA_OK) {
                 switch (ret) {
                     case LZMA_MEM_ERROR:
-                        g_debug(MODULE"%s: XZ: Cannot allocate memory",
+                        g_debug("%s: XZ: Cannot allocate memory",
                                 __func__);
                         break;
                     case LZMA_OPTIONS_ERROR:
-                        g_debug(MODULE"%s: XZ: Unsupported flags (options)",
+                        g_debug("%s: XZ: Unsupported flags (options)",
                                 __func__);
                         break;
                     case LZMA_PROG_ERROR:
-                        g_debug(MODULE"%s: XZ: One or more of the parameters "
+                        g_debug("%s: XZ: One or more of the parameters "
                                 "have values that will never be valid.",
                                 __func__);
                         break;
                     default:
-                        g_debug(MODULE"%s: XZ: Unknown error", __func__);
+                        g_debug("%s: XZ: Unknown error", __func__);
                 }
                 g_free((void *) xz_file);
                 break;
@@ -522,10 +519,10 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len)
                 // Fill input buffer
                 if (stream->avail_in == 0) {
                     if ((lret = fread(xz_file->buffer, 1, XZ_BUFFER_SIZE, xz_file->file)) < 0) {
-                        g_debug(MODULE"%s: XZ: Error while fread", __func__);
+                        g_debug("%s: XZ: Error while fread", __func__);
                         return CR_CW_ERR;   // Error while reading input file
                     } else if (lret == 0) {
-                        g_debug(MODULE"%s: EOF", __func__);
+                        g_debug("%s: EOF", __func__);
                         break;   // EOF
                     }
                     stream->next_in = xz_file->buffer;
@@ -535,7 +532,7 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len)
                 // Decode
                 lret = lzma_code(stream, LZMA_RUN);
                 if (lret != LZMA_OK && lret != LZMA_STREAM_END) {
-                    g_debug(MODULE"%s: XZ: Error while decoding (%d)", __func__, lret);
+                    g_debug("%s: XZ: Error while decoding (%d)", __func__, lret);
                     return CR_CW_ERR;  // Error while decoding
                 }
                 if (lret == LZMA_STREAM_END) {
@@ -705,7 +702,7 @@ cr_printf(CR_FILE *cr_file, const char *format, ...)
     va_end(vl);
 
     if (ret < 0) {
-        g_debug(MODULE"%s: vasprintf() call failed", __func__);
+        g_debug("%s: vasprintf() call failed", __func__);
         return CR_CW_ERR;
     }
 

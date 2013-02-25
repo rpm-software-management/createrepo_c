@@ -22,22 +22,12 @@
  * USA.
  */
 
-/*
-TODO:
-- Fix possible license issue of this module!!!
-  - Relicensins whole project to GPLv2?
-  - Rewrite sqlite module?
-*/
-
 #include <glib.h>
 #include <string.h>
 #include <stdlib.h>
 #include "logging.h"
 #include "misc.h"
 #include "sqlite.h"
-
-#undef MODULE
-#define MODULE "sqlite: "
 
 #define ENCODED_PACKAGE_FILE_FILES 2048
 #define ENCODED_PACKAGE_FILE_TYPES 60

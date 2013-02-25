@@ -30,9 +30,6 @@
 #include "repomd.h"
 #include "compression_wrapper.h"
 
-#undef MODULE
-#define MODULE "repomd: "
-
 #define LOCATION_HREF_PREFIX            "repodata/"
 
 #define DEFAULT_DATABASE_VERSION        10
@@ -138,7 +135,7 @@ get_compressed_content_stat(const char *filename, cr_ChecksumType checksum_type)
             gchecksumtype = G_CHECKSUM_SHA256;
             break;
         default:
-            g_critical(MODULE"%s: Unknown checksum type", __func__);
+            g_critical("%s: Unknown checksum type", __func__);
             return NULL;
     };
 
@@ -147,7 +144,7 @@ get_compressed_content_stat(const char *filename, cr_ChecksumType checksum_type)
 
     GChecksum *checksum = g_checksum_new(gchecksumtype);
     if (!checksum) {
-        g_critical(MODULE"%s: g_checksum_new() failed", __func__);
+        g_critical("%s: g_checksum_new() failed", __func__);
         return NULL;
     }
 
@@ -158,7 +155,7 @@ get_compressed_content_stat(const char *filename, cr_ChecksumType checksum_type)
     do {
         readed = cr_read(cwfile, (void *) buffer, BUFFER_SIZE);
         if (readed == CR_CW_ERR) {
-            g_debug(MODULE"%s: Error while read compressed file: %s",
+            g_debug("%s: Error while read compressed file: %s",
                     __func__, filename);
             break;
         }
@@ -205,7 +202,7 @@ cr_fill_repomdrecord(cr_RepomdRecord md, cr_ChecksumType checksum_type)
 
     if (!g_file_test(path, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR)) {
         // File doesn't exists
-        g_warning(MODULE"%s: File %s doesn't exists", __func__, path);
+        g_warning("%s: File %s doesn't exists", __func__, path);
         return REPOMD_ERR;
     }
 
@@ -239,7 +236,7 @@ cr_fill_repomdrecord(cr_RepomdRecord md, cr_ChecksumType checksum_type)
             g_free(open_stat);
         } else {
             // Unknown compression
-            g_warning(MODULE"%s: File \"%s\" compressed by an unsupported type"
+            g_warning("%s: File \"%s\" compressed by an unsupported type"
                       " of compression", __func__, path);
             md->checksum_open_type = g_string_chunk_insert(md->chunk, "UNKNOWN");
             md->checksum_open = g_string_chunk_insert(md->chunk,
@@ -261,7 +258,7 @@ cr_fill_repomdrecord(cr_RepomdRecord md, cr_ChecksumType checksum_type)
                 md->size = buf.st_size;
             }
         } else {
-            g_warning(MODULE"%s: Stat on file \"%s\" failed", __func__, path);
+            g_warning("%s: Stat on file \"%s\" failed", __func__, path);
         }
     }
 
@@ -326,7 +323,7 @@ cr_process_groupfile_repomdrecord(cr_RepomdRecord groupfile,
 
     if (!g_file_test(path, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR)) {
         // File doesn't exists
-        g_warning(MODULE"%s: File %s doesn't exists", __func__, path);
+        g_warning("%s: File %s doesn't exists", __func__, path);
         return;
     }
 
@@ -338,7 +335,7 @@ cr_process_groupfile_repomdrecord(cr_RepomdRecord groupfile,
 
     while ((readed = cr_read(cw_plain, buf, BUFFER_SIZE)) > 0) {
         if (cr_write(cw_compressed, buf, (unsigned int) readed) == CR_CW_ERR) {
-            g_debug(MODULE"%s: Error while groupfile compression", __func__);
+            g_debug("%s: Error while groupfile compression", __func__);
             break;
         }
     }
@@ -347,7 +344,7 @@ cr_process_groupfile_repomdrecord(cr_RepomdRecord groupfile,
     cr_close(cw_plain);
 
     if (readed == CR_CW_ERR) {
-        g_debug(MODULE"%s: Error while groupfile compression", __func__);
+        g_debug("%s: Error while groupfile compression", __func__);
     }
 
 
@@ -360,14 +357,14 @@ cr_process_groupfile_repomdrecord(cr_RepomdRecord groupfile,
     // Get stats
 
     if (stat(path, &gf_stat)) {
-        g_debug(MODULE"%s: Error while stat() on %s", __func__, path);
+        g_debug("%s: Error while stat() on %s", __func__, path);
     } else {
         gf_size = gf_stat.st_size;
         gf_time = gf_stat.st_mtime;
     }
 
     if (stat(cpath, &cgf_stat)) {
-        g_debug(MODULE"%s: Error while stat() on %s", __func__, path);
+        g_debug("%s: Error while stat() on %s", __func__, path);
     } else {
         cgf_size = cgf_stat.st_size;
         cgf_time = cgf_stat.st_mtime;
@@ -585,7 +582,7 @@ cr_rename_repomdrecord_file(cr_RepomdRecord md)
     // Rename file
     if (g_file_test (new_location_real, G_FILE_TEST_EXISTS)) {
         if (remove(new_location_real)) {
-            g_critical(MODULE"%s: Cannot delete old %s",
+            g_critical("%s: Cannot delete old %s",
                        __func__,
                        new_location_real);
             g_free(new_location_real);
@@ -593,7 +590,7 @@ cr_rename_repomdrecord_file(cr_RepomdRecord md)
         }
     }
     if (rename(md->location_real, new_location_real)) {
-        g_critical(MODULE"%s: Cannot rename %s to %s",
+        g_critical("%s: Cannot rename %s to %s",
                    __func__,
                    md->location_real,
                    new_location_real);

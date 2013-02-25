@@ -34,10 +34,6 @@
 #include "constants.h"
 #include "misc.h"
 
-#undef MODULE
-#define MODULE "misc: "
-
-
 #define BUFFER_SIZE     4096
 
 
@@ -227,14 +223,14 @@ cr_compute_file_checksum(const char *filename, cr_ChecksumType type)
     GChecksumType gchecksumtype;
 
     if (!filename) {
-        g_debug(MODULE"%s: Filename param is NULL", __func__);
+        g_debug("%s: Filename param is NULL", __func__);
         return NULL;
     }
 
     // Check if file exists and if it is a regular file (not a directory)
 
     if (!g_file_test(filename, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR))) {
-        g_debug(MODULE"%s: File %s doesn't exists", __func__, filename);
+        g_debug("%s: File %s doesn't exists", __func__, filename);
         return NULL;
     }
 
@@ -252,7 +248,7 @@ cr_compute_file_checksum(const char *filename, cr_ChecksumType type)
             gchecksumtype = G_CHECKSUM_SHA256;
             break;
         default:
-            g_debug(MODULE"%s: Unknown checksum type", __func__);
+            g_debug("%s: Unknown checksum type", __func__);
             return NULL;
     };
 
@@ -261,7 +257,7 @@ cr_compute_file_checksum(const char *filename, cr_ChecksumType type)
 
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
-        g_critical(MODULE"%s: Cannot open %s (%s)", __func__, filename,
+        g_critical("%s: Cannot open %s (%s)", __func__, filename,
                                                     strerror(errno));
         return NULL;
     }
@@ -291,7 +287,7 @@ cr_compute_file_checksum(const char *filename, cr_ChecksumType type)
     g_checksum_free(checksum);
 
     if (!checksum_str) {
-        g_critical(MODULE"%s: Cannot get checksum %s (low memory?)", __func__,
+        g_critical("%s: Cannot get checksum %s (low memory?)", __func__,
                    filename);
     }
 
@@ -320,7 +316,7 @@ cr_get_header_byte_range(const char *filename)
 
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
-        g_debug(MODULE"%s: Cannot open file %s (%s)", __func__, filename,
+        g_debug("%s: Cannot open file %s (%s)", __func__, filename,
                 strerror(errno));
         return results;
     }
@@ -329,7 +325,7 @@ cr_get_header_byte_range(const char *filename)
     // Get header range
 
     if (fseek(fp, 104, SEEK_SET) != 0) {
-        g_debug(MODULE"%s: fseek fail on %s (%s)", __func__, filename,
+        g_debug("%s: fseek fail on %s (%s)", __func__, filename,
                 strerror(errno));
         fclose(fp);
         return results;
@@ -368,7 +364,7 @@ cr_get_header_byte_range(const char *filename)
     // Check sanity
 
     if (hdrend < hdrstart) {
-        g_debug(MODULE"%s: sanity check fail on %s (%d > %d))", __func__,
+        g_debug("%s: sanity check fail on %s (%d > %d))", __func__,
                 filename, hdrstart, hdrend);
         return results;
     }
@@ -396,7 +392,7 @@ cr_checksum_name_str(cr_ChecksumType type)
             name = "sha256";
             break;
         default:
-            g_debug(MODULE"%s: Unknown checksum (%d)", __func__, type);
+            g_debug("%s: Unknown checksum (%d)", __func__, type);
             break;
     }
 
@@ -436,7 +432,7 @@ cr_copy_file(const char *src, const char *in_dst)
     FILE *new;
 
     if (!src || !in_dst) {
-        g_debug(MODULE"%s: File name cannot be NULL", __func__);
+        g_debug("%s: File name cannot be NULL", __func__);
         return CR_COPY_ERR;
     }
 
@@ -447,13 +443,13 @@ cr_copy_file(const char *src, const char *in_dst)
     }
 
     if ((orig = fopen(src, "r")) == NULL) {
-        g_debug(MODULE"%s: Cannot open source file %s (%s)", __func__, src,
+        g_debug("%s: Cannot open source file %s (%s)", __func__, src,
                 strerror(errno));
         return CR_COPY_ERR;
     }
 
     if ((new = fopen(dst, "w")) == NULL) {
-        g_debug(MODULE"%s: Cannot open destination file %s (%s)", __func__, dst,
+        g_debug("%s: Cannot open destination file %s (%s)", __func__, dst,
                 strerror(errno));
         fclose(orig);
         return CR_COPY_ERR;
@@ -461,7 +457,7 @@ cr_copy_file(const char *src, const char *in_dst)
 
     while ((readed = fread(buf, 1, BUFFER_SIZE, orig)) > 0) {
         if (fwrite(buf, 1, readed, new) != readed) {
-            g_debug(MODULE"%s: Error while copy %s -> %s (%s)", __func__, src,
+            g_debug("%s: Error while copy %s -> %s (%s)", __func__, src,
                     dst, strerror(errno));
             fclose(new);
             fclose(orig);
@@ -469,7 +465,7 @@ cr_copy_file(const char *src, const char *in_dst)
         }
 
         if (readed != BUFFER_SIZE && ferror(orig)) {
-            g_debug(MODULE"%s: Error while copy %s -> %s (%s)", __func__, src,
+            g_debug("%s: Error while copy %s -> %s (%s)", __func__, src,
                     dst, strerror(errno));
             fclose(new);
             fclose(orig);
@@ -501,13 +497,13 @@ cr_compress_file(const char *src,
     CR_FILE *new;
 
     if (!src) {
-        g_debug(MODULE"%s: File name cannot be NULL", __func__);
+        g_debug("%s: File name cannot be NULL", __func__);
         return CR_COPY_ERR;
     }
 
     if (compression == CR_CW_AUTO_DETECT_COMPRESSION ||
         compression == CR_CW_UNKNOWN_COMPRESSION) {
-        g_debug(MODULE"%s: Bad compression type", __func__);
+        g_debug("%s: Bad compression type", __func__);
         return CR_COPY_ERR;
     }
 
@@ -515,7 +511,7 @@ cr_compress_file(const char *src,
     if (g_str_has_suffix(src, "/") ||
         !g_file_test(src, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR))) 
     {
-        g_debug(MODULE"%s: Source (%s) must be directory!", __func__, src);
+        g_debug("%s: Source (%s) must be directory!", __func__, src);
         return CR_COPY_ERR;
     }
 
@@ -533,27 +529,27 @@ cr_compress_file(const char *src,
     }
 
     if ((orig = fopen(src, "r")) == NULL) {
-        g_debug(MODULE"%s: Cannot open source file %s (%s)", __func__, src,
+        g_debug("%s: Cannot open source file %s (%s)", __func__, src,
                 strerror(errno));
         return CR_COPY_ERR;
     }
 
     if ((new = cr_open(dst, CR_CW_MODE_WRITE, compression)) == NULL) {
-        g_debug(MODULE"%s: Cannot open destination file %s", __func__, dst);
+        g_debug("%s: Cannot open destination file %s", __func__, dst);
         fclose(orig);
         return CR_COPY_ERR;
     }
 
     while ((readed = fread(buf, 1, BUFFER_SIZE, orig)) > 0) {
         if (cr_write(new, buf, readed) != readed) {
-            g_debug(MODULE"%s: Error while copy %s -> %s", __func__, src, dst);
+            g_debug("%s: Error while copy %s -> %s", __func__, src, dst);
             cr_close(new);
             fclose(orig);
             return CR_COPY_ERR;
         }
 
         if (readed != BUFFER_SIZE && ferror(orig)) {
-            g_debug(MODULE"%s: Error while copy %s -> %s (%s)", __func__, src,
+            g_debug("%s: Error while copy %s -> %s (%s)", __func__, src,
                     dst, strerror(errno));
             cr_close(new);
             fclose(orig);
@@ -593,7 +589,7 @@ cr_download(CURL *handle, const char *url, const char *in_dst, char **error)
 
     file = fopen(dst, "w");
     if (!file) {
-        *error = g_strdup_printf(MODULE"%s: Cannot open %s", __func__, dst);
+        *error = g_strdup_printf("%s: Cannot open %s", __func__, dst);
         remove(dst);
         g_free(dst);
         return;
@@ -603,7 +599,7 @@ cr_download(CURL *handle, const char *url, const char *in_dst, char **error)
     // Set URL
 
     if (curl_easy_setopt(handle, CURLOPT_URL, url) != CURLE_OK) {
-        *error = g_strdup_printf(MODULE"%s: curl_easy_setopt(CURLOPT_URL) error",
+        *error = g_strdup_printf("%s: curl_easy_setopt(CURLOPT_URL) error",
                                  __func__);
         fclose(file);
         remove(dst);
@@ -615,7 +611,7 @@ cr_download(CURL *handle, const char *url, const char *in_dst, char **error)
     // Set output file descriptor
 
     if (curl_easy_setopt(handle, CURLOPT_WRITEDATA, file) != CURLE_OK) {
-        *error = g_strdup_printf(MODULE
+        *error = g_strdup_printf(
                         "%s: curl_easy_setopt(CURLOPT_WRITEDATA) error",
                          __func__);
         fclose(file);
@@ -626,7 +622,7 @@ cr_download(CURL *handle, const char *url, const char *in_dst, char **error)
 
     rcode = curl_easy_perform(handle);
     if (rcode != 0) {
-        *error = g_strdup_printf(MODULE"%s: curl_easy_perform() error: %s",
+        *error = g_strdup_printf("%s: curl_easy_perform() error: %s",
                                  __func__, curl_easy_strerror(rcode));
         fclose(file);
         remove(dst);
@@ -635,7 +631,7 @@ cr_download(CURL *handle, const char *url, const char *in_dst, char **error)
     }
 
 
-    g_debug(MODULE"%s: Successfully downloaded: %s", __func__, dst);
+    g_debug("%s: Successfully downloaded: %s", __func__, dst);
 
     fclose(file);
     g_free(dst);
@@ -656,7 +652,7 @@ cr_better_copy_file(const char *src, const char *in_dst)
     cr_download(handle, src, in_dst, &error);
     curl_easy_cleanup(handle);
     if (error) {
-        g_debug(MODULE"%s: Error while downloading %s: %s", __func__, src,
+        g_debug("%s: Error while downloading %s: %s", __func__, src,
                 error);
         return CR_COPY_ERR;
     }

@@ -31,6 +31,7 @@ extern "C" {
 
 /** \defgroup   parsehdr         Header parser API.
  *  \addtogroup parsehdr
+ *  @{
  */
 
 /** Read data from header and return filled cr_Package structure.

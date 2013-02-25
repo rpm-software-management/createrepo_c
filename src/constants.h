@@ -24,6 +24,11 @@
 extern "C" {
 #endif
 
+/** \defgroup   contants      Global constants and enums.
+ *  \addtogroup constants
+ *  @{
+ */
+
 /**
  * Checksum type.
  */
@@ -32,6 +37,8 @@ typedef enum {
     CR_CHECKSUM_SHA1,          /*!< SHA1 checksum */
     CR_CHECKSUM_SHA256         /*!< SHA256 checksum */
 } cr_ChecksumType;
+
+/** @} */
 
 #ifdef __cplusplus
 }

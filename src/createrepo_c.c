@@ -168,7 +168,7 @@ write_pkg(long id,
     udata->id_pri++;
     cr_puts(udata->pri_f, (const char *) res.primary);
     if (udata->pri_statements)
-        cr_add_primary_pkg_db(udata->pri_statements, pkg);
+        cr_db_add_primary_pkg(udata->pri_statements, pkg);
     g_mutex_unlock(udata->mutex_pri);
     g_cond_broadcast(udata->cond_pri);
 
@@ -179,7 +179,7 @@ write_pkg(long id,
     udata->id_fil++;
     cr_puts(udata->fil_f, (const char *) res.filelists);
     if (udata->fil_statements) {
-        cr_add_filelists_pkg_db(udata->fil_statements, pkg);
+        cr_db_add_filelists_pkg(udata->fil_statements, pkg);
     }
     g_mutex_unlock(udata->mutex_fil);
     g_cond_broadcast(udata->cond_fil);
@@ -191,7 +191,7 @@ write_pkg(long id,
     udata->id_oth++;
     cr_puts(udata->oth_f, (const char *) res.other);
     if (udata->oth_statements) {
-        cr_add_other_pkg_db(udata->oth_statements, pkg);
+        cr_db_add_other_pkg(udata->oth_statements, pkg);
     }
     g_mutex_unlock(udata->mutex_oth);
     g_cond_broadcast(udata->cond_oth);
@@ -909,12 +909,12 @@ main(int argc, char **argv)
         pri_db_filename = g_strconcat(tmp_out_repo, "/primary.sqlite", NULL);
         fil_db_filename = g_strconcat(tmp_out_repo, "/filelists.sqlite", NULL);
         oth_db_filename = g_strconcat(tmp_out_repo, "/other.sqlite", NULL);
-        pri_db = cr_open_primary_db(pri_db_filename, NULL);
-        fil_db = cr_open_filelists_db(fil_db_filename, NULL);
-        oth_db = cr_open_other_db(oth_db_filename, NULL);
-        pri_statements = cr_prepare_primary_db_statements(pri_db, NULL);
-        fil_statements = cr_prepare_filelists_db_statements(fil_db, NULL);
-        oth_statements = cr_prepare_other_db_statements(oth_db, NULL);
+        pri_db = cr_db_open_primary(pri_db_filename, NULL);
+        fil_db = cr_db_open_filelists(fil_db_filename, NULL);
+        oth_db = cr_db_open_other(oth_db_filename, NULL);
+        pri_statements = cr_db_prepare_primary_statements(pri_db, NULL);
+        fil_statements = cr_db_prepare_filelists_statements(fil_db, NULL);
+        oth_statements = cr_db_prepare_other_statements(oth_db, NULL);
     }
 
 
@@ -1057,17 +1057,17 @@ main(int argc, char **argv)
         gchar *oth_db_name = g_strconcat(oth_db_filename,
                                          sqlite_compression_suffix, NULL);
 
-        cr_dbinfo_update(pri_db, pri_xml_rec->checksum, NULL);
-        cr_dbinfo_update(fil_db, fil_xml_rec->checksum, NULL);
-        cr_dbinfo_update(oth_db, oth_xml_rec->checksum, NULL);
+        cr_db_dbinfo_update(pri_db, pri_xml_rec->checksum, NULL);
+        cr_db_dbinfo_update(fil_db, fil_xml_rec->checksum, NULL);
+        cr_db_dbinfo_update(oth_db, oth_xml_rec->checksum, NULL);
 
-        cr_destroy_primary_db_statements(pri_statements);
-        cr_destroy_filelists_db_statements(fil_statements);
-        cr_destroy_other_db_statements(oth_statements);
+        cr_db_destroy_primary_statements(pri_statements);
+        cr_db_destroy_filelists_statements(fil_statements);
+        cr_db_destroy_other_statements(oth_statements);
 
-        cr_close_primary_db(pri_db, NULL);
-        cr_close_filelists_db(fil_db, NULL);
-        cr_close_other_db(oth_db, NULL);
+        cr_db_close_primary(pri_db, NULL);
+        cr_db_close_filelists(fil_db, NULL);
+        cr_db_close_other(oth_db, NULL);
 
 
         // Compress dbs

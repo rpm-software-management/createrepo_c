@@ -34,7 +34,7 @@
 
 
 GQuark
-cr_db_error_quark (void)
+cr_db_error_quark(void)
 {
     static GQuark quark;
 
@@ -476,7 +476,7 @@ db_index_other_tables (sqlite3 *db, GError **err)
 
 
 sqlite3 *
-cr_open_db(const char *path, cr_DatabaseType db_type, GError **err)
+cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
 {
     GError *tmp_err = NULL;
     sqlite3 *db = NULL;
@@ -524,7 +524,7 @@ cr_open_db(const char *path, cr_DatabaseType db_type, GError **err)
 
 
 void
-cr_close_db(sqlite3 *db, cr_DatabaseType db_type, GError **err)
+cr_db_close(sqlite3 *db, cr_DatabaseType db_type, GError **err)
 {
     GError *tmp_err = NULL;
 
@@ -556,14 +556,14 @@ cr_close_db(sqlite3 *db, cr_DatabaseType db_type, GError **err)
 
 
 void
-cr_dbinfo_update(sqlite3 *db, const char *checksum, GError **err)
+cr_db_dbinfo_update(sqlite3 *db, const char *checksum, GError **err)
 {
     int rc;
     char *sql;
 
     sql = g_strdup_printf
         ("INSERT INTO db_info (dbversion, checksum) VALUES (%d, '%s')",
-         CR_SQLITE_CACHE_DBVERSION, checksum);
+         CR_DB_CACHE_DBVERSION, checksum);
 
      rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
      if (rc != SQLITE_OK)
@@ -906,7 +906,7 @@ typedef struct {
 
 
 static void
-write_file (gpointer key, gpointer value, gpointer user_data)
+cr_db_write_file (gpointer key, gpointer value, gpointer user_data)
 {
     EncodedPackageFile *file = (EncodedPackageFile *) value;
     FileWriteInfo *info = (FileWriteInfo *) user_data;
@@ -952,7 +952,7 @@ db_filelists_write (sqlite3 *db, sqlite3_stmt *handle, cr_Package *p)
     info.pkgKey = p->pkgKey;
 
     hash = package_files_to_hash (p->files);
-    g_hash_table_foreach (hash, write_file, &info);
+    g_hash_table_foreach (hash, cr_db_write_file, &info);
     g_hash_table_destroy (hash);
 }
 
@@ -1035,7 +1035,7 @@ db_package_ids_write (sqlite3 *db, sqlite3_stmt *handle, cr_Package *pkg)
 // Primary.sqlite interface
 
 cr_DbPrimaryStatements
-cr_prepare_primary_db_statements(sqlite3 *db, GError **err)
+cr_db_prepare_primary_statements(sqlite3 *db, GError **err)
 {
     GError *tmp_err = NULL;
     cr_DbPrimaryStatements ret = malloc(sizeof(*ret));
@@ -1089,7 +1089,7 @@ cr_prepare_primary_db_statements(sqlite3 *db, GError **err)
 
 
 void
-cr_destroy_primary_db_statements(cr_DbPrimaryStatements stmts)
+cr_db_destroy_primary_statements(cr_DbPrimaryStatements stmts)
 {
     if (!stmts)
         return;
@@ -1111,7 +1111,7 @@ cr_destroy_primary_db_statements(cr_DbPrimaryStatements stmts)
 
 
 void
-cr_add_primary_pkg_db(cr_DbPrimaryStatements stmts, cr_Package *pkg)
+cr_db_add_primary_pkg(cr_DbPrimaryStatements stmts, cr_Package *pkg)
 {
     GSList *iter;
 
@@ -1159,7 +1159,7 @@ cr_add_primary_pkg_db(cr_DbPrimaryStatements stmts, cr_Package *pkg)
 
 
 cr_DbFilelistsStatements
-cr_prepare_filelists_db_statements(sqlite3 *db, GError **err)
+cr_db_prepare_filelists_statements(sqlite3 *db, GError **err)
 {
     GError *tmp_err = NULL;
     cr_DbFilelistsStatements ret = malloc(sizeof(*ret));
@@ -1185,7 +1185,7 @@ cr_prepare_filelists_db_statements(sqlite3 *db, GError **err)
 
 
 void
-cr_destroy_filelists_db_statements(cr_DbFilelistsStatements stmts)
+cr_db_destroy_filelists_statements(cr_DbFilelistsStatements stmts)
 {
     if (!stmts)
         return;
@@ -1199,7 +1199,7 @@ cr_destroy_filelists_db_statements(cr_DbFilelistsStatements stmts)
 
 
 void
-cr_add_filelists_pkg_db(cr_DbFilelistsStatements stmts, cr_Package *pkg)
+cr_db_add_filelists_pkg(cr_DbFilelistsStatements stmts, cr_Package *pkg)
 {
     // Add package record into the filelists.sqlite
     db_package_ids_write(stmts->db, stmts->package_id_handle, pkg);
@@ -1211,7 +1211,7 @@ cr_add_filelists_pkg_db(cr_DbFilelistsStatements stmts, cr_Package *pkg)
 
 
 cr_DbOtherStatements
-cr_prepare_other_db_statements(sqlite3 *db, GError **err)
+cr_db_prepare_other_statements(sqlite3 *db, GError **err)
 {
     GError *tmp_err = NULL;
     cr_DbOtherStatements ret = malloc(sizeof(*ret));
@@ -1237,7 +1237,7 @@ cr_prepare_other_db_statements(sqlite3 *db, GError **err)
 
 
 void
-cr_destroy_other_db_statements(cr_DbOtherStatements stmts)
+cr_db_destroy_other_statements(cr_DbOtherStatements stmts)
 {
     if (!stmts)
         return;
@@ -1251,7 +1251,7 @@ cr_destroy_other_db_statements(cr_DbOtherStatements stmts)
 
 
 void
-cr_add_other_pkg_db(cr_DbOtherStatements stmts, cr_Package *pkg)
+cr_db_add_other_pkg(cr_DbOtherStatements stmts, cr_Package *pkg)
 {
     GSList *iter;
     cr_ChangelogEntry *entry;

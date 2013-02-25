@@ -1041,17 +1041,17 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         fil_db_filename = g_strconcat(cmd_options->tmp_out_repo, "/filelists.sqlite", NULL);
         oth_db_filename = g_strconcat(cmd_options->tmp_out_repo, "/other.sqlite", NULL);
 
-        pri_db = cr_open_primary_db(pri_db_filename, NULL);
-        fil_db = cr_open_filelists_db(fil_db_filename, NULL);
-        oth_db = cr_open_other_db(oth_db_filename, NULL);
+        pri_db = cr_db_open_primary(pri_db_filename, NULL);
+        fil_db = cr_db_open_filelists(fil_db_filename, NULL);
+        oth_db = cr_db_open_other(oth_db_filename, NULL);
 
         g_free(pri_db_filename);
         g_free(fil_db_filename);
         g_free(oth_db_filename);
 
-        pri_statements = cr_prepare_primary_db_statements(pri_db, NULL);
-        fil_statements = cr_prepare_filelists_db_statements(fil_db, NULL);
-        oth_statements = cr_prepare_other_db_statements(oth_db, NULL);
+        pri_statements = cr_db_prepare_primary_statements(pri_db, NULL);
+        fil_statements = cr_db_prepare_filelists_statements(fil_db, NULL);
+        oth_statements = cr_db_prepare_other_statements(oth_db, NULL);
     }
 
 
@@ -1077,9 +1077,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
             cr_puts(oth_f, (const char *) res.other);
 
             if (!cmd_options->no_database) {
-                cr_add_primary_pkg_db(pri_statements, pkg);
-                cr_add_filelists_pkg_db(fil_statements, pkg);
-                cr_add_other_pkg_db(oth_statements, pkg);
+                cr_db_add_primary_pkg(pri_statements, pkg);
+                cr_db_add_filelists_pkg(fil_statements, pkg);
+                cr_db_add_other_pkg(oth_statements, pkg);
             }
 
             free(res.primary);
@@ -1177,18 +1177,18 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         const char *db_suffix = cr_compression_suffix(cmd_options->db_compression_type);
 
         // Insert XML checksums into the dbs
-        cr_dbinfo_update(pri_db, pri_xml_rec->checksum, NULL);
-        cr_dbinfo_update(fil_db, fil_xml_rec->checksum, NULL);
-        cr_dbinfo_update(oth_db, oth_xml_rec->checksum, NULL);
+        cr_db_dbinfo_update(pri_db, pri_xml_rec->checksum, NULL);
+        cr_db_dbinfo_update(fil_db, fil_xml_rec->checksum, NULL);
+        cr_db_dbinfo_update(oth_db, oth_xml_rec->checksum, NULL);
 
         // Close dbs
-        cr_destroy_primary_db_statements(pri_statements);
-        cr_destroy_filelists_db_statements(fil_statements);
-        cr_destroy_other_db_statements(oth_statements);
+        cr_db_destroy_primary_statements(pri_statements);
+        cr_db_destroy_filelists_statements(fil_statements);
+        cr_db_destroy_other_statements(oth_statements);
 
-        cr_close_primary_db(pri_db, NULL);
-        cr_close_filelists_db(fil_db, NULL);
-        cr_close_other_db(oth_db, NULL);
+        cr_db_close_primary(pri_db, NULL);
+        cr_db_close_filelists(fil_db, NULL);
+        cr_db_close_other(oth_db, NULL);
 
         // Compress dbs
         gchar *pri_db_filename = g_strconcat(cmd_options->tmp_out_repo, "/primary.sqlite", NULL);

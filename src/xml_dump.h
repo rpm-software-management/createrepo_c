@@ -27,6 +27,30 @@ extern "C" {
 #include "package.h"
 
 /** \defgroup   xml_dump        XML dump API.
+ *
+ * Example:
+ * \code
+ * cr_Package *pkg;
+ * struct cr_XmlStruct xml;
+ *
+ * pkg = cr_package_from_rpm("path/to/rpm.rpm", CR_CHECKSUM_SHA256,
+ *                           "repodata/rpm.rpm", NULL, 10, NULL);
+ *
+ * cr_xml_dump_init();
+ * xml = cr_xml_dump(pkg);
+ * cr_xml_dump_cleanup();
+ *
+ * cr_package_free(pkg);
+ *
+ * printf("Primary XML chunk:\n%s\n", xml.primary);
+ * printf("Filelists XML chunk:\n%s\n", xml.filelists);
+ * printf("Other XML chunk:\n%s\n", xml.other);
+ *
+ * free(xml.primary);
+ * free(xml.filelists);
+ * free(xml.other);
+ * \endcode
+ *
  *  \addtogroup xml_dump
  *  @{
  */

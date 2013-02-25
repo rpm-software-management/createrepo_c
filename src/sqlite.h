@@ -29,6 +29,33 @@ extern "C" {
 #endif
 
 /** \defgroup   sqlite        SQLite metadata API.
+ *
+ * Module for writing sqlite metadata databases.
+ *
+ * Example:
+ * \code
+ * cr_Package *pkg;
+ * sqlite3 *primary_db;
+ * cr_DbPrimary_Statements primary_statements;
+ *
+ * // Load pkg (See parsepkg or parsehdr module)
+ *
+ * // Create primary sqlite database
+ * primary_db = cr_db_open_primary("/foo/bar/repodata/primary.sqlite");
+ * // Compile statements (to avoid SQL parsing overhead)
+ * primary_statements = cr_db_prepare_primary_statements(primary_db, NULL);
+ *
+ * // Add all packages here
+ * cr_db_add_primary_pkg(primary_statements, pkg);
+ *
+ * // Add checksum of XML version of file (primary in this case)
+ * cr_db_dbinfo_update(primary_db, "foochecksum", NULL);
+ *
+ * // Cleanup
+ * cr_db_destroy_primary_statements(primary_db);
+ * cr_db_close_primary(primary_db, NULL);
+ * \endcode
+ *
  *  \addtogroup sqlite
  *  @{
  */

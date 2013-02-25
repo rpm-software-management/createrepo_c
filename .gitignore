@@ -21,5 +21,4 @@ _CPack_Packages/
 src/version.h
 src/createrepo_c.pc
 build/
-doc/html
-doc/latex
+tags

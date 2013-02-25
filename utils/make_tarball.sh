@@ -40,12 +40,12 @@ echo "Using root projekt dir: $PREFIX"
     cp --verbose README.md $DIRECTORY
     cp --verbose COPYING $DIRECTORY
     cp --verbose createrepo_c.bash $DIRECTORY
-    cp --verbose Doxyfile.in $DIRECTORY
     cp --verbose VERSION.cmake $DIRECTORY
 
     cp --verbose --parents cmake/Modules/* $DIRECTORY
 
     cp --verbose --parents doc/CMakeLists.txt $DIRECTORY
+    cp --verbose --parents doc/Doxyfile.in.in $DIRECTORY
     cp --verbose --parents doc/createrepo_c.8.* $DIRECTORY
     cp --verbose --parents doc/mergerepo_c.8.* $DIRECTORY
 

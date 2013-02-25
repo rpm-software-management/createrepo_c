@@ -93,21 +93,10 @@ INCLUDE(CPack)
 
 # Other files
 
-#SET(CMAKE_INSTALL_PREFIX "/")
 INSTALL(FILES README.md COPYING
         DESTINATION "share/doc/createrepo_c-${VERSION}")
 INSTALL(FILES createrepo_c.bash
         DESTINATION "/etc/bash_completion.d")
-
-
-# Target to generate API documentation with Doxygen
-
-find_package(Doxygen)
-if(DOXYGEN_FOUND)
-    add_custom_target(doc
-        ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/Doxyfile.in
-        COMMENT "Generating API documentation with Doxygen" VERBATIM)
-endif(DOXYGEN_FOUND)
 
 
 # Gen manpage

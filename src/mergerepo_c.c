@@ -1122,9 +1122,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     // Prepare repomd records
 
-    cr_RepomdRecord pri_xml_rec = cr_new_repomdrecord(pri_xml_filename);
-    cr_RepomdRecord fil_xml_rec = cr_new_repomdrecord(fil_xml_filename);
-    cr_RepomdRecord oth_xml_rec = cr_new_repomdrecord(oth_xml_filename);
+    cr_RepomdRecord pri_xml_rec = cr_repomd_record_new(pri_xml_filename);
+    cr_RepomdRecord fil_xml_rec = cr_repomd_record_new(fil_xml_filename);
+    cr_RepomdRecord oth_xml_rec = cr_repomd_record_new(oth_xml_filename);
     cr_RepomdRecord pri_db_rec               = NULL;
     cr_RepomdRecord fil_db_rec               = NULL;
     cr_RepomdRecord oth_db_rec               = NULL;
@@ -1136,17 +1136,17 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     // XML
 
-    cr_fill_repomdrecord(pri_xml_rec, CR_CHECKSUM_SHA256);
-    cr_fill_repomdrecord(fil_xml_rec, CR_CHECKSUM_SHA256);
-    cr_fill_repomdrecord(oth_xml_rec, CR_CHECKSUM_SHA256);
+    cr_repomd_record_fill(pri_xml_rec, CR_CHECKSUM_SHA256);
+    cr_repomd_record_fill(fil_xml_rec, CR_CHECKSUM_SHA256);
+    cr_repomd_record_fill(oth_xml_rec, CR_CHECKSUM_SHA256);
 
 
     // Groupfile
 
     if (groupfile) {
-        groupfile_rec = cr_new_repomdrecord(groupfile);
-        compressed_groupfile_rec = cr_new_repomdrecord(groupfile);
-        cr_process_groupfile_repomdrecord(groupfile_rec,
+        groupfile_rec = cr_repomd_record_new(groupfile);
+        compressed_groupfile_rec = cr_repomd_record_new(groupfile);
+        cr_repomd_record_groupfile(groupfile_rec,
                                           compressed_groupfile_rec,
                                           CR_CHECKSUM_SHA256,
                                           cmd_options->groupfile_compression_type);
@@ -1156,8 +1156,8 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     // Update info
 
     if (!cmd_options->noupdateinfo) {
-        update_info_rec = cr_new_repomdrecord(update_info_filename);
-        cr_fill_repomdrecord(update_info_rec, CR_CHECKSUM_SHA256);
+        update_info_rec = cr_repomd_record_new(update_info_filename);
+        cr_repomd_record_fill(update_info_rec, CR_CHECKSUM_SHA256);
     }
 
 
@@ -1165,8 +1165,8 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     if (cmd_options->koji) {
         gchar *pkgorigins_path = g_strconcat(cmd_options->tmp_out_repo, "pkgorigins.gz", NULL);
-        pkgorigins_rec = cr_new_repomdrecord(pkgorigins_path);
-        cr_fill_repomdrecord(pkgorigins_rec, CR_CHECKSUM_SHA256);
+        pkgorigins_rec = cr_repomd_record_new(pkgorigins_path);
+        cr_repomd_record_fill(pkgorigins_rec, CR_CHECKSUM_SHA256);
         g_free(pkgorigins_path);
     }
 
@@ -1208,9 +1208,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         remove(oth_db_filename);
 
         // Prepare repomd records
-        pri_db_rec = cr_new_repomdrecord(pri_db_c_filename);
-        fil_db_rec = cr_new_repomdrecord(fil_db_c_filename);
-        oth_db_rec = cr_new_repomdrecord(oth_db_c_filename);
+        pri_db_rec = cr_repomd_record_new(pri_db_c_filename);
+        fil_db_rec = cr_repomd_record_new(fil_db_c_filename);
+        oth_db_rec = cr_repomd_record_new(oth_db_c_filename);
 
         g_free(pri_db_filename);
         g_free(fil_db_filename);
@@ -1220,29 +1220,29 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         g_free(fil_db_c_filename);
         g_free(oth_db_c_filename);
 
-        cr_fill_repomdrecord(pri_db_rec, CR_CHECKSUM_SHA256);
-        cr_fill_repomdrecord(fil_db_rec, CR_CHECKSUM_SHA256);
-        cr_fill_repomdrecord(oth_db_rec, CR_CHECKSUM_SHA256);
+        cr_repomd_record_fill(pri_db_rec, CR_CHECKSUM_SHA256);
+        cr_repomd_record_fill(fil_db_rec, CR_CHECKSUM_SHA256);
+        cr_repomd_record_fill(oth_db_rec, CR_CHECKSUM_SHA256);
     }
 
 
     // Add checksums into files names
 
-    cr_rename_repomdrecord_file(pri_xml_rec);
-    cr_rename_repomdrecord_file(fil_xml_rec);
-    cr_rename_repomdrecord_file(oth_xml_rec);
-    cr_rename_repomdrecord_file(pri_db_rec);
-    cr_rename_repomdrecord_file(fil_db_rec);
-    cr_rename_repomdrecord_file(oth_db_rec);
-    cr_rename_repomdrecord_file(groupfile_rec);
-    cr_rename_repomdrecord_file(compressed_groupfile_rec);
-    cr_rename_repomdrecord_file(update_info_rec);
-    cr_rename_repomdrecord_file(pkgorigins_rec);
+    cr_repomd_record_rename_file(pri_xml_rec);
+    cr_repomd_record_rename_file(fil_xml_rec);
+    cr_repomd_record_rename_file(oth_xml_rec);
+    cr_repomd_record_rename_file(pri_db_rec);
+    cr_repomd_record_rename_file(fil_db_rec);
+    cr_repomd_record_rename_file(oth_db_rec);
+    cr_repomd_record_rename_file(groupfile_rec);
+    cr_repomd_record_rename_file(compressed_groupfile_rec);
+    cr_repomd_record_rename_file(update_info_rec);
+    cr_repomd_record_rename_file(pkgorigins_rec);
 
 
     // Gen repomd.xml content
 
-    cr_Repomd repomd_obj = cr_new_repomd();
+    cr_Repomd repomd_obj = cr_repomd_new();
     cr_repomd_set_record(repomd_obj, pri_xml_rec,   "primary");
     cr_repomd_set_record(repomd_obj, fil_xml_rec,   "filelists");
     cr_repomd_set_record(repomd_obj, oth_xml_rec,   "other");
@@ -1254,9 +1254,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_repomd_set_record(repomd_obj, update_info_rec,"updateinfo");
     cr_repomd_set_record(repomd_obj, pkgorigins_rec, "origin");
 
-    char *repomd_xml = cr_generate_repomd_xml(repomd_obj);
+    char *repomd_xml = cr_repomd_xml_dump(repomd_obj);
 
-    cr_free_repomd(repomd_obj);
+    cr_repomd_free(repomd_obj);
 
     if (repomd_xml) {
         gchar *repomd_path = g_strconcat(cmd_options->tmp_out_repo, "repomd.xml", NULL);

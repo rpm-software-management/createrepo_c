@@ -78,7 +78,7 @@ cr_free_distro(cr_Distro distro)
 
 
 cr_RepomdRecord
-cr_new_repomdrecord(const char *path)
+cr_repomd_record_new(const char *path)
 {
     cr_RepomdRecord md = (cr_RepomdRecord) g_malloc0(sizeof(*md));
     md->chunk = g_string_chunk_new(1024);
@@ -95,7 +95,7 @@ cr_new_repomdrecord(const char *path)
 
 
 void
-cr_free_repomdrecord(cr_RepomdRecord md)
+cr_repomd_record_free(cr_RepomdRecord md)
 {
     if (!md)
         return;
@@ -106,7 +106,7 @@ cr_free_repomdrecord(cr_RepomdRecord md)
 
 
 contentStat *
-get_compressed_content_stat(const char *filename, cr_ChecksumType checksum_type)
+cr_get_compressed_content_stat(const char *filename, cr_ChecksumType checksum_type)
 {
     if (!g_file_test(filename, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR)) {
         return NULL;
@@ -184,7 +184,7 @@ get_compressed_content_stat(const char *filename, cr_ChecksumType checksum_type)
 
 
 int
-cr_fill_repomdrecord(cr_RepomdRecord md, cr_ChecksumType checksum_type)
+cr_repomd_record_fill(cr_RepomdRecord md, cr_ChecksumType checksum_type)
 {
     const char *checksum_str;
     cr_ChecksumType checksum_t;
@@ -226,7 +226,7 @@ cr_fill_repomdrecord(cr_RepomdRecord md, cr_ChecksumType checksum_type)
         {
             // File compressed by supported algorithm
             contentStat *open_stat = NULL;
-            open_stat = get_compressed_content_stat(path, checksum_t);
+            open_stat = cr_get_compressed_content_stat(path, checksum_t);
             md->checksum_open_type = g_string_chunk_insert(md->chunk, checksum_str);
             md->checksum_open = g_string_chunk_insert(md->chunk, open_stat->checksum);
             if (!md->size_open) {
@@ -274,7 +274,7 @@ cr_fill_repomdrecord(cr_RepomdRecord md, cr_ChecksumType checksum_type)
 
 
 void
-cr_process_groupfile_repomdrecord(cr_RepomdRecord groupfile,
+cr_repomd_record_groupfile(cr_RepomdRecord groupfile,
                                   cr_RepomdRecord cgroupfile,
                                   cr_ChecksumType checksum_type,
                                   cr_CompressionType groupfile_compression)
@@ -395,7 +395,7 @@ cr_process_groupfile_repomdrecord(cr_RepomdRecord groupfile,
 
 
 void
-dump_data_items(xmlNodePtr root, cr_RepomdRecord md, const xmlChar *type)
+cr_repomd_dump_data_items(xmlNodePtr root, cr_RepomdRecord md, const xmlChar *type)
 {
     xmlNodePtr data, node;
     gchar str_buffer[STR_BUFFER_SIZE];
@@ -441,12 +441,19 @@ dump_data_items(xmlNodePtr root, cr_RepomdRecord md, const xmlChar *type)
 
 
 char *
-repomd_xml_dump(cr_Repomd repomd)
+cr_repomd_xml_dump(cr_Repomd repomd)
 {
     xmlDocPtr doc;
     xmlNodePtr root;
     GList *keys, *element;
 
+    // Set current time as revision if no revision specified
+
+    if (!repomd->revision) {
+        gchar *rev = g_strdup_printf("%ld", time(NULL));
+        cr_repomd_set_revision(repomd, rev);
+        g_free(rev);
+    }
 
     // Start of XML document
 
@@ -497,7 +504,7 @@ repomd_xml_dump(cr_Repomd repomd)
     for (element = keys; element; element = g_list_next(element)) {
         char *type = element->data;
         cr_RepomdRecord rec = g_hash_table_lookup(repomd->records, type);
-        dump_data_items(root, rec, (const xmlChar *) type);
+        cr_repomd_dump_data_items(root, rec, (const xmlChar *) type);
     }
 
     g_list_free(keys);
@@ -521,7 +528,7 @@ repomd_xml_dump(cr_Repomd repomd)
 
 
 void
-cr_rename_repomdrecord_file(cr_RepomdRecord md)
+cr_repomd_record_rename_file(cr_RepomdRecord md)
 {
     int x, len;
     gchar *location_prefix = NULL;
@@ -613,19 +620,19 @@ cr_rename_repomdrecord_file(cr_RepomdRecord md)
 
 
 cr_Repomd
-cr_new_repomd()
+cr_repomd_new()
 {
    cr_Repomd repomd = g_malloc0(sizeof(struct _cr_Repomd));
    repomd->records = g_hash_table_new_full(g_str_hash,
                                            g_str_equal,
                                            g_free,
-                                           (GDestroyNotify) cr_free_repomdrecord);
+                                           (GDestroyNotify) cr_repomd_record_free);
    return repomd;
 }
 
 
 void
-cr_free_repomd(cr_Repomd repomd)
+cr_repomd_free(cr_Repomd repomd)
 {
     if (!repomd) return;
     g_hash_table_destroy(repomd->records);
@@ -685,15 +692,3 @@ cr_repomd_add_content_tag(cr_Repomd repomd, const char *tag)
     repomd->content_tags = g_slist_append(repomd->content_tags, g_strdup(tag));
 }
 
-
-gchar *
-cr_generate_repomd_xml(cr_Repomd repomd)
-{
-    if (!repomd->revision) {
-        gchar *rev = g_strdup_printf("%ld", time(NULL));
-        cr_repomd_set_revision(repomd, rev);
-        g_free(rev);
-    }
-
-    return repomd_xml_dump(repomd);
-}

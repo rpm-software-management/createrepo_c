@@ -70,25 +70,25 @@ struct _cr_Repomd {
 /** Creates (alloc) new cr_RepomdRecord object
  * @param path                  path to the compressed file
  */
-cr_RepomdRecord cr_new_repomdrecord(const char *path);
+cr_RepomdRecord cr_repomd_record_new(const char *path);
 
 /** Destroy cr_RepomdRecord object.
  * NOTE: Do NOT use this function on objects attached to cr_Repomd
  * (by cr_repomd_set_record).
  * @param record                cr_RepomdRecord object
  */
-void cr_free_repomdrecord(cr_RepomdRecord record);
+void cr_repomd_record_free(cr_RepomdRecord record);
 
 /** Fill unfilled items in the cr_RepomdRecord (calculate checksums,
  * get file size before/after compression, etc.).
- * Note: For groupfile you shoud use cr_process_groupfile_repomdrecord function.
+ * Note: For groupfile you shoud use cr_repomd_record_groupfile function.
  * @param record                cr_RepomdRecord object
  * @param checksum_type         type of checksum to use
  */
-int cr_fill_repomdrecord(cr_RepomdRecord record,
+int cr_repomd_record_fill(cr_RepomdRecord record,
                          cr_ChecksumType checksum_type);
 
-/** Analogue of cr_fill_repomdrecord but for groupfile.
+/** Analogue of cr_repomd_record_fill but for groupfile.
  * Groupfile must be set with the path to existing non compressed groupfile.
  * Compressed group file will be created and compressed_groupfile record
  * updated.
@@ -98,7 +98,7 @@ int cr_fill_repomdrecord(cr_RepomdRecord record,
  * @param checksum_type         type of checksums
  * @param compression           type of compression
  */
-void cr_process_groupfile_repomdrecord(cr_RepomdRecord groupfile,
+void cr_repomd_record_groupfile(cr_RepomdRecord groupfile,
                                        cr_RepomdRecord compressed_groupfile,
                                        cr_ChecksumType checksum_type,
                                        cr_CompressionType compression);
@@ -106,11 +106,11 @@ void cr_process_groupfile_repomdrecord(cr_RepomdRecord groupfile,
 /** Add a hash as prefix to the filename.
  * @param record                cr_RepomdRecord of file to be renamed
  */
-void cr_rename_repomdrecord_file(cr_RepomdRecord record);
+void cr_repomd_record_rename_file(cr_RepomdRecord record);
 
 /** Create new empty cr_Repomd object wich represents content of repomd.xml.
  */
-cr_Repomd cr_new_repomd();
+cr_Repomd cr_repomd_new();
 
 /** Set cr_Repomd record into cr_Repomd object.
  * @param repomd                cr_Repomd object
@@ -151,14 +151,15 @@ void cr_repomd_add_content_tag(cr_Repomd repomd, const char *tag);
 /** Frees cr_Repomd object and all its cr_RepomdRecord objects
  * @param repomd                cr_Repomd object
  */
-void cr_free_repomd(cr_Repomd repomd);
+void cr_repomd_free(cr_Repomd repomd);
 
 
 /** Generate repomd.xml content.
+ * Don't forget to use cr_xml_dump_init() before call this function.
  * @param repomd                cr_Repomd object
  * @return                      string with repomd.xml content
  */
-gchar *cr_generate_repomd_xml(cr_Repomd repomd);
+gchar *cr_repomd_xml_dump(cr_Repomd repomd);
 
 /** @} */
 

@@ -36,7 +36,7 @@
 #include "parsehdr.h"
 
 volatile short cr_initialized = 0;
-rpmts ts = NULL;
+rpmts cr_ts = NULL;
 
 
 void
@@ -48,15 +48,15 @@ cr_package_parser_init()
         return;
     cr_initialized = 1;
     rpmReadConfigFiles(NULL, NULL);
-    ts = rpmtsCreate();
-    if (!ts)
+    cr_ts = rpmtsCreate();
+    if (!cr_ts)
         g_critical("%s: rpmtsCreate() failed", __func__);
 
     rpmVSFlags vsflags = 0;
     vsflags |= _RPMVSF_NODIGESTS;
     vsflags |= _RPMVSF_NOSIGNATURES;
     vsflags |= RPMVSF_NOHDRCHK;
-    rpmtsSetVSFlags(ts, vsflags);
+    rpmtsSetVSFlags(cr_ts, vsflags);
 
     // Set empty keyring
     // Why? Because RPM is not thread-safe. Not only a little bit.
@@ -64,7 +64,7 @@ cr_package_parser_init()
     // This includes also reading the headers.
     // Work around for this shoud be use empty keyring.
     keyring = rpmKeyringNew();
-    if (rpmtsSetKeyring(ts, keyring) == -1)
+    if (rpmtsSetKeyring(cr_ts, keyring) == -1)
         g_critical("%s: rpmtsSetKeyring() failed", __func__);
     rpmKeyringFree(keyring);
 }
@@ -73,8 +73,8 @@ cr_package_parser_init()
 void
 cr_package_parser_shutdown()
 {
-    if (ts)
-        rpmtsFree(ts);
+    if (cr_ts)
+        rpmtsFree(cr_ts);
 
     rpmFreeMacros(NULL);
     rpmFreeRpmrc();
@@ -82,7 +82,7 @@ cr_package_parser_shutdown()
 
 
 cr_Package *
-cr_package_from_file(const char *filename,
+cr_package_from_rpm(const char *filename,
                      cr_ChecksumType checksum_type,
                      const char *location_href,
                      const char *location_base,
@@ -125,7 +125,7 @@ cr_package_from_file(const char *filename,
     // Read package
 
     Header hdr;
-    int rc = rpmReadPackageFile(ts, fd, NULL, &hdr);
+    int rc = rpmReadPackageFile(cr_ts, fd, NULL, &hdr);
     if (rc != RPMRC_OK) {
         switch (rc) {
             case RPMRC_NOKEY:
@@ -180,7 +180,7 @@ cr_package_from_file(const char *filename,
 
     // Get package object
 
-    result = cr_parse_header(hdr, mtime, size, checksum, checksum_type_str,
+    result = cr_package_from_header(hdr, mtime, size, checksum, checksum_type_str,
                              location_href, location_base, changelog_limit,
                              hdr_r.start, hdr_r.end);
 
@@ -196,7 +196,7 @@ cr_package_from_file(const char *filename,
 
 
 struct cr_XmlStruct
-cr_xml_from_package_file(const char *filename,
+cr_xml_from_rpm(const char *filename,
                          cr_ChecksumType checksum_type,
                          const char *location_href,
                          const char *location_base,
@@ -243,7 +243,7 @@ cr_xml_from_package_file(const char *filename,
     // Read package
 
     Header hdr;
-    int rc = rpmReadPackageFile(ts, fd, NULL, &hdr);
+    int rc = rpmReadPackageFile(cr_ts, fd, NULL, &hdr);
     if (rc != RPMRC_OK) {
         switch (rc) {
             case RPMRC_NOKEY:

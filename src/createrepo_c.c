@@ -257,7 +257,7 @@ dumper_thread(gpointer data, gpointer user_data)
     // Load package and gen XML metadata
     if (!old_used) {
         // Load package from file
-        pkg = cr_package_from_file(task->full_path, udata->checksum_type,
+        pkg = cr_package_from_rpm(task->full_path, udata->checksum_type,
                                    location_href, udata->location_base,
                                    udata->changelog_limit, NULL);
         if (!pkg) {

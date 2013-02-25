@@ -56,15 +56,15 @@ void cr_package_parser_shutdown();
  * @param stat_buf              struct stat of the filename
  *                              (optional - could be NULL)
  */
-cr_Package *cr_package_from_file(const char *filename,
-                                 cr_ChecksumType checksum_type,
-                                 const char *location_href,
-                                 const char *location_base,
-                                 int changelog_limit,
-                                 struct stat *stat_buf);
+cr_Package *cr_package_from_rpm(const char *filename,
+                                cr_ChecksumType checksum_type,
+                                const char *location_href,
+                                const char *location_base,
+                                int changelog_limit,
+                                struct stat *stat_buf);
 
 /** Generate XML for the specified package.
- * @param filename              filename
+ * @param filename              rpm filename
  * @param checksum_type         type of checksum to be used
  * @param location_href         package location inside repository
  * @param location_base         location (url) of repository
@@ -72,12 +72,12 @@ cr_Package *cr_package_from_file(const char *filename,
  * @param stat_buf              struct stat of the filename
  *                              (optional - could be NULL)
  */
-struct cr_XmlStruct cr_xml_from_package_file(const char *filename,
-                                             cr_ChecksumType checksum_type,
-                                             const char *location_href,
-                                             const char *location_base,
-                                             int changelog_limit,
-                                             struct stat *stat_buf);
+struct cr_XmlStruct cr_xml_from_rpm(const char *filename,
+                                    cr_ChecksumType checksum_type,
+                                    const char *location_href,
+                                    const char *location_base,
+                                    int changelog_limit,
+                                    struct stat *stat_buf);
 
 /** @} */
 

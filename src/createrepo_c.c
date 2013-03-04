@@ -550,9 +550,9 @@ main(int argc, char **argv)
     // Arguments pre-check
 
     if (cmd_options->version) {
-        printf("Version: %d.%d.%d\n", CR_MAJOR_VERSION,
-                                      CR_MINOR_VERSION,
-                                      CR_PATCH_VERSION);
+        printf("Version: %d.%d.%d\n", CR_VERSION_MAJOR,
+                                      CR_VERSION_MINOR,
+                                      CR_VERSION_PATCH);
         free_options(cmd_options);
         exit(0);
     } else if (argc != 2) {

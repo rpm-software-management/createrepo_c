@@ -45,8 +45,9 @@ struct cr_MetadataLocation {
     char *original_url;         /*!< original path of repo from commandline
                                      param */
     char *local_path;           /*!< local path to repo */
-    char *tmp_dir;              /*!< path to dir where metadata are stored if
-                                     metadata were downloaded */
+    int  tmp;                   /*!< if true - metadata were downloaded and
+                                     will be removed during
+                                     cr_metadata_location_free*/
 };
 
 /** Parses repomd.xml and returns a filled cr_MetadataLocation structure.

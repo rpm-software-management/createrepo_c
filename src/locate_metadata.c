@@ -41,9 +41,9 @@ cr_metadatalocation_free(struct cr_MetadataLocation *ml)
         return;
     }
 
-    if (ml->tmp_dir) {
-        g_debug("%s: Removing %s", __func__,  ml->tmp_dir);
-        cr_remove_dir(ml->tmp_dir);
+    if (ml->tmp && ml->local_path) {
+        g_debug("%s: Removing %s", __func__,  ml->local_path);
+        cr_remove_dir(ml->local_path);
     }
 
     g_free(ml->pri_xml_href);
@@ -58,7 +58,6 @@ cr_metadatalocation_free(struct cr_MetadataLocation *ml)
     g_free(ml->repomd);
     g_free(ml->original_url);
     g_free(ml->local_path);
-    g_free(ml->tmp_dir);
     g_free(ml);
 }
 
@@ -391,9 +390,7 @@ cr_get_remote_metadata(const char *repopath, int ignore_sqlite)
     // Parse downloaded data
 
     ret = cr_get_local_metadata(tmp_dir, ignore_sqlite);
-    if (ret) {
-        ret->tmp_dir = g_strdup(tmp_dir);
-    }
+    if (ret) ret->tmp = 1;
 
 
 get_remote_metadata_cleanup:

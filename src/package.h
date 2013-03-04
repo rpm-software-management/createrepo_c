@@ -145,6 +145,13 @@ void cr_package_free(cr_Package *package);
  */
 gchar *cr_package_nvra(cr_Package *package);
 
+/** Get NEVRA package string
+ * @param package       cr_Package
+ * @return              nevra string
+ */
+gchar *cr_package_nevra(cr_Package *package);
+
+
 /** @} */
 
 #ifdef __cplusplus

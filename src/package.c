@@ -18,6 +18,7 @@
  * USA.
  */
 
+#include <string.h>
 #include "package.h"
 #include "logging.h"
 
@@ -122,4 +123,17 @@ cr_package_nvra(cr_Package *package)
 {
     return g_strdup_printf("%s-%s-%s.%s", package->name, package->version,
                                           package->release, package->arch);
+}
+
+gchar *
+cr_package_nevra(cr_Package *package)
+{
+    char *epoch;
+    if (package->epoch && strlen(package->epoch))
+        epoch = package->epoch;
+    else
+        epoch = "0";
+
+    return g_strdup_printf("%s-%s:%s-%s.%s", package->name, epoch,
+                           package->version, package->release, package->arch);
 }

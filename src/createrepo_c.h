@@ -30,28 +30,28 @@ extern "C" {
  *
  * Usage:
  * \code
- *   #include <createrepo_c.h>
+ *   #include <createrepo_c/createrepo_c.h>
  * \endcode
  *
  */
 
 /** \defgroup   main    Complete API of createrepo_c library
- * Usage: #include <createrepo_c.h>
+ * Usage: #include <createrepo_c/createrepo_c.h>
  */
 
 #include <glib.h>
-#include <compression_wrapper.h>
-#include <constants.h>
-#include <load_metadata.h>
-#include <locate_metadata.h>
-#include <misc.h>
-#include <package.h>
-#include <parsehdr.h>
-#include <parsepkg.h>
-#include <repomd.h>
-#include <sqlite.h>
-#include <version.h>
-#include <xml_dump.h>
+#include "compression_wrapper.h"
+#include "constants.h"
+#include "load_metadata.h"
+#include "locate_metadata.h"
+#include "misc.h"
+#include "package.h"
+#include "parsehdr.h"
+#include "parsepkg.h"
+#include "repomd.h"
+#include "sqlite.h"
+#include "version.h"
+#include "xml_dump.h"
 
 #ifdef __cplusplus
 }

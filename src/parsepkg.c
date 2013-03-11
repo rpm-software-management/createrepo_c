@@ -57,16 +57,6 @@ cr_package_parser_init()
     vsflags |= _RPMVSF_NOSIGNATURES;
     vsflags |= RPMVSF_NOHDRCHK;
     rpmtsSetVSFlags(cr_ts, vsflags);
-
-    // Set empty keyring
-    // Why? Because RPM is not thread-safe. Not only a little bit.
-    // RPM uses some internal states which makes it thread-*un*safe.
-    // This includes also reading the headers.
-    // Work around for this shoud be use empty keyring.
-    keyring = rpmKeyringNew();
-    if (rpmtsSetKeyring(cr_ts, keyring) == -1)
-        g_critical("%s: rpmtsSetKeyring() failed", __func__);
-    rpmKeyringFree(keyring);
 }
 
 

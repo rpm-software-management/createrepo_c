@@ -25,6 +25,7 @@ extern "C" {
 #endif
 
 #include "package.h"
+#include <libxml/tree.h>
 
 /**
  * Dump files from the package and append them to the node as childrens.
@@ -34,6 +35,21 @@ extern "C" {
  *                      in the misc module)
  */
 void cr_xml_dump_files(xmlNodePtr node, cr_Package *package, int primary);
+
+/**
+ * Createrepo wrapper over libxml xmlNewTextChild.
+ * It allows content to be NULL and non UTF-8 (if content is no UTF8
+ * then iso-8859-1 is assumed).
+ */
+xmlNodePtr cr_xmlNewTextChild(xmlNodePtr parent,
+                              xmlNsPtr ns,
+                              const xmlChar *name,
+                              const xmlChar *content);
+
+/** TODO */
+xmlAttrPtr cr_xmlNewProp(xmlNodePtr node,
+                         const xmlChar *name,
+                         const xmlChar *value);
 
 #ifdef __cplusplus
 }

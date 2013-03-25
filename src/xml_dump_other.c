@@ -23,9 +23,11 @@
 #include <string.h>
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
+#include <libxml/xmlsave.h>
 #include "logging.h"
 #include "package.h"
 #include "xml_dump.h"
+#include "xml_dump_internal.h"
 
 #define FORMAT_XML      1
 #define FORMAT_LEVEL    0
@@ -55,15 +57,13 @@ cr_xml_dump_other_changelog(xmlNodePtr root, cr_Package *package)
         xmlNodePtr changelog;
 
         // Add changelog element
-        changelog = xmlNewTextChild(root,
-                                    NULL,
-                                    BAD_CAST "changelog",
-                                    BAD_CAST ((entry->changelog) ? entry->changelog : ""));
+        changelog = cr_xmlNewTextChild(root,
+                                       NULL,
+                                       BAD_CAST "changelog",
+                                       BAD_CAST entry->changelog);
 
         // Write param author
-        xmlNewProp(changelog,
-                   BAD_CAST "author",
-                   BAD_CAST ((entry->author) ? entry->author : ""));
+        cr_xmlNewProp(changelog, BAD_CAST "author", BAD_CAST entry->author);
 
         // Write param date
         char date_str[DATE_MAX_LEN];
@@ -81,16 +81,13 @@ cr_xml_dump_other_items(xmlNodePtr root, cr_Package *package)
     ************************************/
 
     // Add pkgid attribute
-    xmlNewProp(root, BAD_CAST "pkgid",
-               BAD_CAST ((package->pkgId) ? package->pkgId : ""));
+    cr_xmlNewProp(root, BAD_CAST "pkgid", BAD_CAST package->pkgId);
 
     // Add name attribute
-    xmlNewProp(root, BAD_CAST "name",
-               BAD_CAST ((package->name) ? package->name : ""));
+    cr_xmlNewProp(root, BAD_CAST "name", BAD_CAST package->name);
 
     // Add arch attribute
-    xmlNewProp(root, BAD_CAST "arch",
-               BAD_CAST ((package->arch) ? package->arch : ""));
+    cr_xmlNewProp(root, BAD_CAST "arch", BAD_CAST package->arch);
 
 
     /***********************************
@@ -103,16 +100,13 @@ cr_xml_dump_other_items(xmlNodePtr root, cr_Package *package)
     version = xmlNewChild(root, NULL, BAD_CAST "version", NULL);
 
     // Write version attribute epoch
-    xmlNewProp(version, BAD_CAST "epoch",
-               BAD_CAST ((package->epoch) ? package->epoch : ""));
+    xmlNewProp(version, BAD_CAST "epoch", BAD_CAST package->epoch);
 
     // Write version attribute ver
-    xmlNewProp(version, BAD_CAST "ver",
-               BAD_CAST ((package->version) ? package->version : ""));
+    xmlNewProp(version, BAD_CAST "ver", BAD_CAST package->version);
 
     // Write version attribute rel
-    xmlNewProp(version, BAD_CAST "rel",
-               BAD_CAST ((package->release) ? package->release : ""));
+    xmlNewProp(version, BAD_CAST "rel", BAD_CAST package->release);
 
 
     // Changelog dump
@@ -142,6 +136,8 @@ cr_xml_dump_other(cr_Package *package)
         return NULL;
     }
     // Seems to be little bit faster than xmlDocDumpFormatMemory
+//    xmlSaveCtxtPtr savebuf = xmlSaveToBuffer(buf, NULL, XML_SAVE_FORMAT|XML_SAVE_NO_DECL);
+//    xmlSaveTree(savebuf, root);
     xmlNodeDump(buf, NULL, root, FORMAT_LEVEL, FORMAT_XML);
     assert(buf->content);
     result = g_strndup((char *) buf->content, (buf->use+1));

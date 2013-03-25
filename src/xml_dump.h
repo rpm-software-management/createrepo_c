@@ -105,6 +105,13 @@ char *cr_xml_dump_other(cr_Package *package);
  */
 struct cr_XmlStruct cr_xml_dump(cr_Package *package);
 
+/** Prepare string to xml dump.
+ * If string is not utf8 it is converted (source encoding is supposed to be
+ * iso-8859-1).
+ * TODO
+ */
+void cr_latin1_to_utf8(const unsigned char *in, unsigned char *out);
+
 /** @} */
 
 #ifdef __cplusplus

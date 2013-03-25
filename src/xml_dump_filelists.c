@@ -40,16 +40,13 @@ cr_xml_dump_filelists_items(xmlNodePtr root, cr_Package *package)
     ************************************/
 
     // Add pkgid attribute
-    xmlNewProp(root, BAD_CAST "pkgid",
-               BAD_CAST ((package->pkgId) ? package->pkgId : ""));
+    cr_xmlNewProp(root, BAD_CAST "pkgid", BAD_CAST package->pkgId);
 
     // Add name attribute
-    xmlNewProp(root, BAD_CAST "name",
-               BAD_CAST ((package->name) ? package->name : ""));
+    cr_xmlNewProp(root, BAD_CAST "name", BAD_CAST package->name);
 
     // Add arch attribute
-    xmlNewProp(root, BAD_CAST "arch",
-               BAD_CAST ((package->arch) ? package->arch : ""));
+    cr_xmlNewProp(root, BAD_CAST "arch", BAD_CAST package->arch);
 
 
     /***********************************
@@ -62,16 +59,13 @@ cr_xml_dump_filelists_items(xmlNodePtr root, cr_Package *package)
     version = xmlNewChild(root, NULL, BAD_CAST "version", NULL);
 
     // Write version attribute epoch
-    xmlNewProp(version, BAD_CAST "epoch",
-               BAD_CAST ((package->epoch) ? package->epoch : ""));
+    cr_xmlNewProp(version, BAD_CAST "epoch", BAD_CAST package->epoch);
 
     // Write version attribute ver
-    xmlNewProp(version, BAD_CAST "ver",
-               BAD_CAST ((package->version) ? package->version : ""));
+    cr_xmlNewProp(version, BAD_CAST "ver", BAD_CAST package->version);
 
     // Write version attribute rel
-    xmlNewProp(version, BAD_CAST "rel",
-               BAD_CAST ((package->release) ? package->release : ""));
+    cr_xmlNewProp(version, BAD_CAST "rel", BAD_CAST package->release);
 
 
     // Files dump

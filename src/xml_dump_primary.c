@@ -93,27 +93,27 @@ cr_xml_dump_primary_dump_pco(xmlNodePtr root, cr_Package *package, int pcotype)
 
 
         /***********************************
-        Element: entry
+         Element: entry
         ************************************/
 
         xmlNodePtr entry_node;
 
         entry_node = xmlNewChild(pcor_node, NULL, BAD_CAST "rpm:entry", NULL);
-        xmlNewProp(entry_node, BAD_CAST "name", BAD_CAST entry->name);
+        cr_xmlNewProp(entry_node, BAD_CAST "name", BAD_CAST entry->name);
 
         if (entry->flags && entry->flags[0] != '\0') {
-            xmlNewProp(entry_node, BAD_CAST "flags", BAD_CAST entry->flags);
+            cr_xmlNewProp(entry_node, BAD_CAST "flags", BAD_CAST entry->flags);
 
             if (entry->epoch && entry->epoch[0] != '\0') {
-                xmlNewProp(entry_node, BAD_CAST "epoch", BAD_CAST entry->epoch);
+                cr_xmlNewProp(entry_node, BAD_CAST "epoch", BAD_CAST entry->epoch);
             }
 
             if (entry->version && entry->version[0] != '\0') {
-                xmlNewProp(entry_node, BAD_CAST "ver", BAD_CAST entry->version);
+                cr_xmlNewProp(entry_node, BAD_CAST "ver", BAD_CAST entry->version);
             }
 
             if (entry->release && entry->release[0] != '\0') {
-                xmlNewProp(entry_node, BAD_CAST "rel", BAD_CAST entry->release);
+                cr_xmlNewProp(entry_node, BAD_CAST "rel", BAD_CAST entry->release);
             }
         }
 
@@ -141,16 +141,14 @@ cr_xml_dump_primary_base_items(xmlNodePtr root, cr_Package *package)
      Element: name
     ************************************/
 
-    xmlNewTextChild(root, NULL,  BAD_CAST "name",
-                    BAD_CAST ((package->name) ? package->name : ""));
+    cr_xmlNewTextChild(root, NULL,  BAD_CAST "name", BAD_CAST package->name);
 
 
     /***********************************
      Element: arch
     ************************************/
 
-    xmlNewTextChild(root, NULL,  BAD_CAST "arch",
-                    BAD_CAST ((package->arch) ? package->arch : ""));
+    cr_xmlNewTextChild(root, NULL,  BAD_CAST "arch", BAD_CAST package->arch);
 
 
     /***********************************
@@ -163,16 +161,13 @@ cr_xml_dump_primary_base_items(xmlNodePtr root, cr_Package *package)
     version = xmlNewChild(root, NULL, BAD_CAST "version", NULL);
 
     // Write version attribute epoch
-    xmlNewProp(version, BAD_CAST "epoch",
-               BAD_CAST ((package->epoch) ? package->epoch : ""));
+    cr_xmlNewProp(version, BAD_CAST "epoch", BAD_CAST package->epoch);
 
     // Write version attribute ver
-    xmlNewProp(version, BAD_CAST "ver",
-               BAD_CAST ((package->version) ? package->version : ""));
+    cr_xmlNewProp(version, BAD_CAST "ver", BAD_CAST package->version);
 
     // Write version attribute rel
-    xmlNewProp(version, BAD_CAST "rel",
-               BAD_CAST ((package->release) ? package->release : ""));
+    cr_xmlNewProp(version, BAD_CAST "rel", BAD_CAST package->release);
 
 
     /***********************************
@@ -181,12 +176,13 @@ cr_xml_dump_primary_base_items(xmlNodePtr root, cr_Package *package)
 
     xmlNodePtr checksum;
 
-    checksum = xmlNewTextChild(root, NULL,  BAD_CAST "checksum",
-                               BAD_CAST ((package->pkgId) ? package->pkgId : ""));
+    checksum = cr_xmlNewTextChild(root,
+                                  NULL,
+                                  BAD_CAST "checksum",
+                                  BAD_CAST package->pkgId);
 
     // Write checksum attribute checksum_type
-    xmlNewProp(checksum, BAD_CAST "type",
-               BAD_CAST ((package->checksum_type) ? package->checksum_type : ""));
+    cr_xmlNewProp(checksum, BAD_CAST "type", BAD_CAST package->checksum_type);
 
     // Write checksum attribute pkgid
     xmlNewProp(checksum, BAD_CAST "pkgid", BAD_CAST "YES");
@@ -196,32 +192,31 @@ cr_xml_dump_primary_base_items(xmlNodePtr root, cr_Package *package)
      Element: summary
     ************************************/
 
-    xmlNewTextChild(root, NULL,  BAD_CAST "summary",
-                    BAD_CAST ((package->summary) ? package->summary : ""));
+    cr_xmlNewTextChild(root, NULL,  BAD_CAST "summary",
+                       BAD_CAST package->summary);
 
 
     /***********************************
     Element: description
     ************************************/
 
-    xmlNewTextChild(root, NULL,  BAD_CAST "description",
-                    BAD_CAST ((package->description) ? package->description : ""));
+    cr_xmlNewTextChild(root, NULL,  BAD_CAST "description",
+                       BAD_CAST package->description);
 
 
     /***********************************
      Element: packager
     ************************************/
 
-    xmlNewTextChild(root, NULL,  BAD_CAST "packager",
-                    BAD_CAST ((package->rpm_packager) ? package->rpm_packager : ""));
+    cr_xmlNewTextChild(root, NULL,  BAD_CAST "packager",
+                       BAD_CAST package->rpm_packager);
 
 
     /***********************************
      Element: url
     ************************************/
 
-    xmlNewTextChild(root, NULL,  BAD_CAST "url",
-                    BAD_CAST ((package->url) ? package->url : ""));
+    cr_xmlNewTextChild(root, NULL,  BAD_CAST "url", BAD_CAST package->url);
 
 
     /***********************************
@@ -279,14 +274,13 @@ cr_xml_dump_primary_base_items(xmlNodePtr root, cr_Package *package)
 
     // Write location attribute base
     if (package->location_base && package->location_base[0] != '\0') {
-        xmlNewProp(location,
-                   BAD_CAST "xml:base",
-                   BAD_CAST package->location_base);
+        cr_xmlNewProp(location,
+                      BAD_CAST "xml:base",
+                      BAD_CAST package->location_base);
     }
 
     // Write location attribute href
-    xmlNewProp(location, BAD_CAST "href",
-               BAD_CAST ((package->location_href) ? package->location_href : ""));
+    cr_xmlNewProp(location, BAD_CAST "href", BAD_CAST package->location_href);
 
 
     /***********************************
@@ -302,40 +296,40 @@ cr_xml_dump_primary_base_items(xmlNodePtr root, cr_Package *package)
      Element: license
     ************************************/
 
-    xmlNewTextChild(format, NULL,  BAD_CAST "rpm:license",
-                    BAD_CAST ((package->rpm_license) ? package->rpm_license : ""));
+    cr_xmlNewTextChild(format, NULL,  BAD_CAST "rpm:license",
+                       BAD_CAST package->rpm_license);
 
 
     /***********************************
      Element: vendor
     ************************************/
 
-    xmlNewTextChild(format, NULL,  BAD_CAST "rpm:vendor",
-                    BAD_CAST ((package->rpm_vendor) ? package->rpm_vendor : ""));
+    cr_xmlNewTextChild(format, NULL,  BAD_CAST "rpm:vendor",
+                       BAD_CAST package->rpm_vendor);
 
 
     /***********************************
      Element: group
     ************************************/
 
-    xmlNewTextChild(format, NULL,  BAD_CAST "rpm:group",
-                    BAD_CAST ((package->rpm_group) ? package->rpm_group : ""));
+    cr_xmlNewTextChild(format, NULL,  BAD_CAST "rpm:group",
+                       BAD_CAST package->rpm_group);
 
 
     /***********************************
      Element: buildhost
     ************************************/
 
-    xmlNewTextChild(format, NULL,  BAD_CAST "rpm:buildhost",
-                    BAD_CAST ((package->rpm_buildhost) ? package->rpm_buildhost : ""));
+    cr_xmlNewTextChild(format, NULL,  BAD_CAST "rpm:buildhost",
+                       BAD_CAST package->rpm_buildhost);
 
 
     /***********************************
      Element: sourcerpm
     ************************************/
 
-    xmlNewTextChild(format, NULL,  BAD_CAST "rpm:sourcerpm",
-                    BAD_CAST ((package->rpm_sourcerpm) ? package->rpm_sourcerpm : ""));
+    cr_xmlNewTextChild(format, NULL,  BAD_CAST "rpm:sourcerpm",
+                       BAD_CAST package->rpm_sourcerpm);
 
 
     /***********************************

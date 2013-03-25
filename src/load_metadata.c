@@ -1052,6 +1052,7 @@ cr_load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
                const char *filelists_xml_path, const char *other_xml_path,
                GStringChunk *chunk, GHashTable *pkglist_ht)
 {
+    int ret = CR_LOAD_METADATA_OK;
     cr_CompressionType compression_type;
     CR_FILE *pri_xml_cwfile, *fil_xml_cwfile, *oth_xml_cwfile;
     XML_Parser pri_p, fil_p, oth_p;
@@ -1122,28 +1123,30 @@ cr_load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
         pri_buff = XML_GetBuffer(pri_p, CHUNK_SIZE);
         if (!pri_buff) {
             g_critical("%s: Ran out of memory for parse", __func__);
-            return CR_LOAD_METADATA_ERR;
+            ret = CR_LOAD_METADATA_ERR;
+            break;
         }
 
         pri_len = cr_read(pri_xml_cwfile, (void *) pri_buff, CHUNK_SIZE);
         if (pri_len < 0) {
             g_critical("%s: Read error", __func__);
-            return CR_LOAD_METADATA_ERR;
+            ret = CR_LOAD_METADATA_ERR;
+            break;
         }
 
         if (! XML_ParseBuffer(pri_p, pri_len, pri_len == 0)) {
             g_critical("%s: Parse error at line: %d (%s)", __func__,
                                 (int) XML_GetCurrentLineNumber(pri_p),
                                 (char *) XML_ErrorString(XML_GetErrorCode(pri_p)));
-            return CR_LOAD_METADATA_ERR;
-        }
-
-        if (pri_len == 0) {
+            ret = CR_LOAD_METADATA_ERR;
             break;
         }
+
+        if (pri_len == 0)
+            break;
     }
 
-    if (parser_data.error)
+    if (parser_data.error || ret != CR_LOAD_METADATA_OK)
         goto cleanup;
 
     assert(!parser_data.pkg);
@@ -1158,28 +1161,30 @@ cr_load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
         fil_buff = XML_GetBuffer(fil_p, CHUNK_SIZE);
         if (!fil_buff) {
             g_critical("%s: Ran out of memory for parse", __func__);
-            return CR_LOAD_METADATA_ERR;
+            ret = CR_LOAD_METADATA_ERR;
+            break;
         }
 
         fil_len = cr_read(fil_xml_cwfile, (void *) fil_buff, CHUNK_SIZE);
         if (fil_len < 0) {
             g_critical("%s: Read error", __func__);
-            return CR_LOAD_METADATA_ERR;
+            ret = CR_LOAD_METADATA_ERR;
+            break;
         }
 
         if (! XML_ParseBuffer(fil_p, fil_len, fil_len == 0)) {
             g_critical("%s: Parse error at line: %d (%s)", __func__,
                                 (int) XML_GetCurrentLineNumber(fil_p),
                                 (char *) XML_ErrorString(XML_GetErrorCode(fil_p)));
-            return CR_LOAD_METADATA_ERR;
-        }
-
-        if (fil_len == 0) {
+            ret = CR_LOAD_METADATA_ERR;
             break;
         }
+
+        if (fil_len == 0)
+            break;
     }
 
-    if (parser_data.error)
+    if (parser_data.error || ret != CR_LOAD_METADATA_OK)
         goto cleanup;
 
     assert(!parser_data.pkg);
@@ -1194,29 +1199,38 @@ cr_load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
         oth_buff = XML_GetBuffer(oth_p, CHUNK_SIZE);
         if (!oth_buff) {
             g_critical("%s: Ran out of memory for parse", __func__);
-            return CR_LOAD_METADATA_ERR;
+            ret = CR_LOAD_METADATA_ERR;
+            break;
         }
 
         oth_len = cr_read(oth_xml_cwfile, (void *) oth_buff, CHUNK_SIZE);
         if (oth_len < 0) {
             g_critical("%s: Read error", __func__);
-            return CR_LOAD_METADATA_ERR;
+            ret = CR_LOAD_METADATA_ERR;
+            break;
         }
 
         if (! XML_ParseBuffer(oth_p, oth_len, oth_len == 0)) {
             g_critical("%s: Parse error at line: %d (%s)", __func__,
                                 (int) XML_GetCurrentLineNumber(oth_p),
                                 (char *) XML_ErrorString(XML_GetErrorCode(oth_p)));
-            return CR_LOAD_METADATA_ERR;
-        }
-
-        if (oth_len == 0) {
+            ret = CR_LOAD_METADATA_ERR;
             break;
         }
+
+        if (oth_len == 0)
+            break;
     }
 
 // Goto label
 cleanup:
+
+    if (ret != CR_LOAD_METADATA_OK) {
+        // If there were error during parsing it is important to take care
+        // about current processed package if shared chunk is used.
+        if (chunk)
+            parser_data.pkg->chunk = NULL;
+    }
 
     // Cleanup
 
@@ -1229,12 +1243,10 @@ cleanup:
 
     g_string_free(parser_data.current_string, TRUE);
 
+    if (parser_data.error)
+        ret = CR_LOAD_METADATA_ERR;
 
-    if (parser_data.error) {
-        return CR_LOAD_METADATA_ERR;
-    }
-
-    return CR_LOAD_METADATA_OK;
+    return ret;
 }
 
 
@@ -1263,7 +1275,6 @@ cr_metadata_load_xml(cr_Metadata md, struct cr_MetadataLocation *ml)
     if (result == CR_LOAD_METADATA_ERR) {
         g_critical("%s: Error encountered while parsing", __func__);
         cr_destroy_metadata_hashtable(intern_hashtable);
-        cr_metadatalocation_free(ml);
         return result;
     }
 

@@ -609,7 +609,7 @@ db_package_prepare (sqlite3 *db, GError **err)
 }
 
 
-inline const char *
+static inline const char *
 prevent_null(const char *str)
 {
     if (!str)
@@ -618,7 +618,7 @@ prevent_null(const char *str)
         return str;
 }
 
-inline const char *
+static inline const char *
 force_null(const char *str)
 {
     if (!str || str[0] == '\0')

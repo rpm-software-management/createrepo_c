@@ -27,7 +27,7 @@
 #include "misc.h"
 
 
-inline gchar *
+static inline gchar *
 cr_safe_string_chunk_insert(GStringChunk *chunk, const char *str)
 {
     if (!chunk || !str) {
@@ -38,7 +38,7 @@ cr_safe_string_chunk_insert(GStringChunk *chunk, const char *str)
 }
 
 
-inline int
+static inline int
 cr_compare_dependency(const char *dep1, const char *dep2)
 {
     /* Compares two dependency by name

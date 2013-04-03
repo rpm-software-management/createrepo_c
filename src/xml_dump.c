@@ -75,11 +75,11 @@ cr_xmlNewTextChild(xmlNodePtr parent,
     xmlNodePtr child;
 
     if (!orig_content) {
-        content = "";
+        content = BAD_CAST "";
     } else if (xmlCheckUTF8(orig_content)) {
         content = (xmlChar *) orig_content;
     } else {
-        size_t len = strlen(orig_content);
+        size_t len = strlen((const char *) orig_content);
         content = malloc(sizeof(xmlChar)*len*2 + 1);
         cr_latin1_to_utf8(orig_content, content);
         free_content = 1;
@@ -101,11 +101,11 @@ cr_xmlNewProp(xmlNodePtr node, const xmlChar *name, const xmlChar *orig_content)
     xmlAttrPtr attr;
 
     if (!orig_content) {
-        content = "";
+        content = BAD_CAST "";
     } else if (xmlCheckUTF8(orig_content)) {
         content = (xmlChar *) orig_content;
     } else {
-        size_t len = strlen(orig_content);
+        size_t len = strlen((const char *) orig_content);
         content = malloc(sizeof(xmlChar)*len*2 + 1);
         cr_latin1_to_utf8(orig_content, content);
         free_content = 1;

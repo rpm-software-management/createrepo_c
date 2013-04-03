@@ -186,7 +186,7 @@ cr_metadata_free(cr_Metadata md)
 
 
 
-inline gchar *
+static inline gchar *
 cr_chunk_insert_len_or_null (GStringChunk *chunk, const gchar *str, gssize len)
 {
     if (!str || len <= 0)

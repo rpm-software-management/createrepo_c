@@ -42,8 +42,6 @@ rpmts cr_ts = NULL;
 void
 cr_package_parser_init()
 {
-    rpmKeyring keyring;
-
     if (cr_initialized)
         return;
     cr_initialized = 1;

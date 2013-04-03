@@ -22,3 +22,4 @@ src/version.h
 src/createrepo_c.pc
 build/
 tags
+createrepo_c-*.tar.xz

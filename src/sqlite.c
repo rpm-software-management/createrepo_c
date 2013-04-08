@@ -559,18 +559,38 @@ void
 cr_db_dbinfo_update(sqlite3 *db, const char *checksum, GError **err)
 {
     int rc;
-    char *sql;
+    sqlite3_stmt *handle;
+    const char *query = "INSERT INTO db_info (dbversion, checksum) VALUES (?, ?)";
 
-    sql = g_strdup_printf
-        ("INSERT INTO db_info (dbversion, checksum) VALUES (%d, '%s')",
-         CR_DB_CACHE_DBVERSION, checksum);
+    /* Prepare insert statement */
+    rc = sqlite3_prepare_v2(db, query, -1, &handle, NULL);
+    if (rc != SQLITE_OK) {
+        g_set_error(err, CR_DB_ERROR, CR_DB_ERROR,
+                    "Cannot prepare db_info update: %s",
+                    sqlite3_errmsg(db));
+        g_critical("%s: Cannot prepare db_info update statement: %s",
+                   __func__, sqlite3_errmsg(db));
+        sqlite3_finalize(handle);
+        return;
+    }
 
-     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
-     if (rc != SQLITE_OK)
-         g_set_error (err, CR_DB_ERROR, CR_DB_ERROR,
-                      "Can not update dbinfo table: %s",
+    /* Delete all previous content of db_info */
+    sqlite3_exec(db, "DELETE FROM db_info", NULL, NULL, NULL);
+
+    /* Perform insert */
+    sqlite3_bind_int(handle, 1, CR_DB_CACHE_DBVERSION);
+    sqlite3_bind_text(handle, 2, checksum, -1, SQLITE_STATIC);
+    sqlite3_step(handle);
+    rc = sqlite3_finalize(handle);
+
+    if (rc != SQLITE_OK) {
+        g_set_error (err, CR_DB_ERROR, CR_DB_ERROR,
+                      "Cannot update dbinfo table: %s",
                        sqlite3_errmsg (db));
-    g_free (sql);
+        g_critical("%s: Cannot update dbinfo table: %s",
+                    __func__, sqlite3_errmsg(db));
+    }
+
 }
 
 
@@ -599,7 +619,7 @@ db_package_prepare (sqlite3 *db, GError **err)
     rc = sqlite3_prepare_v2 (db, query, -1, &handle, NULL);
     if (rc != SQLITE_OK) {
         g_set_error (err, CR_DB_ERROR, CR_DB_ERROR,
-                     "Can not prepare packages insertion: %s",
+                     "Cannot prepare packages insertion: %s",
                      sqlite3_errmsg (db));
         sqlite3_finalize (handle);
         handle = NULL;

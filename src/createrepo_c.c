@@ -1248,7 +1248,7 @@ main(int argc, char **argv)
     g_free(updateinfo);
 
     free_options(cmd_options);
-    cr_package_parser_shutdown();
+    cr_package_parser_cleanup();
 
     g_debug("All done");
     return 0;

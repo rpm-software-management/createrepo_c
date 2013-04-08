@@ -59,7 +59,7 @@ cr_package_parser_init()
 
 
 void
-cr_package_parser_shutdown()
+cr_package_parser_cleanup()
 {
     if (cr_ts)
         rpmtsFree(cr_ts);

@@ -334,7 +334,7 @@ test_all(TestData *testdata, gconstpointer test_data)
     cr_package_parser_init();
     pkg = cr_package_from_file(EMPTY_PKG, CR_CHECKSUM_SHA256, EMPTY_PKG, NULL, 5, NULL);
     g_assert(pkg);
-    cr_package_parser_shutdown();
+    cr_package_parser_cleanup();
 
     pkg2 = get_empty_package();
 

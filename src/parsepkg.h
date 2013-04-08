@@ -45,7 +45,7 @@ void cr_package_parser_init();
 
 /** Free global structures for package parsing.
  */
-void cr_package_parser_shutdown();
+void cr_package_parser_cleanup();
 
 /** Generate package object from package file.
  * @param filename              filename

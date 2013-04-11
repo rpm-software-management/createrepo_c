@@ -123,6 +123,8 @@ struct CmdOptions {
     char *merge_method_str;
     gboolean all;
     char *noarch_repo_url;
+    gboolean unique_md_filenames;
+    gboolean simple_md_filenames;
 
     // Koji mergerepos specific options
     gboolean koji;
@@ -145,7 +147,9 @@ struct CmdOptions {
 struct CmdOptions _cmd_options = {
         .db_compression_type = DEFAULT_DB_COMPRESSION_TYPE,
         .groupfile_compression_type = DEFAULT_GROUPFILE_COMPRESSION_TYPE,
-        .merge_method = MM_DEFAULT
+        .merge_method = MM_DEFAULT,
+        .unique_md_filenames = TRUE,
+        .simple_md_filenames = FALSE,
     };
 
 
@@ -180,6 +184,12 @@ static GOptionEntry cmd_entries[] =
     { "noarch-repo", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.noarch_repo_url),
       "Packages with noarch architecture will be replaced by package from this "
       "repo if exists in it.", "URL" },
+    { "unique-md-filenames", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.unique_md_filenames),
+      "Include the file's checksum in the metadata filename, helps HTTP caching (default).",
+      NULL },
+    { "simple-md-filenames", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.simple_md_filenames),
+      "Do not include the file's checksum in the metadata filename.", NULL },
+
     // -- Options related to Koji-mergerepos behaviour
     { "koji", 'k', 0, G_OPTION_ARG_NONE, &(_cmd_options.koji),
        "Enable koji mergerepos behaviour.", NULL},
@@ -334,6 +344,11 @@ check_arguments(struct CmdOptions *options)
             g_critical("Unknown merge method %s", options->merge_method_str);
             ret = FALSE;
         }
+    }
+
+    // Check simple filenames
+    if (options->simple_md_filenames) {
+        options->unique_md_filenames = FALSE;
     }
 
     // Koji arguments
@@ -1231,16 +1246,18 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     // Add checksums into files names
 
-    cr_repomd_record_rename_file(pri_xml_rec);
-    cr_repomd_record_rename_file(fil_xml_rec);
-    cr_repomd_record_rename_file(oth_xml_rec);
-    cr_repomd_record_rename_file(pri_db_rec);
-    cr_repomd_record_rename_file(fil_db_rec);
-    cr_repomd_record_rename_file(oth_db_rec);
-    cr_repomd_record_rename_file(groupfile_rec);
-    cr_repomd_record_rename_file(compressed_groupfile_rec);
-    cr_repomd_record_rename_file(update_info_rec);
-    cr_repomd_record_rename_file(pkgorigins_rec);
+    if (cmd_options->unique_md_filenames) {
+        cr_repomd_record_rename_file(pri_xml_rec);
+        cr_repomd_record_rename_file(fil_xml_rec);
+        cr_repomd_record_rename_file(oth_xml_rec);
+        cr_repomd_record_rename_file(pri_db_rec);
+        cr_repomd_record_rename_file(fil_db_rec);
+        cr_repomd_record_rename_file(oth_db_rec);
+        cr_repomd_record_rename_file(groupfile_rec);
+        cr_repomd_record_rename_file(compressed_groupfile_rec);
+        cr_repomd_record_rename_file(update_info_rec);
+        cr_repomd_record_rename_file(pkgorigins_rec);
+    }
 
 
     // Gen repomd.xml content

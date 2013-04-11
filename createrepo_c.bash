@@ -98,7 +98,8 @@ _cr_mergerepo()
 
     COMPREPLY=( $( compgen -W '--version --help --repo --archlist --database
         --no-database --verbose --outputdir --nogroups --noupdateinfo
-        --compress-type --method --all --noarch-repo --koji --groupfile
+        --compress-type --method --all --noarch-repo --unique-md-filenames
+        --simple-md-filenames --koji --groupfile
         --blocked' -- "$2" ) )
 } &&
 complete -F _cr_mergerepo -o filenames mergerepo_c

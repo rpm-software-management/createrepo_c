@@ -548,16 +548,19 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
 
     // Iterate over every repo and fill include_srpms hashtable
 
+    g_debug("Preparing list of allowed srpm builds");
+
     repoid = 0;
     for (element = repos; element; element = g_slist_next(element)) {
         struct cr_MetadataLocation *ml;
         cr_Metadata metadata;
         GHashTableIter iter;
-        gpointer key, value;
+        gpointer key, void_pkg;
 
         metadata = cr_metadata_new(CR_HT_KEY_HASH, 0, NULL);
         ml       = (struct cr_MetadataLocation *) element->data;
 
+        g_debug("Loading srpms from: %s", ml->original_url);
         if (cr_metadata_load_xml(metadata, ml) == CR_LOAD_METADATA_ERR) {
             cr_metadata_free(metadata);
             g_critical("Cannot load repo: \"%s\"", ml->original_url);
@@ -565,15 +568,15 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
             break;
         }
 
-        // Itarate over every package in repo and what "builds"
+        // Iterate over every package in repo and what "builds"
         // we're allowing into the repo
         g_hash_table_iter_init(&iter, cr_metadata_hashtable(metadata));
-        while (g_hash_table_iter_next(&iter, &key, &value)) {
-            cr_Package *pkg = (cr_Package *) value;
+        while (g_hash_table_iter_next(&iter, &key, &void_pkg)) {
+            cr_Package *pkg = (cr_Package *) void_pkg;
             struct cr_NVREA *nvrea;
             gpointer data;
             gboolean blocked = FALSE;
-            struct srpm_val *value_new;
+            struct srpm_val *srpm_value_new;
 
             nvrea = cr_split_rpm_filename(pkg->rpm_sourcerpm);
 
@@ -596,10 +599,10 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
                 // We have already seen build with the same name
 
                 int cmp;
-                struct cr_NVREA *nvrea_other;
-                struct srpm_val *value = data;
+                struct cr_NVREA *nvrea_existing;
+                struct srpm_val *srpm_value_existing = data;
 
-                if (value->repo_id != repoid) {
+                if (srpm_value_existing->repo_id != repoid) {
                     // We found a rpm built from an srpm with the same name in
                     // a previous repo. The previous repo takes precendence,
                     // so ignore the srpm found here.
@@ -610,9 +613,9 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
                 }
 
                 // We're in the same repo, so compare srpm NVRs
-                nvrea_other = cr_split_rpm_filename(value->sourcerpm);
-                cmp = cr_cmp_nvrea(nvrea, nvrea_other);
-                cr_nvrea_free(nvrea_other);
+                nvrea_existing = cr_split_rpm_filename(srpm_value_existing->sourcerpm);
+                cmp = cr_cmp_nvrea(nvrea, nvrea_existing);
+                cr_nvrea_free(nvrea_existing);
                 if (cmp < 1) {
                     // Existing package is from the newer srpm
                     cr_nvrea_free(nvrea);
@@ -627,12 +630,13 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
             // OR
             // We found a new build so we add it to the dict
 
-            value_new = g_malloc0(sizeof(struct srpm_val));
-            value_new->repo_id = repoid;
-            value_new->sourcerpm = g_strdup(pkg->rpm_sourcerpm);
+            g_debug("Adding srpm: %s", pkg->rpm_sourcerpm);
+            srpm_value_new = g_malloc0(sizeof(struct srpm_val));
+            srpm_value_new->repo_id = repoid;
+            srpm_value_new->sourcerpm = g_strdup(pkg->rpm_sourcerpm);
             g_hash_table_replace(include_srpms,
                                  g_strdup(nvrea->name),
-                                 value_new);
+                                 srpm_value_new);
             cr_nvrea_free(nvrea);
         }
 
@@ -706,9 +710,6 @@ add_package(cr_Package *pkg,
         gchar *nvra;
         gboolean seen;
 
-        // Check arch
-        // TODO
-
         nvrea = cr_split_rpm_filename(pkg->rpm_sourcerpm);
         value = g_hash_table_lookup(koji_stuff->include_srpms, nvrea->name);
         cr_nvrea_free(nvrea);
@@ -734,7 +735,7 @@ add_package(cr_Package *pkg,
 
         g_hash_table_replace(koji_stuff->seen_rpms, nvra, NULL);
     }
-    // Koji-mergerepos specifi behaviour end --------------------
+    // Koji-mergerepos specific behaviour end --------------------
 
     // Lookup package in the merged
 

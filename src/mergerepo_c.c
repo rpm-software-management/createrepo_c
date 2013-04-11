@@ -252,6 +252,9 @@ append_arch(GSList *list, gchar *arch, gboolean koji)
         }
     }
 
+    // Always include noarch
+    list = append_arch(list, "noarch", FALSE);
+
     return list;
 }
 

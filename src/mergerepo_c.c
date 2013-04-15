@@ -335,7 +335,7 @@ check_arguments(struct CmdOptions *options)
     // Merge method
     if (options->merge_method_str) {
         if (options->koji) {
-            g_message("With -k/--koji argument merge method is ignored (--all is implicitly used).");
+            g_warning("With -k/--koji argument merge method is ignored (--all is implicitly used).");
         } else if (!g_strcmp0(options->merge_method_str, "repo")) {
             options->merge_method = MM_REPO;
         } else if (!g_strcmp0(options->merge_method_str, "ts")) {
@@ -1385,6 +1385,23 @@ main(int argc, char **argv)
     }
 
 
+    // Set logging
+
+    g_log_set_default_handler (cr_log_fn, NULL);
+
+    if (cmd_options->verbose) {
+        // Verbose mode
+        GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
+        g_log_set_handler(NULL, levels, cr_log_fn, NULL);
+        g_log_set_handler("C_CREATEREPOLIB", levels, cr_log_fn, NULL);
+    } else {
+        // Standard mode
+        GLogLevelFlags levels = G_LOG_LEVEL_DEBUG;
+        g_log_set_handler(NULL, levels, cr_null_log_fn, NULL);
+        g_log_set_handler("C_CREATEREPOLIB", levels, cr_null_log_fn, NULL);
+    }
+
+
     // Check arguments
 
     if (!check_arguments(cmd_options)) {
@@ -1407,23 +1424,6 @@ main(int argc, char **argv)
                         "metadata into a new repo\n\n",
                         cr_get_filename(argv[0]), cr_get_filename(argv[0]));
         return 1;
-    }
-
-
-    // Set logging
-
-    g_log_set_default_handler (cr_log_fn, NULL);
-
-    if (cmd_options->verbose) {
-        // Verbose mode
-        GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
-        g_log_set_handler(NULL, levels, cr_log_fn, NULL);
-        g_log_set_handler("C_CREATEREPOLIB", levels, cr_log_fn, NULL);
-    } else {
-        // Standard mode
-        GLogLevelFlags levels = G_LOG_LEVEL_DEBUG;
-        g_log_set_handler(NULL, levels, cr_null_log_fn, NULL);
-        g_log_set_handler("C_CREATEREPOLIB", levels, cr_null_log_fn, NULL);
     }
 
 

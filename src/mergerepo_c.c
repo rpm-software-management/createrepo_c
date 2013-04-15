@@ -334,7 +334,9 @@ check_arguments(struct CmdOptions *options)
 
     // Merge method
     if (options->merge_method_str) {
-        if (!g_strcmp0(options->merge_method_str, "repo")) {
+        if (options->koji) {
+            g_message("With -k/--koji argument merge method is ignored (--all is implicitly used).");
+        } else if (!g_strcmp0(options->merge_method_str, "repo")) {
             options->merge_method = MM_REPO;
         } else if (!g_strcmp0(options->merge_method_str, "ts")) {
             options->merge_method = MM_TIMESTAMP;
@@ -352,6 +354,9 @@ check_arguments(struct CmdOptions *options)
     }
 
     // Koji arguments
+    if (options->koji)
+        options->all = TRUE;
+
     if (options->blocked) {
         if (!options->koji) {
             g_critical("-b/--blocked cannot be used without -k/--koji argument");

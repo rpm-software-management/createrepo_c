@@ -47,20 +47,20 @@ static const char *REPO_FILENAME_KEYS_02[] = {"super_kernel-6.0.1-2.x86_64.rpm",
 
 
 
-static void test_cr_new_metadata(void)
+static void test_cr_metadata_new(void)
 {
     guint len;
     cr_Metadata metadata = NULL;
 
     // Get new metadata object
-    metadata = cr_new_metadata(CR_HT_KEY_DEFAULT, 0, NULL);
+    metadata = cr_metadata_new(CR_HT_KEY_DEFAULT, 0, NULL);
     g_assert(metadata);
 
     // Check if it is empty
     len = g_hash_table_size(metadata->ht);
     g_assert_cmpint(len, ==, 0);
 
-    cr_destroy_metadata(metadata);
+    cr_metadata_free(metadata);
 }
 
 
@@ -72,10 +72,10 @@ void test_helper_check_keys(const char *repopath, cr_HashTableKey key, guint rep
     gpointer value;
     cr_Metadata metadata;
 
-    metadata = cr_new_metadata(key, 0, NULL);
+    metadata = cr_metadata_new(key, 0, NULL);
     g_assert(metadata);
     g_assert(metadata->ht);
-    ret = cr_locate_and_load_xml_metadata(metadata, repopath);
+    ret = cr_metadata_locate_and_load_xml(metadata, repopath);
     g_assert_cmpint(ret, ==, CR_LOAD_METADATA_OK);
     size = g_hash_table_size(metadata->ht);
     g_assert_cmpuint(size, ==, repo_size);
@@ -84,11 +84,11 @@ void test_helper_check_keys(const char *repopath, cr_HashTableKey key, guint rep
         if (!value)
             g_critical("Key \"%s\" not present!", keys[i]);
     }
-    cr_destroy_metadata(metadata);
+    cr_metadata_free(metadata);
 }
 
 
-static void test_cr_locate_and_load_xml_metadata(void)
+static void test_cr_metadata_locate_and_load_xml(void)
 {
     test_helper_check_keys(REPO_PATH_00, CR_HT_KEY_HASH, REPO_SIZE_00, REPO_HASH_KEYS_00);
     test_helper_check_keys(REPO_PATH_00, CR_HT_KEY_NAME, REPO_SIZE_00, REPO_NAME_KEYS_00);
@@ -104,16 +104,16 @@ static void test_cr_locate_and_load_xml_metadata(void)
 }
 
 
-static void test_cr_locate_and_load_xml_metadata_detailed(void)
+static void test_cr_metadata_locate_and_load_xml_detailed(void)
 {
     int ret;
     guint size;
     cr_Package *pkg;
     cr_Metadata metadata;
 
-    metadata = cr_new_metadata(CR_HT_KEY_NAME, 0, NULL);
+    metadata = cr_metadata_new(CR_HT_KEY_NAME, 0, NULL);
     g_assert(metadata);
-    ret = cr_locate_and_load_xml_metadata(metadata, REPO_PATH_01);
+    ret = cr_metadata_locate_and_load_xml(metadata, REPO_PATH_01);
     g_assert_cmpint(ret, ==, CR_LOAD_METADATA_OK);
     size = g_hash_table_size(metadata->ht);
     g_assert_cmpuint(size, ==, REPO_SIZE_01);
@@ -146,7 +146,7 @@ static void test_cr_locate_and_load_xml_metadata_detailed(void)
     g_assert(!pkg->location_base);
     g_assert_cmpstr(pkg->checksum_type, ==, "sha256");
 
-    cr_destroy_metadata(metadata);
+    cr_metadata_free(metadata);
 }
 
 
@@ -154,9 +154,9 @@ int main(int argc, char *argv[])
 {
     g_test_init(&argc, &argv, NULL);
 
-    g_test_add_func("/load_metadata/test_cr_new_metadata", test_cr_new_metadata);
-    g_test_add_func("/load_metadata/test_cr_locate_and_load_xml_metadata", test_cr_locate_and_load_xml_metadata);
-    g_test_add_func("/load_metadata/test_cr_locate_and_load_xml_metadata_detailed", test_cr_locate_and_load_xml_metadata_detailed);
+    g_test_add_func("/load_metadata/test_cr_metadata_new", test_cr_metadata_new);
+    g_test_add_func("/load_metadata/test_cr_metadata_locate_and_load_xml", test_cr_metadata_locate_and_load_xml);
+    g_test_add_func("/load_metadata/test_cr_metadata_locate_and_load_xml_detailed", test_cr_metadata_locate_and_load_xml_detailed);
 
     return g_test_run();
 }

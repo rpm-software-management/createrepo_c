@@ -46,7 +46,7 @@ extern "C" {
  * primary_statements = cr_db_prepare_primary_statements(primary_db, NULL);
  *
  * // Add all packages here
- * cr_db_add_primary_pkg(primary_statements, pkg);
+ * cr_db_add_primary_pkg(primary_statements, pkg, NULL);
  *
  * // Add checksum of XML version of file (primary in this case)
  * cr_db_dbinfo_update(primary_db, "foochecksum", NULL);
@@ -192,20 +192,29 @@ void cr_db_destroy_other_statements(cr_DbOtherStatements stmts);
 /** Add package into the database.
  * @param stmts                 object with compiled statements
  * @param pkg                   package object
+ * @param err                   **GError
  */
-void cr_db_add_primary_pkg(cr_DbPrimaryStatements stmts, cr_Package *pkg);
+void cr_db_add_primary_pkg(cr_DbPrimaryStatements stmts,
+                           cr_Package *pkg,
+                           GError **err);
 
 /** Add package into the database.
  * @param stmts                 object with compiled statements
  * @param pkg                   package object
+ * @param err                   **GError
  */
-void cr_db_add_filelists_pkg(cr_DbFilelistsStatements stmts, cr_Package *pkg);
+void cr_db_add_filelists_pkg(cr_DbFilelistsStatements stmts,
+                             cr_Package *pkg,
+                             GError **err);
 
 /** Add package into the database.
  * @param stmts                 object with compiled statements
  * @param pkg                   package object
+ * @param err                   **GError
  */
-void cr_db_add_other_pkg(cr_DbOtherStatements stmts, cr_Package *pkg);
+void cr_db_add_other_pkg(cr_DbOtherStatements stmts,
+                         cr_Package *pkg,
+                         GError **err);
 
 /** Insert record into the updateinfo table
  * @param db                    open db connection

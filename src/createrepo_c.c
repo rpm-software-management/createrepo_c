@@ -168,7 +168,7 @@ write_pkg(long id,
     udata->id_pri++;
     cr_puts(udata->pri_f, (const char *) res.primary);
     if (udata->pri_statements)
-        cr_db_add_primary_pkg(udata->pri_statements, pkg);
+        cr_db_add_primary_pkg(udata->pri_statements, pkg, NULL);
     g_mutex_unlock(udata->mutex_pri);
     g_cond_broadcast(udata->cond_pri);
 
@@ -178,9 +178,8 @@ write_pkg(long id,
         g_cond_wait (udata->cond_fil, udata->mutex_fil);
     udata->id_fil++;
     cr_puts(udata->fil_f, (const char *) res.filelists);
-    if (udata->fil_statements) {
-        cr_db_add_filelists_pkg(udata->fil_statements, pkg);
-    }
+    if (udata->fil_statements)
+        cr_db_add_filelists_pkg(udata->fil_statements, pkg, NULL);
     g_mutex_unlock(udata->mutex_fil);
     g_cond_broadcast(udata->cond_fil);
 
@@ -190,9 +189,8 @@ write_pkg(long id,
         g_cond_wait (udata->cond_oth, udata->mutex_oth);
     udata->id_oth++;
     cr_puts(udata->oth_f, (const char *) res.other);
-    if (udata->oth_statements) {
-        cr_db_add_other_pkg(udata->oth_statements, pkg);
-    }
+    if (udata->oth_statements)
+        cr_db_add_other_pkg(udata->oth_statements, pkg, NULL);
     g_mutex_unlock(udata->mutex_oth);
     g_cond_broadcast(udata->cond_oth);
 }

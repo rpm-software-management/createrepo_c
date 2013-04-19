@@ -508,7 +508,7 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
         int x = 0;
         char *content = NULL;
         char **names;
-        GError *err;
+        GError *err = NULL;
 
         if (!g_file_get_contents(cmd_options->blocked, &content, NULL, &err)) {
             g_critical("Error while reading blocked file: %s", err->message);
@@ -1101,9 +1101,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
             cr_puts(oth_f, (const char *) res.other);
 
             if (!cmd_options->no_database) {
-                cr_db_add_primary_pkg(pri_statements, pkg);
-                cr_db_add_filelists_pkg(fil_statements, pkg);
-                cr_db_add_other_pkg(oth_statements, pkg);
+                cr_db_add_primary_pkg(pri_statements, pkg, NULL);
+                cr_db_add_filelists_pkg(fil_statements, pkg, NULL);
+                cr_db_add_other_pkg(oth_statements, pkg, NULL);
             }
 
             free(res.primary);

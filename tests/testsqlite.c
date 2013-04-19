@@ -233,8 +233,9 @@ test_cr_db_add_primary_pkg(TestData *testdata, gconstpointer test_data)
     g_assert(!err);
 
     tmp = g_timer_elapsed(timer, NULL);
-    cr_db_add_primary_pkg(pri_stmts, pkg);
+    cr_db_add_primary_pkg(pri_stmts, pkg, &err);
     tadd = g_timer_elapsed(timer, NULL) - tmp;
+    g_assert(!err);
 
     tmp = g_timer_elapsed(timer, NULL);
     cr_db_destroy_primary_statements(pri_stmts);
@@ -287,7 +288,8 @@ test_cr_db_dbinfo_update(TestData *testdata, gconstpointer test_data)
     pri_stmts = cr_db_prepare_primary_statements(db, &err);
     g_assert(!err);
 
-    cr_db_add_primary_pkg(pri_stmts, pkg);
+    cr_db_add_primary_pkg(pri_stmts, pkg, &err);
+    g_assert(!err);
 
     cr_db_destroy_primary_statements(pri_stmts);
 
@@ -345,8 +347,10 @@ test_all(TestData *testdata, gconstpointer test_data)
     pri_stmts = cr_db_prepare_primary_statements(db, &err);
     g_assert(!err);
 
-    cr_db_add_primary_pkg(pri_stmts, pkg);
-    cr_db_add_primary_pkg(pri_stmts, pkg2);
+    cr_db_add_primary_pkg(pri_stmts, pkg, &err);
+    g_assert(!err);
+    cr_db_add_primary_pkg(pri_stmts, pkg2, &err);
+    g_assert(!err);
 
     cr_db_destroy_primary_statements(pri_stmts);
 

@@ -478,11 +478,14 @@ db_index_other_tables (sqlite3 *db, GError **err)
 sqlite3 *
 cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
 {
+    int exists;
     GError *tmp_err = NULL;
     sqlite3 *db = NULL;
 
     if (!path || path[0] == '\0')
         return db;
+
+    exists = g_file_test(path, G_FILE_TEST_IS_REGULAR);
 
     sqlite3_enable_shared_cache(1);
 
@@ -506,17 +509,20 @@ cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
         return db;
     }
 
-    switch (db_type) {
-        case CR_DB_PRIMARY:
-            db_create_primary_tables(db, &tmp_err); break;
-        case CR_DB_FILELISTS:
-            db_create_filelists_tables(db, &tmp_err); break;
-        case CR_DB_OTHER:
-            db_create_other_tables(db, &tmp_err); break;
-    }
-    if (tmp_err) {
-        g_propagate_error(err, tmp_err);
-        return db;
+    if (!exists) {
+        // Do not recreate tables, indexes and triggers if db has existed.
+        switch (db_type) {
+            case CR_DB_PRIMARY:
+                db_create_primary_tables(db, &tmp_err); break;
+            case CR_DB_FILELISTS:
+                db_create_filelists_tables(db, &tmp_err); break;
+            case CR_DB_OTHER:
+                db_create_other_tables(db, &tmp_err); break;
+        }
+        if (tmp_err) {
+            g_propagate_error(err, tmp_err);
+            return db;
+        }
     }
 
     return db;
@@ -1135,8 +1141,6 @@ cr_db_add_primary_pkg(cr_DbPrimaryStatements stmts, cr_Package *pkg)
 {
     GSList *iter;
 
-//    sqlite3_exec(stmts->db, "BEGIN", NULL, NULL, NULL);
-
     db_package_write(stmts->db, stmts->pkg_handle, pkg);
 
     for (iter = pkg->provides; iter; iter = iter->next)
@@ -1171,7 +1175,6 @@ cr_db_add_primary_pkg(cr_DbPrimaryStatements stmts, cr_Package *pkg)
         db_file_write (stmts->db, stmts->files_handle, pkg->pkgKey,
                        (cr_PackageFile *) iter->data);
 
-//    sqlite3_exec (stmts->db, "COMMIT", NULL, NULL, NULL);
 }
 
 

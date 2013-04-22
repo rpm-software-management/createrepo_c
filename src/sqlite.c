@@ -939,20 +939,20 @@ package_files_to_hash (GSList *files)
 }
 
 
-typedef struct {
-    sqlite3 *db;
-    sqlite3_stmt *handle;
-    gint64 pkgKey;
-} FileWriteInfo;
-
-
 static void
-cr_db_write_file (gpointer key, gpointer value, gpointer user_data)
+cr_db_write_file (sqlite3 *db,
+                  sqlite3_stmt *handle,
+                  gint64 pkgKey,
+                  gpointer key,
+                  gpointer value,
+                  GError **err)
 {
-    EncodedPackageFile *file = (EncodedPackageFile *) value;
-    FileWriteInfo *info = (FileWriteInfo *) user_data;
+    // key is a path to directory eg. "/etc/X11/xinit/xinitrc.d"
+    // value is a struct eg. { .files="foo/bar/dir", .types="ffd"}
+
     int rc;
     size_t key_len;
+    EncodedPackageFile *file = (EncodedPackageFile *) value;
 
     key_len = strlen((const char *) key);
     while (key_len > 1 && ((char *) key)[key_len-1] == '/') {
@@ -967,41 +967,22 @@ cr_db_write_file (gpointer key, gpointer value, gpointer user_data)
         key_len = 1;
     }
 
-    sqlite3_bind_int (info->handle, 1, info->pkgKey);
-    sqlite3_bind_text(info->handle, 2, (const char *) key, (int) key_len, SQLITE_STATIC);
-    sqlite3_bind_text(info->handle, 3, file->files->str, -1, SQLITE_STATIC);
-    sqlite3_bind_text(info->handle, 4, file->types->str, -1, SQLITE_STATIC);
+    sqlite3_bind_int (handle, 1, pkgKey);
+    sqlite3_bind_text(handle, 2, (const char *) key, (int) key_len, SQLITE_STATIC);
+    sqlite3_bind_text(handle, 3, file->files->str, -1, SQLITE_STATIC);
+    sqlite3_bind_text(handle, 4, file->types->str, -1, SQLITE_STATIC);
 
-    rc = sqlite3_step (info->handle);
-    sqlite3_reset (info->handle);
+    rc = sqlite3_step (handle);
+    sqlite3_reset (handle);
 
     if (rc != SQLITE_DONE) {
-        g_critical ("Error adding file to SQL: %s",
-                    sqlite3_errmsg (info->db));
+        g_critical ("Error adding file records to db: %s",
+                    sqlite3_errmsg (db));
+        g_set_error(err, CR_DB_ERROR, CR_DB_ERROR,
+                    "Error adding file records to db : %s",
+                     sqlite3_errmsg(db));
     }
 }
-
-
-static void
-db_filelists_write(sqlite3 *db,
-                   sqlite3_stmt *handle,
-                   cr_Package *p,
-                   GError **err)
-{
-    GHashTable *hash;
-    FileWriteInfo info;
-
-    // TODO: Add support for err
-
-    info.db = db;
-    info.handle = handle;
-    info.pkgKey = p->pkgKey;
-
-    hash = package_files_to_hash (p->files);
-    g_hash_table_foreach(hash, cr_db_write_file, &info);
-    g_hash_table_destroy(hash);
-}
-
 
 
 /*
@@ -1287,20 +1268,34 @@ cr_db_add_filelists_pkg(cr_DbFilelistsStatements stmts,
                         cr_Package *pkg,
                         GError **err)
 {
-    // Add package record into the filelists.sqlite
     GError *tmp_err = NULL;
 
+    // Add record into the package table
     db_package_ids_write(stmts->db, stmts->package_id_handle, pkg, &tmp_err);
     if (tmp_err) {
         g_propagate_error(err, tmp_err);
         return;
     }
 
-    db_filelists_write(stmts->db, stmts->filelists_handle, pkg, &tmp_err);
-    if (tmp_err) {
-        g_propagate_error(err, tmp_err);
-        return;
+    // Add records into the filelist table
+    GHashTable *hash;
+    GHashTableIter iter;
+    gpointer key, value;
+
+    // Create a hashtable where:
+    // key is a path to directory eg. "/etc/X11/xinit/xinitrc.d"
+    // value is a struct eg. { .files="foo/bar/dir", .types="ffd"}
+    hash = package_files_to_hash(pkg->files);
+    g_hash_table_iter_init(&iter, hash);
+    while (g_hash_table_iter_next (&iter, &key, &value)) {
+        cr_db_write_file(stmts->db, stmts->filelists_handle, pkg->pkgKey, key, value, &tmp_err);
+        if (tmp_err) {
+            g_propagate_error(err, tmp_err);
+            break;
+        }
     }
+
+    g_hash_table_destroy(hash);
 }
 
 
@@ -1353,18 +1348,18 @@ cr_db_add_other_pkg(cr_DbOtherStatements stmts, cr_Package *pkg, GError **err)
     GSList *iter;
     cr_ChangelogEntry *entry;
     int rc;
-    GError *tmp_err;
+    GError *tmp_err = NULL;
 
     sqlite3_stmt *handle = stmts->changelog_handle;
 
-    // Add package record into the other.sqlite
-
+    // Add package record into the packages table
     db_package_ids_write(stmts->db, stmts->package_id_handle, pkg, &tmp_err);
     if (tmp_err) {
         g_propagate_error(err, tmp_err);
         return;
     }
 
+    // Add changelog recrods into the changelog table
     for (iter = pkg->changelogs; iter; iter = iter->next) {
         entry = (cr_ChangelogEntry *) iter->data;
 

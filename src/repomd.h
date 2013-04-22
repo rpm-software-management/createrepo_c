@@ -117,7 +117,7 @@ void cr_repomd_record_free(cr_RepomdRecord record);
  * @param checksum_type         type of checksum to use
  */
 int cr_repomd_record_fill(cr_RepomdRecord record,
-                         cr_ChecksumType checksum_type);
+                          cr_ChecksumType checksum_type);
 
 /** Analogue of cr_repomd_record_fill but for groupfile.
  * Groupfile must be set with the path to existing non compressed groupfile.
@@ -130,9 +130,9 @@ int cr_repomd_record_fill(cr_RepomdRecord record,
  * @param compression           type of compression
  */
 void cr_repomd_record_groupfile(cr_RepomdRecord groupfile,
-                                       cr_RepomdRecord compressed_groupfile,
-                                       cr_ChecksumType checksum_type,
-                                       cr_CompressionType compression);
+                                cr_RepomdRecord compressed_groupfile,
+                                cr_ChecksumType checksum_type,
+                                cr_CompressionType compression);
 
 /** Add a hash as prefix to the filename.
  * @param record                cr_RepomdRecord of file to be renamed

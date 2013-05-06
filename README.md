@@ -51,6 +51,22 @@ Modify createrepo_c.spec and run:
 
     utils/make_rpm.sh .
 
+## Testing
+
+All unit tests run from librepo checkout dir
+
+### Build C tests && run c and python tests
+
+    make tests && make test
+
+### Run (from your checkout dir) - C unittests:
+
+    build/tests/run_gtester.sh
+
+### Run (from your checkout dir) - Python unittests:
+
+    PYTHONPATH=`readlink -f ./build/src/python/` nosetests -s tests/python/tests/
+
 ---------------------------------------------------
 
 # Differences in behavior between createrepo_c and createrepo

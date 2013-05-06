@@ -13,3 +13,9 @@ ADD_DEPENDENCIES(tests testmisc)
 ADD_EXECUTABLE(testsqlite testsqlite.c)
 TARGET_LINK_LIBRARIES(testsqlite libcreaterepo_c ${GLIB2_LIBRARIES})
 ADD_DEPENDENCIES(tests testsqlite)
+
+#ADD_TEST(test_main gtester "${CMAKE_CURRENT_SOURCE_DIR}/test_data")
+CONFIGURE_FILE("run_gtester.sh.in"  "run_gtester.sh")
+ADD_TEST(test_main run_gtester.sh)
+
+ADD_SUBDIRECTORY(python)

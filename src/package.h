@@ -151,6 +151,11 @@ gchar *cr_package_nvra(cr_Package *package);
  */
 gchar *cr_package_nevra(cr_Package *package);
 
+/** Create a standalone copy of the package.
+ * @param package       cr_Package
+ * @return              copy of the package
+ */
+cr_Package *cr_package_copy(cr_Package *package);
 
 /** @} */
 

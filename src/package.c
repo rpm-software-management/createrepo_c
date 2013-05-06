@@ -21,6 +21,7 @@
 #include <string.h>
 #include "package.h"
 #include "logging.h"
+#include "misc.h"
 
 #define PACKAGE_CHUNK_SIZE 2048
 
@@ -136,4 +137,82 @@ cr_package_nevra(cr_Package *package)
 
     return g_strdup_printf("%s-%s:%s-%s.%s", package->name, epoch,
                            package->version, package->release, package->arch);
+}
+
+static GSList *
+cr_dependency_dup(GStringChunk *chunk, GSList *orig)
+{
+    GSList *list = NULL;
+
+    for (GSList *elem = orig; elem; elem = g_slist_next(elem)) {
+        cr_Dependency *odep = elem->data;
+        cr_Dependency *ndep  = cr_dependency_new();
+        ndep->name    = cr_safe_string_chunk_insert(chunk, odep->name);
+        ndep->flags   = cr_safe_string_chunk_insert(chunk, odep->flags);
+        ndep->epoch   = cr_safe_string_chunk_insert(chunk, odep->epoch);
+        ndep->version = cr_safe_string_chunk_insert(chunk, odep->version);
+        ndep->release = cr_safe_string_chunk_insert(chunk, odep->release);
+        ndep->pre     = odep->pre;
+        list = g_slist_prepend(list, ndep);
+    }
+
+    return g_slist_reverse(list);
+}
+
+cr_Package *
+cr_package_copy(cr_Package *orig)
+{
+    cr_Package *pkg = cr_package_new();
+
+    pkg->pkgKey           = orig->pkgKey;
+    pkg->pkgId            = cr_safe_string_chunk_insert(pkg->chunk, orig->pkgId);
+    pkg->name             = cr_safe_string_chunk_insert(pkg->chunk, orig->name);
+    pkg->arch             = cr_safe_string_chunk_insert(pkg->chunk, orig->arch);
+    pkg->version          = cr_safe_string_chunk_insert(pkg->chunk, orig->version);
+    pkg->epoch            = cr_safe_string_chunk_insert(pkg->chunk, orig->epoch);
+    pkg->release          = cr_safe_string_chunk_insert(pkg->chunk, orig->release);
+    pkg->summary          = cr_safe_string_chunk_insert(pkg->chunk, orig->summary);
+    pkg->description      = cr_safe_string_chunk_insert(pkg->chunk, orig->description);
+    pkg->url              = cr_safe_string_chunk_insert(pkg->chunk, orig->url);
+    pkg->time_file        = orig->time_file;
+    pkg->time_build       = orig->time_build;
+    pkg->rpm_license      = cr_safe_string_chunk_insert(pkg->chunk, orig->rpm_license);
+    pkg->rpm_vendor       = cr_safe_string_chunk_insert(pkg->chunk, orig->rpm_vendor);
+    pkg->rpm_group        = cr_safe_string_chunk_insert(pkg->chunk, orig->rpm_group);
+    pkg->rpm_buildhost    = cr_safe_string_chunk_insert(pkg->chunk, orig->rpm_buildhost);
+    pkg->rpm_sourcerpm    = cr_safe_string_chunk_insert(pkg->chunk, orig->rpm_sourcerpm);
+    pkg->rpm_header_start = orig->rpm_header_start;
+    pkg->rpm_header_end   = orig->rpm_header_end;
+    pkg->rpm_packager     = cr_safe_string_chunk_insert(pkg->chunk, orig->rpm_packager);
+    pkg->size_package     = orig->size_package;
+    pkg->size_installed   = orig->size_installed;
+    pkg->size_archive     = orig->size_archive;
+    pkg->location_href    = cr_safe_string_chunk_insert(pkg->chunk, orig->location_href);
+    pkg->location_base    = cr_safe_string_chunk_insert(pkg->chunk, orig->location_base);
+    pkg->checksum_type    = cr_safe_string_chunk_insert(pkg->chunk, orig->checksum_type);
+
+    pkg->requires  = cr_dependency_dup(pkg->chunk, orig->requires);
+    pkg->provides  = cr_dependency_dup(pkg->chunk, orig->provides);
+    pkg->conflicts = cr_dependency_dup(pkg->chunk, orig->conflicts);
+    pkg->obsoletes = cr_dependency_dup(pkg->chunk, orig->obsoletes);
+
+    for (GSList *elem = orig->files; elem; elem = g_slist_next(elem)) {
+        cr_PackageFile *orig_file = elem->data;
+        cr_PackageFile *file = cr_package_file_new();
+        file->type = cr_safe_string_chunk_insert(pkg->chunk, orig_file->type);
+        file->path = cr_safe_string_chunk_insert(pkg->chunk, orig_file->path);
+        file->name = cr_safe_string_chunk_insert(pkg->chunk, orig_file->name);
+        pkg->files = g_slist_prepend(pkg->files, file);
+    }
+
+    for (GSList *elem = orig->changelogs; elem; elem = g_slist_next(elem)) {
+        cr_ChangelogEntry *orig_log = elem->data;
+        cr_ChangelogEntry *log = cr_changelog_entry_new();
+        log->author    = cr_safe_string_chunk_insert(pkg->chunk, orig_log->author);
+        log->date      = orig_log->date;
+        log->changelog = cr_safe_string_chunk_insert(pkg->chunk, orig_log->changelog);
+        pkg->changelogs = g_slist_prepend(pkg->changelogs, log);
+    }
+
+    return pkg;
 }

@@ -254,16 +254,30 @@ void cr_nvrea_free(struct cr_NVREA *nvrea);
                                         (B)->epoch, (B)->version, (B)->release))
 
 /** Compare two version strings splited into evr chunks.
- * param e1     1. epoch
- * param v1     1. version
- * param r1     1. release
- * param e2     2. epoch
- * param v2     2. version
- * param r2     2. release
- * return       0 = same, 1 = first is newer, -1 = second is newer
+ * @param e1     1. epoch
+ * @param v1     1. version
+ * @param r1     1. release
+ * @param e2     2. epoch
+ * @param v2     2. version
+ * @param r2     2. release
+ * @return       0 = same, 1 = first is newer, -1 = second is newer
  */
 int cr_cmp_evr(const char *e1, const char *v1, const char *r1,
                const char *e2, const char *v2, const char *r2);
+
+
+/** Safe insert into GStringChunk.
+ * @param chunk     a GStringChunk
+ * @param str       string to add or NULL
+ * @return          pointer to the copy of str or NULL if str is NULL
+ */
+static inline gchar *
+cr_safe_string_chunk_insert(GStringChunk *chunk, const char *str)
+{
+    if (!str) return NULL;
+    return g_string_chunk_insert(chunk, str);
+}
+
 
 /** @} */
 

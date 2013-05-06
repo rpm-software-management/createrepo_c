@@ -27,17 +27,6 @@
 #include "misc.h"
 
 
-static inline gchar *
-cr_safe_string_chunk_insert(GStringChunk *chunk, const char *str)
-{
-    if (!chunk || !str) {
-        return NULL;
-    }
-
-    return g_string_chunk_insert(chunk, str);
-}
-
-
 static inline int
 cr_compare_dependency(const char *dep1, const char *dep2)
 {

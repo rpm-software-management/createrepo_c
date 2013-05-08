@@ -37,7 +37,7 @@ extern "C" {
  *                           "repodata/rpm.rpm", NULL, 10, NULL);
  *
  * cr_xml_dump_init();
- * xml = cr_xml_dump(pkg);
+ * xml = cr_xml_dump(pkg, NULL);
  * cr_xml_dump_cleanup();
  *
  * cr_package_free(pkg);
@@ -83,27 +83,31 @@ void cr_xml_dump_cleanup();
 
 /** Generate primary xml chunk from cr_Package.
  * @param package       cr_Package
+ * @param err           **GError
  * @return              xml chunk string or NULL on error
  */
-char *cr_xml_dump_primary(cr_Package *package);
+char *cr_xml_dump_primary(cr_Package *package, GError **err);
 
 /** Generate filelists xml chunk from cr_Package.
  * @param package       cr_Package
+ * @param err           **GError
  * @return              xml chunk string or NULL on error
  */
-char *cr_xml_dump_filelists(cr_Package *package);
+char *cr_xml_dump_filelists(cr_Package *package, GError **err);
 
 /** Generate other xml chunk from cr_Package.
  * @param package       cr_Package
+ * @param err           **GError
  * @return              xml chunk string or NULL on error
  */
-char *cr_xml_dump_other(cr_Package *package);
+char *cr_xml_dump_other(cr_Package *package, GError **err);
 
 /** Generate all three xml chunks (primary, filelists, other) from cr_Package.
  * @param package       cr_Package
+ * @param err           **GError
  * @return              cr_XmlStruct
  */
-struct cr_XmlStruct cr_xml_dump(cr_Package *package);
+struct cr_XmlStruct cr_xml_dump(cr_Package *package, GError **err);
 
 /** Prepare string to xml dump.
  * If string is not utf8 it is converted (source encoding is supposed to be

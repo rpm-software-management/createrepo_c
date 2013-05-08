@@ -1,5 +1,6 @@
 SET (createrepo_c_SRCS
      compression_wrapper.c
+     error.c
      load_metadata.c
      locate_metadata.c
      misc.c
@@ -17,6 +18,7 @@ SET(headers
     compression_wrapper.h
     constants.h
     createrepo_c.h
+    error.h
     load_metadata.h
     locate_metadata.h
     misc.h

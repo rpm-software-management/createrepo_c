@@ -62,9 +62,6 @@ extern "C" {
 
 #define CR_DB_CACHE_DBVERSION       10      /*!< Version of DB api */
 
-#define CR_DB_ERROR cr_db_error_quark()
-GQuark cr_db_error_quark (void);
-
 typedef struct _DbPrimaryStatements   * cr_DbPrimaryStatements;
 typedef struct _DbFilelistsStatements * cr_DbFilelistsStatements;
 typedef struct _DbOtherStatements     * cr_DbOtherStatements;

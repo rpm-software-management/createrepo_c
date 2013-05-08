@@ -24,6 +24,7 @@
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
 #include <libxml/xmlsave.h>
+#include "error.h"
 #include "logging.h"
 #include "package.h"
 #include "xml_dump.h"
@@ -116,38 +117,38 @@ cr_xml_dump_other_items(xmlNodePtr root, cr_Package *package)
 
 
 char *
-cr_xml_dump_other(cr_Package *package)
+cr_xml_dump_other(cr_Package *package, GError **err)
 {
+    xmlNodePtr root;
+    char *result;
+
     if (!package)
         return NULL;
-
-    xmlNodePtr root = NULL;
-    root = xmlNewNode(NULL, BAD_CAST "package");
 
 
     // Dump IT!
 
-    cr_xml_dump_other_items(root, package);
-
-    char *result;
     xmlBufferPtr buf = xmlBufferCreate();
     if (buf == NULL) {
         g_critical("%s: Error creating the xml buffer", __func__);
+        g_set_error(err, CR_XML_DUMP_OTHER_ERROR, CRE_MEMORY,
+                    "Cannot create an xml buffer");
         return NULL;
     }
-    // Seems to be little bit faster than xmlDocDumpFormatMemory
-//    xmlSaveCtxtPtr savebuf = xmlSaveToBuffer(buf, NULL, XML_SAVE_FORMAT|XML_SAVE_NO_DECL);
-//    xmlSaveTree(savebuf, root);
+
+    root = xmlNewNode(NULL, BAD_CAST "package");
+    cr_xml_dump_other_items(root, package);
+    // xmlNodeDump seems to be a little bit faster than xmlDocDumpFormatMemory
     xmlNodeDump(buf, NULL, root, FORMAT_LEVEL, FORMAT_XML);
     assert(buf->content);
     result = g_strndup((char *) buf->content, (buf->use+1));
     result[buf->use]     = '\n';
     result[buf->use+1]   = '\0';
-    xmlBufferFree(buf);
 
 
     // Cleanup
 
+    xmlBufferFree(buf);
     xmlFreeNode(root);
 
     return result;

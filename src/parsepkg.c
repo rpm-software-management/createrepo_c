@@ -31,7 +31,6 @@
 #include "logging.h"
 #include "constants.h"
 #include "parsehdr.h"
-#include "xml_dump.h"
 #include "misc.h"
 #include "parsehdr.h"
 
@@ -158,7 +157,7 @@ cr_package_from_rpm(const char *filename,
 
     // Compute checksum
 
-    char *checksum = cr_compute_file_checksum(filename, checksum_type);
+    char *checksum = cr_compute_file_checksum(filename, checksum_type, NULL);
 
 
     // Get header range
@@ -276,7 +275,7 @@ cr_xml_from_rpm(const char *filename,
 
     // Compute checksum
 
-    char *checksum = cr_compute_file_checksum(filename, checksum_type);
+    char *checksum = cr_compute_file_checksum(filename, checksum_type, NULL);
 
 
     // Get header range

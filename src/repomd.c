@@ -18,6 +18,7 @@
  */
 
 #include <glib.h>
+#include <errno.h>
 #include <string.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -25,6 +26,7 @@
 #include <assert.h>
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
+#include "error.h"
 #include "logging.h"
 #include "misc.h"
 #include "repomd.h"
@@ -43,8 +45,8 @@
 #define XML_ENC         "UTF-8"
 #define FORMAT_XML      1
 
-#define REPOMD_OK       0
-#define REPOMD_ERR      1
+#define REPOMD_OK       0 // XXX
+#define REPOMD_ERR      1 // XXX
 
 
 typedef struct _contentStat {
@@ -106,9 +108,16 @@ cr_repomd_record_free(cr_RepomdRecord md)
 
 
 contentStat *
-cr_get_compressed_content_stat(const char *filename, cr_ChecksumType checksum_type)
+cr_get_compressed_content_stat(const char *filename,
+                               cr_ChecksumType checksum_type,
+                               GError **err)
 {
+    assert(filename);
+    assert(!err || *err == NULL);
+
     if (!g_file_test(filename, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR)) {
+        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_NOFILE,
+                    "File doesn't exists");
         return NULL;
     }
 
@@ -117,6 +126,8 @@ cr_get_compressed_content_stat(const char *filename, cr_ChecksumType checksum_ty
 
     CR_FILE *cwfile;
     if (!(cwfile = cr_open(filename, CR_CW_MODE_READ, CR_CW_AUTO_DETECT_COMPRESSION))) {
+        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
+                    "Cannot open a file");
         return NULL;
     }
 
@@ -136,6 +147,8 @@ cr_get_compressed_content_stat(const char *filename, cr_ChecksumType checksum_ty
             break;
         default:
             g_critical("%s: Unknown checksum type", __func__);
+            g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_UNKNOWNCHECKSUMTYPE,
+                        "Unknown checksum type: %d", checksum_type);
             return NULL;
     };
 
@@ -145,6 +158,8 @@ cr_get_compressed_content_stat(const char *filename, cr_ChecksumType checksum_ty
     GChecksum *checksum = g_checksum_new(gchecksumtype);
     if (!checksum) {
         g_critical("%s: g_checksum_new() failed", __func__);
+        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_UNKNOWNCHECKSUMTYPE,
+                    "g_checksum_new() failed - Unknown checksum type");
         return NULL;
     }
 
@@ -157,12 +172,16 @@ cr_get_compressed_content_stat(const char *filename, cr_ChecksumType checksum_ty
         if (readed == CR_CW_ERR) {
             g_debug("%s: Error while read compressed file: %s",
                     __func__, filename);
+            g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
+                        "Error while read compressed file");
             break;
         }
         g_checksum_update (checksum, buffer, readed);
         size += readed;
     } while (readed == BUFFER_SIZE);
 
+    if (readed == CR_CW_ERR)
+        return NULL;
 
     // Create result structure
 
@@ -170,6 +189,9 @@ cr_get_compressed_content_stat(const char *filename, cr_ChecksumType checksum_ty
     if (result) {
         result->checksum = g_strdup(g_checksum_get_string(checksum));
         result->size = size;
+    } else {
+        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_MEMORY,
+                    "Cannot allocate memory");
     }
 
 
@@ -184,15 +206,22 @@ cr_get_compressed_content_stat(const char *filename, cr_ChecksumType checksum_ty
 
 
 int
-cr_repomd_record_fill(cr_RepomdRecord md, cr_ChecksumType checksum_type)
+cr_repomd_record_fill(cr_RepomdRecord md,
+                      cr_ChecksumType checksum_type,
+                      GError **err)
 {
     const char *checksum_str;
     cr_ChecksumType checksum_t;
     gchar *path;
+    GError *tmp_err = NULL;
 
-    if (!md || !(md->location_real) || !strlen(md->location_real)) {
-        // Nothing to do
-        return REPOMD_ERR;
+    assert(!err || *err == NULL);
+    assert(md);
+
+    if (!(md->location_real) || !strlen(md->location_real)) {
+        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_BADARG,
+                    "Empty locations in repomd record object.");
+        return CRE_BADARG;
     }
 
     path = md->location_real;
@@ -203,7 +232,9 @@ cr_repomd_record_fill(cr_RepomdRecord md, cr_ChecksumType checksum_type)
     if (!g_file_test(path, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR)) {
         // File doesn't exists
         g_warning("%s: File %s doesn't exists", __func__, path);
-        return REPOMD_ERR;
+        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_NOFILE,
+                    "File %s doesn't exists", path);
+        return CRE_NOFILE;
     }
 
 
@@ -211,8 +242,15 @@ cr_repomd_record_fill(cr_RepomdRecord md, cr_ChecksumType checksum_type)
 
     if (!md->checksum_type || !md->checksum) {
         gchar *chksum;
+
+        chksum = cr_compute_file_checksum(path, checksum_t, &tmp_err);
+        if (tmp_err) {
+            g_propagate_prefixed_error(err, tmp_err,
+                "Error while checksum calculation of %s:", path);
+            return (*err)->code;
+        }
+
         md->checksum_type = g_string_chunk_insert(md->chunk, checksum_str);
-        chksum = cr_compute_file_checksum(path, checksum_t);
         md->checksum = g_string_chunk_insert(md->chunk, chksum);
         g_free(chksum);
     }
@@ -226,12 +264,19 @@ cr_repomd_record_fill(cr_RepomdRecord md, cr_ChecksumType checksum_type)
         {
             // File compressed by supported algorithm
             contentStat *open_stat = NULL;
-            open_stat = cr_get_compressed_content_stat(path, checksum_t);
+
+            open_stat = cr_get_compressed_content_stat(path, checksum_t, &tmp_err);
+            if (tmp_err) {
+                g_propagate_prefixed_error(err, tmp_err,
+                    "Error while computing stat of compressed content of %s:",
+                    path);
+                return (*err)->code;
+            }
+
             md->checksum_open_type = g_string_chunk_insert(md->chunk, checksum_str);
             md->checksum_open = g_string_chunk_insert(md->chunk, open_stat->checksum);
-            if (!md->size_open) {
+            if (!md->size_open)
                 md->size_open = open_stat->size;
-            }
             g_free(open_stat->checksum);
             g_free(open_stat);
         } else {
@@ -259,25 +304,28 @@ cr_repomd_record_fill(cr_RepomdRecord md, cr_ChecksumType checksum_type)
             }
         } else {
             g_warning("%s: Stat on file \"%s\" failed", __func__, path);
+            g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_STAT,
+                        "Stat() on %s failed: %s", path, strerror(errno));
+            return CRE_STAT;
         }
     }
 
 
     // Set db version
 
-    if (!md->db_ver) {
+    if (!md->db_ver)
         md->db_ver = DEFAULT_DATABASE_VERSION;
-    }
 
-    return REPOMD_OK;
+    return CRE_OK;
 }
 
 
 void
 cr_repomd_record_groupfile(cr_RepomdRecord groupfile,
-                                  cr_RepomdRecord cgroupfile,
-                                  cr_ChecksumType checksum_type,
-                                  cr_CompressionType groupfile_compression)
+                           cr_RepomdRecord cgroupfile,
+                           cr_ChecksumType checksum_type,
+                           cr_CompressionType groupfile_compression,
+                           GError **err)
 {
     const char *suffix;
     gchar *path, *cpath;
@@ -350,8 +398,8 @@ cr_repomd_record_groupfile(cr_RepomdRecord groupfile,
 
     // Compute checksums
 
-    checksum  = cr_compute_file_checksum(path, checksum_t);
-    cchecksum = cr_compute_file_checksum(cpath, checksum_t);
+    checksum  = cr_compute_file_checksum(path, checksum_t, NULL);
+    cchecksum = cr_compute_file_checksum(cpath, checksum_t, NULL);
 
 
     // Get stats
@@ -528,7 +576,7 @@ cr_repomd_xml_dump(cr_Repomd repomd)
 
 
 void
-cr_repomd_record_rename_file(cr_RepomdRecord md)
+cr_repomd_record_rename_file(cr_RepomdRecord md, GError **err)
 {
     int x, len;
     gchar *location_prefix = NULL;

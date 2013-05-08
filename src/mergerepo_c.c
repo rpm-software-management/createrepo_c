@@ -1094,7 +1094,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
             cr_Package *pkg;
 
             pkg = (cr_Package *) element->data;
-            res = cr_xml_dump(pkg);
+            res = cr_xml_dump(pkg, NULL);
 
             cr_puts(pri_f, (const char *) res.primary);
             cr_puts(fil_f, (const char *) res.filelists);
@@ -1160,9 +1160,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     // XML
 
-    cr_repomd_record_fill(pri_xml_rec, CR_CHECKSUM_SHA256);
-    cr_repomd_record_fill(fil_xml_rec, CR_CHECKSUM_SHA256);
-    cr_repomd_record_fill(oth_xml_rec, CR_CHECKSUM_SHA256);
+    cr_repomd_record_fill(pri_xml_rec, CR_CHECKSUM_SHA256, NULL);
+    cr_repomd_record_fill(fil_xml_rec, CR_CHECKSUM_SHA256, NULL);
+    cr_repomd_record_fill(oth_xml_rec, CR_CHECKSUM_SHA256, NULL);
 
 
     // Groupfile
@@ -1171,9 +1171,10 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         groupfile_rec = cr_repomd_record_new(groupfile);
         compressed_groupfile_rec = cr_repomd_record_new(groupfile);
         cr_repomd_record_groupfile(groupfile_rec,
-                                          compressed_groupfile_rec,
-                                          CR_CHECKSUM_SHA256,
-                                          cmd_options->groupfile_compression_type);
+                                   compressed_groupfile_rec,
+                                   CR_CHECKSUM_SHA256,
+                                   cmd_options->groupfile_compression_type,
+                                   NULL);
     }
 
 
@@ -1181,7 +1182,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     if (!cmd_options->noupdateinfo) {
         update_info_rec = cr_repomd_record_new(update_info_filename);
-        cr_repomd_record_fill(update_info_rec, CR_CHECKSUM_SHA256);
+        cr_repomd_record_fill(update_info_rec, CR_CHECKSUM_SHA256, NULL);
     }
 
 
@@ -1190,7 +1191,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     if (cmd_options->koji) {
         gchar *pkgorigins_path = g_strconcat(cmd_options->tmp_out_repo, "pkgorigins.gz", NULL);
         pkgorigins_rec = cr_repomd_record_new(pkgorigins_path);
-        cr_repomd_record_fill(pkgorigins_rec, CR_CHECKSUM_SHA256);
+        cr_repomd_record_fill(pkgorigins_rec, CR_CHECKSUM_SHA256, NULL);
         g_free(pkgorigins_path);
     }
 
@@ -1244,25 +1245,25 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         g_free(fil_db_c_filename);
         g_free(oth_db_c_filename);
 
-        cr_repomd_record_fill(pri_db_rec, CR_CHECKSUM_SHA256);
-        cr_repomd_record_fill(fil_db_rec, CR_CHECKSUM_SHA256);
-        cr_repomd_record_fill(oth_db_rec, CR_CHECKSUM_SHA256);
+        cr_repomd_record_fill(pri_db_rec, CR_CHECKSUM_SHA256, NULL);
+        cr_repomd_record_fill(fil_db_rec, CR_CHECKSUM_SHA256, NULL);
+        cr_repomd_record_fill(oth_db_rec, CR_CHECKSUM_SHA256, NULL);
     }
 
 
     // Add checksums into files names
 
     if (cmd_options->unique_md_filenames) {
-        cr_repomd_record_rename_file(pri_xml_rec);
-        cr_repomd_record_rename_file(fil_xml_rec);
-        cr_repomd_record_rename_file(oth_xml_rec);
-        cr_repomd_record_rename_file(pri_db_rec);
-        cr_repomd_record_rename_file(fil_db_rec);
-        cr_repomd_record_rename_file(oth_db_rec);
-        cr_repomd_record_rename_file(groupfile_rec);
-        cr_repomd_record_rename_file(compressed_groupfile_rec);
-        cr_repomd_record_rename_file(update_info_rec);
-        cr_repomd_record_rename_file(pkgorigins_rec);
+        cr_repomd_record_rename_file(pri_xml_rec, NULL);
+        cr_repomd_record_rename_file(fil_xml_rec, NULL);
+        cr_repomd_record_rename_file(oth_xml_rec, NULL);
+        cr_repomd_record_rename_file(pri_db_rec, NULL);
+        cr_repomd_record_rename_file(fil_db_rec, NULL);
+        cr_repomd_record_rename_file(oth_db_rec, NULL);
+        cr_repomd_record_rename_file(groupfile_rec, NULL);
+        cr_repomd_record_rename_file(compressed_groupfile_rec, NULL);
+        cr_repomd_record_rename_file(update_info_rec, NULL);
+        cr_repomd_record_rename_file(pkgorigins_rec, NULL);
     }
 
 

@@ -42,6 +42,7 @@ extern "C" {
 #include <glib.h>
 #include "compression_wrapper.h"
 #include "constants.h"
+#include "error.h"
 #include "load_metadata.h"
 #include "locate_metadata.h"
 #include "misc.h"

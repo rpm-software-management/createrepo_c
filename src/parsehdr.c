@@ -537,9 +537,9 @@ cr_xml_from_header(Header hdr, gint64 mtime, gint64 size,
                                       changelog_limit, hdr_start, hdr_end);
 
     struct cr_XmlStruct result;
-    result.primary   = cr_xml_dump_primary(pkg);
-    result.filelists = cr_xml_dump_filelists(pkg);
-    result.other     = cr_xml_dump_other(pkg);
+    result.primary   = cr_xml_dump_primary(pkg, NULL);
+    result.filelists = cr_xml_dump_filelists(pkg, NULL);
+    result.other     = cr_xml_dump_other(pkg, NULL);
 
     // Cleanup
     cr_package_free(pkg);

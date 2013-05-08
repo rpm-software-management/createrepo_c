@@ -102,10 +102,13 @@ static inline int cr_is_primary(const char *filename) {
 /** Compute file checksum.
  * @param filename      filename
  * @param type          type of checksum
+ * @param err           GError **
  * @return              malloced null terminated string with checksum
  *                      or NULL on error
  */
-char *cr_compute_file_checksum(const char *filename, cr_ChecksumType type);
+char *cr_compute_file_checksum(const char *filename,
+                               cr_ChecksumType type,
+                               GError **err);
 
 /** Header range
  */

@@ -18,10 +18,12 @@
  */
 
 #include <glib.h>
+#include <assert.h>
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
 #include <libxml/parser.h>
 #include <string.h>
+#include "error.h"
 #include "logging.h"
 #include "misc.h"
 #include "xml_dump.h"
@@ -177,9 +179,12 @@ cr_xml_dump_files(xmlNodePtr node, cr_Package *package, int primary)
 
 
 struct cr_XmlStruct
-cr_xml_dump(cr_Package *pkg)
+cr_xml_dump(cr_Package *pkg, GError **err)
 {
     struct cr_XmlStruct result;
+    GError *tmp_err = NULL;
+
+    assert(!err || *err == NULL);
 
     if (!pkg) {
         result.primary   = NULL;
@@ -188,9 +193,29 @@ cr_xml_dump(cr_Package *pkg)
         return result;
     }
 
-    result.primary   = cr_xml_dump_primary(pkg);
-    result.filelists = cr_xml_dump_filelists(pkg);
-    result.other     = cr_xml_dump_other(pkg);
+    result.primary = cr_xml_dump_primary(pkg, &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        return result;
+    }
+
+    result.filelists = cr_xml_dump_filelists(pkg, &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        g_free(result.primary);
+        result.primary = NULL;
+        return result;
+    }
+
+    result.other = cr_xml_dump_other(pkg, &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        g_free(result.primary);
+        result.primary = NULL;
+        g_free(result.filelists);
+        result.filelists = NULL;
+        return result;
+    }
 
     return result;
 }

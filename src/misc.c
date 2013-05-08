@@ -20,6 +20,7 @@
 #define _XOPEN_SOURCE 500
 
 #include <glib.h>
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
@@ -30,6 +31,7 @@
 #include <time.h>
 #include <curl/curl.h>
 #include <rpm/rpmlib.h>
+#include "error.h"
 #include "logging.h"
 #include "constants.h"
 #include "misc.h"
@@ -218,19 +220,21 @@ cr_is_primary(const char *filename)
 
 
 char *
-cr_compute_file_checksum(const char *filename, cr_ChecksumType type)
+cr_compute_file_checksum(const char *filename,
+                         cr_ChecksumType type,
+                         GError **err)
 {
     GChecksumType gchecksumtype;
 
-    if (!filename) {
-        g_debug("%s: Filename param is NULL", __func__);
-        return NULL;
-    }
+    assert(filename);
+    assert(!err || *err == NULL);
 
     // Check if file exists and if it is a regular file (not a directory)
 
     if (!g_file_test(filename, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR))) {
         g_debug("%s: File %s doesn't exists", __func__, filename);
+        g_set_error(err, CR_CHECKSUM_ERROR, CRE_NOFILE,
+                    "File %s doesn't exists", filename);
         return NULL;
     }
 
@@ -249,6 +253,8 @@ cr_compute_file_checksum(const char *filename, cr_ChecksumType type)
             break;
         default:
             g_debug("%s: Unknown checksum type", __func__);
+            g_set_error(err, CR_CHECKSUM_ERROR, CRE_UNKNOWNCHECKSUMTYPE,
+                        "Unknown checksum type: %d", type);
             return NULL;
     };
 
@@ -259,6 +265,8 @@ cr_compute_file_checksum(const char *filename, cr_ChecksumType type)
     if (!fp) {
         g_critical("%s: Cannot open %s (%s)", __func__, filename,
                                                     strerror(errno));
+        g_set_error(err, CR_CHECKSUM_ERROR, CRE_IO,
+                    "Cannot open %s: %s", filename, strerror(errno));
         return NULL;
     }
 
@@ -278,6 +286,14 @@ cr_compute_file_checksum(const char *filename, cr_ChecksumType type)
         }
     }
 
+    if (ferror(fp)) {
+        g_set_error(err, CR_CHECKSUM_ERROR, CRE_IO,
+                    "fread call faied: %s", strerror(errno));
+        fclose(fp);
+        g_checksum_free(checksum);
+        return NULL;
+    }
+
     fclose(fp);
 
 
@@ -289,6 +305,8 @@ cr_compute_file_checksum(const char *filename, cr_ChecksumType type)
     if (!checksum_str) {
         g_critical("%s: Cannot get checksum %s (low memory?)", __func__,
                    filename);
+        g_set_error(err, CR_CHECKSUM_ERROR, CRE_MEMORY,
+                    "Cannot calculate checksum (low memory?)");
     }
 
     return checksum_str;

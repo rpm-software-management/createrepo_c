@@ -360,47 +360,43 @@ static void test_cr_compute_file_checksum(void)
 {
     char *checksum;
 
-    checksum = cr_compute_file_checksum(EMPTY_FILE, CR_CHECKSUM_MD5);
+    checksum = cr_compute_file_checksum(EMPTY_FILE, CR_CHECKSUM_MD5, NULL);
     g_assert_cmpstr(checksum, ==, "d41d8cd98f00b204e9800998ecf8427e");
     g_free(checksum);
-    checksum = cr_compute_file_checksum(EMPTY_FILE, CR_CHECKSUM_SHA1);
+    checksum = cr_compute_file_checksum(EMPTY_FILE, CR_CHECKSUM_SHA1, NULL);
     g_assert_cmpstr(checksum, ==, "da39a3ee5e6b4b0d3255bfef95601890afd80709");
     g_free(checksum);
-    checksum = cr_compute_file_checksum(EMPTY_FILE, CR_CHECKSUM_SHA256);
+    checksum = cr_compute_file_checksum(EMPTY_FILE, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
     g_free(checksum);
 
-    checksum = cr_compute_file_checksum(TEXT_FILE, CR_CHECKSUM_MD5);
+    checksum = cr_compute_file_checksum(TEXT_FILE, CR_CHECKSUM_MD5, NULL);
     g_assert_cmpstr(checksum, ==, "d6d4da5c15f8fe7570ce6ab6b3503916");
     g_free(checksum);
-    checksum = cr_compute_file_checksum(TEXT_FILE, CR_CHECKSUM_SHA1);
+    checksum = cr_compute_file_checksum(TEXT_FILE, CR_CHECKSUM_SHA1, NULL);
     g_assert_cmpstr(checksum, ==, "da048ee8fabfbef1b3d6d3f5a4be20029eecec77");
     g_free(checksum);
-    checksum = cr_compute_file_checksum(TEXT_FILE, CR_CHECKSUM_SHA256);
+    checksum = cr_compute_file_checksum(TEXT_FILE, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "2f395bdfa2750978965e4781ddf224c89646c7d7a1569b7ebb023b170f7bd8bb");
     g_free(checksum);
 
-    checksum = cr_compute_file_checksum(BINARY_FILE, CR_CHECKSUM_MD5);
+    checksum = cr_compute_file_checksum(BINARY_FILE, CR_CHECKSUM_MD5, NULL);
     g_assert_cmpstr(checksum, ==, "4f8b033d7a402927a20c9328fc0e0f46");
     g_free(checksum);
-    checksum = cr_compute_file_checksum(BINARY_FILE, CR_CHECKSUM_SHA1);
+    checksum = cr_compute_file_checksum(BINARY_FILE, CR_CHECKSUM_SHA1, NULL);
     g_assert_cmpstr(checksum, ==, "3539fb660a41846352ac4fa9076d168a3c77070b");
     g_free(checksum);
-    checksum = cr_compute_file_checksum(BINARY_FILE, CR_CHECKSUM_SHA256);
+    checksum = cr_compute_file_checksum(BINARY_FILE, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "bf68e32ad78cea8287be0f35b74fa3fecd0eaa91770b48f1a7282b015d6d883e");
     g_free(checksum);
 
     // Corner cases
 
-    checksum = cr_compute_file_checksum(BINARY_FILE, 244);
+    checksum = cr_compute_file_checksum(BINARY_FILE, 244, NULL);
     g_assert(!checksum);
 
-    checksum = cr_compute_file_checksum(NON_EXIST_FILE, CR_CHECKSUM_MD5);
+    checksum = cr_compute_file_checksum(NON_EXIST_FILE, CR_CHECKSUM_MD5, NULL);
     g_assert(!checksum);
-
-    checksum = cr_compute_file_checksum(NULL, CR_CHECKSUM_MD5);
-    g_assert(!checksum);
-
 }
 
 
@@ -507,7 +503,7 @@ static void copyfiletest_test_empty_file(Copyfiletest *copyfiletest, gconstpoint
     ret = cr_copy_file(EMPTY_FILE, copyfiletest->dst_file);
     g_assert_cmpint(ret, ==, CR_COPY_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
-    checksum = cr_compute_file_checksum(copyfiletest->dst_file, CR_CHECKSUM_SHA256);
+    checksum = cr_compute_file_checksum(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
     g_free(checksum);
 }
@@ -523,7 +519,7 @@ static void copyfiletest_test_text_file(Copyfiletest *copyfiletest, gconstpointe
     ret = cr_copy_file(TEXT_FILE, copyfiletest->dst_file);
     g_assert_cmpint(ret, ==, CR_COPY_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
-    checksum = cr_compute_file_checksum(copyfiletest->dst_file, CR_CHECKSUM_SHA256);
+    checksum = cr_compute_file_checksum(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "2f395bdfa2750978965e4781ddf224c89646c7d7a1569b7ebb023b170f7bd8bb");
     g_free(checksum);
 }
@@ -539,7 +535,7 @@ static void copyfiletest_test_binary_file(Copyfiletest *copyfiletest, gconstpoin
     ret = cr_copy_file(BINARY_FILE, copyfiletest->dst_file);
     g_assert_cmpint(ret, ==, CR_COPY_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
-    checksum = cr_compute_file_checksum(copyfiletest->dst_file, CR_CHECKSUM_SHA256);
+    checksum = cr_compute_file_checksum(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "bf68e32ad78cea8287be0f35b74fa3fecd0eaa91770b48f1a7282b015d6d883e");
     g_free(checksum);
 }
@@ -555,14 +551,14 @@ static void copyfiletest_test_rewrite(Copyfiletest *copyfiletest, gconstpointer 
     ret = cr_copy_file(BINARY_FILE, copyfiletest->dst_file);
     g_assert_cmpint(ret, ==, CR_COPY_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
-    checksum = cr_compute_file_checksum(copyfiletest->dst_file, CR_CHECKSUM_SHA256);
+    checksum = cr_compute_file_checksum(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "bf68e32ad78cea8287be0f35b74fa3fecd0eaa91770b48f1a7282b015d6d883e");
     g_free(checksum);
 
     ret = cr_copy_file(TEXT_FILE, copyfiletest->dst_file);
     g_assert_cmpint(ret, ==, CR_COPY_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
-    checksum = cr_compute_file_checksum(copyfiletest->dst_file, CR_CHECKSUM_SHA256);
+    checksum = cr_compute_file_checksum(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "2f395bdfa2750978965e4781ddf224c89646c7d7a1569b7ebb023b170f7bd8bb");
     g_free(checksum);
 }
@@ -590,7 +586,7 @@ static void compressfile_test_text_file(Copyfiletest *copyfiletest, gconstpointe
     ret = cr_compress_file(TEXT_FILE, copyfiletest->dst_file, CR_CW_GZ_COMPRESSION);
     g_assert_cmpint(ret, ==, CR_COPY_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
-    checksum = cr_compute_file_checksum(copyfiletest->dst_file, CR_CHECKSUM_SHA256);
+    checksum = cr_compute_file_checksum(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "8909fde88a5747d800fd2562b0f22945f014aa7df64cf1c15c7933ae54b72ab6");
     g_free(checksum);
 }
@@ -656,7 +652,7 @@ static void test_cr_better_copy_file_local(Copyfiletest *copyfiletest, gconstpoi
     ret = cr_better_copy_file(BINARY_FILE, copyfiletest->dst_file);
     g_assert_cmpint(ret, ==, CR_COPY_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
-    checksum = cr_compute_file_checksum(copyfiletest->dst_file, CR_CHECKSUM_SHA256);
+    checksum = cr_compute_file_checksum(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "bf68e32ad78cea8287be0f35b74fa3fecd0eaa91770b48f1a7282b015d6d883e");
     g_free(checksum);
 }

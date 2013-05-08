@@ -30,12 +30,23 @@
 PyObject *
 py_xml_dump_primary(PyObject *self, PyObject *args)
 {
-    CR_UNUSED(self);
     PyObject *py_pkg, *py_str;
     char *xml;
+    GError *err = NULL;
+
+    CR_UNUSED(self);
+
     if (!PyArg_ParseTuple(args, "O!:py_xml_dump_primary", &Package_Type, &py_pkg))
         return NULL;
-    xml = cr_xml_dump_primary(Package_FromPyObject(py_pkg));
+
+    xml = cr_xml_dump_primary(Package_FromPyObject(py_pkg), &err);
+    if (err) {
+        PyErr_Format(CrErr_Exception, "Error while dumping primary xml: %s",
+                     err->message);
+        g_clear_error(&err);
+        return NULL;
+    }
+
     py_str = PyStringOrNone_FromString(xml);
     free(xml);
     return py_str;
@@ -44,12 +55,23 @@ py_xml_dump_primary(PyObject *self, PyObject *args)
 PyObject *
 py_xml_dump_filelists(PyObject *self, PyObject *args)
 {
-    CR_UNUSED(self);
     PyObject *py_pkg, *py_str;
     char *xml;
+    GError *err = NULL;
+
+    CR_UNUSED(self);
+
     if (!PyArg_ParseTuple(args, "O!:py_xml_dump_filelists", &Package_Type, &py_pkg))
         return NULL;
-    xml = cr_xml_dump_filelists(Package_FromPyObject(py_pkg));
+
+    xml = cr_xml_dump_filelists(Package_FromPyObject(py_pkg), &err);
+    if (err) {
+        PyErr_Format(CrErr_Exception, "Error while dumping filelists xml: %s",
+                     err->message);
+        g_clear_error(&err);
+        return NULL;
+    }
+
     py_str = PyStringOrNone_FromString(xml);
     free(xml);
     return py_str;
@@ -58,12 +80,23 @@ py_xml_dump_filelists(PyObject *self, PyObject *args)
 PyObject *
 py_xml_dump_other(PyObject *self, PyObject *args)
 {
-    CR_UNUSED(self);
     PyObject *py_pkg, *py_str;
     char *xml;
+    GError *err = NULL;
+
+    CR_UNUSED(self);
+
     if (!PyArg_ParseTuple(args, "O!:py_xml_dump_other", &Package_Type, &py_pkg))
         return NULL;
-    xml = cr_xml_dump_other(Package_FromPyObject(py_pkg));
+
+    xml = cr_xml_dump_other(Package_FromPyObject(py_pkg), &err);
+    if (err) {
+        PyErr_Format(CrErr_Exception, "Error while dumping other xml: %s",
+                     err->message);
+        g_clear_error(&err);
+        return NULL;
+    }
+
     py_str = PyStringOrNone_FromString(xml);
     free(xml);
     return py_str;
@@ -72,17 +105,30 @@ py_xml_dump_other(PyObject *self, PyObject *args)
 PyObject *
 py_xml_dump(PyObject *self, PyObject *args)
 {
-    CR_UNUSED(self);
     PyObject *py_pkg, *tuple;
     struct cr_XmlStruct xml_res;
+    GError *err = NULL;
+
+    CR_UNUSED(self);
 
     if (!PyArg_ParseTuple(args, "O!:py_xml_dump", &Package_Type, &py_pkg))
         return NULL;
 
-    if ((tuple = PyTuple_New(3)) == NULL)
-        return NULL;
 
-    xml_res = cr_xml_dump(Package_FromPyObject(py_pkg));
+    xml_res = cr_xml_dump(Package_FromPyObject(py_pkg), &err);
+    if (err) {
+        PyErr_Format(CrErr_Exception, "Error while dumping xml: %s",
+                     err->message);
+        g_clear_error(&err);
+        return NULL;
+    }
+
+    if ((tuple = PyTuple_New(3)) == NULL) {
+        free(xml_res.primary);
+        free(xml_res.filelists);
+        free(xml_res.other);
+        return NULL;
+    }
 
     PyTuple_SetItem(tuple, 0, PyStringOrNone_FromString(xml_res.primary));
     PyTuple_SetItem(tuple, 1, PyStringOrNone_FromString(xml_res.filelists));

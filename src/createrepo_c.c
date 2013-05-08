@@ -262,11 +262,11 @@ dumper_thread(gpointer data, gpointer user_data)
             g_warning("Cannot read package: %s", task->full_path);
             goto task_cleanup;
         }
-        res = cr_xml_dump(pkg);
+        res = cr_xml_dump(pkg, NULL);
     } else {
         // Just gen XML from old loaded metadata
         pkg = md;
-        res = cr_xml_dump(md);
+        res = cr_xml_dump(md, NULL);
     }
 
     g_mutex_lock(udata->mutex_buffer);
@@ -1019,9 +1019,9 @@ main(int argc, char **argv)
 
     // XML
 
-    cr_repomd_record_fill(pri_xml_rec, cmd_options->checksum_type);
-    cr_repomd_record_fill(fil_xml_rec, cmd_options->checksum_type);
-    cr_repomd_record_fill(oth_xml_rec, cmd_options->checksum_type);
+    cr_repomd_record_fill(pri_xml_rec, cmd_options->checksum_type, NULL);
+    cr_repomd_record_fill(fil_xml_rec, cmd_options->checksum_type, NULL);
+    cr_repomd_record_fill(oth_xml_rec, cmd_options->checksum_type, NULL);
 
 
     // Groupfile
@@ -1032,7 +1032,8 @@ main(int argc, char **argv)
         cr_repomd_record_groupfile(groupfile_rec,
                                           compressed_groupfile_rec,
                                           cmd_options->checksum_type,
-                                          groupfile_compression);
+                                          groupfile_compression,
+                                          NULL);
     }
 
 
@@ -1040,7 +1041,7 @@ main(int argc, char **argv)
 
     if (updateinfo) {
         updateinfo_rec = cr_repomd_record_new(updateinfo);
-        cr_repomd_record_fill(updateinfo_rec, cmd_options->checksum_type);
+        cr_repomd_record_fill(updateinfo_rec, cmd_options->checksum_type, NULL);
     }
 
 
@@ -1085,9 +1086,9 @@ main(int argc, char **argv)
         fil_db_rec = cr_repomd_record_new(fil_db_name);
         oth_db_rec = cr_repomd_record_new(oth_db_name);
 
-        cr_repomd_record_fill(pri_db_rec, cmd_options->checksum_type);
-        cr_repomd_record_fill(fil_db_rec, cmd_options->checksum_type);
-        cr_repomd_record_fill(oth_db_rec, cmd_options->checksum_type);
+        cr_repomd_record_fill(pri_db_rec, cmd_options->checksum_type, NULL);
+        cr_repomd_record_fill(fil_db_rec, cmd_options->checksum_type, NULL);
+        cr_repomd_record_fill(oth_db_rec, cmd_options->checksum_type, NULL);
 
         g_free(pri_db_name);
         g_free(fil_db_name);
@@ -1098,15 +1099,15 @@ main(int argc, char **argv)
     // Add checksums into files names
 
     if (cmd_options->unique_md_filenames) {
-        cr_repomd_record_rename_file(pri_xml_rec);
-        cr_repomd_record_rename_file(fil_xml_rec);
-        cr_repomd_record_rename_file(oth_xml_rec);
-        cr_repomd_record_rename_file(pri_db_rec);
-        cr_repomd_record_rename_file(fil_db_rec);
-        cr_repomd_record_rename_file(oth_db_rec);
-        cr_repomd_record_rename_file(groupfile_rec);
-        cr_repomd_record_rename_file(compressed_groupfile_rec);
-        cr_repomd_record_rename_file(updateinfo_rec);
+        cr_repomd_record_rename_file(pri_xml_rec, NULL);
+        cr_repomd_record_rename_file(fil_xml_rec, NULL);
+        cr_repomd_record_rename_file(oth_xml_rec, NULL);
+        cr_repomd_record_rename_file(pri_db_rec, NULL);
+        cr_repomd_record_rename_file(fil_db_rec, NULL);
+        cr_repomd_record_rename_file(oth_db_rec, NULL);
+        cr_repomd_record_rename_file(groupfile_rec, NULL);
+        cr_repomd_record_rename_file(compressed_groupfile_rec, NULL);
+        cr_repomd_record_rename_file(updateinfo_rec, NULL);
     }
 
 

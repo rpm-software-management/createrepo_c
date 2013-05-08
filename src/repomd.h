@@ -115,9 +115,12 @@ void cr_repomd_record_free(cr_RepomdRecord record);
  * Note: For groupfile you shoud use cr_repomd_record_groupfile function.
  * @param record                cr_RepomdRecord object
  * @param checksum_type         type of checksum to use
+ * @param err                   GError **
+ * @return                      cr_Error code
  */
 int cr_repomd_record_fill(cr_RepomdRecord record,
-                          cr_ChecksumType checksum_type);
+                          cr_ChecksumType checksum_type,
+                          GError **err);
 
 /** Analogue of cr_repomd_record_fill but for groupfile.
  * Groupfile must be set with the path to existing non compressed groupfile.
@@ -128,16 +131,19 @@ int cr_repomd_record_fill(cr_RepomdRecord record,
  * @param compressed_groupfile  empty cr_RepomdRecord object that will by filled
  * @param checksum_type         type of checksums
  * @param compression           type of compression
+ * @param err                   GError **
  */
 void cr_repomd_record_groupfile(cr_RepomdRecord groupfile,
                                 cr_RepomdRecord compressed_groupfile,
                                 cr_ChecksumType checksum_type,
-                                cr_CompressionType compression);
+                                cr_CompressionType compression,
+                                GError **err);
 
 /** Add a hash as prefix to the filename.
  * @param record                cr_RepomdRecord of file to be renamed
+ * @param err                   GError **
  */
-void cr_repomd_record_rename_file(cr_RepomdRecord record);
+void cr_repomd_record_rename_file(cr_RepomdRecord record, GError **err);
 
 /** Create new empty cr_Repomd object wich represents content of repomd.xml.
  */

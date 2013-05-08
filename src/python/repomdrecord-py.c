@@ -112,11 +112,21 @@ static PyObject *
 fill(_RepomdRecordObject *self, PyObject *args)
 {
     int checksum_type;
+    GError *err = NULL;
+
     if (!PyArg_ParseTuple(args, "i:fill", &checksum_type))
         return NULL;
+
     if (check_RepomdRecordStatus(self))
         return NULL;
-    cr_repomd_record_fill(self->record, checksum_type);
+
+    cr_repomd_record_fill(self->record, checksum_type, &err);
+    if (err) {
+        PyErr_Format(CrErr_Exception, "fill method failed: %s", err->message);
+        g_clear_error(&err);
+        return NULL;
+    }
+
     Py_RETURN_NONE;
 }
 
@@ -125,26 +135,46 @@ compress_and_fill(_RepomdRecordObject *self, PyObject *args)
 {
     int checksum_type, compression_type;
     PyObject *compressed_repomdrecord;
+    GError *err = NULL;
+
     if (!PyArg_ParseTuple(args, "O!ii:fill",
                           &RepomdRecord_Type,
                           &compressed_repomdrecord,
                           &checksum_type,
                           &compression_type))
         return NULL;
+
     if (check_RepomdRecordStatus(self))
         return NULL;
+
     cr_repomd_record_groupfile(self->record,
                                RepomdRecord_FromPyObject(compressed_repomdrecord),
                                checksum_type,
-                               compression_type);
+                               compression_type,
+                               &err);
+    if (err) {
+        PyErr_Format(CrErr_Exception, "compress_and_fill method failed: %s", err->message);
+        g_clear_error(&err);
+        return NULL;
+    }
+
     Py_RETURN_NONE;
 }
 
 static PyObject *
 rename_file(_RepomdRecordObject *self, void *nothing)
 {
+    GError *err = NULL;
+
     CR_UNUSED(nothing);
-    cr_repomd_record_rename_file(self->record);
+
+    cr_repomd_record_rename_file(self->record, &err);
+    if (err) {
+        PyErr_Format(CrErr_Exception, "rename_file method failed: %s", err->message);
+        g_clear_error(&err);
+        return NULL;
+    }
+
     Py_RETURN_NONE;
 }
 

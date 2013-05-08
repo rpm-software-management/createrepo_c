@@ -126,11 +126,12 @@ class TestCaseSqlite(unittest.TestCase):
         con = sqlite3.connect(path)
 
         # Check packages table
-        self.assertEqual(con.execute("select * from packages").fetchall(),
+        res = con.execute("select * from packages").fetchall()
+        self.assertEqual(res,
             [(1, u'4e0b775220c67f0f2c1fd2177e626b9c863a098130224ff09778ede25cea9a9e',
               u'Archer', u'x86_64', u'3.4.5', u'2', u'6', u'Complex package.',
               u'Archer package', u'http://soo_complex_package.eu/',
-              1365416502, 1365416480, u'GPL', u'ISIS', u'Development/Tools',
+              res[0][10], 1365416480, u'GPL', u'ISIS', u'Development/Tools',
               u'localhost.localdomain', u'Archer-3.4.5-6.src.rpm', 280, 2865,
               u'Sterling Archer', 3101, 0, 544, None, None, u'sha256')])
 

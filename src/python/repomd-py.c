@@ -75,6 +75,7 @@ repomd_init(_RepomdObject *self, PyObject *args, PyObject *kwds)
         PyErr_SetString(CrErr_Exception, "Repomd initialization failed");
         return -1;
     }
+
     return 0;
 }
 

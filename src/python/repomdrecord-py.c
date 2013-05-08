@@ -160,12 +160,22 @@ static struct PyMethodDef repomdrecord_methods[] = {
 #define OFFSET(member) (void *) offsetof(struct _cr_RepomdRecord, member)
 
 static PyObject *
-get_num(_RepomdRecordObject *self, void *member_offset)
+get_long(_RepomdRecordObject *self, void *member_offset)
 {
     if (check_RepomdRecordStatus(self))
         return NULL;
     cr_RepomdRecord rec = self->record;
-    gint64 val = *((gint64 *) ((size_t)rec + (size_t) member_offset));
+    gint64 val = *((long *) ((size_t)rec + (size_t) member_offset));
+    return PyLong_FromLongLong((long long) val);
+}
+
+static PyObject *
+get_int(_RepomdRecordObject *self, void *member_offset)
+{
+    if (check_RepomdRecordStatus(self))
+        return NULL;
+    cr_RepomdRecord rec = self->record;
+    gint64 val = *((int *) ((size_t)rec + (size_t) member_offset));
     return PyLong_FromLongLong((long long) val);
 }
 
@@ -182,7 +192,7 @@ get_str(_RepomdRecordObject *self, void *member_offset)
 }
 
 static int
-set_num(_RepomdRecordObject *self, PyObject *value, void *member_offset)
+set_long(_RepomdRecordObject *self, PyObject *value, void *member_offset)
 {
     long val;
     if (check_RepomdRecordStatus(self))
@@ -200,6 +210,24 @@ set_num(_RepomdRecordObject *self, PyObject *value, void *member_offset)
     return 0;
 }
 
+static int
+set_int(_RepomdRecordObject *self, PyObject *value, void *member_offset)
+{
+    long val;
+    if (check_RepomdRecordStatus(self))
+        return -1;
+    if (PyLong_Check(value)) {
+        val = PyLong_AsLong(value);
+    } else if (PyInt_Check(value)) {
+        val = PyInt_AS_LONG(value);
+    } else {
+        PyErr_SetString(PyExc_ValueError, "Number expected!");
+        return -1;
+    }
+    cr_RepomdRecord rec = self->record;
+    *((int *) ((size_t) rec + (size_t) member_offset)) = (int) val;
+    return 0;
+}
 static int
 set_str(_RepomdRecordObject *self, PyObject *value, void *member_offset)
 {
@@ -222,10 +250,10 @@ static PyGetSetDef repomdrecord_getsetters[] = {
     {"checksum_type",       (getter)get_str, (setter)set_str, NULL, OFFSET(checksum_type)},
     {"checksum_open",       (getter)get_str, (setter)set_str, NULL, OFFSET(checksum_open)},
     {"checksum_open_type",  (getter)get_str, (setter)set_str, NULL, OFFSET(checksum_open_type)},
-    {"timestamp",           (getter)get_num, (setter)set_num, NULL, OFFSET(timestamp)},
-    {"size",                (getter)get_num, (setter)set_num, NULL, OFFSET(size)},
-    {"size_open",           (getter)get_num, (setter)set_num, NULL, OFFSET(size_open)},
-    {"db_ver",              (getter)get_num, (setter)set_num, NULL, OFFSET(db_ver)},
+    {"timestamp",           (getter)get_long, (setter)set_long, NULL, OFFSET(timestamp)},
+    {"size",                (getter)get_long, (setter)set_long, NULL, OFFSET(size)},
+    {"size_open",           (getter)get_long, (setter)set_long, NULL, OFFSET(size_open)},
+    {"db_ver",              (getter)get_int, (setter)set_int, NULL, OFFSET(db_ver)},
     {NULL, NULL, NULL, NULL, NULL} /* sentinel */
 };
 

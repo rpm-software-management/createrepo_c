@@ -169,7 +169,7 @@ cr_package_from_rpm(const char *filename,
 
     result = cr_package_from_header(hdr, mtime, size, checksum, checksum_type_str,
                              location_href, location_base, changelog_limit,
-                             hdr_r.start, hdr_r.end);
+                             hdr_r.start, hdr_r.end, NULL);
 
 
     // Cleanup
@@ -287,7 +287,7 @@ cr_xml_from_rpm(const char *filename,
 
     result = cr_xml_from_header(hdr, mtime, size, checksum, checksum_type_str,
                                 location_href, location_base, changelog_limit,
-                                hdr_r.start, hdr_r.end);
+                                hdr_r.start, hdr_r.end, NULL);
 
 
     // Cleanup

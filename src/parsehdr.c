@@ -104,11 +104,18 @@ cr_Package *
 cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
                        const char *checksum, const char *checksum_type,
                        const char *location_href, const char *location_base,
-                       int changelog_limit, gint64 hdr_start, gint64 hdr_end)
+                       int changelog_limit, gint64 hdr_start, gint64 hdr_end,
+                       GError **err)
 {
+    cr_Package *pkg;
+
+    assert(hdr);
+    assert(!err || *err == NULL);
+
+    CR_UNUSED(err);  // In fact, GError is not used in this function yet.
+
     // Create new package structure
 
-    cr_Package *pkg = NULL;
     pkg = cr_package_new();
 
 
@@ -524,24 +531,59 @@ cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
 
 
 struct cr_XmlStruct
-cr_xml_from_header(Header hdr, gint64 mtime, gint64 size,
-                                       const char *checksum,
-                                       const char *checksum_type,
-                                       const char *location_href,
-                                       const char *location_base,
-                                       int changelog_limit,
-                                       gint64 hdr_start, gint64 hdr_end)
+cr_xml_from_header(Header hdr,
+                   gint64 mtime,
+                   gint64 size,
+                   const char *checksum,
+                   const char *checksum_type,
+                   const char *location_href,
+                   const char *location_base,
+                   int changelog_limit,
+                   gint64 hdr_start,
+                   gint64 hdr_end,
+                   GError **err)
 {
-    cr_Package *pkg = cr_package_from_header(hdr, mtime, size, checksum, checksum_type,
-                                      location_href, location_base,
-                                      changelog_limit, hdr_start, hdr_end);
-
+    cr_Package *pkg;
     struct cr_XmlStruct result;
-    result.primary   = cr_xml_dump_primary(pkg, NULL);
-    result.filelists = cr_xml_dump_filelists(pkg, NULL);
-    result.other     = cr_xml_dump_other(pkg, NULL);
+    GError *tmp_err = NULL;
 
-    // Cleanup
+    assert(hdr);
+    assert(!err || *err == NULL);
+
+    result.primary   = NULL;
+    result.filelists = NULL;
+    result.other     = NULL;
+
+    pkg = cr_package_from_header(hdr, mtime, size, checksum, checksum_type,
+                                 location_href, location_base,
+                                 changelog_limit, hdr_start, hdr_end, &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        goto cleanup;
+    }
+
+    result.primary = cr_xml_dump_primary(pkg, &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        goto cleanup;
+    }
+
+    result.filelists = cr_xml_dump_filelists(pkg, &tmp_err);
+    if (tmp_err) {
+        result.primary = NULL;
+        g_propagate_error(err, tmp_err);
+        goto cleanup;
+    }
+
+    result.other = cr_xml_dump_other(pkg, &tmp_err);
+    if (tmp_err) {
+        result.primary = NULL;
+        result.filelists = NULL;
+        g_propagate_error(err, tmp_err);
+        goto cleanup;
+    }
+
+cleanup:
     cr_package_free(pkg);
 
     return result;

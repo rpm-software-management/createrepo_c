@@ -20,6 +20,7 @@
 #include <glib.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "createrepo/error.h"
 #include "createrepo/package.h"
 #include "createrepo/misc.h"
 #include "createrepo/load_metadata.h"
@@ -75,8 +76,8 @@ void test_helper_check_keys(const char *repopath, cr_HashTableKey key, guint rep
     metadata = cr_metadata_new(key, 0, NULL);
     g_assert(metadata);
     g_assert(metadata->ht);
-    ret = cr_metadata_locate_and_load_xml(metadata, repopath);
-    g_assert_cmpint(ret, ==, CR_LOAD_METADATA_OK);
+    ret = cr_metadata_locate_and_load_xml(metadata, repopath, NULL);
+    g_assert_cmpint(ret, ==, CRE_OK);
     size = g_hash_table_size(metadata->ht);
     g_assert_cmpuint(size, ==, repo_size);
     for (i=0; i < repo_size; i++) {
@@ -113,8 +114,8 @@ static void test_cr_metadata_locate_and_load_xml_detailed(void)
 
     metadata = cr_metadata_new(CR_HT_KEY_NAME, 0, NULL);
     g_assert(metadata);
-    ret = cr_metadata_locate_and_load_xml(metadata, REPO_PATH_01);
-    g_assert_cmpint(ret, ==, CR_LOAD_METADATA_OK);
+    ret = cr_metadata_locate_and_load_xml(metadata, REPO_PATH_01, NULL);
+    g_assert_cmpint(ret, ==, CRE_OK);
     size = g_hash_table_size(metadata->ht);
     g_assert_cmpuint(size, ==, REPO_SIZE_01);
     pkg = (cr_Package *) g_hash_table_lookup(metadata->ht, "super_kernel");

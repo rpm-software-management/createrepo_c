@@ -409,7 +409,7 @@ set_list(_PackageObject *self, PyObject *list, void *conv)
     // Check all elements
     for (Py_ssize_t x = 0; x < len; x++) {
         PyObject *elem = PyList_GetItem(list, x);
-        if (convertor->t_check && convertor->t_check(elem)) // XXX
+        if (convertor->t_check && convertor->t_check(elem))
             return -1;
     }
 

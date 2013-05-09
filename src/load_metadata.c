@@ -24,6 +24,7 @@
 #include <string.h>
 #include <assert.h>
 #include <expat.h>
+#include "error.h"
 #include "package.h"
 #include "logging.h"
 #include "misc.h"
@@ -143,11 +144,16 @@ cr_destroy_metadata_hashtable(GHashTable *hashtable)
 cr_Metadata
 cr_metadata_new(cr_HashTableKey key, int use_single_chunk, GSList *pkglist)
 {
-    cr_Metadata md = g_malloc0(sizeof(*md));
+    cr_Metadata md;
+
+    assert(key < CR_HT_KEY_SENTINEL);
+
+    md = g_malloc0(sizeof(*md));
     md->key = key;
     md->ht = cr_new_metadata_hashtable();
     if (use_single_chunk)
         md->chunk = g_string_chunk_new(STRINGCHUNK_SIZE);
+
     if (pkglist) {
         // Create hashtable from pkglist
         // This hashtable is used for checking if the metadata of the package
@@ -157,14 +163,15 @@ cr_metadata_new(cr_HashTableKey key, int use_single_chunk, GSList *pkglist)
         // This hashtable is modified "on the fly" - If we found and load
         // a metadata about the package, we remove its record from the hashtable.
         // So if we met the metadata for this package again we will ignore it.
-        GSList *elem;
         md->pkglist_ht = g_hash_table_new_full(g_str_hash,
                                                g_str_equal,
                                                g_free,
                                                NULL);
-       for (elem = pkglist; elem; elem = g_slist_next(elem))
+
+       for (GSList *elem = pkglist; elem; elem = g_slist_next(elem))
             g_hash_table_insert(md->pkglist_ht, g_strdup(elem->data), NULL);
     }
+
     return md;
 }
 
@@ -1047,24 +1054,31 @@ cr_oth_end_handler(void *data, const char *el)
 
 
 
-int
-cr_load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
-               const char *filelists_xml_path, const char *other_xml_path,
-               GStringChunk *chunk, GHashTable *pkglist_ht)
+static int
+cr_load_xml_files(GHashTable *hashtable,
+                  const char *primary_xml_path,
+                  const char *filelists_xml_path,
+                  const char *other_xml_path,
+                  GStringChunk *chunk,
+                  GHashTable *pkglist_ht,
+                  GError **err)
 {
-    int ret = CR_LOAD_METADATA_OK;
+    int ret = CRE_OK;
     cr_CompressionType compression_type;
     CR_FILE *pri_xml_cwfile, *fil_xml_cwfile, *oth_xml_cwfile;
     XML_Parser pri_p, fil_p, oth_p;
     struct ParserData parser_data;
 
+    assert(!err || *err == NULL);
 
     // Detect compression type
 
     compression_type = cr_detect_compression(primary_xml_path);
     if (compression_type == CR_CW_UNKNOWN_COMPRESSION) {
         g_debug("%s: Unknown compression", __func__);
-        return CR_LOAD_METADATA_ERR;
+        g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_UNKNOWNCOMPRESSION,
+                    "Unknown compression of %s", primary_xml_path);
+        return CRE_UNKNOWNCOMPRESSION;
     }
 
 
@@ -1072,17 +1086,23 @@ cr_load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
 
     if (!(pri_xml_cwfile = cr_open(primary_xml_path, CR_CW_MODE_READ, compression_type))) {
         g_debug("%s: Cannot open file: %s", __func__, primary_xml_path);
-        return CR_LOAD_METADATA_ERR;
+        g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_IO,
+                    "Cannot open %s", primary_xml_path);
+        return CRE_IO;
     }
 
     if (!(fil_xml_cwfile = cr_open(filelists_xml_path, CR_CW_MODE_READ, compression_type))) {
         g_debug("%s: Cannot open file: %s", __func__, filelists_xml_path);
-        return CR_LOAD_METADATA_ERR;
+        g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_IO,
+                    "Cannot open %s", primary_xml_path);
+        return CRE_IO;
     }
 
     if (!(oth_xml_cwfile = cr_open(other_xml_path, CR_CW_MODE_READ, compression_type))) {
         g_debug("%s: Cannot open file: %s", __func__, other_xml_path);
-        return CR_LOAD_METADATA_ERR;
+        g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_IO,
+                    "Cannot open %s", primary_xml_path);
+        return CRE_IO;
     }
 
 
@@ -1123,14 +1143,18 @@ cr_load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
         pri_buff = XML_GetBuffer(pri_p, CHUNK_SIZE);
         if (!pri_buff) {
             g_critical("%s: Ran out of memory for parse", __func__);
-            ret = CR_LOAD_METADATA_ERR;
+            ret = CRE_MEMORY;
+            g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_MEMORY,
+                        "Cannot allocate buffer for primary xml parser");
             break;
         }
 
         pri_len = cr_read(pri_xml_cwfile, (void *) pri_buff, CHUNK_SIZE);
         if (pri_len < 0) {
             g_critical("%s: Read error", __func__);
-            ret = CR_LOAD_METADATA_ERR;
+            ret = CRE_IO;
+            g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_IO,
+                        "Error while reading primary");
             break;
         }
 
@@ -1138,7 +1162,11 @@ cr_load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
             g_critical("%s: Parse error at line: %d (%s)", __func__,
                                 (int) XML_GetCurrentLineNumber(pri_p),
                                 (char *) XML_ErrorString(XML_GetErrorCode(pri_p)));
-            ret = CR_LOAD_METADATA_ERR;
+            ret = CRE_XMLPARSER;
+            g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_XMLPARSER,
+                        "Primary parse error at line: %d (%s)",
+                        (int) XML_GetCurrentLineNumber(pri_p),
+                        (char *) XML_ErrorString(XML_GetErrorCode(pri_p)));
             break;
         }
 
@@ -1146,7 +1174,7 @@ cr_load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
             break;
     }
 
-    if (parser_data.error || ret != CR_LOAD_METADATA_OK)
+    if (parser_data.error || ret != CRE_OK)
         goto cleanup;
 
     assert(!parser_data.pkg);
@@ -1161,14 +1189,18 @@ cr_load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
         fil_buff = XML_GetBuffer(fil_p, CHUNK_SIZE);
         if (!fil_buff) {
             g_critical("%s: Ran out of memory for parse", __func__);
-            ret = CR_LOAD_METADATA_ERR;
+            ret = CRE_MEMORY;
+            g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_MEMORY,
+                        "Cannot allocate buffer for filelists xml parser");
             break;
         }
 
         fil_len = cr_read(fil_xml_cwfile, (void *) fil_buff, CHUNK_SIZE);
         if (fil_len < 0) {
             g_critical("%s: Read error", __func__);
-            ret = CR_LOAD_METADATA_ERR;
+            ret = CRE_IO;
+            g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_IO,
+                        "Error while reading filelists");
             break;
         }
 
@@ -1176,7 +1208,11 @@ cr_load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
             g_critical("%s: Parse error at line: %d (%s)", __func__,
                                 (int) XML_GetCurrentLineNumber(fil_p),
                                 (char *) XML_ErrorString(XML_GetErrorCode(fil_p)));
-            ret = CR_LOAD_METADATA_ERR;
+            ret = CRE_XMLPARSER;
+            g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_XMLPARSER,
+                        "Filelists parse error at line: %d (%s)",
+                        (int) XML_GetCurrentLineNumber(fil_p),
+                        (char *) XML_ErrorString(XML_GetErrorCode(fil_p)));
             break;
         }
 
@@ -1184,7 +1220,7 @@ cr_load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
             break;
     }
 
-    if (parser_data.error || ret != CR_LOAD_METADATA_OK)
+    if (parser_data.error || ret != CRE_OK)
         goto cleanup;
 
     assert(!parser_data.pkg);
@@ -1199,14 +1235,18 @@ cr_load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
         oth_buff = XML_GetBuffer(oth_p, CHUNK_SIZE);
         if (!oth_buff) {
             g_critical("%s: Ran out of memory for parse", __func__);
-            ret = CR_LOAD_METADATA_ERR;
+            ret = CRE_MEMORY;
+            g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_MEMORY,
+                        "Cannot allocate buffer for other xml parser");
             break;
         }
 
         oth_len = cr_read(oth_xml_cwfile, (void *) oth_buff, CHUNK_SIZE);
         if (oth_len < 0) {
             g_critical("%s: Read error", __func__);
-            ret = CR_LOAD_METADATA_ERR;
+            ret = CRE_IO;
+            g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_IO,
+                        "Error while reading filelists");
             break;
         }
 
@@ -1214,7 +1254,11 @@ cr_load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
             g_critical("%s: Parse error at line: %d (%s)", __func__,
                                 (int) XML_GetCurrentLineNumber(oth_p),
                                 (char *) XML_ErrorString(XML_GetErrorCode(oth_p)));
-            ret = CR_LOAD_METADATA_ERR;
+            ret = CRE_XMLPARSER;
+            g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_XMLPARSER,
+                        "Primary parse error at line: %d (%s)",
+                        (int) XML_GetCurrentLineNumber(oth_p),
+                        (char *) XML_ErrorString(XML_GetErrorCode(oth_p)));
             break;
         }
 
@@ -1225,7 +1269,7 @@ cr_load_xml_files(GHashTable *hashtable, const char *primary_xml_path,
 // Goto label
 cleanup:
 
-    if (ret != CR_LOAD_METADATA_OK) {
+    if (ret != CRE_OK) {
         // If there were error during parsing it is important to take care
         // about current processed package if shared chunk is used.
         if (chunk)
@@ -1243,8 +1287,11 @@ cleanup:
 
     g_string_free(parser_data.current_string, TRUE);
 
-    if (parser_data.error)
-        ret = CR_LOAD_METADATA_ERR;
+    if (parser_data.error && ret == CRE_OK) {
+        ret = CRE_XMLDATA;
+        g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_XMLDATA,
+                    "Loaded metadata are bad");
+    }
 
     return ret;
 }
@@ -1252,14 +1299,22 @@ cleanup:
 
 
 int
-cr_metadata_load_xml(cr_Metadata md, struct cr_MetadataLocation *ml)
+cr_metadata_load_xml(cr_Metadata md,
+                     struct cr_MetadataLocation *ml,
+                     GError **err)
 {
-    if (!md || !ml)
-        return CR_LOAD_METADATA_ERR;
+    GError *tmp_err = NULL;
 
-    if (!ml->pri_xml_href || !ml->fil_xml_href || !ml->oth_xml_href)
+    assert(md);
+    assert(ml);
+    assert(!err || *err == NULL);
+
+    if (!ml->pri_xml_href || !ml->fil_xml_href || !ml->oth_xml_href) {
         // Some file(s) is/are missing
-        return CR_LOAD_METADATA_ERR;
+        g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_BADARG,
+                    "Some file is missing");
+        return CRE_BADARG;
+    }
 
 
     // Load metadata
@@ -1268,12 +1323,18 @@ cr_metadata_load_xml(cr_Metadata md, struct cr_MetadataLocation *ml)
     GHashTable *intern_hashtable;  // key is checksum (pkgId)
 
     intern_hashtable = cr_new_metadata_hashtable();
-    result = cr_load_xml_files(intern_hashtable, ml->pri_xml_href,
-                            ml->fil_xml_href, ml->oth_xml_href,
-                            md->chunk, md->pkglist_ht);
+    result = cr_load_xml_files(intern_hashtable,
+                               ml->pri_xml_href,
+                               ml->fil_xml_href,
+                               ml->oth_xml_href,
+                               md->chunk,
+                               md->pkglist_ht,
+                               &tmp_err);
 
-    if (result == CR_LOAD_METADATA_ERR) {
+    if (result != CRE_OK) {
         g_critical("%s: Error encountered while parsing", __func__);
+        g_propagate_prefixed_error(err, tmp_err,
+                                   "Error encountered while parsing:");
         cr_destroy_metadata_hashtable(intern_hashtable);
         return result;
     }
@@ -1302,8 +1363,11 @@ cr_metadata_load_xml(cr_Metadata md, struct cr_MetadataLocation *ml)
                 new_key = pkg->name;
                 break;
             default:
-                g_critical("%s: Unknown hash table key selected",
-                           __func__);
+                // Well, this SHOULD never happend!
+                // (md->key SHOULD be setted only by cr_metadata_new()
+                // and it SHOULD set only valid key values)
+                assert(0);
+                g_critical("%s: Unknown hash table key selected", __func__);
                 new_key = pkg->pkgId;
                 break;
         }
@@ -1323,20 +1387,24 @@ cr_metadata_load_xml(cr_Metadata md, struct cr_MetadataLocation *ml)
 
     cr_destroy_metadata_hashtable(intern_hashtable);
 
-    return CR_LOAD_METADATA_OK;
+    return CRE_OK;
 }
 
 
 
 int
-cr_metadata_locate_and_load_xml(cr_Metadata md, const char *repopath)
+cr_metadata_locate_and_load_xml(cr_Metadata md,
+                                const char *repopath,
+                                GError **err)
 {
-    if (!md || !repopath)
-        return CR_LOAD_METADATA_ERR;
-
     int ret;
-    struct cr_MetadataLocation *ml = cr_locate_metadata(repopath, 1);
-    ret = cr_metadata_load_xml(md, ml);
+    struct cr_MetadataLocation *ml;
+
+    assert(md);
+    assert(repopath);
+
+    ml = cr_locate_metadata(repopath, 1, NULL);
+    ret = cr_metadata_load_xml(md, ml, err);
     cr_metadatalocation_free(ml);
 
     return ret;

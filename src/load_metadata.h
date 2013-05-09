@@ -60,8 +60,9 @@ typedef enum {
     CR_HT_KEY_DEFAULT,                  /*!< default = pkg hash */
     CR_HT_KEY_HASH = CR_HT_KEY_DEFAULT, /*!< pkg hash (cr_Package ->pkgId) */
     CR_HT_KEY_NAME,                     /*!< pkg name (cr_Package ->name) */
-    CR_HT_KEY_FILENAME                  /*!< pkg filename (cr_Package
+    CR_HT_KEY_FILENAME,                 /*!< pkg filename (cr_Package
                                              ->location_href) */
+    CR_HT_KEY_SENTINEL,                 /*!< last element, terminator, .. */
 } cr_HashTableKey;
 
 /** Return cr_HashTableKey from a cr_Metadata */
@@ -83,9 +84,6 @@ struct _cr_Metadata {
 /** Pointer to structure with loaded metadata
  */
 typedef struct _cr_Metadata *cr_Metadata;
-
-#define CR_LOAD_METADATA_OK        0  /*!< Metadata loaded successfully */
-#define CR_LOAD_METADATA_ERR       1  /*!< Error while loading metadata */
 
 /** Create new (empty) metadata hashtable.
  * It is NOT thread safe to load data into single cr_Metadata
@@ -113,18 +111,22 @@ void cr_metadata_free(cr_Metadata md);
 /** Load metadata from the specified location.
  * @param md            metadata object
  * @param ml            metadata location
- * @return              return code CR_LOAD_METADATA_OK or CR_LOAD_METADATA_ERR
+ * @param err           GError **
+ * @return              cr_Error code
  */
 int cr_metadata_load_xml(cr_Metadata md,
-                         struct cr_MetadataLocation *ml);
+                         struct cr_MetadataLocation *ml,
+                         GError **err);
 
 /** Locate and load metadata from the specified path.
  * @param md            metadata object
  * @param repopath      path to repo (to directory with repodata/ subdir)
- * @return              return code CR_LOAD_METADATA_OK or CR_LOAD_METADATA_ERR
+ * @param err           GError **
+ * @return              cr_Error code
  */
 int cr_metadata_locate_and_load_xml(cr_Metadata md,
-                                    const char *repopath);
+                                    const char *repopath,
+                                    GError **err);
 
 /** @} */
 

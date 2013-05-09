@@ -25,6 +25,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <string.h>
+#include "error.h"
 #include "version.h"
 #include "compression_wrapper.h"
 #include "misc.h"
@@ -566,7 +567,7 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
         ml       = (struct cr_MetadataLocation *) element->data;
 
         g_debug("Loading srpms from: %s", ml->original_url);
-        if (cr_metadata_load_xml(metadata, ml) == CR_LOAD_METADATA_ERR) {
+        if (cr_metadata_load_xml(metadata, ml, NULL) != CRE_OK) {
             cr_metadata_free(metadata);
             g_critical("Cannot load repo: \"%s\"", ml->original_url);
             repoid++;
@@ -882,7 +883,7 @@ merge_repos(GHashTable *merged,
 
         g_debug("Processing: %s", repopath);
 
-        if (cr_metadata_load_xml(metadata, ml) == CR_LOAD_METADATA_ERR) {
+        if (cr_metadata_load_xml(metadata, ml, NULL) != CRE_OK) {
             cr_metadata_free(metadata);
             g_critical("Cannot load repo: \"%s\"", ml->repomd);
             break;
@@ -1305,7 +1306,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
         // Delete old metadata
         g_debug("Removing old metadata from %s", cmd_options->out_repo);
-        cr_remove_metadata_classic(cmd_options->out_dir, 0);
+        cr_remove_metadata_classic(cmd_options->out_dir, 0, NULL);
 
         // Move files from out_repo to tmp_out_repo
         GDir *dirp;
@@ -1454,7 +1455,7 @@ main(int argc, char **argv)
     gboolean cr_download_failed = FALSE;
 
     for (element = cmd_options->repo_list; element; element = g_slist_next(element)) {
-        struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) element->data, 1);
+        struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) element->data, 1, NULL);
         if (!loc) {
             g_warning("Downloading of repodata failed: %s", (gchar *) element->data);
             cr_download_failed = TRUE;
@@ -1512,7 +1513,7 @@ main(int argc, char **argv)
     if (cmd_options->noarch_repo_url) {
         struct cr_MetadataLocation *noarch_ml;
 
-        noarch_ml = cr_locate_metadata(cmd_options->noarch_repo_url, 1);
+        noarch_ml = cr_locate_metadata(cmd_options->noarch_repo_url, 1, NULL);
         noarch_metadata = cr_metadata_new(CR_HT_KEY_FILENAME, 0, NULL);
 
         // Base paths in output of original createrepo doesn't have trailing '/'
@@ -1523,7 +1524,7 @@ main(int argc, char **argv)
 
         g_debug("Loading noarch_repo: %s", noarch_repopath);
 
-        if (cr_metadata_load_xml(noarch_metadata, noarch_ml) == CR_LOAD_METADATA_ERR) {
+        if (cr_metadata_load_xml(noarch_metadata, noarch_ml, NULL) != CRE_OK) {
             g_error("Cannot load noarch repo: \"%s\"", noarch_ml->repomd);
             cr_metadata_free(noarch_metadata);
             // TODO cleanup

@@ -141,36 +141,41 @@ static PyGetSetDef metadata_getsetters[] = {
 static PyObject *
 load_xml(_MetadataObject *self, PyObject *args)
 {
-    int rc;
     PyObject *ml;
+    GError *tmp_err = NULL;
 
     if (!PyArg_ParseTuple(args, "O!:load_xml", &MetadataLocation_Type, &ml))
         return NULL;
+
     if (check_MetadataStatus(self))
         return NULL;
 
-    rc = cr_metadata_load_xml(self->md, MetadataLocation_FromPyObject(ml));
-    if (rc != CR_LOAD_METADATA_OK) {
-        PyErr_SetString(CrErr_Exception, "Cannot load metadata");
+    cr_metadata_load_xml(self->md, MetadataLocation_FromPyObject(ml), &tmp_err);
+    if (tmp_err) {
+        PyErr_SetString(CrErr_Exception, tmp_err->message);
+        g_clear_error(&tmp_err);
         return NULL;
     }
+
     Py_RETURN_NONE;
 }
 
 static PyObject *
 locate_and_load_xml(_MetadataObject *self, PyObject *args)
 {
-    int rc;
     char *path;
+    GError *tmp_err = NULL;
 
     if (!PyArg_ParseTuple(args, "s:locate_and_load_xml", &path))
         return NULL;
+
     if (check_MetadataStatus(self))
         return NULL;
 
-    rc = cr_metadata_locate_and_load_xml(self->md, path);
-    if (rc != CR_LOAD_METADATA_OK) {
-        PyErr_SetString(CrErr_Exception, "Cannot load metadata");
+    cr_metadata_locate_and_load_xml(self->md, path, &tmp_err);
+    if (tmp_err) {
+        PyErr_SetString(CrErr_Exception, tmp_err->message);
+        g_clear_error(&tmp_err);
         return NULL;
     }
     Py_RETURN_NONE;

@@ -72,6 +72,7 @@ metadatalocation_init(_MetadataLocationObject *self, PyObject *args, PyObject *k
     CR_UNUSED(kwds);
     char *repopath;
     int ignore_db;
+    GError *tmp_err = NULL;
 
     if (!PyArg_ParseTuple(args, "si|:metadatalocation_init", &repopath, &ignore_db))
         return -1;
@@ -82,9 +83,10 @@ metadatalocation_init(_MetadataLocationObject *self, PyObject *args, PyObject *k
     }
 
     /* Init */
-    self->ml = cr_locate_metadata(repopath, ignore_db);
-    if (self->ml == NULL) {
-        PyErr_SetString(CrErr_Exception, "MetadataLocation initialization failed");
+    self->ml = cr_locate_metadata(repopath, ignore_db, &tmp_err);
+    if (tmp_err) {
+        PyErr_SetString(CrErr_Exception, tmp_err->message);
+        g_clear_error(&tmp_err);
         return -1;
     }
     return 0;

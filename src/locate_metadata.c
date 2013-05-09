@@ -19,10 +19,12 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <assert.h>
 #include <libxml/xmlreader.h>
 #include <curl/curl.h>
 #include <string.h>
 #include <errno.h>
+#include "error.h"
 #include "logging.h"
 #include "misc.h"
 #include "locate_metadata.h"
@@ -63,7 +65,7 @@ cr_metadatalocation_free(struct cr_MetadataLocation *ml)
 
 
 
-struct cr_MetadataLocation *
+static struct cr_MetadataLocation *
 cr_parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite)
 {
     int ret;
@@ -216,7 +218,7 @@ cr_parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite
 
 
 
-struct cr_MetadataLocation *
+static struct cr_MetadataLocation *
 cr_get_local_metadata(const char *in_repopath, int ignore_sqlite)
 {
     struct cr_MetadataLocation *ret = NULL;
@@ -257,8 +259,7 @@ cr_get_local_metadata(const char *in_repopath, int ignore_sqlite)
 }
 
 
-
-struct cr_MetadataLocation *
+static struct cr_MetadataLocation *
 cr_get_remote_metadata(const char *repopath, int ignore_sqlite)
 {
     gchar *url = NULL;
@@ -407,21 +408,24 @@ get_remote_metadata_cleanup:
 }
 
 
-
 struct cr_MetadataLocation *
-cr_locate_metadata(const char *in_repopath, int ignore_sqlite)
+cr_locate_metadata(const char *in_repopath, int ignore_sqlite, GError **err)
 {
+    gchar *repopath;
     struct cr_MetadataLocation *ret = NULL;
+
+    assert(in_repopath);
+    assert(!err || *err == NULL);
+
+    // XXX: err is not used in this function yet
+
 
     // repopath must ends with slash
 
-    gchar *repopath;
-
-    if (g_str_has_suffix(in_repopath, "/")) {
+    if (g_str_has_suffix(in_repopath, "/"))
         repopath = g_strdup(in_repopath);
-    } else {
+    else
         repopath = g_strconcat(in_repopath, "/", NULL);
-    }
 
     if (g_str_has_prefix(repopath, "ftp://") ||
         g_str_has_prefix(repopath, "http://") ||
@@ -437,18 +441,17 @@ cr_locate_metadata(const char *in_repopath, int ignore_sqlite)
         ret = cr_get_local_metadata(path, ignore_sqlite);
     }
 
-    if (ret) {
+    if (ret)
         ret->original_url = g_strdup(in_repopath);
-    }
+
     g_free(repopath);
     return ret;
 }
 
 
-
 // Return list of non-null pointers on strings in the passed structure
-GSList *
-cr_get_list_of_md_locations (struct cr_MetadataLocation *ml)
+static GSList *
+cr_get_list_of_md_locations(struct cr_MetadataLocation *ml)
 {
     GSList *list = NULL;
 
@@ -471,8 +474,7 @@ cr_get_list_of_md_locations (struct cr_MetadataLocation *ml)
 }
 
 
-
-void
+static void
 cr_free_list_of_md_locations(GSList *list)
 {
     if (list) {
@@ -481,25 +483,33 @@ cr_free_list_of_md_locations(GSList *list)
 }
 
 
-
 int
-cr_remove_metadata(const char *repopath)
+cr_remove_metadata(const char *repopath, GError **err)
 {
     int removed_files = 0;
     gchar *full_repopath;
     const gchar *file;
     GDir *repodir;
     struct cr_MetadataLocation *ml;
+    GError *tmp_err = NULL;
 
-    if (!repopath || !g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
+    assert(repopath);
+    assert(!err || *err == NULL);
+
+    if (!g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
         g_debug("%s: remove_old_metadata: Cannot remove %s", __func__, repopath);
+        g_set_error(err, CR_LOCATE_METADATA_ERROR, CRE_NODIR,
+                    "Directory %s doesn't exists", repopath);
         return -1;
     }
 
     full_repopath = g_strconcat(repopath, "/repodata/", NULL);
-    repodir = g_dir_open(full_repopath, 0, NULL);
-    if (!repodir) {
+
+    repodir = g_dir_open(full_repopath, 0, &tmp_err);
+    if (tmp_err) {
         g_debug("%s: Path %s doesn't exists", __func__, repopath);
+        g_set_error(err, CR_LOCATE_METADATA_ERROR, CRE_IO,
+                    "Cannot open directory %s: %s", repopath, strerror(errno));
         g_free(full_repopath);
         return -1;
     }
@@ -507,7 +517,12 @@ cr_remove_metadata(const char *repopath)
 
     // Remove all metadata listed in repomd.xml
 
-    ml = cr_locate_metadata(repopath, 0);
+    ml = cr_locate_metadata(repopath, 0, &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        goto cleanup;
+    }
+
     if (ml) {
         GSList *list = cr_get_list_of_md_locations(ml);
         GSList *element;
@@ -516,11 +531,15 @@ cr_remove_metadata(const char *repopath)
             gchar *path = (char *) element->data;
 
             g_debug("%s: Removing: %s (path obtained from repomd.xml)", __func__, path);
-            if (g_remove(path) == -1) {
-                // g_warning("%s: remove_old_metadata: Cannot remove %s", __func__, path);
-                ;
-            } else {
+            if (g_remove(path) != -1) {
                 removed_files++;
+            } else {
+                g_warning("%s: Cannot remove %s", __func__, path);
+                g_set_error(err, CR_LOCATE_METADATA_ERROR, CRE_IO,
+                            "Cannot remove %s: %s", path, strerror(errno));
+                cr_free_list_of_md_locations(list);
+                cr_metadatalocation_free(ml);
+                goto cleanup;
             }
         }
 
@@ -549,14 +568,19 @@ cr_remove_metadata(const char *repopath)
         {
             gchar *path = g_strconcat(full_repopath, file, NULL);
             g_debug("%s: Removing: %s", __func__, path);
-            if (g_remove(path) == -1)
-                g_warning("%s: Cannot remove %s", __func__, path);
-            else
+            if (g_remove(path) != -1) {
                 removed_files++;
-            g_free(path);
+            } else {
+                g_warning("%s: Cannot remove %s", __func__, path);
+                g_set_error(err, CR_LOCATE_METADATA_ERROR, CRE_IO,
+                            "Cannot remove %s: %s", path, strerror(errno));
+                g_free(path);
+                goto cleanup;
+            }
         }
     }
 
+cleanup:
     g_dir_close(repodir);
     g_free(full_repopath);
 
@@ -570,7 +594,7 @@ typedef struct _old_file {
 } OldFile;
 
 
-void
+static void
 cr_free_old_file(gpointer data)
 {
     OldFile *old_file = (OldFile *) data;
@@ -579,7 +603,7 @@ cr_free_old_file(gpointer data)
 }
 
 
-gint
+static gint
 cr_cmp_old_repodata_files(gconstpointer a, gconstpointer b)
 {
     if (((OldFile *) a)->mtime < ((OldFile *) b)->mtime)
@@ -590,7 +614,7 @@ cr_cmp_old_repodata_files(gconstpointer a, gconstpointer b)
 }
 
 
-void
+static void
 cr_stat_and_insert(const gchar *dirname, const gchar *filename, GSList **list)
 {
     struct stat buf;
@@ -605,29 +629,34 @@ cr_stat_and_insert(const gchar *dirname, const gchar *filename, GSList **list)
 }
 
 
-int
-cr_remove_listed_files(GSList *list, int retain)
+static int
+cr_remove_listed_files(GSList *list, int retain, GError **err)
 {
     int removed = 0;
-    GSList *el;
+
+    assert(!err || *err == NULL);
 
     if (retain < 0) retain = 0;
 
-    el = g_slist_nth(list, retain);
-    for (; el; el = g_slist_next(el)) {
+    for (GSList *el = g_slist_nth(list, retain); el; el = g_slist_next(el)) {
         OldFile *of = (OldFile *) el->data;
         g_debug("%s: Removing: %s", __func__, of->path);
-        if (g_remove(of->path) == -1)
+        if (g_remove(of->path) != -1) {
+            ++removed;
+        } else {
             g_warning("%s: Cannot remove %s", __func__, of->path);
-        else
-            removed++;
+            g_set_error(err, CR_LOCATE_METADATA_ERROR, CRE_IO,
+                        "Cannot remove %s: %s", of->path, strerror(errno));
+            break;
+        }
     }
+
     return removed;
 }
 
 
 int
-cr_remove_metadata_classic(const char *repopath, int retain)
+cr_remove_metadata_classic(const char *repopath, int retain, GError **err)
 {
     gchar *full_repopath, *repomd_path;
     GDir *repodir;
@@ -635,18 +664,25 @@ cr_remove_metadata_classic(const char *repopath, int retain)
     GSList *pri_lst = NULL, *pri_db_lst = NULL;
     GSList *fil_lst = NULL, *fil_db_lst = NULL;
     GSList *oth_lst = NULL, *oth_db_lst = NULL;
+    GError *tmp_err = NULL;
 
-    if (!repopath || !g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
-        g_debug("%s: remove_old_metadata: Cannot remove %s", __func__, repopath);
-        return -1;
+    assert(repopath);
+    assert(!err || *err == NULL);
+
+    if (!g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
+        g_debug("%s: Cannot remove %s", __func__, repopath);
+        g_set_error(err, CR_LOCATE_METADATA_ERROR, CRE_NODIR,
+                    "Directory %s doesn't exist", repopath);
+        return CRE_NODIR;
     }
 
     full_repopath = g_strconcat(repopath, "/repodata/", NULL);
-    repodir = g_dir_open(full_repopath, 0, NULL);
-    if (!repodir) {
-        g_debug("%s: Path %s doesn't exists", __func__, repopath);
+    repodir = g_dir_open(full_repopath, 0, &tmp_err);
+    if (tmp_err) {
+        g_debug("%s: Path %s doesn't exist", __func__, repopath);
+        g_propagate_prefixed_error(err, tmp_err, "Cannot open a dir: ");
         g_free(full_repopath);
-        return -1;
+        return CRE_IO;
     }
 
 
@@ -680,25 +716,42 @@ cr_remove_metadata_classic(const char *repopath, int retain)
 
     // Remove old metadata
 
+    int ret = CRE_OK;
+    GSList *lists[] = { pri_lst, pri_db_lst,
+                        fil_lst, fil_db_lst,
+                        oth_lst, oth_db_lst };
+
+
+    // Remove repomd.xml
+
     repomd_path = g_strconcat(full_repopath, "repomd.xml", NULL);
+
     g_debug("%s: Removing: %s", __func__, repomd_path);
-    g_remove(repomd_path);
+    if (g_remove(repomd_path) == -1) {
+        g_set_error(err, CR_LOCATE_METADATA_ERROR, CRE_IO,
+                    "Cannot remove %s: %s", repomd_path, strerror(errno));
+        ret = CRE_IO;
+        goto cleanup;
+    }
+
+
+    // Remove listed files
+
+    for (int x = 0; x < 6; x++) {
+        cr_remove_listed_files(lists[x], retain, &tmp_err);
+        if (tmp_err) {
+            ret = tmp_err->code;
+            g_propagate_error(err, tmp_err);
+            break;
+        }
+    }
+
+cleanup:
     g_free(repomd_path);
     g_free(full_repopath);
 
-    cr_remove_listed_files(pri_lst, retain);
-    cr_remove_listed_files(pri_db_lst, retain);
-    cr_remove_listed_files(fil_lst, retain);
-    cr_remove_listed_files(fil_db_lst, retain);
-    cr_remove_listed_files(oth_lst, retain);
-    cr_remove_listed_files(oth_db_lst, retain);
+    for (int x = 0; x < 6; x++)
+        cr_slist_free_full(lists[x], cr_free_old_file);
 
-    cr_slist_free_full(pri_lst, cr_free_old_file);
-    cr_slist_free_full(pri_db_lst, cr_free_old_file);
-    cr_slist_free_full(fil_lst, cr_free_old_file);
-    cr_slist_free_full(fil_db_lst, cr_free_old_file);
-    cr_slist_free_full(oth_lst, cr_free_old_file);
-    cr_slist_free_full(oth_db_lst, cr_free_old_file);
-
-    return 0;
+    return ret;
 }

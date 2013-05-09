@@ -26,10 +26,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <fcntl.h>
+#include "error.h"
 #include "version.h"
 #include "constants.h"
 #include "parsepkg.h"
-#include <fcntl.h>
 #include "locate_metadata.h"
 #include "load_metadata.h"
 #include "repomd.h"
@@ -726,12 +727,12 @@ main(int argc, char **argv)
         old_metadata = cr_metadata_new(CR_HT_KEY_FILENAME, 1, current_pkglist);
 
         if (cmd_options->outputdir)
-            old_metadata_location = cr_locate_metadata(out_dir, 1);
+            old_metadata_location = cr_locate_metadata(out_dir, 1, NULL);
         else
-            old_metadata_location = cr_locate_metadata(in_dir, 1);
+            old_metadata_location = cr_locate_metadata(in_dir, 1, NULL);
 
-        ret = cr_metadata_load_xml(old_metadata, old_metadata_location);
-        if (ret == CR_LOAD_METADATA_OK)
+        ret = cr_metadata_load_xml(old_metadata, old_metadata_location, NULL);
+        if (ret == CRE_OK)
             g_debug("Old metadata from: %s - loaded", out_dir);
         else
             g_debug("Old metadata from %s - loading failed", out_dir);
@@ -741,8 +742,8 @@ main(int argc, char **argv)
         for (; element; element = g_slist_next(element)) {
             char *path = (char *) element->data;
             g_message("Loading metadata from md-path: %s", path);
-            ret = cr_metadata_locate_and_load_xml(old_metadata, path);
-            if (ret == CR_LOAD_METADATA_OK)
+            ret = cr_metadata_locate_and_load_xml(old_metadata, path, NULL);
+            if (ret == CRE_OK)
                 g_debug("Metadata from md-path %s - loaded", path);
             else
                 g_warning("Metadata from md-path %s - loading failed", path);
@@ -1170,7 +1171,7 @@ main(int argc, char **argv)
 
         // Delete old metadata
         g_debug("Removing old metadata from %s", out_repo);
-        cr_remove_metadata_classic(out_dir, cmd_options->retain_old);
+        cr_remove_metadata_classic(out_dir, cmd_options->retain_old, NULL);
 
         // Move files from out_repo to tmp_out_repo
         GDir *dirp;

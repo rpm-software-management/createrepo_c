@@ -67,3 +67,15 @@ cr_parsepkg_error_quark(void)
     return g_quark_from_static_string("cr_parsepkg_error");
 }
 
+GQuark
+cr_locate_metadata_error_quark(void)
+{
+    return g_quark_from_static_string("cr_locate_metadata_error");
+}
+
+GQuark
+cr_load_metadata_error_quark(void)
+{
+    return g_quark_from_static_string("cr_load_metadata_error");
+}
+

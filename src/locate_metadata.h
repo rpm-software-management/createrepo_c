@@ -56,10 +56,12 @@ struct cr_MetadataLocation {
  * is called on the cr_MetadataLocation.
  * @param repopath      path to directory with repodata/ subdirectory
  * @param ignore_sqlite if ignore_sqlite != 0 sqlite dbs are ignored
+ * @param err           GError **
  * @return              filled cr_MetadataLocation structure or NULL
  */
 struct cr_MetadataLocation *cr_locate_metadata(const char *repopath,
-                                                     int ignore_sqlite);
+                                               int ignore_sqlite,
+                                               GError **err);
 
 /** Free cr_MetadataLocation. If repodata were downloaded remove
  * a temporary directory with repodata.
@@ -73,9 +75,10 @@ void cr_metadatalocation_free(struct cr_MetadataLocation *ml);
  * are names with suffixes like primary.xml.*, primary.sqlite.*, other.xml.*,
  * etc.) are keep untouched (repodata/ subdirectory IS NOT removed!).
  * @param repopath      path to directory with repodata/ subdirectory
+ * @param err           GError **
  * @return              number of removed files
  */
-int cr_remove_metadata(const char *repopath);
+int cr_remove_metadata(const char *repopath, GError **err);
 
 /** Remove repodata in same manner as classic createrepo.
  * This function removes only (primary|filelists|other)[.sqlite].* files
@@ -84,8 +87,10 @@ int cr_remove_metadata(const char *repopath);
  * @param retain        keep around the latest N old, uniquely named primary,
  *                      filelists and otherdata xml and sqlite files.
  *                      If <1 no old files will be kept.
+ * @param err           GError **
+ * @return              cr_Error code
  */
-int cr_remove_metadata_classic(const char *repopath, int retain);
+int cr_remove_metadata_classic(const char *repopath, int retain, GError **err);
 
 /** @} */
 

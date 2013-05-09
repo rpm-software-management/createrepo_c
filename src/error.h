@@ -36,9 +36,17 @@ typedef enum {
     CRE_BADARG, /*!<
         At least one argument of function is bad or non complete */
     CRE_NOFILE, /*!<
-        File doesn't exists */
+        File doesn't exist */
+    CRE_NODIR, /*!<
+        Directory doesn't exist (not a dir or path doesn't exists) */
     CRE_UNKNOWNCHECKSUMTYPE, /*!<
         Unknown/Unsupported checksum type */
+    CRE_UNKNOWNCOMPRESSION, /*!<
+        Unknown/Unsupported compression type */
+    CRE_XMLPARSER, /*!<
+        XML parser error (non valid xml, corrupted xml,  ..) */
+    CRE_XMLDATA, /*!<
+        Loaded xml metadata are bad */
 } cr_Error;
 
 #define CR_DB_ERROR cr_db_error_quark()
@@ -49,6 +57,8 @@ typedef enum {
 #define CR_REPOMD_RECORD_ERROR cr_repomd_record_error_quark()
 #define CR_CHECKSUM_ERROR cr_checksum_error_quark()
 #define CR_PARSEPKG_ERROR cr_parsepkg_error_quark()
+#define CR_LOCATE_METADATA_ERROR cr_locate_metadata_error_quark()
+#define CR_LOAD_METADATA_ERROR cr_load_metadata_error_quark()
 
 GQuark cr_db_error_quark(void);
 GQuark cr_xml_dump_primary_error_quark(void);
@@ -58,5 +68,7 @@ GQuark cr_repomd_error_quark(void);
 GQuark cr_repomd_record_error_quark(void);
 GQuark cr_checksum_error_quark(void);
 GQuark cr_parsepkg_error_quark(void);
+GQuark cr_locate_metadata_error_quark(void);
+GQuark cr_load_metadata_error_quark(void);
 
 #endif

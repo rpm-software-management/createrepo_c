@@ -242,7 +242,7 @@ cr_repomd_record_fill(cr_RepomdRecord md,
 
         chksum = cr_compute_file_checksum(path, checksum_t, &tmp_err);
         if (tmp_err) {
-            int code = tmp_err->code
+            int code = tmp_err->code;
             g_propagate_prefixed_error(err, tmp_err,
                 "Error while checksum calculation of %s:", path);
             return code;

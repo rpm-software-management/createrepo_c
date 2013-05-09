@@ -1029,7 +1029,7 @@ main(int argc, char **argv)
     if (groupfile) {
         groupfile_rec = cr_repomd_record_new(groupfile);
         compressed_groupfile_rec = cr_repomd_record_new(groupfile);
-        cr_repomd_record_groupfile(groupfile_rec,
+        cr_repomd_record_compress_and_fill(groupfile_rec,
                                           compressed_groupfile_rec,
                                           cmd_options->checksum_type,
                                           groupfile_compression,

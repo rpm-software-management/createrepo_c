@@ -147,11 +147,11 @@ compress_and_fill(_RepomdRecordObject *self, PyObject *args)
     if (check_RepomdRecordStatus(self))
         return NULL;
 
-    cr_repomd_record_groupfile(self->record,
-                               RepomdRecord_FromPyObject(compressed_repomdrecord),
-                               checksum_type,
-                               compression_type,
-                               &err);
+    cr_repomd_record_compress_and_fill(self->record,
+                                       RepomdRecord_FromPyObject(compressed_repomdrecord),
+                                       checksum_type,
+                                       compression_type,
+                                       &err);
     if (err) {
         PyErr_Format(CrErr_Exception, "compress_and_fill method failed: %s", err->message);
         g_clear_error(&err);

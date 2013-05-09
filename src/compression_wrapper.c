@@ -557,13 +557,12 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len)
 int
 cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len)
 {
-    if (!cr_file || !buffer || cr_file->mode != CR_CW_MODE_WRITE) {
-        return CR_CW_ERR;
-    }
-
-
     int bzerror;
     int ret = CR_CW_ERR;
+
+    if (!cr_file || !buffer || cr_file->mode != CR_CW_MODE_WRITE) {
+        return ret;
+    }
 
     switch (cr_file->type) {
 

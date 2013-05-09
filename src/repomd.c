@@ -45,9 +45,6 @@
 #define XML_ENC         "UTF-8"
 #define FORMAT_XML      1
 
-#define REPOMD_OK       0 // XXX
-#define REPOMD_ERR      1 // XXX
-
 
 typedef struct _contentStat {
     char *checksum;
@@ -215,8 +212,8 @@ cr_repomd_record_fill(cr_RepomdRecord md,
     gchar *path;
     GError *tmp_err = NULL;
 
-    assert(!err || *err == NULL);
     assert(md);
+    assert(!err || *err == NULL);
 
     if (!(md->location_real) || !strlen(md->location_real)) {
         g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_BADARG,
@@ -245,9 +242,10 @@ cr_repomd_record_fill(cr_RepomdRecord md,
 
         chksum = cr_compute_file_checksum(path, checksum_t, &tmp_err);
         if (tmp_err) {
+            int code = tmp_err->code
             g_propagate_prefixed_error(err, tmp_err,
                 "Error while checksum calculation of %s:", path);
-            return (*err)->code;
+            return code;
         }
 
         md->checksum_type = g_string_chunk_insert(md->chunk, checksum_str);
@@ -267,10 +265,11 @@ cr_repomd_record_fill(cr_RepomdRecord md,
 
             open_stat = cr_get_compressed_content_stat(path, checksum_t, &tmp_err);
             if (tmp_err) {
+                int code = tmp_err->code;
                 g_propagate_prefixed_error(err, tmp_err,
                     "Error while computing stat of compressed content of %s:",
                     path);
-                return (*err)->code;
+                return code;
             }
 
             md->checksum_open_type = g_string_chunk_insert(md->chunk, checksum_str);
@@ -320,12 +319,12 @@ cr_repomd_record_fill(cr_RepomdRecord md,
 }
 
 
-void
-cr_repomd_record_groupfile(cr_RepomdRecord groupfile,
-                           cr_RepomdRecord cgroupfile,
-                           cr_ChecksumType checksum_type,
-                           cr_CompressionType groupfile_compression,
-                           GError **err)
+int
+cr_repomd_record_compress_and_fill(cr_RepomdRecord record,
+                                   cr_RepomdRecord crecord,
+                                   cr_ChecksumType checksum_type,
+                                   cr_CompressionType record_compression,
+                                   GError **err)
 {
     const char *suffix;
     gchar *path, *cpath;
@@ -338,52 +337,63 @@ cr_repomd_record_groupfile(cr_RepomdRecord groupfile,
     long gf_size = -1, cgf_size = -1;
     long gf_time = -1, cgf_time = -1;
     struct stat gf_stat, cgf_stat;
-    const char *checksum_str;
-    cr_ChecksumType checksum_t;
+    const char *checksum_str = cr_checksum_name_str(checksum_type);
+    GError *tmp_err = NULL;
 
-    if (!groupfile || !(groupfile->location_real)
-        || !strlen(groupfile->location_real) || !cgroupfile) {
-        return;
+    assert(record);
+    assert(crecord);
+    assert(!err || *err == NULL);
+
+    if (!(record->location_real) || !strlen(record->location_real)) {
+        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_BADARG,
+                    "Empty locations in repomd record object");
+        return CRE_BADARG;
     }
 
-
-    // Checksum stuff
-
-    checksum_str = cr_checksum_name_str(checksum_type);
-    checksum_t = checksum_type;
-
+    if (!g_file_test(record->location_real, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR)) {
+        // File doesn't exists
+        g_warning("%s: File %s doesn't exists", __func__, record->location_real);
+        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_NOFILE,
+                    "File %s doesn't exists", record->location_real);
+        return CRE_NOFILE;;
+    }
 
     // Paths
 
-    suffix = cr_compression_suffix(groupfile_compression);
+    suffix = cr_compression_suffix(record_compression);
 
-    clocation_real = g_strconcat(groupfile->location_real, suffix, NULL);
-    clocation_href = g_strconcat(groupfile->location_href, suffix, NULL);
-    cgroupfile->location_real = g_string_chunk_insert(cgroupfile->chunk,
-                                                      clocation_real);
-    cgroupfile->location_href = g_string_chunk_insert(cgroupfile->chunk,
-                                                      clocation_href);
+    clocation_real = g_strconcat(record->location_real, suffix, NULL);
+    clocation_href = g_strconcat(record->location_href, suffix, NULL);
+    crecord->location_real = g_string_chunk_insert(crecord->chunk,
+                                                   clocation_real);
+    crecord->location_href = g_string_chunk_insert(crecord->chunk,
+                                                   clocation_href);
     g_free(clocation_real);
     g_free(clocation_href);
 
-    path  = groupfile->location_real;
-    cpath = cgroupfile->location_real;
-
-    if (!g_file_test(path, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR)) {
-        // File doesn't exists
-        g_warning("%s: File %s doesn't exists", __func__, path);
-        return;
-    }
+    path  = record->location_real;
+    cpath = crecord->location_real;
 
 
     // Compress file + get size of non compressed file
 
-    cw_plain      = cr_open(path, CR_CW_MODE_READ, CR_CW_NO_COMPRESSION);
-    cw_compressed = cr_open(cpath, CR_CW_MODE_WRITE, groupfile_compression);
+    cw_plain = cr_open(path, CR_CW_MODE_READ, CR_CW_NO_COMPRESSION);
+    if (!cw_plain) {
+        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
+                    "Cannot open %s", path);
+        return CRE_IO;
+    }
+
+    cw_compressed = cr_open(cpath, CR_CW_MODE_WRITE, record_compression);
+    if (!cw_compressed) {
+        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
+                    "Cannot open %s", path);
+        return CRE_IO;
+    }
 
     while ((readed = cr_read(cw_plain, buf, BUFFER_SIZE)) > 0) {
         if (cr_write(cw_compressed, buf, (unsigned int) readed) == CR_CW_ERR) {
-            g_debug("%s: Error while groupfile compression", __func__);
+            g_debug("%s: Error while record compression", __func__);
             break;
         }
     }
@@ -392,27 +402,49 @@ cr_repomd_record_groupfile(cr_RepomdRecord groupfile,
     cr_close(cw_plain);
 
     if (readed == CR_CW_ERR) {
-        g_debug("%s: Error while groupfile compression", __func__);
+        g_debug("%s: Error while record compression", __func__);
+        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
+                    "Error while compression");
+        return CRE_IO;
     }
 
 
     // Compute checksums
 
-    checksum  = cr_compute_file_checksum(path, checksum_t, NULL);
-    cchecksum = cr_compute_file_checksum(cpath, checksum_t, NULL);
+    checksum  = cr_compute_file_checksum(path, checksum_type, &tmp_err);
+    if (tmp_err) {
+        int code = tmp_err->code;
+        g_propagate_prefixed_error(err, tmp_err,
+                                   "Error while checksum calculation:");
+        return code;
+    }
+
+    cchecksum = cr_compute_file_checksum(cpath, checksum_type, &tmp_err);
+    if (tmp_err) {
+        int code = tmp_err->code;
+        g_propagate_prefixed_error(err, tmp_err,
+                                   "Error while checksum calculation:");
+        return code;
+    }
 
 
     // Get stats
 
     if (stat(path, &gf_stat)) {
         g_debug("%s: Error while stat() on %s", __func__, path);
+        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
+                    "Cannot stat %s", path);
+        return CRE_IO;
     } else {
         gf_size = gf_stat.st_size;
         gf_time = gf_stat.st_mtime;
     }
 
     if (stat(cpath, &cgf_stat)) {
-        g_debug("%s: Error while stat() on %s", __func__, path);
+        g_debug("%s: Error while stat() on %s", __func__, cpath);
+        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
+                    "Cannot stat %s", cpath);
+        return CRE_IO;
     } else {
         cgf_size = cgf_stat.st_size;
         cgf_time = cgf_stat.st_mtime;
@@ -421,24 +453,135 @@ cr_repomd_record_groupfile(cr_RepomdRecord groupfile,
 
     // Results
 
-    groupfile->checksum = g_string_chunk_insert(groupfile->chunk, checksum);
-    groupfile->checksum_type = g_string_chunk_insert(groupfile->chunk, checksum_str);
-    groupfile->checksum_open = NULL;
-    groupfile->checksum_open_type = NULL;
-    groupfile->timestamp = gf_time;
-    groupfile->size = gf_size;
-    groupfile->size_open = -1;
+    record->checksum = g_string_chunk_insert(record->chunk, checksum);
+    record->checksum_type = g_string_chunk_insert(record->chunk, checksum_str);
+    record->checksum_open = NULL;
+    record->checksum_open_type = NULL;
+    record->timestamp = gf_time;
+    record->size = gf_size;
+    record->size_open = -1;
 
-    cgroupfile->checksum = g_string_chunk_insert(cgroupfile->chunk, cchecksum);
-    cgroupfile->checksum_type = g_string_chunk_insert(cgroupfile->chunk, checksum_str);
-    cgroupfile->checksum_open = g_string_chunk_insert(groupfile->chunk, checksum);
-    cgroupfile->checksum_open_type = g_string_chunk_insert(groupfile->chunk, checksum_str);
-    cgroupfile->timestamp = cgf_time;
-    cgroupfile->size = cgf_size;
-    cgroupfile->size_open = gf_size;
+    crecord->checksum = g_string_chunk_insert(crecord->chunk, cchecksum);
+    crecord->checksum_type = g_string_chunk_insert(crecord->chunk, checksum_str);
+    crecord->checksum_open = g_string_chunk_insert(record->chunk, checksum);
+    crecord->checksum_open_type = g_string_chunk_insert(record->chunk, checksum_str);
+    crecord->timestamp = cgf_time;
+    crecord->size = cgf_size;
+    crecord->size_open = gf_size;
 
     g_free(checksum);
     g_free(cchecksum);
+
+    return CRE_OK;
+}
+
+
+int
+cr_repomd_record_rename_file(cr_RepomdRecord md, GError **err)
+{
+    int x, len;
+    gchar *location_prefix = NULL;
+    const gchar *location_filename = NULL;
+    gchar *new_location_href;
+    gchar *new_location_real;
+
+    assert(md);
+    assert(!err || *err == NULL);
+
+    if (!(md->location_real) || !strlen(md->location_real)) {
+        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_BADARG,
+                    "Empty locations in repomd record object");
+        return CRE_BADARG;
+    }
+
+    if (!md->checksum) {
+        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_BADARG,
+                    "Record doesn't contain checksum");
+        return CRE_BADARG;
+    }
+
+    x = strlen(md->location_real);
+    for (; x > 0; x--) {
+        if (md->location_real[x] == '/') {
+            location_prefix = g_strndup(md->location_real, x+1);
+            location_filename = cr_get_filename(md->location_real+x+1);
+            break;
+        }
+    }
+
+    // Check if the rename is necessary
+    // During update with --keep-all-metadata some files (groupfile,
+    // updateinfo, ..) could already have checksum in filenames
+    if (g_str_has_prefix(location_filename, md->checksum)) {
+        // The filename constains valid checksum
+        g_free(location_prefix);
+        return CRE_OK;
+    }
+
+    // Skip existing obsolete checksum in the name if there is any
+    len = strlen(location_filename);
+    if (len > 32) {
+        // The filename is long -> it could contains a checksum
+        for (x = 0; x < len; x++) {
+            if (location_filename[x] == '-' && (
+                   x == 32  // Prefix is MD5 checksum
+                || x == 40  // Prefix is SHA1 checksum
+                || x == 64  // Prefix is SHA256 checksum
+                || x == 128 // Prefix is SHA512 checksum
+               ))
+            {
+                location_filename = location_filename + x + 1;
+                break;
+            }
+        }
+    }
+
+    // Prepare new name
+    new_location_real = g_strconcat(location_prefix,
+                                    md->checksum,
+                                    "-",
+                                    location_filename,
+                                    NULL);
+    g_free(location_prefix);
+
+    // Rename file
+    if (g_file_test (new_location_real, G_FILE_TEST_EXISTS)) {
+        if (remove(new_location_real)) {
+            g_critical("%s: Cannot delete old %s",
+                       __func__,
+                       new_location_real);
+            g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
+                        "File with name %s already exists and cannot be deleted",
+                        new_location_real);
+            g_free(new_location_real);
+            return CRE_IO;
+        }
+    }
+    if (rename(md->location_real, new_location_real)) {
+        g_critical("%s: Cannot rename %s to %s",
+                   __func__,
+                   md->location_real,
+                   new_location_real);
+        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
+                    "Cannot rename %s to %s", md->location_real,
+                    new_location_real);
+        g_free(new_location_real);
+        return CRE_IO;
+    }
+
+    // Update locations in repomd record
+    md->location_real = g_string_chunk_insert(md->chunk, new_location_real);
+    new_location_href = g_strconcat(LOCATION_HREF_PREFIX,
+                                    md->checksum,
+                                    "-",
+                                    location_filename,
+                                    NULL);
+    md->location_href = g_string_chunk_insert(md->chunk, new_location_href);
+
+    g_free(new_location_real);
+    g_free(new_location_href);
+
+    return CRE_OK;
 }
 
 
@@ -495,13 +638,6 @@ cr_repomd_xml_dump(cr_Repomd repomd)
     xmlNodePtr root;
     GList *keys, *element;
 
-    // Set current time as revision if no revision specified
-
-    if (!repomd->revision) {
-        gchar *rev = g_strdup_printf("%ld", time(NULL));
-        cr_repomd_set_revision(repomd, rev);
-        g_free(rev);
-    }
 
     // Start of XML document
 
@@ -511,7 +647,14 @@ cr_repomd_xml_dump(cr_Repomd repomd)
     xmlNewNs(root, BAD_CAST RPM_NS, BAD_CAST "rpm");
     xmlDocSetRootElement(doc, root);
 
-    xmlNewChild(root, NULL, BAD_CAST "revision", BAD_CAST repomd->revision);
+    if (repomd->revision) {
+        xmlNewChild(root, NULL, BAD_CAST "revision", BAD_CAST repomd->revision);
+    } else {
+        // Use the current time if no revision was explicitly specified
+        gchar *rev = g_strdup_printf("%ld", time(NULL));
+        xmlNewChild(root, NULL, BAD_CAST "revision", BAD_CAST rev);
+        g_free(rev);
+    }
 
 
     // Tags
@@ -572,98 +715,6 @@ cr_repomd_xml_dump(cr_Repomd repomd)
     xmlFreeDoc(doc);
 
     return result;
-}
-
-
-void
-cr_repomd_record_rename_file(cr_RepomdRecord md, GError **err)
-{
-    int x, len;
-    gchar *location_prefix = NULL;
-    const gchar *location_filename = NULL;
-    gchar *new_location_href;
-    gchar *new_location_real;
-
-    if (!md || !(md->location_real) || !strlen(md->location_real))
-        return;
-
-    if (!md->checksum)
-        return;
-
-    x = strlen(md->location_real);
-    for (; x > 0; x--) {
-        if (md->location_real[x] == '/') {
-            location_prefix = g_strndup(md->location_real, x+1);
-            location_filename = cr_get_filename(md->location_real+x+1);
-            break;
-        }
-    }
-
-    // Check if the rename is necessary
-    // During update with --keep-all-metadata some files (groupfile,
-    // updateinfo, ..) could already have checksum in filenames
-    if (g_str_has_prefix(location_filename, md->checksum)) {
-        // The filename constains valid checksum
-        g_free(location_prefix);
-        return;
-    }
-
-    // Skip existing obsolete checksum in the name if there is any
-    len = strlen(location_filename);
-    if (len > 32) {
-        // The filename is long -> it could contains a checksum
-        for (x = 0; x < len; x++) {
-            if (location_filename[x] == '-' && (
-                   x == 32  // Prefix is MD5 checksum
-                || x == 40  // Prefix is SHA1 checksum
-                || x == 64  // Prefix is SHA256 checksum
-                || x == 128 // Prefix is SHA512 checksum
-               ))
-            {
-                location_filename = location_filename + x + 1;
-                break;
-            }
-        }
-    }
-
-    // Prepare new name
-    new_location_real = g_strconcat(location_prefix,
-                                    md->checksum,
-                                    "-",
-                                    location_filename,
-                                    NULL);
-    g_free(location_prefix);
-
-    // Rename file
-    if (g_file_test (new_location_real, G_FILE_TEST_EXISTS)) {
-        if (remove(new_location_real)) {
-            g_critical("%s: Cannot delete old %s",
-                       __func__,
-                       new_location_real);
-            g_free(new_location_real);
-            return;
-        }
-    }
-    if (rename(md->location_real, new_location_real)) {
-        g_critical("%s: Cannot rename %s to %s",
-                   __func__,
-                   md->location_real,
-                   new_location_real);
-        g_free(new_location_real);
-        return;
-    }
-
-    // Update locations in repomd record
-    md->location_real = g_string_chunk_insert(md->chunk, new_location_real);
-    new_location_href = g_strconcat(LOCATION_HREF_PREFIX,
-                                    md->checksum,
-                                    "-",
-                                    location_filename,
-                                    NULL);
-    md->location_href = g_string_chunk_insert(md->chunk, new_location_href);
-
-    g_free(new_location_real);
-    g_free(new_location_href);
 }
 
 

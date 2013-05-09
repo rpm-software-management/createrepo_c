@@ -1170,11 +1170,11 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     if (groupfile) {
         groupfile_rec = cr_repomd_record_new(groupfile);
         compressed_groupfile_rec = cr_repomd_record_new(groupfile);
-        cr_repomd_record_groupfile(groupfile_rec,
-                                   compressed_groupfile_rec,
-                                   CR_CHECKSUM_SHA256,
-                                   cmd_options->groupfile_compression_type,
-                                   NULL);
+        cr_repomd_record_compress_and_fill(groupfile_rec,
+                                           compressed_groupfile_rec,
+                                           CR_CHECKSUM_SHA256,
+                                           cmd_options->groupfile_compression_type,
+                                           NULL);
     }
 
 

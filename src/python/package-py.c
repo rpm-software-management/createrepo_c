@@ -249,13 +249,13 @@ typedef PyObject *(*ConversionFromFunc)(void *);
  * @param       a single list element
  * @return      0 if ok, 1 otherwise
  */
-typedef int *(*ConversionToCheckFunc)(void *);
+typedef int (*ConversionToCheckFunc)(PyObject *);
 
 /** Convert PyObject to C representation.
  * @param       PyObject
  * @return      C representation
  */
-typedef void *(*ConversionToFunc)(void *, void *);
+typedef void *(*ConversionToFunc)(PyObject *, GStringChunk *);
 
 /* Pre-Declaration for check functions */
 static int CheckPyDependency(PyObject *dep);

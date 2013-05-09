@@ -55,6 +55,6 @@ GQuark cr_xml_dump_filelists_error_quark(void);
 GQuark cr_xml_dump_other_error_quark(void);
 GQuark cr_repomd_error_quark(void);
 GQuark cr_repomd_record_error_quark(void);
-GQuark cr_checksum_error(void);
+GQuark cr_checksum_error_quark(void);
 
 #endif

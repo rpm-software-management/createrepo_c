@@ -61,3 +61,9 @@ cr_checksum_error_quark(void)
     return g_quark_from_static_string("cr_checksum_error");
 }
 
+GQuark
+cr_parsepkg_error_quark(void)
+{
+    return g_quark_from_static_string("cr_parsepkg_error");
+}
+

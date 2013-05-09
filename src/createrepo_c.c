@@ -257,7 +257,7 @@ dumper_thread(gpointer data, gpointer user_data)
         // Load package from file
         pkg = cr_package_from_rpm(task->full_path, udata->checksum_type,
                                    location_href, udata->location_base,
-                                   udata->changelog_limit, NULL);
+                                   udata->changelog_limit, NULL, NULL);
         if (!pkg) {
             g_warning("Cannot read package: %s", task->full_path);
             goto task_cleanup;

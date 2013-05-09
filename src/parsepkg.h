@@ -55,13 +55,16 @@ void cr_package_parser_cleanup();
  * @param changelog_limit       number of changelog entries
  * @param stat_buf              struct stat of the filename
  *                              (optional - could be NULL)
+ * @param err                   GError **
+ * @return                      cr_Package
  */
 cr_Package *cr_package_from_rpm(const char *filename,
                                 cr_ChecksumType checksum_type,
                                 const char *location_href,
                                 const char *location_base,
                                 int changelog_limit,
-                                struct stat *stat_buf);
+                                struct stat *stat_buf,
+                                GError **err);
 
 /** Generate XML for the specified package.
  * @param filename              rpm filename
@@ -71,13 +74,17 @@ cr_Package *cr_package_from_rpm(const char *filename,
  * @param changelog_limit       number of changelog entries
  * @param stat_buf              struct stat of the filename
  *                              (optional - could be NULL)
+ * @param err                   GError **
+ * @return                      struct cr_XmlStruct with primary, filelists and
+ *                              other xmls
  */
 struct cr_XmlStruct cr_xml_from_rpm(const char *filename,
                                     cr_ChecksumType checksum_type,
                                     const char *location_href,
                                     const char *location_base,
                                     int changelog_limit,
-                                    struct stat *stat_buf);
+                                    struct stat *stat_buf,
+                                    GError **err);
 
 /** @} */
 

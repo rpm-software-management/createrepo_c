@@ -18,6 +18,7 @@
  */
 
 #include <glib.h>
+#include <assert.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
@@ -29,6 +30,7 @@
 #include <rpm/rpmmacro.h>
 #include <rpm/rpmkeyring.h>
 #include "logging.h"
+#include "error.h"
 #include "constants.h"
 #include "parsehdr.h"
 #include "misc.h"
@@ -68,16 +70,60 @@ cr_package_parser_cleanup()
 }
 
 
+static int
+read_header(const char *filename, Header *hdr, GError **err)
+{
+    assert(filename);
+    assert(!err || *err == NULL);
+
+    FD_t fd = Fopen(filename, "r.ufdio");
+    if (!fd) {
+        g_warning("%s: Fopen of %s failed %s",
+                  __func__, filename, strerror(errno));
+        g_set_error(err, CR_PARSEPKG_ERROR, CRE_IO,
+                    "Fopen failed: %s", strerror(errno));
+        return CRE_IO;
+    }
+
+    int rc = rpmReadPackageFile(cr_ts, fd, NULL, hdr);
+    if (rc != RPMRC_OK) {
+        switch (rc) {
+            case RPMRC_NOKEY:
+                g_debug("%s: %s: Public key is unavailable.",
+                        __func__, filename);
+                break;
+            case RPMRC_NOTTRUSTED:
+                g_debug("%s:  %s: Signature is OK, but key is not trusted.",
+                        __func__, filename);
+                break;
+            default:
+                g_warning("%s: rpmReadPackageFile() error (%s)",
+                          __func__, strerror(errno));
+                g_set_error(err, CR_PARSEPKG_ERROR, CRE_IO,
+                            "rpmReadPackageFile() error: %s", strerror(errno));
+                Fclose(fd);
+                return CRE_IO;
+        }
+    }
+
+    Fclose(fd);
+    return CRE_OK;
+}
+
 cr_Package *
 cr_package_from_rpm(const char *filename,
-                     cr_ChecksumType checksum_type,
-                     const char *location_href,
-                     const char *location_base,
-                     int changelog_limit,
-                     struct stat *stat_buf)
+                    cr_ChecksumType checksum_type,
+                    const char *location_href,
+                    const char *location_base,
+                    int changelog_limit,
+                    struct stat *stat_buf,
+                    GError **err)
 {
-    cr_Package *result = NULL;
+    cr_Package *pkg = NULL;
     const char *checksum_type_str;
+    GError *tmp_err = NULL;
+
+    assert(filename);
 
     // Set checksum type
 
@@ -93,47 +139,20 @@ cr_package_from_rpm(const char *filename,
             break;
         default:
             g_warning("%s: Unknown checksum type", __func__);
-            return result;
-            break;
+            g_set_error(err, CR_PARSEPKG_ERROR, CRE_UNKNOWNCHECKSUMTYPE,
+                        "Unknown/Unsupported checksum type: %d", checksum_type);
+            return NULL;
     };
 
 
-    // Open rpm file
-
-    FD_t fd = NULL;
-    fd = Fopen(filename, "r.ufdio");
-    if (!fd) {
-        g_warning("%s: Fopen of %s failed %s",
-                  __func__, filename, strerror(errno));
-        return result;
-    }
-
-
-    // Read package
+    // Read header
 
     Header hdr;
-    int rc = rpmReadPackageFile(cr_ts, fd, NULL, &hdr);
-    if (rc != RPMRC_OK) {
-        switch (rc) {
-            case RPMRC_NOKEY:
-                g_debug("%s: %s: Public key is unavailable.",
-                        __func__, filename);
-                break;
-            case RPMRC_NOTTRUSTED:
-                g_debug("%s:  %s: Signature is OK, but key is not trusted.",
-                        __func__, filename);
-                break;
-            default:
-                g_warning("%s: rpmReadPackageFile() error (%s)",
-                          __func__, strerror(errno));
-                return result;
-        }
+    read_header(filename, &hdr, &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        return NULL;
     }
-
-
-    // Cleanup
-
-    Fclose(fd);
 
 
     // Get file stat
@@ -145,7 +164,9 @@ cr_package_from_rpm(const char *filename,
         struct stat stat_buf_own;
         if (stat(filename, &stat_buf_own) == -1) {
             g_warning("%s: stat() error (%s)", __func__, strerror(errno));
-            return result;
+            g_set_error(err,  CR_PARSEPKG_ERROR, CRE_IO, "stat() failed");
+            headerFree(hdr);
+            return NULL;
         }
         mtime  = stat_buf_own.st_mtime;
         size   = stat_buf_own.st_size;
@@ -157,7 +178,13 @@ cr_package_from_rpm(const char *filename,
 
     // Compute checksum
 
-    char *checksum = cr_compute_file_checksum(filename, checksum_type, NULL);
+    char *checksum = cr_compute_file_checksum(filename, checksum_type, &tmp_err);
+    if (tmp_err) {
+        g_propagate_prefixed_error(err, tmp_err,
+                                   "Error while checksum calculation:");
+        headerFree(hdr);
+        return NULL;
+    }
 
 
     // Get header range
@@ -167,30 +194,34 @@ cr_package_from_rpm(const char *filename,
 
     // Get package object
 
-    result = cr_package_from_header(hdr, mtime, size, checksum, checksum_type_str,
+    pkg = cr_package_from_header(hdr, mtime, size, checksum, checksum_type_str,
                              location_href, location_base, changelog_limit,
-                             hdr_r.start, hdr_r.end, NULL);
-
-
-    // Cleanup
-
+                             hdr_r.start, hdr_r.end, &tmp_err);
     free(checksum);
     headerFree(hdr);
 
-    return result;
+    if (tmp_err) {
+        g_propagate_prefixed_error(err, tmp_err,
+                                   "Error while checksum calculation:");
+        return NULL;
+    }
+
+    return pkg;
 }
 
 
 
 struct cr_XmlStruct
 cr_xml_from_rpm(const char *filename,
-                         cr_ChecksumType checksum_type,
-                         const char *location_href,
-                         const char *location_base,
-                         int changelog_limit,
-                         struct stat *stat_buf)
+                cr_ChecksumType checksum_type,
+                const char *location_href,
+                const char *location_base,
+                int changelog_limit,
+                struct stat *stat_buf,
+                GError **err)
 {
     const char *checksum_type_str;
+    GError *tmp_err = NULL;
 
     struct cr_XmlStruct result;
     result.primary   = NULL;
@@ -212,46 +243,20 @@ cr_xml_from_rpm(const char *filename,
             break;
         default:
             g_warning("%s: Unknown checksum type", __func__);
+            g_set_error(err, CR_PARSEPKG_ERROR, CRE_UNKNOWNCHECKSUMTYPE,
+                        "Unknown/Unsupported checksum type: %d", checksum_type);
             return result;
-            break;
     };
 
 
-    // Open rpm file
-
-    FD_t fd = NULL;
-    fd = Fopen(filename, "r.ufdio");
-    if (!fd) {
-        g_warning("%s: Fopen failed %s", __func__, strerror(errno));
-        return result;
-    }
-
-
-    // Read package
+     // Read header
 
     Header hdr;
-    int rc = rpmReadPackageFile(cr_ts, fd, NULL, &hdr);
-    if (rc != RPMRC_OK) {
-        switch (rc) {
-            case RPMRC_NOKEY:
-                g_debug("%s: %s: Public key is unavailable.",
-                        __func__, filename);
-                break;
-            case RPMRC_NOTTRUSTED:
-                g_debug("%s:  %s: Signature is OK, but key is not trusted.",
-                        __func__, filename);
-                break;
-            default:
-                g_warning("%s: rpmReadPackageFile() error (%s)",
-                          __func__, strerror(errno));
-                return result;
-        }
+    read_header(filename, &hdr, &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        return result;
     }
-
-
-    // Cleanup
-
-    Fclose(fd);
 
 
     // Get file stat
@@ -263,6 +268,8 @@ cr_xml_from_rpm(const char *filename,
         struct stat stat_buf_own;
         if (stat(filename, &stat_buf_own) == -1) {
             g_warning("%s: stat() error (%s)", __func__, strerror(errno));
+            g_set_error(err,  CR_PARSEPKG_ERROR, CRE_IO, "stat() failed");
+            headerFree(hdr);
             return result;
         }
         mtime  = stat_buf_own.st_mtime;
@@ -276,6 +283,12 @@ cr_xml_from_rpm(const char *filename,
     // Compute checksum
 
     char *checksum = cr_compute_file_checksum(filename, checksum_type, NULL);
+    if (tmp_err) {
+        g_propagate_prefixed_error(err, tmp_err,
+                                   "Error while checksum calculation:");
+        headerFree(hdr);
+        return result;
+    }
 
 
     // Get header range
@@ -287,13 +300,15 @@ cr_xml_from_rpm(const char *filename,
 
     result = cr_xml_from_header(hdr, mtime, size, checksum, checksum_type_str,
                                 location_href, location_base, changelog_limit,
-                                hdr_r.start, hdr_r.end, NULL);
-
-
-    // Cleanup
-
+                                hdr_r.start, hdr_r.end, &tmp_err);
     free(checksum);
     headerFree(hdr);
+
+    if (tmp_err) {
+        g_propagate_prefixed_error(err, tmp_err,
+                                   "Error while checksum calculation:");
+        return result;
+    }
 
     return result;
 }

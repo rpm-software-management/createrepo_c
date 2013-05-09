@@ -48,6 +48,7 @@ typedef enum {
 #define CR_REPOMD_ERROR cr_repomd_error_quark()
 #define CR_REPOMD_RECORD_ERROR cr_repomd_record_error_quark()
 #define CR_CHECKSUM_ERROR cr_checksum_error_quark()
+#define CR_PARSEPKG_ERROR cr_parsepkg_error_quark()
 
 GQuark cr_db_error_quark(void);
 GQuark cr_xml_dump_primary_error_quark(void);
@@ -56,5 +57,6 @@ GQuark cr_xml_dump_other_error_quark(void);
 GQuark cr_repomd_error_quark(void);
 GQuark cr_repomd_record_error_quark(void);
 GQuark cr_checksum_error_quark(void);
+GQuark cr_parsepkg_error_quark(void);
 
 #endif

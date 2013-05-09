@@ -37,6 +37,7 @@ py_package_from_rpm(PyObject *self, PyObject *args)
     cr_Package *pkg;
     int checksum_type, changelog_limit;
     char *filename, *location_href, *location_base;
+    GError *tmp_err = NULL;
 
     if (!PyArg_ParseTuple(args, "sizzi:py_package_from_rpm",
                                          &filename,
@@ -53,9 +54,11 @@ py_package_from_rpm(PyObject *self, PyObject *args)
     }
 
     pkg = cr_package_from_rpm(filename, checksum_type, location_href,
-                              location_base, changelog_limit, NULL);
-    if (!pkg) {
-        PyErr_Format(CrErr_Exception, "Cannot load %s", filename);
+                              location_base, changelog_limit, NULL, &tmp_err);
+    if (tmp_err) {
+        PyErr_Format(CrErr_Exception, "Cannot load %s: %s",
+                     filename, tmp_err->message);
+        g_clear_error(&tmp_err);
         return NULL;
     }
 
@@ -72,6 +75,7 @@ py_xml_from_rpm(PyObject *self, PyObject *args)
     int checksum_type, changelog_limit;
     char *filename, *location_href, *location_base;
     struct cr_XmlStruct xml_res;
+    GError *tmp_err = NULL;
 
     if (!PyArg_ParseTuple(args, "sizzi:py_xml_from_rpm",
                                          &filename,
@@ -89,10 +93,11 @@ py_xml_from_rpm(PyObject *self, PyObject *args)
 
 
     xml_res = cr_xml_from_rpm(filename, checksum_type, location_href,
-                              location_base, changelog_limit, NULL);
-
-    if (!xml_res.primary && !xml_res.filelists && !xml_res.other) {
-        PyErr_Format(CrErr_Exception, "Cannot load %s", filename);
+                              location_base, changelog_limit, NULL, &tmp_err);
+    if (tmp_err) {
+        PyErr_Format(CrErr_Exception, "Cannot load %s: %s",
+                     filename, tmp_err->message);
+        g_clear_error(&tmp_err);
         return NULL;
     }
 

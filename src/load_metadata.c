@@ -1399,11 +1399,18 @@ cr_metadata_locate_and_load_xml(cr_Metadata md,
 {
     int ret;
     struct cr_MetadataLocation *ml;
+    GError *tmp_err = NULL;
 
     assert(md);
     assert(repopath);
 
-    ml = cr_locate_metadata(repopath, 1, NULL);
+    ml = cr_locate_metadata(repopath, 1, &tmp_err);
+    if (tmp_err) {
+        int code = tmp_err->code;
+        g_propagate_error(err, tmp_err);
+        return code;
+    }
+
     ret = cr_metadata_load_xml(md, ml, err);
     cr_metadatalocation_free(ml);
 

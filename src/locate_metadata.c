@@ -417,7 +417,7 @@ cr_locate_metadata(const char *in_repopath, int ignore_sqlite, GError **err)
     assert(in_repopath);
     assert(!err || *err == NULL);
 
-    // XXX: err is not used in this function yet
+    // XXX: err is not really used in this function yet
 
 
     // repopath must ends with slash
@@ -445,6 +445,13 @@ cr_locate_metadata(const char *in_repopath, int ignore_sqlite, GError **err)
         ret->original_url = g_strdup(in_repopath);
 
     g_free(repopath);
+
+    // XXX
+    if (!ret) {
+        g_set_error(err, CR_LOCATE_METADATA_ERROR, CRE_NODIR,
+                    "Cannot locate metadata");
+    }
+
     return ret;
 }
 

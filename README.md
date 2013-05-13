@@ -17,11 +17,15 @@ Package build requires:
 * glib2 (http://developer.gnome.org/glib/) - in Fedora: glib2-devel
 * libcurl (http://curl.haxx.se/libcurl/) - in Fedora: libcurl-devel
 * libxml2 (http://xmlsoft.org/) - in Fedora: libxml2-devel
+* python (http://python.org/) - in Fedora: python2-devel
 * rpm (http://www.rpm.org/) - in Fedora: rpm-devel
 * sqlite3 (https://sqlite.org/) - in Fedora: sqlite-devel
 * xz (http://tukaani.org/xz/) - in Fedora: xz-devel
 * zlib (http://www.zlib.net/) - in Fedora: zlib-devel
 * *Optional:* doxygen (http://doxygen.org/) - in Fedora: doxygen
+* **Test requires:** check (http://check.sourceforge.net/) - in Fedora: check-devel
+* **Test requires:** python-nose (https://nose.readthedocs.org/) - in Fedora: python-nose
+
 
 From your checkout dir:
 

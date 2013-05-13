@@ -1,6 +1,6 @@
 import os.path
 
-TEST_DATA_PATH = os.path.normpath(os.path.join(__file__, "../../../test_data"))
+TEST_DATA_PATH = os.path.normpath(os.path.join(__file__, "../../../testdata"))
 
 PACKAGES_PATH = os.path.join(TEST_DATA_PATH, "packages")
 REPOS_PATH = TEST_DATA_PATH

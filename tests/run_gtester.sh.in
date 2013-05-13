@@ -1,1 +1,5 @@
-cd ${CMAKE_CURRENT_SOURCE_DIR} && gtester ${CMAKE_BINARY_DIR}/tests/test*
+cd ${CMAKE_CURRENT_SOURCE_DIR}
+gtester ${CMAKE_BINARY_DIR}/tests/test_compression_wrapper
+gtester ${CMAKE_BINARY_DIR}/tests/test_load_metadata
+gtester ${CMAKE_BINARY_DIR}/tests/test_misc
+gtester ${CMAKE_BINARY_DIR}/tests/test_sqlite

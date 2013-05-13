@@ -20,7 +20,7 @@
 #ifndef __C_CREATEREPOLIB_TEST_FIXTURES_H__
 #define __C_CREATEREPOLIB_TEST_FIXTURES_H__
 
-#define TEST_DATA_PATH              "test_data/"
+#define TEST_DATA_PATH              "testdata/"
 
 #define TEST_FILES_PATH             TEST_DATA_PATH"test_files/"
 #define TEST_REPO_00                TEST_DATA_PATH"repo_00/"

@@ -1067,11 +1067,11 @@ main(int argc, char *argv[])
     g_test_add("/misc/copyfiletest_test_rewrite", Copyfiletest, NULL, copyfiletest_setup, copyfiletest_test_rewrite, copyfiletest_teardown);
     g_test_add("/misc/copyfiletest_test_corner_cases", Copyfiletest, NULL, copyfiletest_setup, copyfiletest_test_corner_cases, copyfiletest_teardown);
     g_test_add("/misc/compressfile_test_text_file", Copyfiletest, NULL, copyfiletest_setup, compressfile_test_text_file, copyfiletest_teardown);
-    g_test_add("/misc/test_cr_download_valid_url_1", Copyfiletest, NULL, copyfiletest_setup, test_cr_download_valid_url_1, copyfiletest_teardown);
-    g_test_add("/misc/test_cr_download_valid_url_2", Copyfiletest, NULL, copyfiletest_setup, test_cr_download_valid_url_2, copyfiletest_teardown);
-    g_test_add("/misc/test_cr_download_invalid_url", Copyfiletest, NULL, copyfiletest_setup, test_cr_download_invalid_url, copyfiletest_teardown);
+//    g_test_add("/misc/test_cr_download_valid_url_1", Copyfiletest, NULL, copyfiletest_setup, test_cr_download_valid_url_1, copyfiletest_teardown);
+//    g_test_add("/misc/test_cr_download_valid_url_2", Copyfiletest, NULL, copyfiletest_setup, test_cr_download_valid_url_2, copyfiletest_teardown);
+//    g_test_add("/misc/test_cr_download_invalid_url", Copyfiletest, NULL, copyfiletest_setup, test_cr_download_invalid_url, copyfiletest_teardown);
     g_test_add("/misc/test_cr_better_copy_file_local", Copyfiletest, NULL, copyfiletest_setup, test_cr_better_copy_file_local, copyfiletest_teardown);
-    g_test_add("/misc/test_cr_better_copy_file_url", Copyfiletest, NULL, copyfiletest_setup, test_cr_better_copy_file_url, copyfiletest_teardown);
+//    g_test_add("/misc/test_cr_better_copy_file_url", Copyfiletest, NULL, copyfiletest_setup, test_cr_better_copy_file_url, copyfiletest_teardown);
     g_test_add_func("/misc/test_cr_normalize_dir_path", test_cr_normalize_dir_path);
     g_test_add_func("/misc/test_cr_remove_dir", test_cr_remove_dir);
     g_test_add_func("/misc/test_cr_str_to_version", test_cr_str_to_version);

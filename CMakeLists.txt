@@ -66,36 +66,8 @@ SET (VERSION "${CR_MAJOR}.${CR_MINOR}.${CR_PATCH}")
 message("Package version: ${VERSION}")
 
 
-# CPack stuff
-
-INCLUDE(InstallRequiredSystemLibraries)
-
-SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "C implementation of createrepo")
-SET(CPACK_PACKAGE_VENDOR "Fedora Project")
-SET(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
-SET(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/COPYING")
-SET(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
-SET(CPACK_PACKAGE_INSTALL_DIRECTORY "CMake ${CMake_VERSION_MAJOR}.${CMake_VERSION_MINOR}")
-SET(CPACK_STRIP_FILES "usr/bin/createrepo_c")
-SET(CPACK_SOURCE_STRIP_FILES "")
-SET(CPACK_PACKAGE_EXECUTABLES "createrepo_c" "createrepo_c")
-
-SET(CPACK_GENERATOR "TGZ")
-
-# Not useful now because cpack doesn't support generate SRPM packages
-#SET(CPACK_GENERATOR "TGZ;RPM")
-#SET(CPACK_RPM_PACKAGE_RELEASE "1")
-#SET(CPACK_RPM_PACKAGE_LICENSE "GPLv2")
-#SET(CPACK_RPM_PACKAGE_GROUP "System Environment/Base")
-#SET(CPACK_RPM_PACKAGE_REQUIRES "glib2 >= 2.26.0, file-libs, zlib, bzip2, rpm-libs >= 4.8.1, libxml2")
-
-INCLUDE(CPack)
-
-
 # Other files
 
-INSTALL(FILES README.md COPYING
-        DESTINATION "share/doc/createrepo_c-${VERSION}")
 INSTALL(FILES createrepo_c.bash
         DESTINATION "/etc/bash_completion.d")
 

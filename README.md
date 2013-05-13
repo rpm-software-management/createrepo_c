@@ -41,19 +41,19 @@ To build the documentation, from the build/ directory:
 
     cmake -DCMAKE_BUILD_TYPE:STRING=DEBUG .. && make
 
-## Build tarball from current work tree
+## Build tarball
 
-    utils/make_tarball.sh
+    utils/make_tarball.sh [git revision]
 
-## Build tarball from version in remote git
-
-    utils/make_tarball_from_git.sh
+Without git revision specified HEAD is used.
 
 ## Build RPM package
 
 Modify createrepo_c.spec and run:
 
-    utils/make_rpm.sh .
+    utils/make_rpm.sh
+
+Note: [Current .spec for Fedora rawhide](http://pkgs.fedoraproject.org/cgit/createrepo_c.git/plain/createrepo_c.spec)
 
 ## Testing
 

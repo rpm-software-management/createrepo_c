@@ -20,24 +20,22 @@
 #include <glib.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "fixtures.h"
 #include "createrepo/error.h"
 #include "createrepo/package.h"
 #include "createrepo/misc.h"
 #include "createrepo/load_metadata.h"
 
-#define REPO_PATH_00    "test_data/repo_00/"
 #define REPO_SIZE_00    0
 static const char *REPO_HASH_KEYS_00[] = {};
 static const char *REPO_NAME_KEYS_00[] = {};
 static const char *REPO_FILENAME_KEYS_00[] = {};
 
-#define REPO_PATH_01    "test_data/repo_01/"
 #define REPO_SIZE_01    1
 static const char *REPO_HASH_KEYS_01[] = {"152824bff2aa6d54f429d43e87a3ff3a0286505c6d93ec87692b5e3a9e3b97bf"};
 static const char *REPO_NAME_KEYS_01[] = {"super_kernel"};
 static const char *REPO_FILENAME_KEYS_01[] = {"super_kernel-6.0.1-2.x86_64.rpm"};
 
-#define REPO_PATH_02    "test_data/repo_02/"
 #define REPO_SIZE_02    2
 static const char *REPO_HASH_KEYS_02[] = {"6d43a638af70ef899933b1fd86a866f18f65b0e0e17dcbf2e42bfd0cdd7c63c3",
                                           "90f61e546938a11449b710160ad294618a5bd3062e46f8cf851fd0088af184b7"};
@@ -91,17 +89,17 @@ void test_helper_check_keys(const char *repopath, cr_HashTableKey key, guint rep
 
 static void test_cr_metadata_locate_and_load_xml(void)
 {
-    test_helper_check_keys(REPO_PATH_00, CR_HT_KEY_HASH, REPO_SIZE_00, REPO_HASH_KEYS_00);
-    test_helper_check_keys(REPO_PATH_00, CR_HT_KEY_NAME, REPO_SIZE_00, REPO_NAME_KEYS_00);
-    test_helper_check_keys(REPO_PATH_00, CR_HT_KEY_FILENAME, REPO_SIZE_00, REPO_FILENAME_KEYS_00);
+    test_helper_check_keys(TEST_REPO_00, CR_HT_KEY_HASH, REPO_SIZE_00, REPO_HASH_KEYS_00);
+    test_helper_check_keys(TEST_REPO_00, CR_HT_KEY_NAME, REPO_SIZE_00, REPO_NAME_KEYS_00);
+    test_helper_check_keys(TEST_REPO_00, CR_HT_KEY_FILENAME, REPO_SIZE_00, REPO_FILENAME_KEYS_00);
 
-    test_helper_check_keys(REPO_PATH_01, CR_HT_KEY_HASH, REPO_SIZE_01, REPO_HASH_KEYS_01);
-    test_helper_check_keys(REPO_PATH_01, CR_HT_KEY_NAME, REPO_SIZE_01, REPO_NAME_KEYS_01);
-    test_helper_check_keys(REPO_PATH_01, CR_HT_KEY_FILENAME, REPO_SIZE_01, REPO_FILENAME_KEYS_01);
+    test_helper_check_keys(TEST_REPO_01, CR_HT_KEY_HASH, REPO_SIZE_01, REPO_HASH_KEYS_01);
+    test_helper_check_keys(TEST_REPO_01, CR_HT_KEY_NAME, REPO_SIZE_01, REPO_NAME_KEYS_01);
+    test_helper_check_keys(TEST_REPO_01, CR_HT_KEY_FILENAME, REPO_SIZE_01, REPO_FILENAME_KEYS_01);
 
-    test_helper_check_keys(REPO_PATH_02, CR_HT_KEY_HASH, REPO_SIZE_02, REPO_HASH_KEYS_02);
-    test_helper_check_keys(REPO_PATH_02, CR_HT_KEY_NAME, REPO_SIZE_02, REPO_NAME_KEYS_02);
-    test_helper_check_keys(REPO_PATH_02, CR_HT_KEY_FILENAME, REPO_SIZE_02, REPO_FILENAME_KEYS_02);
+    test_helper_check_keys(TEST_REPO_02, CR_HT_KEY_HASH, REPO_SIZE_02, REPO_HASH_KEYS_02);
+    test_helper_check_keys(TEST_REPO_02, CR_HT_KEY_NAME, REPO_SIZE_02, REPO_NAME_KEYS_02);
+    test_helper_check_keys(TEST_REPO_02, CR_HT_KEY_FILENAME, REPO_SIZE_02, REPO_FILENAME_KEYS_02);
 }
 
 
@@ -114,7 +112,7 @@ static void test_cr_metadata_locate_and_load_xml_detailed(void)
 
     metadata = cr_metadata_new(CR_HT_KEY_NAME, 0, NULL);
     g_assert(metadata);
-    ret = cr_metadata_locate_and_load_xml(metadata, REPO_PATH_01, NULL);
+    ret = cr_metadata_locate_and_load_xml(metadata, TEST_REPO_01, NULL);
     g_assert_cmpint(ret, ==, CRE_OK);
     size = g_hash_table_size(metadata->ht);
     g_assert_cmpuint(size, ==, REPO_SIZE_01);

@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "fixtures.h"
 #include "createrepo/misc.h"
 #include "createrepo/compression_wrapper.h"
 
@@ -31,29 +32,30 @@
 
 #define FILE_COMPRESSED_0_CONTENT               ""
 #define FILE_COMPRESSED_0_CONTENT_LEN           0
-#define FILE_COMPRESSED_0_PLAIN                 "test_data/compressed_files/00_plain.txt"
-#define FILE_COMPRESSED_0_GZ                    "test_data/compressed_files/00_plain.txt.gz"
-#define FILE_COMPRESSED_0_BZ2                   "test_data/compressed_files/00_plain.txt.bz2"
-#define FILE_COMPRESSED_0_XZ                    "test_data/compressed_files/00_plain.txt.xz"
-#define FILE_COMPRESSED_0_PLAIN_BAD_SUFFIX      "test_data/compressed_files/00_plain.foo0"
-#define FILE_COMPRESSED_0_GZ_BAD_SUFFIX         "test_data/compressed_files/00_plain.foo1"
-#define FILE_COMPRESSED_0_BZ2_BAD_SUFFIX        "test_data/compressed_files/00_plain.foo2"
-#define FILE_COMPRESSED_0_XZ_BAD_SUFFIX         "test_data/compressed_files/00_plain.foo3"
+#define FILE_COMPRESSED_0_PLAIN                 TEST_COMPRESSED_FILES_PATH"/00_plain.txt"
+#define FILE_COMPRESSED_0_GZ                    TEST_COMPRESSED_FILES_PATH"/00_plain.txt.gz"
+#define FILE_COMPRESSED_0_BZ2                   TEST_COMPRESSED_FILES_PATH"/00_plain.txt.bz2"
+#define FILE_COMPRESSED_0_XZ                    TEST_COMPRESSED_FILES_PATH"/00_plain.txt.xz"
+#define FILE_COMPRESSED_0_PLAIN_BAD_SUFFIX      TEST_COMPRESSED_FILES_PATH"/00_plain.foo0"
+#define FILE_COMPRESSED_0_GZ_BAD_SUFFIX         TEST_COMPRESSED_FILES_PATH"/00_plain.foo1"
+#define FILE_COMPRESSED_0_BZ2_BAD_SUFFIX        TEST_COMPRESSED_FILES_PATH"/00_plain.foo2"
+#define FILE_COMPRESSED_0_XZ_BAD_SUFFIX         TEST_COMPRESSED_FILES_PATH"/00_plain.foo3"
 
 #define FILE_COMPRESSED_1_CONTENT               "foobar foobar foobar foobar test test\nfolkjsaflkjsadokf\n"
 #define FILE_COMPRESSED_1_CONTENT_LEN           56
-#define FILE_COMPRESSED_1_PLAIN                 "test_data/compressed_files/01_plain.txt"
-#define FILE_COMPRESSED_1_GZ                    "test_data/compressed_files/01_plain.txt.gz"
-#define FILE_COMPRESSED_1_BZ2                   "test_data/compressed_files/01_plain.txt.bz2"
-#define FILE_COMPRESSED_1_XZ                    "test_data/compressed_files/01_plain.txt.xz"
-#define FILE_COMPRESSED_1_PLAIN_BAD_SUFFIX      "test_data/compressed_files/01_plain.foo0"
-#define FILE_COMPRESSED_1_GZ_BAD_SUFFIX         "test_data/compressed_files/01_plain.foo1"
-#define FILE_COMPRESSED_1_BZ2_BAD_SUFFIX        "test_data/compressed_files/01_plain.foo2"
-#define FILE_COMPRESSED_1_XZ_BAD_SUFFIX         "test_data/compressed_files/01_plain.foo3"
+#define FILE_COMPRESSED_1_PLAIN                 TEST_COMPRESSED_FILES_PATH"/01_plain.txt"
+#define FILE_COMPRESSED_1_GZ                    TEST_COMPRESSED_FILES_PATH"/01_plain.txt.gz"
+#define FILE_COMPRESSED_1_BZ2                   TEST_COMPRESSED_FILES_PATH"/01_plain.txt.bz2"
+#define FILE_COMPRESSED_1_XZ                    TEST_COMPRESSED_FILES_PATH"/01_plain.txt.xz"
+#define FILE_COMPRESSED_1_PLAIN_BAD_SUFFIX      TEST_COMPRESSED_FILES_PATH"/01_plain.foo0"
+#define FILE_COMPRESSED_1_GZ_BAD_SUFFIX         TEST_COMPRESSED_FILES_PATH"/01_plain.foo1"
+#define FILE_COMPRESSED_1_BZ2_BAD_SUFFIX        TEST_COMPRESSED_FILES_PATH"/01_plain.foo2"
+#define FILE_COMPRESSED_1_XZ_BAD_SUFFIX         TEST_COMPRESSED_FILES_PATH"/01_plain.foo3"
 
 
 
-static void test_cr_compression_suffix(void)
+static void
+test_cr_compression_suffix(void)
 {
     const char *suffix;
 
@@ -77,7 +79,8 @@ static void test_cr_compression_suffix(void)
 }
 
 
-static void test_cr_detect_compression(void)
+static void
+test_cr_detect_compression(void)
 {
     cr_CompressionType ret;
 
@@ -111,7 +114,8 @@ static void test_cr_detect_compression(void)
 }
 
 
-static void test_cr_detect_compression_bad_suffix(void)
+static void
+test_cr_detect_compression_bad_suffix(void)
 {
     cr_CompressionType ret;
 
@@ -145,7 +149,8 @@ static void test_cr_detect_compression_bad_suffix(void)
 }
 
 
-void test_helper_cw_input(const char *filename, cr_CompressionType ctype, const char *content, int len)
+void
+test_helper_cw_input(const char *filename, cr_CompressionType ctype, const char *content, int len)
 {
     int ret;
     CR_FILE *file;
@@ -162,7 +167,8 @@ void test_helper_cw_input(const char *filename, cr_CompressionType ctype, const 
 }
 
 
-static void test_cr_read_with_autodetection(void)
+static void
+test_cr_read_with_autodetection(void)
 {
     // Plain
 
@@ -191,7 +197,8 @@ typedef struct {
 } Outputtest;
 
 
-static void outputtest_setup(Outputtest *outputtest, gconstpointer test_data)
+static void
+outputtest_setup(Outputtest *outputtest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
     int fd;
@@ -201,7 +208,8 @@ static void outputtest_setup(Outputtest *outputtest, gconstpointer test_data)
 }
 
 
-static void outputtest_teardown(Outputtest *outputtest, gconstpointer test_data)
+static void
+outputtest_teardown(Outputtest *outputtest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
 
@@ -216,7 +224,9 @@ static void outputtest_teardown(Outputtest *outputtest, gconstpointer test_data)
 #define OUTPUT_TYPE_PUTS        1
 #define OUTPUT_TYPE_PRINTF      2
 
-void test_helper_cw_output(int type, const char *filename, cr_CompressionType ctype, const char *content, int len) {
+void
+test_helper_cw_output(int type, const char *filename, cr_CompressionType ctype, const char *content, int len)
+{
     int ret;
     CR_FILE *file;
 
@@ -252,7 +262,8 @@ void test_helper_cw_output(int type, const char *filename, cr_CompressionType ct
 }
 
 
-static void outputtest_cw_output(Outputtest *outputtest, gconstpointer test_data)
+static void
+outputtest_cw_output(Outputtest *outputtest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
 
@@ -315,7 +326,8 @@ static void outputtest_cw_output(Outputtest *outputtest, gconstpointer test_data
 
 
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
     g_test_init(&argc, &argv, NULL);
 

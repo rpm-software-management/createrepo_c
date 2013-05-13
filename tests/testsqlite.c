@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sqlite3.h>
+#include "fixtures.h"
 #include "createrepo/misc.h"
 #include "createrepo/package.h"
 #include "createrepo/sqlite.h"
@@ -34,8 +35,8 @@
 #define TMP_FILELISTS_NAME      "filelists.sqlite"
 #define TMP_OTHER_NAME          "other.sqlite"
 
-#define EMPTY_PKG               "test_data/packages/empty-0-0.x86_64.rpm"
-#define EMPTY_PKG_SRC           "test_data/packages/empty-0-0.src.rpm"
+#define EMPTY_PKG               TEST_PACKAGES_PATH"empty-0-0.x86_64.rpm"
+#define EMPTY_PKG_SRC           TEST_PACKAGES_PATH"empty-0-0.src.rpm"
 
 
 typedef struct {

@@ -22,19 +22,19 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
+#include "fixtures.h"
 #include "createrepo/misc.h"
 
 
-#define TEST_FILES_PATH         "test_data/test_files/"
 #define EMPTY_FILE              TEST_FILES_PATH"empty_file"
 #define TEXT_FILE               TEST_FILES_PATH"text_file"
 #define BINARY_FILE             TEST_FILES_PATH"binary_file"
 
-#define PACKAGE_01              "test_data/packages/super_kernel-6.0.1-2.x86_64.rpm"
+#define PACKAGE_01              TEST_PACKAGES_PATH"super_kernel-6.0.1-2.x86_64.rpm"
 #define PACKAGE_01_HEADER_START 280
 #define PACKAGE_01_HEADER_END   2637
 
-#define PACKAGE_02              "test_data/packages/fake_bash-1.1.1-1.x86_64.rpm"
+#define PACKAGE_02              TEST_PACKAGES_PATH"fake_bash-1.1.1-1.x86_64.rpm"
 #define PACKAGE_02_HEADER_START 280
 #define PACKAGE_02_HEADER_END   2057
 
@@ -46,7 +46,8 @@
 #define INVALID_URL     "htp://foo.bar"
 
 
-static void test_cr_str_to_evr(void)
+static void
+test_cr_str_to_evr(void)
 {
     struct cr_EVR evr;
 
@@ -216,7 +217,8 @@ static void test_cr_str_to_evr(void)
 }
 
 
-static void test_cr_str_to_evr_with_chunk(void)
+static void
+test_cr_str_to_evr_with_chunk(void)
 {
     struct cr_EVR evr;
     GStringChunk *chunk;
@@ -333,7 +335,8 @@ static void test_cr_str_to_evr_with_chunk(void)
 }
 
 
-static void test_cr_is_primary(void)
+static void
+test_cr_is_primary(void)
 {
     g_assert(cr_is_primary("/etc/foobar"));
     g_assert(cr_is_primary("/etc/"));
@@ -356,7 +359,8 @@ static void test_cr_is_primary(void)
 }
 
 
-static void test_cr_compute_file_checksum(void)
+static void
+test_cr_compute_file_checksum(void)
 {
     char *checksum;
 
@@ -400,7 +404,8 @@ static void test_cr_compute_file_checksum(void)
 }
 
 
-static void test_cr_get_header_byte_range(void)
+static void
+test_cr_get_header_byte_range(void)
 {
     struct cr_HeaderRangeStruct hdr_range;
 
@@ -418,7 +423,8 @@ static void test_cr_get_header_byte_range(void)
 }
 
 
-static void test_cr_checksum_name_str(void)
+static void
+test_cr_checksum_name_str(void)
 {
     const char *checksum_name;
 
@@ -436,7 +442,8 @@ static void test_cr_checksum_name_str(void)
 }
 
 
-static void test_cr_get_filename(void)
+static void
+test_cr_get_filename(void)
 {
     char *filename;
 
@@ -474,7 +481,8 @@ typedef struct {
 } Copyfiletest;
 
 
-static void copyfiletest_setup(Copyfiletest *copyfiletest, gconstpointer test_data)
+static void
+copyfiletest_setup(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
     copyfiletest->tmp_dir = g_strdup(TMP_DIR_PATTERN);
@@ -483,7 +491,8 @@ static void copyfiletest_setup(Copyfiletest *copyfiletest, gconstpointer test_da
 }
 
 
-static void copyfiletest_teardown(Copyfiletest *copyfiletest, gconstpointer test_data)
+static void
+copyfiletest_teardown(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
     remove(copyfiletest->dst_file);
@@ -493,7 +502,8 @@ static void copyfiletest_teardown(Copyfiletest *copyfiletest, gconstpointer test
 }
 
 
-static void copyfiletest_test_empty_file(Copyfiletest *copyfiletest, gconstpointer test_data)
+static void
+copyfiletest_test_empty_file(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
     int ret;
@@ -509,7 +519,8 @@ static void copyfiletest_test_empty_file(Copyfiletest *copyfiletest, gconstpoint
 }
 
 
-static void copyfiletest_test_text_file(Copyfiletest *copyfiletest, gconstpointer test_data)
+static void
+copyfiletest_test_text_file(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
     int ret;
@@ -525,7 +536,8 @@ static void copyfiletest_test_text_file(Copyfiletest *copyfiletest, gconstpointe
 }
 
 
-static void copyfiletest_test_binary_file(Copyfiletest *copyfiletest, gconstpointer test_data)
+static void
+copyfiletest_test_binary_file(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
     int ret;
@@ -541,7 +553,8 @@ static void copyfiletest_test_binary_file(Copyfiletest *copyfiletest, gconstpoin
 }
 
 
-static void copyfiletest_test_rewrite(Copyfiletest *copyfiletest, gconstpointer test_data)
+static void
+copyfiletest_test_rewrite(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
     int ret;
@@ -564,7 +577,8 @@ static void copyfiletest_test_rewrite(Copyfiletest *copyfiletest, gconstpointer 
 }
 
 
-static void copyfiletest_test_corner_cases(Copyfiletest *copyfiletest, gconstpointer test_data)
+static void
+copyfiletest_test_corner_cases(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
     int ret;
@@ -576,7 +590,8 @@ static void copyfiletest_test_corner_cases(Copyfiletest *copyfiletest, gconstpoi
 }
 
 
-static void compressfile_test_text_file(Copyfiletest *copyfiletest, gconstpointer test_data)
+static void
+compressfile_test_text_file(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
     int ret;
@@ -592,7 +607,8 @@ static void compressfile_test_text_file(Copyfiletest *copyfiletest, gconstpointe
 }
 
 
-static void test_cr_download_valid_url_1(Copyfiletest *copyfiletest, gconstpointer test_data)
+static void
+test_cr_download_valid_url_1(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
 
@@ -608,7 +624,8 @@ static void test_cr_download_valid_url_1(Copyfiletest *copyfiletest, gconstpoint
 
 
 
-static void test_cr_download_valid_url_2(Copyfiletest *copyfiletest, gconstpointer test_data)
+static void
+test_cr_download_valid_url_2(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
 
@@ -625,7 +642,8 @@ static void test_cr_download_valid_url_2(Copyfiletest *copyfiletest, gconstpoint
 }
 
 
-static void test_cr_download_invalid_url(Copyfiletest *copyfiletest, gconstpointer test_data)
+static void
+test_cr_download_invalid_url(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
 
@@ -642,7 +660,8 @@ static void test_cr_download_invalid_url(Copyfiletest *copyfiletest, gconstpoint
 
 
 
-static void test_cr_better_copy_file_local(Copyfiletest *copyfiletest, gconstpointer test_data)
+static void
+test_cr_better_copy_file_local(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
     int ret;
@@ -659,7 +678,8 @@ static void test_cr_better_copy_file_local(Copyfiletest *copyfiletest, gconstpoi
 
 
 
-static void test_cr_better_copy_file_url(Copyfiletest *copyfiletest, gconstpointer test_data)
+static void
+test_cr_better_copy_file_url(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
     int ret;
@@ -672,7 +692,8 @@ static void test_cr_better_copy_file_url(Copyfiletest *copyfiletest, gconstpoint
 
 
 
-static void test_cr_remove_dir(void)
+static void
+test_cr_remove_dir(void)
 {
     char *tmp_dir;
     char *subdir01, *subdir02, *subsubdir011, *subsubsubdir0111;
@@ -735,7 +756,8 @@ static void test_cr_remove_dir(void)
 }
 
 
-static void test_cr_normalize_dir_path(void)
+static void
+test_cr_normalize_dir_path(void)
 {
     char *normalized;
 
@@ -773,7 +795,8 @@ static void test_cr_normalize_dir_path(void)
 }
 
 
-static void test_cr_str_to_version(void)
+static void
+test_cr_str_to_version(void)
 {
     struct cr_Version ver;
 
@@ -884,7 +907,8 @@ static void test_cr_str_to_version(void)
 }
 
 
-static void test_cr_cmp_version_str(void)
+static void
+test_cr_cmp_version_str(void)
 {
     int ret;
 
@@ -940,7 +964,8 @@ static void test_cr_cmp_version_str(void)
     g_assert_cmpint(ret, ==, 2);
 }
 
-static void test_cr_split_rpm_filename(void)
+static void
+test_cr_split_rpm_filename(void)
 {
     struct cr_NVREA *res;
 
@@ -985,7 +1010,8 @@ static void test_cr_split_rpm_filename(void)
 }
 
 
-static void test_cr_cmp_evr(void)
+static void
+test_cr_cmp_evr(void)
 {
     int res;
 
@@ -1023,7 +1049,8 @@ static void test_cr_cmp_evr(void)
 }
 
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
     g_test_init(&argc, &argv, NULL);
 

@@ -14,7 +14,10 @@ ADD_EXECUTABLE(test_sqlite test_sqlite.c)
 TARGET_LINK_LIBRARIES(test_sqlite libcreaterepo_c ${GLIB2_LIBRARIES})
 ADD_DEPENDENCIES(tests test_sqlite)
 
-#ADD_TEST(test_main gtester "${CMAKE_CURRENT_SOURCE_DIR}/test_data")
+ADD_EXECUTABLE(test_xml_file test_xml_file.c)
+TARGET_LINK_LIBRARIES(test_xml_file libcreaterepo_c ${GLIB2_LIBRARIES})
+ADD_DEPENDENCIES(tests test_xml_file)
+
 CONFIGURE_FILE("run_gtester.sh.in"  "run_gtester.sh")
 ADD_TEST(test_main run_gtester.sh)
 

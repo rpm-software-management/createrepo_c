@@ -12,7 +12,8 @@ SET (createrepo_c_SRCS
      xml_dump.c
      xml_dump_filelists.c
      xml_dump_other.c
-     xml_dump_primary.c)
+     xml_dump_primary.c
+     xml_file.c)
 
 SET(headers
     compression_wrapper.h
@@ -28,7 +29,8 @@ SET(headers
     repomd.h
     sqlite.h
     version.h
-    xml_dump.h)
+    xml_dump.h
+    xml_file.h)
 
 ADD_LIBRARY(libcreaterepo_c SHARED ${createrepo_c_SRCS})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${BZIP2_LIBRARIES})

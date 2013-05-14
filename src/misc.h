@@ -39,6 +39,10 @@ extern "C" {
  */
 #define CR_UNUSED(x) (void)(x)
 
+/** Lenght of static string (including last '\0' byte)
+ */
+#define CR_STATICSTRLEN(s) (sizeof(s)/sizeof(s[0]))
+
 /** Convert flags from RPM header to a string representation.
  * @param flags         flags
  * @return              flags as constant string

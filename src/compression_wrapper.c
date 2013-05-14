@@ -216,6 +216,9 @@ cr_open(const char *filename, cr_OpenMode mode, cr_CompressionType comtype)
     CR_FILE *file = NULL;
     cr_CompressionType type;
 
+    assert(mode < CR_CW_MODE_SENTINEL);
+    assert(comtype < CR_CW_COMPRESSION_SENTINEL);
+
     if (!filename || (mode != CR_CW_MODE_READ && mode != CR_CW_MODE_WRITE)) {
         g_debug("%s: Filename is NULL or bad mode value", __func__);
         return NULL;
@@ -475,13 +478,14 @@ cr_close(CR_FILE *cr_file)
 int
 cr_read(CR_FILE *cr_file, void *buffer, unsigned int len)
 {
-    if (!cr_file || !buffer || cr_file->mode != CR_CW_MODE_READ) {
-        return CR_CW_ERR;
-    }
-
-
     int bzerror;
     int ret;
+
+    assert(cr_file);
+    assert(buffer);
+
+    if (cr_file->mode != CR_CW_MODE_READ)
+        return CR_CW_ERR;
 
     switch (cr_file->type) {
 
@@ -560,9 +564,11 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len)
     int bzerror;
     int ret = CR_CW_ERR;
 
-    if (!cr_file || !buffer || cr_file->mode != CR_CW_MODE_WRITE) {
+    assert(cr_file);
+    assert(buffer);
+
+    if (cr_file->mode != CR_CW_MODE_WRITE)
         return ret;
-    }
 
     switch (cr_file->type) {
 
@@ -631,14 +637,14 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len)
 int
 cr_puts(CR_FILE *cr_file, const char *str)
 {
-    if (!cr_file || !str || cr_file->mode != CR_CW_MODE_WRITE) {
-        return CR_CW_ERR;
-    }
-
-
     size_t len;
     int bzerror;
     int ret = CR_CW_ERR;
+
+    assert(cr_file);
+
+    if (!str || cr_file->mode != CR_CW_MODE_WRITE)
+        return CR_CW_ERR;
 
     switch (cr_file->type) {
 
@@ -686,16 +692,18 @@ cr_puts(CR_FILE *cr_file, const char *str)
 int
 cr_printf(CR_FILE *cr_file, const char *format, ...)
 {
-    if (!cr_file || !format || cr_file->mode != CR_CW_MODE_WRITE) {
-        return CR_CW_ERR;
-    }
-
     va_list vl;
+    int ret;
+    gchar *buf = NULL;
+
+    assert(cr_file);
+
+    if (!format || cr_file->mode != CR_CW_MODE_WRITE)
+        return CR_CW_ERR;
+
     va_start(vl, format);
 
     // Fill format string
-    int ret;
-    gchar *buf = NULL;
     ret = g_vasprintf(&buf, format, vl);
 
     va_end(vl);

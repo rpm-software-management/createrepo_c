@@ -38,13 +38,15 @@ typedef enum {
     CR_CW_GZ_COMPRESSION,             /*!< Gzip compression */
     CR_CW_BZ2_COMPRESSION,            /*!< BZip2 compression */
     CR_CW_XZ_COMPRESSION,             /*!< XZ compression */
+    CR_CW_COMPRESSION_SENTINEL,       /*!< Sentinel of the list */
 } cr_CompressionType;
 
 /** Open modes.
  */
 typedef enum {
-    CR_CW_MODE_READ,               /*!< Read mode */
-    CR_CW_MODE_WRITE               /*!< Write mode */
+    CR_CW_MODE_READ,            /*!< Read mode */
+    CR_CW_MODE_WRITE,           /*!< Write mode */
+    CR_CW_MODE_SENTINEL,        /*!< Sentinel of the list */
 } cr_OpenMode;
 
 

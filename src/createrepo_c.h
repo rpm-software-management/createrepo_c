@@ -53,6 +53,7 @@ extern "C" {
 #include "sqlite.h"
 #include "version.h"
 #include "xml_dump.h"
+#include "xml_file.h"
 
 #ifdef __cplusplus
 }

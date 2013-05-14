@@ -23,6 +23,7 @@
  */
 
 #include <glib.h>
+#include <assert.h>
 #include <string.h>
 #include <stdlib.h>
 #include "logging.h"
@@ -470,6 +471,8 @@ cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
     GError *tmp_err = NULL;
     sqlite3 *db = NULL;
 
+    assert(db_type < CR_DB_SENTINEL);
+
     if (!path || path[0] == '\0')
         return db;
 
@@ -506,6 +509,8 @@ cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
                 db_create_filelists_tables(db, &tmp_err); break;
             case CR_DB_OTHER:
                 db_create_other_tables(db, &tmp_err); break;
+            default:
+                assert(0);
         }
 
         if (tmp_err)
@@ -521,6 +526,8 @@ cr_db_close(sqlite3 *db, cr_DatabaseType db_type, GError **err)
 {
     GError *tmp_err = NULL;
 
+    assert(db_type < CR_DB_SENTINEL);
+
     if (!db)
         return;
 
@@ -531,6 +538,8 @@ cr_db_close(sqlite3 *db, cr_DatabaseType db_type, GError **err)
             db_index_filelists_tables(db, &tmp_err); break;
         case CR_DB_OTHER:
             db_index_other_tables(db, &tmp_err); break;
+        default:
+            assert(0);
     }
 
     if (tmp_err)

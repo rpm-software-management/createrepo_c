@@ -69,9 +69,10 @@ typedef struct _DbOtherStatements     * cr_DbOtherStatements;
 /** Database type.
  */
 typedef enum {
-    CR_DB_PRIMARY,         /*!< primary */
-    CR_DB_FILELISTS,       /*!< filelists */
-    CR_DB_OTHER            /*!< other */
+    CR_DB_PRIMARY,      /*!< primary */
+    CR_DB_FILELISTS,    /*!< filelists */
+    CR_DB_OTHER,        /*!< other */
+    CR_DB_SENTINEL,     /*!< sentinel of the list */
 } cr_DatabaseType;
 
 /** Macro over cr_db_open function. Open (create new) primary sqlite sqlite db.

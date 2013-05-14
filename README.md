@@ -6,25 +6,25 @@ Run `createrepo -h` for usage syntax.
 
 # Devel tips
 
-## Building for Fedora
+## Building
 
-Package build requires:
+Package build requires - Pkg name in Fedora/Ubuntu:
 
-* bzip2 (http://bzip.org/) - in Fedora: bzip2-devel
-* cmake (http://www.cmake.org/) - in Fedora: cmake
-* expat (http://expat.sourceforge.net/) - in Fedora: expat-devel
-* file (http://www.darwinsys.com/file/) - in Fedora: file-devel
-* glib2 (http://developer.gnome.org/glib/) - in Fedora: glib2-devel
-* libcurl (http://curl.haxx.se/libcurl/) - in Fedora: libcurl-devel
-* libxml2 (http://xmlsoft.org/) - in Fedora: libxml2-devel
-* python (http://python.org/) - in Fedora: python2-devel
-* rpm (http://www.rpm.org/) - in Fedora: rpm-devel
-* sqlite3 (https://sqlite.org/) - in Fedora: sqlite-devel
-* xz (http://tukaani.org/xz/) - in Fedora: xz-devel
-* zlib (http://www.zlib.net/) - in Fedora: zlib-devel
-* *Optional:* doxygen (http://doxygen.org/) - in Fedora: doxygen
-* **Test requires:** check (http://check.sourceforge.net/) - in Fedora: check-devel
-* **Test requires:** python-nose (https://nose.readthedocs.org/) - in Fedora: python-nose
+* bzip2 (http://bzip.org/) - bzip2-devel/libbz2-dev
+* cmake (http://www.cmake.org/) - cmake/cmake
+* expat (http://expat.sourceforge.net/) - expat-devel/libexpat1-dev
+* file (http://www.darwinsys.com/file/) - file-devel/libmagic-dev
+* glib2 (http://developer.gnome.org/glib/) - glib2-devel/libglib2.0-dev
+* libcurl (http://curl.haxx.se/libcurl/) - libcurl-devel/libcurl4-openssl-dev
+* libxml2 (http://xmlsoft.org/) - libxml2-devel/libxml2-dev
+* python (http://python.org/) - python2-devel/libpython2.7-dev
+* rpm (http://www.rpm.org/) - rpm-devel/librpm-dev
+* sqlite3 (https://sqlite.org/) - sqlite-devel/libsqlite3-dev
+* xz (http://tukaani.org/xz/) - xz-devel/liblzma-dev
+* zlib (http://www.zlib.net/) - zlib-devel/zlib1g-dev
+* *Optional:* doxygen (http://doxygen.org/) - doxygen/doxygen
+* **Test requires:** check (http://check.sourceforge.net/) - check-devel/check
+* **Test requires:** python-nose (https://nose.readthedocs.org/) - python-nose/python-nose
 
 
 From your checkout dir:
@@ -63,11 +63,11 @@ All unit tests run from librepo checkout dir
 
     make tests && make test
 
-### Run (from your checkout dir) - C unittests:
+### Run only C unittests (from your checkout dir):
 
     build/tests/run_gtester.sh
 
-### Run (from your checkout dir) - Python unittests:
+### Run only Python unittests (from your checkout dir):
 
     PYTHONPATH=`readlink -f ./build/src/python/` nosetests -s tests/python/tests/
 

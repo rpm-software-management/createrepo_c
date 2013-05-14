@@ -87,7 +87,7 @@ CR_FILE *cr_open(const char *filename,
  * @param cr_file       CR_FILE pointer
  * @param buffer        target buffer
  * @param len           number of bytes to read
- * @return              CR_CW_OK or CR_CW_ERR
+ * @return              number of readed bytes or CR_CW_ERR
  */
 int cr_read(CR_FILE *cr_file, void *buffer, unsigned int len);
 

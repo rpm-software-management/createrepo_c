@@ -29,4 +29,6 @@
 #define TEST_PACKAGES_PATH          TEST_DATA_PATH"packages/"
 #define TEST_COMPRESSED_FILES_PATH  TEST_DATA_PATH"compressed_files/"
 
+#define TMPDIR_TEMPLATE            "/tmp/cr_testXXXXXX"
+
 #endif

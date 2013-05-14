@@ -39,6 +39,8 @@ typedef enum {
         File doesn't exist */
     CRE_NODIR, /*!<
         Directory doesn't exist (not a dir or path doesn't exists) */
+    CRE_EXISTS, /*!<
+        File/Directory already exists */
     CRE_UNKNOWNCHECKSUMTYPE, /*!<
         Unknown/Unsupported checksum type */
     CRE_UNKNOWNCOMPRESSION, /*!<
@@ -49,26 +51,28 @@ typedef enum {
         Loaded xml metadata are bad */
 } cr_Error;
 
-#define CR_DB_ERROR cr_db_error_quark()
-#define CR_XML_DUMP_PRIMARY_ERROR cr_xml_dump_primary_error_quark()
+#define CR_CHECKSUM_ERROR           cr_checksum_error_quark()
+#define CR_DB_ERROR                 cr_db_error_quark()
+#define CR_LOAD_METADATA_ERROR      cr_load_metadata_error_quark()
+#define CR_LOCATE_METADATA_ERROR    cr_locate_metadata_error_quark()
+#define CR_PARSEPKG_ERROR           cr_parsepkg_error_quark()
+#define CR_REPOMD_ERROR             cr_repomd_error_quark()
+#define CR_REPOMD_RECORD_ERROR      cr_repomd_record_error_quark()
 #define CR_XML_DUMP_FILELISTS_ERROR cr_xml_dump_filelists_error_quark()
-#define CR_XML_DUMP_OTHER_ERROR cr_xml_dump_other_error_quark()
-#define CR_REPOMD_ERROR cr_repomd_error_quark()
-#define CR_REPOMD_RECORD_ERROR cr_repomd_record_error_quark()
-#define CR_CHECKSUM_ERROR cr_checksum_error_quark()
-#define CR_PARSEPKG_ERROR cr_parsepkg_error_quark()
-#define CR_LOCATE_METADATA_ERROR cr_locate_metadata_error_quark()
-#define CR_LOAD_METADATA_ERROR cr_load_metadata_error_quark()
+#define CR_XML_DUMP_OTHER_ERROR     cr_xml_dump_other_error_quark()
+#define CR_XML_DUMP_PRIMARY_ERROR   cr_xml_dump_primary_error_quark()
+#define CR_XML_FILE_ERROR           cr_xml_file_error_quark()
 
+GQuark cr_checksum_error_quark(void);
 GQuark cr_db_error_quark(void);
-GQuark cr_xml_dump_primary_error_quark(void);
-GQuark cr_xml_dump_filelists_error_quark(void);
-GQuark cr_xml_dump_other_error_quark(void);
+GQuark cr_load_metadata_error_quark(void);
+GQuark cr_locate_metadata_error_quark(void);
+GQuark cr_parsepkg_error_quark(void);
 GQuark cr_repomd_error_quark(void);
 GQuark cr_repomd_record_error_quark(void);
-GQuark cr_checksum_error_quark(void);
-GQuark cr_parsepkg_error_quark(void);
-GQuark cr_locate_metadata_error_quark(void);
-GQuark cr_load_metadata_error_quark(void);
+GQuark cr_xml_dump_filelists_error_quark(void);
+GQuark cr_xml_dump_other_error_quark(void);
+GQuark cr_xml_dump_primary_error_quark(void);
+GQuark cr_xml_file_error_quark(void);
 
 #endif

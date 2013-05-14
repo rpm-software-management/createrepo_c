@@ -20,15 +20,45 @@
 #include "error.h"
 
 GQuark
+cr_checksum_error_quark(void)
+{
+    return g_quark_from_static_string("cr_checksum_error");
+}
+
+GQuark
 cr_db_error_quark(void)
 {
     return g_quark_from_static_string("cr_db_error");
 }
 
 GQuark
-cr_xml_dump_primary_error_quark(void)
+cr_load_metadata_error_quark(void)
 {
-    return g_quark_from_static_string("cr_xml_dump_primary_error");
+    return g_quark_from_static_string("cr_load_metadata_error");
+}
+
+GQuark
+cr_locate_metadata_error_quark(void)
+{
+    return g_quark_from_static_string("cr_locate_metadata_error");
+}
+
+GQuark
+cr_parsepkg_error_quark(void)
+{
+    return g_quark_from_static_string("cr_parsepkg_error");
+}
+
+GQuark
+cr_repomd_error_quark(void)
+{
+    return g_quark_from_static_string("cr_repomd_error");
+}
+
+GQuark
+cr_repomd_record_error_quark(void)
+{
+    return g_quark_from_static_string("cr_repomd_record_error");
 }
 
 GQuark
@@ -44,38 +74,13 @@ cr_xml_dump_other_error_quark(void)
 }
 
 GQuark
-cr_repomd_record_error_quark(void)
+cr_xml_dump_primary_error_quark(void)
 {
-    return g_quark_from_static_string("cr_repomd_record_error");
+    return g_quark_from_static_string("cr_xml_dump_primary_error");
 }
 
 GQuark
-cr_repomd_error_quark(void)
+cr_xml_file_error_quark(void)
 {
-    return g_quark_from_static_string("cr_repomd_error");
+    return g_quark_from_static_string("cr_xml_file_error");
 }
-
-GQuark
-cr_checksum_error_quark(void)
-{
-    return g_quark_from_static_string("cr_checksum_error");
-}
-
-GQuark
-cr_parsepkg_error_quark(void)
-{
-    return g_quark_from_static_string("cr_parsepkg_error");
-}
-
-GQuark
-cr_locate_metadata_error_quark(void)
-{
-    return g_quark_from_static_string("cr_locate_metadata_error");
-}
-
-GQuark
-cr_load_metadata_error_quark(void)
-{
-    return g_quark_from_static_string("cr_load_metadata_error");
-}
-

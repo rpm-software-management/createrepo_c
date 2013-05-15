@@ -234,8 +234,10 @@ cr_xmlfile_close(cr_XmlFile *f, GError **err)
 {
     GError *tmp_err = NULL;
 
-    assert(f);
     assert(!err || *err == NULL);
+
+    if (!f)
+        return CRE_OK;
 
     if (f->header == 0) {
         cr_xmlfile_write_xml_header(f, &tmp_err);

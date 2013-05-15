@@ -25,6 +25,7 @@ SET (craeterepo_cmodule_SRCS
      sqlite-py.c
      typeconversion.c
      xml_dump-py.c
+     xml_file-py.c
     )
 
 ADD_LIBRARY(_createrepo_cmodule SHARED ${craeterepo_cmodule_SRCS})

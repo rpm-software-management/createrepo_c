@@ -30,6 +30,7 @@
 #include "repomdrecord-py.h"
 #include "sqlite-py.h"
 #include "xml_dump-py.h"
+#include "xml_file-py.h"
 
 static struct PyMethodDef createrepo_c_methods[] = {
     {"package_from_rpm",        (PyCFunction)py_package_from_rpm,
@@ -57,7 +58,7 @@ init_createrepo_c(void)
     /* Exceptions */
     if (!init_exceptions())
         return;
-    PyModule_AddObject(m, "CreaterepoCException", CrErr_Exception);
+    PyModule_AddObject(m, "CreaterepoCError", CrErr_Exception);
 
     /* Objects */
 
@@ -97,6 +98,12 @@ init_createrepo_c(void)
     Py_INCREF(&Sqlite_Type);
     PyModule_AddObject(m, "Sqlite", (PyObject *)&Sqlite_Type);
 
+    /* _createrepo_c.XmlFile */
+    if (PyType_Ready(&XmlFile_Type) < 0)
+        return;
+    Py_INCREF(&XmlFile_Type);
+    PyModule_AddObject(m, "XmlFile", (PyObject *)&XmlFile_Type);
+
     /* Createrepo init */
 
     cr_xml_dump_init();
@@ -132,4 +139,9 @@ init_createrepo_c(void)
     PyModule_AddIntConstant(m, "DB_PRIMARY", CR_DB_PRIMARY);
     PyModule_AddIntConstant(m, "DB_FILELISTS", CR_DB_FILELISTS);
     PyModule_AddIntConstant(m, "DB_OTHER", CR_DB_OTHER);
+
+    /* XmlFile types */
+    PyModule_AddIntConstant(m, "XMLFILE_PRIMARY", CR_XMLFILE_PRIMARY);
+    PyModule_AddIntConstant(m, "XMLFILE_FILELISTS", CR_XMLFILE_FILELISTS);
+    PyModule_AddIntConstant(m, "XMLFILE_OTHER", CR_XMLFILE_OTHER);
 }

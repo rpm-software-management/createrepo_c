@@ -28,7 +28,11 @@ DB_PRIMARY      = _createrepo_c.DB_PRIMARY
 DB_FILELISTS    = _createrepo_c.DB_FILELISTS
 DB_OTHER        = _createrepo_c.DB_OTHER
 
-CreaterepoCException = _createrepo_c.CreaterepoCException
+XMLFILE_PRIMARY   = _createrepo_c.XMLFILE_PRIMARY
+XMLFILE_FILELISTS = _createrepo_c.XMLFILE_FILELISTS
+XMLFILE_OTHER     = _createrepo_c.XMLFILE_OTHER
+
+CreaterepoCError = _createrepo_c.CreaterepoCError
 
 # Metadata class
 
@@ -74,6 +78,22 @@ class FilelistsSqlite(Sqlite):
 class OtherSqlite(Sqlite):
     def __init__(self, filename):
         Sqlite.__init__(self, filename, DB_OTHER)
+
+# XmlFile class
+
+XmlFile = _createrepo_c.XmlFile
+
+class PrimaryXmlFile(XmlFile):
+    def __init__(self, filename, compressiontype=GZ_COMPRESSION):
+        XmlFile.__init__(self, filename, XMLFILE_PRIMARY, compressiontype)
+
+class FilelistsXmlFile(XmlFile):
+    def __init__(self, filename, compressiontype=GZ_COMPRESSION):
+        XmlFile.__init__(self, filename, XMLFILE_FILELISTS, compressiontype)
+
+class OtherXmlFile(XmlFile):
+    def __init__(self, filename, compressiontype=GZ_COMPRESSION):
+        XmlFile.__init__(self, filename, XMLFILE_OTHER, compressiontype)
 
 # Methods
 

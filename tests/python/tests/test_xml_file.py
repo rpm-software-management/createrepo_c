@@ -125,6 +125,20 @@ class TestCaseXmlFile(unittest.TestCase):
 <metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="0">
 </metadata>""")
 
+    def test_xmlfile_set_num_of_pkgs(self):
+        path = os.path.join(self.tmpdir, "primary.xml")
+        f = cr.PrimaryXmlFile(path, cr.NO_COMPRESSION)
+        self.assertTrue(f)
+        self.assertTrue(os.path.isfile(path))
+        f.set_num_of_pkgs(22)
+        f.close()
+
+        content = open(path).read()
+        self.assertEqual(content,
+"""<?xml version="1.0" encoding="UTF-8"?>
+<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="22">
+</metadata>""")
+
     def test_xmlfile_add_pkg(self):
         pkg = cr.package_from_rpm(PKG_ARCHER_PATH)
         self.assertTrue(pkg)

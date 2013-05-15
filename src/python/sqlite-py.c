@@ -31,7 +31,6 @@ typedef struct {
     int type;           // cr_DatabaseType value or -1
     void *statements;
     sqlite3 *db;
-    int closed;         // Is db closed?
 } _SqliteObject;
 
 // Forward declaration
@@ -44,7 +43,8 @@ check_SqliteStatus(const _SqliteObject *self)
     assert(self != NULL);
     assert(SqliteObject_Check(self));
     if (self->db == NULL) {
-        PyErr_SetString(CrErr_Exception, "Improper createrepo_c Sqlite object.");
+        PyErr_SetString(CrErr_Exception,
+            "Improper createrepo_c Sqlite object (Already closed db?)");
         return -1;
     }
     return 0;
@@ -62,7 +62,6 @@ sqlite_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
         self->type = -1;
         self->statements = NULL;
         self->db = NULL;
-        self->closed = 0;
     }
     return (PyObject *)self;
 }
@@ -73,6 +72,7 @@ sqlite_init(_SqliteObject *self, PyObject *args, PyObject *kwds)
     char *path;
     int db_type;
     GError *err = NULL;
+    PyObject *ret;
 
     CR_UNUSED(kwds);
 
@@ -80,13 +80,19 @@ sqlite_init(_SqliteObject *self, PyObject *args, PyObject *kwds)
         return -1;
 
     /* Check arguments */
-    if (db_type < CR_DB_PRIMARY || db_type > CR_DB_OTHER) {
+    if (db_type < CR_DB_PRIMARY || db_type >= CR_DB_SENTINEL) {
         PyErr_SetString(PyExc_ValueError, "Unknown type value");
         return -1;
     }
 
     /* Free all previous resources when reinitialization */
-    Py_XDECREF(close_db(self, NULL));
+    ret = close_db(self, NULL);
+    Py_XDECREF(ret);
+    if (ret == NULL) {
+        // Error encountered!
+        return -1;
+    }
+
     if (self->statements) {
         if (self->type == CR_DB_PRIMARY)
             cr_db_destroy_primary_statements(self->statements);
@@ -97,15 +103,8 @@ sqlite_init(_SqliteObject *self, PyObject *args, PyObject *kwds)
         self->statements = NULL;
     }
 
-    if (err) {
-        PyErr_Format(CrErr_Exception, "Error while freeing previous content: %s", err->message);
-        g_clear_error(&err);
-        return -1;
-    }
-
     /* Init */
     self->type = db_type;
-    self->closed = 0;
     if (self->type == CR_DB_PRIMARY)
         self->db = cr_db_open_primary(path, &err);
     else if (self->type == CR_DB_FILELISTS)
@@ -113,15 +112,14 @@ sqlite_init(_SqliteObject *self, PyObject *args, PyObject *kwds)
     else if (self->type == CR_DB_OTHER)
         self->db = cr_db_open_other(path, &err);
 
-    if (self->db == NULL) {
-        PyErr_SetString(CrErr_Exception, "Sqlite initialization failed");
-        return -1;
-    }
-
     if (err) {
         PyErr_Format(CrErr_Exception, "Sqlite initialization failed: %s", err->message);
         g_clear_error(&err);
-        Py_XDECREF(close_db(self, NULL));
+        return -1;
+    }
+
+    if (self->db == NULL) {
+        PyErr_SetString(CrErr_Exception, "Sqlite initialization failed");
         return -1;
     }
 
@@ -140,7 +138,10 @@ sqlite_dealloc(_SqliteObject *self)
             cr_db_destroy_other_statements(self->statements);
         self->statements = NULL;
     }
-    Py_XDECREF(close_db(self, NULL));
+
+    if (self->db)
+        cr_db_close(self->db, self->type, NULL);
+
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -243,11 +244,20 @@ dbinfo_update(_SqliteObject *self, PyObject *args)
 static PyObject *
 close_db(_SqliteObject *self, void *nothing)
 {
+    GError *err = NULL;
+
     CR_UNUSED(nothing);
-    if (self->db && !self->closed) {
-        self->closed = 1;
-        cr_db_close(self->db, self->type, NULL);
+
+    if (self->db) {
+        cr_db_close(self->db, self->type, &err);
+        self->db = NULL;
+        if (err) {
+            PyErr_Format(CrErr_Exception, "Sqlite close error: %s", err->message);
+            g_clear_error(&err);
+            return NULL;
+        }
     }
+
     Py_RETURN_NONE;
 }
 

@@ -46,7 +46,7 @@ class TestCaseParsepkg(unittest.TestCase):
         self.assertRaises(IOError, cr.package_from_rpm, "./")
 
         # File is not a rpm
-        self.assertRaises(cr.CreaterepoCException, cr.package_from_rpm, FILE_BINARY_PATH)
+        self.assertRaises(cr.CreaterepoCError, cr.package_from_rpm, FILE_BINARY_PATH)
 
     def test_xml_from_rpm(self):
         xml = cr.xml_from_rpm(PKG_ARCHER_PATH)
@@ -65,4 +65,4 @@ class TestCaseParsepkg(unittest.TestCase):
         self.assertRaises(IOError, cr.xml_from_rpm, "./")
 
         # File is not a rpm
-        self.assertRaises(cr.CreaterepoCException, cr.xml_from_rpm, FILE_BINARY_PATH)
+        self.assertRaises(cr.CreaterepoCError, cr.xml_from_rpm, FILE_BINARY_PATH)

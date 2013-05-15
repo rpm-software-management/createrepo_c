@@ -25,7 +25,7 @@ PyObject *CrErr_Exception = NULL;
 int
 init_exceptions()
 {
-    CrErr_Exception = PyErr_NewException("_createrepo_c.Exception", NULL, NULL);
+    CrErr_Exception = PyErr_NewException("createrepo_c.CreaterepoCError", NULL, NULL);
     if (!CrErr_Exception)
         return 0;
     Py_INCREF(CrErr_Exception);

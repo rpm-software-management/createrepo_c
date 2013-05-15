@@ -40,15 +40,25 @@ class TestCaseSqlite(unittest.TestCase):
         self.assertTrue(db_oth)
         self.assertTrue(os.path.isfile(self.tmpdir+"/other2.db"))
 
-        # Error cases
 
-        self.assertRaises(cr.CreaterepoCException, cr.Sqlite, self.tmpdir, cr.DB_PRIMARY)
-
+    def test_sqlite_error_cases(self):
+        self.assertRaises(cr.CreaterepoCError, cr.Sqlite, self.tmpdir, cr.DB_PRIMARY)
         self.assertRaises(ValueError, cr.Sqlite, self.tmpdir+"/foo.db", 55)
-
         self.assertRaises(TypeError, cr.Sqlite, self.tmpdir+"/foo.db", None)
-
         self.assertRaises(TypeError, cr.Sqlite, None, cr.DB_PRIMARY)
+
+    def test_sqlite_operations_on_closed_db(self):
+        pkg = cr.package_from_rpm(PKG_ARCHER_PATH)
+        path = os.path.join(self.tmpdir, "primary.db")
+        db = cr.Sqlite(path, cr.DB_PRIMARY)
+        self.assertTrue(db)
+        db.close()
+
+        self.assertRaises(cr.CreaterepoCError, db.add_pkg, pkg)
+        self.assertRaises(cr.CreaterepoCError, db.dbinfo_update, "somechecksum")
+
+        db.close()  # No error shoud be raised
+        del db      # No error shoud be raised
 
     def test_sqlite_primary_schema(self):
         path = os.path.join(self.tmpdir, "primary.db")
@@ -118,7 +128,13 @@ class TestCaseSqlite(unittest.TestCase):
         db = cr.Sqlite(path, cr.DB_PRIMARY)
         pkg = cr.package_from_rpm(PKG_ARCHER_PATH)
         db.add_pkg(pkg)
+        self.assertRaises(TypeError, db.add_pkg, None)
+        self.assertRaises(TypeError, db.add_pkg, 123)
+        self.assertRaises(TypeError, db.add_pkg, "foo")
         db.dbinfo_update("somechecksum")
+        self.assertRaises(TypeError, db.dbinfo_update, pkg)
+        self.assertRaises(TypeError, db.dbinfo_update, None)
+        self.assertRaises(TypeError, db.dbinfo_update, 123)
         db.close()
 
         self.assertTrue(os.path.isfile(path))

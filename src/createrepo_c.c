@@ -27,18 +27,19 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <fcntl.h>
-#include "error.h"
-#include "version.h"
-#include "constants.h"
-#include "parsepkg.h"
-#include "locate_metadata.h"
-#include "load_metadata.h"
-#include "repomd.h"
-#include "compression_wrapper.h"
-#include "misc.h"
 #include "cmd_parser.h"
-#include "xml_dump.h"
+#include "compression_wrapper.h"
+#include "constants.h"
+#include "error.h"
+#include "load_metadata.h"
+#include "locate_metadata.h"
+#include "misc.h"
+#include "parsepkg.h"
+#include "repomd.h"
 #include "sqlite.h"
+#include "version.h"
+#include "xml_dump.h"
+#include "xml_file.h"
 
 
 #define G_LOG_DOMAIN        ((gchar*) 0)
@@ -47,9 +48,9 @@
 
 struct UserData {
     GThreadPool *pool;              // thread pool
-    CR_FILE *pri_f;                 // Opened compressed primary.xml.*
-    CR_FILE *fil_f;                 // Opened compressed filelists.xml.*
-    CR_FILE *oth_f;                 // Opened compressed other.xml.*
+    cr_XmlFile *pri_f;              // Opened compressed primary.xml.*
+    cr_XmlFile *fil_f;              // Opened compressed filelists.xml.*
+    cr_XmlFile *oth_f;              // Opened compressed other.xml.*
     cr_DbPrimaryStatements pri_statements;  // Opened connection to primary.sqlite
     cr_DbFilelistsStatements fil_statements;// Opened connection to filelists.sqlite
     cr_DbOtherStatements oth_statements;    // Opened connection to other.sqlite
@@ -60,7 +61,7 @@ struct UserData {
     const char *checksum_type_str;  // Name of selected checksum
     cr_ChecksumType checksum_type;  // Constant representing selected checksum
     gboolean skip_symlinks;         // Skip symlinks
-    int package_count;              // Total number of packages to process
+    long package_count;             // Total number of packages to process
 
     // Update stuff
     gboolean skip_stat;             // Skip stat() while updating
@@ -167,7 +168,7 @@ write_pkg(long id,
     while (udata->id_pri != id)
         g_cond_wait (udata->cond_pri, udata->mutex_pri);
     udata->id_pri++;
-    cr_puts(udata->pri_f, (const char *) res.primary);
+    cr_xmlfile_add_chunk(udata->pri_f, (const char *) res.primary, NULL);
     if (udata->pri_statements)
         cr_db_add_primary_pkg(udata->pri_statements, pkg, NULL);
     g_mutex_unlock(udata->mutex_pri);
@@ -178,7 +179,7 @@ write_pkg(long id,
     while (udata->id_fil != id)
         g_cond_wait (udata->cond_fil, udata->mutex_fil);
     udata->id_fil++;
-    cr_puts(udata->fil_f, (const char *) res.filelists);
+    cr_xmlfile_add_chunk(udata->fil_f, (const char *) res.filelists, NULL);
     if (udata->fil_statements)
         cr_db_add_filelists_pkg(udata->fil_statements, pkg, NULL);
     g_mutex_unlock(udata->mutex_fil);
@@ -189,7 +190,7 @@ write_pkg(long id,
     while (udata->id_oth != id)
         g_cond_wait (udata->cond_oth, udata->mutex_oth);
     udata->id_oth++;
-    cr_puts(udata->oth_f, (const char *) res.other);
+    cr_xmlfile_add_chunk(udata->oth_f, (const char *) res.other, NULL);
     if (udata->oth_statements)
         cr_db_add_other_pkg(udata->oth_statements, pkg, NULL);
     g_mutex_unlock(udata->mutex_oth);
@@ -387,7 +388,7 @@ task_cmp(gconstpointer a_p, gconstpointer b_p, gpointer user_data)
 }
 
 
-int
+long
 fill_pool(GThreadPool *pool,
           gchar *in_dir,
           struct CmdOptions *cmd_options,
@@ -396,7 +397,7 @@ fill_pool(GThreadPool *pool,
 {
     GQueue queue = G_QUEUE_INIT;
     struct PoolTask *task;
-    int package_count = 0;
+    long package_count = 0;
 
     if (!(cmd_options->include_pkgs)) {
         // --pkglist (or --includepkg) is not supplied -> do dir walk
@@ -694,7 +695,7 @@ main(int argc, char **argv)
                                           NULL);
     g_debug("Thread pool ready");
 
-    int package_count;
+    long package_count;
     GSList *current_pkglist = NULL;
     /* ^^^ List with basenames of files which will be processed */
 
@@ -707,8 +708,8 @@ main(int argc, char **argv)
                               &current_pkglist,
                               output_pkg_list);
 
-    g_debug("Package count: %d", package_count);
-    g_message("Directory walk done - %d packages", package_count);
+    g_debug("Package count: %ld", package_count);
+    g_message("Directory walk done - %ld packages", package_count);
 
     if (output_pkg_list)
         fclose(output_pkg_list);
@@ -731,11 +732,13 @@ main(int argc, char **argv)
         else
             old_metadata_location = cr_locate_metadata(in_dir, 1, NULL);
 
-        ret = cr_metadata_load_xml(old_metadata, old_metadata_location, NULL);
-        if (ret == CRE_OK)
-            g_debug("Old metadata from: %s - loaded", out_dir);
-        else
-            g_debug("Old metadata from %s - loading failed", out_dir);
+        if (old_metadata_location) {
+            ret = cr_metadata_load_xml(old_metadata, old_metadata_location, NULL);
+            if (ret == CRE_OK)
+                g_debug("Old metadata from: %s - loaded", out_dir);
+            else
+                g_debug("Old metadata from %s - loading failed", out_dir);
+        }
 
         // Load repodata from --update-md-path
         GSList *element = cmd_options->l_update_md_paths;
@@ -838,9 +841,9 @@ main(int argc, char **argv)
 
     // Create and open new compressed files
 
-    CR_FILE *pri_cr_file;
-    CR_FILE *fil_cr_file;
-    CR_FILE *oth_cr_file;
+    cr_XmlFile *pri_cr_file;
+    cr_XmlFile *fil_cr_file;
+    cr_XmlFile *oth_cr_file;
 
     gchar *pri_xml_filename;
     gchar *fil_xml_filename;
@@ -853,9 +856,9 @@ main(int argc, char **argv)
     fil_xml_filename = g_strconcat(tmp_out_repo, "/filelists.xml.gz", NULL);
     oth_xml_filename = g_strconcat(tmp_out_repo, "/other.xml.gz", NULL);
 
-    pri_cr_file = cr_open(pri_xml_filename,
-                          CR_CW_MODE_WRITE,
-                          CR_CW_GZ_COMPRESSION);
+    pri_cr_file = cr_xmlfile_open_primary(pri_xml_filename,
+                                          CR_CW_GZ_COMPRESSION,
+                                          NULL);
     if (!pri_cr_file) {
         g_critical("Cannot open file: %s", pri_xml_filename);
         g_free(pri_xml_filename);
@@ -864,30 +867,38 @@ main(int argc, char **argv)
         exit(1);
     }
 
-    fil_cr_file = cr_open(fil_xml_filename,
-                          CR_CW_MODE_WRITE,
-                          CR_CW_GZ_COMPRESSION);
+    fil_cr_file = cr_xmlfile_open_filelists(fil_xml_filename,
+                                            CR_CW_GZ_COMPRESSION,
+                                            NULL);
     if (!fil_cr_file) {
         g_critical("Cannot open file: %s", fil_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
-        cr_close(pri_cr_file);
+        cr_xmlfile_close(pri_cr_file, NULL);
         exit(1);
     }
 
-    oth_cr_file = cr_open(oth_xml_filename,
-                          CR_CW_MODE_WRITE,
-                          CR_CW_GZ_COMPRESSION);
+    oth_cr_file = cr_xmlfile_open_other(oth_xml_filename,
+                                        CR_CW_GZ_COMPRESSION,
+                                        NULL);
     if (!oth_cr_file) {
         g_critical("Cannot open file: %s", oth_xml_filename);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
-        cr_close(fil_cr_file);
-        cr_close(pri_cr_file);
+        cr_xmlfile_close(fil_cr_file, NULL);
+        cr_xmlfile_close(pri_cr_file, NULL);
         exit(1);
     }
+
+
+    // Set number of packages
+
+    g_debug("Setting number of packages");
+    cr_xmlfile_set_num_of_pkgs(pri_cr_file, package_count, NULL);
+    cr_xmlfile_set_num_of_pkgs(fil_cr_file, package_count, NULL);
+    cr_xmlfile_set_num_of_pkgs(oth_cr_file, package_count, NULL);
 
 
     // Open sqlite databases
@@ -955,21 +966,6 @@ main(int argc, char **argv)
     g_debug("Thread pool user data ready");
 
 
-    // Write XML header
-
-    g_debug("Writing xml headers");
-
-    cr_printf(user_data.pri_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-              "<metadata xmlns=\""CR_XML_COMMON_NS"\" xmlns:rpm=\""
-              CR_XML_RPM_NS"\" packages=\"%d\">\n", package_count);
-    cr_printf(user_data.fil_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-              "<filelists xmlns=\""CR_XML_FILELISTS_NS"\" packages=\"%d\">\n",
-              package_count);
-    cr_printf(user_data.oth_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-              "<otherdata xmlns=\""CR_XML_OTHER_NS"\" packages=\"%d\">\n",
-              package_count);
-
-
     // Start pool
 
     g_thread_pool_set_max_threads(pool, cmd_options->workers, NULL);
@@ -983,13 +979,9 @@ main(int argc, char **argv)
 
     cr_xml_dump_cleanup();
 
-    cr_puts(user_data.pri_f, "</metadata>");
-    cr_puts(user_data.fil_f, "</filelists>");
-    cr_puts(user_data.oth_f, "</otherdata>");
-
-    cr_close(user_data.pri_f);
-    cr_close(user_data.fil_f);
-    cr_close(user_data.oth_f);
+    cr_xmlfile_close(pri_cr_file, NULL);
+    cr_xmlfile_close(fil_cr_file, NULL);
+    cr_xmlfile_close(oth_cr_file, NULL);
 
     g_queue_free(user_data.buffer);
     g_mutex_free(user_data.mutex_buffer);

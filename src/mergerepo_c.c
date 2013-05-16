@@ -563,8 +563,14 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
         GHashTableIter iter;
         gpointer key, void_pkg;
 
+        ml = (struct cr_MetadataLocation *) element->data;
+        if (!ml) {
+            g_critical("Bad repo location");
+            repoid++;
+            break;
+        }
+
         metadata = cr_metadata_new(CR_HT_KEY_HASH, 0, NULL);
-        ml       = (struct cr_MetadataLocation *) element->data;
 
         g_debug("Loading srpms from: %s", ml->original_url);
         if (cr_metadata_load_xml(metadata, ml, NULL) != CRE_OK) {
@@ -873,8 +879,13 @@ merge_repos(GHashTable *merged,
         cr_Metadata metadata;               // current repodata
         struct cr_MetadataLocation *ml;     // location of current repodata
 
+        ml = (struct cr_MetadataLocation *) element->data;
+        if (!ml) {
+            g_critical("Bad location!");
+            break;
+        }
+
         metadata = cr_metadata_new(CR_HT_KEY_HASH, 0, NULL);
-        ml       = (struct cr_MetadataLocation *) element->data;
         repopath = cr_normalize_dir_path(ml->original_url);
 
         // Base paths in output of original createrepo doesn't have trailing '/'
@@ -1514,6 +1525,11 @@ main(int argc, char **argv)
         struct cr_MetadataLocation *noarch_ml;
 
         noarch_ml = cr_locate_metadata(cmd_options->noarch_repo_url, 1, NULL);
+        if (!noarch_ml) {
+            g_error("Cannot locate noarch repo: %s", cmd_options->noarch_repo_url);
+            return 1;
+        }
+
         noarch_metadata = cr_metadata_new(CR_HT_KEY_FILENAME, 0, NULL);
 
         // Base paths in output of original createrepo doesn't have trailing '/'

@@ -1061,12 +1061,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     // Prepare sqlite if needed
 
-    sqlite3 *pri_db = NULL;
-    sqlite3 *fil_db = NULL;
-    sqlite3 *oth_db = NULL;
-    cr_DbPrimaryStatements pri_statements = NULL;
-    cr_DbFilelistsStatements fil_statements = NULL;
-    cr_DbOtherStatements oth_statements = NULL;
+    cr_SqliteDb *pri_db = NULL;
+    cr_SqliteDb *fil_db = NULL;
+    cr_SqliteDb *oth_db = NULL;
 
     if (!cmd_options->no_database) {
         gchar *pri_db_filename = NULL;
@@ -1084,10 +1081,6 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         g_free(pri_db_filename);
         g_free(fil_db_filename);
         g_free(oth_db_filename);
-
-        pri_statements = cr_db_prepare_primary_statements(pri_db, NULL);
-        fil_statements = cr_db_prepare_filelists_statements(fil_db, NULL);
-        oth_statements = cr_db_prepare_other_statements(oth_db, NULL);
     }
 
 
@@ -1113,9 +1106,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
             cr_puts(oth_f, (const char *) res.other);
 
             if (!cmd_options->no_database) {
-                cr_db_add_primary_pkg(pri_statements, pkg, NULL);
-                cr_db_add_filelists_pkg(fil_statements, pkg, NULL);
-                cr_db_add_other_pkg(oth_statements, pkg, NULL);
+                cr_db_add_pkg(pri_db, pkg, NULL);
+                cr_db_add_pkg(fil_db, pkg, NULL);
+                cr_db_add_pkg(oth_db, pkg, NULL);
             }
 
             free(res.primary);
@@ -1218,14 +1211,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         cr_db_dbinfo_update(fil_db, fil_xml_rec->checksum, NULL);
         cr_db_dbinfo_update(oth_db, oth_xml_rec->checksum, NULL);
 
-        // Close dbs
-        cr_db_destroy_primary_statements(pri_statements);
-        cr_db_destroy_filelists_statements(fil_statements);
-        cr_db_destroy_other_statements(oth_statements);
-
-        cr_db_close_primary(pri_db, NULL);
-        cr_db_close_filelists(fil_db, NULL);
-        cr_db_close_other(oth_db, NULL);
+        cr_db_close(pri_db, NULL);
+        cr_db_close(fil_db, NULL);
+        cr_db_close(oth_db, NULL);
 
         // Compress dbs
         gchar *pri_db_filename = g_strconcat(cmd_options->tmp_out_repo, "/primary.sqlite", NULL);

@@ -36,24 +36,20 @@ extern "C" {
  * \code
  * cr_Package *pkg;
  * sqlite3 *primary_db;
- * cr_DbPrimary_Statements primary_statements;
  *
  * // Load pkg (See parsepkg or parsehdr module)
  *
  * // Create primary sqlite database
- * primary_db = cr_db_open_primary("/foo/bar/repodata/primary.sqlite");
- * // Compile statements (to avoid SQL parsing overhead)
- * primary_statements = cr_db_prepare_primary_statements(primary_db, NULL);
+ * primary_db = cr_db_open_primary("/foo/bar/repodata/primary.sqlite", NULL);
  *
  * // Add all packages here
- * cr_db_add_primary_pkg(primary_statements, pkg, NULL);
+ * cr_db_add_pkg(primary_db, pkg, NULL);
  *
  * // Add checksum of XML version of file (primary in this case)
  * cr_db_dbinfo_update(primary_db, "foochecksum", NULL);
  *
  * // Cleanup
- * cr_db_destroy_primary_statements(primary_db);
- * cr_db_close_primary(primary_db, NULL);
+ * cr_db_close(primary_db, NULL);
  * \endcode
  *
  *  \addtogroup sqlite
@@ -61,10 +57,6 @@ extern "C" {
  */
 
 #define CR_DB_CACHE_DBVERSION       10      /*!< Version of DB api */
-
-typedef struct _DbPrimaryStatements   * cr_DbPrimaryStatements;
-typedef struct _DbFilelistsStatements * cr_DbFilelistsStatements;
-typedef struct _DbOtherStatements     * cr_DbOtherStatements;
 
 /** Database type.
  */
@@ -75,6 +67,27 @@ typedef enum {
     CR_DB_SENTINEL,     /*!< sentinel of the list */
 } cr_DatabaseType;
 
+typedef struct _DbPrimaryStatements   * cr_DbPrimaryStatements;
+typedef struct _DbFilelistsStatements * cr_DbFilelistsStatements;
+typedef struct _DbOtherStatements     * cr_DbOtherStatements;
+
+typedef union {
+    cr_DbPrimaryStatements pri;
+    cr_DbFilelistsStatements fil;
+    cr_DbOtherStatements oth;
+} cr_Statements;
+
+/** cr_SqliteDb structure.
+ */
+typedef struct {
+    sqlite3 *db; /*!<
+        Sqlite database */
+    cr_DatabaseType type; /*!<
+        Type of Sqlite database. */
+    cr_Statements statements; /*!<
+        Compiled SQL statements */
+} cr_SqliteDb;
+
 /** Macro over cr_db_open function. Open (create new) primary sqlite sqlite db.
  *  - creates db file
  *  - creates primary tables
@@ -82,7 +95,7 @@ typedef enum {
  *  - tweak some db params
  * @param PATH                  Path to the db file.
  * @param ERR                   **GError
- * @return                      open db pointer
+ * @return                      Opened db or NULL on error
  */
 #define cr_db_open_primary(PATH, ERR)    cr_db_open(PATH, CR_DB_PRIMARY, ERR)
 
@@ -93,7 +106,7 @@ typedef enum {
  *  - tweak some db params
  * @param PATH                  Path to the db file.
  * @param ERR                   **GError
- * @return                      open db pointer
+ * @return                      Opened db or NULL on error
  */
 #define cr_db_open_filelists(PATH, ERR)  cr_db_open(PATH, CR_DB_FILELISTS, ERR)
 
@@ -105,36 +118,9 @@ typedef enum {
  *  - tweak some db params
  * @param PATH                  Path to the db file.
  * @param ERR                   **GError
- * @return                      open db connection
+ * @return                      Opened db or NULL on error
  */
 #define cr_db_open_other(PATH, ERR)      cr_db_open(PATH, CR_DB_OTHER, ERR)
-
-/** Macro over cr_db_close function. Close db.
- *  - creates indexes on tables
- *  - commits transaction
- *  - closes db
- * @param DB                    open db connection
- * @param ERR                   **GError
- */
-#define cr_db_close_primary(DB, ERR)     cr_db_close(DB, CR_DB_PRIMARY, ERR)
-
-/** Macro over cr_db_close function. Close db.
- *  - creates indexes on tables
- *  - commits transaction
- *  - closes db
- * @param DB                    open db connection
- * @param ERR                   **GError
- */
-#define cr_db_close_filelists(DB, ERR)   cr_db_close(DB, CR_DB_FILELISTS, ERR)
-
-/** Macro over cr_db_close function. Close db.
- *  - creates indexes on tables
- *  - commits transaction
- *  - closes db
- * @param DB                    open db connection
- * @param ERR                   **GError
- */
-#define cr_db_close_other(DB, ERR)       cr_db_close(DB, CR_DB_OTHER, ERR)
 
 /** Open (create new) other sqlite sqlite db.
  *  - creates db file
@@ -145,91 +131,41 @@ typedef enum {
  * @param path                  Path to the db file.
  * @param db_type               Type of database (primary, filelists, other)
  * @param err                   **GError
- * @return                      open db connection
+ * @return                      Opened db or NULL on error
  */
-sqlite3 *cr_db_open(const char *path, cr_DatabaseType db_type, GError **err);
-
-/** Prepare compiled statements for use in the cr_db_add_primary_pkg function.
- * @param db                    Open db connection
- * @param err                   **GError
- * @return                      cr_DbPrimaryStatements object
- */
-cr_DbPrimaryStatements cr_db_prepare_primary_statements(sqlite3 *db,
-                                                        GError **err);
-
-/** Prepare compiled statements for use in the cr_db_add_filelists_pkg function.
- * @param db                    Open db connection
- * @param err                   **GError
- * @return                      cr_DbFilelistsStatements object
- */
-cr_DbFilelistsStatements cr_db_prepare_filelists_statements(sqlite3 *db,
-                                                            GError **err);
-
-/** Prepare compiled statements for use in the cr_db_add_other_pkg function.
- * @param db                    Open db connection
- * @param err                   **GError
- * @return                      cr_DbOtherStatements object
- */
-cr_DbOtherStatements cr_db_prepare_other_statements(sqlite3 *db, GError **err);
-
-/** Frees cr_DbPrimaryStatements object.
- * @param stmts                 statements object
- */
-void cr_db_destroy_primary_statements(cr_DbPrimaryStatements stmts);
-
-/** Frees cr_DbFilelistsStatements object.
- * @param stmts                 statements object
- */
-void cr_db_destroy_filelists_statements(cr_DbFilelistsStatements stmts);
-
-/** Frees cr_DbOtherStatements object.
- * @param stmts                 statements object
- */
-void cr_db_destroy_other_statements(cr_DbOtherStatements stmts);
+cr_SqliteDb *cr_db_open(const char *path,
+                        cr_DatabaseType db_type,
+                        GError **err);
 
 /** Add package into the database.
- * @param stmts                 object with compiled statements
+ * @param sqlitedb              open db connection
  * @param pkg                   package object
  * @param err                   **GError
+ * @return                      cr_Error code
  */
-void cr_db_add_primary_pkg(cr_DbPrimaryStatements stmts,
-                           cr_Package *pkg,
-                           GError **err);
-
-/** Add package into the database.
- * @param stmts                 object with compiled statements
- * @param pkg                   package object
- * @param err                   **GError
- */
-void cr_db_add_filelists_pkg(cr_DbFilelistsStatements stmts,
-                             cr_Package *pkg,
-                             GError **err);
-
-/** Add package into the database.
- * @param stmts                 object with compiled statements
- * @param pkg                   package object
- * @param err                   **GError
- */
-void cr_db_add_other_pkg(cr_DbOtherStatements stmts,
-                         cr_Package *pkg,
-                         GError **err);
+int cr_db_add_pkg(cr_SqliteDb *sqlitedb,
+                  cr_Package *pkg,
+                  GError **err);
 
 /** Insert record into the updateinfo table
- * @param db                    open db connection
+ * @param sqlitedb              open db connection
  * @param checksum              compressed xml file checksum
  * @param err                   **GError
+ * @return                      cr_Error code
  */
-void cr_db_dbinfo_update(sqlite3 *db, const char *checksum, GError **err);
+int cr_db_dbinfo_update(cr_SqliteDb *sqlitedb,
+                        const char *checksum,
+                        GError **err);
 
 /** Close db.
  *  - creates indexes on tables
  *  - commits transaction
  *  - closes db
- * @param db                    open db connection
- * @param db_type               Type of database (primary, filelists, other)
+ * @param sqlitedb              open db connection
  * @param err                   **GError
+ * @return                      cr_Error code
  */
-void cr_db_close(sqlite3 *db, cr_DatabaseType db_type, GError **err);
+int cr_db_close(cr_SqliteDb *sqlitedb, GError **err);
 
 /** @} */
 

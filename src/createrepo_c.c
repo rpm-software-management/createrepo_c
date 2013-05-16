@@ -51,9 +51,9 @@ struct UserData {
     cr_XmlFile *pri_f;              // Opened compressed primary.xml.*
     cr_XmlFile *fil_f;              // Opened compressed filelists.xml.*
     cr_XmlFile *oth_f;              // Opened compressed other.xml.*
-    cr_DbPrimaryStatements pri_statements;  // Opened connection to primary.sqlite
-    cr_DbFilelistsStatements fil_statements;// Opened connection to filelists.sqlite
-    cr_DbOtherStatements oth_statements;    // Opened connection to other.sqlite
+    cr_SqliteDb *pri_db;            // Primary db
+    cr_SqliteDb *fil_db;            // Filelists db
+    cr_SqliteDb *oth_db;            // Other db
     int changelog_limit;            // Max number of changelogs for a package
     const char *location_base;      // Base location url
     int repodir_name_len;           // Len of path to repo /foo/bar/repodata
@@ -169,8 +169,8 @@ write_pkg(long id,
         g_cond_wait (udata->cond_pri, udata->mutex_pri);
     udata->id_pri++;
     cr_xmlfile_add_chunk(udata->pri_f, (const char *) res.primary, NULL);
-    if (udata->pri_statements)
-        cr_db_add_primary_pkg(udata->pri_statements, pkg, NULL);
+    if (udata->pri_db)
+        cr_db_add_pkg(udata->pri_db, pkg, NULL);
     g_mutex_unlock(udata->mutex_pri);
     g_cond_broadcast(udata->cond_pri);
 
@@ -180,8 +180,8 @@ write_pkg(long id,
         g_cond_wait (udata->cond_fil, udata->mutex_fil);
     udata->id_fil++;
     cr_xmlfile_add_chunk(udata->fil_f, (const char *) res.filelists, NULL);
-    if (udata->fil_statements)
-        cr_db_add_filelists_pkg(udata->fil_statements, pkg, NULL);
+    if (udata->fil_db)
+        cr_db_add_pkg(udata->fil_db, pkg, NULL);
     g_mutex_unlock(udata->mutex_fil);
     g_cond_broadcast(udata->cond_fil);
 
@@ -191,8 +191,8 @@ write_pkg(long id,
         g_cond_wait (udata->cond_oth, udata->mutex_oth);
     udata->id_oth++;
     cr_xmlfile_add_chunk(udata->oth_f, (const char *) res.other, NULL);
-    if (udata->oth_statements)
-        cr_db_add_other_pkg(udata->oth_statements, pkg, NULL);
+    if (udata->oth_db)
+        cr_db_add_pkg(udata->oth_db, pkg, NULL);
     g_mutex_unlock(udata->mutex_oth);
     g_cond_broadcast(udata->cond_oth);
 }
@@ -906,12 +906,9 @@ main(int argc, char **argv)
     gchar *pri_db_filename = NULL;
     gchar *fil_db_filename = NULL;
     gchar *oth_db_filename = NULL;
-    sqlite3 *pri_db = NULL;
-    sqlite3 *fil_db = NULL;
-    sqlite3 *oth_db = NULL;
-    cr_DbPrimaryStatements pri_statements   = NULL;
-    cr_DbFilelistsStatements fil_statements = NULL;
-    cr_DbOtherStatements oth_statements     = NULL;
+    cr_SqliteDb *pri_db = NULL;
+    cr_SqliteDb *fil_db = NULL;
+    cr_SqliteDb *oth_db = NULL;
 
     if (!cmd_options->no_database) {
         g_message("Preparing sqlite DBs");
@@ -922,9 +919,6 @@ main(int argc, char **argv)
         pri_db = cr_db_open_primary(pri_db_filename, NULL);
         fil_db = cr_db_open_filelists(fil_db_filename, NULL);
         oth_db = cr_db_open_other(oth_db_filename, NULL);
-        pri_statements = cr_db_prepare_primary_statements(pri_db, NULL);
-        fil_statements = cr_db_prepare_filelists_statements(fil_db, NULL);
-        oth_statements = cr_db_prepare_other_statements(oth_db, NULL);
     }
 
 
@@ -939,9 +933,9 @@ main(int argc, char **argv)
     user_data.pri_f             = pri_cr_file;
     user_data.fil_f             = fil_cr_file;
     user_data.oth_f             = oth_cr_file;
-    user_data.pri_statements    = pri_statements;
-    user_data.fil_statements    = fil_statements;
-    user_data.oth_statements    = oth_statements;
+    user_data.pri_db            = pri_db;
+    user_data.fil_db            = fil_db;
+    user_data.oth_db            = oth_db;
     user_data.changelog_limit   = cmd_options->changelog_limit;
     user_data.location_base     = cmd_options->location_base;
     user_data.checksum_type_str = cr_checksum_name_str(cmd_options->checksum_type);
@@ -1053,13 +1047,9 @@ main(int argc, char **argv)
         cr_db_dbinfo_update(fil_db, fil_xml_rec->checksum, NULL);
         cr_db_dbinfo_update(oth_db, oth_xml_rec->checksum, NULL);
 
-        cr_db_destroy_primary_statements(pri_statements);
-        cr_db_destroy_filelists_statements(fil_statements);
-        cr_db_destroy_other_statements(oth_statements);
-
-        cr_db_close_primary(pri_db, NULL);
-        cr_db_close_filelists(fil_db, NULL);
-        cr_db_close_other(oth_db, NULL);
+        cr_db_close(pri_db, NULL);
+        cr_db_close(fil_db, NULL);
+        cr_db_close(oth_db, NULL);
 
 
         // Compress dbs

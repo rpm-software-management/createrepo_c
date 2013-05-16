@@ -164,7 +164,7 @@ test_cr_open_db(TestData *testdata, gconstpointer test_data)
 
     GError *err = NULL;
     gchar *path = NULL;
-    sqlite3 *db;
+    cr_SqliteDb *db;
 
     // Create new db
 
@@ -174,7 +174,7 @@ test_cr_open_db(TestData *testdata, gconstpointer test_data)
     g_assert(!err);
     g_assert(g_file_test(path, G_FILE_TEST_EXISTS));
     g_free(path);
-    cr_db_close_primary(db, &err);
+    cr_db_close(db, &err);
     g_assert(!err);
 
     path = g_strconcat(testdata->tmp_dir, "/", TMP_FILELISTS_NAME, NULL);
@@ -183,7 +183,7 @@ test_cr_open_db(TestData *testdata, gconstpointer test_data)
     g_assert(!err);
     g_assert(g_file_test(path, G_FILE_TEST_EXISTS));
     g_free(path);
-    cr_db_close_filelists(db, &err);
+    cr_db_close(db, &err);
     g_assert(!err);
 
     path = g_strconcat(testdata->tmp_dir, "/", TMP_OTHER_NAME, NULL);
@@ -192,7 +192,7 @@ test_cr_open_db(TestData *testdata, gconstpointer test_data)
     g_assert(!err);
     g_assert(g_file_test(path, G_FILE_TEST_EXISTS));
     g_free(path);
-    cr_db_close_other(db, &err);
+    cr_db_close(db, &err);
     g_assert(!err);
 }
 
@@ -204,15 +204,16 @@ test_cr_db_add_primary_pkg(TestData *testdata, gconstpointer test_data)
 
     GError *err = NULL;
     gchar *path;
-    sqlite3 *db;
+    cr_SqliteDb *db;
     cr_Package *pkg;
 
     GTimer *timer = g_timer_new();
-    gdouble topen, tprepare, tadd, tclean, tmp;
+    gdouble topen, tadd, tclean, tmp;
 
     // Create new db
 
     path = g_strconcat(testdata->tmp_dir, "/", TMP_PRIMARY_NAME, NULL);
+
     g_timer_start(timer);
     db = cr_db_open_primary(path, &err);
     topen = g_timer_elapsed(timer, NULL);
@@ -226,25 +227,17 @@ test_cr_db_add_primary_pkg(TestData *testdata, gconstpointer test_data)
 
     // Add package
 
-    cr_DbPrimaryStatements pri_stmts;
-
     tmp = g_timer_elapsed(timer, NULL);
-    pri_stmts = cr_db_prepare_primary_statements(db, &err);
-    tprepare = g_timer_elapsed(timer, NULL) - tmp;
-    g_assert(!err);
-
-    tmp = g_timer_elapsed(timer, NULL);
-    cr_db_add_primary_pkg(pri_stmts, pkg, &err);
+    cr_db_add_pkg(db, pkg, &err);
     tadd = g_timer_elapsed(timer, NULL) - tmp;
     g_assert(!err);
 
     tmp = g_timer_elapsed(timer, NULL);
-    cr_db_destroy_primary_statements(pri_stmts);
-    cr_db_close_primary(db, &err);
+    cr_db_close(db, &err);
     tclean = g_timer_elapsed(timer, NULL) - tmp;
 
-    printf("Stats:\nOpen:    %f\nPrepare: %f\nAdd:     %f\nCleanup: %f\nSum:     %f\n",
-            topen, tprepare, tadd, tclean, (topen + tprepare + tadd + tclean));
+    printf("Stats:\nOpen:    %f\nAdd:     %f\nCleanup: %f\nSum:     %f\n",
+           topen, tadd, tclean, (tadd + tclean));
 
     // Cleanup
 
@@ -262,7 +255,7 @@ test_cr_db_dbinfo_update(TestData *testdata, gconstpointer test_data)
 
     GError *err = NULL;
     gchar *path;
-    sqlite3 *db;
+    cr_SqliteDb *db;
     cr_Package *pkg;
 
     // Create new db
@@ -284,15 +277,8 @@ test_cr_db_dbinfo_update(TestData *testdata, gconstpointer test_data)
 
     // Add package
 
-    cr_DbPrimaryStatements pri_stmts;
-
-    pri_stmts = cr_db_prepare_primary_statements(db, &err);
+    cr_db_add_pkg(db, pkg, &err);
     g_assert(!err);
-
-    cr_db_add_primary_pkg(pri_stmts, pkg, &err);
-    g_assert(!err);
-
-    cr_db_destroy_primary_statements(pri_stmts);
 
     // Try cr_db_dbinfo_update again
 
@@ -303,7 +289,7 @@ test_cr_db_dbinfo_update(TestData *testdata, gconstpointer test_data)
 
     cr_package_free(pkg);
     g_free(path);
-    cr_db_close_primary(db, &err);
+    cr_db_close(db, &err);
     g_assert(!err);
 }
 
@@ -316,7 +302,7 @@ test_all(TestData *testdata, gconstpointer test_data)
 
     GError *err = NULL;
     gchar *path;
-    sqlite3 *db = NULL;
+    cr_SqliteDb *db = NULL;
     cr_Package *pkg, *pkg2 = NULL;
 
     // Create new db
@@ -343,17 +329,10 @@ test_all(TestData *testdata, gconstpointer test_data)
 
     // Add package
 
-    cr_DbPrimaryStatements pri_stmts;
-
-    pri_stmts = cr_db_prepare_primary_statements(db, &err);
+    cr_db_add_pkg(db, pkg, &err);
     g_assert(!err);
-
-    cr_db_add_primary_pkg(pri_stmts, pkg, &err);
+    cr_db_add_pkg(db, pkg2, &err);
     g_assert(!err);
-    cr_db_add_primary_pkg(pri_stmts, pkg2, &err);
-    g_assert(!err);
-
-    cr_db_destroy_primary_statements(pri_stmts);
 
     // Try cr_db_dbinfo_update again
 
@@ -365,7 +344,7 @@ test_all(TestData *testdata, gconstpointer test_data)
 
     cr_package_free(pkg);
     cr_package_free(pkg2);
-    cr_db_close_primary(db, &err);
+    cr_db_close(db, &err);
     g_assert(!err);
     g_free(path);
 }

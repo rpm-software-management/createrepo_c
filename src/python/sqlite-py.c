@@ -28,9 +28,7 @@
 
 typedef struct {
     PyObject_HEAD
-    int type;           // cr_DatabaseType value or -1
-    void *statements;
-    sqlite3 *db;
+    cr_SqliteDb *db;
 } _SqliteObject;
 
 // Forward declaration
@@ -58,11 +56,8 @@ sqlite_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     CR_UNUSED(args);
     CR_UNUSED(kwds);
     _SqliteObject *self = (_SqliteObject *)type->tp_alloc(type, 0);
-    if (self) {
-        self->type = -1;
-        self->statements = NULL;
+    if (self)
         self->db = NULL;
-    }
     return (PyObject *)self;
 }
 
@@ -93,33 +88,11 @@ sqlite_init(_SqliteObject *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
-    if (self->statements) {
-        if (self->type == CR_DB_PRIMARY)
-            cr_db_destroy_primary_statements(self->statements);
-        else if (self->type == CR_DB_FILELISTS)
-            cr_db_destroy_filelists_statements(self->statements);
-        else if (self->type == CR_DB_OTHER)
-            cr_db_destroy_other_statements(self->statements);
-        self->statements = NULL;
-    }
-
     /* Init */
-    self->type = db_type;
-    if (self->type == CR_DB_PRIMARY)
-        self->db = cr_db_open_primary(path, &err);
-    else if (self->type == CR_DB_FILELISTS)
-        self->db = cr_db_open_filelists(path, &err);
-    else if (self->type == CR_DB_OTHER)
-        self->db = cr_db_open_other(path, &err);
-
+    self->db = cr_db_open(path, db_type, &err);
     if (err) {
         PyErr_Format(CrErr_Exception, "Sqlite initialization failed: %s", err->message);
         g_clear_error(&err);
-        return -1;
-    }
-
-    if (self->db == NULL) {
-        PyErr_SetString(CrErr_Exception, "Sqlite initialization failed");
         return -1;
     }
 
@@ -129,18 +102,8 @@ sqlite_init(_SqliteObject *self, PyObject *args, PyObject *kwds)
 static void
 sqlite_dealloc(_SqliteObject *self)
 {
-    if (self->statements) {
-        if (self->type == CR_DB_PRIMARY)
-            cr_db_destroy_primary_statements(self->statements);
-        else if (self->type == CR_DB_FILELISTS)
-            cr_db_destroy_filelists_statements(self->statements);
-        else if (self->type == CR_DB_OTHER)
-            cr_db_destroy_other_statements(self->statements);
-        self->statements = NULL;
-    }
-
     if (self->db)
-        cr_db_close(self->db, self->type, NULL);
+        cr_db_close(self->db, NULL);
 
     Py_TYPE(self)->tp_free(self);
 }
@@ -149,10 +112,10 @@ static PyObject *
 sqlite_repr(_SqliteObject *self)
 {
     char *type;
-    if (self->type == CR_DB_PRIMARY)        type = "PrimaryDb";
-    else if (self->type == CR_DB_FILELISTS) type = "FilelistsDb";
-    else if (self->type == CR_DB_OTHER)     type = "OtherDb";
-    else                                    type = "UnknownDb";
+    if (self->db->type == CR_DB_PRIMARY)        type = "PrimaryDb";
+    else if (self->db->type == CR_DB_FILELISTS) type = "FilelistsDb";
+    else if (self->db->type == CR_DB_OTHER)     type = "OtherDb";
+    else                                        type = "UnknownDb";
     return PyString_FromFormat("<createrepo_c.Sqlite %s object>", type);
 }
 
@@ -165,34 +128,6 @@ sqlite_repr(_SqliteObject *self)
 /* Sqlite methods */
 
 static PyObject *
-prepare_statements(_SqliteObject *self, void *nothing)
-{
-    CR_UNUSED(nothing);
-    GError *err = NULL;
-
-    if (self->statements)
-        Py_RETURN_NONE;
-
-    if (check_SqliteStatus(self))
-        return NULL;
-
-    if (self->type == CR_DB_PRIMARY)
-        self->statements = cr_db_prepare_primary_statements(self->db, &err);
-    else if (self->type == CR_DB_FILELISTS)
-        self->statements = cr_db_prepare_filelists_statements(self->db, &err);
-    else if (self->type == CR_DB_OTHER)
-        self->statements = cr_db_prepare_other_statements(self->db, &err);
-
-    if (err) {
-        PyErr_Format(CrErr_Exception, "Sqlite statement error: %s", err->message);
-        g_clear_error(&err);
-        return NULL;
-    }
-
-    Py_RETURN_NONE;
-}
-
-static PyObject *
 add_pkg(_SqliteObject *self, PyObject *args)
 {
     PyObject *py_pkg;
@@ -200,17 +135,11 @@ add_pkg(_SqliteObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "O!:add_pkg", &Package_Type, &py_pkg))
         return NULL;
+
     if (check_SqliteStatus(self))
         return NULL;
-    if (!self->statements)
-        Py_XDECREF(prepare_statements(self, NULL));
-    if (self->type == CR_DB_PRIMARY)
-        cr_db_add_primary_pkg(self->statements, Package_FromPyObject(py_pkg), &err);
-    else if (self->type == CR_DB_FILELISTS)
-        cr_db_add_filelists_pkg(self->statements, Package_FromPyObject(py_pkg), &err);
-    else if (self->type == CR_DB_OTHER)
-        cr_db_add_other_pkg(self->statements, Package_FromPyObject(py_pkg), &err);
 
+    cr_db_add_pkg(self->db, Package_FromPyObject(py_pkg), &err);
     if (err) {
         PyErr_Format(CrErr_Exception, "Cannot add package: %s", err->message);
         g_clear_error(&err);
@@ -228,10 +157,11 @@ dbinfo_update(_SqliteObject *self, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "s:dbinfo_update", &checksum))
         return NULL;
+
     if (check_SqliteStatus(self))
         return NULL;
-    cr_db_dbinfo_update(self->db, checksum, &err);
 
+    cr_db_dbinfo_update(self->db, checksum, &err);
     if (err) {
         PyErr_Format(CrErr_Exception, "Sqlite dbinfo_update error: %s", err->message);
         g_clear_error(&err);
@@ -249,7 +179,7 @@ close_db(_SqliteObject *self, void *nothing)
     CR_UNUSED(nothing);
 
     if (self->db) {
-        cr_db_close(self->db, self->type, &err);
+        cr_db_close(self->db, &err);
         self->db = NULL;
         if (err) {
             PyErr_Format(CrErr_Exception, "Sqlite close error: %s", err->message);
@@ -262,7 +192,6 @@ close_db(_SqliteObject *self, void *nothing)
 }
 
 static struct PyMethodDef sqlite_methods[] = {
-    {"_prepare_statements", (PyCFunction)prepare_statements, METH_NOARGS, NULL},
     {"add_pkg", (PyCFunction)add_pkg, METH_VARARGS, NULL},
     {"dbinfo_update", (PyCFunction)dbinfo_update, METH_VARARGS, NULL},
     {"close", (PyCFunction)close_db, METH_NOARGS, NULL},

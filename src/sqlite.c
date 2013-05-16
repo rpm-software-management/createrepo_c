@@ -464,119 +464,35 @@ db_index_other_tables (sqlite3 *db, GError **err)
 }
 
 
-sqlite3 *
-cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
-{
-    int exists;
-    GError *tmp_err = NULL;
-    sqlite3 *db = NULL;
-
-    assert(db_type < CR_DB_SENTINEL);
-
-    if (!path || path[0] == '\0')
-        return db;
-
-    exists = g_file_test(path, G_FILE_TEST_IS_REGULAR);
-
-    sqlite3_enable_shared_cache(1);
-
-    db = open_sqlite_db(path, &tmp_err);
-    if (tmp_err) {
-        g_propagate_error(err, tmp_err);
-        return db;
-    }
-
-    sqlite3_exec(db, "BEGIN", NULL, NULL, NULL);
-
-    db_tweak(db, &tmp_err);
-    if (tmp_err) {
-        g_propagate_error(err, tmp_err);
-        return db;
-    }
-
-    db_create_dbinfo_table(db, &tmp_err);
-    if (tmp_err) {
-        g_propagate_error(err, tmp_err);
-        return db;
-    }
-
-    if (!exists) {
-        // Do not recreate tables, indexes and triggers if db has existed.
-        switch (db_type) {
-            case CR_DB_PRIMARY:
-                db_create_primary_tables(db, &tmp_err); break;
-            case CR_DB_FILELISTS:
-                db_create_filelists_tables(db, &tmp_err); break;
-            case CR_DB_OTHER:
-                db_create_other_tables(db, &tmp_err); break;
-            default:
-                assert(0);
-        }
-
-        if (tmp_err)
-            g_propagate_error(err, tmp_err);
-    }
-
-    return db;
-}
-
-
-void
-cr_db_close(sqlite3 *db, cr_DatabaseType db_type, GError **err)
-{
-    GError *tmp_err = NULL;
-
-    assert(db_type < CR_DB_SENTINEL);
-
-    if (!db)
-        return;
-
-    switch (db_type) {
-        case CR_DB_PRIMARY:
-            db_index_primary_tables(db, &tmp_err); break;
-        case CR_DB_FILELISTS:
-            db_index_filelists_tables(db, &tmp_err); break;
-        case CR_DB_OTHER:
-            db_index_other_tables(db, &tmp_err); break;
-        default:
-            assert(0);
-    }
-
-    if (tmp_err)
-        g_propagate_error(err, tmp_err);
-
-    sqlite3_exec (db, "COMMIT", NULL, NULL, NULL);
-
-    sqlite3_close(db);
-}
-
-
 /*
  * Package insertion stuff
  */
 
 
-void
-cr_db_dbinfo_update(sqlite3 *db, const char *checksum, GError **err)
+int
+cr_db_dbinfo_update(cr_SqliteDb *sqlitedb, const char *checksum, GError **err)
 {
     int rc;
     sqlite3_stmt *handle;
     const char *query = "INSERT INTO db_info (dbversion, checksum) VALUES (?, ?)";
 
+    assert(sqlitedb);
+    assert(!err || *err == NULL);
+
     /* Prepare insert statement */
-    rc = sqlite3_prepare_v2(db, query, -1, &handle, NULL);
+    rc = sqlite3_prepare_v2(sqlitedb->db, query, -1, &handle, NULL);
     if (rc != SQLITE_OK) {
         g_set_error(err, CR_DB_ERROR, CRE_DB,
                     "Cannot prepare db_info update: %s",
-                    sqlite3_errmsg(db));
+                    sqlite3_errmsg(sqlitedb->db));
         g_critical("%s: Cannot prepare db_info update statement: %s",
-                   __func__, sqlite3_errmsg(db));
+                   __func__, sqlite3_errmsg(sqlitedb->db));
         sqlite3_finalize(handle);
-        return;
+        return CRE_DB;
     }
 
     /* Delete all previous content of db_info */
-    sqlite3_exec(db, "DELETE FROM db_info", NULL, NULL, NULL);
+    sqlite3_exec(sqlitedb->db, "DELETE FROM db_info", NULL, NULL, NULL);
 
     /* Perform insert */
     sqlite3_bind_int(handle, 1, CR_DB_CACHE_DBVERSION);
@@ -587,11 +503,13 @@ cr_db_dbinfo_update(sqlite3 *db, const char *checksum, GError **err)
     if (rc != SQLITE_OK) {
         g_set_error(err, CR_DB_ERROR, CRE_DB,
                       "Cannot update dbinfo table: %s",
-                       sqlite3_errmsg (db));
+                       sqlite3_errmsg (sqlitedb->db));
         g_critical("%s: Cannot update dbinfo table: %s",
-                    __func__, sqlite3_errmsg(db));
+                    __func__, sqlite3_errmsg(sqlitedb->db));
+        return CRE_DB;
     }
 
+    return CRE_OK;
 }
 
 
@@ -1377,4 +1295,195 @@ cr_db_add_other_pkg(cr_DbOtherStatements stmts, cr_Package *pkg, GError **err)
             return;
         }
     }
+}
+
+
+// Function from header file (Public interface of the module)
+
+
+cr_SqliteDb *
+cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
+{
+    cr_SqliteDb *sqlitedb = NULL;
+    int exists;
+    sqlite3 *db = NULL;
+    GError *tmp_err = NULL;
+    void *statements;
+
+    assert(path);
+    assert(db_type < CR_DB_SENTINEL);
+    assert(!err || *err == NULL);
+
+    if (path[0] == '\0') {
+        g_set_error(err, CR_DB_ERROR, CRE_BADARG, "Bad path: \"%s\"", path);
+        return NULL;
+    }
+
+    exists = g_file_test(path, G_FILE_TEST_IS_REGULAR);
+
+    sqlite3_enable_shared_cache(1);
+
+    db = open_sqlite_db(path, &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        return NULL;
+    }
+
+    sqlite3_exec(db, "BEGIN", NULL, NULL, NULL);
+
+    db_tweak(db, &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        sqlite3_close(db);
+        return NULL;
+    }
+
+    db_create_dbinfo_table(db, &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        sqlite3_close(db);
+        return NULL;
+    }
+
+    if (!exists) {
+        // Do not recreate tables, indexes and triggers if db has existed.
+        switch (db_type) {
+            case CR_DB_PRIMARY:
+                db_create_primary_tables(db, &tmp_err);
+                break;
+            case CR_DB_FILELISTS:
+                db_create_filelists_tables(db, &tmp_err);
+                break;
+            case CR_DB_OTHER:
+                db_create_other_tables(db, &tmp_err);
+                break;
+            default:
+                assert(0);
+        }
+
+        if (tmp_err) {
+            g_propagate_error(err, tmp_err);
+            sqlite3_close(db);
+            return NULL;
+        }
+    }
+
+    // Compile SQL statements
+    switch (db_type) {
+        case CR_DB_PRIMARY:
+            statements = cr_db_prepare_primary_statements(db, &tmp_err);
+            break;
+        case CR_DB_FILELISTS:
+            statements = cr_db_prepare_filelists_statements(db, &tmp_err);
+            break;
+        case CR_DB_OTHER:
+            statements = cr_db_prepare_other_statements(db, &tmp_err);
+            break;
+        default:
+            assert(0);
+    }
+
+    if (tmp_err) {
+            g_propagate_error(err, tmp_err);
+            sqlite3_close(db);
+            return NULL;
+    }
+
+    sqlitedb = g_new0(cr_SqliteDb, 1);
+    sqlitedb->db         = db;
+    sqlitedb->type       = db_type;
+
+    switch (db_type) {
+        case CR_DB_PRIMARY:
+            sqlitedb->statements.pri = statements;
+            break;
+        case CR_DB_FILELISTS:
+            sqlitedb->statements.fil = statements;
+            break;
+        case CR_DB_OTHER:
+            sqlitedb->statements.oth = statements;
+            break;
+        default:
+            assert(0);
+    }
+
+    return sqlitedb;
+}
+
+
+int
+cr_db_close(cr_SqliteDb *sqlitedb, GError **err)
+{
+    GError *tmp_err = NULL;
+
+    assert(!err || *err == NULL);
+
+    if (!sqlitedb)
+        return CRE_OK;
+
+    switch (sqlitedb->type) {
+        case CR_DB_PRIMARY:
+            db_index_primary_tables(sqlitedb->db, &tmp_err);
+            cr_db_destroy_primary_statements(sqlitedb->statements.pri);
+            break;
+        case CR_DB_FILELISTS:
+            db_index_filelists_tables(sqlitedb->db, &tmp_err);
+            cr_db_destroy_filelists_statements(sqlitedb->statements.fil);
+            break;
+        case CR_DB_OTHER:
+            db_index_other_tables(sqlitedb->db, &tmp_err);
+            cr_db_destroy_other_statements(sqlitedb->statements.oth);
+            break;
+        default:
+            assert(0);
+    }
+
+    if (tmp_err) {
+        int code = tmp_err->code;
+        g_propagate_error(err, tmp_err);
+        return code;
+    }
+
+    sqlite3_exec (sqlitedb->db, "COMMIT", NULL, NULL, NULL);
+    sqlite3_close(sqlitedb->db);
+
+    g_free(sqlitedb);
+
+    return CRE_OK;
+}
+
+
+int
+cr_db_add_pkg(cr_SqliteDb *sqlitedb, cr_Package *pkg, GError **err)
+{
+    GError *tmp_err = NULL;
+
+    assert(sqlitedb);
+    assert(sqlitedb->type < CR_DB_SENTINEL);
+    assert(!err || *err == NULL);
+
+    if (!pkg)
+        return CRE_OK;
+
+    switch (sqlitedb->type) {
+    case CR_DB_PRIMARY:
+        cr_db_add_primary_pkg(sqlitedb->statements.pri, pkg, &tmp_err);
+        break;
+    case CR_DB_FILELISTS:
+        cr_db_add_filelists_pkg(sqlitedb->statements.fil, pkg, &tmp_err);
+        break;
+    case CR_DB_OTHER:
+        cr_db_add_other_pkg(sqlitedb->statements.oth, pkg, &tmp_err);
+        break;
+    default:
+        assert(0);
+    }
+
+    if (tmp_err) {
+        int code = tmp_err->code;
+        g_propagate_error(err, tmp_err);
+        return code;
+    }
+
+    return CRE_OK;
 }

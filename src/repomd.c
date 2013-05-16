@@ -485,8 +485,10 @@ cr_repomd_record_rename_file(cr_RepomdRecord md, GError **err)
     gchar *new_location_href;
     gchar *new_location_real;
 
-    assert(md);
     assert(!err || *err == NULL);
+
+    if (!md)
+        return CRE_OK;
 
     if (!(md->location_real) || !strlen(md->location_real)) {
         g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_BADARG,

@@ -25,6 +25,8 @@
 typedef enum {
     CRE_OK,     /*!<
         No error */
+    CRE_ERROR, /*!<
+        No specified error */
     CRE_IO,     /*!<
         Input/Output error (cannot open file, etc.) */
     CRE_MEMORY, /*!<

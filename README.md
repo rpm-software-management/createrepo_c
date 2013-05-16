@@ -63,6 +63,8 @@ All unit tests run from librepo checkout dir
 
     make tests && make test
 
+Note: For a verbose output of testing use: ``make ARGS="-V" test``
+
 ### Run only C unittests (from your checkout dir):
 
     build/tests/run_gtester.sh

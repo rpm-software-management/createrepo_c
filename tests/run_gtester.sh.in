@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/bin/bash
 
 BINDIR="${CMAKE_BINARY_DIR}/tests/"
 RET=0

@@ -35,7 +35,7 @@ extern "C" {
  * Example:
  * \code
  * cr_Package *pkg;
- * sqlite3 *primary_db;
+ * cr_SqliteDb *primary_db;
  *
  * // Load pkg (See parsepkg or parsehdr module)
  *

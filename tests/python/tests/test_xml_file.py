@@ -142,6 +142,7 @@ class TestCaseXmlFile(unittest.TestCase):
     def test_xmlfile_add_pkg(self):
         pkg = cr.package_from_rpm(PKG_ARCHER_PATH)
         self.assertTrue(pkg)
+        pkg.time_file = 111
 
         # Primary
         path = os.path.join(self.tmpdir, "primary.xml")
@@ -168,7 +169,7 @@ class TestCaseXmlFile(unittest.TestCase):
   <description>Archer package</description>
   <packager>Sterling Archer</packager>
   <url>http://soo_complex_package.eu/</url>
-  <time file="1368446051" build="1365416480"/>
+  <time file="111" build="1365416480"/>
   <size package="3101" installed="0" archive="544"/>
   <location href=""/>
   <format>

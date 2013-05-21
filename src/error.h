@@ -22,6 +22,7 @@
 
 #include <glib.h>
 
+/* Error codes */
 typedef enum {
     CRE_OK,     /*!<
         No error */
@@ -53,6 +54,7 @@ typedef enum {
         Loaded xml metadata are bad */
 } cr_Error;
 
+/* Error domains */
 #define CR_CHECKSUM_ERROR           cr_checksum_error_quark()
 #define CR_DB_ERROR                 cr_db_error_quark()
 #define CR_LOAD_METADATA_ERROR      cr_load_metadata_error_quark()

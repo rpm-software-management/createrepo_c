@@ -95,11 +95,6 @@ typedef enum {
 
 
 struct ParserData {
-    int total_pkgs;
-    int actual_pkg;
-    int pkgs_size;
-    cr_Package **pkgs;
-
     GString *current_string;
     GHashTable *hashtable;
     cr_Package *pkg;

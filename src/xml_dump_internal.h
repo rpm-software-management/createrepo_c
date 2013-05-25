@@ -27,6 +27,12 @@ extern "C" {
 #include "package.h"
 #include <libxml/tree.h>
 
+#define FORMAT_XML      1
+#define FORMAT_LEVEL    0
+
+#define DATE_STR_MAX_LEN    32
+#define SIZE_STR_MAX_LEN    32
+
 /**
  * Dump files from the package and append them to the node as childrens.
  * @param node          parent xml node

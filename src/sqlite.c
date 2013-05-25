@@ -72,6 +72,8 @@ open_sqlite_db(const char *path, GError **err)
     int rc;
     sqlite3 *db = NULL;
 
+    assert(!err || *err == NULL);
+
     rc = sqlite3_open(path, &db);
     if (rc != SQLITE_OK) {
         g_set_error(err, CR_DB_ERROR, CRE_DB,
@@ -90,6 +92,8 @@ db_create_dbinfo_table(sqlite3 *db, GError **err)
     int rc;
     const char *sql;
 
+    assert(!err || *err == NULL);
+
     sql = "CREATE TABLE db_info (dbversion INTEGER, checksum TEXT)";
     rc = sqlite3_exec(db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
@@ -105,6 +109,8 @@ db_create_primary_tables(sqlite3 *db, GError **err)
 {
     int rc;
     const char *sql;
+
+    assert(!err || *err == NULL);
 
     sql =
         "CREATE TABLE packages ("
@@ -215,6 +221,8 @@ db_create_filelists_tables(sqlite3 *db, GError **err)
     int rc;
     const char *sql;
 
+    assert(!err || *err == NULL);
+
     sql =
         "CREATE TABLE packages ("
         "  pkgKey INTEGER PRIMARY KEY,"
@@ -263,6 +271,8 @@ db_create_other_tables (sqlite3 *db, GError **err)
     int rc;
     const char *sql;
 
+    assert(!err || *err == NULL);
+
     sql =
         "CREATE TABLE packages ("
         "  pkgKey INTEGER PRIMARY KEY,"
@@ -310,6 +320,8 @@ db_tweak(sqlite3 *db, GError **err)
 {
     CR_UNUSED(err);
 
+    assert(!err || *err == NULL);
+
     // Do not wait for disk writes to be fully
     // written to disk before continuing
 
@@ -326,6 +338,8 @@ db_index_primary_tables (sqlite3 *db, GError **err)
 {
     int rc;
     const char *sql;
+
+    assert(!err || *err == NULL);
 
     sql = "CREATE INDEX IF NOT EXISTS packagename ON packages (name)";
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
@@ -409,6 +423,8 @@ db_index_filelists_tables (sqlite3 *db, GError **err)
     int rc;
     const char *sql;
 
+    assert(!err || *err == NULL);
+
     sql = "CREATE INDEX IF NOT EXISTS keyfile ON filelist (pkgKey)";
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
@@ -443,6 +459,8 @@ db_index_other_tables (sqlite3 *db, GError **err)
 {
     int rc;
     const char *sql;
+
+    assert(!err || *err == NULL);
 
     sql = "CREATE INDEX IF NOT EXISTS keychange ON changelog (pkgKey)";
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
@@ -525,6 +543,8 @@ db_package_prepare (sqlite3 *db, GError **err)
     sqlite3_stmt *handle = NULL;
     const char *query;
 
+    assert(!err || *err == NULL);
+
     query =
         "INSERT INTO packages ("
         "  pkgId, name, arch, version, epoch, release, summary, description,"
@@ -574,6 +594,8 @@ db_package_write (sqlite3 *db,
                   GError **err)
 {
     int rc;
+
+    assert(!err || *err == NULL);
 
     sqlite3_bind_text (handle, 1,  p->pkgId, -1, SQLITE_STATIC);
     sqlite3_bind_text (handle, 2,  p->name, -1, SQLITE_STATIC);
@@ -626,6 +648,8 @@ db_dependency_prepare (sqlite3 *db, const char *table, GError **err)
     const char *pre_name = "";
     const char *pre_value = "";
 
+    assert(!err || *err == NULL);
+
     if (!strcmp (table, "requires")) {
         pre_name = ", pre";
         pre_value = ", ?";
@@ -658,6 +682,8 @@ db_dependency_write (sqlite3 *db,
                      GError **err)
 {
     int rc;
+
+    assert(!err || *err == NULL);
 
     sqlite3_bind_text (handle, 1, dep->name,    -1, SQLITE_STATIC);
     sqlite3_bind_text (handle, 2, dep->flags,   -1, SQLITE_STATIC);
@@ -692,6 +718,8 @@ db_file_prepare (sqlite3 *db, GError **err)
     sqlite3_stmt *handle = NULL;
     const char *query;
 
+    assert(!err || *err == NULL);
+
     query = "INSERT INTO files (name, type, pkgKey) VALUES (?, ?, ?)";
 
     rc = sqlite3_prepare_v2 (db, query, -1, &handle, NULL);
@@ -715,6 +743,8 @@ db_file_write (sqlite3 *db,
                GError **err)
 {
     int rc;
+
+    assert(!err || *err == NULL);
 
     gchar *fullpath = g_strconcat(file->path, file->name, NULL);
     if (!fullpath)
@@ -759,6 +789,8 @@ db_filelists_prepare (sqlite3 *db, GError **err)
     int rc;
     sqlite3_stmt *handle = NULL;
     const char *query;
+
+    assert(!err || *err == NULL);
 
     query =
         "INSERT INTO filelist (pkgKey, dirname, filenames, filetypes) "
@@ -869,6 +901,8 @@ cr_db_write_file (sqlite3 *db,
     size_t key_len;
     EncodedPackageFile *file = (EncodedPackageFile *) value;
 
+    assert(!err || *err == NULL);
+
     key_len = strlen((const char *) key);
     while (key_len > 1 && ((char *) key)[key_len-1] == '/') {
         // Remove trailing '/' char(s)
@@ -912,6 +946,8 @@ db_changelog_prepare (sqlite3 *db, GError **err)
     sqlite3_stmt *handle = NULL;
     const char *query;
 
+    assert(!err || *err == NULL);
+
     query =
         "INSERT INTO changelog (pkgKey, author, date, changelog) "
         " VALUES (?, ?, ?, ?)";
@@ -939,6 +975,8 @@ db_package_ids_prepare(sqlite3 *db, GError **err)
     sqlite3_stmt *handle = NULL;
     const char *query;
 
+    assert(!err || *err == NULL);
+
     query = "INSERT INTO packages (pkgId) VALUES (?)";
     rc = sqlite3_prepare_v2 (db, query, -1, &handle, NULL);
     if (rc != SQLITE_OK) {
@@ -959,6 +997,8 @@ db_package_ids_write(sqlite3 *db,
                      GError **err)
 {
     int rc;
+
+    assert(!err || *err == NULL);
 
     sqlite3_bind_text (handle, 1,  pkg->pkgId, -1, SQLITE_STATIC);
     rc = sqlite3_step (handle);
@@ -987,6 +1027,8 @@ cr_db_prepare_primary_statements(sqlite3 *db, GError **err)
 {
     GError *tmp_err = NULL;
     cr_DbPrimaryStatements ret = malloc(sizeof(*ret));
+
+    assert(!err || *err == NULL);
 
     ret->db               = db;
     ret->pkg_handle       = NULL;
@@ -1066,6 +1108,8 @@ cr_db_add_primary_pkg(cr_DbPrimaryStatements stmts,
     GError *tmp_err = NULL;
     GSList *iter;
 
+    assert(!err || *err == NULL);
+
     db_package_write(stmts->db, stmts->pkg_handle, pkg, &tmp_err);
     if (tmp_err) {
         g_propagate_error(err, tmp_err);
@@ -1144,6 +1188,8 @@ cr_db_prepare_filelists_statements(sqlite3 *db, GError **err)
     GError *tmp_err = NULL;
     cr_DbFilelistsStatements ret = malloc(sizeof(*ret));
 
+    assert(!err || *err == NULL);
+
     ret->db                = db;
     ret->package_id_handle = NULL;
     ret->filelists_handle  = NULL;
@@ -1185,6 +1231,8 @@ cr_db_add_filelists_pkg(cr_DbFilelistsStatements stmts,
 {
     GError *tmp_err = NULL;
 
+    assert(!err || *err == NULL);
+
     // Add record into the package table
     db_package_ids_write(stmts->db, stmts->package_id_handle, pkg, &tmp_err);
     if (tmp_err) {
@@ -1223,6 +1271,8 @@ cr_db_prepare_other_statements(sqlite3 *db, GError **err)
     GError *tmp_err = NULL;
     cr_DbOtherStatements ret = malloc(sizeof(*ret));
 
+    assert(!err || *err == NULL);
+
     ret->db                = db;
     ret->package_id_handle = NULL;
     ret->changelog_handle  = NULL;
@@ -1260,10 +1310,12 @@ cr_db_destroy_other_statements(cr_DbOtherStatements stmts)
 void
 cr_db_add_other_pkg(cr_DbOtherStatements stmts, cr_Package *pkg, GError **err)
 {
+    int rc;
     GSList *iter;
     cr_ChangelogEntry *entry;
-    int rc;
     GError *tmp_err = NULL;
+
+    assert(!err || *err == NULL);
 
     sqlite3_stmt *handle = stmts->changelog_handle;
 

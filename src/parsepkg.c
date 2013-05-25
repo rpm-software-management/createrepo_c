@@ -124,6 +124,7 @@ cr_package_from_rpm(const char *filename,
     GError *tmp_err = NULL;
 
     assert(filename);
+    assert(!err || *err == NULL);
 
     // Set checksum type
 
@@ -221,9 +222,12 @@ cr_xml_from_rpm(const char *filename,
                 GError **err)
 {
     const char *checksum_type_str;
+    struct cr_XmlStruct result;
     GError *tmp_err = NULL;
 
-    struct cr_XmlStruct result;
+    assert(filename);
+    assert(!err || *err == NULL);
+
     result.primary   = NULL;
     result.filelists = NULL;
     result.other     = NULL;

@@ -34,12 +34,6 @@
 #define OBSOLETES   2
 #define REQUIRES    3
 
-#define FORMAT_XML      1
-#define FORMAT_LEVEL    0
-
-#define DATE_STR_MAX_LEN    32
-#define SIZE_STR_MAX_LEN    32
-
 
 void
 cr_xml_dump_primary_dump_pco(xmlNodePtr root, cr_Package *package, int pcotype)
@@ -372,6 +366,8 @@ cr_xml_dump_primary(cr_Package *package, GError **err)
 {
     xmlNodePtr root;
     char *result;
+
+    assert(!err || *err == NULL);
 
     if (!package)
         return NULL;

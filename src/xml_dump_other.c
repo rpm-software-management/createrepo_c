@@ -30,11 +30,6 @@
 #include "xml_dump.h"
 #include "xml_dump_internal.h"
 
-#define FORMAT_XML      1
-#define FORMAT_LEVEL    0
-
-#define DATE_MAX_LEN    32
-
 
 void
 cr_xml_dump_other_changelog(xmlNodePtr root, cr_Package *package)
@@ -67,8 +62,8 @@ cr_xml_dump_other_changelog(xmlNodePtr root, cr_Package *package)
         cr_xmlNewProp(changelog, BAD_CAST "author", BAD_CAST entry->author);
 
         // Write param date
-        char date_str[DATE_MAX_LEN];
-        g_snprintf(date_str, DATE_MAX_LEN, "%lld", (long long int) entry->date);
+        char date_str[DATE_STR_MAX_LEN];
+        g_snprintf(date_str, DATE_STR_MAX_LEN, "%lld", (long long int) entry->date);
         xmlNewProp(changelog, BAD_CAST "date", BAD_CAST date_str);
     }
 }
@@ -121,6 +116,8 @@ cr_xml_dump_other(cr_Package *package, GError **err)
 {
     xmlNodePtr root;
     char *result;
+
+    assert(!err || *err == NULL);
 
     if (!package)
         return NULL;

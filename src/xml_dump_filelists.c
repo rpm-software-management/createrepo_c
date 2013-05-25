@@ -29,9 +29,6 @@
 #include "xml_dump.h"
 #include "xml_dump_internal.h"
 
-#define FORMAT_XML      1
-#define FORMAT_LEVEL    0
-
 
 void
 cr_xml_dump_filelists_items(xmlNodePtr root, cr_Package *package)
@@ -80,6 +77,8 @@ cr_xml_dump_filelists(cr_Package *package, GError **err)
 {
     xmlNodePtr root;
     char *result;
+
+    assert(!err || *err == NULL);
 
     if (!package)
         return NULL;

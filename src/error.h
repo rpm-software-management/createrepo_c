@@ -52,7 +52,17 @@ typedef enum {
         XML parser error (non valid xml, corrupted xml,  ..) */
     CRE_XMLDATA, /*!<
         Loaded xml metadata are bad */
+    CRE_CBINTERRUPTED, /*!<
+        Interrupted by callback. */
+    CRE_BADXMLFILELISTS, /*!<
+        Bad filelists.xml file */
 } cr_Error;
+
+/** Converts cr_Error return code to error string.
+ * @param rc        cr_Error return code
+ * @return          Error string
+ */
+const char *cr_strerror(cr_Error rc);
 
 /* Error domains */
 #define CR_CHECKSUM_ERROR           cr_checksum_error_quark()
@@ -66,6 +76,9 @@ typedef enum {
 #define CR_XML_DUMP_OTHER_ERROR     cr_xml_dump_other_error_quark()
 #define CR_XML_DUMP_PRIMARY_ERROR   cr_xml_dump_primary_error_quark()
 #define CR_XML_FILE_ERROR           cr_xml_file_error_quark()
+#define CR_XML_PARSER_FIL_ERROR     cr_xml_parser_fil_error_quark()
+#define CR_XML_PARSER_OTH_ERROR     cr_xml_parser_oth_error_quark()
+#define CR_XML_PARSER_PRI_ERROR     cr_xml_parser_pri_error_quark()
 
 GQuark cr_checksum_error_quark(void);
 GQuark cr_db_error_quark(void);
@@ -78,5 +91,8 @@ GQuark cr_xml_dump_filelists_error_quark(void);
 GQuark cr_xml_dump_other_error_quark(void);
 GQuark cr_xml_dump_primary_error_quark(void);
 GQuark cr_xml_file_error_quark(void);
+GQuark cr_xml_parser_fil_error_quark(void);
+GQuark cr_xml_parser_oth_error_quark(void);
+GQuark cr_xml_parser_pri_error_quark(void);
 
 #endif

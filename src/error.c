@@ -19,6 +19,47 @@
 
 #include "error.h"
 
+const char *
+cr_strerror(cr_Error rc)
+{
+    switch (rc) {
+        case CRE_OK:
+            return "No error";
+        case CRE_ERROR:
+            return "No specified error";
+        case CRE_IO:
+            return "Input/Output error";
+        case CRE_MEMORY:
+            return "Out of memory";
+        case CRE_STAT:
+            return "stat() system call failed";
+        case CRE_DB:
+            return "Database error";
+        case CRE_BADARG:
+            return "Bad function argument(s)";
+        case CRE_NOFILE:
+            return "File doesn't exist";
+        case CRE_NODIR:
+            return "Directory doesn't exist";
+        case CRE_EXISTS:
+            return "File/Directory already exists";
+        case CRE_UNKNOWNCHECKSUMTYPE:
+            return "Unknown/Unsupported checksum type";
+        case CRE_UNKNOWNCOMPRESSION:
+            return "Unknown/Usupported compression";
+        case CRE_XMLPARSER:
+            return "Error while parsing XML";
+        case CRE_XMLDATA:
+            return "Loaded XML data are bad";
+        case CRE_CBINTERRUPTED:
+            return "Interrupted by callback";
+        case CRE_BADXMLFILELISTS:
+            return "Bad filelists XML";
+        default:
+            return "Unknown error";
+    }
+}
+
 GQuark
 cr_checksum_error_quark(void)
 {
@@ -83,4 +124,22 @@ GQuark
 cr_xml_file_error_quark(void)
 {
     return g_quark_from_static_string("cr_xml_file_error");
+}
+
+GQuark
+cr_xml_parser_fil_error_quark(void)
+{
+    return g_quark_from_static_string("cr_xml_parser_filelists_error");
+}
+
+GQuark
+cr_xml_parser_oth_error_quark(void)
+{
+    return g_quark_from_static_string("cr_xml_parser_other_error");
+}
+
+GQuark
+cr_xml_parser_pri_error_quark(void)
+{
+    return g_quark_from_static_string("cr_xml_parser_primary_error");
 }

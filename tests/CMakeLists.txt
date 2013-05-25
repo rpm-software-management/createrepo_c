@@ -18,6 +18,10 @@ ADD_EXECUTABLE(test_xml_file test_xml_file.c)
 TARGET_LINK_LIBRARIES(test_xml_file libcreaterepo_c ${GLIB2_LIBRARIES})
 ADD_DEPENDENCIES(tests test_xml_file)
 
+ADD_EXECUTABLE(test_xml_parser_filelists test_xml_parser_filelists.c)
+TARGET_LINK_LIBRARIES(test_xml_parser_filelists libcreaterepo_c ${GLIB2_LIBRARIES})
+ADD_DEPENDENCIES(tests test_xml_parser_filelists)
+
 CONFIGURE_FILE("run_gtester.sh.in"  "run_gtester.sh")
 ADD_TEST(test_main run_gtester.sh)
 

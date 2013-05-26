@@ -347,6 +347,16 @@ cr_xml_parse_filelists(const char *path,
     if (pd->err)
         g_propagate_error(err, pd->err);
 
+    if (ret != CRE_OK && newpkgcb == cr_newpkgcb) {
+        // Prevent memory leak when the parsing is interrupted by an error.
+        // If a new package object was created by the cr_newpkgcb then
+        // is obvious that there is no other reference to the package
+        // except of the parser reference in pd->pkg.
+        // If a caller supplied its own newpkgcb, then the freeing
+        // of the currently parsed package is the caller responsibility.
+        cr_package_free(pd->pkg);
+    }
+
     msgs = cr_xml_parser_data_free(pd);
     XML_ParserFree(parser);
     cr_close(f);

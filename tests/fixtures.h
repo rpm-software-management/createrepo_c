@@ -20,16 +20,17 @@
 #ifndef __C_CREATEREPOLIB_TEST_FIXTURES_H__
 #define __C_CREATEREPOLIB_TEST_FIXTURES_H__
 
-#define TEST_DATA_PATH              "testdata/"
+#define TMPDIR_TEMPLATE                 "/tmp/cr_testXXXXXX"
 
-#define TEST_FILES_PATH             TEST_DATA_PATH"test_files/"
-#define TEST_REPO_00                TEST_DATA_PATH"repo_00/"
-#define TEST_REPO_01                TEST_DATA_PATH"repo_01/"
-#define TEST_REPO_02                TEST_DATA_PATH"repo_02/"
-#define TEST_PACKAGES_PATH          TEST_DATA_PATH"packages/"
-#define TEST_COMPRESSED_FILES_PATH  TEST_DATA_PATH"compressed_files/"
+#define TEST_DATA_PATH                  "testdata/"
 
-#define TMPDIR_TEMPLATE            "/tmp/cr_testXXXXXX"
+#define TEST_COMPRESSED_FILES_PATH      TEST_DATA_PATH"compressed_files/"
+#define TEST_MODIFIED_REPO_FILES_PATH   TEST_DATA_PATH"modified_repo_files/"
+#define TEST_PACKAGES_PATH              TEST_DATA_PATH"packages/"
+#define TEST_REPO_00                    TEST_DATA_PATH"repo_00/"
+#define TEST_REPO_01                    TEST_DATA_PATH"repo_01/"
+#define TEST_REPO_02                    TEST_DATA_PATH"repo_02/"
+#define TEST_FILES_PATH                 TEST_DATA_PATH"test_files/"
 
 // Repo files
 
@@ -44,5 +45,19 @@
 #define TEST_REPO_02_PRIMARY    TEST_REPO_02"repodata/bcde64b04916a2a72fdc257d61bc922c70b3d58e953499180585f7a360ce86cf-primary.xml.gz"
 #define TEST_REPO_02_FILELISTS  TEST_REPO_02"repodata/3b7e6ecd01af9cb674aff6458186911d7081bb5676d5562a21a963afc8a8bcc7-filelists.xml.gz"
 #define TEST_REPO_02_OTHER      TEST_REPO_02"repodata/ab5d3edeea50f9b4ec5ee13e4d25c147e318e3a433dbabc94d3461f58ac28255-other.xml.gz"
+
+// Modified repo files (MFR)
+
+#define TEST_MRF_NO_PKGID_FIL   TEST_MODIFIED_REPO_FILES_PATH"no_pkgid-filelists.xml"
+#define TEST_MRF_NO_PKGID_OTH   TEST_MODIFIED_REPO_FILES_PATH"no_pkgid-other.xml"
+#define TEST_MRF_UE_PRI_00      TEST_MODIFIED_REPO_FILES_PATH"unknown_element_00-primary.xml"
+#define TEST_MRF_UE_PRI_01      TEST_MODIFIED_REPO_FILES_PATH"unknown_element_01-primary.xml"
+#define TEST_MRF_UE_PRI_02      TEST_MODIFIED_REPO_FILES_PATH"unknown_element_02-primary.xml"
+#define TEST_MRF_UE_FIL_00      TEST_MODIFIED_REPO_FILES_PATH"unknown_element_00-filelists.xml"
+#define TEST_MRF_UE_FIL_01      TEST_MODIFIED_REPO_FILES_PATH"unknown_element_01-filelists.xml"
+#define TEST_MRF_UE_FIL_02      TEST_MODIFIED_REPO_FILES_PATH"unknown_element_02-filelists.xml"
+#define TEST_MRF_UE_OTH_00      TEST_MODIFIED_REPO_FILES_PATH"unknown_element_00-other.xml"
+#define TEST_MRF_UE_OTH_01      TEST_MODIFIED_REPO_FILES_PATH"unknown_element_01-other.xml"
+#define TEST_MRF_UE_OTH_02      TEST_MODIFIED_REPO_FILES_PATH"unknown_element_02-other.xml"
 
 #endif

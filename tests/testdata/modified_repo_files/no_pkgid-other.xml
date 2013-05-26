@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<otherdata xmlns="http://linux.duke.edu/metadata/other" packages="2">
+<package pkgid="90f61e546938a11449b710160ad294618a5bd3062e46f8cf851fd0088af184b7" name="fake_bash" arch="x86_64">
+  <version epoch="0" ver="1.1.1" rel="1"/>
+  <changelog author="Tomas Mlcoch &lt;tmlcoch@redhat.com&gt; - 1.1.1-1" date="1334664000">- First release</changelog>
+  <foo>foo element</foo>
+</package>
+<package name="super_kernel" arch="x86_64">
+  <version epoch="0" ver="6.0.1" rel="2"/>
+  <changelog author="Tomas Mlcoch &lt;tmlcoch@redhat.com&gt; - 6.0.1-1" date="1334664000">- First release</changelog>
+  <changelog author="Tomas Mlcoch &lt;tmlcoch@redhat.com&gt; - 6.0.1-2" date="1334664001">- Second release</changelog>
+</package>
+</otherdata>

@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="2">
+<package type="rpm">
+  <name>fake_bash</name>
+  <arch>x86_64</arch>
+  <version epoch="0" ver="1.1.1" rel="1"/>
+  <checksum type="sha256" pkgid="YES">90f61e546938a11449b710160ad294618a5bd3062e46f8cf851fd0088af184b7</checksum>
+  <summary>Fake bash</summary>
+  <description>Fake bash package</description>
+  <packager></packager>
+  <foo>foo element</foo>
+  <url>http://fake_bash_shell.com/</url>
+  <time file="1334670842" build="1334670842"/>
+  <size package="2237" installed="0" archive="256"/>
+<location href="fake_bash-1.1.1-1.x86_64.rpm"/>
+  <format>
+    <rpm:license>GPL</rpm:license>
+    <rpm:vendor/>
+    <rpm:group>System Environment/Shells</rpm:group>
+    <rpm:buildhost>localhost.localdomain</rpm:buildhost>
+    <rpm:sourcerpm>fake_bash-1.1.1-1.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="280" end="2057"/>
+    <rpm:provides>
+      <rpm:entry name="bash"/>
+      <rpm:entry name="fake_bash" flags="EQ" epoch="0" ver="1.1.1" rel="1"/>
+      <rpm:entry name="fake_bash(x86-64)" flags="EQ" epoch="0" ver="1.1.1" rel="1"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="super_kernel"/>
+    </rpm:requires>
+    <file>/usr/bin/fake_bash</file>
+  </format>
+</package>
+<bar>
+  <foo>foo element</foo>
+  <package type="foobar"/>
+</bar>
+<package type="rpm">
+  <name>super_kernel</name>
+  <arch>x86_64</arch>
+  <version epoch="0" ver="6.0.1" rel="2"/>
+  <checksum type="sha256" pkgid="YES">6d43a638af70ef899933b1fd86a866f18f65b0e0e17dcbf2e42bfd0cdd7c63c3</checksum>
+  <summary>Test package</summary>
+  <description>This package has provides, requires, obsoletes, conflicts options.</description>
+  <packager></packager>
+  <url>http://so_super_kernel.com/it_is_awesome/yep_it_really_is</url>
+  <time file="1334670843" build="1334670843"/>
+  <size package="2845" installed="0" archive="404"/>
+<location href="super_kernel-6.0.1-2.x86_64.rpm"/>
+  <format>
+    <rpm:license>LGPLv2</rpm:license>
+    <rpm:vendor/>
+    <rpm:group>Applications/System</rpm:group>
+    <rpm:buildhost>localhost.localdomain</rpm:buildhost>
+    <rpm:sourcerpm>super_kernel-6.0.1-2.src.rpm</rpm:sourcerpm>
+    <rpm:header-range start="280" end="2637"/>
+    <rpm:provides>
+      <rpm:entry name="not_so_super_kernel" flags="LT" epoch="0" ver="5.8.0"/>
+      <rpm:entry name="super_kernel" flags="EQ" epoch="0" ver="6.0.0"/>
+      <rpm:entry name="super_kernel" flags="EQ" epoch="0" ver="6.0.1" rel="2"/>
+      <rpm:entry name="super_kernel(x86-64)" flags="EQ" epoch="0" ver="6.0.1" rel="2"/>
+    </rpm:provides>
+    <rpm:requires>
+      <rpm:entry name="bzip2" flags="GE" epoch="0" ver="1.0.0" pre="1"/>
+      <rpm:entry name="expat" pre="1"/>
+      <rpm:entry name="glib" flags="GE" epoch="0" ver="2.26.0"/>
+      <rpm:entry name="zlib"/>
+    </rpm:requires>
+    <rpm:conflicts>
+      <rpm:entry name="kernel"/>
+      <rpm:entry name="super_kernel" flags="EQ" epoch="0" ver="5.0.0"/>
+      <rpm:entry name="super_kernel" flags="LT" epoch="0" ver="4.0.0"/>
+    </rpm:conflicts>
+    <rpm:obsoletes>
+      <rpm:entry name="kernel"/>
+      <rpm:entry name="super_kernel" flags="EQ" epoch="0" ver="5.9.0"/>
+    </rpm:obsoletes>
+    <file>/usr/bin/super_kernel</file>
+  </format>
+</package>
+</metadata>

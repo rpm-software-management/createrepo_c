@@ -53,8 +53,12 @@ cr_strerror(cr_Error rc)
             return "Loaded XML data are bad";
         case CRE_CBINTERRUPTED:
             return "Interrupted by callback";
+        case CRE_BADXMLPRIMARY:
+            return "Bad primary XML";
         case CRE_BADXMLFILELISTS:
             return "Bad filelists XML";
+        case CRE_BADXMLOTHER:
+            return "Bad other XML";
         default:
             return "Unknown error";
     }

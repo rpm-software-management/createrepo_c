@@ -25,37 +25,41 @@
 /* Error codes */
 typedef enum {
     CRE_OK,     /*!<
-        No error */
+        (0) No error */
     CRE_ERROR, /*!<
-        No specified error */
+        (1) No specified error */
     CRE_IO,     /*!<
-        Input/Output error (cannot open file, etc.) */
+        (2) Input/Output error (cannot open file, etc.) */
     CRE_MEMORY, /*!<
-        Cannot allocate memory */
+        (3) Cannot allocate memory */
     CRE_STAT, /*!<
-        Stat() call failed */
+        (4) Stat() call failed */
     CRE_DB,     /*!<
-        A database error */
+        (5) A database error */
     CRE_BADARG, /*!<
-        At least one argument of function is bad or non complete */
+        (6) At least one argument of function is bad or non complete */
     CRE_NOFILE, /*!<
-        File doesn't exist */
+        (7) File doesn't exist */
     CRE_NODIR, /*!<
-        Directory doesn't exist (not a dir or path doesn't exists) */
+        (8) Directory doesn't exist (not a dir or path doesn't exists) */
     CRE_EXISTS, /*!<
-        File/Directory already exists */
+        (9) File/Directory already exists */
     CRE_UNKNOWNCHECKSUMTYPE, /*!<
-        Unknown/Unsupported checksum type */
+        (10) Unknown/Unsupported checksum type */
     CRE_UNKNOWNCOMPRESSION, /*!<
-        Unknown/Unsupported compression type */
+        (11) Unknown/Unsupported compression type */
     CRE_XMLPARSER, /*!<
-        XML parser error (non valid xml, corrupted xml,  ..) */
+        (12) XML parser error (non valid xml, corrupted xml,  ..) */
     CRE_XMLDATA, /*!<
-        Loaded xml metadata are bad */
+        (13) Loaded xml metadata are bad */
     CRE_CBINTERRUPTED, /*!<
-        Interrupted by callback. */
+        (14) Interrupted by callback. */
+    CRE_BADXMLPRIMARY, /*!<
+        (15) Bad filelists.xml file */
     CRE_BADXMLFILELISTS, /*!<
-        Bad filelists.xml file */
+        (16) Bad filelists.xml file */
+    CRE_BADXMLOTHER, /*!<
+        (17) Bad filelists.xml file */
 } cr_Error;
 
 /** Converts cr_Error return code to error string.

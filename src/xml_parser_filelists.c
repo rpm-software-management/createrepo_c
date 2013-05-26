@@ -126,6 +126,10 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
             else
                 g_set_error(&pd->err, CR_XML_PARSER_FIL_ERROR, CRE_CBINTERRUPTED,
                             "Parsing interrupted");
+        } else {
+            // If callback return CRE_OK but it simultaneously set
+            // the tmp_err then it's a programming error.
+            assert(tmp_err == NULL);
         }
 
         if (pd->pkg) {
@@ -272,7 +276,7 @@ cr_xml_parse_filelists(const char *path,
     assert(!messages || *messages == NULL);
     assert(!err || *err == NULL);
 
-    if (!newpkgcb)
+    if (!newpkgcb)  // Use default newpkgcb
         newpkgcb = cr_newpkgcb;
 
     f = cr_open(path, CR_CW_MODE_READ, CR_CW_AUTO_DETECT_COMPRESSION);

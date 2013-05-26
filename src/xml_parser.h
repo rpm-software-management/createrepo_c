@@ -62,15 +62,6 @@ typedef int (*cr_XmlParserNewPkgCb)(cr_Package **pkg,
                                     void *cbdata,
                                     GError **err);
 
-/** Default callback for the new package.
- */
-int cr_newpkgcb(cr_Package **pkg,
-                const char *pkgId,
-                const char *name,
-                const char *arch,
-                void *cbdata,
-                GError **err);
-
 /** Parse filelists.xml. File could be compressed.
  * @param path          Path to filelists.xml (plain or compressed)
  * @param newpkgcb      Callback for new package (Called when new package

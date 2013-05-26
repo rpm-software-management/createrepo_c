@@ -33,6 +33,7 @@ extern "C" {
 #define XML_BUFFER_SIZE         8192
 #define CONTENT_REALLOC_STEP    256
 
+/* File types in filelists.xml */
 typedef enum {
     FILE_FILE,
     FILE_DIR,
@@ -88,10 +89,19 @@ typedef struct _cr_ParserData {
     int last_file_type;
 } cr_ParserData;
 
+/** Malloc and initialize common part of XML parser data.
+ */
 cr_ParserData *cr_xml_parser_data();
 
+/** Frees XML parser data.
+ */
 char *cr_xml_parser_data_free(cr_ParserData *pd);
 
+/** Find attribute in list of attributes.
+ * @param name      Attribute name.
+ * @param attr      List of attributes of the tag
+ * @return          Value or NULL
+ */
 static inline const char *
 cr_find_attr(const char *name, const char **attr)
 {
@@ -104,7 +114,18 @@ cr_find_attr(const char *name, const char **attr)
     return NULL;
 }
 
+/** XML character handler
+ */
 void XMLCALL cr_char_handler(void *pdata, const XML_Char *s, int len);
+
+/** Default callback for the new package.
+ */
+int cr_newpkgcb(cr_Package **pkg,
+                const char *pkgId,
+                const char *name,
+                const char *arch,
+                void *cbdata,
+                GError **err);
 
 #ifdef __cplusplus
 }

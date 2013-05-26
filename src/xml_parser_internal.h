@@ -80,7 +80,7 @@ typedef struct _cr_ParserData {
         The package which is currently loaded. */
     GString                 *msgs;              /*!<
         Messages from xml parser (warnings about unknown elements etc.) */
-    GError **err;                               /*!<
+    GError *err;                                /*!<
         Error message */
 
     /* Filelists related stuff */
@@ -90,7 +90,7 @@ typedef struct _cr_ParserData {
 
 cr_ParserData *cr_xml_parser_data();
 
-void cr_xml_parser_data_free(cr_ParserData *pd);
+char *cr_xml_parser_data_free(cr_ParserData *pd);
 
 static inline const char *
 cr_find_attr(const char *name, const char **attr)

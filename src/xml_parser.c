@@ -5,23 +5,29 @@
 #include "misc.h"
 
 cr_ParserData *
-cr_xml_parser_data()
+cr_xml_parser_data(unsigned int numstates)
 {
     cr_ParserData *pd = g_new0(cr_ParserData, 1);
     pd->ret = CRE_OK;
     pd->content = g_malloc(CONTENT_REALLOC_STEP);
     pd->acontent = CONTENT_REALLOC_STEP;
     pd->msgs = g_string_new(0);
+    pd->swtab = g_malloc0(sizeof(cr_StatesSwitch *) * numstates);
+    pd->sbtab = g_malloc(sizeof(unsigned int) * numstates);
 
     return pd;
 }
 
-void
+char *
 cr_xml_parser_data_free(cr_ParserData *pd)
 {
+    char *msgs;
     g_free(pd->content);
-    g_string_free(pd->msgs, TRUE);
+    msgs = g_string_free(pd->msgs, FALSE);
+    g_free(pd->swtab);
+    g_free(pd->sbtab);
     g_free(pd);
+    return msgs;
 }
 
 void XMLCALL
@@ -37,7 +43,6 @@ cr_char_handler(void *pdata, const XML_Char *s, int len)
     if (!pd->docontent)
         return; /* Do not store the content */
 
-    /* XXX: TODO: Maybe rewrite this reallocation step */
     l = pd->lcontent + len + 1;
     if (l > pd->acontent) {
         pd->acontent = l + CONTENT_REALLOC_STEP;

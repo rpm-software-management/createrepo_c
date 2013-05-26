@@ -62,6 +62,8 @@ typedef int (*cr_XmlParserNewPkgCb)(cr_Package **pkg,
                                     void *cbdata,
                                     GError **err);
 
+/** Default callback for the new package.
+ */
 int cr_newpkgcb(cr_Package **pkg,
                 const char *pkgId,
                 const char *name,
@@ -69,14 +71,28 @@ int cr_newpkgcb(cr_Package **pkg,
                 void *cbdata,
                 GError **err);
 
+/** Parse filelists.xml. File could be compressed.
+ * @param path          Path to filelists.xml (plain or compressed)
+ * @param newpkgcb      Callback for new package (Called when new package
+ *                      xml chunk is found and package object to store
+ *                      the data is needed). If NULL cr_newpkgcb is used.
+ * @param newpkgcb_data User data for the newpkgcb.
+ * @param pkgcb         Package callback. (Called when complete package
+ *                      xml chunk is parsed.). Could be NULL if newpkgcb is
+ *                      not NULL.
+ * @param pkgcb_data    User data for the pkgcb.
+ * @param messages      Pointer to char* where messages (warnings)
+ *                      from parsing will be stored.
+ * @param err           GError **
+ * @return              cr_Error code.
+ */
 int cr_xml_parse_filelists(const char *path,
                            cr_XmlParserNewPkgCb newpkgcb,
                            void *newpkgcb_data,
                            cr_XmlParserPkgCb pkgcb,
                            void *pkgcb_data,
+                           char **messages,
                            GError **err);
-
-
 /** @} */
 
 #ifdef __cplusplus

@@ -73,7 +73,6 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
     if (!pd->swtab[pd->state])
          return;  // Current element should not have any sub elements
 
-    /* TODO TEST THIS */
     if (!pd->pkg && pd->state != STATE_FILELISTS && pd->state != STATE_START)
         return;  // Do not parse current package tag and its content
 
@@ -97,18 +96,21 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         break;
 
     case STATE_PACKAGE: {
-        /* TODO: Parse all attrs in single loop instead of use cr_find_attr */
         const char *pkgId = cr_find_attr("pkgid", attr);
         const char *name  = cr_find_attr("name", attr);
         const char *arch  = cr_find_attr("arch", attr);
 
+
         if (!pkgId) {
+            // Package without a pkgid attr is error
             pd->ret = CRE_BADXMLFILELISTS;
-            g_set_error(pd->err, CR_XML_PARSER_FIL_ERROR, CRE_BADXMLFILELISTS,
+            g_set_error(&pd->err, CR_XML_PARSER_FIL_ERROR, CRE_BADXMLFILELISTS,
                         "Package pkgid attributte is missing!");
             break;
         }
 
+        // Get package object to store current package or NULL if
+        // current XML package element shoud be skipped/ignored.
         if (pd->newpkgcb(&pd->pkg,
                          pkgId,
                          name,
@@ -118,20 +120,40 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         {
             pd->ret = CRE_CBINTERRUPTED;
             if (tmp_err)
-                g_propagate_prefixed_error(pd->err,
+                g_propagate_prefixed_error(&pd->err,
                                            tmp_err,
                                            "Parsing interrupted:");
             else
-                g_set_error(pd->err, CR_XML_PARSER_FIL_ERROR, CRE_CBINTERRUPTED,
+                g_set_error(&pd->err, CR_XML_PARSER_FIL_ERROR, CRE_CBINTERRUPTED,
                             "Parsing interrupted");
         }
 
-        /* TODO: Insert name and pkg id to the package */
+        if (pd->pkg) {
+            if (!pd->pkg->pkgId)
+                pd->pkg->pkgId = g_string_chunk_insert(pd->pkg->chunk, pkgId);
+            if (!pd->pkg->name && name)
+                pd->pkg->name = g_string_chunk_insert(pd->pkg->chunk, name);
+            if (!pd->pkg->arch && arch)
+                pd->pkg->arch = g_string_chunk_insert(pd->pkg->chunk, arch);
+        }
         break;
     }
 
     case STATE_VERSION:
-        /* TODO: Parse version */
+        if (!pd->pkg)
+            break;
+
+        // Version string insert only if them don't already exists
+
+        if (!pd->pkg->epoch)
+            pd->pkg->epoch = cr_safe_string_chunk_insert(pd->pkg->chunk,
+                                            cr_find_attr("epoch", attr));
+        if (!pd->pkg->version)
+            pd->pkg->version = cr_safe_string_chunk_insert(pd->pkg->chunk,
+                                            cr_find_attr("ver", attr));
+        if (!pd->pkg->release)
+            pd->pkg->release = cr_safe_string_chunk_insert(pd->pkg->chunk,
+                                            cr_find_attr("rel", attr));
         break;
 
     case STATE_FILE: {
@@ -188,16 +210,21 @@ cr_end_handler(void *pdata, const char *element)
         if (!pd->pkg)
             return;
 
-        if (pd->pkgcb(pd->pkg, pd->pkgcb_data, &tmp_err)) {
+        if (pd->pkgcb && pd->pkgcb(pd->pkg, pd->pkgcb_data, &tmp_err)) {
             pd->ret = CRE_CBINTERRUPTED;
             if (tmp_err)
-                g_propagate_prefixed_error(pd->err,
+                g_propagate_prefixed_error(&pd->err,
                                            tmp_err,
                                            "Parsing interrupted:");
             else
-                g_set_error(pd->err, CR_XML_PARSER_FIL_ERROR, CRE_CBINTERRUPTED,
+                g_set_error(&pd->err, CR_XML_PARSER_FIL_ERROR, CRE_CBINTERRUPTED,
                             "Parsing interrupted");
+        } else {
+            // If callback return CRE_OK but it simultaneously set
+            // the tmp_err then it's a programming error.
+            assert(tmp_err == NULL);
         }
+
         pd->pkg = NULL;
         break;
 
@@ -231,15 +258,18 @@ cr_xml_parse_filelists(const char *path,
                        void *newpkgcb_data,
                        cr_XmlParserPkgCb pkgcb,
                        void *pkgcb_data,
+                       char **messages,
                        GError **err)
 {
     int ret = CRE_OK;
     CR_FILE *f;
     cr_ParserData *pd;
     XML_Parser parser;
+    char *msgs;
 
     assert(path);
-    assert(pkgcb);
+    assert(newpkgcb || pkgcb);
+    assert(!messages || *messages == NULL);
     assert(!err || *err == NULL);
 
     if (!newpkgcb)
@@ -255,15 +285,13 @@ cr_xml_parse_filelists(const char *path,
     XML_SetElementHandler(parser, cr_start_handler, cr_end_handler);
     XML_SetCharacterDataHandler(parser, cr_char_handler);
 
-    pd = cr_xml_parser_data();
+    pd = cr_xml_parser_data(NUMSTATES);
     pd->parser = &parser;
     pd->state = STATE_START;
     pd->newpkgcb_data = newpkgcb_data;
     pd->newpkgcb = newpkgcb;
     pd->pkgcb_data = pkgcb_data;
     pd->pkgcb = pkgcb;
-    pd->swtab = g_malloc0(sizeof(cr_StatesSwitch *) * NUMSTATES);
-    pd->sbtab = g_malloc(sizeof(cr_FilState) * NUMSTATES);
     for (cr_StatesSwitch *sw = stateswitches; sw->from != NUMSTATES; sw++) {
         if (!pd->swtab[sw->from])
             pd->swtab[sw->from] = sw;
@@ -303,17 +331,26 @@ cr_xml_parse_filelists(const char *path,
             break;
         }
 
-        if (len == 0)
-            break;
-
         if (pd->ret != CRE_OK) {
             ret = pd->ret;
             break;
         }
+
+        if (len == 0)
+            break;
     }
 
-    cr_xml_parser_data_free(pd);
+    if (pd->err)
+        g_propagate_error(err, pd->err);
+
+    msgs = cr_xml_parser_data_free(pd);
     XML_ParserFree(parser);
+    cr_close(f);
+
+    if (messages)
+        *messages = msgs;
+    else
+        g_free(msgs);
 
     return ret;
 }

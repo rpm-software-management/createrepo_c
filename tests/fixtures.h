@@ -48,6 +48,7 @@
 
 // Modified repo files (MFR)
 
+#define TEST_MRF_BAD_TYPE_FIL   TEST_MODIFIED_REPO_FILES_PATH"bad_file_type-filelists.xml"
 #define TEST_MRF_NO_PKGID_FIL   TEST_MODIFIED_REPO_FILES_PATH"no_pkgid-filelists.xml"
 #define TEST_MRF_NO_PKGID_OTH   TEST_MODIFIED_REPO_FILES_PATH"no_pkgid-other.xml"
 #define TEST_MRF_UE_PRI_00      TEST_MODIFIED_REPO_FILES_PATH"unknown_element_00-primary.xml"

@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include "fixtures.h"
+#include "createrepo/error.h"
 #include "createrepo/misc.h"
 #include "createrepo/compression_wrapper.h"
 
@@ -409,6 +410,43 @@ outputtest_cw_output(Outputtest *outputtest, gconstpointer test_data)
 }
 
 
+static void
+test_cr_error_handling(void)
+{
+    GError *tmp_err = NULL;
+    cr_CompressionType type;
+    CR_FILE *f;
+
+    type = cr_detect_compression("/filename/that/should/not/exists", &tmp_err);
+    g_assert_cmpint(type, ==, CR_CW_UNKNOWN_COMPRESSION);
+    g_assert(tmp_err);
+    g_assert_cmpint(tmp_err->code, ==, CRE_NOFILE);
+    g_error_free(tmp_err);
+    tmp_err = NULL;
+
+    type = cr_detect_compression("/", &tmp_err);
+    g_assert_cmpint(type, ==, CR_CW_UNKNOWN_COMPRESSION);
+    g_assert(tmp_err);
+    g_assert_cmpint(tmp_err->code, ==, CRE_NOFILE);
+    g_error_free(tmp_err);
+    tmp_err = NULL;
+
+    f = cr_open("/", CR_CW_MODE_READ, CR_CW_AUTO_DETECT_COMPRESSION, &tmp_err);
+    g_assert(!f);
+    g_assert(tmp_err);
+    g_assert_cmpint(tmp_err->code, ==, CRE_NOFILE);
+    g_error_free(tmp_err);
+    tmp_err = NULL;
+
+    f = cr_open("/", CR_CW_MODE_WRITE, CR_CW_NO_COMPRESSION, &tmp_err);
+    g_assert(!f);
+    g_assert(tmp_err);
+    g_assert_cmpint(tmp_err->code, ==, CRE_IO);
+    g_error_free(tmp_err);
+    tmp_err = NULL;
+
+}
+
 
 int
 main(int argc, char *argv[])
@@ -425,6 +463,8 @@ main(int argc, char *argv[])
             test_cr_read_with_autodetection);
     g_test_add("/compression_wrapper/outputtest_cw_output", Outputtest, NULL,
             outputtest_setup, outputtest_cw_output, outputtest_teardown);
+    g_test_add_func("/compression_wrapper/test_cr_error_handling",
+            test_cr_error_handling);
 
     return g_test_run();
 }

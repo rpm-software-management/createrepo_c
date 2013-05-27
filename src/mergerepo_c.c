@@ -35,6 +35,7 @@
 #include "xml_dump.h"
 #include "repomd.h"
 #include "sqlite.h"
+#include "xml_file.h"
 
 
 // TODO:
@@ -482,6 +483,7 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
     gchar *pkgorigins_path = NULL;
     GSList *element;
     int repoid;
+    GError *tmp_err = NULL;
 
     // Pointers to elements in the koji_stuff_ptr
     GHashTable *blocked_srpms = NULL; // XXX
@@ -543,9 +545,11 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
     pkgorigins_path = g_strconcat(cmd_options->tmp_out_repo, "pkgorigins.gz", NULL);
     koji_stuff->pkgorigins = cr_open(pkgorigins_path,
                                      CR_CW_MODE_WRITE,
-                                     CR_CW_GZ_COMPRESSION);
-    if (!koji_stuff->pkgorigins) {
-        g_critical("Cannot open file: %s", pkgorigins_path);
+                                     CR_CW_GZ_COMPRESSION,
+                                     &tmp_err);
+    if (tmp_err) {
+        g_critical("Cannot open %s: %s", pkgorigins_path, tmp_err->message);
+        g_error_free(tmp_err);
         g_free(pkgorigins_path);
         return 1;
     }
@@ -675,7 +679,7 @@ koji_stuff_destroy(struct KojiMergedReposStuff **koji_stuff_ptr)
         g_hash_table_destroy(koji_stuff->blocked_srpms);
     g_hash_table_destroy(koji_stuff->include_srpms);
     g_hash_table_destroy(koji_stuff->seen_rpms);
-    cr_close(koji_stuff->pkgorigins);
+    cr_close(koji_stuff->pkgorigins, NULL);
     g_free(koji_stuff);
 }
 
@@ -951,7 +955,8 @@ merge_repos(GHashTable *merged,
                     // Koji-mergerepos specific behaviour -----------
                     if (koji_stuff && koji_stuff->pkgorigins) {
                         gchar *nvra = cr_package_nvra(pkg);
-                        cr_printf(koji_stuff->pkgorigins,
+                        cr_printf(NULL,
+                                  koji_stuff->pkgorigins,
                                   "%s\t%s\n",
                                   nvra, ml->original_url);
                         g_free(nvra);
@@ -998,11 +1003,13 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                      gchar *groupfile,
                      struct CmdOptions *cmd_options)
 {
+    GError *tmp_err = NULL;
+
     // Create/Open output xml files
 
-    CR_FILE *pri_f;
-    CR_FILE *fil_f;
-    CR_FILE *oth_f;
+    cr_XmlFile *pri_f;
+    cr_XmlFile *fil_f;
+    cr_XmlFile *oth_f;
 
     const char *groupfile_suffix = cr_compression_suffix(cmd_options->groupfile_compression_type);
 
@@ -1015,8 +1022,12 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                                             "/updateinfo.xml",
                                             groupfile_suffix, NULL);
 
-    if ((pri_f = cr_open(pri_xml_filename, CR_CW_MODE_WRITE, CR_CW_GZ_COMPRESSION)) == NULL) {
-        g_critical("Cannot open file: %s", pri_xml_filename);
+    pri_f = cr_xmlfile_open_primary(pri_xml_filename,
+                                    CR_CW_GZ_COMPRESSION,
+                                    &tmp_err);
+    if (tmp_err) {
+        g_critical("Cannot open %s: %s", pri_xml_filename, tmp_err->message);
+        g_error_free(tmp_err);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
@@ -1024,39 +1035,37 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         return 0;
     }
 
-    if ((fil_f = cr_open(fil_xml_filename, CR_CW_MODE_WRITE, CR_CW_GZ_COMPRESSION)) == NULL) {
-        g_critical("Cannot open file: %s", fil_xml_filename);
+    fil_f = cr_xmlfile_open_filelists(fil_xml_filename,
+                                      CR_CW_GZ_COMPRESSION,
+                                      &tmp_err);
+    if (tmp_err) {
+        g_critical("Cannot open %s: %s", fil_xml_filename, tmp_err->message);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
         g_free(update_info_filename);
-        cr_close(pri_f);
+        cr_xmlfile_close(pri_f, NULL);
         return 0;
     }
 
-    if ((oth_f = cr_open(oth_xml_filename, CR_CW_MODE_WRITE, CR_CW_GZ_COMPRESSION)) == NULL) {
-        g_critical("Cannot open file: %s", oth_xml_filename);
+    oth_f = cr_xmlfile_open_other(oth_xml_filename,
+                                  CR_CW_GZ_COMPRESSION,
+                                  &tmp_err);
+    if (tmp_err) {
+        g_critical("Cannot open %s: %s", oth_xml_filename, tmp_err->message);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
         g_free(update_info_filename);
-        cr_close(fil_f);
-        cr_close(pri_f);
+        cr_xmlfile_close(fil_f, NULL);
+        cr_xmlfile_close(pri_f, NULL);
         return 0;
     }
 
 
-    // Write xml headers
-
-    cr_printf(pri_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-              "<metadata xmlns=\""CR_XML_COMMON_NS"\" xmlns:rpm=\""
-              CR_XML_RPM_NS"\" packages=\"%d\">\n", packages);
-    cr_printf(fil_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-              "<filelists xmlns=\""CR_XML_FILELISTS_NS"\" packages=\"%d\">\n",
-              packages);
-    cr_printf(oth_f, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-              "<otherdata xmlns=\""CR_XML_OTHER_NS"\" packages=\"%d\">\n",
-              packages);
+    cr_xmlfile_set_num_of_pkgs(pri_f, packages, NULL);
+    cr_xmlfile_set_num_of_pkgs(fil_f, packages, NULL);
+    cr_xmlfile_set_num_of_pkgs(oth_f, packages, NULL);
 
 
     // Prepare sqlite if needed
@@ -1101,9 +1110,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
             pkg = (cr_Package *) element->data;
             res = cr_xml_dump(pkg, NULL);
 
-            cr_puts(pri_f, (const char *) res.primary);
-            cr_puts(fil_f, (const char *) res.filelists);
-            cr_puts(oth_f, (const char *) res.other);
+            cr_xmlfile_add_chunk(pri_f, (const char *) res.primary, NULL);
+            cr_xmlfile_add_chunk(fil_f, (const char *) res.filelists, NULL);
+            cr_xmlfile_add_chunk(oth_f, (const char *) res.other, NULL);
 
             if (!cmd_options->no_database) {
                 cr_db_add_pkg(pri_db, pkg, NULL);
@@ -1119,30 +1128,32 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     g_list_free(keys);
 
-    // Write xml footers
-
-    cr_puts(pri_f, "</metadata>");
-    cr_puts(fil_f, "</filelists>");
-    cr_puts(oth_f, "</otherdata>");
-
 
     // Close files
 
-    cr_close(pri_f);
-    cr_close(fil_f);
-    cr_close(oth_f);
+    cr_xmlfile_close(pri_f, NULL);
+    cr_xmlfile_close(fil_f, NULL);
+    cr_xmlfile_close(oth_f, NULL);
 
 
     // Write updateinfo.xml
     // TODO
 
     if (!cmd_options->noupdateinfo) {
-        CR_FILE *update_info = NULL;
-        if ((update_info = cr_open(update_info_filename, CR_CW_MODE_WRITE, cmd_options->groupfile_compression_type))) {
-            cr_puts(update_info, "<?xml version=\"1.0\"?>\n<updates></updates>\n");
-            cr_close(update_info);
+        CR_FILE *update_info = cr_open(update_info_filename,
+                                       CR_CW_MODE_WRITE,
+                                       cmd_options->groupfile_compression_type,
+                                       &tmp_err);
+        if (!tmp_err) {
+            cr_puts(update_info,
+                    "<?xml version=\"1.0\"?>\n<updates></updates>\n",
+                    NULL);
+            cr_close(update_info, NULL);
         } else {
-            g_warning("Cannot open file: %s", update_info_filename);
+            g_warning("Cannot open %s: %s",
+                      update_info_filename,
+                      tmp_err->message);
+            g_error_free(tmp_err);
         }
     }
 

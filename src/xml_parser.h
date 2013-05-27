@@ -31,11 +31,15 @@ extern "C" {
  *  @{
  */
 
+#define CR_CB_RET_OK    0
+#define CR_CB_RET_ERR   1
+
+
 /** Callback for XML parser wich is called when a package element is parsed.
  * @param pkg       Currently parsed package.
  * @param cbdata    User data.
  * @err             GError **
- * @return          0 - OK, 1 - ERROR (stops the parsing)
+ * @return          CR_CB_RET_OK (0) or CR_CB_RET_ERR (1) - stops the parsing
  */
 typedef int (*cr_XmlParserPkgCb)(cr_Package *pkg,
                                  void *cbdata,
@@ -47,13 +51,13 @@ typedef int (*cr_XmlParserPkgCb)(cr_Package *pkg,
  * filled (by other XML parsers) package object.
  * If the pointer is set to NULL, current package will be skiped.
  * Note: For the primary.xml file pkgId, name and arch are NULL!
- * @param pkg           Package that will be populated.
- * @param pkgId         pkgId (hash) of the new package.
- * @param name          Name of the new package.
- * @param arch          Arch of the new package.
- * @param cbdata        User data.
- * @param err           GError **
- * @return              0 - OK, 1 - ERR (stops the parsing)
+ * @param pkg       Package that will be populated.
+ * @param pkgId     pkgId (hash) of the new package.
+ * @param name      Name of the new package.
+ * @param arch      Arch of the new package.
+ * @param cbdata    User data.
+ * @param err       GError **
+ * @return          CR_CB_RET_OK (0) or CR_CB_RET_ERR (1) - stops the parsing
  */
 typedef int (*cr_XmlParserNewPkgCb)(cr_Package **pkg,
                                     const char *pkgId,

@@ -8,7 +8,6 @@ cr_ParserData *
 cr_xml_parser_data(unsigned int numstates)
 {
     cr_ParserData *pd = g_new0(cr_ParserData, 1);
-    pd->ret = CRE_OK;
     pd->content = g_malloc(CONTENT_REALLOC_STEP);
     pd->acontent = CONTENT_REALLOC_STEP;
     pd->msgs = g_string_new(0);
@@ -37,7 +36,7 @@ cr_char_handler(void *pdata, const XML_Char *s, int len)
     char *c;
     cr_ParserData *pd = pdata;
 
-    if (pd->ret != CRE_OK)
+    if (pd->err)
         return; /* There was an error -> do nothing */
 
     if (!pd->docontent)
@@ -75,4 +74,84 @@ cr_newpkgcb(cr_Package **pkg,
     *pkg = cr_package_new();
 
     return CRE_OK;
+}
+
+int
+cr_xml_parser_generic(XML_Parser parser,
+                      cr_ParserData *pd,
+                      const char *path,
+                      GError **err)
+{
+    /* Note: This function uses .err members of cr_ParserData! */
+
+    int ret = CRE_OK;
+    CR_FILE *f;
+    GError *tmp_err = NULL;
+
+    assert(parser);
+    assert(pd);
+    assert(path);
+    assert(!err || *err == NULL);
+
+    f = cr_open(path, CR_CW_MODE_READ, CR_CW_AUTO_DETECT_COMPRESSION, &tmp_err);
+    if (tmp_err) {
+        int code = tmp_err->code;
+        g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", path);
+        return code;
+    }
+
+    while (1) {
+        int len;
+        void *buf = XML_GetBuffer(parser, XML_BUFFER_SIZE);
+        if (!buf) {
+            ret = CRE_MEMORY;
+            g_set_error(err, CR_XML_PARSER_FIL_ERROR, CRE_MEMORY,
+                        "Out of memory: Cannot allocate buffer for xml parser");
+            break;
+        }
+
+        len = cr_read(f, buf, XML_BUFFER_SIZE, &tmp_err);
+        if (tmp_err) {
+            ret = tmp_err->code;
+            g_critical("%s: Error while reading xml : %s\n",
+                       __func__, tmp_err->message);
+            g_propagate_prefixed_error(err, tmp_err, "Read error: ");
+            break;
+        }
+
+        if (!XML_ParseBuffer(parser, len, len == 0)) {
+            ret = CRE_XMLPARSER;
+            g_critical("%s: parsing error: %s\n",
+                       __func__, XML_ErrorString(XML_GetErrorCode(parser)));
+            g_set_error(err, CR_XML_PARSER_FIL_ERROR, CRE_XMLPARSER,
+                        "Parse error at line: %d (%s)",
+                        (int) XML_GetCurrentLineNumber(parser),
+                        (char *) XML_ErrorString(XML_GetErrorCode(parser)));
+            break;
+        }
+
+        if (pd->err) {
+            ret = pd->err->code;
+            g_propagate_error(err, pd->err);
+            break;
+        }
+
+        if (len == 0)
+            break;
+    }
+
+    if (ret != CRE_OK) {
+        // An error already encoutentered
+        // just close the file without error checking
+        cr_close(f, NULL);
+    } else {
+        // No error encountered yet
+        cr_close(f, &tmp_err);
+        if (tmp_err) {
+            ret = tmp_err->code;
+            g_propagate_prefixed_error(err, tmp_err, "Error while closing: ");
+        }
+    }
+
+    return ret;
 }

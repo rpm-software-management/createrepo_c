@@ -60,7 +60,7 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
     cr_ParserData *pd = pdata;
     cr_StatesSwitch *sw;
 
-    if (pd->ret != CRE_OK)
+    if (pd->err)
         return;  // There was an error -> do nothing
 
     if (pd->depth != pd->statedepth) {
@@ -103,7 +103,6 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
 
         if (!pkgId) {
             // Package without a pkgid attr is error
-            pd->ret = CRE_BADXMLFILELISTS;
             g_set_error(&pd->err, CR_XML_PARSER_FIL_ERROR, CRE_BADXMLFILELISTS,
                         "Package pkgid attributte is missing!");
             break;
@@ -118,7 +117,6 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
                          pd->newpkgcb_data,
                          &tmp_err))
         {
-            pd->ret = CRE_CBINTERRUPTED;
             if (tmp_err)
                 g_propagate_prefixed_error(&pd->err,
                                            tmp_err,
@@ -190,7 +188,7 @@ cr_end_handler(void *pdata, const char *element)
 
     CR_UNUSED(element);
 
-    if (pd->ret != CRE_OK)
+    if (pd->err)
         return; /* There was an error -> do nothing */
 
     if (pd->depth != pd->statedepth) {
@@ -215,7 +213,6 @@ cr_end_handler(void *pdata, const char *element)
             return;
 
         if (pd->pkgcb && pd->pkgcb(pd->pkg, pd->pkgcb_data, &tmp_err)) {
-            pd->ret = CRE_CBINTERRUPTED;
             if (tmp_err)
                 g_propagate_prefixed_error(&pd->err,
                                            tmp_err,
@@ -266,7 +263,6 @@ cr_xml_parse_filelists(const char *path,
                        GError **err)
 {
     int ret = CRE_OK;
-    CR_FILE *f;
     cr_ParserData *pd;
     XML_Parser parser;
     char *msgs;
@@ -280,12 +276,7 @@ cr_xml_parse_filelists(const char *path,
     if (!newpkgcb)  // Use default newpkgcb
         newpkgcb = cr_newpkgcb;
 
-    f = cr_open(path, CR_CW_MODE_READ, CR_CW_AUTO_DETECT_COMPRESSION, &tmp_err);
-    if (tmp_err) {
-        int code = tmp_err->code;
-        g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", path);
-        return code;
-    }
+    // Init
 
     parser = XML_ParserCreate(NULL);
     XML_SetElementHandler(parser, cr_start_handler, cr_end_handler);
@@ -306,47 +297,13 @@ cr_xml_parse_filelists(const char *path,
 
     XML_SetUserData(parser, pd);
 
-    while (1) {
-        int len;
-        void *buf = XML_GetBuffer(parser, XML_BUFFER_SIZE);
-        if (!buf) {
-            ret = CRE_MEMORY;
-            g_set_error(err, CR_XML_PARSER_FIL_ERROR, CRE_MEMORY,
-                        "Out of memory: Cannot allocate buffer for xml parser");
-            break;
-        }
+    // Parsing
 
-        len = cr_read(f, buf, XML_BUFFER_SIZE, &tmp_err);
-        if (tmp_err) {
-            ret = tmp_err->code;
-            g_critical("%s: Error while reading xml : %s\n",
-                       __func__, tmp_err->message);
-            g_propagate_prefixed_error(err, tmp_err, "Read error: ");
-            break;
-        }
+    ret = cr_xml_parser_generic(parser, pd, path, &tmp_err);
+    if (tmp_err)
+        g_propagate_error(err, tmp_err);
 
-        if (!XML_ParseBuffer(parser, len, len == 0)) {
-            ret = CRE_XMLPARSER;
-            g_critical("%s: parsing error: %s\n",
-                       __func__, XML_ErrorString(XML_GetErrorCode(parser)));
-            g_set_error(err, CR_XML_PARSER_FIL_ERROR, CRE_XMLPARSER,
-                        "Parse error at line: %d (%s)",
-                        (int) XML_GetCurrentLineNumber(parser),
-                        (char *) XML_ErrorString(XML_GetErrorCode(parser)));
-            break;
-        }
-
-        if (pd->ret != CRE_OK) {
-            ret = pd->ret;
-            break;
-        }
-
-        if (len == 0)
-            break;
-    }
-
-    if (pd->err)
-        g_propagate_error(err, pd->err);
+    // Clean up
 
     if (ret != CRE_OK && newpkgcb == cr_newpkgcb) {
         // Prevent memory leak when the parsing is interrupted by an error.
@@ -359,18 +316,12 @@ cr_xml_parse_filelists(const char *path,
     }
 
     msgs = cr_xml_parser_data_free(pd);
-    XML_ParserFree(parser);
-    cr_close(f, &tmp_err);
-    if (tmp_err) {
-        int code = tmp_err->code;
-        g_propagate_prefixed_error(err, tmp_err, "Error while closing: ");
-        return code;
-    }
-
     if (messages)
         *messages = msgs;
     else
         g_free(msgs);
+
+    XML_ParserFree(parser);
 
     return ret;
 }

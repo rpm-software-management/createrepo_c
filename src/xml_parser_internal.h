@@ -33,6 +33,15 @@ extern "C" {
 #define XML_BUFFER_SIZE         8192
 #define CONTENT_REALLOC_STEP    256
 
+/* Some notes about XML parsing (primary, filelists, other)
+ * ========================================================
+ * - Error during parsing is indicated via cr_ParserData->err member.
+ * - User specified callback have to be sanitized! User callbacks
+ *   are allowed return CR_CB_RET_ERR and do not set the GError.
+ *   So if the CR_CB_RET_ERR is returned and GError not setted, caller
+ *   of the callback has to set the GError by himself.
+ */
+
 /* File types in filelists.xml */
 typedef enum {
     FILE_FILE,
@@ -49,10 +58,11 @@ typedef struct {
 } cr_StatesSwitch;
 
 typedef struct _cr_ParserData {
-    int          ret;        /*!< status of parsing (return code) */
     int          depth;
     int          statedepth;
     unsigned int state;      /*!< current state */
+    GError       *err;       /*!< Error message */
+
 
     /* Tag content related values */
 
@@ -81,8 +91,6 @@ typedef struct _cr_ParserData {
         The package which is currently loaded. */
     GString                 *msgs;              /*!<
         Messages from xml parser (warnings about unknown elements etc.) */
-    GError *err;                                /*!<
-        Error message */
 
     /* Filelists related stuff */
 
@@ -126,6 +134,14 @@ int cr_newpkgcb(cr_Package **pkg,
                 const char *arch,
                 void *cbdata,
                 GError **err);
+
+/** Generic parser.
+ */
+int
+cr_xml_parser_generic(XML_Parser parser,
+                      cr_ParserData *pd,
+                      const char *path,
+                      GError **err);
 
 #ifdef __cplusplus
 }

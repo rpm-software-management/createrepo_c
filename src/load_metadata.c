@@ -1063,37 +1063,39 @@ cr_load_xml_files(GHashTable *hashtable,
     CR_FILE *pri_xml_cwfile, *fil_xml_cwfile, *oth_xml_cwfile;
     XML_Parser pri_p, fil_p, oth_p;
     struct ParserData parser_data;
+    GError *tmp_err = NULL;
 
     assert(!err || *err == NULL);
 
     // Detect compression type
 
-    compression_type = cr_detect_compression(primary_xml_path);
+    compression_type = cr_detect_compression(primary_xml_path, &tmp_err);
     if (compression_type == CR_CW_UNKNOWN_COMPRESSION) {
+        ret = tmp_err->code;
         g_debug("%s: Unknown compression", __func__);
-        g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_UNKNOWNCOMPRESSION,
-                    "Unknown compression of %s", primary_xml_path);
-        return CRE_UNKNOWNCOMPRESSION;
+        g_propagate_prefixed_error(err, tmp_err,
+                    "Compression detection of %s: ", primary_xml_path);
+        return ret;
     }
 
 
     // Open files
 
-    if (!(pri_xml_cwfile = cr_open(primary_xml_path, CR_CW_MODE_READ, compression_type))) {
+    if (!(pri_xml_cwfile = cr_open(primary_xml_path, CR_CW_MODE_READ, compression_type, NULL))) {
         g_debug("%s: Cannot open file: %s", __func__, primary_xml_path);
         g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_IO,
                     "Cannot open %s", primary_xml_path);
         return CRE_IO;
     }
 
-    if (!(fil_xml_cwfile = cr_open(filelists_xml_path, CR_CW_MODE_READ, compression_type))) {
+    if (!(fil_xml_cwfile = cr_open(filelists_xml_path, CR_CW_MODE_READ, compression_type, NULL))) {
         g_debug("%s: Cannot open file: %s", __func__, filelists_xml_path);
         g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_IO,
                     "Cannot open %s", primary_xml_path);
         return CRE_IO;
     }
 
-    if (!(oth_xml_cwfile = cr_open(other_xml_path, CR_CW_MODE_READ, compression_type))) {
+    if (!(oth_xml_cwfile = cr_open(other_xml_path, CR_CW_MODE_READ, compression_type, NULL))) {
         g_debug("%s: Cannot open file: %s", __func__, other_xml_path);
         g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_IO,
                     "Cannot open %s", primary_xml_path);
@@ -1144,7 +1146,7 @@ cr_load_xml_files(GHashTable *hashtable,
             break;
         }
 
-        pri_len = cr_read(pri_xml_cwfile, (void *) pri_buff, CHUNK_SIZE);
+        pri_len = cr_read(pri_xml_cwfile, (void *) pri_buff, CHUNK_SIZE, NULL);
         if (pri_len < 0) {
             g_critical("%s: Read error", __func__);
             ret = CRE_IO;
@@ -1190,7 +1192,7 @@ cr_load_xml_files(GHashTable *hashtable,
             break;
         }
 
-        fil_len = cr_read(fil_xml_cwfile, (void *) fil_buff, CHUNK_SIZE);
+        fil_len = cr_read(fil_xml_cwfile, (void *) fil_buff, CHUNK_SIZE, NULL);
         if (fil_len < 0) {
             g_critical("%s: Read error", __func__);
             ret = CRE_IO;
@@ -1236,7 +1238,7 @@ cr_load_xml_files(GHashTable *hashtable,
             break;
         }
 
-        oth_len = cr_read(oth_xml_cwfile, (void *) oth_buff, CHUNK_SIZE);
+        oth_len = cr_read(oth_xml_cwfile, (void *) oth_buff, CHUNK_SIZE, NULL);
         if (oth_len < 0) {
             g_critical("%s: Read error", __func__);
             ret = CRE_IO;
@@ -1276,9 +1278,9 @@ cleanup:
     XML_ParserFree(pri_p);
     XML_ParserFree(fil_p);
     XML_ParserFree(oth_p);
-    cr_close(pri_xml_cwfile);
-    cr_close(fil_xml_cwfile);
-    cr_close(oth_xml_cwfile);
+    cr_close(pri_xml_cwfile, NULL);
+    cr_close(fil_xml_cwfile, NULL);
+    cr_close(oth_xml_cwfile, NULL);
 
     g_string_free(parser_data.current_string, TRUE);
 

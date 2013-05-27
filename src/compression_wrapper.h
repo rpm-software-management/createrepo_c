@@ -69,57 +69,68 @@ const char *cr_compression_suffix(cr_CompressionType comtype);
 
 /** Detect a compression type of the specified file.
  * @param filename      filename
+ * @param err           GError **
  * @return              detected type of compression
  */
-cr_CompressionType cr_detect_compression(const char* filename);
+cr_CompressionType cr_detect_compression(const char* filename, GError **err);
 
 /** Open/Create the specified file.
  * @param filename      filename
  * @param mode          open mode
  * @param comtype       type of compression
+ * @param err           GError **
  * @return              pointer to a CR_FILE or NULL
  */
 CR_FILE *cr_open(const char *filename,
                  cr_OpenMode mode,
-                 cr_CompressionType comtype);
+                 cr_CompressionType comtype,
+                 GError **err);
 
 /** Reads an array of len bytes from the CR_FILE.
  * @param cr_file       CR_FILE pointer
  * @param buffer        target buffer
  * @param len           number of bytes to read
+ * @param err           GError **
  * @return              number of readed bytes or CR_CW_ERR
  */
-int cr_read(CR_FILE *cr_file, void *buffer, unsigned int len);
+int cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err);
 
 /** Writes the array of len bytes from buffer to the cr_file.
  * @param cr_file       CR_FILE pointer
  * @param buffer        source buffer
  * @param len           number of bytes to read
+ * @param err           GError **
  * @return              number of uncompressed bytes readed (0 = EOF)
  *                      or CR_CW_ERR
  */
-int cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len);
+int cr_write(CR_FILE *cr_file,
+             const void *buffer,
+             unsigned int len,
+             GError **err);
 
 /** Writes the string pointed by str into the cr_file.
  * @param cr_file       CR_FILE pointer
  * @param str           null terminated ('\0') string
+ * @param err           GError **
  * @return              number of uncompressed bytes writed or CR_CW_ERR
  */
-int cr_puts(CR_FILE *cr_file, const char *str);
+int cr_puts(CR_FILE *cr_file, const char *str, GError **err);
 
 /** Writes a formatted string into the cr_file.
+ * @param err           GError **
  * @param cr_file       CR_FILE pointer
  * @param format        format string
  * @param ...           list of additional arguments as specified in format
  * @return              CR_CW_OK or CR_CW_ERR
  */
-int cr_printf(CR_FILE *cr_file, const char *format, ...);
+int cr_printf(GError **err, CR_FILE *cr_file, const char *format, ...);
 
 /** Closes the CR_FILE.
  * @param cr_file       CR_FILE pointer
+ * @param err           GError **
  * @return              CR_CW_OK or CR_CW_ERR
  */
-int cr_close(CR_FILE *cr_file);
+int cr_close(CR_FILE *cr_file, GError **err);
 
 /** @} */
 

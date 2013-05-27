@@ -45,6 +45,7 @@ cr_xmlfile_open(const char *filename,
                 GError **err)
 {
     cr_XmlFile *f;
+    GError *tmp_err = NULL;
 
     assert(filename);
     assert(type < CR_XMLFILE_SENTINEL);
@@ -57,10 +58,9 @@ cr_xmlfile_open(const char *filename,
         return NULL;
     }
 
-    CR_FILE *cr_f = cr_open(filename, CR_CW_MODE_WRITE, comtype);
-    if (cr_f == NULL) {
-        g_set_error(err, CR_XML_FILE_ERROR, CRE_IO,
-                    "Cannot open file");
+    CR_FILE *cr_f = cr_open(filename, CR_CW_MODE_WRITE, comtype, &tmp_err);
+    if (tmp_err) {
+        g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", filename);
         return NULL;
     }
 
@@ -90,6 +90,7 @@ int
 cr_xmlfile_write_xml_header(cr_XmlFile *f, GError **err)
 {
     const char *xml_header;
+    GError *tmp_err = NULL;
 
     assert(f);
     assert(!err || *err == NULL);
@@ -109,10 +110,10 @@ cr_xmlfile_write_xml_header(cr_XmlFile *f, GError **err)
         assert(0);
     }
 
-    if (cr_printf(f->f, xml_header, f->pkgs) == CR_CW_ERR) {
-        g_set_error(err, CR_XML_FILE_ERROR, CRE_IO,
-                    "Cannot write XML header");
-        return CRE_IO;
+    if (cr_printf(&tmp_err, f->f, xml_header, f->pkgs) == CR_CW_ERR) {
+        int code = tmp_err->code;
+        g_propagate_prefixed_error(err, tmp_err, "Cannot write XML header: ");
+        return code;
     }
 
     f->header = 1;
@@ -124,6 +125,7 @@ int
 cr_xmlfile_write_xml_footer(cr_XmlFile *f, GError **err)
 {
     const char *xml_footer;
+    GError *tmp_err = NULL;
 
     assert(f);
     assert(!err || *err == NULL);
@@ -143,10 +145,11 @@ cr_xmlfile_write_xml_footer(cr_XmlFile *f, GError **err)
         assert(0);
     }
 
-    if (cr_puts(f->f, xml_footer) < 0) {
-        g_set_error(err, CR_XML_FILE_ERROR, CRE_IO,
-                    "Cannot write XML footer");
-        return CRE_IO;
+    cr_puts(f->f, xml_footer, &tmp_err);
+    if (tmp_err) {
+        int code = tmp_err->code;
+        g_propagate_prefixed_error(err, tmp_err, "Cannot write XML footer: ");
+        return code;
     }
 
     f->footer = 1;
@@ -220,10 +223,11 @@ cr_xmlfile_add_chunk(cr_XmlFile *f, const char* chunk, GError **err)
         }
     }
 
-    if (cr_puts(f->f, chunk) < 0) {
-        g_set_error(err, CR_XML_FILE_ERROR, CRE_IO,
-                    "Error while write operation");
-        return CRE_IO;
+    cr_puts(f->f, chunk, &tmp_err);
+    if (tmp_err) {
+        int code = tmp_err->code;
+        g_propagate_prefixed_error(err, tmp_err, "Error while write: ");
+        return code;
     }
 
     return CRE_OK;
@@ -257,10 +261,12 @@ cr_xmlfile_close(cr_XmlFile *f, GError **err)
         }
     }
 
-    if (cr_close(f->f) == CR_CW_ERR) {
-        g_set_error(err, CR_XML_FILE_ERROR, CRE_IO,
-                    "Error while closing file");
-        return CRE_IO;
+    cr_close(f->f, &tmp_err);
+    if (tmp_err) {
+        int code = tmp_err->code;
+        g_propagate_prefixed_error(err, tmp_err,
+                "Error while closing a file: ");
+        return code;
     }
 
     g_free(f);

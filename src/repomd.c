@@ -109,6 +109,8 @@ cr_get_compressed_content_stat(const char *filename,
                                cr_ChecksumType checksum_type,
                                GError **err)
 {
+    GError *tmp_err = NULL;
+
     assert(filename);
     assert(!err || *err == NULL);
 
@@ -121,10 +123,13 @@ cr_get_compressed_content_stat(const char *filename,
 
     // Open compressed file
 
-    CR_FILE *cwfile;
-    if (!(cwfile = cr_open(filename, CR_CW_MODE_READ, CR_CW_AUTO_DETECT_COMPRESSION))) {
-        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
-                    "Cannot open a file");
+    CR_FILE *cwfile = cr_open(filename,
+                              CR_CW_MODE_READ,
+                              CR_CW_AUTO_DETECT_COMPRESSION,
+                              &tmp_err);
+    if (!cwfile) {
+        g_propagate_prefixed_error(err, tmp_err,
+                                   "Cannot open a file %s: ", filename);
         return NULL;
     }
 
@@ -165,12 +170,13 @@ cr_get_compressed_content_stat(const char *filename,
     unsigned char buffer[BUFFER_SIZE];
 
     do {
-        readed = cr_read(cwfile, (void *) buffer, BUFFER_SIZE);
+        readed = cr_read(cwfile, (void *) buffer, BUFFER_SIZE, &tmp_err);
         if (readed == CR_CW_ERR) {
-            g_debug("%s: Error while read compressed file: %s",
-                    __func__, filename);
-            g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
-                        "Error while read compressed file");
+            g_debug("%s: Error while read compressed file %s: %s",
+                    __func__, filename, tmp_err->message);
+            g_propagate_prefixed_error(err, tmp_err,
+                        "Error while read compressed file %s: ",
+                        filename);
             break;
         }
         g_checksum_update (checksum, buffer, readed);
@@ -195,7 +201,7 @@ cr_get_compressed_content_stat(const char *filename,
     // Clean up
 
     g_checksum_free(checksum);
-    cr_close(cwfile);
+    cr_close(cwfile, NULL);
 
     return result;
 }
@@ -257,8 +263,16 @@ cr_repomd_record_fill(cr_RepomdRecord md,
     // Compute checksum of non compressed content and its size
 
     if (!md->checksum_open_type || !md->checksum_open || !md->size_open) {
-        if (cr_detect_compression(path) != CR_CW_UNKNOWN_COMPRESSION &&
-            cr_detect_compression(path) != CR_CW_NO_COMPRESSION)
+        cr_CompressionType com_type = cr_detect_compression(path, &tmp_err);
+        if (tmp_err) {
+            int code = tmp_err->code;
+            g_propagate_prefixed_error(err, tmp_err,
+                    "Cannot detect compression type of %s: ", path);
+            return code;
+        }
+
+        if (com_type != CR_CW_UNKNOWN_COMPRESSION &&
+            com_type != CR_CW_NO_COMPRESSION)
         {
             // File compressed by supported algorithm
             contentStat *open_stat = NULL;
@@ -377,35 +391,50 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord record,
 
     // Compress file + get size of non compressed file
 
-    cw_plain = cr_open(path, CR_CW_MODE_READ, CR_CW_NO_COMPRESSION);
+    cw_plain = cr_open(path,
+                       CR_CW_MODE_READ,
+                       CR_CW_NO_COMPRESSION,
+                       &tmp_err);
     if (!cw_plain) {
-        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
-                    "Cannot open %s", path);
-        return CRE_IO;
+        int code = tmp_err->code;
+        g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", path);
+        return code;
     }
 
-    cw_compressed = cr_open(cpath, CR_CW_MODE_WRITE, record_compression);
+    cw_compressed = cr_open(cpath,
+                            CR_CW_MODE_WRITE,
+                            record_compression,
+                            &tmp_err);
     if (!cw_compressed) {
-        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
-                    "Cannot open %s", path);
-        return CRE_IO;
+        int code = tmp_err->code;
+        g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", cpath);
+        return code;
     }
 
-    while ((readed = cr_read(cw_plain, buf, BUFFER_SIZE)) > 0) {
-        if (cr_write(cw_compressed, buf, (unsigned int) readed) == CR_CW_ERR) {
-            g_debug("%s: Error while record compression", __func__);
+    while ((readed = cr_read(cw_plain, buf, BUFFER_SIZE, &tmp_err)) > 0) {
+        cr_write(cw_compressed, buf, (unsigned int) readed, &tmp_err);
+        if (tmp_err)
             break;
-        }
     }
 
-    cr_close(cw_compressed);
-    cr_close(cw_plain);
+    cr_close(cw_plain, NULL);
 
-    if (readed == CR_CW_ERR) {
-        g_debug("%s: Error while record compression", __func__);
-        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
-                    "Error while compression");
-        return CRE_IO;
+    if (tmp_err) {
+        int code = tmp_err->code;
+        cr_close(cw_compressed, NULL);
+        g_debug("%s: Error while repomd record compression: %s", __func__,
+                tmp_err->message);
+        g_propagate_prefixed_error(err, tmp_err,
+                "Error while compression %s -> %s:", path, cpath);
+        return code;
+    }
+
+    cr_close(cw_compressed, &tmp_err);
+    if (tmp_err) {
+        int code = tmp_err->code;
+        g_propagate_prefixed_error(err, tmp_err,
+                "Error while closing %s: ", path);
+        return code;
     }
 
 

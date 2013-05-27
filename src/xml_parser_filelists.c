@@ -270,6 +270,7 @@ cr_xml_parse_filelists(const char *path,
     cr_ParserData *pd;
     XML_Parser parser;
     char *msgs;
+    GError *tmp_err = NULL;
 
     assert(path);
     assert(newpkgcb || pkgcb);
@@ -279,10 +280,11 @@ cr_xml_parse_filelists(const char *path,
     if (!newpkgcb)  // Use default newpkgcb
         newpkgcb = cr_newpkgcb;
 
-    f = cr_open(path, CR_CW_MODE_READ, CR_CW_AUTO_DETECT_COMPRESSION);
-    if (!f) {
-        g_set_error(err, CR_XML_PARSER_FIL_ERROR, CRE_IO, "Cannot open %s", path);
-        return CRE_IO;
+    f = cr_open(path, CR_CW_MODE_READ, CR_CW_AUTO_DETECT_COMPRESSION, &tmp_err);
+    if (tmp_err) {
+        int code = tmp_err->code;
+        g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", path);
+        return code;
     }
 
     parser = XML_ParserCreate(NULL);
@@ -314,13 +316,12 @@ cr_xml_parse_filelists(const char *path,
             break;
         }
 
-        len = cr_read(f, buf, XML_BUFFER_SIZE);
-        if (len < 0) {
-            ret = CRE_IO;
-            g_critical("%s: Cannot read for parsing : %s\n",
-                       __func__, strerror(errno));
-            g_set_error(err, CR_XML_PARSER_FIL_ERROR, CRE_IO,
-                        "Error while reading xml");
+        len = cr_read(f, buf, XML_BUFFER_SIZE, &tmp_err);
+        if (tmp_err) {
+            ret = tmp_err->code;
+            g_critical("%s: Error while reading xml : %s\n",
+                       __func__, tmp_err->message);
+            g_propagate_prefixed_error(err, tmp_err, "Read error: ");
             break;
         }
 
@@ -359,7 +360,12 @@ cr_xml_parse_filelists(const char *path,
 
     msgs = cr_xml_parser_data_free(pd);
     XML_ParserFree(parser);
-    cr_close(f);
+    cr_close(f, &tmp_err);
+    if (tmp_err) {
+        int code = tmp_err->code;
+        g_propagate_prefixed_error(err, tmp_err, "Error while closing: ");
+        return code;
+    }
 
     if (messages)
         *messages = msgs;

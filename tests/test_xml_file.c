@@ -75,12 +75,15 @@ test_no_packages(TestFixtures *fixtures, gconstpointer test_data)
     g_assert(err == NULL);
     cr_xmlfile_close(f, &err);
 
-    CR_FILE *crf = cr_open(path, CR_CW_MODE_READ, CR_CW_AUTO_DETECT_COMPRESSION);
+    CR_FILE *crf = cr_open(path,
+                           CR_CW_MODE_READ,
+                           CR_CW_AUTO_DETECT_COMPRESSION,
+                           NULL);
     g_assert(crf);
-    ret = cr_read(crf, &contents, 2047);
+    ret = cr_read(crf, &contents, 2047, NULL);
     g_assert(ret != CR_CW_ERR);
     contents[ret] = '\0';
-    cr_close(crf);
+    cr_close(crf, NULL);
     g_assert_cmpstr(contents, ==, "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
             "<metadata xmlns=\"http://linux.duke.edu/metadata/common\" "
             "xmlns:rpm=\"http://linux.duke.edu/metadata/rpm\" "
@@ -88,7 +91,6 @@ test_no_packages(TestFixtures *fixtures, gconstpointer test_data)
 
     g_free(path);
 }
-
 
 
 int

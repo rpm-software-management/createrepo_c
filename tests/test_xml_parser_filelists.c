@@ -81,6 +81,7 @@ newpkgcb_interrupt(cr_Package **pkg,
                    GError **err)
 {
     CR_UNUSED(pkgId);
+    CR_UNUSED(name);
     CR_UNUSED(arch);
     CR_UNUSED(cbdata);
 

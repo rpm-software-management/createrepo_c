@@ -60,6 +60,16 @@ typedef enum {
         (16) Bad filelists.xml file */
     CRE_BADXMLOTHER, /*!<
         (17) Bad filelists.xml file */
+    CRE_BADXMLREPOMD, /*!<
+        (18) Bad repomd.xml file */
+    CRE_MAGIC, /*!<
+        (19) Magic Number Recognition Library (libmagic) error */
+    CRE_GZ, /*!<
+        (20) Gzip library related error */
+    CRE_BZ2, /*!<
+        (21) Bzip2 library related error */
+    CRE_XZ, /*!<
+        (22) Xz (lzma) library related error */
 } cr_Error;
 
 /** Converts cr_Error return code to error string.
@@ -69,22 +79,24 @@ typedef enum {
 const char *cr_strerror(cr_Error rc);
 
 /* Error domains */
-#define CR_CHECKSUM_ERROR           cr_checksum_error_quark()
-#define CR_DB_ERROR                 cr_db_error_quark()
-#define CR_LOAD_METADATA_ERROR      cr_load_metadata_error_quark()
-#define CR_LOCATE_METADATA_ERROR    cr_locate_metadata_error_quark()
-#define CR_PARSEPKG_ERROR           cr_parsepkg_error_quark()
-#define CR_REPOMD_ERROR             cr_repomd_error_quark()
-#define CR_REPOMD_RECORD_ERROR      cr_repomd_record_error_quark()
-#define CR_XML_DUMP_FILELISTS_ERROR cr_xml_dump_filelists_error_quark()
-#define CR_XML_DUMP_OTHER_ERROR     cr_xml_dump_other_error_quark()
-#define CR_XML_DUMP_PRIMARY_ERROR   cr_xml_dump_primary_error_quark()
-#define CR_XML_FILE_ERROR           cr_xml_file_error_quark()
-#define CR_XML_PARSER_FIL_ERROR     cr_xml_parser_fil_error_quark()
-#define CR_XML_PARSER_OTH_ERROR     cr_xml_parser_oth_error_quark()
-#define CR_XML_PARSER_PRI_ERROR     cr_xml_parser_pri_error_quark()
+#define CR_CHECKSUM_ERROR               cr_checksum_error_quark()
+#define CR_COMPRESSION_WRAPPER_ERROR    cr_compression_wrapper_error_quark()
+#define CR_DB_ERROR                     cr_db_error_quark()
+#define CR_LOAD_METADATA_ERROR          cr_load_metadata_error_quark()
+#define CR_LOCATE_METADATA_ERROR        cr_locate_metadata_error_quark()
+#define CR_PARSEPKG_ERROR               cr_parsepkg_error_quark()
+#define CR_REPOMD_ERROR                 cr_repomd_error_quark()
+#define CR_REPOMD_RECORD_ERROR          cr_repomd_record_error_quark()
+#define CR_XML_DUMP_FILELISTS_ERROR     cr_xml_dump_filelists_error_quark()
+#define CR_XML_DUMP_OTHER_ERROR         cr_xml_dump_other_error_quark()
+#define CR_XML_DUMP_PRIMARY_ERROR       cr_xml_dump_primary_error_quark()
+#define CR_XML_FILE_ERROR               cr_xml_file_error_quark()
+#define CR_XML_PARSER_FIL_ERROR         cr_xml_parser_fil_error_quark()
+#define CR_XML_PARSER_OTH_ERROR         cr_xml_parser_oth_error_quark()
+#define CR_XML_PARSER_PRI_ERROR         cr_xml_parser_pri_error_quark()
 
 GQuark cr_checksum_error_quark(void);
+GQuark cr_compression_wrapper_error_quark(void);
 GQuark cr_db_error_quark(void);
 GQuark cr_load_metadata_error_quark(void);
 GQuark cr_locate_metadata_error_quark(void);

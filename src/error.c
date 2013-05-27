@@ -71,6 +71,12 @@ cr_checksum_error_quark(void)
 }
 
 GQuark
+cr_compression_wrapper_error_quark(void)
+{
+    return g_quark_from_static_string("cr_compression_wrapper_error");
+}
+
+GQuark
 cr_db_error_quark(void)
 {
     return g_quark_from_static_string("cr_db_error");

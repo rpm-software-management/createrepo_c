@@ -552,16 +552,16 @@ cr_compress_file(const char *src,
         return CR_COPY_ERR;
     }
 
-    if ((new = cr_open(dst, CR_CW_MODE_WRITE, compression)) == NULL) {
+    if ((new = cr_open(dst, CR_CW_MODE_WRITE, compression, NULL)) == NULL) {
         g_debug("%s: Cannot open destination file %s", __func__, dst);
         fclose(orig);
         return CR_COPY_ERR;
     }
 
     while ((readed = fread(buf, 1, BUFFER_SIZE, orig)) > 0) {
-        if (cr_write(new, buf, readed) != readed) {
+        if (cr_write(new, buf, readed, NULL) != readed) {
             g_debug("%s: Error while copy %s -> %s", __func__, src, dst);
-            cr_close(new);
+            cr_close(new, NULL);
             fclose(orig);
             return CR_COPY_ERR;
         }
@@ -569,17 +569,16 @@ cr_compress_file(const char *src,
         if (readed != BUFFER_SIZE && ferror(orig)) {
             g_debug("%s: Error while copy %s -> %s (%s)", __func__, src,
                     dst, strerror(errno));
-            cr_close(new);
+            cr_close(new, NULL);
             fclose(orig);
             return CR_COPY_ERR;
         }
     }
 
-    if (dst != in_dst) {
+    if (dst != in_dst)
         g_free(dst);
-    }
 
-    cr_close(new);
+    cr_close(new, NULL);
     fclose(orig);
 
     return CR_COPY_OK;

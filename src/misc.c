@@ -231,10 +231,11 @@ cr_compute_file_checksum(const char *filename,
 
     // Check if file exists and if it is a regular file (not a directory)
 
-    if (!g_file_test(filename, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR))) {
-        g_debug("%s: File %s doesn't exists", __func__, filename);
+    if (!g_file_test(filename, G_FILE_TEST_IS_REGULAR)) {
+        g_debug("%s: File %s doesn't exists or not a regular file",
+                __func__, filename);
         g_set_error(err, CR_CHECKSUM_ERROR, CRE_NOFILE,
-                    "File %s doesn't exists", filename);
+                    "File %s doesn't exists or not a regular file", filename);
         return NULL;
     }
 
@@ -526,9 +527,7 @@ cr_compress_file(const char *src,
     }
 
     // Src must be a file NOT a directory
-    if (g_str_has_suffix(src, "/") ||
-        !g_file_test(src, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR))) 
-    {
+    if (!g_file_test(src, G_FILE_TEST_IS_REGULAR)) {
         g_debug("%s: Source (%s) must be directory!", __func__, src);
         return CR_COPY_ERR;
     }

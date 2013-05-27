@@ -101,11 +101,11 @@ cr_detect_compression(const char *filename, GError **err)
     assert(filename);
     assert(!err || *err == NULL);
 
-    if (!g_file_test(filename, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR)) {
-        g_debug("%s: File %s doesn't exists or it's not a regular file",
+    if (!g_file_test(filename, G_FILE_TEST_IS_REGULAR)) {
+        g_debug("%s: File %s doesn't exists or not a regular file",
                 __func__, filename);
         g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_NOFILE,
-                    "File %s doesn't exists or it's not a regular file.", filename);
+                    "File %s doesn't exists or not a regular file", filename);
         return type;
     }
 

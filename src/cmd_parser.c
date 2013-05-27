@@ -249,7 +249,7 @@ check_arguments(struct CmdOptions *options)
                                                       NULL);
         }
 
-        if (!remote && !g_file_test(options->groupfile_fullpath, G_FILE_TEST_IS_REGULAR|G_FILE_TEST_EXISTS)) {
+        if (!remote && !g_file_test(options->groupfile_fullpath, G_FILE_TEST_IS_REGULAR)) {
             g_warning("groupfile %s doesn't exists", options->groupfile_fullpath);
             return FALSE;
         }
@@ -257,7 +257,7 @@ check_arguments(struct CmdOptions *options)
 
     // Process pkglist file
     if (options->pkglist) {
-        if (!g_file_test(options->pkglist, G_FILE_TEST_IS_REGULAR|G_FILE_TEST_EXISTS)) {
+        if (!g_file_test(options->pkglist, G_FILE_TEST_IS_REGULAR)) {
             g_warning("pkglist file \"%s\" doesn't exists", options->pkglist);
         } else {
             char *content = NULL;

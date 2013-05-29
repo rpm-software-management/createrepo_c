@@ -415,14 +415,18 @@ cr_open(const char *filename,
                         break;
                     case LZMA_PROG_ERROR:
                         err_msg = "One or more of the parameters "
-                                  "have values that will never be valid.";
+                                  "have values that will never be valid. "
+                                  "(Possibly a bug)";
                         break;
+                    case LZMA_UNSUPPORTED_CHECK:
+		        err_msg = "Specified integrity check is not supported";
+		        break;
                     default:
                         err_msg = "Unknown error";
                 }
 
                 g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_XZ,
-                            "XZ error: %s", err_msg);
+                            "XZ error (%d): %s", ret, err_msg);
                 g_free((void *) xz_file);
                 break;
             }
@@ -549,12 +553,41 @@ cr_close(CR_FILE *cr_file, GError **err)
                 while (1) {
                     stream->next_out = (uint8_t*) xz_file->buffer;
                     stream->avail_out = XZ_BUFFER_SIZE;
+
                     rc = lzma_code(stream, LZMA_FINISH);
 
                     if(rc != LZMA_OK && rc != LZMA_STREAM_END) {
                         // Error while coding
+                        const char *err_msg;
+
+                        switch (rc) {
+                            case LZMA_MEM_ERROR:
+                                err_msg = "Memory allocation failed";
+                                break;
+                            case LZMA_DATA_ERROR:
+                                // This error is returned if the compressed
+                                // or uncompressed size get near 8 EiB
+                                // (2^63 bytes) because that's where the .xz
+                                // file format size limits currently are.
+                                // That is, the possibility of this error
+                                // is mostly theoretical unless you are doing
+                                // something very unusual.
+                                //
+                                // Note that strm->total_in and strm->total_out
+                                // have nothing to do with this error. Changing
+                                // those variables won't increase or decrease
+                                // the chance of getting this error.
+                                err_msg = "File size limits exceeded";
+                                break;
+                            default:
+                                // This is most likely LZMA_PROG_ERROR.
+                                err_msg = "Unknown error, possibly a bug";
+                                break;
+                        }
+
                         g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_XZ,
-                                    "XZ: lzma_code() error");
+                                    "XZ: lzma_code() error (%d): %s",
+                                    rc, err_msg);
                         break;
                     }
 
@@ -869,9 +902,37 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
                 stream->avail_out = XZ_BUFFER_SIZE;
                 lret = lzma_code(stream, LZMA_RUN);
                 if (lret != LZMA_OK) {
+                    const char *err_msg;
                     ret = CR_CW_ERR;
+
+                    switch (lret) {
+                        case LZMA_MEM_ERROR:
+                            err_msg = "Memory allocation failed";
+                            break;
+			case LZMA_DATA_ERROR:
+                            // This error is returned if the compressed
+                            // or uncompressed size get near 8 EiB
+                            // (2^63 bytes) because that's where the .xz
+                            // file format size limits currently are.
+                            // That is, the possibility of this error
+                            // is mostly theoretical unless you are doing
+                            // something very unusual.
+                            //
+                            // Note that strm->total_in and strm->total_out
+                            // have nothing to do with this error. Changing
+                            // those variables won't increase or decrease
+                            // the chance of getting this error.
+                            err_msg = "File size limits exceeded";
+                            break;
+			default:
+                            // This is most likely LZMA_PROG_ERROR.
+                            err_msg = "Unknown error, possibly a bug";
+                            break;
+                    }
+
                     g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_XZ,
-                                "XZ: lzma_code() error");
+                                "XZ: lzma_code() error (%d): %s",
+                                lret, err_msg);
                     break;   // Error while coding
                 }
 

@@ -438,6 +438,8 @@ test_cr_error_handling(void)
     g_error_free(tmp_err);
     tmp_err = NULL;
 
+    // Opening dir for writing
+
     f = cr_open("/", CR_CW_MODE_WRITE, CR_CW_NO_COMPRESSION, &tmp_err);
     g_assert(!f);
     g_assert(tmp_err);
@@ -445,6 +447,69 @@ test_cr_error_handling(void)
     g_error_free(tmp_err);
     tmp_err = NULL;
 
+    f = cr_open("/", CR_CW_MODE_WRITE, CR_CW_GZ_COMPRESSION, &tmp_err);
+    g_assert(!f);
+    g_assert(tmp_err);
+    g_assert_cmpint(tmp_err->code, ==, CRE_GZ);
+    g_error_free(tmp_err);
+    tmp_err = NULL;
+
+    f = cr_open("/", CR_CW_MODE_WRITE, CR_CW_BZ2_COMPRESSION, &tmp_err);
+    g_assert(!f);
+    g_assert(tmp_err);
+    g_assert_cmpint(tmp_err->code, ==, CRE_IO);
+    g_error_free(tmp_err);
+    tmp_err = NULL;
+
+    f = cr_open("/", CR_CW_MODE_WRITE, CR_CW_XZ_COMPRESSION, &tmp_err);
+    g_assert(!f);
+    g_assert(tmp_err);
+    g_assert_cmpint(tmp_err->code, ==, CRE_XZ);
+    g_error_free(tmp_err);
+    tmp_err = NULL;
+
+    // Opening plain text file as compressed
+
+    char buf[256];
+    int ret;
+
+    // gzread can read compressed as well as uncompressed, so this test
+    // is useful.
+    f = cr_open(FILE_COMPRESSED_1_PLAIN, CR_CW_MODE_READ,
+                CR_CW_GZ_COMPRESSION, &tmp_err);
+    g_assert(f);
+    ret = cr_read(f, buf, 256, &tmp_err);
+    g_assert_cmpint(ret, ==, FILE_COMPRESSED_1_CONTENT_LEN);
+    g_assert(!tmp_err);
+    ret = cr_close(f, &tmp_err);
+    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert(!tmp_err);
+
+    f = cr_open(FILE_COMPRESSED_1_PLAIN, CR_CW_MODE_READ,
+                CR_CW_BZ2_COMPRESSION, &tmp_err);
+    g_assert(f);
+    ret = cr_read(f, buf, 256, &tmp_err);
+    g_assert_cmpint(ret, ==, -1);
+    g_assert(tmp_err);
+    g_assert_cmpint(tmp_err->code, ==, CRE_BZ2);
+    g_error_free(tmp_err);
+    tmp_err = NULL;
+    ret = cr_close(f, &tmp_err);
+    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert(!tmp_err);
+
+    f = cr_open(FILE_COMPRESSED_1_PLAIN, CR_CW_MODE_READ,
+                CR_CW_XZ_COMPRESSION, &tmp_err);
+    g_assert(f);
+    ret = cr_read(f, buf, 256, &tmp_err);
+    g_assert_cmpint(ret, ==, -1);
+    g_assert(tmp_err);
+    g_assert_cmpint(tmp_err->code, ==, CRE_XZ);
+    g_error_free(tmp_err);
+    tmp_err = NULL;
+    ret = cr_close(f, &tmp_err);
+    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert(!tmp_err);
 }
 
 

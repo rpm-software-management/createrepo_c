@@ -708,10 +708,59 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
 
                 // Decode
                 lret = lzma_code(stream, LZMA_RUN);
+
                 if (lret != LZMA_OK && lret != LZMA_STREAM_END) {
-                    g_debug("%s: XZ: Error while decoding (%d)", __func__, lret);
+                    const char *err_msg;
+
+                    switch (lret) {
+                        case LZMA_MEM_ERROR:
+                            err_msg = "Memory allocation failed";
+                            break;
+			case LZMA_FORMAT_ERROR:
+                            // .xz magic bytes weren't found.
+                            err_msg = "The input is not in the .xz format";
+                            break;
+			case LZMA_OPTIONS_ERROR:
+                            // For example, the headers specify a filter
+                            // that isn't supported by this liblzma
+                            // version (or it hasn't been enabled when
+                            // building liblzma, but no-one sane does
+                            // that unless building liblzma for an
+                            // embedded system). Upgrading to a newer
+                            // liblzma might help.
+                            //
+                            // Note that it is unlikely that the file has
+                            // accidentally became corrupt if you get this
+                            // error. The integrity of the .xz headers is
+                            // always verified with a CRC32, so
+                            // unintentionally corrupt files can be
+                            // distinguished from unsupported files.
+                            err_msg = "Unsupported compression options";
+                            break;
+			case LZMA_DATA_ERROR:
+                            err_msg = "Compressed file is corrupt";
+                            break;
+			case LZMA_BUF_ERROR:
+                            // Typically this error means that a valid
+                            // file has got truncated, but it might also
+                            // be a damaged part in the file that makes
+                            // the decoder think the file is truncated.
+                            // If you prefer, you can use the same error
+                            // message for this as for LZMA_DATA_ERROR.
+                            err_msg = "Compressed file is truncated or "
+                                      "otherwise corrupt";
+                            break;
+			default:
+                            // This is most likely LZMA_PROG_ERROR.
+                            err_msg = "Unknown error, possibly a bug";
+                            break;
+                    }
+
+                    g_debug("%s: XZ: Error while decoding (%d): %s",
+                            __func__, lret, err_msg);
                     g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_XZ,
-                                "XZ: Error while deconding(%d)", lret);
+                                "XZ: Error while decoding (%d): %s",
+                                lret, err_msg);
                     return CR_CW_ERR;  // Error while decoding
                 }
 

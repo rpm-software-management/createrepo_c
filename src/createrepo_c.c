@@ -640,6 +640,12 @@ main(int argc, char **argv)
         tmp_out_repo = g_strconcat(out_dir, ".repodata/", NULL);
     }
 
+    // Block SIGINT
+
+    sigset_t intmask;
+    sigemptyset(&intmask);
+    sigaddset(&intmask, SIGINT);
+    sigprocmask(SIG_BLOCK, &intmask, NULL);
 
     // Check if tmp_out_repo exists & Create tmp_out_repo dir
 
@@ -669,6 +675,12 @@ main(int argc, char **argv)
         g_critical("sigaction(): %s", strerror(errno));
         exit(1);
     }
+
+    // Unblock SIGINT
+
+    sigemptyset(&intmask);
+    sigaddset(&intmask, SIGINT);
+    sigprocmask(SIG_UNBLOCK, &intmask, NULL);
 
 
     // Open package list

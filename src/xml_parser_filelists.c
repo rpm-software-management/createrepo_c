@@ -99,6 +99,8 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
     pd->lcontent   = 0;
     pd->content[0] = '\0';
 
+    const char *val;
+
     switch(pd->state) {
     case STATE_START:
     case STATE_FILELISTS:
@@ -175,22 +177,21 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
                                             cr_find_attr("rel", attr));
         break;
 
-    case STATE_FILE: {
+    case STATE_FILE:
         assert(pd->pkg);
 
-        const char *type = cr_find_attr("type", attr);
+        val = cr_find_attr("type", attr);
         pd->last_file_type = FILE_FILE;
-        if (type) {
-            if (!strcmp(type, "dir"))
+        if (val) {
+            if (!strcmp(val, "dir"))
                 pd->last_file_type = FILE_DIR;
-            else if (!strcmp(type, "ghost"))
+            else if (!strcmp(val, "ghost"))
                 pd->last_file_type = FILE_GHOST;
             else
                 cr_xml_parser_warning(pd, CR_XML_WARNING_UNKNOWNVAL,
-                                      "Unknown file type \"%s\"", type);
+                                      "Unknown file type \"%s\"", val);
         }
         break;
-    }
 
     default:
         break;
@@ -262,6 +263,7 @@ cr_end_handler(void *pdata, const char *element)
             case FILE_FILE:  pkg_file->type = NULL;    break; // NULL => "file"
             case FILE_DIR:   pkg_file->type = "dir";   break;
             case FILE_GHOST: pkg_file->type = "ghost"; break;
+            default: assert(0);  // Should not happend
         }
 
         pd->pkg->files = g_slist_prepend(pd->pkg->files, pkg_file);

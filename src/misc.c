@@ -405,7 +405,7 @@ cr_checksum_name_str(cr_ChecksumType type)
             name = "md5";
             break;
         case CR_CHECKSUM_SHA1:
-            name = "sha1";
+            name = "sha";
             break;
         case CR_CHECKSUM_SHA256:
             name = "sha256";

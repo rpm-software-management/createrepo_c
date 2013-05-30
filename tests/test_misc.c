@@ -432,7 +432,7 @@ test_cr_checksum_name_str(void)
     g_assert_cmpstr(checksum_name, ==, "md5");
 
     checksum_name = cr_checksum_name_str(CR_CHECKSUM_SHA1);
-    g_assert_cmpstr(checksum_name, ==, "sha1");
+    g_assert_cmpstr(checksum_name, ==, "sha");
 
     checksum_name = cr_checksum_name_str(CR_CHECKSUM_SHA256);
     g_assert_cmpstr(checksum_name, ==, "sha256");

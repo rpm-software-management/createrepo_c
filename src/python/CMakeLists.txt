@@ -26,6 +26,7 @@ SET (craeterepo_cmodule_SRCS
      typeconversion.c
      xml_dump-py.c
      xml_file-py.c
+     xml_parser-py.c
     )
 
 ADD_LIBRARY(_createrepo_cmodule SHARED ${craeterepo_cmodule_SRCS})

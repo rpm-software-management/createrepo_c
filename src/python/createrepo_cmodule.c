@@ -31,6 +31,7 @@
 #include "sqlite-py.h"
 #include "xml_dump-py.h"
 #include "xml_file-py.h"
+#include "xml_parser-py.h"
 
 static struct PyMethodDef createrepo_c_methods[] = {
     {"package_from_rpm",        (PyCFunction)py_package_from_rpm,
@@ -104,6 +105,12 @@ init_createrepo_c(void)
     Py_INCREF(&XmlFile_Type);
     PyModule_AddObject(m, "XmlFile", (PyObject *)&XmlFile_Type);
 
+    /* _createrepo_c.XmlParser */
+    if (PyType_Ready(&XmlParser_Type) < 0)
+        return;
+    Py_INCREF(&XmlParser_Type);
+    PyModule_AddObject(m, "XmlParser", (PyObject *)&XmlParser_Type);
+
     /* Createrepo init */
 
     cr_xml_dump_init();
@@ -144,4 +151,10 @@ init_createrepo_c(void)
     PyModule_AddIntConstant(m, "XMLFILE_PRIMARY", CR_XMLFILE_PRIMARY);
     PyModule_AddIntConstant(m, "XMLFILE_FILELISTS", CR_XMLFILE_FILELISTS);
     PyModule_AddIntConstant(m, "XMLFILE_OTHER", CR_XMLFILE_OTHER);
+
+    /* XmlParser types */
+    PyModule_AddIntConstant(m, "XML_WARNING_UNKNOWNTAG", CR_XML_WARNING_UNKNOWNTAG);
+    PyModule_AddIntConstant(m, "XML_WARNING_MISSINGATTR", CR_XML_WARNING_MISSINGATTR);
+    PyModule_AddIntConstant(m, "XML_WARNING_UNKNOWNVAL", CR_XML_WARNING_UNKNOWNVAL);
+    PyModule_AddIntConstant(m, "XML_WARNING_BADATTRVAL", CR_XML_WARNING_BADATTRVAL);
 }

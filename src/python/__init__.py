@@ -32,6 +32,11 @@ XMLFILE_PRIMARY   = _createrepo_c.XMLFILE_PRIMARY
 XMLFILE_FILELISTS = _createrepo_c.XMLFILE_FILELISTS
 XMLFILE_OTHER     = _createrepo_c.XMLFILE_OTHER
 
+XML_WARNING_UNKNOWNTAG  = _createrepo_c.XML_WARNING_UNKNOWNTAG
+XML_WARNING_MISSINGATTR = _createrepo_c.XML_WARNING_MISSINGATTR
+XML_WARNING_UNKNOWNVAL  = _createrepo_c.XML_WARNING_UNKNOWNVAL
+XML_WARNING_BADATTRVAL  = _createrepo_c.XML_WARNING_BADATTRVAL
+
 CreaterepoCError = _createrepo_c.CreaterepoCError
 
 # Metadata class
@@ -94,6 +99,10 @@ class FilelistsXmlFile(XmlFile):
 class OtherXmlFile(XmlFile):
     def __init__(self, filename, compressiontype=GZ_COMPRESSION):
         XmlFile.__init__(self, filename, XMLFILE_OTHER, compressiontype)
+
+# XmlParser class
+
+XmlParser = _createrepo_c.XmlParser
 
 # Methods
 

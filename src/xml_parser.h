@@ -34,6 +34,12 @@ extern "C" {
 #define CR_CB_RET_OK    0
 #define CR_CB_RET_ERR   1
 
+typedef enum {
+    CR_XML_WARNING_UNKNOWNTAG,  /*!< Unknown tag */
+    CR_XML_WARNING_MISSINGATTR, /*!< Missing attribute */
+    CR_XML_WARNING_UNKNOWNVAL,  /*!< Unknown tag or attribute value */
+    CR_XML_WARNING_SENTINEL,
+} cr_XmlParserWarningType;
 
 /** Callback for XML parser wich is called when a package element is parsed.
  * @param pkg       Currently parsed package.
@@ -66,27 +72,42 @@ typedef int (*cr_XmlParserNewPkgCb)(cr_Package **pkg,
                                     void *cbdata,
                                     GError **err);
 
+/** Callback for XML parser warnings. All reported warnings are non-fatal,
+ * and ignored by default. But if callback return CR_CB_RET_ERR instead of
+ * CR_CB_RET_OK then parsing is immediately interrupted.
+ * @param type      Type of warning
+ * @param msg       Warning msg
+ * @param cbdata    User data.
+ * @param err       GError **
+ * @return          CR_CB_RET_OK (0) or CR_CB_RET_ERR (1) - stops the parsing
+ */
+typedef int (*cr_XmlParserWarningCb)(cr_XmlParserWarningType type,
+                                     char *msg,
+                                     void *cbdata,
+                                     GError **err);
+
 /** Parse filelists.xml. File could be compressed.
- * @param path          Path to filelists.xml (plain or compressed)
- * @param newpkgcb      Callback for new package (Called when new package
- *                      xml chunk is found and package object to store
- *                      the data is needed). If NULL cr_newpkgcb is used.
- * @param newpkgcb_data User data for the newpkgcb.
- * @param pkgcb         Package callback. (Called when complete package
- *                      xml chunk is parsed.). Could be NULL if newpkgcb is
- *                      not NULL.
- * @param pkgcb_data    User data for the pkgcb.
- * @param messages      Pointer to char* where messages (warnings)
- *                      from parsing will be stored.
- * @param err           GError **
- * @return              cr_Error code.
+ * @param path           Path to filelists.xml (plain or compressed)
+ * @param newpkgcb       Callback for new package (Called when new package
+ *                       xml chunk is found and package object to store
+ *                       the data is needed). If NULL cr_newpkgcb is used.
+ * @param newpkgcb_data  User data for the newpkgcb.
+ * @param pkgcb          Package callback. (Called when complete package
+ *                       xml chunk is parsed.). Could be NULL if newpkgcb is
+ *                       not NULL.
+ * @param pkgcb_data     User data for the pkgcb.
+ * @param warningcb      Callback for warning messages.
+ * @param warningcb_data User data for the warningcb.
+ * @param err            GError **
+ * @return               cr_Error code.
  */
 int cr_xml_parse_filelists(const char *path,
                            cr_XmlParserNewPkgCb newpkgcb,
                            void *newpkgcb_data,
                            cr_XmlParserPkgCb pkgcb,
                            void *pkgcb_data,
-                           char **messages,
+                           cr_XmlParserWarningCb warningcb,
+                           void *warningcb_data,
                            GError **err);
 /** @} */
 

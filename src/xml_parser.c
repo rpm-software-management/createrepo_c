@@ -1,3 +1,5 @@
+#include <glib.h>
+#include <glib/gprintf.h>
 #include <assert.h>
 #include "error.h"
 #include "xml_parser.h"
@@ -10,23 +12,19 @@ cr_xml_parser_data(unsigned int numstates)
     cr_ParserData *pd = g_new0(cr_ParserData, 1);
     pd->content = g_malloc(CONTENT_REALLOC_STEP);
     pd->acontent = CONTENT_REALLOC_STEP;
-    pd->msgs = g_string_new(0);
     pd->swtab = g_malloc0(sizeof(cr_StatesSwitch *) * numstates);
     pd->sbtab = g_malloc(sizeof(unsigned int) * numstates);
 
     return pd;
 }
 
-char *
+void
 cr_xml_parser_data_free(cr_ParserData *pd)
 {
-    char *msgs;
     g_free(pd->content);
-    msgs = g_string_free(pd->msgs, FALSE);
     g_free(pd->swtab);
     g_free(pd->sbtab);
     g_free(pd);
-    return msgs;
 }
 
 void XMLCALL
@@ -53,6 +51,44 @@ cr_char_handler(void *pdata, const XML_Char *s, int len)
     while (len-- > 0)
         *c++ = *s++;
     *c = '\0';
+}
+
+int
+cr_xml_parser_warning(cr_ParserData *pd,
+                      cr_XmlParserWarningType type,
+                      const char *msg,
+                      ...)
+{
+    int ret;
+    va_list args;
+    char *warn;
+    GError *tmp_err;
+
+    assert(pd);
+    assert(msg);
+
+    if (!pd->warningcb)
+        return CR_CB_RET_OK;
+
+    va_start(args, msg);
+    g_vasprintf(&warn, msg, args);
+    va_end(args);
+
+    tmp_err = NULL;
+    ret = pd->warningcb(type, warn, pd->warningcb_data, &tmp_err);
+    if (ret != CR_CB_RET_OK) {
+        if (tmp_err)
+            g_propagate_prefixed_error(&pd->err, tmp_err,
+                                       "Parsing interrupted: ");
+        else
+            g_set_error(&pd->err, CR_XML_PARSER_ERROR, CRE_CBINTERRUPTED,
+                        "Parsing interrupted");
+    }
+
+
+    assert(pd->err || ret == CR_CB_RET_OK);
+
+    return ret;
 }
 
 int

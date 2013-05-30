@@ -137,6 +137,12 @@ cr_xml_file_error_quark(void)
 }
 
 GQuark
+cr_xml_parser_error_quark(void)
+{
+    return g_quark_from_static_string("cr_xml_parser_error");
+}
+
+GQuark
 cr_xml_parser_fil_error_quark(void)
 {
     return g_quark_from_static_string("cr_xml_parser_filelists_error");

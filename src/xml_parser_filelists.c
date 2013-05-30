@@ -31,6 +31,9 @@
 #include "logging.h"
 #include "misc.h"
 
+#define ERR_DOMAIN      CR_XML_PARSER_FIL_ERROR
+#define ERR_CODE_XML    CRE_BADXMLFILELISTS
+
 typedef enum {
     STATE_START,
     STATE_FILELISTS,
@@ -64,14 +67,16 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         return;  // There was an error -> do nothing
 
     if (pd->depth != pd->statedepth) {
-        // There probably was an unknown element
+        // We are inside of unknown element
         pd->depth++;
         return;
     }
     pd->depth++;
 
-    if (!pd->swtab[pd->state])
-         return;  // Current element should not have any sub elements
+    if (!pd->swtab[pd->state]) {
+        // Current element should not have any sub elements
+        return;
+    }
 
     if (!pd->pkg && pd->state != STATE_FILELISTS && pd->state != STATE_START)
         return;  // Do not parse current package tag and its content
@@ -80,8 +85,12 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
     for (sw = pd->swtab[pd->state]; sw->from == pd->state; sw++)
         if (!strcmp(element, sw->ename))
             break;
-    if (sw->from != pd->state)
-      return; // There is no state for the name -> skip
+    if (sw->from != pd->state) {
+        // No state for current element (unknown element)
+        cr_xml_parser_warning(pd, CR_XML_WARNING_UNKNOWNTAG,
+                              "Unknown element \"%s\"", element);
+        return;
+    }
 
     // Update parser data
     pd->state      = sw->to;
@@ -103,10 +112,18 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
 
         if (!pkgId) {
             // Package without a pkgid attr is error
-            g_set_error(&pd->err, CR_XML_PARSER_FIL_ERROR, CRE_BADXMLFILELISTS,
+            g_set_error(&pd->err, ERR_DOMAIN, ERR_CODE_XML,
                         "Package pkgid attributte is missing!");
             break;
         }
+
+        if (!name)
+            cr_xml_parser_warning(pd, CR_XML_WARNING_MISSINGATTR,
+                           "Missing attribute \"name\" of a package element");
+
+        if (!arch)
+            cr_xml_parser_warning(pd, CR_XML_WARNING_MISSINGATTR,
+                           "Missing attribute \"arch\" of a package element");
 
         // Get package object to store current package or NULL if
         // current XML package element shoud be skipped/ignored.
@@ -122,8 +139,9 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
                                            tmp_err,
                                            "Parsing interrupted:");
             else
-                g_set_error(&pd->err, CR_XML_PARSER_FIL_ERROR, CRE_CBINTERRUPTED,
+                g_set_error(&pd->err, ERR_DOMAIN, CRE_CBINTERRUPTED,
                             "Parsing interrupted");
+            break;
         } else {
             // If callback return CRE_OK but it simultaneously set
             // the tmp_err then it's a programming error.
@@ -142,8 +160,7 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
     }
 
     case STATE_VERSION:
-        if (!pd->pkg)
-            break;
+        assert(pd->pkg);
 
         // Version string insert only if them don't already exists
 
@@ -159,6 +176,8 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         break;
 
     case STATE_FILE: {
+        assert(pd->pkg);
+
         const char *type = cr_find_attr("type", attr);
         pd->last_file_type = FILE_FILE;
         if (type) {
@@ -167,9 +186,8 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
             else if (!strcmp(type, "ghost"))
                 pd->last_file_type = FILE_GHOST;
             else
-                g_string_append_printf(pd->msgs,
-                                       "Unknown file type \"%s\";",
-                                       type);
+                cr_xml_parser_warning(pd, CR_XML_WARNING_UNKNOWNVAL,
+                                      "Unknown file type \"%s\"", type);
         }
         break;
     }
@@ -189,10 +207,10 @@ cr_end_handler(void *pdata, const char *element)
     CR_UNUSED(element);
 
     if (pd->err)
-        return; /* There was an error -> do nothing */
+        return; // There was an error -> do nothing
 
     if (pd->depth != pd->statedepth) {
-        /* Back from the unknown state */
+        // Back from the unknown state
         pd->depth--;
         return;
     }
@@ -216,9 +234,9 @@ cr_end_handler(void *pdata, const char *element)
             if (tmp_err)
                 g_propagate_prefixed_error(&pd->err,
                                            tmp_err,
-                                           "Parsing interrupted:");
+                                           "Parsing interrupted: ");
             else
-                g_set_error(&pd->err, CR_XML_PARSER_FIL_ERROR, CRE_CBINTERRUPTED,
+                g_set_error(&pd->err, ERR_DOMAIN, CRE_CBINTERRUPTED,
                             "Parsing interrupted");
         } else {
             // If callback return CRE_OK but it simultaneously set
@@ -230,7 +248,9 @@ cr_end_handler(void *pdata, const char *element)
         break;
 
     case STATE_FILE: {
-        if (!pd->pkg || !pd->content)
+        assert(pd->pkg);
+
+        if (!pd->content)
             break;
 
         cr_PackageFile *pkg_file = cr_package_file_new();
@@ -259,18 +279,17 @@ cr_xml_parse_filelists(const char *path,
                        void *newpkgcb_data,
                        cr_XmlParserPkgCb pkgcb,
                        void *pkgcb_data,
-                       char **messages,
+                       cr_XmlParserWarningCb warningcb,
+                       void *warningcb_data,
                        GError **err)
 {
     int ret = CRE_OK;
     cr_ParserData *pd;
     XML_Parser parser;
-    char *msgs;
     GError *tmp_err = NULL;
 
     assert(path);
     assert(newpkgcb || pkgcb);
-    assert(!messages || *messages == NULL);
     assert(!err || *err == NULL);
 
     if (!newpkgcb)  // Use default newpkgcb
@@ -289,6 +308,8 @@ cr_xml_parse_filelists(const char *path,
     pd->newpkgcb = newpkgcb;
     pd->pkgcb_data = pkgcb_data;
     pd->pkgcb = pkgcb;
+    pd->warningcb = warningcb;
+    pd->warningcb_data = warningcb_data;
     for (cr_StatesSwitch *sw = stateswitches; sw->from != NUMSTATES; sw++) {
         if (!pd->swtab[sw->from])
             pd->swtab[sw->from] = sw;
@@ -315,12 +336,7 @@ cr_xml_parse_filelists(const char *path,
         cr_package_free(pd->pkg);
     }
 
-    msgs = cr_xml_parser_data_free(pd);
-    if (messages)
-        *messages = msgs;
-    else
-        g_free(msgs);
-
+    cr_xml_parser_data_free(pd);
     XML_ParserFree(parser);
 
     return ret;

@@ -35,7 +35,7 @@ pkgcb(cr_Package *pkg, void *cbdata, GError **err)
     g_assert(!err || *err == NULL);
     if (cbdata) *((int *)cbdata) += 1;
     cr_package_free(pkg);
-    return CRE_OK;
+    return CR_CB_RET_OK;
 }
 
 static int
@@ -45,7 +45,7 @@ pkgcb_interrupt(cr_Package *pkg, void *cbdata, GError **err)
     g_assert(!err || *err == NULL);
     if (cbdata) *((int *)cbdata) += 1;
     cr_package_free(pkg);
-    return 1;
+    return CR_CB_RET_ERR;
 }
 
 static int
@@ -69,7 +69,7 @@ newpkgcb_skip_fake_bash(cr_Package **pkg,
         return CRE_OK;
 
     *pkg = cr_package_new();
-    return CRE_OK;
+    return CR_CB_RET_OK;
 }
 
 static int
@@ -90,7 +90,47 @@ newpkgcb_interrupt(cr_Package **pkg,
     g_assert(pkgId != NULL);
     g_assert(!err || *err == NULL);
 
-    return 1;
+    if (cbdata) *((int *)cbdata) += 1;
+
+    return CR_CB_RET_ERR;
+}
+
+static int
+warningcb(cr_XmlParserWarningType type,
+                    char *msg,
+                    void *cbdata,
+                    GError **err)
+{
+    CR_UNUSED(type);
+    CR_UNUSED(msg);
+    CR_UNUSED(err);
+
+    g_assert(type < CR_XML_WARNING_SENTINEL);
+    g_assert(!err || *err == NULL);
+
+    g_string_append((GString *) cbdata, msg);
+    g_string_append((GString *) cbdata, ";");
+
+    return CR_CB_RET_OK;
+}
+
+static int
+warningcb_interrupt(cr_XmlParserWarningType type,
+                    char *msg,
+                    void *cbdata,
+                    GError **err)
+{
+    CR_UNUSED(type);
+    CR_UNUSED(msg);
+    CR_UNUSED(cbdata);
+    CR_UNUSED(err);
+
+    g_assert(type < CR_XML_WARNING_SENTINEL);
+    g_assert(!err || *err == NULL);
+
+    if (cbdata) *((int *)cbdata) += 1;
+
+    return CR_CB_RET_ERR;
 }
 
 // Tests
@@ -100,7 +140,7 @@ test_cr_xml_parse_filelists_00(void)
 {
     GError *tmp_err = NULL;
     int ret = cr_xml_parse_filelists(TEST_REPO_00_FILELISTS, NULL, NULL,
-                                     pkgcb, NULL, NULL, &tmp_err);
+                                     pkgcb, NULL, NULL, NULL, &tmp_err);
     g_assert(tmp_err == NULL);
     g_assert_cmpint(ret, ==, CRE_OK);
 }
@@ -111,7 +151,7 @@ test_cr_xml_parse_filelists_01(void)
     int parsed = 0;
     GError *tmp_err = NULL;
     int ret = cr_xml_parse_filelists(TEST_REPO_01_FILELISTS, NULL, NULL,
-                                     pkgcb, &parsed, NULL, &tmp_err);
+                                     pkgcb, &parsed, NULL, NULL, &tmp_err);
     g_assert(tmp_err == NULL);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert_cmpint(parsed, ==, 1);
@@ -123,7 +163,7 @@ test_cr_xml_parse_filelists_02(void)
     int parsed = 0;
     GError *tmp_err = NULL;
     int ret = cr_xml_parse_filelists(TEST_REPO_02_FILELISTS, NULL, NULL,
-                                     pkgcb, &parsed, NULL, &tmp_err);
+                                     pkgcb, &parsed, NULL, NULL, &tmp_err);
     g_assert(tmp_err == NULL);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert_cmpint(parsed, ==, 2);
@@ -135,7 +175,7 @@ test_cr_xml_parse_filelists_unknown_element_00(void)
     int parsed = 0;
     GError *tmp_err = NULL;
     int ret = cr_xml_parse_filelists(TEST_MRF_UE_FIL_00, NULL, NULL,
-                                     pkgcb, &parsed, NULL, &tmp_err);
+                                     pkgcb, &parsed, NULL, NULL, &tmp_err);
     g_assert(tmp_err == NULL);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert_cmpint(parsed, ==, 2);
@@ -147,7 +187,7 @@ test_cr_xml_parse_filelists_unknown_element_01(void)
     int parsed = 0;
     GError *tmp_err = NULL;
     int ret = cr_xml_parse_filelists(TEST_MRF_UE_FIL_01, NULL, NULL,
-                                     pkgcb, &parsed, NULL, &tmp_err);
+                                     pkgcb, &parsed, NULL, NULL, &tmp_err);
     g_assert(tmp_err == NULL);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert_cmpint(parsed, ==, 1);
@@ -159,7 +199,7 @@ test_cr_xml_parse_filelists_unknown_element_02(void)
     int parsed = 0;
     GError *tmp_err = NULL;
     int ret = cr_xml_parse_filelists(TEST_MRF_UE_FIL_02, NULL, NULL,
-                                     pkgcb, &parsed, NULL, &tmp_err);
+                                     pkgcb, &parsed, NULL, NULL, &tmp_err);
     g_assert(tmp_err == NULL);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert_cmpint(parsed, ==, 2);
@@ -171,7 +211,7 @@ test_cr_xml_parse_filelists_no_pkgid(void)
     int parsed = 0;
     GError *tmp_err = NULL;
     int ret = cr_xml_parse_filelists(TEST_MRF_NO_PKGID_FIL, NULL, NULL,
-                                     pkgcb, &parsed, NULL, &tmp_err);
+                                     pkgcb, &parsed, NULL, NULL, &tmp_err);
     g_assert(tmp_err != NULL);
     g_error_free(tmp_err);
     g_assert_cmpint(ret, ==, CRE_BADXMLFILELISTS);
@@ -184,7 +224,7 @@ test_cr_xml_parse_filelists_skip_fake_bash_00(void)
     GError *tmp_err = NULL;
     int ret = cr_xml_parse_filelists(TEST_MRF_UE_FIL_00,
                                      newpkgcb_skip_fake_bash, NULL,
-                                     pkgcb, &parsed, NULL, &tmp_err);
+                                     pkgcb, &parsed, NULL, NULL, &tmp_err);
     g_assert(tmp_err == NULL);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert_cmpint(parsed, ==, 1);
@@ -197,7 +237,7 @@ test_cr_xml_parse_filelists_skip_fake_bash_01(void)
     GError *tmp_err = NULL;
     int ret = cr_xml_parse_filelists(TEST_MRF_UE_FIL_01,
                                      newpkgcb_skip_fake_bash, NULL,
-                                     pkgcb, &parsed, NULL, &tmp_err);
+                                     pkgcb, &parsed, NULL, NULL, &tmp_err);
     g_assert(tmp_err == NULL);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert_cmpint(parsed, ==, 0);
@@ -209,7 +249,7 @@ test_cr_xml_parse_filelists_pkgcb_interrupt(void)
     int parsed = 0;
     GError *tmp_err = NULL;
     int ret = cr_xml_parse_filelists(TEST_REPO_02_FILELISTS, NULL, NULL,
-                                     pkgcb_interrupt, &parsed, NULL, &tmp_err);
+                            pkgcb_interrupt, &parsed, NULL, NULL, &tmp_err);
     g_assert(tmp_err != NULL);
     g_error_free(tmp_err);
     g_assert_cmpint(ret, ==, CRE_CBINTERRUPTED);
@@ -223,7 +263,7 @@ test_cr_xml_parse_filelists_newpkgcb_interrupt(void)
     GError *tmp_err = NULL;
     int ret = cr_xml_parse_filelists(TEST_REPO_02_FILELISTS,
                                      newpkgcb_interrupt, NULL,
-                                     pkgcb, &parsed,  NULL, &tmp_err);
+                                     pkgcb, &parsed,  NULL, NULL, &tmp_err);
     g_assert(tmp_err != NULL);
     g_error_free(tmp_err);
     g_assert_cmpint(ret, ==, CRE_CBINTERRUPTED);
@@ -231,13 +271,28 @@ test_cr_xml_parse_filelists_newpkgcb_interrupt(void)
 }
 
 static void
+test_cr_xml_parse_filelists_warningcb_interrupt(void)
+{
+    int parsed = 0, numofwarnings = 0;
+    GError *tmp_err = NULL;
+    int ret = cr_xml_parse_filelists(TEST_MRF_BAD_TYPE_FIL,
+                                     NULL, NULL,
+                                     pkgcb, &parsed,  warningcb_interrupt,
+                                     &numofwarnings, &tmp_err);
+    g_assert(tmp_err != NULL);
+    g_error_free(tmp_err);
+    g_assert_cmpint(ret, ==, CRE_CBINTERRUPTED);
+    g_assert_cmpint(parsed, ==, 1);
+    g_assert_cmpint(numofwarnings, ==, 1);
+}
+
+static void
 test_cr_xml_parse_filelists_bad_file_type_00(void)
 {
     int parsed = 0;
     GError *tmp_err = NULL;
-    int ret = cr_xml_parse_filelists(TEST_MRF_BAD_TYPE_FIL,
-                                     NULL, NULL,
-                                     pkgcb, &parsed, NULL, &tmp_err);
+    int ret = cr_xml_parse_filelists(TEST_MRF_BAD_TYPE_FIL, NULL, NULL,
+                                     pkgcb, &parsed, NULL, NULL, &tmp_err);
     g_assert(tmp_err == NULL);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert_cmpint(parsed, ==, 2);
@@ -246,18 +301,19 @@ test_cr_xml_parse_filelists_bad_file_type_00(void)
 static void
 test_cr_xml_parse_filelists_bad_file_type_01(void)
 {
+    char *warnmsgs;
     int parsed = 0;
-    char *msgs = NULL;
+    GString *warn_strings = g_string_new(0);
     GError *tmp_err = NULL;
-    int ret = cr_xml_parse_filelists(TEST_MRF_BAD_TYPE_FIL,
-                                     NULL, NULL,
-                                     pkgcb, &parsed, &msgs, &tmp_err);
-    g_assert(msgs != NULL);
-    g_assert_cmpstr(msgs, ==, "Unknown file type \"foo\";");
-    g_free(msgs);
+    int ret = cr_xml_parse_filelists(TEST_MRF_BAD_TYPE_FIL, NULL, NULL,
+                                     pkgcb, &parsed, warningcb,
+                                     warn_strings, &tmp_err);
     g_assert(tmp_err == NULL);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert_cmpint(parsed, ==, 2);
+    warnmsgs = g_string_free(warn_strings, FALSE);
+    g_assert_cmpstr(warnmsgs, ==, "Unknown file type \"foo\";");
+    g_free(warnmsgs);
 }
 
 int
@@ -287,6 +343,8 @@ main(int argc, char *argv[])
                     test_cr_xml_parse_filelists_pkgcb_interrupt);
     g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_filelists_newpkgcb_interrupt",
                     test_cr_xml_parse_filelists_newpkgcb_interrupt);
+    g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_filelists_warningcb_interrupt",
+                    test_cr_xml_parse_filelists_warningcb_interrupt);
     g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_filelists_bad_file_type_00",
                     test_cr_xml_parse_filelists_bad_file_type_00);
     g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_filelists_bad_file_type_01",

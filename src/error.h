@@ -91,6 +91,7 @@ const char *cr_strerror(cr_Error rc);
 #define CR_XML_DUMP_OTHER_ERROR         cr_xml_dump_other_error_quark()
 #define CR_XML_DUMP_PRIMARY_ERROR       cr_xml_dump_primary_error_quark()
 #define CR_XML_FILE_ERROR               cr_xml_file_error_quark()
+#define CR_XML_PARSER_ERROR             cr_xml_parser_error_quark()
 #define CR_XML_PARSER_FIL_ERROR         cr_xml_parser_fil_error_quark()
 #define CR_XML_PARSER_OTH_ERROR         cr_xml_parser_oth_error_quark()
 #define CR_XML_PARSER_PRI_ERROR         cr_xml_parser_pri_error_quark()
@@ -107,6 +108,7 @@ GQuark cr_xml_dump_filelists_error_quark(void);
 GQuark cr_xml_dump_other_error_quark(void);
 GQuark cr_xml_dump_primary_error_quark(void);
 GQuark cr_xml_file_error_quark(void);
+GQuark cr_xml_parser_error_quark(void);
 GQuark cr_xml_parser_fil_error_quark(void);
 GQuark cr_xml_parser_oth_error_quark(void);
 GQuark cr_xml_parser_pri_error_quark(void);

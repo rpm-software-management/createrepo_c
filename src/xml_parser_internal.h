@@ -87,10 +87,11 @@ typedef struct _cr_ParserData {
         User data for the pkgcb. */
     cr_XmlParserPkgCb       pkgcb;              /*!<
         Callback called when a signel pkg data are completly parsed. */
+    void                    *warningcb_data;    /*!<
+        User data fot he warningcb. */
+    cr_XmlParserWarningCb   warningcb;
     cr_Package              *pkg;               /*!<
         The package which is currently loaded. */
-    GString                 *msgs;              /*!<
-        Messages from xml parser (warnings about unknown elements etc.) */
 
     /* Filelists related stuff */
 
@@ -103,7 +104,7 @@ cr_ParserData *cr_xml_parser_data();
 
 /** Frees XML parser data.
  */
-char *cr_xml_parser_data_free(cr_ParserData *pd);
+void cr_xml_parser_data_free(cr_ParserData *pd);
 
 /** Find attribute in list of attributes.
  * @param name      Attribute name.
@@ -125,6 +126,15 @@ cr_find_attr(const char *name, const char **attr)
 /** XML character handler
  */
 void XMLCALL cr_char_handler(void *pdata, const XML_Char *s, int len);
+
+/** Wrapper for user warning cb.
+ * It checks if warningcb is defined, if defined, it build warning msg from
+ * va_args, calls warningcb and propagate (set) error if necessary.
+ */
+int cr_xml_parser_warning(cr_ParserData *pd,
+                          cr_XmlParserWarningType type,
+                          const char *msg,
+                          ...);
 
 /** Default callback for the new package.
  */

@@ -256,8 +256,8 @@ cr_end_handler(void *pdata, const char *element)
         cr_PackageFile *pkg_file = cr_package_file_new();
         pkg_file->name = cr_safe_string_chunk_insert(pd->pkg->chunk,
                                                 cr_get_filename(pd->content));
-        pkg_file->path = cr_safe_string_chunk_insert(pd->pkg->chunk,
-                                                     pd->content);
+        pkg_file->path = cr_safe_string_chunk_insert_const(pd->pkg->chunk,
+                                                           pd->content);
         switch (pd->last_file_type) {
             case FILE_FILE:  pkg_file->type = NULL;    break; // NULL => "file"
             case FILE_DIR:   pkg_file->type = "dir";   break;

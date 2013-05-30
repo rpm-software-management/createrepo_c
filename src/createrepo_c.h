@@ -54,6 +54,7 @@ extern "C" {
 #include "version.h"
 #include "xml_dump.h"
 #include "xml_file.h"
+#include "xml_parser.h"
 
 #ifdef __cplusplus
 }

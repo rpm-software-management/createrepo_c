@@ -38,6 +38,7 @@ typedef enum {
     CR_XML_WARNING_UNKNOWNTAG,  /*!< Unknown tag */
     CR_XML_WARNING_MISSINGATTR, /*!< Missing attribute */
     CR_XML_WARNING_UNKNOWNVAL,  /*!< Unknown tag or attribute value */
+    CR_XML_WARNING_BADATTRVAL,  /*!< Bad attribute value */
     CR_XML_WARNING_SENTINEL,
 } cr_XmlParserWarningType;
 
@@ -58,7 +59,9 @@ typedef int (*cr_XmlParserPkgCb)(cr_Package *pkg,
  * If the pointer is set to NULL, current package will be skiped.
  * Note: For the primary.xml file pkgId, name and arch are NULL!
  * @param pkg       Package that will be populated.
- * @param pkgId     pkgId (hash) of the new package.
+ * @param pkgId     pkgId (hash) of the new package (in case of filelists.xml
+ *                  or other.xml) or package type ("rpm" in case
+ *                  of primary.xml).
  * @param name      Name of the new package.
  * @param arch      Arch of the new package.
  * @param cbdata    User data.
@@ -86,6 +89,32 @@ typedef int (*cr_XmlParserWarningCb)(cr_XmlParserWarningType type,
                                      void *cbdata,
                                      GError **err);
 
+/** Parse primary.xml. File could be compressed.
+ * @param path           Path to filelists.xml (plain or compressed)
+ * @param newpkgcb       Callback for new package (Called when new package
+ *                       xml chunk is found and package object to store
+ *                       the data is needed). If NULL cr_newpkgcb is used.
+ * @param newpkgcb_data  User data for the newpkgcb.
+ * @param pkgcb          Package callback. (Called when complete package
+ *                       xml chunk is parsed.). Could be NULL if newpkgcb is
+ *                       not NULL.
+ * @param pkgcb_data     User data for the pkgcb.
+ * @param warningcb      Callback for warning messages.
+ * @param warningcb_data User data for the warningcb.
+ * @param do_files       0 - Ignore file tags in primary.xml.
+ * @param err            GError **
+ * @return               cr_Error code.
+ */
+int cr_xml_parse_primary(const char *path,
+                         cr_XmlParserNewPkgCb newpkgcb,
+                         void *newpkgcb_data,
+                         cr_XmlParserPkgCb pkgcb,
+                         void *pkgcb_data,
+                         cr_XmlParserWarningCb warningcb,
+                         void *warningcb_data,
+                         int do_files,
+                         GError **err);
+
 /** Parse filelists.xml. File could be compressed.
  * @param path           Path to filelists.xml (plain or compressed)
  * @param newpkgcb       Callback for new package (Called when new package
@@ -109,6 +138,30 @@ int cr_xml_parse_filelists(const char *path,
                            cr_XmlParserWarningCb warningcb,
                            void *warningcb_data,
                            GError **err);
+
+/** Parse other.xml. File could be compressed.
+ * @param path           Path to other.xml (plain or compressed)
+ * @param newpkgcb       Callback for new package (Called when new package
+ *                       xml chunk is found and package object to store
+ *                       the data is needed). If NULL cr_newpkgcb is used.
+ * @param newpkgcb_data  User data for the newpkgcb.
+ * @param pkgcb          Package callback. (Called when complete package
+ *                       xml chunk is parsed.). Could be NULL if newpkgcb is
+ *                       not NULL.
+ * @param pkgcb_data     User data for the pkgcb.
+ * @param warningcb      Callback for warning messages.
+ * @param warningcb_data User data for the warningcb.
+ * @param err            GError **
+ * @return               cr_Error code.
+ */
+int cr_xml_parse_other(const char *path,
+                       cr_XmlParserNewPkgCb newpkgcb,
+                       void *newpkgcb_data,
+                       cr_XmlParserPkgCb pkgcb,
+                       void *pkgcb_data,
+                       cr_XmlParserWarningCb warningcb,
+                       void *warningcb_data,
+                       GError **err);
 /** @} */
 
 #ifdef __cplusplus

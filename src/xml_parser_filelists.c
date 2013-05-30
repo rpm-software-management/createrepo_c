@@ -231,6 +231,9 @@ cr_end_handler(void *pdata, const char *element)
         if (!pd->pkg)
             return;
 
+        // Reverse list of files
+        pd->pkg->files = g_slist_reverse(pd->pkg->files);
+
         if (pd->pkgcb && pd->pkgcb(pd->pkg, pd->pkgcb_data, &tmp_err)) {
             if (tmp_err)
                 g_propagate_prefixed_error(&pd->err,
@@ -257,6 +260,7 @@ cr_end_handler(void *pdata, const char *element)
         cr_PackageFile *pkg_file = cr_package_file_new();
         pkg_file->name = cr_safe_string_chunk_insert(pd->pkg->chunk,
                                                 cr_get_filename(pd->content));
+        pd->content[pd->lcontent - strlen(pkg_file->name)] = '\0';
         pkg_file->path = cr_safe_string_chunk_insert_const(pd->pkg->chunk,
                                                            pd->content);
         switch (pd->last_file_type) {

@@ -439,6 +439,24 @@ cr_end_handler(void *pdata, const char *element)
         if (!pd->pkg)
             return;
 
+        if (!pd->pkg->pkgId) {
+            // Package without a pkgid attr is error
+            g_set_error(&pd->err, ERR_DOMAIN, ERR_CODE_XML,
+                        "Package without pkgid (checksum)!");
+            break;
+        }
+
+        if (pd->pkg->pkgId[0] == '\0') {
+            // Package without a pkgid attr is error
+            g_set_error(&pd->err, ERR_DOMAIN, ERR_CODE_XML,
+                        "Package with empty pkgid (checksum)!");
+            break;
+        }
+
+        if (pd->do_files)
+            // Reverse order of files
+            pd->pkg->files = g_slist_reverse(pd->pkg->files);
+
         if (pd->pkgcb && pd->pkgcb(pd->pkg, pd->pkgcb_data, &tmp_err)) {
             if (tmp_err)
                 g_propagate_prefixed_error(&pd->err,
@@ -460,78 +478,94 @@ cr_end_handler(void *pdata, const char *element)
         assert(pd->pkg);
         if (!pd->pkg->name)
             // name could be already filled by filelists or other xml parser
-            pd->pkg->name = cr_safe_string_chunk_insert(pd->pkg->chunk,
-                                                        pd->content);
+            pd->pkg->name = cr_safe_string_chunk_insert_null(pd->pkg->chunk,
+                                                             pd->content);
         break;
 
     case STATE_ARCH:
         assert(pd->pkg);
         if (!pd->pkg->arch)
             // arch could be already filled by filelists or other xml parser
-            pd->pkg->arch = cr_safe_string_chunk_insert(pd->pkg->chunk,
-                                                        pd->content);
+            pd->pkg->arch = cr_safe_string_chunk_insert_null(pd->pkg->chunk,
+                                                             pd->content);
         break;
 
     case STATE_CHECKSUM:
         assert(pd->pkg);
         if (!pd->pkg->pkgId)
             // pkgId could be already filled by filelists or other xml parser
-            pd->pkg->pkgId = cr_safe_string_chunk_insert(pd->pkg->chunk,
-                                                         pd->content);
+            pd->pkg->pkgId = cr_safe_string_chunk_insert_null(pd->pkg->chunk,
+                                                              pd->content);
         break;
 
     case STATE_SUMMARY:
         assert(pd->pkg);
-        pd->pkg->summary = cr_safe_string_chunk_insert(pd->pkg->chunk,
-                                                       pd->content);
+        pd->pkg->summary = cr_safe_string_chunk_insert_null(pd->pkg->chunk,
+                                                            pd->content);
         break;
 
     case STATE_DESCRIPTION:
         assert(pd->pkg);
-        pd->pkg->description = cr_safe_string_chunk_insert(pd->pkg->chunk,
-                                                           pd->content);
+        pd->pkg->description = cr_safe_string_chunk_insert_null(pd->pkg->chunk,
+                                                                pd->content);
         break;
 
     case STATE_PACKAGER:
         assert(pd->pkg);
-        pd->pkg->rpm_packager = cr_safe_string_chunk_insert(pd->pkg->chunk,
-                                                            pd->content);
+        pd->pkg->rpm_packager = cr_safe_string_chunk_insert_null(pd->pkg->chunk,
+                                                                 pd->content);
         break;
 
     case STATE_URL:
         assert(pd->pkg);
-        pd->pkg->url = cr_safe_string_chunk_insert(pd->pkg->chunk,
-                                                   pd->content);
+        pd->pkg->url = cr_safe_string_chunk_insert_null(pd->pkg->chunk,
+                                                        pd->content);
         break;
 
     case STATE_RPM_LICENSE:
         assert(pd->pkg);
-        pd->pkg->rpm_license = cr_safe_string_chunk_insert(pd->pkg->chunk,
-                                                           pd->content);
+        pd->pkg->rpm_license = cr_safe_string_chunk_insert_null(pd->pkg->chunk,
+                                                                pd->content);
         break;
 
     case STATE_RPM_VENDOR:
         assert(pd->pkg);
-        pd->pkg->rpm_vendor = cr_safe_string_chunk_insert(pd->pkg->chunk,
-                                                          pd->content);
+        pd->pkg->rpm_vendor = cr_safe_string_chunk_insert_null(pd->pkg->chunk,
+                                                               pd->content);
         break;
 
     case STATE_RPM_GROUP:
         assert(pd->pkg);
-        pd->pkg->rpm_group = cr_safe_string_chunk_insert(pd->pkg->chunk,
-                                                         pd->content);
+        pd->pkg->rpm_group = cr_safe_string_chunk_insert_null(pd->pkg->chunk,
+                                                              pd->content);
         break;
 
     case STATE_RPM_BUILDHOST:
         assert(pd->pkg);
-        pd->pkg->rpm_buildhost = cr_safe_string_chunk_insert(pd->pkg->chunk,
-                                                             pd->content);
+        pd->pkg->rpm_buildhost = cr_safe_string_chunk_insert_null(pd->pkg->chunk,
+                                                                  pd->content);
         break;
 
     case STATE_RPM_SOURCERPM:
         assert(pd->pkg);
-        pd->pkg->rpm_sourcerpm = cr_safe_string_chunk_insert(pd->pkg->chunk,
-                                                             pd->content);
+        pd->pkg->rpm_sourcerpm = cr_safe_string_chunk_insert_null(pd->pkg->chunk,
+                                                                  pd->content);
+        break;
+
+    case STATE_RPM_PROVIDES:
+        pd->pkg->provides = g_slist_reverse(pd->pkg->provides);
+        break;
+
+    case STATE_RPM_REQUIRES:
+        pd->pkg->requires = g_slist_reverse(pd->pkg->requires);
+        break;
+
+    case STATE_RPM_CONFLICTS:
+        pd->pkg->conflicts = g_slist_reverse(pd->pkg->conflicts);
+        break;
+
+    case STATE_RPM_OBSOLETES:
+        pd->pkg->obsoletes = g_slist_reverse(pd->pkg->obsoletes);
         break;
 
     case STATE_FILE: {
@@ -546,6 +580,7 @@ cr_end_handler(void *pdata, const char *element)
         cr_PackageFile *pkg_file = cr_package_file_new();
         pkg_file->name = cr_safe_string_chunk_insert(pd->pkg->chunk,
                                                 cr_get_filename(pd->content));
+        pd->content[pd->lcontent - strlen(pkg_file->name)] = '\0';
         pkg_file->path = cr_safe_string_chunk_insert_const(pd->pkg->chunk,
                                                            pd->content);
         switch (pd->last_file_type) {

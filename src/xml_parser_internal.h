@@ -93,9 +93,25 @@ typedef struct _cr_ParserData {
     cr_Package              *pkg;               /*!<
         The package which is currently loaded. */
 
-    /* Filelists related stuff */
+    /* Primary related stuff */
 
-    int last_file_type;
+    int do_files;   /*!<
+        If == 0 then parser will ignore files elements in the primary.xml.
+        This is useful when you are inteding parse primary.xml as well as
+        filelists.xml. In this case files will be filled from filelists.xml.
+        If you are inteding parse only the primary.xml then it coud be useful
+        to parse files in primary.
+        If you parse files from both a primary.xml and a filelists.xml
+        then some files in package object will be duplicated! */
+
+    /* Filelists + Primary related stuff */
+
+    cr_FileType last_file_type;
+
+    /* Other related stuff */
+
+    cr_ChangelogEntry *changelog;
+
 } cr_ParserData;
 
 /** Malloc and initialize common part of XML parser data.
@@ -135,6 +151,12 @@ int cr_xml_parser_warning(cr_ParserData *pd,
                           cr_XmlParserWarningType type,
                           const char *msg,
                           ...);
+
+/** strtoll with ability to call warning cb if error during conversion.
+ */
+gint64 cr_xml_parser_strtoll(cr_ParserData *pd,
+                             const char *nptr,
+                             unsigned int base);
 
 /** Default callback for the new package.
  */

@@ -1,6 +1,7 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 #include <assert.h>
+#include <errno.h>
 #include "error.h"
 #include "xml_parser.h"
 #include "xml_parser_internal.h"
@@ -89,6 +90,32 @@ cr_xml_parser_warning(cr_ParserData *pd,
     assert(pd->err || ret == CR_CB_RET_OK);
 
     return ret;
+}
+
+gint64
+cr_xml_parser_strtoll(cr_ParserData *pd,
+                      const char *nptr,
+                      unsigned int base)
+{
+    gint64 val;
+    char *endptr;
+
+    assert(pd);
+    assert(base <= 36 && base != 1);
+
+    if (!nptr)
+        return 0;
+
+    val = g_ascii_strtoll(nptr, &endptr, base);
+
+    if ((val == G_MAXINT64 || val == G_MININT64) && errno == ERANGE)
+        cr_xml_parser_warning(pd, CR_XML_WARNING_BADATTRVAL,
+                "Correct integer value \"%s\" caused overflow", nptr);
+    else if (val == 0 && endptr)
+        cr_xml_parser_warning(pd, CR_XML_WARNING_BADATTRVAL,
+                "Conversion of \"%s\" to integer failed", nptr);
+
+    return val;
 }
 
 int

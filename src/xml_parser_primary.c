@@ -102,7 +102,7 @@ static cr_StatesSwitch stateswitches[] = {
     { STATE_RPM_PROVIDES,   "rpm:entry",        STATE_RPM_ENTRY_PROVIDES,  0 },
     { STATE_RPM_REQUIRES,   "rpm:entry",        STATE_RPM_ENTRY_REQUIRES,  0 },
     { STATE_RPM_CONFLICTS,  "rpm:entry",        STATE_RPM_ENTRY_CONFLICTS, 0 },
-    { STATE_RPM_OBSOLETES,  "rpm_entry",        STATE_RPM_ENTRY_OBSOLETES, 0 },
+    { STATE_RPM_OBSOLETES,  "rpm:entry",        STATE_RPM_ENTRY_OBSOLETES, 0 },
     { NUMSTATES,            NULL,               NUMSTATES,              0 },
 };
 

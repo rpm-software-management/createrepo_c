@@ -42,16 +42,6 @@ typedef enum {
     CR_XML_WARNING_SENTINEL,
 } cr_XmlParserWarningType;
 
-/** Callback for XML parser wich is called when a package element is parsed.
- * @param pkg       Currently parsed package.
- * @param cbdata    User data.
- * @err             GError **
- * @return          CR_CB_RET_OK (0) or CR_CB_RET_ERR (1) - stops the parsing
- */
-typedef int (*cr_XmlParserPkgCb)(cr_Package *pkg,
-                                 void *cbdata,
-                                 GError **err);
-
 /** Callback for XML parser wich is called when a new package object parsing
  * is started. This function has to set *pkg to package object which will
  * be populated by parser. The object could be empty, or already partially
@@ -74,6 +64,16 @@ typedef int (*cr_XmlParserNewPkgCb)(cr_Package **pkg,
                                     const char *arch,
                                     void *cbdata,
                                     GError **err);
+
+/** Callback for XML parser wich is called when a package element is parsed.
+ * @param pkg       Currently parsed package.
+ * @param cbdata    User data.
+ * @err             GError **
+ * @return          CR_CB_RET_OK (0) or CR_CB_RET_ERR (1) - stops the parsing
+ */
+typedef int (*cr_XmlParserPkgCb)(cr_Package *pkg,
+                                 void *cbdata,
+                                 GError **err);
 
 /** Callback for XML parser warnings. All reported warnings are non-fatal,
  * and ignored by default. But if callback return CR_CB_RET_ERR instead of

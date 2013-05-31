@@ -139,7 +139,7 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
             if (tmp_err)
                 g_propagate_prefixed_error(&pd->err,
                                            tmp_err,
-                                           "Parsing interrupted:");
+                                           "Parsing interrupted: ");
             else
                 g_set_error(&pd->err, ERR_DOMAIN, CRE_CBINTERRUPTED,
                             "Parsing interrupted");

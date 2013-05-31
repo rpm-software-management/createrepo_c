@@ -46,6 +46,12 @@ static struct PyMethodDef createrepo_c_methods[] = {
      METH_VARARGS, NULL},
     {"xml_dump",                (PyCFunction)py_xml_dump,
      METH_VARARGS, NULL},
+    {"xml_parse_primary",       (PyCFunction)py_xml_parse_primary,
+     METH_VARARGS, NULL},
+    {"xml_parse_filelists",     (PyCFunction)py_xml_parse_filelists,
+     METH_VARARGS, NULL},
+    {"xml_parse_other",         (PyCFunction)py_xml_parse_other,
+     METH_VARARGS, NULL},
     { NULL }
 };
 
@@ -104,12 +110,6 @@ init_createrepo_c(void)
         return;
     Py_INCREF(&XmlFile_Type);
     PyModule_AddObject(m, "XmlFile", (PyObject *)&XmlFile_Type);
-
-    /* _createrepo_c.XmlParser */
-    if (PyType_Ready(&XmlParser_Type) < 0)
-        return;
-    Py_INCREF(&XmlParser_Type);
-    PyModule_AddObject(m, "XmlParser", (PyObject *)&XmlParser_Type);
 
     /* Createrepo init */
 

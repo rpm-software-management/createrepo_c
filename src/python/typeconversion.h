@@ -23,6 +23,9 @@
 #include <glib.h>
 #include "src/createrepo_c.h"
 
+// Clears the current Python Exception and return its representation in GError
+void PyErr_ToGError(GError **err);
+
 PyObject *PyStringOrNone_FromString(const char *str);
 char *PyObject_ToStrOrNull(PyObject *pyobj);
 

@@ -100,16 +100,15 @@ class OtherXmlFile(XmlFile):
     def __init__(self, filename, compressiontype=GZ_COMPRESSION):
         XmlFile.__init__(self, filename, XMLFILE_OTHER, compressiontype)
 
-# XmlParser class
-
-XmlParser = _createrepo_c.XmlParser
-
 # Methods
 
-xml_dump_primary = _createrepo_c.xml_dump_primary
-xml_dump_filelists = _createrepo_c.xml_dump_filelists
-xml_dump_other = _createrepo_c.xml_dump_other
-xml_dump = _createrepo_c.xml_dump
+xml_dump_primary    = _createrepo_c.xml_dump_primary
+xml_dump_filelists  = _createrepo_c.xml_dump_filelists
+xml_dump_other      = _createrepo_c.xml_dump_other
+xml_dump            = _createrepo_c.xml_dump
+xml_parse_primary   = _createrepo_c.xml_parse_primary
+xml_parse_filelists = _createrepo_c.xml_parse_filelists
+xml_parse_other     = _createrepo_c.xml_parse_other
 
 def package_from_rpm(filename, checksum_type=SHA256, location_href=None,
                      location_base=None, changelog_limit=10):

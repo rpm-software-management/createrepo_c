@@ -21,6 +21,36 @@
 #include <assert.h>
 #include "typeconversion.h"
 
+void
+PyErr_ToGError(GError **err)
+{
+    PyObject *type, *val, *traceback, *pystr;
+
+    if (!err)
+        return;
+
+    assert(*err == NULL);
+
+    PyErr_Fetch(&type, &val, &traceback);
+
+    pystr = PyObject_Str(val);
+
+    Py_XDECREF(type);
+    Py_XDECREF(val);
+    Py_XDECREF(traceback);
+
+    if (!pystr) {
+        PyErr_Clear();
+        g_set_error(err, CR_XML_PARSER_ERROR, CRE_XMLPARSER,
+                    "Error while error handling");
+    } else {
+        g_set_error(err, CR_XML_PARSER_ERROR, CRE_XMLPARSER,
+                    PyString_AsString(pystr));
+    }
+
+    Py_XDECREF(pystr);
+}
+
 PyObject *
 PyStringOrNone_FromString(const char *str)
 {

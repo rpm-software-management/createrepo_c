@@ -98,7 +98,7 @@ cr_xml_parser_strtoll(cr_ParserData *pd,
                       unsigned int base)
 {
     gint64 val;
-    char *endptr;
+    char *endptr = NULL;
 
     assert(pd);
     assert(base <= 36 && base != 1);
@@ -111,7 +111,7 @@ cr_xml_parser_strtoll(cr_ParserData *pd,
     if ((val == G_MAXINT64 || val == G_MININT64) && errno == ERANGE)
         cr_xml_parser_warning(pd, CR_XML_WARNING_BADATTRVAL,
                 "Correct integer value \"%s\" caused overflow", nptr);
-    else if (val == 0 && endptr)
+    else if (val == 0 && *endptr != '\0')
         cr_xml_parser_warning(pd, CR_XML_WARNING_BADATTRVAL,
                 "Conversion of \"%s\" to integer failed", nptr);
 

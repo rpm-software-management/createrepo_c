@@ -2,12 +2,31 @@ import os.path
 
 TEST_DATA_PATH = os.path.normpath(os.path.join(__file__, "../../../testdata"))
 
+COMPRESSED_FILES_PATH = os.path.join(TEST_DATA_PATH, "compressed_files")
+MODIFIED_REPO_FILES_PATH = os.path.join(TEST_DATA_PATH, "modified_repo_files")
 PACKAGES_PATH = os.path.join(TEST_DATA_PATH, "packages")
 REPOS_PATH = TEST_DATA_PATH
-COMPRESSED_FILES_PATH = os.path.join(TEST_DATA_PATH, "compressed_files")
 TEST_FILES_PATH = os.path.join(TEST_DATA_PATH, "test_files")
 
-# Test packages
+# Modified repo files
+
+PRIMARY_ERROR_00_PATH = os.path.join(MODIFIED_REPO_FILES_PATH,
+                        "error_00-primary.xml")
+PRIMARY_MULTI_WARN_00_PATH = os.path.join(MODIFIED_REPO_FILES_PATH,
+                             "multiple_warnings_00-primary.xml")
+
+FILELISTS_ERROR_00_PATH = os.path.join(MODIFIED_REPO_FILES_PATH,
+                          "error_00-filelists.xml")
+FILELISTS_MULTI_WARN_00_PATH = os.path.join(MODIFIED_REPO_FILES_PATH,
+                               "multiple_warnings_00-filelists.xml")
+
+OTHER_ERROR_00_PATH = os.path.join(MODIFIED_REPO_FILES_PATH,
+                      "error_00-other.xml")
+OTHER_MULTI_WARN_00_PATH = os.path.join(MODIFIED_REPO_FILES_PATH,
+                           "multiple_warnings_00-other.xml")
+
+# Packages
+
 PKG_ARCHER = "Archer-3.4.5-6.x86_64.rpm"
 PKG_ARCHER_PATH = os.path.join(PACKAGES_PATH, PKG_ARCHER)
 
@@ -33,6 +52,7 @@ PKG_SUPER_KERNEL = "super_kernel-6.0.1-2.x86_64.rpm"
 PKG_SUPER_KERNEL_PATH = os.path.join(PACKAGES_PATH, PKG_SUPER_KERNEL)
 
 # Test repositories
+
 REPO_00_PATH = os.path.join(REPOS_PATH, "repo_00")
 REPO_00_PRIXML = os.path.join(REPO_00_PATH, "repodata/",
     "dabe2ce5481d23de1f4f52bdcfee0f9af98316c9e0de2ce8123adeefa0dd08b9-primary.xml.gz")
@@ -57,7 +77,7 @@ REPO_02_FILXML = os.path.join(REPO_02_PATH, "repodata/",
 REPO_02_OTHXML = os.path.join(REPO_02_PATH, "repodata/",
     "ab5d3edeea50f9b4ec5ee13e4d25c147e318e3a433dbabc94d3461f58ac28255-other.xml.gz")
 
-# Other test files
+# Test files
 
 FILE_BINARY = "binary_file"
 FILE_BINARY_PATH = os.path.join(TEST_FILES_PATH, FILE_BINARY)

@@ -45,7 +45,7 @@ PyErr_ToGError(GError **err)
                     "Error while error handling");
     } else {
         g_set_error(err, CR_XML_PARSER_ERROR, CRE_XMLPARSER,
-                    PyString_AsString(pystr));
+                    "%s", PyString_AsString(pystr));
     }
 
     Py_XDECREF(pystr);

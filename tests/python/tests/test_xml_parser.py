@@ -109,6 +109,78 @@ class TestCaseXmlParserPrimary(unittest.TestCase):
         self.assertEqual(userdata["pkgcb_calls"], 2)
         self.assertEqual(userdata["warnings"], [])
 
+    def test_xml_parser_primary_warnings(self):
+
+        userdata = {
+                "pkgs": [],
+                "warnings": []
+            }
+
+        def newpkgcb(pkgId, name, arch):
+            pkg = cr.Package()
+            userdata["pkgs"].append(pkg)
+            return pkg
+
+        def warningcb(warn_type, msg):
+            userdata["warnings"].append((warn_type, msg))
+
+        cr.xml_parse_primary(PRIMARY_MULTI_WARN_00_PATH,
+                             newpkgcb,
+                             None,
+                             warningcb,
+                             1)
+
+        self.assertEqual([pkg.name for pkg in userdata["pkgs"]],
+            ['fake_bash', 'super_kernel'])
+        self.assertEqual(userdata["warnings"],
+            [(0, 'Unknown element "fooelement"'),
+             (1, 'Missing attribute "type" of a package element'),
+             (0, 'Unknown element "foo"'),
+             (3, 'Conversion of "foobar" to integer failed'),
+             (2, 'Unknown file type "xxx"'),
+             (0, 'Unknown element "bar"')])
+
+    def test_xml_parser_primary_error(self):
+
+        userdata = { "pkgs": [] }
+
+        def newpkgcb(pkgId, name, arch):
+            pkg = cr.Package()
+            userdata["pkgs"].append(pkg)
+            return pkg
+
+        self.assertRaises(cr.CreaterepoCError,
+                          cr.xml_parse_primary,
+                          PRIMARY_ERROR_00_PATH, newpkgcb, None, None, 1)
+
+        self.assertEqual([pkg.name for pkg in userdata["pkgs"]], ['fake_bash'])
+
+    def test_xml_parser_primary_newpkgcb_abort(self):
+        def newpkgcb(pkgId, name, arch):
+            raise Error("Foo error")
+        self.assertRaises(cr.CreaterepoCError,
+                          cr.xml_parse_primary,
+                          REPO_02_PRIXML, newpkgcb, None, None, 1)
+
+    def test_xml_parser_primary_pkgcb_abort(self):
+        def newpkgcb(pkgId, name, arch):
+            return cr.Package()
+        def pkgcb():
+            raise Error("Foo error")
+        self.assertRaises(cr.CreaterepoCError,
+                          cr.xml_parse_primary,
+                          REPO_02_PRIXML, newpkgcb, pkgcb, None, 1)
+
+    def test_xml_parser_primary_warningcb_abort(self):
+        def newpkgcb(pkgId, name, arch):
+            return cr.Package()
+        def warningcb(type, msg):
+            raise Error("Foo error")
+        self.assertRaises(cr.CreaterepoCError,
+                          cr.xml_parse_primary,
+                          PRIMARY_MULTI_WARN_00_PATH,
+                          newpkgcb, None, warningcb, 1)
+
 class TestCaseXmlParserFilelists(unittest.TestCase):
 
     def test_xml_parser_filelists_repo01(self):
@@ -197,6 +269,74 @@ class TestCaseXmlParserFilelists(unittest.TestCase):
             ['fake_bash', 'super_kernel'])
         self.assertEqual(userdata["pkgcb_calls"], 2)
         self.assertEqual(userdata["warnings"], [])
+
+    def test_xml_parser_filelists_warnings(self):
+
+        userdata = {
+                "pkgs": [],
+                "warnings": []
+            }
+
+        def newpkgcb(pkgId, name, arch):
+            pkg = cr.Package()
+            userdata["pkgs"].append(pkg)
+            return pkg
+
+        def warningcb(warn_type, msg):
+            userdata["warnings"].append((warn_type, msg))
+
+        cr.xml_parse_filelists(FILELISTS_MULTI_WARN_00_PATH,
+                               newpkgcb,
+                               None,
+                               warningcb)
+
+        self.assertEqual([pkg.name for pkg in userdata["pkgs"]],
+            ['fake_bash', 'super_kernel'])
+        self.assertEqual(userdata["warnings"],
+            [(1, 'Missing attribute "arch" of a package element'),
+             (2, 'Unknown file type "xxx"'),
+             (0, 'Unknown element "bar"')])
+
+    def test_xml_parser_filelists_error(self):
+
+        userdata = { "pkgs": [] }
+
+        def newpkgcb(pkgId, name, arch):
+            pkg = cr.Package()
+            userdata["pkgs"].append(pkg)
+            return pkg
+
+        self.assertRaises(cr.CreaterepoCError,
+                          cr.xml_parse_filelists,
+                          FILELISTS_ERROR_00_PATH, newpkgcb, None, None)
+
+        self.assertEqual([pkg.name for pkg in userdata["pkgs"]], [])
+
+    def test_xml_parser_filelists_newpkgcb_abort(self):
+        def newpkgcb(pkgId, name, arch):
+            raise Error("Foo error")
+        self.assertRaises(cr.CreaterepoCError,
+                          cr.xml_parse_filelists,
+                          REPO_02_FILXML, newpkgcb, None, None)
+
+    def test_xml_parser_filelists_pkgcb_abort(self):
+        def newpkgcb(pkgId, name, arch):
+            return cr.Package()
+        def pkgcb():
+            raise Error("Foo error")
+        self.assertRaises(cr.CreaterepoCError,
+                          cr.xml_parse_filelists,
+                          REPO_02_FILXML, newpkgcb, pkgcb, None)
+
+    def test_xml_parser_filelists_warningcb_abort(self):
+        def newpkgcb(pkgId, name, arch):
+            return cr.Package()
+        def warningcb(type, msg):
+            raise Error("Foo error")
+        self.assertRaises(cr.CreaterepoCError,
+                          cr.xml_parse_filelists,
+                          FILELISTS_MULTI_WARN_00_PATH,
+                          newpkgcb, None, warningcb)
 
 class TestCaseXmlParserOther(unittest.TestCase):
 
@@ -291,6 +431,70 @@ class TestCaseXmlParserOther(unittest.TestCase):
         self.assertEqual(userdata["pkgcb_calls"], 2)
         self.assertEqual(userdata["warnings"], [])
 
+    def test_xml_parser_other_warnings(self):
 
-# TODO:
-# Test warnings
+        userdata = {
+                "pkgs": [],
+                "warnings": []
+            }
+
+        def newpkgcb(pkgId, name, arch):
+            pkg = cr.Package()
+            userdata["pkgs"].append(pkg)
+            return pkg
+
+        def warningcb(warn_type, msg):
+            userdata["warnings"].append((warn_type, msg))
+
+        cr.xml_parse_other(OTHER_MULTI_WARN_00_PATH,
+                           newpkgcb,
+                           None,
+                           warningcb)
+
+        self.assertEqual([pkg.name for pkg in userdata["pkgs"]],
+            [None, 'super_kernel'])
+        self.assertEqual(userdata["warnings"],
+            [(1, 'Missing attribute "name" of a package element'),
+             (0, 'Unknown element "bar"'),
+             (3, 'Conversion of "xxx" to integer failed')])
+
+    def test_xml_parser_other_error(self):
+
+        userdata = { "pkgs": [] }
+
+        def newpkgcb(pkgId, name, arch):
+            pkg = cr.Package()
+            userdata["pkgs"].append(pkg)
+            return pkg
+
+        self.assertRaises(cr.CreaterepoCError,
+                          cr.xml_parse_other,
+                          OTHER_ERROR_00_PATH, newpkgcb, None, None)
+
+        self.assertEqual([pkg.name for pkg in userdata["pkgs"]], [])
+
+    def test_xml_parser_other_newpkgcb_abort(self):
+        def newpkgcb(pkgId, name, arch):
+            raise Error("Foo error")
+        self.assertRaises(cr.CreaterepoCError,
+                          cr.xml_parse_other,
+                          REPO_02_OTHXML, newpkgcb, None, None)
+
+    def test_xml_parser_other_pkgcb_abort(self):
+        def newpkgcb(pkgId, name, arch):
+            return cr.Package()
+        def pkgcb():
+            raise Error("Foo error")
+        self.assertRaises(cr.CreaterepoCError,
+                          cr.xml_parse_other,
+                          REPO_02_OTHXML, newpkgcb, pkgcb, None)
+
+    def test_xml_parser_other_warningcb_abort(self):
+        def newpkgcb(pkgId, name, arch):
+            return cr.Package()
+        def warningcb(type, msg):
+            raise Error("Foo error")
+        self.assertRaises(cr.CreaterepoCError,
+                          cr.xml_parse_other,
+                          OTHER_MULTI_WARN_00_PATH,
+                          newpkgcb, None, warningcb)

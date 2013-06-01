@@ -24,7 +24,7 @@ _cr_createrepo()
             return 0
             ;;
         -s|--checksum)
-            COMPREPLY=( $( compgen -W 'md5 sha1 sha256' -- "$2" ) )
+            COMPREPLY=( $( compgen -W 'md5 sha sha1 sha224 sha256 sha384 sha512' -- "$2" ) )
             return 0
             ;;
         -i|--pkglist|--read-pkgs-list)

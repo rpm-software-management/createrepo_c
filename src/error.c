@@ -101,6 +101,12 @@ cr_parsepkg_error_quark(void)
 }
 
 GQuark
+cr_misc_error_quark(void)
+{
+    return g_quark_from_static_string("cr_misc_error");
+}
+
+GQuark
 cr_repomd_error_quark(void)
 {
     return g_quark_from_static_string("cr_repomd_error");

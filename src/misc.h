@@ -111,9 +111,11 @@ struct cr_HeaderRangeStruct {
 
 /** Return header byte range.
  * @param filename      filename
+ * @param err           GError **
  * @return              header range (start = end = 0 on error)
  */
-struct cr_HeaderRangeStruct cr_get_header_byte_range(const char *filename);
+struct cr_HeaderRangeStruct cr_get_header_byte_range(const char *filename,
+                                                     GError **err);
 
 /** Return pointer to the rest of string after last '/'.
  * (e.g. for "/foo/bar" returns "bar")
@@ -122,29 +124,28 @@ struct cr_HeaderRangeStruct cr_get_header_byte_range(const char *filename);
  */
 char *cr_get_filename(const char *filepath);
 
-#define CR_COPY_OK              0       /*!< Copy successfully finished */
-#define CR_COPY_ERR             1       /*!< Error while copy */
-
 /** Download a file from the URL into the in_dst via curl handle.
- * If *error == NULL then download was successfull.
  * @param handle        CURL handle
  * @param url           source url
  * @param destination   destination (if destination is dir, filename from the
  *                      url is used)
- * @param error         pointer to string pointer for error message
- *                      (mandatory argument!)
+ * @param err           GError **
+ * @return              cr_Error
  */
-void cr_download(CURL *handle,
-                 const char *url,
-                 const char *destination,
-                 char **error);
+int cr_download(CURL *handle,
+                const char *url,
+                const char *destination,
+                GError **err);
 
 /** Copy file.
  * @param src           source filename
  * @param dst           destination (if dst is dir, filename of src is used)
- * @return              CR_COPY_OK or CR_COPY_ERR on error
+ * @param err           GError **
+ * @return              cr_Error return code
  */
-int cr_copy_file(const char *src, const char *dst);
+int cr_copy_file(const char *src,
+                 const char *dst,
+                 GError **err);
 
 /** Compress file.
  * @param src           source filename
@@ -152,24 +153,30 @@ int cr_copy_file(const char *src, const char *dst);
  *                      compression suffix is used.
  *                      If dst is NULL, src + compression suffix is used)
  * @param compression   type of compression
- * @return              CR_COPY_OK or CR_COPY_ERR on error
+ * @param err           GError **
+ * @return              cr_Error return code
  */
 int cr_compress_file(const char *src,
                      const char *dst,
-                     cr_CompressionType compression);
+                     cr_CompressionType compression,
+                     GError **err);
 
 /** Better copy file. Source (src) could be remote address (http:// or ftp://).
  * @param src           source filename
  * @param dst           destination (if dst is dir, filename of src is used)
- * @return              CR_COPY_OK or CR_COPY_ERR on error
+ * @param err           GError **
+ * @return              cr_Error return code
  */
-int cr_better_copy_file(const char *src, const char *dst);
+int cr_better_copy_file(const char *src,
+                        const char *dst,
+                        GError **err);
 
 /** Recursively remove directory.
  * @param path          filepath
- * @return              0 on success, nonzero on failure (errno is set)
+ * @param err           GError **
+ * @return              cr_Error return code
  */
-int cr_remove_dir(const char *path);
+int cr_remove_dir(const char *path, GError **err);
 
 /** Normalize path (Path with exactly one trailing '/').
  *@param path           path

@@ -115,7 +115,7 @@ sigint_catcher(int sig)
     CR_UNUSED(sig);
     g_message("SIGINT catched: Terminating...");
     if (tmp_repodata_path)
-        cr_remove_dir(tmp_repodata_path);
+        cr_remove_dir(tmp_repodata_path, NULL);
     exit(1);
 }
 
@@ -786,8 +786,8 @@ main(int argc, char **argv)
                 cmd_options->groupfile_fullpath, groupfile);
 
         int ret;
-        ret = cr_better_copy_file(cmd_options->groupfile_fullpath, groupfile);
-        if (ret != CR_COPY_OK) {
+        ret = cr_better_copy_file(cmd_options->groupfile_fullpath, groupfile, NULL);
+        if (ret != CRE_OK) {
             g_critical("Error while copy %s -> %s",
                        cmd_options->groupfile_fullpath, groupfile);
         }
@@ -805,7 +805,7 @@ main(int argc, char **argv)
 
         g_debug("Copy groupfile %s -> %s", src_groupfile, groupfile);
 
-        if (cr_better_copy_file(src_groupfile, groupfile) != CR_COPY_OK)
+        if (cr_better_copy_file(src_groupfile, groupfile, NULL) != CRE_OK)
             g_critical("Error while copy %s -> %s", src_groupfile, groupfile);
     }
 
@@ -824,7 +824,7 @@ main(int argc, char **argv)
 
         g_debug("Copy updateinfo %s -> %s", src_updateinfo, updateinfo);
 
-        if (cr_better_copy_file(src_updateinfo, updateinfo) != CR_COPY_OK)
+        if (cr_better_copy_file(src_updateinfo, updateinfo, NULL) != CRE_OK)
             g_critical("Error while copy %s -> %s", src_updateinfo, updateinfo);
     }
 
@@ -1066,9 +1066,9 @@ main(int argc, char **argv)
 
         // Compress dbs
 
-        cr_compress_file(pri_db_filename, NULL, sqlite_compression);
-        cr_compress_file(fil_db_filename, NULL, sqlite_compression);
-        cr_compress_file(oth_db_filename, NULL, sqlite_compression);
+        cr_compress_file(pri_db_filename, NULL, sqlite_compression, NULL);
+        cr_compress_file(fil_db_filename, NULL, sqlite_compression, NULL);
+        cr_compress_file(oth_db_filename, NULL, sqlite_compression, NULL);
 
         remove(pri_db_filename);
         remove(fil_db_filename);

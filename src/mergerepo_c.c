@@ -1227,17 +1227,23 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         cr_db_close(oth_db, NULL);
 
         // Compress dbs
-        gchar *pri_db_filename = g_strconcat(cmd_options->tmp_out_repo, "/primary.sqlite", NULL);
-        gchar *fil_db_filename = g_strconcat(cmd_options->tmp_out_repo, "/filelists.sqlite", NULL);
-        gchar *oth_db_filename = g_strconcat(cmd_options->tmp_out_repo, "/other.sqlite", NULL);
+        gchar *pri_db_filename = g_strconcat(cmd_options->tmp_out_repo,
+                                             "/primary.sqlite", NULL);
+        gchar *fil_db_filename = g_strconcat(cmd_options->tmp_out_repo,
+                                             "/filelists.sqlite", NULL);
+        gchar *oth_db_filename = g_strconcat(cmd_options->tmp_out_repo,
+                                             "/other.sqlite", NULL);
 
         gchar *pri_db_c_filename = g_strconcat(pri_db_filename, db_suffix, NULL);
         gchar *fil_db_c_filename = g_strconcat(fil_db_filename, db_suffix, NULL);
         gchar *oth_db_c_filename = g_strconcat(oth_db_filename, db_suffix, NULL);
 
-        cr_compress_file(pri_db_filename, NULL, cmd_options->db_compression_type);
-        cr_compress_file(fil_db_filename, NULL, cmd_options->db_compression_type);
-        cr_compress_file(oth_db_filename, NULL, cmd_options->db_compression_type);
+        cr_compress_file(pri_db_filename, NULL,
+                         cmd_options->db_compression_type, NULL);
+        cr_compress_file(fil_db_filename, NULL,
+                         cmd_options->db_compression_type, NULL);
+        cr_compress_file(oth_db_filename, NULL,
+                         cmd_options->db_compression_type, NULL);
 
         remove(pri_db_filename);
         remove(fil_db_filename);
@@ -1493,7 +1499,7 @@ main(int argc, char **argv)
             struct cr_MetadataLocation *loc;
             loc = (struct cr_MetadataLocation  *) element->data;
             if (!groupfile && loc->groupfile_href) {
-                if (cr_copy_file(loc->groupfile_href, cmd_options->tmp_out_repo) == CR_COPY_OK) {
+                if (cr_copy_file(loc->groupfile_href, cmd_options->tmp_out_repo, NULL) == CRE_OK) {
                     groupfile = g_strconcat(cmd_options->tmp_out_repo,
                                             cr_get_filename(loc->groupfile_href),
                                             NULL);
@@ -1504,7 +1510,7 @@ main(int argc, char **argv)
         }
     } else {
         // Use groupfile specified by user
-        if (cr_copy_file(cmd_options->groupfile, cmd_options->tmp_out_repo) == CR_COPY_OK) {
+        if (cr_copy_file(cmd_options->groupfile, cmd_options->tmp_out_repo, NULL) == CRE_OK) {
             groupfile = g_strconcat(cmd_options->tmp_out_repo,
                                     cr_get_filename(cmd_options->groupfile),
                                     NULL);

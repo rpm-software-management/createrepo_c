@@ -25,6 +25,7 @@
 #include "fixtures.h"
 #include "createrepo/checksum.h"
 #include "createrepo/misc.h"
+#include "createrepo/error.h"
 
 #define PACKAGE_01              TEST_PACKAGES_PATH"super_kernel-6.0.1-2.x86_64.rpm"
 #define PACKAGE_01_HEADER_START 280
@@ -356,16 +357,21 @@ static void
 test_cr_get_header_byte_range(void)
 {
     struct cr_HeaderRangeStruct hdr_range;
+    GError *tmp_err = NULL;
 
-    hdr_range = cr_get_header_byte_range(PACKAGE_01);
+    hdr_range = cr_get_header_byte_range(PACKAGE_01, NULL);
     g_assert_cmpuint(hdr_range.start, ==, PACKAGE_01_HEADER_START);
     g_assert_cmpuint(hdr_range.end, ==, PACKAGE_01_HEADER_END);
 
-    hdr_range = cr_get_header_byte_range(PACKAGE_02);
+    hdr_range = cr_get_header_byte_range(PACKAGE_02, &tmp_err);
+    g_assert(!tmp_err);
     g_assert_cmpuint(hdr_range.start, ==, PACKAGE_02_HEADER_START);
     g_assert_cmpuint(hdr_range.end, ==, PACKAGE_02_HEADER_END);
 
-    hdr_range = cr_get_header_byte_range(NON_EXIST_FILE);
+    hdr_range = cr_get_header_byte_range(NON_EXIST_FILE, &tmp_err);
+    g_assert(tmp_err);
+    g_error_free(tmp_err);
+    tmp_err = NULL;
     g_assert_cmpuint(hdr_range.start, ==, 0);
     g_assert_cmpuint(hdr_range.end, ==, 0);
 }
@@ -437,10 +443,12 @@ copyfiletest_test_empty_file(Copyfiletest *copyfiletest, gconstpointer test_data
     CR_UNUSED(test_data);
     int ret;
     char *checksum;
+    GError *tmp_err = NULL;
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    ret = cr_copy_file(TEST_EMPTY_FILE, copyfiletest->dst_file);
-    g_assert_cmpint(ret, ==, CR_COPY_OK);
+    ret = cr_copy_file(TEST_EMPTY_FILE, copyfiletest->dst_file, &tmp_err);
+    g_assert(!tmp_err);
+    g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
@@ -456,8 +464,8 @@ copyfiletest_test_text_file(Copyfiletest *copyfiletest, gconstpointer test_data)
     char *checksum;
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    ret = cr_copy_file(TEST_TEXT_FILE, copyfiletest->dst_file);
-    g_assert_cmpint(ret, ==, CR_COPY_OK);
+    ret = cr_copy_file(TEST_TEXT_FILE, copyfiletest->dst_file, NULL);
+    g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "2f395bdfa2750978965e4781ddf224c89646c7d7a1569b7ebb023b170f7bd8bb");
@@ -471,10 +479,12 @@ copyfiletest_test_binary_file(Copyfiletest *copyfiletest, gconstpointer test_dat
     CR_UNUSED(test_data);
     int ret;
     char *checksum;
+    GError *tmp_err = NULL;
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    ret = cr_copy_file(TEST_BINARY_FILE, copyfiletest->dst_file);
-    g_assert_cmpint(ret, ==, CR_COPY_OK);
+    ret = cr_copy_file(TEST_BINARY_FILE, copyfiletest->dst_file, &tmp_err);
+    g_assert(!tmp_err);
+    g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "bf68e32ad78cea8287be0f35b74fa3fecd0eaa91770b48f1a7282b015d6d883e");
@@ -488,17 +498,19 @@ copyfiletest_test_rewrite(Copyfiletest *copyfiletest, gconstpointer test_data)
     CR_UNUSED(test_data);
     int ret;
     char *checksum;
+    GError *tmp_err = NULL;
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    ret = cr_copy_file(TEST_BINARY_FILE, copyfiletest->dst_file);
-    g_assert_cmpint(ret, ==, CR_COPY_OK);
+    ret = cr_copy_file(TEST_BINARY_FILE, copyfiletest->dst_file, NULL);
+    g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "bf68e32ad78cea8287be0f35b74fa3fecd0eaa91770b48f1a7282b015d6d883e");
     g_free(checksum);
 
-    ret = cr_copy_file(TEST_TEXT_FILE, copyfiletest->dst_file);
-    g_assert_cmpint(ret, ==, CR_COPY_OK);
+    ret = cr_copy_file(TEST_TEXT_FILE, copyfiletest->dst_file, &tmp_err);
+    g_assert(!tmp_err);
+    g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "2f395bdfa2750978965e4781ddf224c89646c7d7a1569b7ebb023b170f7bd8bb");
@@ -511,10 +523,20 @@ copyfiletest_test_corner_cases(Copyfiletest *copyfiletest, gconstpointer test_da
 {
     CR_UNUSED(test_data);
     int ret;
+    GError *tmp_err = NULL;
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    ret = cr_copy_file(NON_EXIST_FILE, copyfiletest->dst_file);
-    g_assert_cmpint(ret, ==, CR_COPY_ERR);
+
+    // Withou GError
+    ret = cr_copy_file(NON_EXIST_FILE, copyfiletest->dst_file, NULL);
+    g_assert_cmpint(ret, !=, CRE_OK);
+    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
+
+    // With GError
+    ret = cr_copy_file(NON_EXIST_FILE, copyfiletest->dst_file, &tmp_err);
+    g_assert(tmp_err);
+    g_error_free(tmp_err);
+    g_assert_cmpint(ret, !=, CRE_OK);
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
 }
 
@@ -525,10 +547,12 @@ compressfile_test_text_file(Copyfiletest *copyfiletest, gconstpointer test_data)
     CR_UNUSED(test_data);
     int ret;
     char *checksum;
+    GError *tmp_err = NULL;
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    ret = cr_compress_file(TEST_TEXT_FILE, copyfiletest->dst_file, CR_CW_GZ_COMPRESSION);
-    g_assert_cmpint(ret, ==, CR_COPY_OK);
+    ret = cr_compress_file(TEST_TEXT_FILE, copyfiletest->dst_file, CR_CW_GZ_COMPRESSION, &tmp_err);
+    g_assert(!tmp_err);
+    g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "8909fde88a5747d800fd2562b0f22945f014aa7df64cf1c15c7933ae54b72ab6");
@@ -541,13 +565,11 @@ test_cr_download_valid_url_1(Copyfiletest *copyfiletest, gconstpointer test_data
 {
     CR_UNUSED(test_data);
 
-    char *error = NULL;
     CURL *handle = curl_easy_init();
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    cr_download(handle, VALID_URL_01, copyfiletest->dst_file, &error);
+    cr_download(handle, VALID_URL_01, copyfiletest->dst_file, NULL);
     curl_easy_cleanup(handle);
-    g_assert(!error);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
 }
 
@@ -558,13 +580,13 @@ test_cr_download_valid_url_2(Copyfiletest *copyfiletest, gconstpointer test_data
 {
     CR_UNUSED(test_data);
 
-    char *error = NULL;
     CURL *handle = curl_easy_init();
+    GError *tmp_err = NULL;
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    cr_download(handle, VALID_URL_01, copyfiletest->tmp_dir, &error);
+    cr_download(handle, VALID_URL_01, copyfiletest->tmp_dir, &tmp_err);
     curl_easy_cleanup(handle);
-    g_assert(!error);
+    g_assert(!tmp_err);
     char *dst = g_strconcat(copyfiletest->tmp_dir, "/", URL_FILENAME_01, NULL);
     g_assert(g_file_test(dst, G_FILE_TEST_EXISTS));
     g_free(dst);
@@ -576,14 +598,14 @@ test_cr_download_invalid_url(Copyfiletest *copyfiletest, gconstpointer test_data
 {
     CR_UNUSED(test_data);
 
-    char *error = NULL;
     CURL *handle = curl_easy_init();
+    GError *tmp_err = NULL;
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    cr_download(handle, INVALID_URL, copyfiletest->dst_file, &error);
+    cr_download(handle, INVALID_URL, copyfiletest->dst_file, &tmp_err);
     curl_easy_cleanup(handle);
-    g_assert(error);
-    free(error);
+    g_assert(tmp_err);
+    g_error_free(tmp_err);
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
 }
 
@@ -592,13 +614,16 @@ test_cr_download_invalid_url(Copyfiletest *copyfiletest, gconstpointer test_data
 static void
 test_cr_better_copy_file_local(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
     int ret;
     char *checksum;
+    GError *tmp_err = NULL;
+
+    CR_UNUSED(test_data);
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    ret = cr_better_copy_file(TEST_BINARY_FILE, copyfiletest->dst_file);
-    g_assert_cmpint(ret, ==, CR_COPY_OK);
+    ret = cr_better_copy_file(TEST_BINARY_FILE, copyfiletest->dst_file, &tmp_err);
+    g_assert(!tmp_err);
+    g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "bf68e32ad78cea8287be0f35b74fa3fecd0eaa91770b48f1a7282b015d6d883e");
@@ -610,12 +635,15 @@ test_cr_better_copy_file_local(Copyfiletest *copyfiletest, gconstpointer test_da
 static void
 test_cr_better_copy_file_url(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
     int ret;
+    GError *tmp_err = NULL;
+
+    CR_UNUSED(test_data);
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    ret = cr_better_copy_file(VALID_URL_01, copyfiletest->dst_file);
-    g_assert_cmpint(ret, ==, CR_COPY_OK);
+    ret = cr_better_copy_file(VALID_URL_01, copyfiletest->dst_file, &tmp_err);
+    g_assert(!tmp_err);
+    g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
 }
 
@@ -666,7 +694,7 @@ test_cr_remove_dir(void)
     g_assert(g_file_test(tmp_file_2, G_FILE_TEST_EXISTS));
     g_assert(g_file_test(tmp_file_3, G_FILE_TEST_EXISTS));
 
-    cr_remove_dir(tmp_dir);
+    cr_remove_dir(tmp_dir, NULL);
 
     g_assert(!g_file_test(tmp_file_1, G_FILE_TEST_EXISTS));
     g_assert(!g_file_test(tmp_file_2, G_FILE_TEST_EXISTS));

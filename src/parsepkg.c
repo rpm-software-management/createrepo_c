@@ -172,7 +172,13 @@ cr_package_from_rpm(const char *filename,
 
     // Get header range
 
-    struct cr_HeaderRangeStruct hdr_r = cr_get_header_byte_range(filename);
+    struct cr_HeaderRangeStruct hdr_r = cr_get_header_byte_range(filename,
+                                                                 &tmp_err);
+    if (tmp_err) {
+        g_propagate_prefixed_error(err, tmp_err,
+                                   "Error while determinig header range: ");
+        return NULL;
+    }
 
 
     // Get package object
@@ -261,7 +267,13 @@ cr_xml_from_rpm(const char *filename,
 
     // Get header range
 
-    struct cr_HeaderRangeStruct hdr_r = cr_get_header_byte_range(filename);
+    struct cr_HeaderRangeStruct hdr_r = cr_get_header_byte_range(filename,
+                                                                 &tmp_err);
+    if (tmp_err) {
+        g_propagate_prefixed_error(err, tmp_err,
+                                   "Error while determinig header range: ");
+        return result;
+    }
 
 
     // Gen XML

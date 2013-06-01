@@ -152,7 +152,7 @@ static void
 testdata_teardown(TestData *testdata, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
-    cr_remove_dir(testdata->tmp_dir);
+    cr_remove_dir(testdata->tmp_dir, NULL);
     g_free(testdata->tmp_dir);
 }
 

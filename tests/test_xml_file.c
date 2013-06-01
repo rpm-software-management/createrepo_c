@@ -50,7 +50,7 @@ fixtures_teardown(TestFixtures *fixtures, gconstpointer test_data)
     if (!fixtures->tmpdir)
         return;
 
-    cr_remove_dir(fixtures->tmpdir);
+    cr_remove_dir(fixtures->tmpdir, NULL);
     g_free(fixtures->tmpdir);
 }
 

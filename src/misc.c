@@ -220,7 +220,7 @@ cr_is_primary(const char *filename)
 #define VAL_LEN         4       // Len of numeric values in rpm
 
 struct cr_HeaderRangeStruct
-cr_get_header_byte_range(const char *filename)
+cr_get_header_byte_range(const char *filename, GError **err)
 {
     /* Values readed by fread are 4 bytes long and stored as big-endian.
      * So there is htonl function to convert this big-endian number into host
@@ -228,6 +228,8 @@ cr_get_header_byte_range(const char *filename)
      */
 
     struct cr_HeaderRangeStruct results;
+
+    assert(!err || *err == NULL);
 
     results.start = 0;
     results.end   = 0;
@@ -239,6 +241,8 @@ cr_get_header_byte_range(const char *filename)
     if (!fp) {
         g_debug("%s: Cannot open file %s (%s)", __func__, filename,
                 strerror(errno));
+        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+                    "Cannot open %s: %s", filename, strerror(errno));
         return results;
     }
 
@@ -248,16 +252,29 @@ cr_get_header_byte_range(const char *filename)
     if (fseek(fp, 104, SEEK_SET) != 0) {
         g_debug("%s: fseek fail on %s (%s)", __func__, filename,
                 strerror(errno));
+        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+                    "Cannot seek over %s: %s", filename, strerror(errno));
         fclose(fp);
         return results;
     }
 
     unsigned int sigindex = 0;
     unsigned int sigdata  = 0;
-    fread(&sigindex, VAL_LEN, 1, fp);
+    if (fread(&sigindex, VAL_LEN, 1, fp) != 1) {
+        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+                    "fread() error on %s: %s", filename, strerror(errno));
+        fclose(fp);
+        return results;
+    }
     sigindex = htonl(sigindex);
-    fread(&sigdata, VAL_LEN, 1, fp);
+    if (fread(&sigdata, VAL_LEN, 1, fp) != 1) {
+        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+                    "fread() error on %s: %s", filename, strerror(errno));
+        fclose(fp);
+        return results;
+    }
     sigdata = htonl(sigdata);
+
     unsigned int sigindexsize = sigindex * 16;
     unsigned int sigsize = sigdata + sigindexsize;
     unsigned int disttoboundary = sigsize % 8;
@@ -271,9 +288,19 @@ cr_get_header_byte_range(const char *filename)
 
     unsigned int hdrindex = 0;
     unsigned int hdrdata  = 0;
-    fread(&hdrindex, VAL_LEN, 1, fp);
+    if (fread(&hdrindex, VAL_LEN, 1, fp) != 1) {
+        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+                    "fread() error on %s: %s", filename, strerror(errno));
+        fclose(fp);
+        return results;
+    }
     hdrindex = htonl(hdrindex);
-    fread(&hdrdata, VAL_LEN, 1, fp);
+    if (fread(&hdrdata, VAL_LEN, 1, fp) != 1) {
+        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+                    "fread() error on %s: %s", filename, strerror(errno));
+        fclose(fp);
+        return results;
+    }
     hdrdata = htonl(hdrdata);
     unsigned int hdrindexsize = hdrindex * 16;
     unsigned int hdrsize = hdrdata + hdrindexsize + 16;
@@ -287,6 +314,9 @@ cr_get_header_byte_range(const char *filename)
     if (hdrend < hdrstart) {
         g_debug("%s: sanity check fail on %s (%d > %d))", __func__,
                 filename, hdrstart, hdrend);
+        g_set_error(err, CR_MISC_ERROR, CRE_ERROR,
+                    "sanity check error on %s (hdrstart: %d > hdrend: %d)",
+                    filename, hdrstart, hdrend);
         return results;
     }
 
@@ -319,64 +349,72 @@ cr_get_filename(const char *filepath)
 
 
 int
-cr_copy_file(const char *src, const char *in_dst)
+cr_copy_file(const char *src, const char *in_dst, GError **err)
 {
+    int ret = CRE_OK;
     size_t readed;
     char buf[BUFFER_SIZE];
+    gchar *dst = (gchar *) in_dst;
 
-    FILE *orig;
-    FILE *new;
+    FILE *orig = NULL;
+    FILE *new  = NULL;
 
-    if (!src || !in_dst) {
-        g_debug("%s: File name cannot be NULL", __func__);
-        return CR_COPY_ERR;
-    }
+    assert(src);
+    assert(in_dst);
+    assert(!err || *err == NULL);
 
     // If destination is dir use filename from src
-    gchar *dst = (gchar *) in_dst;
-    if (g_str_has_suffix(in_dst, "/")) {
+    if (g_str_has_suffix(in_dst, "/"))
         dst = g_strconcat(in_dst, cr_get_filename(src), NULL);
-    }
 
-    if ((orig = fopen(src, "r")) == NULL) {
+    if ((orig = fopen(src, "rb")) == NULL) {
         g_debug("%s: Cannot open source file %s (%s)", __func__, src,
                 strerror(errno));
-        return CR_COPY_ERR;
+        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+                    "Cannot open file %s: %s", src, strerror(errno));
+        ret = CRE_IO;
+        goto copy_file_cleanup;
     }
 
-    if ((new = fopen(dst, "w")) == NULL) {
+    if ((new = fopen(dst, "wb")) == NULL) {
         g_debug("%s: Cannot open destination file %s (%s)", __func__, dst,
                 strerror(errno));
-        fclose(orig);
-        return CR_COPY_ERR;
+        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+                    "Cannot open file %s: %s", dst, strerror(errno));
+        ret = CRE_IO;
+        goto copy_file_cleanup;
     }
 
     while ((readed = fread(buf, 1, BUFFER_SIZE, orig)) > 0) {
+        if (readed != BUFFER_SIZE && ferror(orig)) {
+            g_set_error(err, CR_MISC_ERROR, CRE_IO,
+                    "Error while read %s: %s", src, strerror(errno));
+            ret = CRE_IO;
+            goto copy_file_cleanup;
+        }
+
         if (fwrite(buf, 1, readed, new) != readed) {
             g_debug("%s: Error while copy %s -> %s (%s)", __func__, src,
                     dst, strerror(errno));
-            fclose(new);
-            fclose(orig);
-            return CR_COPY_ERR;
-        }
-
-        if (readed != BUFFER_SIZE && ferror(orig)) {
-            g_debug("%s: Error while copy %s -> %s (%s)", __func__, src,
-                    dst, strerror(errno));
-            fclose(new);
-            fclose(orig);
-            return CR_COPY_ERR;
+            g_set_error(err, CR_MISC_ERROR, CRE_IO,
+                    "Error while write %s: %s", dst, strerror(errno));
+            ret = CRE_IO;
+            goto copy_file_cleanup;
         }
     }
 
-    if (dst != in_dst) {
+copy_file_cleanup:
+
+    if (dst != in_dst)
         g_free(dst);
-    }
 
-    fclose(new);
-    fclose(orig);
+    if (new)
+        fclose(new);
 
-    return CR_COPY_OK;
+    if (orig)
+        fclose(orig);
+
+    return ret;
 }
 
 
@@ -384,173 +422,193 @@ cr_copy_file(const char *src, const char *in_dst)
 int
 cr_compress_file(const char *src,
                  const char *in_dst,
-                 cr_CompressionType compression)
+                 cr_CompressionType compression,
+                 GError **err)
 {
+    int ret = CRE_OK;
     int readed;
     char buf[BUFFER_SIZE];
+    FILE *orig = NULL;
+    CR_FILE *new = NULL;
+    gchar *dst = (gchar *) in_dst;
+    GError *tmp_err = NULL;
 
-    FILE *orig;
-    CR_FILE *new;
-
-    if (!src) {
-        g_debug("%s: File name cannot be NULL", __func__);
-        return CR_COPY_ERR;
-    }
-
-    if (compression == CR_CW_AUTO_DETECT_COMPRESSION ||
-        compression == CR_CW_UNKNOWN_COMPRESSION) {
-        g_debug("%s: Bad compression type", __func__);
-        return CR_COPY_ERR;
-    }
+    assert(src);
+    assert(!err || *err == NULL);
 
     // Src must be a file NOT a directory
     if (!g_file_test(src, G_FILE_TEST_IS_REGULAR)) {
         g_debug("%s: Source (%s) must be directory!", __func__, src);
-        return CR_COPY_ERR;
+        g_set_error(err, CR_MISC_ERROR, CRE_NOFILE,
+                    "Not a regular file: %s", src);
+        return CRE_NOFILE;
     }
 
-    gchar *dst = (gchar *) in_dst;
     if (!dst) {
         // If destination is NULL, use src + compression suffix
-        const gchar *suffix = cr_compression_suffix(compression);
-        dst = g_strconcat(src, suffix, NULL);
-    } else {
+        dst = g_strconcat(src,
+                          cr_compression_suffix(compression),
+                          NULL);
+    } else if (g_str_has_suffix(in_dst, "/")) {
         // If destination is dir use filename from src + compression suffix
-        if (g_str_has_suffix(in_dst, "/")) {
-            const gchar *suffix = cr_compression_suffix(compression);
-            dst = g_strconcat(in_dst, cr_get_filename(src), suffix, NULL);
-        }
+        dst = g_strconcat(in_dst,
+                          cr_get_filename(src),
+                          cr_compression_suffix(compression),
+                          NULL);
     }
 
-    if ((orig = fopen(src, "r")) == NULL) {
+    orig = fopen(src, "rb");
+    if (orig == NULL) {
         g_debug("%s: Cannot open source file %s (%s)", __func__, src,
                 strerror(errno));
-        return CR_COPY_ERR;
+        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+                    "Cannot open %s: %s", src, strerror(errno));
+        ret = CRE_IO;
+        goto compress_file_cleanup;
     }
 
-    if ((new = cr_open(dst, CR_CW_MODE_WRITE, compression, NULL)) == NULL) {
+    new = cr_open(dst, CR_CW_MODE_WRITE, compression, &tmp_err);
+    if (tmp_err) {
         g_debug("%s: Cannot open destination file %s", __func__, dst);
-        fclose(orig);
-        return CR_COPY_ERR;
+        g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", dst);
+        ret = CRE_IO;
+        goto compress_file_cleanup;
     }
 
     while ((readed = fread(buf, 1, BUFFER_SIZE, orig)) > 0) {
-        if (cr_write(new, buf, readed, NULL) != readed) {
-            g_debug("%s: Error while copy %s -> %s", __func__, src, dst);
-            cr_close(new, NULL);
-            fclose(orig);
-            return CR_COPY_ERR;
-        }
-
         if (readed != BUFFER_SIZE && ferror(orig)) {
             g_debug("%s: Error while copy %s -> %s (%s)", __func__, src,
                     dst, strerror(errno));
-            cr_close(new, NULL);
-            fclose(orig);
-            return CR_COPY_ERR;
+            g_set_error(err, CR_MISC_ERROR, CRE_IO,
+                        "Error while read %s: %s", src, strerror(errno));
+            ret = CRE_IO;
+            goto compress_file_cleanup;
+        }
+
+        cr_write(new, buf, readed, &tmp_err);
+        if (tmp_err) {
+            g_debug("%s: Error while copy %s -> %s", __func__, src, dst);
+            g_propagate_prefixed_error(err, tmp_err,
+                    "Error while read %s: ", dst);
+            ret = CRE_IO;
+            goto compress_file_cleanup;
         }
     }
+
+compress_file_cleanup:
 
     if (dst != in_dst)
         g_free(dst);
 
-    cr_close(new, NULL);
-    fclose(orig);
+    if (orig)
+        fclose(orig);
 
-    return CR_COPY_OK;
-}
+    if (new)
+        cr_close(new, NULL);
 
-
-
-void
-cr_download(CURL *handle, const char *url, const char *in_dst, char **error)
-{
-    CURLcode rcode;
-    FILE *file = NULL;
-
-
-    // If destination is dir use filename from src
-
-    gchar *dst = NULL;
-    if (g_str_has_suffix(in_dst, "/")) {
-        dst = g_strconcat(in_dst, cr_get_filename(url), NULL);
-    } else if (g_file_test(in_dst, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_DIR))) {
-        dst = g_strconcat(in_dst, "/", cr_get_filename(url), NULL);
-    } else {
-        dst = g_strdup(in_dst);
-    }
-
-    file = fopen(dst, "w");
-    if (!file) {
-        *error = g_strdup_printf("%s: Cannot open %s", __func__, dst);
-        remove(dst);
-        g_free(dst);
-        return;
-    }
-
-
-    // Set URL
-
-    if (curl_easy_setopt(handle, CURLOPT_URL, url) != CURLE_OK) {
-        *error = g_strdup_printf("%s: curl_easy_setopt(CURLOPT_URL) error",
-                                 __func__);
-        fclose(file);
-        remove(dst);
-        g_free(dst);
-        return;
-    }
-
-
-    // Set output file descriptor
-
-    if (curl_easy_setopt(handle, CURLOPT_WRITEDATA, file) != CURLE_OK) {
-        *error = g_strdup_printf(
-                        "%s: curl_easy_setopt(CURLOPT_WRITEDATA) error",
-                         __func__);
-        fclose(file);
-        remove(dst);
-        g_free(dst);
-        return;
-    }
-
-    rcode = curl_easy_perform(handle);
-    if (rcode != 0) {
-        *error = g_strdup_printf("%s: curl_easy_perform() error: %s",
-                                 __func__, curl_easy_strerror(rcode));
-        fclose(file);
-        remove(dst);
-        g_free(dst);
-        return;
-    }
-
-
-    g_debug("%s: Successfully downloaded: %s", __func__, dst);
-
-    fclose(file);
-    g_free(dst);
+    return ret;
 }
 
 
 
 int
-cr_better_copy_file(const char *src, const char *in_dst)
+cr_download(CURL *handle,
+            const char *url,
+            const char *in_dst,
+            GError **err)
 {
-    if (!strstr(src, "://")) {
-        // Probably local path
-        return cr_copy_file(src, in_dst);
+    CURLcode rcode;
+    FILE *file = NULL;
+
+    assert(!err || *err == NULL);
+
+    // If destination is dir use filename from src
+
+    gchar *dst = NULL;
+    if (g_str_has_suffix(in_dst, "/"))
+        dst = g_strconcat(in_dst, cr_get_filename(url), NULL);
+    else if (g_file_test(in_dst, G_FILE_TEST_IS_DIR))
+        dst = g_strconcat(in_dst, "/", cr_get_filename(url), NULL);
+    else
+        dst = g_strdup(in_dst);
+
+    file = fopen(dst, "wb");
+    if (!file) {
+        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+                    "Cannot open %s: %s", dst, strerror(errno));
+        remove(dst);
+        g_free(dst);
+        return CRE_IO;
     }
 
-    char *error = NULL;
+
+    // Set URL
+
+    rcode = curl_easy_setopt(handle, CURLOPT_URL, url);
+    if (rcode != CURLE_OK) {
+        g_set_error(err, CR_MISC_ERROR, CRE_CURL,
+                    "curl_easy_setopt failed: %s", curl_easy_strerror(rcode));
+        fclose(file);
+        remove(dst);
+        g_free(dst);
+        return CRE_CURL;
+    }
+
+
+    // Set output file descriptor
+
+    rcode = curl_easy_setopt(handle, CURLOPT_WRITEDATA, file);
+    if (rcode != CURLE_OK) {
+        g_set_error(err, CR_MISC_ERROR, CRE_CURL,
+                    "curl_easy_setopt failed: %s", curl_easy_strerror(rcode));
+        fclose(file);
+        remove(dst);
+        g_free(dst);
+        return CRE_CURL;
+    }
+
+    rcode = curl_easy_perform(handle);
+    if (rcode != CURLE_OK) {
+        g_set_error(err, CR_MISC_ERROR, CRE_CURL,
+                    "curl_easy_perform failed: %s", curl_easy_strerror(rcode));
+        fclose(file);
+        remove(dst);
+        g_free(dst);
+        return CRE_CURL;
+    }
+
+    g_debug("%s: Successfully downloaded: %s", __func__, dst);
+
+    fclose(file);
+    g_free(dst);
+
+    return CRE_OK;
+}
+
+
+
+int
+cr_better_copy_file(const char *src, const char *in_dst, GError **err)
+{
+    GError *tmp_err = NULL;
+
+    assert(!err || *err == NULL);
+
+    if (!strstr(src, "://"))   // Probably local path
+        return cr_copy_file(src, in_dst, err);
+
     CURL *handle = curl_easy_init();
-    cr_download(handle, src, in_dst, &error);
+    cr_download(handle, src, in_dst, &tmp_err);
     curl_easy_cleanup(handle);
-    if (error) {
+    if (tmp_err) {
         g_debug("%s: Error while downloading %s: %s", __func__, src,
-                error);
-        return CR_COPY_ERR;
+                tmp_err->message);
+        g_propagate_prefixed_error(err, tmp_err,
+                                   "Error while downloading %s: ", src);
+        return CRE_CURL;
     }
 
-    return CR_COPY_OK;
+    return CRE_OK;
 }
 
 
@@ -572,9 +630,20 @@ cr_remove_dir_cb(const char *fpath,
 
 
 int
-cr_remove_dir(const char *path)
+cr_remove_dir(const char *path, GError **err)
 {
-    return nftw(path, cr_remove_dir_cb, 64, FTW_DEPTH | FTW_PHYS);
+    int ret;
+
+    assert(!err || *err == NULL);
+
+    ret = nftw(path, cr_remove_dir_cb, 64, FTW_DEPTH | FTW_PHYS);
+    if (ret != 0) {
+        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+                    "Cannot remove dir %s: %s", path, strerror(errno));
+        return CRE_IO;
+    }
+
+    return CRE_OK;
 }
 
 

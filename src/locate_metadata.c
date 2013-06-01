@@ -45,7 +45,7 @@ cr_metadatalocation_free(struct cr_MetadataLocation *ml)
 
     if (ml->tmp && ml->local_path) {
         g_debug("%s: Removing %s", __func__,  ml->local_path);
-        cr_remove_dir(ml->local_path);
+        cr_remove_dir(ml->local_path, NULL);
     }
 
     g_free(ml->pri_xml_href);
@@ -358,30 +358,31 @@ cr_get_remote_metadata(const char *repopath, int ignore_sqlite)
 
 
     // Download all other repofiles
-    char *error = NULL;
+    GError *tmp_err = NULL;
 
     if (r_location->pri_xml_href)
-        cr_download(handle, r_location->pri_xml_href, tmp_repodata, &error);
-    if (!error && r_location->fil_xml_href)
-        cr_download(handle, r_location->fil_xml_href, tmp_repodata, &error);
-    if (!error && r_location->oth_xml_href)
-        cr_download(handle, r_location->oth_xml_href, tmp_repodata, &error);
-    if (!error && r_location->pri_sqlite_href)
-        cr_download(handle, r_location->pri_sqlite_href, tmp_repodata, &error);
-    if (!error && r_location->fil_sqlite_href)
-        cr_download(handle, r_location->fil_sqlite_href, tmp_repodata, &error);
-    if (!error && r_location->oth_sqlite_href)
-        cr_download(handle, r_location->oth_sqlite_href, tmp_repodata, &error);
-    if (!error && r_location->groupfile_href)
-        cr_download(handle, r_location->groupfile_href, tmp_repodata, &error);
-    if (!error && r_location->cgroupfile_href)
-        cr_download(handle, r_location->cgroupfile_href, tmp_repodata, &error);
-    if (!error && r_location->updateinfo_href)
-        cr_download(handle, r_location->updateinfo_href, tmp_repodata, &error);
+        cr_download(handle, r_location->pri_xml_href, tmp_repodata, &tmp_err);
+    if (!tmp_err && r_location->fil_xml_href)
+        cr_download(handle, r_location->fil_xml_href, tmp_repodata, &tmp_err);
+    if (!tmp_err && r_location->oth_xml_href)
+        cr_download(handle, r_location->oth_xml_href, tmp_repodata, &tmp_err);
+    if (!tmp_err && r_location->pri_sqlite_href)
+        cr_download(handle, r_location->pri_sqlite_href, tmp_repodata, &tmp_err);
+    if (!tmp_err && r_location->fil_sqlite_href)
+        cr_download(handle, r_location->fil_sqlite_href, tmp_repodata, &tmp_err);
+    if (!tmp_err && r_location->oth_sqlite_href)
+        cr_download(handle, r_location->oth_sqlite_href, tmp_repodata, &tmp_err);
+    if (!tmp_err && r_location->groupfile_href)
+        cr_download(handle, r_location->groupfile_href, tmp_repodata, &tmp_err);
+    if (!tmp_err && r_location->cgroupfile_href)
+        cr_download(handle, r_location->cgroupfile_href, tmp_repodata, &tmp_err);
+    if (!tmp_err && r_location->updateinfo_href)
+        cr_download(handle, r_location->updateinfo_href, tmp_repodata, &tmp_err);
 
-    if (error) {
-        g_critical("%s: Error while downloadig files: %s", __func__, error);
-        g_free(error);
+    if (tmp_err) {
+        g_critical("%s: Error while downloadig files: %s",
+                   __func__, tmp_err->message);
+        g_error_free(tmp_err);
         goto get_remote_metadata_cleanup;
     }
 
@@ -401,7 +402,7 @@ get_remote_metadata_cleanup:
     g_free(tmp_repodata);
     g_free(url);
     curl_easy_cleanup(handle);
-    if (!ret) cr_remove_dir(tmp_dir);
+    if (!ret) cr_remove_dir(tmp_dir, NULL);
     if (r_location) cr_metadatalocation_free(r_location);
 
     return ret;

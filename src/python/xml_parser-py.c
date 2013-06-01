@@ -80,18 +80,19 @@ c_pkgcb(cr_Package *pkg,
         void *cbdata,
         GError **err)
 {
-    PyObject *result;
+    PyObject *arglist, *result, *py_pkg;
     CbData *data = cbdata;
 
-    CR_UNUSED(pkg);
+    if (data->py_pkg)
+        py_pkg = data->py_pkg;
+    else
+        py_pkg = Object_FromPackage(pkg, 1);
 
-    if (data->py_pkg) {
-        // Decref ref count on processed package
-        Py_DECREF(data->py_pkg);
-        data->py_pkg = NULL;
-    }
-
-    result = PyObject_CallObject(data->py_pkgcb, NULL);
+    arglist = Py_BuildValue("(O)", py_pkg);
+    result = PyObject_CallObject(data->py_pkgcb, arglist);
+    Py_DECREF(arglist);
+    Py_DECREF(py_pkg);
+    data->py_pkg = NULL;
 
     if (result == NULL) {
         // Exception raised
@@ -146,8 +147,8 @@ py_xml_parse_primary(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    if (!PyCallable_Check(py_newpkgcb)) {
-        PyErr_SetString(PyExc_TypeError, "newpkgcb must be callable");
+    if (!PyCallable_Check(py_newpkgcb) && py_newpkgcb != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "newpkgcb must be callable or None");
         return NULL;
     }
 
@@ -161,13 +162,21 @@ py_xml_parse_primary(PyObject *self, PyObject *args)
         return NULL;
     }
 
+    if (py_newpkgcb == Py_None && py_pkgcb == Py_None) {
+        PyErr_SetString(PyExc_TypeError, "both pkgcb and newpkgcb cannot be None");
+        return NULL;
+    }
+
     Py_XINCREF(py_newpkgcb);
     Py_XINCREF(py_pkgcb);
     Py_XINCREF(py_warningcb);
 
+    cr_XmlParserNewPkgCb    ptr_c_newpkgcb  = NULL;
     cr_XmlParserPkgCb       ptr_c_pkgcb     = NULL;
     cr_XmlParserWarningCb   ptr_c_warningcb = NULL;
 
+    if (py_newpkgcb != Py_None)
+        ptr_c_newpkgcb = c_newpkgcb;
     if (py_pkgcb != Py_None)
         ptr_c_pkgcb = c_pkgcb;
     if (py_warningcb != Py_None)
@@ -179,7 +188,7 @@ py_xml_parse_primary(PyObject *self, PyObject *args)
     cbdata.py_pkg       = NULL;
 
     cr_xml_parse_primary(filename,
-                         c_newpkgcb,
+                         ptr_c_newpkgcb,
                          &cbdata,
                          ptr_c_pkgcb,
                          &cbdata,
@@ -220,8 +229,8 @@ py_xml_parse_filelists(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    if (!PyCallable_Check(py_newpkgcb)) {
-        PyErr_SetString(PyExc_TypeError, "newpkgcb must be callable");
+    if (!PyCallable_Check(py_newpkgcb) && py_newpkgcb != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "newpkgcb must be callable or None");
         return NULL;
     }
 
@@ -235,13 +244,21 @@ py_xml_parse_filelists(PyObject *self, PyObject *args)
         return NULL;
     }
 
+    if (py_newpkgcb == Py_None && py_pkgcb == Py_None) {
+        PyErr_SetString(PyExc_TypeError, "both pkgcb and newpkgcb cannot be None");
+        return NULL;
+    }
+
     Py_XINCREF(py_newpkgcb);
     Py_XINCREF(py_pkgcb);
     Py_XINCREF(py_warningcb);
 
+    cr_XmlParserNewPkgCb    ptr_c_newpkgcb  = NULL;
     cr_XmlParserPkgCb       ptr_c_pkgcb     = NULL;
     cr_XmlParserWarningCb   ptr_c_warningcb = NULL;
 
+    if (py_newpkgcb != Py_None)
+        ptr_c_newpkgcb = c_newpkgcb;
     if (py_pkgcb != Py_None)
         ptr_c_pkgcb = c_pkgcb;
     if (py_warningcb != Py_None)
@@ -253,7 +270,7 @@ py_xml_parse_filelists(PyObject *self, PyObject *args)
     cbdata.py_pkg       = NULL;
 
     cr_xml_parse_filelists(filename,
-                           c_newpkgcb,
+                           ptr_c_newpkgcb,
                            &cbdata,
                            ptr_c_pkgcb,
                            &cbdata,
@@ -293,8 +310,8 @@ py_xml_parse_other(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    if (!PyCallable_Check(py_newpkgcb)) {
-        PyErr_SetString(PyExc_TypeError, "newpkgcb must be callable");
+    if (!PyCallable_Check(py_newpkgcb) && py_newpkgcb != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "newpkgcb must be callable or None");
         return NULL;
     }
 
@@ -308,13 +325,21 @@ py_xml_parse_other(PyObject *self, PyObject *args)
         return NULL;
     }
 
+    if (py_newpkgcb == Py_None && py_pkgcb == Py_None) {
+        PyErr_SetString(PyExc_TypeError, "both pkgcb and newpkgcb cannot be None");
+        return NULL;
+    }
+
     Py_XINCREF(py_newpkgcb);
     Py_XINCREF(py_pkgcb);
     Py_XINCREF(py_warningcb);
 
+    cr_XmlParserNewPkgCb    ptr_c_newpkgcb  = NULL;
     cr_XmlParserPkgCb       ptr_c_pkgcb     = NULL;
     cr_XmlParserWarningCb   ptr_c_warningcb = NULL;
 
+    if (py_newpkgcb != Py_None)
+        ptr_c_newpkgcb = c_newpkgcb;
     if (py_pkgcb != Py_None)
         ptr_c_pkgcb = c_pkgcb;
     if (py_warningcb != Py_None)
@@ -326,7 +351,7 @@ py_xml_parse_other(PyObject *self, PyObject *args)
     cbdata.py_pkg       = NULL;
 
     cr_xml_parse_other(filename,
-                       c_newpkgcb,
+                       ptr_c_newpkgcb,
                        &cbdata,
                        ptr_c_pkgcb,
                        &cbdata,

@@ -22,7 +22,7 @@ class TestCaseXmlParserPrimary(unittest.TestCase):
             userdata["pkgs"].append(pkg)
             return pkg
 
-        def pkgcb():
+        def pkgcb(pkg):
             userdata["pkgcb_calls"] += 1
 
         def warningcb(warn_type, msg):
@@ -96,7 +96,7 @@ class TestCaseXmlParserPrimary(unittest.TestCase):
             userdata["pkgs"].append(pkg)
             return pkg
 
-        def pkgcb():
+        def pkgcb(pkg):
             userdata["pkgcb_calls"] += 1
 
         def warningcb(warn_type, msg):
@@ -108,6 +108,23 @@ class TestCaseXmlParserPrimary(unittest.TestCase):
             ['fake_bash', 'super_kernel'])
         self.assertEqual(userdata["pkgcb_calls"], 2)
         self.assertEqual(userdata["warnings"], [])
+
+    def test_xml_parser_primary_repo02_only_pkgcb(self):
+
+        pkgs = []
+
+        def pkgcb(pkg):
+            pkgs.append(pkg)
+
+        cr.xml_parse_primary(REPO_02_PRIXML, None, pkgcb, None, 1)
+
+        self.assertEqual([pkg.name for pkg in pkgs],
+            ['fake_bash', 'super_kernel'])
+
+    def test_xml_parser_primary_repo02_no_cbs(self):
+        self.assertRaises(TypeError,
+                          cr.xml_parse_primary,
+                          REPO_02_PRIXML, None, None, None, 1)
 
     def test_xml_parser_primary_warnings(self):
 
@@ -165,7 +182,7 @@ class TestCaseXmlParserPrimary(unittest.TestCase):
     def test_xml_parser_primary_pkgcb_abort(self):
         def newpkgcb(pkgId, name, arch):
             return cr.Package()
-        def pkgcb():
+        def pkgcb(pkg):
             raise Error("Foo error")
         self.assertRaises(cr.CreaterepoCError,
                           cr.xml_parse_primary,
@@ -196,7 +213,7 @@ class TestCaseXmlParserFilelists(unittest.TestCase):
             userdata["pkgs"].append(pkg)
             return pkg
 
-        def pkgcb():
+        def pkgcb(pkg):
             userdata["pkgcb_calls"] += 1
 
         def warningcb(warn_type, msg):
@@ -257,7 +274,7 @@ class TestCaseXmlParserFilelists(unittest.TestCase):
             userdata["pkgs"].append(pkg)
             return pkg
 
-        def pkgcb():
+        def pkgcb(pkg):
             userdata["pkgcb_calls"] += 1
 
         def warningcb(warn_type, msg):
@@ -269,6 +286,23 @@ class TestCaseXmlParserFilelists(unittest.TestCase):
             ['fake_bash', 'super_kernel'])
         self.assertEqual(userdata["pkgcb_calls"], 2)
         self.assertEqual(userdata["warnings"], [])
+
+    def test_xml_parser_filelists_repo02_only_pkgcb(self):
+
+        pkgs = []
+
+        def pkgcb(pkg):
+            pkgs.append(pkg)
+
+        cr.xml_parse_filelists(REPO_02_FILXML, None, pkgcb, None)
+
+        self.assertEqual([pkg.name for pkg in pkgs],
+            ['fake_bash', 'super_kernel'])
+
+    def test_xml_parser_filelists_repo02_no_cbs(self):
+        self.assertRaises(TypeError,
+                          cr.xml_parse_filelists,
+                          REPO_02_FILXML, None, None, None)
 
     def test_xml_parser_filelists_warnings(self):
 
@@ -322,7 +356,7 @@ class TestCaseXmlParserFilelists(unittest.TestCase):
     def test_xml_parser_filelists_pkgcb_abort(self):
         def newpkgcb(pkgId, name, arch):
             return cr.Package()
-        def pkgcb():
+        def pkgcb(pkg):
             raise Error("Foo error")
         self.assertRaises(cr.CreaterepoCError,
                           cr.xml_parse_filelists,
@@ -353,7 +387,7 @@ class TestCaseXmlParserOther(unittest.TestCase):
             userdata["pkgs"].append(pkg)
             return pkg
 
-        def pkgcb():
+        def pkgcb(pkg):
             userdata["pkgcb_calls"] += 1
 
         def warningcb(warn_type, msg):
@@ -418,7 +452,7 @@ class TestCaseXmlParserOther(unittest.TestCase):
             userdata["pkgs"].append(pkg)
             return pkg
 
-        def pkgcb():
+        def pkgcb(pkg):
             userdata["pkgcb_calls"] += 1
 
         def warningcb(warn_type, msg):
@@ -430,6 +464,23 @@ class TestCaseXmlParserOther(unittest.TestCase):
             ['fake_bash', 'super_kernel'])
         self.assertEqual(userdata["pkgcb_calls"], 2)
         self.assertEqual(userdata["warnings"], [])
+
+    def test_xml_parser_other_repo02_only_pkgcb(self):
+
+        pkgs = []
+
+        def pkgcb(pkg):
+            pkgs.append(pkg)
+
+        cr.xml_parse_other(REPO_02_OTHXML, None, pkgcb, None)
+
+        self.assertEqual([pkg.name for pkg in pkgs],
+            ['fake_bash', 'super_kernel'])
+
+    def test_xml_parser_other_repo02_no_cbs(self):
+        self.assertRaises(TypeError,
+                          cr.xml_parse_other,
+                          REPO_02_OTHXML, None, None, None)
 
     def test_xml_parser_other_warnings(self):
 
@@ -483,7 +534,7 @@ class TestCaseXmlParserOther(unittest.TestCase):
     def test_xml_parser_other_pkgcb_abort(self):
         def newpkgcb(pkgId, name, arch):
             return cr.Package()
-        def pkgcb():
+        def pkgcb(pkg):
             raise Error("Foo error")
         self.assertRaises(cr.CreaterepoCError,
                           cr.xml_parse_other,

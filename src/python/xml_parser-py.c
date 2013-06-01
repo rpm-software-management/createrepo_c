@@ -191,6 +191,7 @@ py_xml_parse_primary(PyObject *self, PyObject *args)
     Py_XDECREF(py_newpkgcb);
     Py_XDECREF(py_pkgcb);
     Py_XDECREF(py_warningcb);
+    Py_XDECREF(cbdata.py_pkg);
 
     if (tmp_err) {
         PyErr_Format(CrErr_Exception, "%s", tmp_err->message);
@@ -263,6 +264,7 @@ py_xml_parse_filelists(PyObject *self, PyObject *args)
     Py_XDECREF(py_newpkgcb);
     Py_XDECREF(py_pkgcb);
     Py_XDECREF(py_warningcb);
+    Py_XDECREF(cbdata.py_pkg);
 
     if (tmp_err) {
         PyErr_Format(CrErr_Exception, "%s", tmp_err->message);
@@ -335,6 +337,7 @@ py_xml_parse_other(PyObject *self, PyObject *args)
     Py_XDECREF(py_newpkgcb);
     Py_XDECREF(py_pkgcb);
     Py_XDECREF(py_warningcb);
+    Py_XDECREF(cbdata.py_pkg);
 
     if (tmp_err) {
         PyErr_Format(CrErr_Exception, "%s", tmp_err->message);

@@ -125,8 +125,12 @@ init_createrepo_c(void)
 
     /* Checksum types */
     PyModule_AddIntConstant(m, "MD5", CR_CHECKSUM_MD5);
+    PyModule_AddIntConstant(m, "SHA", CR_CHECKSUM_SHA);
     PyModule_AddIntConstant(m, "SHA1", CR_CHECKSUM_SHA1);
+    PyModule_AddIntConstant(m, "SHA224", CR_CHECKSUM_SHA224);
     PyModule_AddIntConstant(m, "SHA256", CR_CHECKSUM_SHA256);
+    PyModule_AddIntConstant(m, "SHA384", CR_CHECKSUM_SHA384);
+    PyModule_AddIntConstant(m, "SHA512", CR_CHECKSUM_SHA512);
 
     /* Compression types */
     PyModule_AddIntConstant(m, "AUTO_DETECT_COMPRESSION", CR_CW_AUTO_DETECT_COMPRESSION);

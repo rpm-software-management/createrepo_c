@@ -9,8 +9,12 @@ VERSION_PATCH = _createrepo_c.VERSION_PATCH
 VERSION = u"%d.%d.%d" % (VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 
 MD5     = _createrepo_c.MD5
+SHA     = _createrepo_c.SHA
 SHA1    = _createrepo_c.SHA1
+SHA224  = _createrepo_c.SHA224
 SHA256  = _createrepo_c.SHA256
+SHA384  = _createrepo_c.SHA384
+SHA512  = _createrepo_c.SHA512
 
 AUTO_DETECT_COMPRESSION = _createrepo_c.AUTO_DETECT_COMPRESSION
 UNKNOWN_COMPRESSION     = _createrepo_c.UNKNOWN_COMPRESSION

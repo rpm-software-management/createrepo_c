@@ -31,10 +31,9 @@
 #include <rpm/rpmkeyring.h>
 #include "logging.h"
 #include "error.h"
-#include "constants.h"
 #include "parsehdr.h"
 #include "misc.h"
-#include "parsehdr.h"
+#include "checksum.h"
 
 volatile short cr_initialized = 0;
 rpmts cr_ts = NULL;
@@ -126,24 +125,7 @@ cr_package_from_rpm(const char *filename,
     assert(filename);
     assert(!err || *err == NULL);
 
-    // Set checksum type
-
-    switch (checksum_type) {
-        case CR_CHECKSUM_MD5:
-            checksum_type_str = "md5";
-            break;
-        case CR_CHECKSUM_SHA1:
-             checksum_type_str = "sha1";
-            break;
-        case CR_CHECKSUM_SHA256:
-            checksum_type_str = "sha256";
-            break;
-        default:
-            g_warning("%s: Unknown checksum type", __func__);
-            g_set_error(err, CR_PARSEPKG_ERROR, CRE_UNKNOWNCHECKSUMTYPE,
-                        "Unknown/Unsupported checksum type: %d", checksum_type);
-            return NULL;
-    };
+    checksum_type_str = cr_checksum_name_str(checksum_type);
 
 
     // Read header
@@ -179,10 +161,10 @@ cr_package_from_rpm(const char *filename,
 
     // Compute checksum
 
-    char *checksum = cr_compute_file_checksum(filename, checksum_type, &tmp_err);
+    char *checksum = cr_checksum_file(filename, checksum_type, &tmp_err);
     if (tmp_err) {
         g_propagate_prefixed_error(err, tmp_err,
-                                   "Error while checksum calculation:");
+                                   "Error while checksum calculation: ");
         headerFree(hdr);
         return NULL;
     }
@@ -232,28 +214,10 @@ cr_xml_from_rpm(const char *filename,
     result.filelists = NULL;
     result.other     = NULL;
 
-
-    // Set checksum type
-
-    switch (checksum_type) {
-        case CR_CHECKSUM_MD5:
-            checksum_type_str = "md5";
-            break;
-        case CR_CHECKSUM_SHA1:
-             checksum_type_str = "sha1";
-            break;
-        case CR_CHECKSUM_SHA256:
-            checksum_type_str = "sha256";
-            break;
-        default:
-            g_warning("%s: Unknown checksum type", __func__);
-            g_set_error(err, CR_PARSEPKG_ERROR, CRE_UNKNOWNCHECKSUMTYPE,
-                        "Unknown/Unsupported checksum type: %d", checksum_type);
-            return result;
-    };
+    checksum_type_str = cr_checksum_name_str(checksum_type);
 
 
-     // Read header
+    // Read header
 
     Header hdr;
     read_header(filename, &hdr, &tmp_err);
@@ -286,10 +250,10 @@ cr_xml_from_rpm(const char *filename,
 
     // Compute checksum
 
-    char *checksum = cr_compute_file_checksum(filename, checksum_type, NULL);
+    char *checksum = cr_checksum_file(filename, checksum_type, &tmp_err);
     if (tmp_err) {
         g_propagate_prefixed_error(err, tmp_err,
-                                   "Error while checksum calculation:");
+                                   "Error while checksum calculation: ");
         headerFree(hdr);
         return result;
     }

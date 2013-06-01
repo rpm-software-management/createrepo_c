@@ -25,7 +25,7 @@ extern "C" {
 #endif
 
 #include <glib.h>
-#include "constants.h"
+#include "checksum.h"
 #include "package.h"
 
 /** \defgroup   parsepkg    Package parser API.

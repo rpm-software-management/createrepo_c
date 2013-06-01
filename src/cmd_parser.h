@@ -21,7 +21,7 @@
 #define __C_CREATEREPOLIB_CMD_PARSER_H__
 
 #include <glib.h>
-#include "constants.h"
+#include "checksum.h"
 #include "compression_wrapper.h"
 
 

@@ -33,7 +33,6 @@
 #include <rpm/rpmlib.h>
 #include "error.h"
 #include "logging.h"
-#include "constants.h"
 #include "misc.h"
 
 #define BUFFER_SIZE     4096
@@ -218,103 +217,6 @@ cr_is_primary(const char *filename)
 }
 */
 
-
-char *
-cr_compute_file_checksum(const char *filename,
-                         cr_ChecksumType type,
-                         GError **err)
-{
-    GChecksumType gchecksumtype;
-
-    assert(filename);
-    assert(!err || *err == NULL);
-
-    // Check if file exists and if it is a regular file (not a directory)
-
-    if (!g_file_test(filename, G_FILE_TEST_IS_REGULAR)) {
-        g_debug("%s: File %s doesn't exists or not a regular file",
-                __func__, filename);
-        g_set_error(err, CR_CHECKSUM_ERROR, CRE_NOFILE,
-                    "File %s doesn't exists or not a regular file", filename);
-        return NULL;
-    }
-
-
-    // Convert our checksum type into glib type
-
-    switch (type) {
-        case CR_CHECKSUM_MD5:
-            gchecksumtype = G_CHECKSUM_MD5;
-            break;
-        case CR_CHECKSUM_SHA1:
-            gchecksumtype = G_CHECKSUM_SHA1;
-            break;
-        case CR_CHECKSUM_SHA256:
-            gchecksumtype = G_CHECKSUM_SHA256;
-            break;
-        default:
-            g_debug("%s: Unknown checksum type", __func__);
-            g_set_error(err, CR_CHECKSUM_ERROR, CRE_UNKNOWNCHECKSUMTYPE,
-                        "Unknown checksum type: %d", type);
-            return NULL;
-    };
-
-
-    // Open file and initialize checksum structure
-
-    FILE *fp = fopen(filename, "rb");
-    if (!fp) {
-        g_critical("%s: Cannot open %s (%s)", __func__, filename,
-                                                    strerror(errno));
-        g_set_error(err, CR_CHECKSUM_ERROR, CRE_IO,
-                    "Cannot open %s: %s", filename, strerror(errno));
-        return NULL;
-    }
-
-
-    // Calculate checksum
-
-    GChecksum *checksum = g_checksum_new(gchecksumtype);
-    unsigned char buffer[BUFFER_SIZE];
-
-    while (1) {
-        size_t input_len;
-        input_len = fread((void *) buffer, sizeof(unsigned char),
-                          BUFFER_SIZE, fp);
-        g_checksum_update(checksum, (const guchar *) buffer, input_len);
-        if (input_len < BUFFER_SIZE) {
-            break;
-        }
-    }
-
-    if (ferror(fp)) {
-        g_set_error(err, CR_CHECKSUM_ERROR, CRE_IO,
-                    "fread call faied: %s", strerror(errno));
-        fclose(fp);
-        g_checksum_free(checksum);
-        return NULL;
-    }
-
-    fclose(fp);
-
-
-    // Get checksum
-
-    char *checksum_str = g_strdup(g_checksum_get_string(checksum));
-    g_checksum_free(checksum);
-
-    if (!checksum_str) {
-        g_critical("%s: Cannot get checksum %s (low memory?)", __func__,
-                   filename);
-        g_set_error(err, CR_CHECKSUM_ERROR, CRE_MEMORY,
-                    "Cannot calculate checksum (low memory?)");
-    }
-
-    return checksum_str;
-}
-
-
-
 #define VAL_LEN         4       // Len of numeric values in rpm
 
 struct cr_HeaderRangeStruct
@@ -393,31 +295,6 @@ cr_get_header_byte_range(const char *filename)
 
     return results;
 }
-
-
-const char *
-cr_checksum_name_str(cr_ChecksumType type)
-{
-    char *name = NULL;
-
-    switch (type) {
-        case CR_CHECKSUM_MD5:
-            name = "md5";
-            break;
-        case CR_CHECKSUM_SHA1:
-            name = "sha";
-            break;
-        case CR_CHECKSUM_SHA256:
-            name = "sha256";
-            break;
-        default:
-            g_debug("%s: Unknown checksum (%d)", __func__, type);
-            break;
-    }
-
-    return name;
-}
-
 
 char *
 cr_get_filename(const char *filepath)

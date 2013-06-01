@@ -61,4 +61,14 @@
 #define TEST_MRF_UE_OTH_01      TEST_MODIFIED_REPO_FILES_PATH"unknown_element_01-other.xml"
 #define TEST_MRF_UE_OTH_02      TEST_MODIFIED_REPO_FILES_PATH"unknown_element_02-other.xml"
 
+// Test files
+
+#define TEST_EMPTY_FILE         TEST_FILES_PATH"empty_file"
+#define TEST_TEXT_FILE          TEST_FILES_PATH"text_file"
+#define TEST_BINARY_FILE        TEST_FILES_PATH"binary_file"
+
+// Other
+
+#define NON_EXIST_FILE          "/tmp/foobarfile.which.should.not.exists"
+
 #endif

@@ -176,21 +176,13 @@ check_arguments(struct CmdOptions *options)
 
     // Check and set checksum type
     if (options->checksum) {
-        GString *checksum_str = g_string_ascii_down(g_string_new(options->checksum));
-        if (!strcmp(checksum_str->str, "sha256")) {
-            options->checksum_type = CR_CHECKSUM_SHA256;
-        } else if (!strcmp(checksum_str->str, "sha1")) {
-            options->checksum_type = CR_CHECKSUM_SHA1;
-        } else if (!strcmp(checksum_str->str, "sha")) {
-            options->checksum_type = CR_CHECKSUM_SHA1;
-        } else if (!strcmp(checksum_str->str, "md5")) {
-            options->checksum_type = CR_CHECKSUM_MD5;
-        } else {
-            g_string_free(checksum_str, TRUE);
+        cr_ChecksumType type;
+        type = cr_checksum_type(options->checksum);
+        if (type == CR_CHECKSUM_UNKNOWN) {
             g_critical("Unknown/Unsupported checksum type \"%s\"", options->checksum);
             return FALSE;
         }
-        g_string_free(checksum_str, TRUE);
+        options->checksum_type = type;
     }
 
     // Check and set compression type

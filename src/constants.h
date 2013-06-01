@@ -29,15 +29,6 @@ extern "C" {
  *  @{
  */
 
-/**
- * Checksum type.
- */
-typedef enum {
-    CR_CHECKSUM_MD5,        /*!< MD5 checksum */
-    CR_CHECKSUM_SHA1,       /*!< SHA1 checksum */
-    CR_CHECKSUM_SHA256,     /*!< SHA256 checksum */
-    CR_CHECKSUM_SENTINEL,   /*!< sentinel of the list */
-} cr_ChecksumType;
 
 /** @} */
 

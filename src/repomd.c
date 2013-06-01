@@ -29,6 +29,7 @@
 #include "error.h"
 #include "logging.h"
 #include "misc.h"
+#include "checksum.h"
 #include "repomd.h"
 #include "compression_wrapper.h"
 
@@ -134,34 +135,13 @@ cr_get_compressed_content_stat(const char *filename,
     }
 
 
-    // Create checksum structure
-
-    GChecksumType gchecksumtype;
-    switch (checksum_type) {
-        case CR_CHECKSUM_MD5:
-            gchecksumtype = G_CHECKSUM_MD5;
-            break;
-        case CR_CHECKSUM_SHA1:
-            gchecksumtype = G_CHECKSUM_SHA1;
-            break;
-        case CR_CHECKSUM_SHA256:
-            gchecksumtype = G_CHECKSUM_SHA256;
-            break;
-        default:
-            g_critical("%s: Unknown checksum type", __func__);
-            g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_UNKNOWNCHECKSUMTYPE,
-                        "Unknown checksum type: %d", checksum_type);
-            return NULL;
-    };
-
-
     // Read compressed file and calculate checksum and size
 
-    GChecksum *checksum = g_checksum_new(gchecksumtype);
-    if (!checksum) {
+    cr_ChecksumCtx *checksum = cr_checksum_new(checksum_type, &tmp_err);
+    if (tmp_err) {
         g_critical("%s: g_checksum_new() failed", __func__);
-        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_UNKNOWNCHECKSUMTYPE,
-                    "g_checksum_new() failed - Unknown checksum type");
+        g_propagate_prefixed_error(err, tmp_err,
+                "Error while checksum calculation: ");
         return NULL;
     }
 
@@ -179,7 +159,7 @@ cr_get_compressed_content_stat(const char *filename,
                         filename);
             break;
         }
-        g_checksum_update (checksum, buffer, readed);
+        cr_checksum_update(checksum, buffer, readed, NULL);
         size += readed;
     } while (readed == BUFFER_SIZE);
 
@@ -190,17 +170,13 @@ cr_get_compressed_content_stat(const char *filename,
 
     contentStat* result = g_malloc(sizeof(contentStat));
     if (result) {
-        result->checksum = g_strdup(g_checksum_get_string(checksum));
+        result->checksum = cr_checksum_final(checksum, NULL);
         result->size = size;
     } else {
         g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_MEMORY,
                     "Cannot allocate memory");
     }
 
-
-    // Clean up
-
-    g_checksum_free(checksum);
     cr_close(cwfile, NULL);
 
     return result;
@@ -246,7 +222,7 @@ cr_repomd_record_fill(cr_RepomdRecord md,
     if (!md->checksum_type || !md->checksum) {
         gchar *chksum;
 
-        chksum = cr_compute_file_checksum(path, checksum_t, &tmp_err);
+        chksum = cr_checksum_file(path, checksum_t, &tmp_err);
         if (tmp_err) {
             int code = tmp_err->code;
             g_propagate_prefixed_error(err, tmp_err,
@@ -441,7 +417,7 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord record,
 
     // Compute checksums
 
-    checksum  = cr_compute_file_checksum(path, checksum_type, &tmp_err);
+    checksum  = cr_checksum_file(path, checksum_type, &tmp_err);
     if (tmp_err) {
         int code = tmp_err->code;
         g_propagate_prefixed_error(err, tmp_err,
@@ -449,7 +425,7 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord record,
         return code;
     }
 
-    cchecksum = cr_compute_file_checksum(cpath, checksum_type, &tmp_err);
+    cchecksum = cr_checksum_file(cpath, checksum_type, &tmp_err);
     if (tmp_err) {
         int code = tmp_err->code;
         g_propagate_prefixed_error(err, tmp_err,

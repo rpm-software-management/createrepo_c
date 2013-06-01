@@ -30,6 +30,7 @@ find_package(GTHREAD2 REQUIRED)
 find_package(Libmagic REQUIRED)
 find_package(LibXml2 REQUIRED)
 find_package(LZMA REQUIRED)
+find_package(OpenSSL REQUIRED)
 find_package(Sqlite3 REQUIRED)
 find_package(ZLIB REQUIRED)
 

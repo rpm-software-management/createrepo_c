@@ -1,3 +1,7 @@
+ADD_EXECUTABLE(test_checksum test_checksum.c)
+TARGET_LINK_LIBRARIES(test_checksum libcreaterepo_c ${GLIB2_LIBRARIES})
+ADD_DEPENDENCIES(tests test_checksum)
+
 ADD_EXECUTABLE(test_compression_wrapper test_compression_wrapper.c)
 TARGET_LINK_LIBRARIES(test_compression_wrapper libcreaterepo_c ${GLIB2_LIBRARIES})
 ADD_DEPENDENCIES(tests test_compression_wrapper)

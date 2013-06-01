@@ -1,4 +1,5 @@
 SET (createrepo_c_SRCS
+     checksum.c
      compression_wrapper.c
      error.c
      load_metadata.c
@@ -20,6 +21,7 @@ SET (createrepo_c_SRCS
      xml_parser_primary.c)
 
 SET(headers
+    checksum.h
     compression_wrapper.h
     constants.h
     createrepo_c.h
@@ -45,6 +47,7 @@ TARGET_LINK_LIBRARIES(libcreaterepo_c ${GLIB2_LIBRARIES})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${Libmagic_LIBRARY})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${LIBXML2_LIBRARIES})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${LZMA_LIBRARIES})
+TARGET_LINK_LIBRARIES(libcreaterepo_c ${OPENSSL_LIBRARIES})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${RPMDB_LIBRARY})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${SQLITE3_LIBRARIES})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${ZLIB_LIBRARY})

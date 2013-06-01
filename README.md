@@ -19,6 +19,7 @@ Package build requires - Pkg name in Fedora/Ubuntu:
 * libxml2 (http://xmlsoft.org/) - libxml2-devel/libxml2-dev
 * python (http://python.org/) - python2-devel/libpython2.7-dev
 * rpm (http://www.rpm.org/) - rpm-devel/librpm-dev
+* openssl (http://www.openssl.org/) - openssl-devel/libssl-dev
 * sqlite3 (https://sqlite.org/) - sqlite-devel/libsqlite3-dev
 * xz (http://tukaani.org/xz/) - xz-devel/liblzma-dev
 * zlib (http://www.zlib.net/) - zlib-devel/zlib1g-dev

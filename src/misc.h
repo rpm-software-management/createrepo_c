@@ -28,7 +28,6 @@ extern "C" {
 #include <string.h>
 #include <curl/curl.h>
 #include "compression_wrapper.h"
-#include "constants.h"
 
 /** \defgroup   misc    Miscellaneous useful functions and macros.
  *  \addtogroup misc
@@ -103,17 +102,6 @@ static inline int cr_is_primary(const char *filename) {
     return 0;
 };
 
-/** Compute file checksum.
- * @param filename      filename
- * @param type          type of checksum
- * @param err           GError **
- * @return              malloced null terminated string with checksum
- *                      or NULL on error
- */
-char *cr_compute_file_checksum(const char *filename,
-                               cr_ChecksumType type,
-                               GError **err);
-
 /** Header range
  */
 struct cr_HeaderRangeStruct {
@@ -126,13 +114,6 @@ struct cr_HeaderRangeStruct {
  * @return              header range (start = end = 0 on error)
  */
 struct cr_HeaderRangeStruct cr_get_header_byte_range(const char *filename);
-
-/** Return checksum name.
- * @param type          checksum type
- * @return              constant null terminated string with checksum name
- *                      or NULL on error
- */
-const char *cr_checksum_name_str(cr_ChecksumType type);
 
 /** Return pointer to the rest of string after last '/'.
  * (e.g. for "/foo/bar" returns "bar")

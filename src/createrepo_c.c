@@ -29,7 +29,7 @@
 #include <fcntl.h>
 #include "cmd_parser.h"
 #include "compression_wrapper.h"
-#include "constants.h"
+#include "checksum.h"
 #include "error.h"
 #include "load_metadata.h"
 #include "locate_metadata.h"

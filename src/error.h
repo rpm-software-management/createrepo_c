@@ -70,6 +70,8 @@ typedef enum {
         (21) Bzip2 library related error */
     CRE_XZ, /*!<
         (22) Xz (lzma) library related error */
+    CRE_OPENSSL, /*!<
+        (23) OpenSSL library related error */
 } cr_Error;
 
 /** Converts cr_Error return code to error string.

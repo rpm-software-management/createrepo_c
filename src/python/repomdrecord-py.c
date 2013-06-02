@@ -27,10 +27,10 @@
 
 typedef struct {
     PyObject_HEAD
-    cr_RepomdRecord record;
+    cr_RepomdRecord *record;
 } _RepomdRecordObject;
 
-cr_RepomdRecord
+cr_RepomdRecord *
 RepomdRecord_FromPyObject(PyObject *o)
 {
     if (!RepomdRecordObject_Check(o)) {
@@ -187,14 +187,14 @@ static struct PyMethodDef repomdrecord_methods[] = {
 
 /* getsetters */
 
-#define OFFSET(member) (void *) offsetof(struct _cr_RepomdRecord, member)
+#define OFFSET(member) (void *) offsetof(cr_RepomdRecord, member)
 
 static PyObject *
 get_long(_RepomdRecordObject *self, void *member_offset)
 {
     if (check_RepomdRecordStatus(self))
         return NULL;
-    cr_RepomdRecord rec = self->record;
+    cr_RepomdRecord *rec = self->record;
     gint64 val = *((long *) ((size_t)rec + (size_t) member_offset));
     return PyLong_FromLongLong((long long) val);
 }
@@ -204,7 +204,7 @@ get_int(_RepomdRecordObject *self, void *member_offset)
 {
     if (check_RepomdRecordStatus(self))
         return NULL;
-    cr_RepomdRecord rec = self->record;
+    cr_RepomdRecord *rec = self->record;
     gint64 val = *((int *) ((size_t)rec + (size_t) member_offset));
     return PyLong_FromLongLong((long long) val);
 }
@@ -214,7 +214,7 @@ get_str(_RepomdRecordObject *self, void *member_offset)
 {
     if (check_RepomdRecordStatus(self))
         return NULL;
-    cr_RepomdRecord rec = self->record;
+    cr_RepomdRecord *rec = self->record;
     char *str = *((char **) ((size_t) rec + (size_t) member_offset));
     if (str == NULL)
         Py_RETURN_NONE;
@@ -235,7 +235,7 @@ set_long(_RepomdRecordObject *self, PyObject *value, void *member_offset)
         PyErr_SetString(PyExc_ValueError, "Number expected!");
         return -1;
     }
-    cr_RepomdRecord rec = self->record;
+    cr_RepomdRecord *rec = self->record;
     *((long *) ((size_t) rec + (size_t) member_offset)) = val;
     return 0;
 }
@@ -254,7 +254,7 @@ set_int(_RepomdRecordObject *self, PyObject *value, void *member_offset)
         PyErr_SetString(PyExc_ValueError, "Number expected!");
         return -1;
     }
-    cr_RepomdRecord rec = self->record;
+    cr_RepomdRecord *rec = self->record;
     *((int *) ((size_t) rec + (size_t) member_offset)) = (int) val;
     return 0;
 }
@@ -267,7 +267,7 @@ set_str(_RepomdRecordObject *self, PyObject *value, void *member_offset)
         PyErr_SetString(PyExc_ValueError, "String expected!");
         return -1;
     }
-    cr_RepomdRecord rec = self->record;
+    cr_RepomdRecord *rec = self->record;
     char *str = g_string_chunk_insert(rec->chunk, PyString_AsString(value));
     *((char **) ((size_t) rec + (size_t) member_offset)) = str;
     return 0;

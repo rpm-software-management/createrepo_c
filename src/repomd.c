@@ -31,6 +31,7 @@
 #include "misc.h"
 #include "checksum.h"
 #include "repomd.h"
+#include "repomd_internal.h"
 #include "compression_wrapper.h"
 
 #define LOCATION_HREF_PREFIX            "repodata/"
@@ -52,23 +53,14 @@ typedef struct _contentStat {
     long size;
 } contentStat;
 
-
-typedef struct _cr_Distro * cr_Distro;
-struct _cr_Distro {
-    gchar *cpeid;
-    gchar *val;
-};
-
-
-cr_Distro
-cr_new_distro()
+cr_DistroTag *
+cr_distrotag_new()
 {
-    return (cr_Distro) g_malloc0(sizeof(struct _cr_Distro));
+    return (cr_DistroTag *) g_malloc0(sizeof(cr_DistroTag));
 }
 
-
 void
-cr_free_distro(cr_Distro distro)
+cr_distrotag_free(cr_DistroTag *distro)
 {
     if (!distro) return;
     g_free(distro->cpeid);
@@ -77,10 +69,10 @@ cr_free_distro(cr_Distro distro)
 }
 
 
-cr_RepomdRecord
+cr_RepomdRecord *
 cr_repomd_record_new(const char *path)
 {
-    cr_RepomdRecord md = (cr_RepomdRecord) g_malloc0(sizeof(*md));
+    cr_RepomdRecord *md = g_malloc0(sizeof(*md));
     md->chunk = g_string_chunk_new(1024);
     if (path) {
         gchar *filename = cr_get_filename(path);
@@ -95,7 +87,7 @@ cr_repomd_record_new(const char *path)
 
 
 void
-cr_repomd_record_free(cr_RepomdRecord md)
+cr_repomd_record_free(cr_RepomdRecord *md)
 {
     if (!md)
         return;
@@ -185,7 +177,7 @@ cr_get_compressed_content_stat(const char *filename,
 
 
 int
-cr_repomd_record_fill(cr_RepomdRecord md,
+cr_repomd_record_fill(cr_RepomdRecord *md,
                       cr_ChecksumType checksum_type,
                       GError **err)
 {
@@ -310,8 +302,8 @@ cr_repomd_record_fill(cr_RepomdRecord md,
 
 
 int
-cr_repomd_record_compress_and_fill(cr_RepomdRecord record,
-                                   cr_RepomdRecord crecord,
+cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
+                                   cr_RepomdRecord *crecord,
                                    cr_ChecksumType checksum_type,
                                    cr_CompressionType record_compression,
                                    GError **err)
@@ -483,7 +475,7 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord record,
 
 
 int
-cr_repomd_record_rename_file(cr_RepomdRecord md, GError **err)
+cr_repomd_record_rename_file(cr_RepomdRecord *md, GError **err)
 {
     int x, len;
     gchar *location_prefix = NULL;
@@ -594,7 +586,9 @@ cr_repomd_record_rename_file(cr_RepomdRecord md, GError **err)
 
 
 void
-cr_repomd_dump_data_items(xmlNodePtr root, cr_RepomdRecord md, const xmlChar *type)
+cr_repomd_dump_data_items(xmlNodePtr root,
+                          cr_RepomdRecord *md,
+                          const xmlChar *type)
 {
     xmlNodePtr data, node;
     gchar str_buffer[STR_BUFFER_SIZE];
@@ -640,7 +634,7 @@ cr_repomd_dump_data_items(xmlNodePtr root, cr_RepomdRecord md, const xmlChar *ty
 
 
 char *
-cr_repomd_xml_dump(cr_Repomd repomd)
+cr_repomd_xml_dump(cr_Repomd *repomd)
 {
     xmlDocPtr doc;
     xmlNodePtr root;
@@ -683,7 +677,7 @@ cr_repomd_xml_dump(cr_Repomd repomd)
         element = repomd->distro_tags;
         for (; element; element = g_slist_next(element)) {
             xmlNodePtr distro_elem;
-            cr_Distro distro = (cr_Distro) element->data;
+            cr_DistroTag *distro = (cr_DistroTag *) element->data;
             distro_elem = xmlNewChild(tags,
                                       NULL,
                                       BAD_CAST "distro",
@@ -702,7 +696,7 @@ cr_repomd_xml_dump(cr_Repomd repomd)
 
     for (element = keys; element; element = g_list_next(element)) {
         char *type = element->data;
-        cr_RepomdRecord rec = g_hash_table_lookup(repomd->records, type);
+        cr_RepomdRecord *rec = g_hash_table_lookup(repomd->records, type);
         cr_repomd_dump_data_items(root, rec, (const xmlChar *) type);
     }
 
@@ -726,10 +720,10 @@ cr_repomd_xml_dump(cr_Repomd repomd)
 }
 
 
-cr_Repomd
+cr_Repomd *
 cr_repomd_new()
 {
-   cr_Repomd repomd = g_malloc0(sizeof(struct _cr_Repomd));
+   cr_Repomd *repomd = g_malloc0(sizeof(cr_Repomd));
    repomd->records = g_hash_table_new_full(g_str_hash,
                                            g_str_equal,
                                            g_free,
@@ -739,12 +733,12 @@ cr_repomd_new()
 
 
 void
-cr_repomd_free(cr_Repomd repomd)
+cr_repomd_free(cr_Repomd *repomd)
 {
     if (!repomd) return;
     g_hash_table_destroy(repomd->records);
     cr_slist_free_full(repomd->repo_tags, g_free);
-    cr_slist_free_full(repomd->distro_tags, (GDestroyNotify) cr_free_distro);
+    cr_slist_free_full(repomd->distro_tags, (GDestroyNotify) cr_distrotag_free);
     cr_slist_free_full(repomd->content_tags, g_free);
     g_free(repomd->revision);
     g_free(repomd);
@@ -752,8 +746,8 @@ cr_repomd_free(cr_Repomd repomd)
 
 
 void
-cr_repomd_set_record(cr_Repomd repomd,
-                     cr_RepomdRecord record,
+cr_repomd_set_record(cr_Repomd *repomd,
+                     cr_RepomdRecord *record,
                      const char *type)
 {
     if (!repomd || !record) return;
@@ -762,7 +756,7 @@ cr_repomd_set_record(cr_Repomd repomd,
 
 
 void
-cr_repomd_set_revision(cr_Repomd repomd, const char *revision)
+cr_repomd_set_revision(cr_Repomd *repomd, const char *revision)
 {
     if (!repomd) return;
     if (repomd->revision)  // A revision string already exists
@@ -772,11 +766,13 @@ cr_repomd_set_revision(cr_Repomd repomd, const char *revision)
 
 
 void
-cr_repomd_add_distro_tag(cr_Repomd repomd, const char *cpeid, const char *tag)
+cr_repomd_add_distro_tag(cr_Repomd *repomd,
+                         const char *cpeid,
+                         const char *tag)
 {
-    cr_Distro distro;
+    cr_DistroTag *distro;
     if (!repomd || !tag) return;
-    distro = cr_new_distro();
+    distro = cr_distrotag_new();
     distro->cpeid = g_strdup(cpeid);
     distro->val   = g_strdup(tag);
     repomd->distro_tags = g_slist_prepend(repomd->distro_tags,
@@ -785,7 +781,7 @@ cr_repomd_add_distro_tag(cr_Repomd repomd, const char *cpeid, const char *tag)
 
 
 void
-cr_repomd_add_repo_tag(cr_Repomd repomd, const char *tag)
+cr_repomd_add_repo_tag(cr_Repomd *repomd, const char *tag)
 {
     if (!repomd) return;
     repomd->repo_tags = g_slist_append(repomd->repo_tags, g_strdup(tag));
@@ -793,7 +789,7 @@ cr_repomd_add_repo_tag(cr_Repomd repomd, const char *tag)
 
 
 void
-cr_repomd_add_content_tag(cr_Repomd repomd, const char *tag)
+cr_repomd_add_content_tag(cr_Repomd *repomd, const char *tag)
 {
     if (!repomd) return;
     repomd->content_tags = g_slist_append(repomd->content_tags, g_strdup(tag));

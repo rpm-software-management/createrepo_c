@@ -1003,17 +1003,17 @@ main(int argc, char **argv)
 
     g_debug("Generating repomd.xml");
 
-    cr_Repomd repomd_obj = cr_repomd_new();
+    cr_Repomd *repomd_obj = cr_repomd_new();
 
-    cr_RepomdRecord pri_xml_rec = cr_repomd_record_new(pri_xml_filename);
-    cr_RepomdRecord fil_xml_rec = cr_repomd_record_new(fil_xml_filename);
-    cr_RepomdRecord oth_xml_rec = cr_repomd_record_new(oth_xml_filename);
-    cr_RepomdRecord pri_db_rec               = NULL;
-    cr_RepomdRecord fil_db_rec               = NULL;
-    cr_RepomdRecord oth_db_rec               = NULL;
-    cr_RepomdRecord groupfile_rec            = NULL;
-    cr_RepomdRecord compressed_groupfile_rec = NULL;
-    cr_RepomdRecord updateinfo_rec           = NULL;
+    cr_RepomdRecord *pri_xml_rec = cr_repomd_record_new(pri_xml_filename);
+    cr_RepomdRecord *fil_xml_rec = cr_repomd_record_new(fil_xml_filename);
+    cr_RepomdRecord *oth_xml_rec = cr_repomd_record_new(oth_xml_filename);
+    cr_RepomdRecord *pri_db_rec               = NULL;
+    cr_RepomdRecord *fil_db_rec               = NULL;
+    cr_RepomdRecord *oth_db_rec               = NULL;
+    cr_RepomdRecord *groupfile_rec            = NULL;
+    cr_RepomdRecord *compressed_groupfile_rec = NULL;
+    cr_RepomdRecord *updateinfo_rec           = NULL;
 
 
     // XML

@@ -28,7 +28,7 @@
 
 typedef struct {
     PyObject_HEAD
-    cr_Repomd repomd;
+    cr_Repomd *repomd;
 } _RepomdObject;
 
 static int

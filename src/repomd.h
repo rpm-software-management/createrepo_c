@@ -36,8 +36,8 @@ extern "C" {
  *
  * \code
  * char *xml;
- * cr_Repomd md = cr_repomd_new();
- * cr_RepomdRecord rec;
+ * cr_Repomd *md = cr_repomd_new();
+ * cr_RepomdRecord *rec;
  *
  * // Set some repomd stuff
  * cr_repomd_set_revision(md, "007");
@@ -64,17 +64,9 @@ extern "C" {
  *  @{
  */
 
-/** cr_RepomdRecord - object representing an item from repomd.xml
- */
-typedef struct _cr_RepomdRecord * cr_RepomdRecord;
-
-/** cr_Repomd - object representing repomd.xml
- */
-typedef struct _cr_Repomd * cr_Repomd;
-
 /** Internal representation of cr_RepomdRecord object
  */
-struct _cr_RepomdRecord {
+typedef struct {
     char *location_real;        /*!< real path to the file */
     char *location_href;        /*!< location of the file (in repomd.xml) */
     char *checksum;             /*!< checksum of file */
@@ -87,29 +79,36 @@ struct _cr_RepomdRecord {
     int db_ver;                 /*!< version of database */
 
     GStringChunk *chunk;        /*!< string chunk */
-};
+} cr_RepomdRecord;
+
+/** Distro tag structure
+ */
+typedef struct {
+    gchar *cpeid;
+    gchar *val;
+} cr_DistroTag;
 
 /** Internal representation of cr_Repomd object
  */
-struct _cr_Repomd {
-    GHashTable *records;
-    GSList *repo_tags;
-    GSList *distro_tags;
-    GSList *content_tags;
+typedef struct {
+    GHashTable *records;        /*!< Hash table with cr_RepomdRecord */
+    GSList *repo_tags;          /*!< List of strings */
+    GSList *distro_tags;        /*!< List of cr_DistroTag* */
+    GSList *content_tags;       /*!< List of strings */
     gchar *revision;
-};
+} cr_Repomd;
 
 /** Creates (alloc) new cr_RepomdRecord object
  * @param path                  path to the compressed file
  */
-cr_RepomdRecord cr_repomd_record_new(const char *path);
+cr_RepomdRecord *cr_repomd_record_new(const char *path);
 
 /** Destroy cr_RepomdRecord object.
  * NOTE: Do NOT use this function on objects attached to cr_Repomd
  * (by cr_repomd_set_record).
  * @param record                cr_RepomdRecord object
  */
-void cr_repomd_record_free(cr_RepomdRecord record);
+void cr_repomd_record_free(cr_RepomdRecord *record);
 
 /** Fill unfilled items in the cr_RepomdRecord (calculate checksums,
  * get file size before/after compression, etc.).
@@ -120,7 +119,7 @@ void cr_repomd_record_free(cr_RepomdRecord record);
  * @param err                   GError **
  * @return                      cr_Error code
  */
-int cr_repomd_record_fill(cr_RepomdRecord record,
+int cr_repomd_record_fill(cr_RepomdRecord *record,
                           cr_ChecksumType checksum_type,
                           GError **err);
 
@@ -135,8 +134,8 @@ int cr_repomd_record_fill(cr_RepomdRecord record,
  * @param err                   GError **
  * @return                      cr_Error code
  */
-int cr_repomd_record_compress_and_fill(cr_RepomdRecord record,
-                                       cr_RepomdRecord compressed_record,
+int cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
+                                       cr_RepomdRecord *compressed_record,
                                        cr_ChecksumType checksum_type,
                                        cr_CompressionType compression,
                                        GError **err);
@@ -146,33 +145,33 @@ int cr_repomd_record_compress_and_fill(cr_RepomdRecord record,
  * @param err                   GError **
  * @return                      cr_Error code
  */
-int cr_repomd_record_rename_file(cr_RepomdRecord record, GError **err);
+int cr_repomd_record_rename_file(cr_RepomdRecord *record, GError **err);
 
 /** Create new empty cr_Repomd object wich represents content of repomd.xml.
  */
-cr_Repomd cr_repomd_new();
+cr_Repomd *cr_repomd_new();
 
 /** Set cr_Repomd record into cr_Repomd object.
  * @param repomd                cr_Repomd object
  * @param record                cr_RepomdRecord object
  * @param type                  type of record ("primary, "groupfile", ...)
  */
-void cr_repomd_set_record(cr_Repomd repomd,
-                          cr_RepomdRecord record,
+void cr_repomd_set_record(cr_Repomd *repomd,
+                          cr_RepomdRecord *record,
                           const char *type);
 
 /** Set custom revision string of repomd.
  * @param repomd                cr_Repomd object
  * @param revision              revision string
  */
-void cr_repomd_set_revision(cr_Repomd repomd, const char *revision);
+void cr_repomd_set_revision(cr_Repomd *repomd, const char *revision);
 
 /** Add distro tag.
  * @param repomd                cr_Repomd object
  * @param cpeid                 cpeid string (could be NULL)
  * @param tag                   distro tag string
  */
-void cr_repomd_add_distro_tag(cr_Repomd repomd,
+void cr_repomd_add_distro_tag(cr_Repomd *repomd,
                               const char *cpeid,
                               const char *tag);
 
@@ -180,18 +179,18 @@ void cr_repomd_add_distro_tag(cr_Repomd repomd,
  * @param repomd                cr_Repomd object
  * @param tag                   repo tag
  */
-void cr_repomd_add_repo_tag(cr_Repomd repomd, const char *tag);
+void cr_repomd_add_repo_tag(cr_Repomd *repomd, const char *tag);
 
 /** Add content tag.
  * @param repomd                cr_Repomd object
  * @param tag                   content tag
  */
-void cr_repomd_add_content_tag(cr_Repomd repomd, const char *tag);
+void cr_repomd_add_content_tag(cr_Repomd *repomd, const char *tag);
 
 /** Frees cr_Repomd object and all its cr_RepomdRecord objects
  * @param repomd                cr_Repomd object
  */
-void cr_repomd_free(cr_Repomd repomd);
+void cr_repomd_free(cr_Repomd *repomd);
 
 
 /** Generate repomd.xml content.
@@ -199,7 +198,7 @@ void cr_repomd_free(cr_Repomd repomd);
  * @param repomd                cr_Repomd object
  * @return                      string with repomd.xml content
  */
-gchar *cr_repomd_xml_dump(cr_Repomd repomd);
+gchar *cr_repomd_xml_dump(cr_Repomd *repomd);
 
 /** @} */
 

@@ -17,14 +17,22 @@
  * USA.
  */
 
-#ifndef CR_REPOMDRECORD_PY_H
-#define CR_REPOMDRECORD_PY_H
+#ifndef __C_CREATEREPOLIB_REPOMD_INTERNAL_H__
+#define __C_CREATEREPOLIB_REPOMD_INTERNAL_H__
 
-#include "src/createrepo_c.h"
-
-extern PyTypeObject RepomdRecord_Type;
-cr_RepomdRecord *RepomdRecord_FromPyObject(PyObject *o);
-
-#define RepomdRecordObject_Check(o)   PyObject_TypeCheck(o, &RepomdRecord_Type)
-
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+#include <string.h>
+#include "error.h"
+
+cr_DistroTag *cr_distrotag_new();
+
+void cr_distrotag_free(cr_DistroTag *distro);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __C_CREATEREPOLIB_REPOMD_INTERNAL_H__ */

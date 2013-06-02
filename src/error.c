@@ -59,6 +59,18 @@ cr_strerror(cr_Error rc)
             return "Bad filelists XML";
         case CRE_BADXMLOTHER:
             return "Bad other XML";
+        case CRE_MAGIC:
+            return "Magic Number Recognition Library (libmagic) error";
+        case CRE_GZ:
+            return "Gzip library related error";
+        case CRE_BZ2:
+            return "Bzip2 library related error";
+        case CRE_XZ:
+            return "XZ (lzma) library related error";
+        case CRE_OPENSSL:
+            return "OpenSSL library related error";
+        case CRE_CURL:
+            return "Curl library related error";
         default:
             return "Unknown error";
     }

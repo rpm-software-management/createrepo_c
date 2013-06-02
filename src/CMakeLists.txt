@@ -18,7 +18,8 @@ SET (createrepo_c_SRCS
      xml_parser.c
      xml_parser_filelists.c
      xml_parser_other.c
-     xml_parser_primary.c)
+     xml_parser_primary.c
+     xml_parser_repomd.c)
 
 SET(headers
     checksum.h

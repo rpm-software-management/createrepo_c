@@ -25,6 +25,7 @@ extern "C" {
 #endif
 
 #include "package.h"
+#include "repomd.h"
 
 /** \defgroup   xml_parser        XML parser API.
  *  \addtogroup xml_parser
@@ -39,6 +40,7 @@ typedef enum {
     CR_XML_WARNING_MISSINGATTR, /*!< Missing attribute */
     CR_XML_WARNING_UNKNOWNVAL,  /*!< Unknown tag or attribute value */
     CR_XML_WARNING_BADATTRVAL,  /*!< Bad attribute value */
+    CR_XML_WARNING_MISSINGVAL,  /*!< Missing tag value */
     CR_XML_WARNING_SENTINEL,
 } cr_XmlParserWarningType;
 
@@ -162,6 +164,21 @@ int cr_xml_parse_other(const char *path,
                        cr_XmlParserWarningCb warningcb,
                        void *warningcb_data,
                        GError **err);
+
+/** Parse repomd.xml. File could be compressed.
+ * @param repom          cr_Repomd object.
+ * @param warningcb      Callback for warning messages.
+ * @param warningcb_data User data for the warningcb.
+ * @param err            GError **
+ * @return               cr_Error code.
+ */
+int
+cr_xml_parse_repomd(const char *path,
+                    cr_Repomd *repomd,
+                    cr_XmlParserWarningCb warningcb,
+                    void *warningcb_data,
+                    GError **err);
+
 /** @} */
 
 #ifdef __cplusplus

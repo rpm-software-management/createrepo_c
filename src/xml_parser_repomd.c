@@ -34,6 +34,11 @@
 #define ERR_DOMAIN      CR_XML_PARSER_REPOMD_ERROR
 #define ERR_CODE_XML    CRE_BADXMLREPOMD
 
+/* TODO:
+ * - replace atol function with better alternative
+ * - maybe in repomdrecord struct use gint64 instead of long
+ */
+
 typedef enum {
     STATE_START,
     STATE_REPOMD,
@@ -142,41 +147,41 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
 
         pd->repomdrecord = cr_repomd_record_new(NULL);
 
-        val = lr_find_attr("type", attr);
+        val = cr_find_attr("type", attr);
         if (!val) {
             cr_xml_parser_warning(pd, CR_XML_WARNING_MISSINGATTR,
                            "Missing attribute \"type\" of a data element");
-            break;
+            val = "unknown";
         }
 
-        pd->repomdrecord->type = g_strdup(val);
+        cr_repomd_set_record(pd->repomd, pd->repomdrecord, val);
         break;
 
     case STATE_LOCATION:
         assert(pd->repomd);
-        assert(!pd->repomdrecord);
+        assert(pd->repomdrecord);
 
-        var = cr_find_attr("href", attr);
-        if (var)
-            pd->repomd_rec->location_href = g_strdup(var);
+        val = cr_find_attr("href", attr);
+        if (val)
+            pd->repomdrecord->location_href = g_strdup(val);
         else
             cr_xml_parser_warning(pd, CR_XML_WARNING_MISSINGATTR,
-                           "Missing attribute \"href\" of a location element");
+                    "Missing attribute \"href\" of a location element");
 
-        var = cr_find_attr("base", attr);
-        if (var)
-            pd->repomd_rec->location_base = g_strdup(var);
+//        val = cr_find_attr("base", attr);
+//        if (val)
+//            pd->repomdrecord->location_base = g_strdup(val);
 
         break;
 
     case STATE_CHECKSUM:
         assert(pd->repomd);
-        assert(!pd->repomdrecord);
+        assert(pd->repomdrecord);
 
         val = cr_find_attr("type", attr);
         if (!val) {
             cr_xml_parser_warning(pd, CR_XML_WARNING_MISSINGATTR,
-                           "Missing attribute \"type\" of a checksum element");
+                    "Missing attribute \"type\" of a checksum element");
             break;
         }
 
@@ -185,7 +190,7 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
 
     case STATE_OPENCHECKSUM:
         assert(pd->repomd);
-        assert(!pd->repomdrecord);
+        assert(pd->repomdrecord);
 
         val = cr_find_attr("type", attr);
         if (!val) {
@@ -231,62 +236,113 @@ cr_end_handler(void *pdata, const char *element)
 
     switch (state) {
     case STATE_START:
-/*
-    case STATE_OTHERDATA:
-    case STATE_VERSION:
+    case STATE_REPOMD:
         break;
 
-    case STATE_PACKAGE:
-        if (!pd->pkg)
-            return;
+    case STATE_REVISION:
+        assert(pd->repomd);
+        assert(pd->repomdrecord);
 
-        // Reverse list of changelogs
-        pd->pkg->changelogs = g_slist_reverse(pd->pkg->changelogs);
-
-        if (pd->pkgcb && pd->pkgcb(pd->pkg, pd->pkgcb_data, &tmp_err)) {
-            if (tmp_err)
-                g_propagate_prefixed_error(&pd->err,
-                                           tmp_err,
-                                           "Parsing interrupted: ");
-            else
-                g_set_error(&pd->err, ERR_DOMAIN, CRE_CBINTERRUPTED,
-                            "Parsing interrupted");
-        } else {
-            // If callback return CRE_OK but it simultaneously set
-            // the tmp_err then it's a programming error.
-            assert(tmp_err == NULL);
+        if (pd->lcontent == 0) {
+            cr_xml_parser_warning(pd, CR_XML_WARNING_MISSINGVAL,
+                    "Missing value of a revision element");
+            break;
         }
 
-        pd->pkg = NULL;
+        pd->repomd->revision = g_strdup(pd->content);
         break;
 
-    case STATE_CHANGELOG: {
-        assert(pd->pkg);
-        assert(pd->changelog);
-
-        if (!pd->content)
-            break;
-
-        pd->changelog->changelog = g_string_chunk_insert(pd->pkg->chunk,
-                                                         pd->content);
-        pd->changelog = NULL;
+    case STATE_TAGS:
         break;
-    }
-*/
+
+    case STATE_REPO:
+        assert(pd->repomd);
+        assert(pd->repomdrecord);
+
+        cr_repomd_add_repo_tag(pd->repomd, pd->content);
+        break;
+
+    case STATE_CONTENT:
+        assert(pd->repomd);
+        assert(pd->repomdrecord);
+
+        cr_repomd_add_content_tag(pd->repomd, pd->content);
+        break;
+
+    case STATE_DISTRO:
+        assert(pd->repomd);
+        assert(pd->repomdrecord);
+
+        cr_repomd_add_distro_tag(pd->repomd, pd->cpeid, pd->content);
+        if (pd->cpeid) {
+            g_free(pd->cpeid);
+            pd->cpeid = NULL;
+        }
+        break;
+
+    case STATE_DATA:
+        assert(pd->repomd);
+        assert(pd->repomdrecord);
+
+        pd->repomdrecord = NULL;
+        break;
+
+    case STATE_LOCATION:
+        break;
+
+    case STATE_CHECKSUM:
+        assert(pd->repomd);
+        assert(pd->repomdrecord);
+
+        pd->repomdrecord->checksum = g_strdup(pd->content);
+        break;
+
+    case STATE_OPENCHECKSUM:
+        assert(pd->repomd);
+        assert(pd->repomdrecord);
+
+        pd->repomdrecord->checksum_open = g_strdup(pd->content);
+        break;
+
+    case STATE_TIMESTAMP:
+        assert(pd->repomd);
+        assert(pd->repomdrecord);
+
+        pd->repomdrecord->timestamp = atol(pd->content);
+        break;
+
+    case STATE_SIZE:
+        assert(pd->repomd);
+        assert(pd->repomdrecord);
+
+        pd->repomdrecord->size = atol(pd->content);
+        break;
+
+    case STATE_OPENSIZE:
+        assert(pd->repomd);
+        assert(pd->repomdrecord);
+
+        pd->repomdrecord->size_open = atol(pd->content);
+        break;
+
+    case STATE_DBVERSION:
+        assert(pd->repomd);
+        assert(pd->repomdrecord);
+
+        pd->repomdrecord->db_ver = atol(pd->content);
+        break;
+
     default:
         break;
     }
 }
 
 int
-cr_xml_parse_other(const char *path,
-                   cr_XmlParserNewPkgCb newpkgcb,
-                   void *newpkgcb_data,
-                   cr_XmlParserPkgCb pkgcb,
-                   void *pkgcb_data,
-                   cr_XmlParserWarningCb warningcb,
-                   void *warningcb_data,
-                   GError **err)
+cr_xml_parse_repomd(const char *path,
+                    cr_Repomd *repomd,
+                    cr_XmlParserWarningCb warningcb,
+                    void *warningcb_data,
+                    GError **err)
 {
     int ret = CRE_OK;
     cr_ParserData *pd;
@@ -294,11 +350,8 @@ cr_xml_parse_other(const char *path,
     GError *tmp_err = NULL;
 
     assert(path);
-    assert(newpkgcb || pkgcb);
+    assert(repomd);
     assert(!err || *err == NULL);
-
-    if (!newpkgcb)  // Use default newpkgcb
-        newpkgcb = cr_newpkgcb;
 
     // Init
 
@@ -309,10 +362,7 @@ cr_xml_parse_other(const char *path,
     pd = cr_xml_parser_data(NUMSTATES);
     pd->parser = &parser;
     pd->state = STATE_START;
-    pd->newpkgcb_data = newpkgcb_data;
-    pd->newpkgcb = newpkgcb;
-    pd->pkgcb_data = pkgcb_data;
-    pd->pkgcb = pkgcb;
+    pd->repomd = repomd;
     pd->warningcb = warningcb;
     pd->warningcb_data = warningcb_data;
     for (cr_StatesSwitch *sw = stateswitches; sw->from != NUMSTATES; sw++) {
@@ -330,16 +380,6 @@ cr_xml_parse_other(const char *path,
         g_propagate_error(err, tmp_err);
 
     // Clean up
-
-    if (ret != CRE_OK && newpkgcb == cr_newpkgcb) {
-        // Prevent memory leak when the parsing is interrupted by an error.
-        // If a new package object was created by the cr_newpkgcb then
-        // is obvious that there is no other reference to the package
-        // except of the parser reference in pd->pkg.
-        // If a caller supplied its own newpkgcb, then the freeing
-        // of the currently parsed package is the caller responsibility.
-        cr_package_free(pd->pkg);
-    }
 
     cr_xml_parser_data_free(pd);
     XML_ParserFree(parser);

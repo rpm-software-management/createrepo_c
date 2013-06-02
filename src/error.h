@@ -100,6 +100,7 @@ const char *cr_strerror(cr_Error rc);
 #define CR_XML_PARSER_FIL_ERROR         cr_xml_parser_fil_error_quark()
 #define CR_XML_PARSER_OTH_ERROR         cr_xml_parser_oth_error_quark()
 #define CR_XML_PARSER_PRI_ERROR         cr_xml_parser_pri_error_quark()
+#define CR_XML_PARSER_REPOMD_ERROR      cr_xml_parser_repomd_error_quark()
 
 GQuark cr_checksum_error_quark(void);
 GQuark cr_compression_wrapper_error_quark(void);
@@ -118,5 +119,6 @@ GQuark cr_xml_parser_error_quark(void);
 GQuark cr_xml_parser_fil_error_quark(void);
 GQuark cr_xml_parser_oth_error_quark(void);
 GQuark cr_xml_parser_pri_error_quark(void);
+GQuark cr_xml_parser_repomd_error_quark(void);
 
 #endif

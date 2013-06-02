@@ -29,6 +29,7 @@ extern "C" {
 #include "xml_parser.h"
 #include "error.h"
 #include "package.h"
+#include "repomd.h"
 
 #define XML_BUFFER_SIZE         8192
 #define CONTENT_REALLOC_STEP    256
@@ -111,6 +112,12 @@ typedef struct _cr_ParserData {
     /* Other related stuff */
 
     cr_ChangelogEntry *changelog;
+
+    /* Repomd related stuff */
+
+    cr_Repomd *repomd;
+    cr_RepomdRecord *repomdrecord;
+    char *cpeid;
 
 } cr_ParserData;
 

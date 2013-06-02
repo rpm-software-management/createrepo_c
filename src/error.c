@@ -177,3 +177,9 @@ cr_xml_parser_pri_error_quark(void)
 {
     return g_quark_from_static_string("cr_xml_parser_primary_error");
 }
+
+GQuark
+cr_xml_parser_repomd_error_quark(void)
+{
+    return g_quark_from_static_string("cr_xml_parser_repomd_error");
+}

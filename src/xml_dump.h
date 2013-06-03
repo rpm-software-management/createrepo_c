@@ -33,12 +33,13 @@ extern "C" {
  * cr_Package *pkg;
  * struct cr_XmlStruct xml;
  *
+ * cr_xml_dump_init();
+ * cr_package_parser_init();
+ *
  * pkg = cr_package_from_rpm("path/to/rpm.rpm", CR_CHECKSUM_SHA256,
  *                           "repodata/rpm.rpm", NULL, 10, NULL);
  *
- * cr_xml_dump_init();
  * xml = cr_xml_dump(pkg, NULL);
- * cr_xml_dump_cleanup();
  *
  * cr_package_free(pkg);
  *
@@ -49,6 +50,9 @@ extern "C" {
  * free(xml.primary);
  * free(xml.filelists);
  * free(xml.other);
+ *
+ * cr_package_parser_cleanup();
+ * cr_xml_dump_cleanup();
  * \endcode
  *
  *  \addtogroup xml_dump

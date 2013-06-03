@@ -39,6 +39,8 @@ extern "C" {
  * cr_Repomd *md = cr_repomd_new();
  * cr_RepomdRecord *rec;
  *
+ * cr_xml_dump_init();
+ *
  * // Set some repomd stuff
  * cr_repomd_set_revision(md, "007");
  * cr_repomd_add_repo_tag(md, "repotag");
@@ -46,18 +48,20 @@ extern "C" {
  * cr_repomd_add_distro_tag(md, "foocpeid", "data");
  *
  * // Create record for new metadata file
- * rec = cr_repomd_record_new("/foo/bar/repodata/primary.xml.xz");
+ * rec = cr_repomd_record_new("primary", "/foo/bar/repodata/primary.xml.xz");
  * // Calculate all needed parameters (uncompresed size, checksum, ...)
  * cr_repomd_record_fill(rec, CR_CHECKSUM_SHA256);
  * // Rename source file - insert checksum into the filename
  * cr_repomd_record_rename_file(rec)
  * // Append the record into the repomd
- * cr_repomd_set_record(md, rec,  "primary");
+ * cr_repomd_set_record(md, rec);
  *
  * // Get repomd.xml content
- * // Note: cr_xml_dump_init() shoud be once called before dump
  * xml = cr_repomd_xml_dump(md);
+ *
+ * // Cleanup
  * cr_repomd_free(md);
+ * cr_xml_dump_cleanup();
  * \endcode
  *
  *  \addtogroup repomd

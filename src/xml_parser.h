@@ -81,7 +81,8 @@ typedef int (*cr_XmlParserPkgCb)(cr_Package *pkg,
  * and ignored by default. But if callback return CR_CB_RET_ERR instead of
  * CR_CB_RET_OK then parsing is immediately interrupted.
  * @param type      Type of warning
- * @param msg       Warning msg
+ * @param msg       Warning msg. The message is destroyed after the call.
+ *                  If you want touse the message later, you have to copy it.
  * @param cbdata    User data.
  * @param err       GError **
  * @return          CR_CB_RET_OK (0) or CR_CB_RET_ERR (1) - stops the parsing

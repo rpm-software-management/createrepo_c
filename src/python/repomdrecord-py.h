@@ -23,8 +23,10 @@
 #include "src/createrepo_c.h"
 
 extern PyTypeObject RepomdRecord_Type;
-cr_RepomdRecord *RepomdRecord_FromPyObject(PyObject *o);
 
 #define RepomdRecordObject_Check(o)   PyObject_TypeCheck(o, &RepomdRecord_Type)
+
+PyObject *Object_FromRepomdRecord(cr_RepomdRecord *rec);
+cr_RepomdRecord *RepomdRecord_FromPyObject(PyObject *o);
 
 #endif

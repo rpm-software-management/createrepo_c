@@ -26,4 +26,6 @@ extern PyTypeObject Repomd_Type;
 
 #define RepomdObject_Check(o)   PyObject_TypeCheck(o, &Repomd_Type)
 
+cr_Repomd *Repomd_FromPyObject(PyObject *o);
+
 #endif

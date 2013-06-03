@@ -67,6 +67,7 @@ extern "C" {
 /** Internal representation of cr_RepomdRecord object
  */
 typedef struct {
+    char *type;                 /*!< type of record */
     char *location_real;        /*!< real path to the file */
     char *location_href;        /*!< location of the file (in repomd.xml) */
     char *checksum;             /*!< checksum of file */
@@ -78,7 +79,7 @@ typedef struct {
     long size_open;             /*!< size of uncompressed file in bytes */
     int db_ver;                 /*!< version of database */
 
-    GStringChunk *chunk;        /*!< string chunk */
+    GStringChunk *chunk;        /*!< String chunk */
 } cr_RepomdRecord;
 
 /** Distro tag structure
@@ -91,17 +92,22 @@ typedef struct {
 /** Internal representation of cr_Repomd object
  */
 typedef struct {
-    GHashTable *records;        /*!< Hash table with cr_RepomdRecord */
+    gchar *revision;            /*!< Revison */
     GSList *repo_tags;          /*!< List of strings */
-    GSList *distro_tags;        /*!< List of cr_DistroTag* */
     GSList *content_tags;       /*!< List of strings */
-    gchar *revision;
+    GSList *distro_tags;        /*!< List of cr_DistroTag* */
+    GSList *records;            /*!< List with cr_RepomdRecords */
+
+    GStringChunk *chunk;        /*!< String chunk for repomd strings
+                                     (Note: RepomdRecord strings are stored
+                                      in RepomdRecord->chunk) */
 } cr_Repomd;
 
 /** Creates (alloc) new cr_RepomdRecord object
+ * @param type                  Type of record ("primary", "filelists", ..)
  * @param path                  path to the compressed file
  */
-cr_RepomdRecord *cr_repomd_record_new(const char *path);
+cr_RepomdRecord *cr_repomd_record_new(const char *type, const char *path);
 
 /** Destroy cr_RepomdRecord object.
  * NOTE: Do NOT use this function on objects attached to cr_Repomd
@@ -109,6 +115,12 @@ cr_RepomdRecord *cr_repomd_record_new(const char *path);
  * @param record                cr_RepomdRecord object
  */
 void cr_repomd_record_free(cr_RepomdRecord *record);
+
+/** Copy cr_RepomdRecord object.
+ * @param orig              cr_RepomdRecord object
+ * @return                  copy of cr_RepomdRecord object
+ */
+cr_RepomdRecord *cr_repomd_record_copy(const cr_RepomdRecord *orig);
 
 /** Fill unfilled items in the cr_RepomdRecord (calculate checksums,
  * get file size before/after compression, etc.).
@@ -154,11 +166,8 @@ cr_Repomd *cr_repomd_new();
 /** Set cr_Repomd record into cr_Repomd object.
  * @param repomd                cr_Repomd object
  * @param record                cr_RepomdRecord object
- * @param type                  type of record ("primary, "groupfile", ...)
  */
-void cr_repomd_set_record(cr_Repomd *repomd,
-                          cr_RepomdRecord *record,
-                          const char *type);
+void cr_repomd_set_record(cr_Repomd *repomd, cr_RepomdRecord *record);
 
 /** Set custom revision string of repomd.
  * @param repomd                cr_Repomd object

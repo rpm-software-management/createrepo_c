@@ -22,13 +22,10 @@ class TestCaseRepomdRecord(unittest.TestCase):
         shutil.rmtree(self.tmpdir)
 
     def test_repomdrecord_fill(self):
-        self.assertRaises(TypeError, cr.RepomdRecord)
-        self.assertRaises(TypeError, cr.RepomdRecord, None)
-
         shutil.copyfile(REPO_00_PRIXML, self.path00)
         self.assertTrue(os.path.exists(self.path00))
 
-        rec = cr.RepomdRecord(self.path00)
+        rec = cr.RepomdRecord("primary", self.path00)
         self.assertTrue(rec)
 
         self.assertEqual(rec.location_real, self.path00)
@@ -62,17 +59,15 @@ class TestCaseRepomdRecord(unittest.TestCase):
             ['dabe2ce5481d23de1f4f52bdcfee0f9af98316c9e0de2ce8123adeefa0dd08b9-primary.xml.gz'])
 
     def test_repomdrecord_setters(self):
-        self.assertRaises(TypeError, cr.RepomdRecord)
-        self.assertRaises(TypeError, cr.RepomdRecord, None)
-
         shutil.copyfile(REPO_00_PRIXML, self.path00)
         self.assertTrue(os.path.exists(self.path00))
 
-        rec = cr.RepomdRecord(self.path00)
+        rec = cr.RepomdRecord("primary", self.path00)
         self.assertTrue(rec)
 
         rec.fill(cr.SHA256)
 
+        self.assertEqual(rec.type, "primary")
         self.assertEqual(rec.location_real, self.path00)
         self.assertEqual(rec.location_href, "repodata/primary.xml.gz")
         self.assertEqual(rec.checksum, "dabe2ce5481d23de1f4f52bdcfee0f9af98316c9e0de2ce8123adeefa0dd08b9")
@@ -86,6 +81,7 @@ class TestCaseRepomdRecord(unittest.TestCase):
 
         # Set new values
 
+        rec.type = "foo"
         rec.location_href = "repodata/foo.xml.gz"
         rec.checksum = "foobar11"
         rec.checksum_type = "foo1"
@@ -98,6 +94,7 @@ class TestCaseRepomdRecord(unittest.TestCase):
 
         # Check
 
+        self.assertEqual(rec.type, "foo")
         self.assertEqual(rec.location_real, self.path00)
         self.assertEqual(rec.location_href, "repodata/foo.xml.gz")
         self.assertEqual(rec.checksum, "foobar11")
@@ -110,13 +107,10 @@ class TestCaseRepomdRecord(unittest.TestCase):
         self.assertEqual(rec.db_ver, 11)
 
     def test_repomdrecord_compress_and_fill(self):
-        self.assertRaises(TypeError, cr.RepomdRecord)
-        self.assertRaises(TypeError, cr.RepomdRecord, None)
-
         open(self.path01, "w").write("foobar\ncontent\nhh\n")
         self.assertTrue(os.path.exists(self.path01))
 
-        rec = cr.RepomdRecord(self.path01)
+        rec = cr.RepomdRecord("primary", self.path01)
         self.assertTrue(rec)
         rec_compressed = rec.compress_and_fill(cr.SHA256, cr.GZ_COMPRESSION)
 

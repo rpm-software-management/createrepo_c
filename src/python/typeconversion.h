@@ -28,6 +28,7 @@ void PyErr_ToGError(GError **err);
 
 PyObject *PyStringOrNone_FromString(const char *str);
 char *PyObject_ToStrOrNull(PyObject *pyobj);
+char *PyObject_ToChunkedString(PyObject *pyobj, GStringChunk *chunk);
 
 PyObject *PyObject_FromDependency(cr_Dependency *dep);
 cr_Dependency *PyObject_ToDependency(PyObject *tuple, GStringChunk *chunk);
@@ -37,6 +38,9 @@ cr_PackageFile *PyObject_ToPackageFile(PyObject *tuple, GStringChunk *chunk);
 
 PyObject *PyObject_FromChangelogEntry(cr_ChangelogEntry *log);
 cr_ChangelogEntry *PyObject_ToChangelogEntry(PyObject *tuple, GStringChunk *chunk);
+
+PyObject *PyObject_FromDistroTag(cr_DistroTag *tag);
+cr_DistroTag *PyObject_ToDistroTag(PyObject *tuple, GStringChunk *chunk);
 
 GSList *GSList_FromPyList_Str(PyObject *py_list);
 

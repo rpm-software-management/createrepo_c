@@ -59,21 +59,12 @@ cr_distrotag_new()
     return (cr_DistroTag *) g_malloc0(sizeof(cr_DistroTag));
 }
 
-void
-cr_distrotag_free(cr_DistroTag *distro)
-{
-    if (!distro) return;
-    g_free(distro->cpeid);
-    g_free(distro->val);
-    g_free(distro);
-}
-
-
 cr_RepomdRecord *
-cr_repomd_record_new(const char *path)
+cr_repomd_record_new(const char *type, const char *path)
 {
     cr_RepomdRecord *md = g_malloc0(sizeof(*md));
-    md->chunk = g_string_chunk_new(1024);
+    md->chunk = g_string_chunk_new(128);
+    md->type  = cr_safe_string_chunk_insert(md->chunk, type);
     if (path) {
         gchar *filename = cr_get_filename(path);
         gchar *location_href = g_strconcat(LOCATION_HREF_PREFIX, filename, NULL);
@@ -83,8 +74,6 @@ cr_repomd_record_new(const char *path)
     }
     return md;
 }
-
-
 
 void
 cr_repomd_record_free(cr_RepomdRecord *md)
@@ -96,6 +85,33 @@ cr_repomd_record_free(cr_RepomdRecord *md)
     g_free(md);
 }
 
+cr_RepomdRecord *
+cr_repomd_record_copy(const cr_RepomdRecord *orig)
+{
+    cr_RepomdRecord *rec;
+
+    if (!orig) return NULL;
+
+    rec = cr_repomd_record_new(orig->type, NULL);
+    rec->location_real      = cr_safe_string_chunk_insert(rec->chunk,
+                                                orig->location_real);
+    rec->location_href      = cr_safe_string_chunk_insert(rec->chunk,
+                                                orig->location_href);
+    rec->checksum           = cr_safe_string_chunk_insert(rec->chunk,
+                                                orig->checksum);
+    rec->checksum_type      = cr_safe_string_chunk_insert(rec->chunk,
+                                                orig->checksum_type);
+    rec->checksum_open      = cr_safe_string_chunk_insert(rec->chunk,
+                                                orig->checksum_open);
+    rec->checksum_open_type = cr_safe_string_chunk_insert(rec->chunk,
+                                                orig->checksum_open_type);
+    rec->timestamp = orig->timestamp;
+    rec->size      = orig->size;
+    rec->size_open = orig->size_open;
+    rec->db_ver    = orig->db_ver;
+
+    return rec;
+}
 
 contentStat *
 cr_get_compressed_content_stat(const char *filename,
@@ -173,8 +189,6 @@ cr_get_compressed_content_stat(const char *filename,
 
     return result;
 }
-
-
 
 int
 cr_repomd_record_fill(cr_RepomdRecord *md,
@@ -299,7 +313,6 @@ cr_repomd_record_fill(cr_RepomdRecord *md,
 
     return CRE_OK;
 }
-
 
 int
 cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
@@ -473,7 +486,6 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
     return CRE_OK;
 }
 
-
 int
 cr_repomd_record_rename_file(cr_RepomdRecord *md, GError **err)
 {
@@ -584,21 +596,18 @@ cr_repomd_record_rename_file(cr_RepomdRecord *md, GError **err)
     return CRE_OK;
 }
 
-
 void
-cr_repomd_dump_data_items(xmlNodePtr root,
-                          cr_RepomdRecord *md,
-                          const xmlChar *type)
+cr_repomd_dump_data_items(xmlNodePtr root, cr_RepomdRecord *md)
 {
     xmlNodePtr data, node;
     gchar str_buffer[STR_BUFFER_SIZE];
 
-    if (!root || !md || !type) {
+    if (!root || !md) {
         return;
     }
 
     data = xmlNewChild(root, NULL, BAD_CAST "data", NULL);
-    xmlNewProp(data, BAD_CAST "type", BAD_CAST type);
+    xmlNewProp(data, BAD_CAST "type", BAD_CAST md->type);
 
 
     node = xmlNewTextChild(data, NULL, BAD_CAST "checksum",
@@ -625,20 +634,19 @@ cr_repomd_dump_data_items(xmlNodePtr root,
         xmlNewChild(data, NULL, BAD_CAST "open-size", BAD_CAST str_buffer);
     }
 
-    if (g_str_has_suffix((char *)type, "_db")) {
+    if (g_str_has_suffix((char *)md->type, "_db")) {
         g_snprintf(str_buffer, STR_BUFFER_SIZE, "%d", md->db_ver);
         xmlNewChild(data, NULL, BAD_CAST "database_version",
                     BAD_CAST str_buffer);
     }
 }
 
-
 char *
 cr_repomd_xml_dump(cr_Repomd *repomd)
 {
     xmlDocPtr doc;
     xmlNodePtr root;
-    GList *keys, *element;
+    GSList *element;
 
 
     // Start of XML document
@@ -691,16 +699,12 @@ cr_repomd_xml_dump(cr_Repomd *repomd)
 
     // Records
 
-    keys = g_hash_table_get_keys(repomd->records);
-    keys = g_list_sort(keys, (GCompareFunc) g_strcmp0);
+    repomd->records = g_slist_sort(repomd->records, (GCompareFunc) g_strcmp0);
 
-    for (element = keys; element; element = g_list_next(element)) {
-        char *type = element->data;
-        cr_RepomdRecord *rec = g_hash_table_lookup(repomd->records, type);
-        cr_repomd_dump_data_items(root, rec, (const xmlChar *) type);
+    for (element = repomd->records; element; element = g_slist_next(element)) {
+        cr_RepomdRecord *rec = element->data;
+        cr_repomd_dump_data_items(root, rec);
     }
-
-    g_list_free(keys);
 
     // Dump IT!
 
@@ -719,51 +723,40 @@ cr_repomd_xml_dump(cr_Repomd *repomd)
     return result;
 }
 
-
 cr_Repomd *
 cr_repomd_new()
 {
    cr_Repomd *repomd = g_malloc0(sizeof(cr_Repomd));
-   repomd->records = g_hash_table_new_full(g_str_hash,
-                                           g_str_equal,
-                                           g_free,
-                                           (GDestroyNotify) cr_repomd_record_free);
+   repomd->chunk = g_string_chunk_new(0);
    return repomd;
 }
-
 
 void
 cr_repomd_free(cr_Repomd *repomd)
 {
     if (!repomd) return;
-    g_hash_table_destroy(repomd->records);
-    cr_slist_free_full(repomd->repo_tags, g_free);
-    cr_slist_free_full(repomd->distro_tags, (GDestroyNotify) cr_distrotag_free);
-    cr_slist_free_full(repomd->content_tags, g_free);
-    g_free(repomd->revision);
+    cr_slist_free_full(repomd->records, (GDestroyNotify) cr_repomd_record_free );
+    g_slist_free(repomd->repo_tags);
+    cr_slist_free_full(repomd->distro_tags, (GDestroyNotify) g_free);
+    g_slist_free(repomd->content_tags);
+    g_string_chunk_free(repomd->chunk);
     g_free(repomd);
 }
 
-
 void
 cr_repomd_set_record(cr_Repomd *repomd,
-                     cr_RepomdRecord *record,
-                     const char *type)
+                     cr_RepomdRecord *record)
 {
     if (!repomd || !record) return;
-    g_hash_table_replace(repomd->records, g_strdup(type), record);
+    repomd->records = g_slist_append(repomd->records, record);
 }
-
 
 void
 cr_repomd_set_revision(cr_Repomd *repomd, const char *revision)
 {
     if (!repomd) return;
-    if (repomd->revision)  // A revision string already exists
-        g_free(repomd->revision);
-    repomd->revision = g_strdup(revision);
+    repomd->revision = cr_safe_string_chunk_insert(repomd->chunk, revision);
 }
-
 
 void
 cr_repomd_add_distro_tag(cr_Repomd *repomd,
@@ -773,25 +766,25 @@ cr_repomd_add_distro_tag(cr_Repomd *repomd,
     cr_DistroTag *distro;
     if (!repomd || !tag) return;
     distro = cr_distrotag_new();
-    distro->cpeid = g_strdup(cpeid);
-    distro->val   = g_strdup(tag);
+    distro->cpeid = cr_safe_string_chunk_insert(repomd->chunk, cpeid);
+    distro->val   = cr_safe_string_chunk_insert(repomd->chunk, tag);
     repomd->distro_tags = g_slist_prepend(repomd->distro_tags,
                                           (gpointer) distro);
 }
 
-
 void
 cr_repomd_add_repo_tag(cr_Repomd *repomd, const char *tag)
 {
-    if (!repomd) return;
-    repomd->repo_tags = g_slist_append(repomd->repo_tags, g_strdup(tag));
+    if (!repomd || !tag) return;
+    repomd->repo_tags = g_slist_append(repomd->repo_tags,
+                            cr_safe_string_chunk_insert(repomd->chunk, tag));
 }
-
 
 void
 cr_repomd_add_content_tag(cr_Repomd *repomd, const char *tag)
 {
-    if (!repomd) return;
-    repomd->content_tags = g_slist_append(repomd->content_tags, g_strdup(tag));
+    if (!repomd || !tag) return;
+    repomd->content_tags = g_slist_append(repomd->content_tags,
+                            cr_safe_string_chunk_insert(repomd->chunk, tag));
 }
 

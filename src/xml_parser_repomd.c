@@ -144,8 +144,6 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         assert(pd->repomd);
         assert(!pd->repomdrecord);
 
-        pd->repomdrecord = cr_repomd_record_new(NULL);
-
         val = cr_find_attr("type", attr);
         if (!val) {
             cr_xml_parser_warning(pd, CR_XML_WARNING_MISSINGATTR,
@@ -153,7 +151,8 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
             val = "unknown";
         }
 
-        cr_repomd_set_record(pd->repomd, pd->repomdrecord, val);
+        pd->repomdrecord = cr_repomd_record_new(val, NULL);
+        cr_repomd_set_record(pd->repomd, pd->repomdrecord);
         break;
 
     case STATE_LOCATION:
@@ -162,14 +161,18 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
 
         val = cr_find_attr("href", attr);
         if (val)
-            pd->repomdrecord->location_href = g_strdup(val);
+            pd->repomdrecord->location_href = g_string_chunk_insert(
+                                                    pd->repomdrecord->chunk,
+                                                    val);
         else
             cr_xml_parser_warning(pd, CR_XML_WARNING_MISSINGATTR,
                     "Missing attribute \"href\" of a location element");
 
 //        val = cr_find_attr("base", attr);
 //        if (val)
-//            pd->repomdrecord->location_base = g_strdup(val);
+//            pd->repomdrecord->location_base = g_string_chunk_insert(
+//                                                    pd->repodmrecord->chunk,
+//                                                    val);
 
         break;
 
@@ -184,7 +187,9 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
             break;
         }
 
-        pd->repomdrecord->checksum_type = g_strdup(val);
+        pd->repomdrecord->checksum_type = g_string_chunk_insert(
+                                                    pd->repomdrecord->chunk,
+                                                    val);
         break;
 
     case STATE_OPENCHECKSUM:
@@ -198,7 +203,9 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
             break;
         }
 
-        pd->repomdrecord->checksum_open_type = g_strdup(val);
+        pd->repomdrecord->checksum_open_type = g_string_chunk_insert(
+                                                    pd->repomdrecord->chunk,
+                                                    val);
         break;
 
     case STATE_TIMESTAMP:
@@ -247,7 +254,7 @@ cr_end_handler(void *pdata, const char *element)
             break;
         }
 
-        pd->repomd->revision = g_strdup(pd->content);
+        cr_repomd_set_revision(pd->repomd, pd->content);
         break;
 
     case STATE_TAGS:
@@ -292,14 +299,18 @@ cr_end_handler(void *pdata, const char *element)
         assert(pd->repomd);
         assert(pd->repomdrecord);
 
-        pd->repomdrecord->checksum = g_strdup(pd->content);
+        pd->repomdrecord->checksum = cr_safe_string_chunk_insert(
+                                            pd->repomdrecord->chunk,
+                                            pd->content);
         break;
 
     case STATE_OPENCHECKSUM:
         assert(pd->repomd);
         assert(pd->repomdrecord);
 
-        pd->repomdrecord->checksum_open = g_strdup(pd->content);
+        pd->repomdrecord->checksum_open = cr_safe_string_chunk_insert(
+                                            pd->repomdrecord->chunk,
+                                            pd->content);
         break;
 
     case STATE_TIMESTAMP:

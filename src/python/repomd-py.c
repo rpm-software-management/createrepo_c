@@ -31,7 +31,17 @@ typedef struct {
     cr_Repomd *repomd;
 } _RepomdObject;
 
-static int
+cr_Repomd *
+Repomd_FromPyObject(PyObject *o)
+{
+    if (!RepomdObject_Check(o)) {
+        PyErr_SetString(PyExc_TypeError, "Expected a createrepo_c.Repomd object.");
+        return NULL;
+    }
+    return ((_RepomdObject *)o)->repomd;
+}
+
+    static int
 check_RepomdStatus(const _RepomdObject *self)
 {
     assert(self != NULL);
@@ -100,14 +110,16 @@ static PyObject *
 set_record(_RepomdObject *self, PyObject *args)
 {
     PyObject *record;
-    char *type;
+    cr_RepomdRecord *orig, *new;
 
-    if (!PyArg_ParseTuple(args, "O!s:set_record", &RepomdRecord_Type, &record, &type))
+    if (!PyArg_ParseTuple(args, "O!:set_record", &RepomdRecord_Type, &record))
         return NULL;
     if (check_RepomdStatus(self))
         return NULL;
-    cr_repomd_set_record(self->repomd, RepomdRecord_FromPyObject(record), type);
-    Py_XINCREF(record);
+
+    orig = RepomdRecord_FromPyObject(record);
+    new = cr_repomd_record_copy(orig);
+    cr_repomd_set_record(self->repomd, new);
     Py_RETURN_NONE;
 }
 
@@ -183,6 +195,171 @@ static struct PyMethodDef repomd_methods[] = {
     {NULL} /* sentinel */
 };
 
+/* Convertors for getsetters */
+
+/** Convert C object to PyObject.
+ * @param       C object
+ * @return      PyObject representation
+ */
+typedef PyObject *(*ConversionFromFunc)(void *);
+
+/** Check an element from a list if has a valid format.
+ * @param       a single list element
+ * @return      0 if ok, 1 otherwise
+ */
+typedef int (*ConversionToCheckFunc)(PyObject *);
+
+/** Convert PyObject to C representation.
+ * @param       PyObject
+ * @return      C representation
+ */
+typedef void *(*ConversionToFunc)(PyObject *, GStringChunk *);
+
+static int
+CheckPyString(PyObject *dep)
+{
+    if (!PyString_Check(dep)) {
+        PyErr_SetString(PyExc_ValueError, "Element of list has to be a string");
+        return 1;
+    }
+    return 0;
+}
+
+static int
+CheckPyDistroTag(PyObject *dep)
+{
+    if (!PyTuple_Check(dep) || PyTuple_Size(dep) != 2) {
+        PyErr_SetString(PyExc_ValueError, "Element of list has to be a tuple with 2 items.");
+        return 1;
+    }
+    return 0;
+}
+
+PyObject *
+PyObject_FromRepomdRecord(cr_RepomdRecord *rec)
+{
+    return Object_FromRepomdRecord(cr_repomd_record_copy(rec));
+}
+
+typedef struct {
+    size_t offset;          /*!< Ofset of the list in cr_Repomd */
+    ConversionFromFunc f;   /*!< Conversion func to PyObject from a C object */
+    ConversionToCheckFunc t_check; /*!< Check func for a single element of list */
+    ConversionToFunc t;     /*!< Conversion func to C object from PyObject */
+} ListConvertor;
+
+/** List of convertors for converting a lists in cr_Package. */
+static ListConvertor list_convertors[] = {
+    { offsetof(cr_Repomd, repo_tags),    PyStringOrNone_FromString,
+      CheckPyString, PyObject_ToChunkedString },
+    { offsetof(cr_Repomd, distro_tags),  PyObject_FromDistroTag,
+      CheckPyDistroTag, PyObject_ToDistroTag },
+    { offsetof(cr_Repomd, content_tags), PyStringOrNone_FromString,
+      CheckPyString, PyObject_ToChunkedString },
+    { offsetof(cr_Repomd, records),      PyObject_FromRepomdRecord,
+      NULL, NULL },
+};
+
+/* Getters */
+
+static PyObject *
+get_str(_RepomdObject *self, void *member_offset)
+{
+    if (check_RepomdStatus(self))
+        return NULL;
+    cr_Repomd *repomd = self->repomd;
+    char *str = *((char **) ((size_t) repomd + (size_t) member_offset));
+    if (str == NULL)
+        Py_RETURN_NONE;
+    return PyString_FromString(str);
+}
+
+static PyObject *
+get_list(_RepomdObject *self, void *conv)
+{
+    ListConvertor *convertor = conv;
+    PyObject *list;
+    cr_Repomd *repomd = self->repomd;
+    GSList *glist = *((GSList **) ((size_t) repomd + (size_t) convertor->offset));
+
+    if (check_RepomdStatus(self))
+        return NULL;
+
+    if ((list = PyList_New(0)) == NULL)
+        return NULL;
+
+    for (GSList *elem = glist; elem; elem = g_slist_next(elem))
+        PyList_Append(list, convertor->f(elem->data));
+
+    return list;
+}
+
+/* Setters */
+
+static int
+set_str(_RepomdObject *self, PyObject *value, void *member_offset)
+{
+    if (check_RepomdStatus(self))
+        return -1;
+    if (!PyString_Check(value)) {
+        PyErr_SetString(PyExc_ValueError, "String expected!");
+        return -1;
+    }
+    cr_Repomd *repomd = self->repomd;
+
+    char *str = g_string_chunk_insert(repomd->chunk, PyString_AsString(value));
+    *((char **) ((size_t) repomd + (size_t) member_offset)) = str;
+    return 0;
+}
+
+static int
+set_list(_RepomdObject *self, PyObject *list, void *conv)
+{
+    ListConvertor *convertor = conv;
+    cr_Repomd *repomd = self->repomd;
+    GSList *glist = NULL;
+
+    if (check_RepomdStatus(self))
+        return -1;
+
+    if (!PyList_Check(list)) {
+        PyErr_SetString(PyExc_ValueError, "List expected!");
+        return -1;
+    }
+
+    Py_ssize_t len = PyList_Size(list);
+
+    // Check all elements
+    for (Py_ssize_t x = 0; x < len; x++) {
+        PyObject *elem = PyList_GetItem(list, x);
+        if (convertor->t_check && convertor->t_check(elem))
+            return -1;
+    }
+
+    for (Py_ssize_t x = 0; x < len; x++) {
+        glist = g_slist_prepend(glist,
+                        convertor->t(PyList_GetItem(list, x), repomd->chunk));
+    }
+
+    *((GSList **) ((size_t) repomd + (size_t) convertor->offset)) = glist;
+    return 0;
+}
+
+/** Return offset of a selected member of cr_Repomd structure. */
+#define OFFSET(member) (void *) offsetof(cr_Repomd, member)
+
+static PyGetSetDef repomd_getsetters[] = {
+    {"revision",         (getter)get_str,  (setter)set_str,  NULL, OFFSET(revision)},
+    {"repo_tags",        (getter)get_list, (setter)set_list, NULL, &(list_convertors[0])},
+    {"distro_tags",      (getter)get_list, (setter)set_list, NULL, &(list_convertors[1])},
+    {"content_tags",     (getter)get_list, (setter)set_list, NULL, &(list_convertors[2])},
+    {"records",          (getter)get_list, (setter)NULL,     NULL, &(list_convertors[3])},
+    {NULL, NULL, NULL, NULL, NULL} /* sentinel */
+};
+
+/* Object */
+
+
 PyTypeObject Repomd_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                              /* ob_size */
@@ -214,7 +391,7 @@ PyTypeObject Repomd_Type = {
     0,                              /* tp_iternext */
     repomd_methods,                 /* tp_methods */
     0,                              /* tp_members */
-    0,                              /* tp_getset */
+    repomd_getsetters,              /* tp_getset */
     0,                              /* tp_base */
     0,                              /* tp_dict */
     0,                              /* tp_descr_get */

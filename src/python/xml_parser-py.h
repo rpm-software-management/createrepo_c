@@ -25,5 +25,6 @@
 PyObject *py_xml_parse_primary(PyObject *self, PyObject *args);
 PyObject *py_xml_parse_filelists(PyObject *self, PyObject *args);
 PyObject *py_xml_parse_other(PyObject *self, PyObject *args);
+PyObject *py_xml_parse_repomd(PyObject *self, PyObject *args);
 
 #endif

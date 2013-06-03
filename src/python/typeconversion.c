@@ -20,6 +20,8 @@
 #include <Python.h>
 #include <assert.h>
 #include "typeconversion.h"
+#include "src/createrepo_c.h"
+#include "src/repomd_internal.h"
 
 void
 PyErr_ToGError(GError **err)
@@ -67,6 +69,12 @@ PyObject_ToStrOrNull(PyObject *pyobj)
         return PyString_AsString(pyobj);
     // TODO: ? Add support for pyobj like: ("xxx",) and ["xxx"]
     return NULL;
+}
+
+char *
+PyObject_ToChunkedString(PyObject *pyobj, GStringChunk *chunk)
+{
+    return cr_safe_string_chunk_insert(chunk, PyObject_ToStrOrNull(pyobj));
 }
 
 long long
@@ -189,6 +197,35 @@ PyObject_ToChangelogEntry(PyObject *tuple, GStringChunk *chunk)
     log->changelog = cr_safe_string_chunk_insert(chunk, PyObject_ToStrOrNull(pyobj));
 
     return log;
+}
+
+PyObject *
+PyObject_FromDistroTag(cr_DistroTag *tag)
+{
+    PyObject *tuple;
+
+    if ((tuple = PyTuple_New(2)) == NULL)
+        return NULL;
+
+    PyTuple_SetItem(tuple, 0, PyStringOrNone_FromString(tag->cpeid));
+    PyTuple_SetItem(tuple, 1, PyStringOrNone_FromString(tag->val));
+
+    return tuple;
+}
+
+cr_DistroTag *
+PyObject_ToDistroTag(PyObject *tuple, GStringChunk *chunk)
+{
+    PyObject *pyobj;
+    cr_DistroTag *tag = cr_distrotag_new();
+
+    pyobj = PyTuple_GetItem(tuple, 0);
+    tag->cpeid = cr_safe_string_chunk_insert(chunk, PyObject_ToStrOrNull(pyobj));
+
+    pyobj = PyTuple_GetItem(tuple, 2);
+    tag->val = cr_safe_string_chunk_insert(chunk, PyObject_ToStrOrNull(pyobj));
+
+    return tag;
 }
 
 GSList *

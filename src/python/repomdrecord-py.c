@@ -30,6 +30,23 @@ typedef struct {
     cr_RepomdRecord *record;
 } _RepomdRecordObject;
 
+PyObject *
+Object_FromRepomdRecord(cr_RepomdRecord *rec)
+{
+    PyObject *py_rec;
+
+    if (!rec) {
+        PyErr_SetString(PyExc_TypeError, "Expected a cr_RepomdRecord pointer not NULL.");
+        return NULL;
+    }
+
+    py_rec = PyObject_CallObject((PyObject *) &RepomdRecord_Type, NULL);
+    cr_repomd_record_free(((_RepomdRecordObject *)py_rec)->record);
+    ((_RepomdRecordObject *)py_rec)->record = rec;
+
+    return py_rec;
+}
+
 cr_RepomdRecord *
 RepomdRecord_FromPyObject(PyObject *o)
 {
@@ -71,18 +88,17 @@ repomdrecord_init(_RepomdRecordObject *self, PyObject *args, PyObject *kwds)
 {
     CR_UNUSED(kwds);
 
-    char *path;
+    char *type = NULL, *path = NULL;
 
-    if (!PyArg_ParseTuple(args, "s|:repomdrecord_init", &path))
+    if (!PyArg_ParseTuple(args, "|zz:repomdrecord_init", &type, &path))
         return -1;
 
     /* Free all previous resources when reinitialization */
-    if (self->record) {
+    if (self->record)
         cr_repomd_record_free(self->record);
-    }
 
     /* Init */
-    self->record = cr_repomd_record_new(path);
+    self->record = cr_repomd_record_new(type, path);
     if (self->record == NULL) {
         PyErr_SetString(CrErr_Exception, "RepomdRecord initialization failed");
         return -1;
@@ -103,10 +119,23 @@ static PyObject *
 repomdrecord_repr(_RepomdRecordObject *self)
 {
     CR_UNUSED(self);
-    return PyString_FromFormat("<createrepo_c.RepomdRecord object>");
+    if (self->record->type)
+        return PyString_FromFormat("<createrepo_c.RepomdRecord %s object>",
+                                   self->record->type);
+    else
+        return PyString_FromFormat("<createrepo_c.RepomdRecord object>");
 }
 
 /* RepomdRecord methods */
+
+static PyObject *
+copy_repomdrecord(_RepomdRecordObject *self, void *nothing)
+{
+    CR_UNUSED(nothing);
+    if (check_RepomdRecordStatus(self))
+        return NULL;
+    return Object_FromRepomdRecord(cr_repomd_record_copy(self->record));
+}
 
 static PyObject *
 fill(_RepomdRecordObject *self, PyObject *args)
@@ -179,6 +208,7 @@ rename_file(_RepomdRecordObject *self, void *nothing)
 }
 
 static struct PyMethodDef repomdrecord_methods[] = {
+    {"copy", (PyCFunction)copy_repomdrecord, METH_NOARGS, NULL},
     {"fill", (PyCFunction)fill, METH_VARARGS, NULL},
     {"compress_and_fill", (PyCFunction)compress_and_fill, METH_VARARGS, NULL},
     {"rename_file", (PyCFunction)rename_file, METH_NOARGS, NULL},
@@ -274,6 +304,7 @@ set_str(_RepomdRecordObject *self, PyObject *value, void *member_offset)
 }
 
 static PyGetSetDef repomdrecord_getsetters[] = {
+    {"type",                (getter)get_str, (setter)set_str, NULL, OFFSET(type)},
     {"location_real",       (getter)get_str, (setter)set_str, NULL, OFFSET(location_real)},
     {"location_href",       (getter)get_str, (setter)set_str, NULL, OFFSET(location_href)},
     {"checksum",            (getter)get_str, (setter)set_str, NULL, OFFSET(checksum)},

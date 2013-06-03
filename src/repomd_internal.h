@@ -29,8 +29,6 @@ extern "C" {
 
 cr_DistroTag *cr_distrotag_new();
 
-void cr_distrotag_free(cr_DistroTag *distro);
-
 #ifdef __cplusplus
 }
 #endif

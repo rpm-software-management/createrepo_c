@@ -241,16 +241,21 @@ ht_keys(_MetadataObject *self, PyObject *args)
 
     if (check_MetadataStatus(self))
         return NULL;
+
     GList *keys = g_hash_table_get_keys(self->md->ht);
     PyObject *list = PyList_New(0);
+
     for (GList *elem = keys; elem; elem = g_list_next(elem)) {
         PyObject *py_str = PyString_FromString(elem->data);
         assert(py_str);
         if (PyList_Append(list, py_str) == -1) {
             Py_XDECREF(list);
+            g_list_free(keys);
             return NULL;
         }
     }
+
+    g_list_free(keys);
     return list;
 }
 

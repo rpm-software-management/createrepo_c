@@ -1005,9 +1005,9 @@ main(int argc, char **argv)
 
     cr_Repomd *repomd_obj = cr_repomd_new();
 
-    cr_RepomdRecord *pri_xml_rec = cr_repomd_record_new(pri_xml_filename);
-    cr_RepomdRecord *fil_xml_rec = cr_repomd_record_new(fil_xml_filename);
-    cr_RepomdRecord *oth_xml_rec = cr_repomd_record_new(oth_xml_filename);
+    cr_RepomdRecord *pri_xml_rec = cr_repomd_record_new(pri_xml_filename, "primary");
+    cr_RepomdRecord *fil_xml_rec = cr_repomd_record_new(fil_xml_filename, "filelists");
+    cr_RepomdRecord *oth_xml_rec = cr_repomd_record_new(oth_xml_filename, "other");
     cr_RepomdRecord *pri_db_rec               = NULL;
     cr_RepomdRecord *fil_db_rec               = NULL;
     cr_RepomdRecord *oth_db_rec               = NULL;
@@ -1026,8 +1026,8 @@ main(int argc, char **argv)
     // Groupfile
 
     if (groupfile) {
-        groupfile_rec = cr_repomd_record_new(groupfile);
-        compressed_groupfile_rec = cr_repomd_record_new(groupfile);
+        groupfile_rec = cr_repomd_record_new(groupfile, "group");
+        compressed_groupfile_rec = cr_repomd_record_new(groupfile, "group_gz");
         cr_repomd_record_compress_and_fill(groupfile_rec,
                                           compressed_groupfile_rec,
                                           cmd_options->checksum_type,
@@ -1039,7 +1039,7 @@ main(int argc, char **argv)
     // Updateinfo
 
     if (updateinfo) {
-        updateinfo_rec = cr_repomd_record_new(updateinfo);
+        updateinfo_rec = cr_repomd_record_new(updateinfo, "updateinfo");
         cr_repomd_record_fill(updateinfo_rec, cmd_options->checksum_type, NULL);
     }
 
@@ -1077,9 +1077,9 @@ main(int argc, char **argv)
 
         // Prepare repomd records
 
-        pri_db_rec = cr_repomd_record_new(pri_db_name);
-        fil_db_rec = cr_repomd_record_new(fil_db_name);
-        oth_db_rec = cr_repomd_record_new(oth_db_name);
+        pri_db_rec = cr_repomd_record_new(pri_db_name, "primary_db");
+        fil_db_rec = cr_repomd_record_new(fil_db_name, "filelists_db");
+        oth_db_rec = cr_repomd_record_new(oth_db_name, "other_db");
 
         cr_repomd_record_fill(pri_db_rec, cmd_options->checksum_type, NULL);
         cr_repomd_record_fill(fil_db_rec, cmd_options->checksum_type, NULL);
@@ -1108,15 +1108,15 @@ main(int argc, char **argv)
 
     // Gen xml
 
-    cr_repomd_set_record(repomd_obj, pri_xml_rec,    "primary");
-    cr_repomd_set_record(repomd_obj, fil_xml_rec,    "filelists");
-    cr_repomd_set_record(repomd_obj, oth_xml_rec,    "other");
-    cr_repomd_set_record(repomd_obj, pri_db_rec,     "primary_db");
-    cr_repomd_set_record(repomd_obj, fil_db_rec,     "filelists_db");
-    cr_repomd_set_record(repomd_obj, oth_db_rec,     "other_db");
-    cr_repomd_set_record(repomd_obj, groupfile_rec,  "group");
-    cr_repomd_set_record(repomd_obj, compressed_groupfile_rec, "group_gz");
-    cr_repomd_set_record(repomd_obj, updateinfo_rec, "updateinfo");
+    cr_repomd_set_record(repomd_obj, pri_xml_rec);
+    cr_repomd_set_record(repomd_obj, fil_xml_rec);
+    cr_repomd_set_record(repomd_obj, oth_xml_rec);
+    cr_repomd_set_record(repomd_obj, pri_db_rec);
+    cr_repomd_set_record(repomd_obj, fil_db_rec);
+    cr_repomd_set_record(repomd_obj, oth_db_rec);
+    cr_repomd_set_record(repomd_obj, groupfile_rec);
+    cr_repomd_set_record(repomd_obj, compressed_groupfile_rec);
+    cr_repomd_set_record(repomd_obj, updateinfo_rec);
 
     int i = 0;
     while (cmd_options->repo_tags && cmd_options->repo_tags[i])

@@ -26,6 +26,7 @@
 #include "xml_parser-py.h"
 #include "typeconversion.h"
 #include "package-py.h"
+#include "repomd-py.h"
 #include "exception-py.h"
 
 typedef struct {
@@ -363,6 +364,67 @@ py_xml_parse_other(PyObject *self, PyObject *args)
     Py_XDECREF(py_pkgcb);
     Py_XDECREF(py_warningcb);
     Py_XDECREF(cbdata.py_pkg);
+
+    if (tmp_err) {
+        PyErr_Format(CrErr_Exception, "%s", tmp_err->message);
+        g_clear_error(&tmp_err);
+        return NULL;
+    }
+
+    Py_RETURN_NONE;
+}
+
+PyObject *
+py_xml_parse_repomd(PyObject *self, PyObject *args)
+{
+    CR_UNUSED(self);
+
+    char *filename;
+    PyObject *py_repomd, *py_warningcb;
+    CbData cbdata;
+    cr_Repomd *repomd;
+    GError *tmp_err = NULL;
+
+    if (!PyArg_ParseTuple(args, "sOO:py_xml_parse_repomd",
+                                         &filename,
+                                         &py_repomd,
+                                         &py_warningcb)) {
+        return NULL;
+    }
+
+    if (!RepomdObject_Check(py_repomd)) {
+        PyErr_SetString(PyExc_TypeError, "Bad type");
+        return NULL;
+    }
+
+    if (!PyCallable_Check(py_warningcb) && py_warningcb != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "warningcb must be callable or None");
+        return NULL;
+    }
+
+    Py_XINCREF(py_repomd);
+    Py_XINCREF(py_warningcb);
+
+    cr_XmlParserWarningCb   ptr_c_warningcb = NULL;
+
+    if (py_warningcb != Py_None)
+        ptr_c_warningcb = c_warningcb;
+
+    cbdata.py_newpkgcb  = NULL;
+    cbdata.py_pkgcb     = NULL;
+    cbdata.py_warningcb = py_warningcb;
+    cbdata.py_pkg       = NULL;
+
+    repomd = Repomd_FromPyObject(py_repomd);
+
+    cr_xml_parse_repomd(filename,
+                       repomd,
+                       ptr_c_warningcb,
+                       &cbdata,
+                       &tmp_err);
+
+    Py_XDECREF(py_repomd);
+    Py_XDECREF(py_warningcb);
 
     if (tmp_err) {
         PyErr_Format(CrErr_Exception, "%s", tmp_err->message);

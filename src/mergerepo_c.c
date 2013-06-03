@@ -1162,9 +1162,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     // Prepare repomd records
 
-    cr_RepomdRecord *pri_xml_rec = cr_repomd_record_new(pri_xml_filename);
-    cr_RepomdRecord *fil_xml_rec = cr_repomd_record_new(fil_xml_filename);
-    cr_RepomdRecord *oth_xml_rec = cr_repomd_record_new(oth_xml_filename);
+    cr_RepomdRecord *pri_xml_rec = cr_repomd_record_new(pri_xml_filename, "primary");
+    cr_RepomdRecord *fil_xml_rec = cr_repomd_record_new(fil_xml_filename, "filelists");
+    cr_RepomdRecord *oth_xml_rec = cr_repomd_record_new(oth_xml_filename, "other");
     cr_RepomdRecord *pri_db_rec               = NULL;
     cr_RepomdRecord *fil_db_rec               = NULL;
     cr_RepomdRecord *oth_db_rec               = NULL;
@@ -1184,8 +1184,8 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     // Groupfile
 
     if (groupfile) {
-        groupfile_rec = cr_repomd_record_new(groupfile);
-        compressed_groupfile_rec = cr_repomd_record_new(groupfile);
+        groupfile_rec = cr_repomd_record_new(groupfile, "group");
+        compressed_groupfile_rec = cr_repomd_record_new(groupfile, "group_gz");
         cr_repomd_record_compress_and_fill(groupfile_rec,
                                            compressed_groupfile_rec,
                                            CR_CHECKSUM_SHA256,
@@ -1197,7 +1197,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     // Update info
 
     if (!cmd_options->noupdateinfo) {
-        update_info_rec = cr_repomd_record_new(update_info_filename);
+        update_info_rec = cr_repomd_record_new(update_info_filename, "updateinfo");
         cr_repomd_record_fill(update_info_rec, CR_CHECKSUM_SHA256, NULL);
     }
 
@@ -1206,7 +1206,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     if (cmd_options->koji) {
         gchar *pkgorigins_path = g_strconcat(cmd_options->tmp_out_repo, "pkgorigins.gz", NULL);
-        pkgorigins_rec = cr_repomd_record_new(pkgorigins_path);
+        pkgorigins_rec = cr_repomd_record_new(pkgorigins_path, "origin");
         cr_repomd_record_fill(pkgorigins_rec, CR_CHECKSUM_SHA256, NULL);
         g_free(pkgorigins_path);
     }
@@ -1250,9 +1250,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         remove(oth_db_filename);
 
         // Prepare repomd records
-        pri_db_rec = cr_repomd_record_new(pri_db_c_filename);
-        fil_db_rec = cr_repomd_record_new(fil_db_c_filename);
-        oth_db_rec = cr_repomd_record_new(oth_db_c_filename);
+        pri_db_rec = cr_repomd_record_new(pri_db_c_filename, "primary_db");
+        fil_db_rec = cr_repomd_record_new(fil_db_c_filename, "filelists_db");
+        oth_db_rec = cr_repomd_record_new(oth_db_c_filename, "other_db");
 
         g_free(pri_db_filename);
         g_free(fil_db_filename);
@@ -1287,16 +1287,16 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     // Gen repomd.xml content
 
     cr_Repomd *repomd_obj = cr_repomd_new();
-    cr_repomd_set_record(repomd_obj, pri_xml_rec,   "primary");
-    cr_repomd_set_record(repomd_obj, fil_xml_rec,   "filelists");
-    cr_repomd_set_record(repomd_obj, oth_xml_rec,   "other");
-    cr_repomd_set_record(repomd_obj, pri_db_rec,    "primary_db");
-    cr_repomd_set_record(repomd_obj, fil_db_rec,    "filelists_db");
-    cr_repomd_set_record(repomd_obj, oth_db_rec,    "other_db");
-    cr_repomd_set_record(repomd_obj, groupfile_rec, "group");
-    cr_repomd_set_record(repomd_obj, compressed_groupfile_rec, "group_gz");
-    cr_repomd_set_record(repomd_obj, update_info_rec,"updateinfo");
-    cr_repomd_set_record(repomd_obj, pkgorigins_rec, "origin");
+    cr_repomd_set_record(repomd_obj, pri_xml_rec);
+    cr_repomd_set_record(repomd_obj, fil_xml_rec);
+    cr_repomd_set_record(repomd_obj, oth_xml_rec);
+    cr_repomd_set_record(repomd_obj, pri_db_rec);
+    cr_repomd_set_record(repomd_obj, fil_db_rec);
+    cr_repomd_set_record(repomd_obj, oth_db_rec);
+    cr_repomd_set_record(repomd_obj, groupfile_rec);
+    cr_repomd_set_record(repomd_obj, compressed_groupfile_rec);
+    cr_repomd_set_record(repomd_obj, update_info_rec);
+    cr_repomd_set_record(repomd_obj, pkgorigins_rec);
 
     char *repomd_xml = cr_repomd_xml_dump(repomd_obj);
 

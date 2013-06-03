@@ -96,6 +96,7 @@ cr_xml_parser_warning(cr_ParserData *pd,
 
     tmp_err = NULL;
     ret = pd->warningcb(type, warn, pd->warningcb_data, &tmp_err);
+    g_free(warn);
     if (ret != CR_CB_RET_OK) {
         if (tmp_err)
             g_propagate_prefixed_error(&pd->err, tmp_err,

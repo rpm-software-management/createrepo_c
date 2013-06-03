@@ -52,6 +52,8 @@ static struct PyMethodDef createrepo_c_methods[] = {
      METH_VARARGS, NULL},
     {"xml_parse_other",         (PyCFunction)py_xml_parse_other,
      METH_VARARGS, NULL},
+    {"xml_parse_repomd",        (PyCFunction)py_xml_parse_repomd,
+     METH_VARARGS, NULL},
     { NULL }
 };
 

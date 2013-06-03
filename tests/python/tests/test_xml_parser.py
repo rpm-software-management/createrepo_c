@@ -549,3 +549,69 @@ class TestCaseXmlParserOther(unittest.TestCase):
                           cr.xml_parse_other,
                           OTHER_MULTI_WARN_00_PATH,
                           newpkgcb, None, warningcb)
+
+class TestCaseXmlParserRepomd(unittest.TestCase):
+
+    def test_xml_parser_repomd_repo01(self):
+
+        warnings = []
+
+        def warningcb(warn_type, msg):
+            warnings.append((warn_type, msg))
+
+        repomd = cr.Repomd()
+
+        cr.xml_parse_repomd(REPO_01_REPOMD, repomd, warningcb)
+
+        self.assertEqual(warnings, [])
+
+        self.assertEqual(repomd.revision, "1334667230")
+        self.assertEqual(repomd.repo_tags, [])
+        self.assertEqual(repomd.distro_tags, [])
+        self.assertEqual(repomd.content_tags, [])
+        self.assertEqual(len(repomd.records), 3)
+
+        self.assertEqual(repomd.records[0].type, "filelists")
+        self.assertEqual(repomd.records[0].location_real, None)
+        self.assertEqual(repomd.records[0].location_href,
+            "repodata/c7db035d0e6f1b2e883a7fa3229e2d2be70c05a8b8d2b57dbb5f9c1a67483b6c-filelists.xml.gz")
+        self.assertEqual(repomd.records[0].checksum,
+            "c7db035d0e6f1b2e883a7fa3229e2d2be70c05a8b8d2b57dbb5f9c1a67483b6c")
+        self.assertEqual(repomd.records[0].checksum_type, "sha256")
+        self.assertEqual(repomd.records[0].checksum_open,
+            "85bc611be5d81ac8da2fe01e98ef741d243d1518fcc46ada70660020803fbf09")
+        self.assertEqual(repomd.records[0].checksum_open_type, "sha256")
+        self.assertEqual(repomd.records[0].timestamp, 1334667230)
+        self.assertEqual(repomd.records[0].size, 273)
+        self.assertEqual(repomd.records[0].size_open, 389)
+        self.assertEqual(repomd.records[0].db_ver, 0)
+
+        self.assertEqual(repomd.records[1].type, "other")
+        self.assertEqual(repomd.records[1].location_real, None)
+        self.assertEqual(repomd.records[1].location_href,
+            "repodata/b752a73d9efd4006d740f943db5fb7c2dd77a8324bd99da92e86bd55a2c126ef-other.xml.gz")
+        self.assertEqual(repomd.records[1].checksum,
+            "b752a73d9efd4006d740f943db5fb7c2dd77a8324bd99da92e86bd55a2c126ef")
+        self.assertEqual(repomd.records[1].checksum_type, "sha256")
+        self.assertEqual(repomd.records[1].checksum_open,
+            "da6096c924349af0c326224a33be0cdb26897fbe3d25477ac217261652449445")
+        self.assertEqual(repomd.records[1].checksum_open_type, "sha256")
+        self.assertEqual(repomd.records[1].timestamp, 1334667230)
+        self.assertEqual(repomd.records[1].size, 332)
+        self.assertEqual(repomd.records[1].size_open, 530)
+        self.assertEqual(repomd.records[1].db_ver, 0)
+
+        self.assertEqual(repomd.records[2].type, "primary")
+        self.assertEqual(repomd.records[2].location_real, None)
+        self.assertEqual(repomd.records[2].location_href,
+            "repodata/6c662d665c24de9a0f62c17d8fa50622307739d7376f0d19097ca96c6d7f5e3e-primary.xml.gz")
+        self.assertEqual(repomd.records[2].checksum,
+            "6c662d665c24de9a0f62c17d8fa50622307739d7376f0d19097ca96c6d7f5e3e")
+        self.assertEqual(repomd.records[2].checksum_type, "sha256")
+        self.assertEqual(repomd.records[2].checksum_open,
+            "0fc6cadf97d515e87491d24dc9712d8ddaf2226a21ae7f131ff42d71a877c496")
+        self.assertEqual(repomd.records[2].checksum_open_type, "sha256")
+        self.assertEqual(repomd.records[2].timestamp, 1334667230)
+        self.assertEqual(repomd.records[2].size, 782)
+        self.assertEqual(repomd.records[2].size_open, 2085)
+        self.assertEqual(repomd.records[2].db_ver, 0)

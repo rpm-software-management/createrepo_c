@@ -34,14 +34,17 @@
 
 // Repo files
 
+#define TEST_REPO_00_REPOMD     TEST_REPO_00"repodata/repomd.xml"
 #define TEST_REPO_00_PRIMARY    TEST_REPO_00"repodata/dabe2ce5481d23de1f4f52bdcfee0f9af98316c9e0de2ce8123adeefa0dd08b9-primary.xml.gz"
 #define TEST_REPO_00_FILELISTS  TEST_REPO_00"repodata/401dc19bda88c82c403423fb835844d64345f7e95f5b9835888189c03834cc93-filelists.xml.gz"
 #define TEST_REPO_00_OTHER      TEST_REPO_00"repodata/6bf9672d0862e8ef8b8ff05a2fd0208a922b1f5978e6589d87944c88259cb670-other.xml.gz"
 
+#define TEST_REPO_01_REPOMD     TEST_REPO_01"repodata/repomd.xml"
 #define TEST_REPO_01_PRIMARY    TEST_REPO_01"repodata/6c662d665c24de9a0f62c17d8fa50622307739d7376f0d19097ca96c6d7f5e3e-primary.xml.gz"
 #define TEST_REPO_01_FILELISTS  TEST_REPO_01"repodata/c7db035d0e6f1b2e883a7fa3229e2d2be70c05a8b8d2b57dbb5f9c1a67483b6c-filelists.xml.gz"
 #define TEST_REPO_01_OTHER      TEST_REPO_01"repodata/b752a73d9efd4006d740f943db5fb7c2dd77a8324bd99da92e86bd55a2c126ef-other.xml.gz"
 
+#define TEST_REPO_02_REPOMD     TEST_REPO_02"repodata/repomd.xml"
 #define TEST_REPO_02_PRIMARY    TEST_REPO_02"repodata/bcde64b04916a2a72fdc257d61bc922c70b3d58e953499180585f7a360ce86cf-primary.xml.gz"
 #define TEST_REPO_02_FILELISTS  TEST_REPO_02"repodata/3b7e6ecd01af9cb674aff6458186911d7081bb5676d5562a21a963afc8a8bcc7-filelists.xml.gz"
 #define TEST_REPO_02_OTHER      TEST_REPO_02"repodata/ab5d3edeea50f9b4ec5ee13e4d25c147e318e3a433dbabc94d3461f58ac28255-other.xml.gz"

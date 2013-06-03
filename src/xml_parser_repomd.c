@@ -84,7 +84,6 @@ static cr_StatesSwitch stateswitches[] = {
 static void XMLCALL
 cr_start_handler(void *pdata, const char *element, const char **attr)
 {
-    GError *tmp_err = NULL;
     cr_ParserData *pd = pdata;
     cr_StatesSwitch *sw;
 
@@ -215,7 +214,6 @@ static void XMLCALL
 cr_end_handler(void *pdata, const char *element)
 {
     cr_ParserData *pd = pdata;
-    GError *tmp_err = NULL;
     unsigned int state = pd->state;
 
     CR_UNUSED(element);
@@ -241,7 +239,7 @@ cr_end_handler(void *pdata, const char *element)
 
     case STATE_REVISION:
         assert(pd->repomd);
-        assert(pd->repomdrecord);
+        assert(!pd->repomdrecord);
 
         if (pd->lcontent == 0) {
             cr_xml_parser_warning(pd, CR_XML_WARNING_MISSINGVAL,
@@ -257,21 +255,21 @@ cr_end_handler(void *pdata, const char *element)
 
     case STATE_REPO:
         assert(pd->repomd);
-        assert(pd->repomdrecord);
+        assert(!pd->repomdrecord);
 
         cr_repomd_add_repo_tag(pd->repomd, pd->content);
         break;
 
     case STATE_CONTENT:
         assert(pd->repomd);
-        assert(pd->repomdrecord);
+        assert(!pd->repomdrecord);
 
         cr_repomd_add_content_tag(pd->repomd, pd->content);
         break;
 
     case STATE_DISTRO:
         assert(pd->repomd);
-        assert(pd->repomdrecord);
+        assert(!pd->repomdrecord);
 
         cr_repomd_add_distro_tag(pd->repomd, pd->cpeid, pd->content);
         if (pd->cpeid) {

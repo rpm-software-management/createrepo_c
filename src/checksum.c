@@ -53,9 +53,10 @@ cr_checksum_type(const char *name)
 
     if (!strncmp(name_lower, "md", 2)) {
         // MD* family
-        if (name_lower[2] == '2')
-            return CR_CHECKSUM_MD2;
-        else if (name_lower[2] == '5')
+//        if (name_lower[2] == '2')
+//            return CR_CHECKSUM_MD2;
+//        else if (name_lower[2] == '5')
+        if (name_lower[2] == '5')
             return CR_CHECKSUM_MD5;
     } else if (!strncmp(name_lower, "sha", 3)) {
         // SHA* family
@@ -99,8 +100,9 @@ cr_checksum_name_str(cr_ChecksumType type)
         return "sha384";
     case CR_CHECKSUM_SHA512:
         return "sha512";
+    default:
+        return NULL;
     }
-    return NULL;
 }
 
 char *
@@ -178,7 +180,6 @@ cr_checksum_file(const char *filename,
 cr_ChecksumCtx *
 cr_checksum_new(cr_ChecksumType type, GError **err)
 {
-    int rc;
     EVP_MD_CTX *ctx;
     const EVP_MD *ctx_type;
     cr_ChecksumCtx *cr_ctx;

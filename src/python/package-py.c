@@ -299,8 +299,12 @@ get_list(_PackageObject *self, void *conv)
     if ((list = PyList_New(0)) == NULL)
         return NULL;
 
-    for (GSList *elem = glist; elem; elem = g_slist_next(elem))
-        PyList_Append(list, convertor->f(elem->data));
+    for (GSList *elem = glist; elem; elem = g_slist_next(elem)) {
+        PyObject *obj = convertor->f(elem->data);
+        if (!obj) continue;
+        PyList_Append(list, obj);
+        Py_DECREF(obj);
+    }
 
     return list;
 }

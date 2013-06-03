@@ -179,6 +179,7 @@ keys(_MetadataHashtableObject *self, PyObject *args)
             Py_XDECREF(list);
             return NULL;
         }
+        Py_DECREF(py_str);
     }
     return list;
 }

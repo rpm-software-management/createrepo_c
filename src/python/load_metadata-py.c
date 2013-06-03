@@ -253,6 +253,7 @@ ht_keys(_MetadataObject *self, PyObject *args)
             g_list_free(keys);
             return NULL;
         }
+        Py_DECREF(py_str);
     }
 
     g_list_free(keys);

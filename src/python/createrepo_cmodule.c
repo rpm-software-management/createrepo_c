@@ -118,6 +118,9 @@ init_createrepo_c(void)
     cr_xml_dump_init();
     cr_package_parser_init();
 
+    Py_AtExit(cr_xml_dump_cleanup);
+    Py_AtExit(cr_package_parser_cleanup);
+
     /* Module constants */
 
     /* Version */

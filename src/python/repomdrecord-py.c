@@ -293,12 +293,13 @@ set_str(_RepomdRecordObject *self, PyObject *value, void *member_offset)
 {
     if (check_RepomdRecordStatus(self))
         return -1;
-    if (!PyString_Check(value)) {
-        PyErr_SetString(PyExc_ValueError, "String expected!");
+    if (!PyString_Check(value) && value != Py_None) {
+        PyErr_SetString(PyExc_ValueError, "String or None expected!");
         return -1;
     }
     cr_RepomdRecord *rec = self->record;
-    char *str = g_string_chunk_insert(rec->chunk, PyString_AsString(value));
+    char *str = cr_safe_string_chunk_insert(rec->chunk,
+                                            PyObject_ToStrOrNull(value));
     *((char **) ((size_t) rec + (size_t) member_offset)) = str;
     return 0;
 }

@@ -335,11 +335,18 @@ set_str(_PackageObject *self, PyObject *value, void *member_offset)
 {
     if (check_PackageStatus(self))
         return -1;
-    if (!PyString_Check(value)) {
-        PyErr_SetString(PyExc_ValueError, "String expected!");
+    if (!PyString_Check(value) && value != Py_None) {
+        PyErr_SetString(PyExc_ValueError, "String or None expected!");
         return -1;
     }
     cr_Package *pkg = self->package;
+
+    if (value == Py_None) {
+        // If value is None exist right now (avoid possibly
+        // creation of a string chunk)
+        *((char **) ((size_t) pkg + (size_t) member_offset)) = NULL;
+        return 0;
+    }
 
     // Check if chunk exits
     // If it doesn't - this is package from loaded metadata and all its

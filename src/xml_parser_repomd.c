@@ -179,11 +179,11 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
             cr_xml_parser_warning(pd, CR_XML_WARNING_MISSINGATTR,
                     "Missing attribute \"href\" of a location element");
 
-//        val = cr_find_attr("base", attr);
-//        if (val)
-//            pd->repomdrecord->location_base = g_string_chunk_insert(
-//                                                    pd->repodmrecord->chunk,
-//                                                    val);
+        val = cr_find_attr("xml:base", attr);
+        if (val)
+            pd->repomdrecord->location_base = g_string_chunk_insert(
+                                                    pd->repomdrecord->chunk,
+                                                    val);
 
         break;
 

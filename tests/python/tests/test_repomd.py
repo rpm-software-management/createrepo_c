@@ -89,6 +89,7 @@ class TestCaseRepomd(unittest.TestCase):
         rec = cr.RepomdRecord("primary", self.path00)
         rec.fill(cr.SHA256)
         rec.timestamp = 1
+        rec.location_base = "http://foo/"
         md.set_record(rec)
 
         self.assertEqual(len(md.records), 1)
@@ -110,7 +111,7 @@ class TestCaseRepomd(unittest.TestCase):
   <data type="primary">
     <checksum type="sha256">dabe2ce5481d23de1f4f52bdcfee0f9af98316c9e0de2ce8123adeefa0dd08b9</checksum>
     <open-checksum type="sha256">e1e2ffd2fb1ee76f87b70750d00ca5677a252b397ab6c2389137a0c33e7b359f</open-checksum>
-    <location href="repodata/primary.xml.gz"/>
+    <location href="repodata/primary.xml.gz" xml:base="http://foo/"/>
     <timestamp>1</timestamp>
     <size>134</size>
     <open-size>167</open-size>

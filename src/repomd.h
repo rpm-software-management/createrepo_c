@@ -74,6 +74,7 @@ typedef struct {
     char *type;                 /*!< type of record */
     char *location_real;        /*!< real path to the file */
     char *location_href;        /*!< location of the file (in repomd.xml) */
+    char *location_base;        /*!< base location of the file */
     char *checksum;             /*!< checksum of file */
     char *checksum_type;        /*!< checksum type */
     char *checksum_open;        /*!< checksum of uncompressed file */

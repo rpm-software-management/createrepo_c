@@ -308,6 +308,7 @@ static PyGetSetDef repomdrecord_getsetters[] = {
     {"type",                (getter)get_str, (setter)set_str, NULL, OFFSET(type)},
     {"location_real",       (getter)get_str, (setter)set_str, NULL, OFFSET(location_real)},
     {"location_href",       (getter)get_str, (setter)set_str, NULL, OFFSET(location_href)},
+    {"location_base",       (getter)get_str, (setter)set_str, NULL, OFFSET(location_base)},
     {"checksum",            (getter)get_str, (setter)set_str, NULL, OFFSET(checksum)},
     {"checksum_type",       (getter)get_str, (setter)set_str, NULL, OFFSET(checksum_type)},
     {"checksum_open",       (getter)get_str, (setter)set_str, NULL, OFFSET(checksum_open)},

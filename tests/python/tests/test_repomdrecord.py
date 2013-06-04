@@ -30,6 +30,7 @@ class TestCaseRepomdRecord(unittest.TestCase):
 
         self.assertEqual(rec.location_real, self.path00)
         self.assertEqual(rec.location_href, "repodata/primary.xml.gz")
+        self.assertEqual(rec.location_base, None)
         self.assertEqual(rec.checksum, None)
         self.assertEqual(rec.checksum_type, None)
         self.assertEqual(rec.checksum_open, None)
@@ -43,6 +44,7 @@ class TestCaseRepomdRecord(unittest.TestCase):
 
         self.assertEqual(rec.location_real, self.path00)
         self.assertEqual(rec.location_href, "repodata/primary.xml.gz")
+        self.assertEqual(rec.location_base, None)
         self.assertEqual(rec.checksum, "dabe2ce5481d23de1f4f52bdcfee0f9af98316c9e0de2ce8123adeefa0dd08b9")
         self.assertEqual(rec.checksum_type, "sha256")
         self.assertEqual(rec.checksum_open, "e1e2ffd2fb1ee76f87b70750d00ca5677a252b397ab6c2389137a0c33e7b359f")

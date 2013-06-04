@@ -97,6 +97,8 @@ cr_repomd_record_copy(const cr_RepomdRecord *orig)
                                                 orig->location_real);
     rec->location_href      = cr_safe_string_chunk_insert(rec->chunk,
                                                 orig->location_href);
+    rec->location_base      = cr_safe_string_chunk_insert(rec->chunk,
+                                                orig->location_base);
     rec->checksum           = cr_safe_string_chunk_insert(rec->chunk,
                                                 orig->checksum);
     rec->checksum_type      = cr_safe_string_chunk_insert(rec->chunk,
@@ -622,6 +624,8 @@ cr_repomd_dump_data_items(xmlNodePtr root, cr_RepomdRecord *md)
 
     node = xmlNewChild(data, NULL, BAD_CAST "location", NULL);
     xmlNewProp(node, BAD_CAST "href", BAD_CAST md->location_href);
+    if (md->location_base)
+        xmlNewProp(node, BAD_CAST "xml:base", BAD_CAST md->location_base);
 
     g_snprintf(str_buffer, STR_BUFFER_SIZE, "%ld", md->timestamp);
     xmlNewChild(data, NULL, BAD_CAST "timestamp", BAD_CAST str_buffer);

@@ -68,7 +68,10 @@ Repomd = _createrepo_c.Repomd
 class RepomdRecord(_createrepo_c.RepomdRecord):
     def compress_and_fill(self, hashtype, compresstype):
         rec = RepomdRecord(self.type + "_gz", None)
-        _createrepo_c.RepomdRecord.compress_and_fill(self, rec, hashtype, compresstype)
+        _createrepo_c.RepomdRecord.compress_and_fill(self,
+                                                     rec,
+                                                     hashtype,
+                                                     compresstype)
         return rec
 
 
@@ -110,10 +113,6 @@ xml_dump_primary    = _createrepo_c.xml_dump_primary
 xml_dump_filelists  = _createrepo_c.xml_dump_filelists
 xml_dump_other      = _createrepo_c.xml_dump_other
 xml_dump            = _createrepo_c.xml_dump
-xml_parse_primary   = _createrepo_c.xml_parse_primary
-xml_parse_filelists = _createrepo_c.xml_parse_filelists
-xml_parse_other     = _createrepo_c.xml_parse_other
-xml_parse_repomd    = _createrepo_c.xml_parse_repomd
 
 def package_from_rpm(filename, checksum_type=SHA256, location_href=None,
                      location_base=None, changelog_limit=10):
@@ -124,3 +123,17 @@ def xml_from_rpm(filename, checksum_type=SHA256, location_href=None,
                      location_base=None, changelog_limit=10):
     return _createrepo_c.xml_from_rpm(filename, checksum_type,
                       location_href, location_base, changelog_limit)
+
+def xml_parse_primary(path, newpkgcb=None, pkgcb=None,
+                      warningcb=None, do_files=1):
+    return _createrepo_c.xml_parse_primary(path, newpkgcb, pkgcb,
+                                           warningcb, do_files)
+
+def xml_parse_filelists(path, newpkgcb=None, pkgcb=None, warningcb=None):
+    return _createrepo_c.xml_parse_filelists(path, newpkgcb, pkgcb, warningcb)
+
+def xml_parse_other(path, newpkgcb=None, pkgcb=None, warningcb=None):
+    return _createrepo_c.xml_parse_other(path, newpkgcb, pkgcb, warningcb)
+
+def xml_parse_repomd(path, repomdobj, warning_cb=None):
+    return _createrepo_c.xml_parse_repomd(path, repomdobj, warning_cb)

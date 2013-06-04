@@ -615,3 +615,14 @@ class TestCaseXmlParserRepomd(unittest.TestCase):
         self.assertEqual(repomd.records[2].size, 782)
         self.assertEqual(repomd.records[2].size_open, 2085)
         self.assertEqual(repomd.records[2].db_ver, 0)
+
+    def test_xml_parser_repomd_repo01_nowarningcb(self):
+
+        repomd = cr.Repomd()
+        cr.xml_parse_repomd(REPO_01_REPOMD, repomd)
+        self.assertEqual(repomd.revision, "1334667230")
+        self.assertEqual(repomd.repo_tags, [])
+        self.assertEqual(repomd.distro_tags, [])
+        self.assertEqual(repomd.content_tags, [])
+        self.assertEqual(len(repomd.records), 3)
+

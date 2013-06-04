@@ -666,6 +666,16 @@ cr_repomd_xml_dump(cr_Repomd *repomd)
         g_free(rev);
     }
 
+    if (repomd->repoid) {
+        xmlNodePtr repoid_elem = xmlNewChild(root,
+                                             NULL,
+                                             BAD_CAST "repoid",
+                                             BAD_CAST repomd->repoid);
+        if (repomd->repoid_type)
+            xmlNewProp(repoid_elem,
+                       BAD_CAST "type",
+                       BAD_CAST repomd->repoid_type);
+    }
 
     // Tags
 
@@ -756,6 +766,14 @@ cr_repomd_set_revision(cr_Repomd *repomd, const char *revision)
 {
     if (!repomd) return;
     repomd->revision = cr_safe_string_chunk_insert(repomd->chunk, revision);
+}
+
+void
+cr_repomd_set_repoid(cr_Repomd *repomd, const char *repoid, const char *type)
+{
+    if (!repomd) return;
+    repomd->repoid = cr_safe_string_chunk_insert(repomd->chunk, repoid);
+    repomd->repoid_type = cr_safe_string_chunk_insert(repomd->chunk, type);
 }
 
 void

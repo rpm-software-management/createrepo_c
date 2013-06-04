@@ -43,6 +43,7 @@ typedef enum {
     STATE_START,
     STATE_REPOMD,
     STATE_REVISION,
+    STATE_REPOID,
     STATE_TAGS,
     STATE_REPO,
     STATE_CONTENT,
@@ -66,6 +67,7 @@ typedef enum {
 static cr_StatesSwitch stateswitches[] = {
     { STATE_START,      "repomd",           STATE_REPOMD,       0 },
     { STATE_REPOMD,     "revision",         STATE_REVISION,     1 },
+    { STATE_REPOMD,     "repoid",           STATE_REPOID,       1 },
     { STATE_REPOMD,     "tags",             STATE_TAGS,         0 },
     { STATE_REPOMD,     "data",             STATE_DATA,         0 },
     { STATE_TAGS,       "repo",             STATE_REPO,         1 },
@@ -129,6 +131,15 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
     case STATE_TAGS:
     case STATE_REPO:
     case STATE_CONTENT:
+        break;
+
+    case STATE_REPOID:
+        assert(pd->repomd);
+        assert(!pd->repomdrecord);
+
+        val = cr_find_attr("type", attr);
+        if (val)
+            pd->repomd->repoid_type = g_strdup(val);
         break;
 
     case STATE_DISTRO:
@@ -255,6 +266,13 @@ cr_end_handler(void *pdata, const char *element)
         }
 
         cr_repomd_set_revision(pd->repomd, pd->content);
+        break;
+
+    case STATE_REPOID:
+        assert(pd->repomd);
+        assert(!pd->repomdrecord);
+
+        pd->repomd->repoid = g_strdup(pd->content);
         break;
 
     case STATE_TAGS:

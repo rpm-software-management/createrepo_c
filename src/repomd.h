@@ -97,6 +97,8 @@ typedef struct {
  */
 typedef struct {
     gchar *revision;            /*!< Revison */
+    gchar *repoid;              /*!< RepoId */
+    gchar *repoid_type;         /*!< RepoId type ("sha256", ...) */
     GSList *repo_tags;          /*!< List of strings */
     GSList *content_tags;       /*!< List of strings */
     GSList *distro_tags;        /*!< List of cr_DistroTag* */
@@ -178,6 +180,15 @@ void cr_repomd_set_record(cr_Repomd *repomd, cr_RepomdRecord *record);
  * @param revision              revision string
  */
 void cr_repomd_set_revision(cr_Repomd *repomd, const char *revision);
+
+/** Set a repoid
+ * @param repomd                cr_Repomd object
+ * @param type                  Type of hash function used to calculate repoid
+ * @param repoid                RepoId
+ */
+void cr_repomd_set_repoid(cr_Repomd *repomd,
+                          const char *repoid,
+                          const char *type);
 
 /** Add distro tag.
  * @param repomd                cr_Repomd object

@@ -47,6 +47,10 @@ class TestCaseRepomd(unittest.TestCase):
         md.set_revision("foobar")
         self.assertEqual(md.revision, "foobar")
 
+        self.assertEqual(md.repoid, None);
+        md.set_repoid("fooid", "sha256")
+        self.assertEqual(md.repoid, "fooid")
+
         self.assertEqual(md.distro_tags, [])
         md.add_distro_tag("tag1")
         md.add_distro_tag("tag2", "cpeid1")
@@ -71,6 +75,7 @@ class TestCaseRepomd(unittest.TestCase):
 """<?xml version="1.0" encoding="UTF-8"?>
 <repomd xmlns="http://linux.duke.edu/metadata/repo" xmlns:rpm="http://linux.duke.edu/metadata/rpm">
   <revision>foobar</revision>
+  <repoid type="sha256">fooid</repoid>
   <tags>
     <content>contenttag</content>
     <repo>repotag</repo>
@@ -87,6 +92,8 @@ class TestCaseRepomd(unittest.TestCase):
         md.set_record(rec)
 
         self.assertEqual(len(md.records), 1)
+
+        md.repoid = None
 
         xml = md.xml_dump()
         self.assertEqual(xml,

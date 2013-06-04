@@ -136,6 +136,18 @@ set_revision(_RepomdObject *self, PyObject *args)
 }
 
 static PyObject *
+set_repoid(_RepomdObject *self, PyObject *args)
+{
+    char *repoid, *repoid_type;
+    if (!PyArg_ParseTuple(args, "zz:set_repoid", &repoid, &repoid_type))
+        return NULL;
+    if (check_RepomdStatus(self))
+        return NULL;
+    cr_repomd_set_repoid(self->repomd, repoid, repoid_type);
+    Py_RETURN_NONE;
+}
+
+    static PyObject *
 add_distro_tag(_RepomdObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = { "tag", "cpeid", NULL };
@@ -188,6 +200,7 @@ xml_dump(_RepomdObject *self, void *nothing)
 static struct PyMethodDef repomd_methods[] = {
     {"set_record", (PyCFunction)set_record, METH_VARARGS, NULL},
     {"set_revision", (PyCFunction)set_revision, METH_VARARGS, NULL},
+    {"set_repoid", (PyCFunction)set_repoid, METH_VARARGS, NULL},
     {"add_distro_tag", (PyCFunction)add_distro_tag, METH_VARARGS|METH_KEYWORDS, NULL},
     {"add_repo_tag", (PyCFunction)add_repo_tag, METH_VARARGS, NULL},
     {"add_content_tag", (PyCFunction)add_content_tag, METH_VARARGS, NULL},
@@ -305,13 +318,14 @@ set_str(_RepomdObject *self, PyObject *value, void *member_offset)
 {
     if (check_RepomdStatus(self))
         return -1;
-    if (!PyString_Check(value)) {
-        PyErr_SetString(PyExc_ValueError, "String expected!");
+    if (!PyString_Check(value) && value != Py_None) {
+        PyErr_SetString(PyExc_ValueError, "String or None expected!");
         return -1;
     }
     cr_Repomd *repomd = self->repomd;
 
-    char *str = g_string_chunk_insert(repomd->chunk, PyString_AsString(value));
+    char *str = cr_safe_string_chunk_insert(repomd->chunk,
+                                            PyObject_ToStrOrNull(value));
     *((char **) ((size_t) repomd + (size_t) member_offset)) = str;
     return 0;
 }
@@ -354,6 +368,8 @@ set_list(_RepomdObject *self, PyObject *list, void *conv)
 
 static PyGetSetDef repomd_getsetters[] = {
     {"revision",         (getter)get_str,  (setter)set_str,  NULL, OFFSET(revision)},
+    {"repoid",           (getter)get_str,  (setter)set_str,  NULL, OFFSET(repoid)},
+    {"repoid_type",      (getter)get_str,  (setter)set_str,  NULL, OFFSET(repoid_type)},
     {"repo_tags",        (getter)get_list, (setter)set_list, NULL, &(list_convertors[0])},
     {"distro_tags",      (getter)get_list, (setter)set_list, NULL, &(list_convertors[1])},
     {"content_tags",     (getter)get_list, (setter)set_list, NULL, &(list_convertors[2])},

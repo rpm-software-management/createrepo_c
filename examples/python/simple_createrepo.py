@@ -74,12 +74,12 @@ def do_repodata(path):
                      ("filelists_db", fil_db_path,  None),
                      ("other_db",     oth_db_path,  None))
     for name, path, db_to_update in repomdrecords:
-        record = cr.RepomdRecord(path)
+        record = cr.RepomdRecord(name, path)
         record.fill(cr.SHA256)
         if (db_to_update):
             db_to_update.dbinfo_update(record.checksum)
             db_to_update.close()
-        repomd.set_record(record, name)
+        repomd.set_record(record)
 
     # Write repomd.xml
     open(repomd_path, "w").write(repomd.xml_dump())

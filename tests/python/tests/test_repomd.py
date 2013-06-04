@@ -110,3 +110,13 @@ class TestCaseRepomd(unittest.TestCase):
   </data>
 </repomd>
 """)
+
+    def test_repomd_with_path_in_constructor_repo01(self):
+
+        repomd = cr.Repomd(REPO_01_REPOMD)
+        self.assertEqual(repomd.revision, "1334667230")
+        self.assertEqual(repomd.repo_tags, [])
+        self.assertEqual(repomd.distro_tags, [])
+        self.assertEqual(repomd.content_tags, [])
+        self.assertEqual(len(repomd.records), 3)
+

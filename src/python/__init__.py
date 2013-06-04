@@ -61,7 +61,11 @@ class Package(_createrepo_c.Package):
 
 # Repomd class
 
-Repomd = _createrepo_c.Repomd
+class Repomd(_createrepo_c.Repomd):
+    def __init__(self, path=None):
+        _createrepo_c.Repomd.__init__(self)
+        if path:
+            xml_parse_repomd(path, self)
 
 # RepomdRecord class
 
@@ -107,7 +111,7 @@ class OtherXmlFile(XmlFile):
     def __init__(self, filename, compressiontype=GZ_COMPRESSION):
         XmlFile.__init__(self, filename, XMLFILE_OTHER, compressiontype)
 
-# Methods
+# Functions
 
 xml_dump_primary    = _createrepo_c.xml_dump_primary
 xml_dump_filelists  = _createrepo_c.xml_dump_filelists

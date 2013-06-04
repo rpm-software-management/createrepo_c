@@ -768,8 +768,8 @@ cr_repomd_add_distro_tag(cr_Repomd *repomd,
     distro = cr_distrotag_new();
     distro->cpeid = cr_safe_string_chunk_insert(repomd->chunk, cpeid);
     distro->val   = cr_safe_string_chunk_insert(repomd->chunk, tag);
-    repomd->distro_tags = g_slist_prepend(repomd->distro_tags,
-                                          (gpointer) distro);
+    repomd->distro_tags = g_slist_append(repomd->distro_tags,
+                                         (gpointer) distro);
 }
 
 void

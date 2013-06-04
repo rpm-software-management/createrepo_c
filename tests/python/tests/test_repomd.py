@@ -52,9 +52,9 @@ class TestCaseRepomd(unittest.TestCase):
         md.add_distro_tag("tag2", "cpeid1")
         md.add_distro_tag("tag3", cpeid="cpeid2")
         self.assertEqual(md.distro_tags,
-                [('cpeid2', 'tag3'),
+                [(None, 'tag1'),
                  ('cpeid1', 'tag2'),
-                 (None, 'tag1')])
+                 ('cpeid2', 'tag3')])
 
         self.assertEqual(md.repo_tags, [])
         md.add_repo_tag("repotag")
@@ -74,9 +74,9 @@ class TestCaseRepomd(unittest.TestCase):
   <tags>
     <content>contenttag</content>
     <repo>repotag</repo>
-    <distro cpeid="cpeid2">tag3</distro>
-    <distro cpeid="cpeid1">tag2</distro>
     <distro>tag1</distro>
+    <distro cpeid="cpeid1">tag2</distro>
+    <distro cpeid="cpeid2">tag3</distro>
   </tags>
 </repomd>
 """)
@@ -96,9 +96,9 @@ class TestCaseRepomd(unittest.TestCase):
   <tags>
     <content>contenttag</content>
     <repo>repotag</repo>
-    <distro cpeid="cpeid2">tag3</distro>
-    <distro cpeid="cpeid1">tag2</distro>
     <distro>tag1</distro>
+    <distro cpeid="cpeid1">tag2</distro>
+    <distro cpeid="cpeid2">tag3</distro>
   </tags>
   <data type="primary">
     <checksum type="sha256">dabe2ce5481d23de1f4f52bdcfee0f9af98316c9e0de2ce8123adeefa0dd08b9</checksum>

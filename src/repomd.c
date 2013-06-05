@@ -277,12 +277,13 @@ cr_repomd_record_fill(cr_RepomdRecord *md,
             g_free(open_stat->checksum);
             g_free(open_stat);
         } else {
-            // Unknown compression
-            g_warning("%s: File \"%s\" compressed by an unsupported type"
-                      " of compression", __func__, path);
-            md->checksum_open_type = g_string_chunk_insert(md->chunk, "UNKNOWN");
-            md->checksum_open = g_string_chunk_insert(md->chunk,
-                        "file_compressed_by_an_unsupported_type_of_compression");
+            if (com_type != CR_CW_NO_COMPRESSION) {
+                // Unknown compression
+                g_warning("%s: File \"%s\" compressed by an unsupported type"
+                          " of compression", __func__, path);
+            }
+            md->checksum_open_type = NULL;
+            md->checksum_open = NULL;
             md->size_open = -1;
         }
     }

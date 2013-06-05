@@ -22,6 +22,9 @@ NO_COMPRESSION          = _createrepo_c.NO_COMPRESSION
 GZ_COMPRESSION          = _createrepo_c.GZ_COMPRESSION
 BZ2_COMPRESSION         = _createrepo_c.BZ2_COMPRESSION
 XZ_COMPRESSION          = _createrepo_c.XZ_COMPRESSION
+GZ                      = _createrepo_c.GZ_COMPRESSION
+BZ2                     = _createrepo_c.BZ2_COMPRESSION
+XZ                      = _createrepo_c.XZ_COMPRESSION
 
 HT_KEY_DEFAULT  = _createrepo_c.HT_KEY_DEFAULT
 HT_KEY_HASH     = _createrepo_c.HT_KEY_HASH

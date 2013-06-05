@@ -14,6 +14,7 @@ SET (createrepo_c_SRCS
      xml_dump_filelists.c
      xml_dump_other.c
      xml_dump_primary.c
+     xml_dump_repomd.c
      xml_file.c
      xml_parser.c
      xml_parser_filelists.c

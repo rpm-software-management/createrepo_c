@@ -57,7 +57,7 @@ extern "C" {
  * cr_repomd_set_record(md, rec);
  *
  * // Get repomd.xml content
- * xml = cr_repomd_xml_dump(md);
+ * xml = cr_xml_dump_repomd(md, NULL);
  *
  * // Cleanup
  * cr_repomd_free(md);
@@ -216,14 +216,6 @@ void cr_repomd_add_content_tag(cr_Repomd *repomd, const char *tag);
  * @param repomd                cr_Repomd object
  */
 void cr_repomd_free(cr_Repomd *repomd);
-
-
-/** Generate repomd.xml content.
- * Don't forget to use cr_xml_dump_init() before call this function.
- * @param repomd                cr_Repomd object
- * @return                      string with repomd.xml content
- */
-gchar *cr_repomd_xml_dump(cr_Repomd *repomd);
 
 /** @} */
 

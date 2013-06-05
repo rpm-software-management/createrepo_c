@@ -1298,7 +1298,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_repomd_set_record(repomd_obj, update_info_rec);
     cr_repomd_set_record(repomd_obj, pkgorigins_rec);
 
-    char *repomd_xml = cr_repomd_xml_dump(repomd_obj);
+    char *repomd_xml = cr_xml_dump_repomd(repomd_obj, NULL);
 
     cr_repomd_free(repomd_obj);
 

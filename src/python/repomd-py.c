@@ -191,7 +191,13 @@ xml_dump(_RepomdObject *self, void *nothing)
 {
     CR_UNUSED(nothing);
     PyObject *py_str;
-    char *xml = cr_repomd_xml_dump(self->repomd);
+    GError *tmp_err = NULL;
+    char *xml = cr_xml_dump_repomd(self->repomd, &tmp_err);
+    if (tmp_err) {
+        PyErr_Format(CrErr_Exception, "dump failed: %s", tmp_err->message);
+        g_clear_error(&tmp_err);
+        return NULL;
+    }
     py_str = PyStringOrNone_FromString(xml);
     free(xml);
     return py_str;

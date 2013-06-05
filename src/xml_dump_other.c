@@ -48,7 +48,7 @@ cr_xml_dump_other_changelog(xmlNodePtr root, cr_Package *package)
 
         // ***********************************
         // Element: Changelog
-        // ************************************
+        // ***********************************
 
         xmlNodePtr changelog;
 

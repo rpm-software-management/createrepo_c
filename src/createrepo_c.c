@@ -1139,7 +1139,7 @@ main(int argc, char **argv)
     if (cmd_options->revision)
         cr_repomd_set_revision(repomd_obj, cmd_options->revision);
 
-    char *repomd_xml = cr_repomd_xml_dump(repomd_obj);
+    char *repomd_xml = cr_xml_dump_repomd(repomd_obj, NULL);
 
     cr_repomd_free(repomd_obj);
 

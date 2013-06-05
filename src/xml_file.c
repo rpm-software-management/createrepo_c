@@ -23,8 +23,10 @@
 #include "error.h"
 #include "xml_dump.h"
 #include "compression_wrapper.h"
+#include "xml_dump_internal.h"
 
-#define XML_HEADER              "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
+#define XML_HEADER              "<?xml version=\""XML_DOC_VERSION \
+                                "\" encoding=\""XML_ENCODING"\"?>\n"
 
 #define XML_PRIMARY_HEADER      XML_HEADER"<metadata xmlns=\"" \
                                 CR_XML_COMMON_NS"\" xmlns:rpm=\"" \

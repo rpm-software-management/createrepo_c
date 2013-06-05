@@ -27,11 +27,20 @@ extern "C" {
 #include "package.h"
 #include <libxml/tree.h>
 
+#define XML_DOC_VERSION "1.0"
+#define XML_ENCODING    "UTF-8"
+
 #define FORMAT_XML      1
 #define FORMAT_LEVEL    0
 
-#define DATE_STR_MAX_LEN    32
-#define SIZE_STR_MAX_LEN    32
+#define DATE_STR_MAX_LEN        32
+#define SIZE_STR_MAX_LEN        32
+
+#if DATE_STR_MAX_LEN > SIZE_STR_MAX_LEN
+#define DATESIZE_STR_MAX_LEN    DATE_STR_MAX_LEN
+#else
+#define DATESIZE_STR_MAX_LEN    SIZE_STR_MAX_LEN
+#endif
 
 /**
  * Dump files from the package and append them to the node as childrens.

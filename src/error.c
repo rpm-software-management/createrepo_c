@@ -149,6 +149,12 @@ cr_xml_dump_primary_error_quark(void)
 }
 
 GQuark
+cr_xml_dump_repomd_error_quark(void)
+{
+    return g_quark_from_static_string("cr_xml_dump_repomd_error");
+}
+
+GQuark
 cr_xml_file_error_quark(void)
 {
     return g_quark_from_static_string("cr_xml_file_error");

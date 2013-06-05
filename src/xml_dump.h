@@ -25,6 +25,7 @@ extern "C" {
 #endif
 
 #include "package.h"
+#include "repomd.h"
 
 /** \defgroup   xml_dump        XML dump API.
  *
@@ -60,13 +61,15 @@ extern "C" {
  */
 
 /** Default namespace for primary.xml */
-#define CR_XML_COMMON_NS           "http://linux.duke.edu/metadata/common"
+#define CR_XML_COMMON_NS            "http://linux.duke.edu/metadata/common"
 /** Default namespace for filelists.xml */
-#define CR_XML_FILELISTS_NS        "http://linux.duke.edu/metadata/filelists"
+#define CR_XML_FILELISTS_NS         "http://linux.duke.edu/metadata/filelists"
 /** Default namespace for other.xml */
-#define CR_XML_OTHER_NS            "http://linux.duke.edu/metadata/other"
-/** Namespace used in primary.xml */
-#define CR_XML_RPM_NS              "http://linux.duke.edu/metadata/rpm"
+#define CR_XML_OTHER_NS             "http://linux.duke.edu/metadata/other"
+/** Default namespace for repomd.xml */
+#define CR_XML_REPOMD_NS            "http://linux.duke.edu/metadata/repo"
+/** Namespace for rpm (used in primary.xml and repomd.xml) */
+#define CR_XML_RPM_NS               "http://linux.duke.edu/metadata/rpm"
 
 
 /** Xml chunks for primary.xml, filelists.xml and other.xml.
@@ -112,6 +115,13 @@ char *cr_xml_dump_other(cr_Package *package, GError **err);
  * @return              cr_XmlStruct
  */
 struct cr_XmlStruct cr_xml_dump(cr_Package *package, GError **err);
+
+/** Generate xml representation of cr_Repomd.
+ * @param repomd        cr_Repomd
+ * @param err           **GError
+ * @return              repomd.xml content
+ */
+char *cr_xml_dump_repomd(cr_Repomd *repomd, GError **err);
 
 /** Prepare string to xml dump.
  * If string is not utf8 it is converted (source encoding is supposed to be

@@ -148,18 +148,32 @@ int cr_copy_file(const char *src,
                  GError **err);
 
 /** Compress file.
+ * @param SRC           source filename
+ * @param DST           destination (If dst is dir, filename of src +
+ *                      compression suffix is used.
+ *                      If dst is NULL, src + compression suffix is used)
+ * @param COMTYPE       type of compression
+ * @param ERR           GError **
+ * @return              cr_Error return code
+ */
+#define cr_compress_file(SRC, DST, COMTYPE, ERR) \
+                    cr_compress_file_with_stat(SRC, DST, COMTYPE, NULL, ERR)
+
+/** Compress file.
  * @param src           source filename
  * @param dst           destination (If dst is dir, filename of src +
  *                      compression suffix is used.
  *                      If dst is NULL, src + compression suffix is used)
- * @param compression   type of compression
+ * @param comtype       type of compression
+ * @param stat          cr_ContentStat object or NULL
  * @param err           GError **
  * @return              cr_Error return code
  */
-int cr_compress_file(const char *src,
-                     const char *dst,
-                     cr_CompressionType compression,
-                     GError **err);
+int cr_compress_file_with_stat(const char *src,
+                               const char *dst,
+                               cr_CompressionType comtype,
+                               cr_ContentStat *stat,
+                               GError **err);
 
 /** Better copy file. Source (src) could be remote address (http:// or ftp://).
  * @param src           source filename

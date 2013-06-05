@@ -449,7 +449,7 @@ copyfiletest_test_empty_file(Copyfiletest *copyfiletest, gconstpointer test_data
     ret = cr_copy_file(TEST_EMPTY_FILE, copyfiletest->dst_file, &tmp_err);
     g_assert(!tmp_err);
     g_assert_cmpint(ret, ==, CRE_OK);
-    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
+    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
     g_free(checksum);
@@ -466,7 +466,7 @@ copyfiletest_test_text_file(Copyfiletest *copyfiletest, gconstpointer test_data)
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
     ret = cr_copy_file(TEST_TEXT_FILE, copyfiletest->dst_file, NULL);
     g_assert_cmpint(ret, ==, CRE_OK);
-    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
+    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "2f395bdfa2750978965e4781ddf224c89646c7d7a1569b7ebb023b170f7bd8bb");
     g_free(checksum);
@@ -485,7 +485,7 @@ copyfiletest_test_binary_file(Copyfiletest *copyfiletest, gconstpointer test_dat
     ret = cr_copy_file(TEST_BINARY_FILE, copyfiletest->dst_file, &tmp_err);
     g_assert(!tmp_err);
     g_assert_cmpint(ret, ==, CRE_OK);
-    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
+    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "bf68e32ad78cea8287be0f35b74fa3fecd0eaa91770b48f1a7282b015d6d883e");
     g_free(checksum);
@@ -503,7 +503,7 @@ copyfiletest_test_rewrite(Copyfiletest *copyfiletest, gconstpointer test_data)
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
     ret = cr_copy_file(TEST_BINARY_FILE, copyfiletest->dst_file, NULL);
     g_assert_cmpint(ret, ==, CRE_OK);
-    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
+    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "bf68e32ad78cea8287be0f35b74fa3fecd0eaa91770b48f1a7282b015d6d883e");
     g_free(checksum);
@@ -511,7 +511,7 @@ copyfiletest_test_rewrite(Copyfiletest *copyfiletest, gconstpointer test_data)
     ret = cr_copy_file(TEST_TEXT_FILE, copyfiletest->dst_file, &tmp_err);
     g_assert(!tmp_err);
     g_assert_cmpint(ret, ==, CRE_OK);
-    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
+    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "2f395bdfa2750978965e4781ddf224c89646c7d7a1569b7ebb023b170f7bd8bb");
     g_free(checksum);
@@ -550,15 +550,44 @@ compressfile_test_text_file(Copyfiletest *copyfiletest, gconstpointer test_data)
     GError *tmp_err = NULL;
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    ret = cr_compress_file(TEST_TEXT_FILE, copyfiletest->dst_file, CR_CW_GZ_COMPRESSION, &tmp_err);
+    ret = cr_compress_file(TEST_TEXT_FILE, copyfiletest->dst_file,
+                           CR_CW_GZ_COMPRESSION, &tmp_err);
     g_assert(!tmp_err);
     g_assert_cmpint(ret, ==, CRE_OK);
-    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
+    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
-    g_assert_cmpstr(checksum, ==, "8909fde88a5747d800fd2562b0f22945f014aa7df64cf1c15c7933ae54b72ab6");
+    g_assert_cmpstr(checksum, ==, "8909fde88a5747d800fd2562b0f22945f014aa7df64"
+                                  "cf1c15c7933ae54b72ab6");
     g_free(checksum);
 }
 
+static void
+compressfile_with_stat_test_text_file(Copyfiletest *copyfiletest, gconstpointer test_data)
+{
+    CR_UNUSED(test_data);
+    int ret;
+    char *checksum, *checksum_;
+    cr_ContentStat *stat;
+    GError *tmp_err = NULL;
+
+    stat = cr_contentstat_new(CR_CHECKSUM_SHA256, &tmp_err);
+    g_assert(stat);
+    g_assert(!tmp_err);
+
+    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
+    ret = cr_compress_file(TEST_TEXT_FILE, copyfiletest->dst_file,
+                           CR_CW_GZ_COMPRESSION, &tmp_err);
+    g_assert(!tmp_err);
+    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
+    checksum = cr_contentstat_free(stat, &tmp_err);
+    g_assert(checksum);
+    g_assert(!tmp_err);
+    checksum_ = cr_checksum_file(TEST_TEXT_FILE, CR_CHECKSUM_SHA256, NULL);
+    g_assert_cmpstr(checksum, ==, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649"
+                                  "b934ca495991b7852b855");
+    g_free(checksum);
+}
 
 static void
 test_cr_download_valid_url_1(Copyfiletest *copyfiletest, gconstpointer test_data)
@@ -624,7 +653,7 @@ test_cr_better_copy_file_local(Copyfiletest *copyfiletest, gconstpointer test_da
     ret = cr_better_copy_file(TEST_BINARY_FILE, copyfiletest->dst_file, &tmp_err);
     g_assert(!tmp_err);
     g_assert_cmpint(ret, ==, CRE_OK);
-    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
+    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "bf68e32ad78cea8287be0f35b74fa3fecd0eaa91770b48f1a7282b015d6d883e");
     g_free(checksum);
@@ -644,7 +673,7 @@ test_cr_better_copy_file_url(Copyfiletest *copyfiletest, gconstpointer test_data
     ret = cr_better_copy_file(VALID_URL_01, copyfiletest->dst_file, &tmp_err);
     g_assert(!tmp_err);
     g_assert_cmpint(ret, ==, CRE_OK);
-    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_REGULAR));
+    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
 }
 
 
@@ -1011,28 +1040,64 @@ main(int argc, char *argv[])
 {
     g_test_init(&argc, &argv, NULL);
 
-    g_test_add_func("/misc/test_cr_str_to_evr", test_cr_str_to_evr);
-    g_test_add_func("/misc/test_cr_str_to_evr_with_chunk", test_cr_str_to_evr_with_chunk);
-    g_test_add_func("/misc/test_cr_is_primary", test_cr_is_primary);
-    g_test_add_func("/misc/test_cr_get_header_byte_range", test_cr_get_header_byte_range);
-    g_test_add_func("/misc/test_cr_get_filename", test_cr_get_filename);
-    g_test_add("/misc/copyfiletest_test_empty_file", Copyfiletest, NULL, copyfiletest_setup, copyfiletest_test_empty_file, copyfiletest_teardown);
-    g_test_add("/misc/copyfiletest_test_text_file", Copyfiletest, NULL, copyfiletest_setup, copyfiletest_test_text_file, copyfiletest_teardown);
-    g_test_add("/misc/copyfiletest_test_binary_file", Copyfiletest, NULL, copyfiletest_setup, copyfiletest_test_binary_file, copyfiletest_teardown);
-    g_test_add("/misc/copyfiletest_test_rewrite", Copyfiletest, NULL, copyfiletest_setup, copyfiletest_test_rewrite, copyfiletest_teardown);
-    g_test_add("/misc/copyfiletest_test_corner_cases", Copyfiletest, NULL, copyfiletest_setup, copyfiletest_test_corner_cases, copyfiletest_teardown);
-    g_test_add("/misc/compressfile_test_text_file", Copyfiletest, NULL, copyfiletest_setup, compressfile_test_text_file, copyfiletest_teardown);
-//    g_test_add("/misc/test_cr_download_valid_url_1", Copyfiletest, NULL, copyfiletest_setup, test_cr_download_valid_url_1, copyfiletest_teardown);
-//    g_test_add("/misc/test_cr_download_valid_url_2", Copyfiletest, NULL, copyfiletest_setup, test_cr_download_valid_url_2, copyfiletest_teardown);
-//    g_test_add("/misc/test_cr_download_invalid_url", Copyfiletest, NULL, copyfiletest_setup, test_cr_download_invalid_url, copyfiletest_teardown);
-    g_test_add("/misc/test_cr_better_copy_file_local", Copyfiletest, NULL, copyfiletest_setup, test_cr_better_copy_file_local, copyfiletest_teardown);
-//    g_test_add("/misc/test_cr_better_copy_file_url", Copyfiletest, NULL, copyfiletest_setup, test_cr_better_copy_file_url, copyfiletest_teardown);
-    g_test_add_func("/misc/test_cr_normalize_dir_path", test_cr_normalize_dir_path);
-    g_test_add_func("/misc/test_cr_remove_dir", test_cr_remove_dir);
-    g_test_add_func("/misc/test_cr_str_to_version", test_cr_str_to_version);
-    g_test_add_func("/misc/test_cr_cmp_version_str", test_cr_cmp_version_str);
-    g_test_add_func("/misc/test_cr_split_rpm_filename", test_cr_split_rpm_filename);
-    g_test_add_func("/misc/test_cr_cmp_evr", test_cr_cmp_evr);
+    g_test_add_func("/misc/test_cr_str_to_evr",
+            test_cr_str_to_evr);
+    g_test_add_func("/misc/test_cr_str_to_evr_with_chunk",
+            test_cr_str_to_evr_with_chunk);
+    g_test_add_func("/misc/test_cr_is_primary",
+            test_cr_is_primary);
+    g_test_add_func("/misc/test_cr_get_header_byte_range",
+            test_cr_get_header_byte_range);
+    g_test_add_func("/misc/test_cr_get_filename",
+            test_cr_get_filename);
+    g_test_add("/misc/copyfiletest_test_empty_file",
+            Copyfiletest, NULL, copyfiletest_setup,
+            copyfiletest_test_empty_file, copyfiletest_teardown);
+    g_test_add("/misc/copyfiletest_test_text_file",
+            Copyfiletest, NULL, copyfiletest_setup,
+            copyfiletest_test_text_file, copyfiletest_teardown);
+    g_test_add("/misc/copyfiletest_test_binary_file",
+            Copyfiletest, NULL, copyfiletest_setup,
+            copyfiletest_test_binary_file, copyfiletest_teardown);
+    g_test_add("/misc/copyfiletest_test_rewrite",
+            Copyfiletest, NULL, copyfiletest_setup,
+            copyfiletest_test_rewrite, copyfiletest_teardown);
+    g_test_add("/misc/copyfiletest_test_corner_cases",
+            Copyfiletest, NULL, copyfiletest_setup,
+            copyfiletest_test_corner_cases, copyfiletest_teardown);
+    g_test_add("/misc/compressfile_test_text_file",
+            Copyfiletest, NULL, copyfiletest_setup,
+            compressfile_test_text_file, copyfiletest_teardown);
+    g_test_add("/misc/compressfile_with_stat_test_text_file",
+            Copyfiletest, NULL, copyfiletest_setup,
+            compressfile_with_stat_test_text_file, copyfiletest_teardown);
+//    g_test_add("/misc/test_cr_download_valid_url_1",
+//          Copyfiletest, NULL, copyfiletest_setup,
+//          test_cr_download_valid_url_1, copyfiletest_teardown);
+//    g_test_add("/misc/test_cr_download_valid_url_2",
+//          Copyfiletest, NULL, copyfiletest_setup,
+//          test_cr_download_valid_url_2, copyfiletest_teardown);
+//    g_test_add("/misc/test_cr_download_invalid_url",
+//          Copyfiletest, NULL, copyfiletest_setup,
+//          test_cr_download_invalid_url, copyfiletest_teardown);
+    g_test_add("/misc/test_cr_better_copy_file_local",
+            Copyfiletest, NULL, copyfiletest_setup,
+            test_cr_better_copy_file_local, copyfiletest_teardown);
+//    g_test_add("/misc/test_cr_better_copy_file_url",
+//          Copyfiletest, NULL, copyfiletest_setup,
+//          test_cr_better_copy_file_url, copyfiletest_teardown);
+    g_test_add_func("/misc/test_cr_normalize_dir_path",
+            test_cr_normalize_dir_path);
+    g_test_add_func("/misc/test_cr_remove_dir",
+            test_cr_remove_dir);
+    g_test_add_func("/misc/test_cr_str_to_version",
+            test_cr_str_to_version);
+    g_test_add_func("/misc/test_cr_cmp_version_str",
+            test_cr_cmp_version_str);
+    g_test_add_func("/misc/test_cr_split_rpm_filename",
+            test_cr_split_rpm_filename);
+    g_test_add_func("/misc/test_cr_cmp_evr",
+            test_cr_cmp_evr);
 
     return g_test_run();
 }

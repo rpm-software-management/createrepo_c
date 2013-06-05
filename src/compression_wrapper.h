@@ -106,7 +106,7 @@ cr_CompressionType cr_detect_compression(const char* filename, GError **err);
  * @return              pointer to a CR_FILE or NULL
  */
 #define cr_open(FILENAME, MODE, COMPRESSION, ERR) \
-                    cr_open_with_stats(FILENAME, MODE, COMPRESSION, NULL, ERR)
+                    cr_open_with_stat(FILENAME, MODE, COMPRESSION, NULL, ERR)
 
 /** Open/Create the specified file. For writting is possible pass
  * a cr_ContentStat object and after cr_close() get stats of
@@ -118,7 +118,7 @@ cr_CompressionType cr_detect_compression(const char* filename, GError **err);
  * @param err           GError **
  * @return              pointer to a CR_FILE or NULL
  */
-CR_FILE *cr_open_with_stats(const char *filename,
+CR_FILE *cr_open_with_stat(const char *filename,
                             cr_OpenMode mode,
                             cr_CompressionType comtype,
                             cr_ContentStat *stat,

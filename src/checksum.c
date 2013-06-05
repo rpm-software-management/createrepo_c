@@ -235,9 +235,9 @@ cr_checksum_update(cr_ChecksumCtx *ctx,
     if (len == 0)
         return CRE_OK;
 
-    if (EVP_DigestUpdate(ctx->ctx, buf, len)) {
+    if (!EVP_DigestUpdate(ctx->ctx, buf, len)) {
         g_set_error(err, CR_CHECKSUM_ERROR, CRE_OPENSSL,
-                    "EVP_DigestInit_ex() failed");
+                    "EVP_DigestUpdate_ex() failed");
         return CRE_OPENSSL;
     }
 

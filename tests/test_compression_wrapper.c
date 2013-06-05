@@ -325,7 +325,7 @@ test_helper_cw_output(int type,
 
         case OUTPUT_TYPE_PUTS:
             ret = cr_puts(file, content, &tmp_err);
-            g_assert_cmpint(ret, ==, CRE_OK);
+            g_assert_cmpint(ret, ==, len);
             g_assert(!tmp_err);
             break;
 
@@ -555,6 +555,190 @@ test_cr_error_handling(void)
 }
 
 
+static void
+test_contentstating_singlewrite(Outputtest *outputtest, gconstpointer test_data)
+{
+    CR_FILE *f;
+    int ret;
+    cr_ContentStat *stat;
+    char *checksum;
+    GError *tmp_err = NULL;
+
+    CR_UNUSED(test_data);
+
+    const char *content = "sdlkjowykjnhsadyhfsoaf\nasoiuyseahlndsf\n";
+    const int content_len = 39;
+    const char *content_sha256 = "c9d112f052ab86270bfb484817a513d6ce188133ddc0"
+                                 "7c0fc1ac32018b6da6c7";
+
+    // No compression
+
+    stat = cr_contentstat_new(CR_CHECKSUM_SHA256, &tmp_err);
+    g_assert(stat);
+    g_assert(!tmp_err);
+
+    f = cr_open_with_stat(outputtest->tmp_filename,
+                          CR_CW_MODE_WRITE,
+                          CR_CW_NO_COMPRESSION,
+                          stat,
+                          &tmp_err);
+    g_assert(f);
+    g_assert(!tmp_err);
+
+    ret = cr_write(f, content, content_len, &tmp_err);
+    g_assert_cmpint(ret, ==, content_len);
+    g_assert(!tmp_err);
+
+    cr_close(f, &tmp_err);
+    g_assert(!tmp_err);
+
+    g_assert_cmpint(stat->size, ==, content_len);
+    checksum = cr_contentstat_free(stat, &tmp_err);
+    g_assert(checksum);
+    g_assert(!tmp_err);
+    g_assert_cmpstr(checksum, ==, content_sha256);
+    g_free(checksum);
+    checksum = NULL;
+
+    // Gz compression
+
+    stat = cr_contentstat_new(CR_CHECKSUM_SHA256, &tmp_err);
+    g_assert(stat);
+    g_assert(!tmp_err);
+
+    f = cr_open_with_stat(outputtest->tmp_filename,
+                          CR_CW_MODE_WRITE,
+                          CR_CW_GZ_COMPRESSION,
+                          stat,
+                          &tmp_err);
+    g_assert(f);
+    g_assert(!tmp_err);
+
+    ret = cr_write(f, content, content_len, &tmp_err);
+    g_assert_cmpint(ret, ==, content_len);
+    g_assert(!tmp_err);
+
+    cr_close(f, &tmp_err);
+    g_assert(!tmp_err);
+
+    g_assert_cmpint(stat->size, ==, content_len);
+    checksum = cr_contentstat_free(stat, &tmp_err);
+    g_assert(checksum);
+    g_assert(!tmp_err);
+    g_assert_cmpstr(checksum, ==, content_sha256);
+    g_free(checksum);
+    checksum = NULL;
+
+    // Bz2 compression
+
+    stat = cr_contentstat_new(CR_CHECKSUM_SHA256, &tmp_err);
+    g_assert(stat);
+    g_assert(!tmp_err);
+
+    f = cr_open_with_stat(outputtest->tmp_filename,
+                          CR_CW_MODE_WRITE,
+                          CR_CW_BZ2_COMPRESSION,
+                          stat,
+                          &tmp_err);
+    g_assert(f);
+    g_assert(!tmp_err);
+
+    ret = cr_write(f, content, content_len, &tmp_err);
+    g_assert_cmpint(ret, ==, content_len);
+    g_assert(!tmp_err);
+
+    cr_close(f, &tmp_err);
+    g_assert(!tmp_err);
+
+    g_assert_cmpint(stat->size, ==, content_len);
+    checksum = cr_contentstat_free(stat, &tmp_err);
+    g_assert(checksum);
+    g_assert(!tmp_err);
+    g_assert_cmpstr(checksum, ==, content_sha256);
+    g_free(checksum);
+    checksum = NULL;
+
+    // Xz compression
+
+    stat = cr_contentstat_new(CR_CHECKSUM_SHA256, &tmp_err);
+    g_assert(stat);
+    g_assert(!tmp_err);
+
+    f = cr_open_with_stat(outputtest->tmp_filename,
+                          CR_CW_MODE_WRITE,
+                          CR_CW_XZ_COMPRESSION,
+                          stat,
+                          &tmp_err);
+    g_assert(f);
+    g_assert(!tmp_err);
+
+    ret = cr_write(f, content, content_len, &tmp_err);
+    g_assert_cmpint(ret, ==, content_len);
+    g_assert(!tmp_err);
+
+    cr_close(f, &tmp_err);
+    g_assert(!tmp_err);
+
+    g_assert_cmpint(stat->size, ==, content_len);
+    checksum = cr_contentstat_free(stat, &tmp_err);
+    g_assert(checksum);
+    g_assert(!tmp_err);
+    g_assert_cmpstr(checksum, ==, content_sha256);
+    g_free(checksum);
+    checksum = NULL;
+}
+
+static void
+test_contentstating_multiwrite(Outputtest *outputtest, gconstpointer test_data)
+{
+    CR_FILE *f;
+    int ret;
+    cr_ContentStat *stat;
+    char *checksum;
+    GError *tmp_err = NULL;
+
+    CR_UNUSED(test_data);
+
+    const char *content = "sdlkjowykjnhsadyhfsoaf\nasoiuyseahlndsf\n";
+    const int content_len = 39;
+    const char *content_sha256 = "c9d112f052ab86270bfb484817a513d6ce188133ddc0"
+                                 "7c0fc1ac32018b6da6c7";
+
+    // Gz compression
+
+    stat = cr_contentstat_new(CR_CHECKSUM_SHA256, &tmp_err);
+    g_assert(stat);
+    g_assert(!tmp_err);
+
+    f = cr_open_with_stat(outputtest->tmp_filename,
+                          CR_CW_MODE_WRITE,
+                          CR_CW_GZ_COMPRESSION,
+                          stat,
+                          &tmp_err);
+    g_assert(f);
+    g_assert(!tmp_err);
+
+    ret = cr_write(f, content, 10, &tmp_err);
+    g_assert_cmpint(ret, ==, 10);
+    g_assert(!tmp_err);
+
+    ret = cr_write(f, content+10, 29, &tmp_err);
+    g_assert_cmpint(ret, ==, 29);
+    g_assert(!tmp_err);
+
+    cr_close(f, &tmp_err);
+    g_assert(!tmp_err);
+
+    g_assert_cmpint(stat->size, ==, content_len);
+    checksum = cr_contentstat_free(stat, &tmp_err);
+    g_assert(checksum);
+    g_assert(!tmp_err);
+    g_assert_cmpstr(checksum, ==, content_sha256);
+    g_free(checksum);
+    checksum = NULL;
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -574,6 +758,12 @@ main(int argc, char *argv[])
             outputtest_setup, outputtest_cw_output, outputtest_teardown);
     g_test_add_func("/compression_wrapper/test_cr_error_handling",
             test_cr_error_handling);
+    g_test_add("/compression_wrapper/test_contentstating_singlewrite",
+            Outputtest, NULL, outputtest_setup,
+            test_contentstating_singlewrite, outputtest_teardown);
+    g_test_add("/compression_wrapper/test_contentstating_multiwrite",
+            Outputtest, NULL, outputtest_setup,
+            test_contentstating_multiwrite, outputtest_teardown);
 
     return g_test_run();
 }

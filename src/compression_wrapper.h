@@ -24,6 +24,8 @@
 extern "C" {
 #endif
 
+#include "checksum.h"
+
 /** \defgroup   compression_wrapper     Wrapper for compressed file.
  *  \addtogroup compression_wrapper
  *  @{
@@ -49,17 +51,39 @@ typedef enum {
     CR_CW_MODE_SENTINEL,        /*!< Sentinel of the list */
 } cr_OpenMode;
 
+/** Stat build about open content during compression (writting).
+ */
+typedef struct {
+    gint64          size;       /*!< Size of content */
+    cr_ChecksumCtx  *checksum;  /*!< Checksum context */
+} cr_ContentStat;
+
+/** Creates new cr_ContentStat object
+ * @param type      Type of checksum. (if CR_CHECKSUM_UNKNOWN is used,
+ *                  no checksum calculation will be done)
+ * @param err       GError **
+ * @return          cr_ContentStat object
+ */
+cr_ContentStat *cr_contentstat_new(cr_ChecksumType type, GError **err);
+
+/** Frees cr_ContentStat object.
+ * @param cstat     cr_ContentStat object
+ * @param err       GError **
+ * @return          checksum or NULL on error or if checksum calculation
+ *                  was disabled (CR_CHECKSUM_UNKNOWN was used)
+ */
+char *cr_contentstat_free(cr_ContentStat *cstat, GError **err);
 
 /** Structure represents a compressed file.
  */
 typedef struct {
-    cr_CompressionType type;    /*!< Type of compression */
-    void *FILE;                 /*!< Pointer to gzFile, BZFILE or plain FILE */
-    cr_OpenMode mode;           /*!< Mode */
+    cr_CompressionType  type;   /*!< Type of compression */
+    void                *FILE;  /*!< Pointer to gzFile, BZFILE or plain FILE */
+    cr_OpenMode         mode;   /*!< Mode */
+    cr_ContentStat      *stat;  /*!< Content stats */
 } CR_FILE;
 
-#define CR_CW_OK   0       /*!< Return value - Everything all right */
-#define CR_CW_ERR -1       /*!< Return value - Error */
+#define CR_CW_ERR       -1      /*!< Return value - Error */
 
 /** Returns a common suffix for the specified cr_CompressionType.
  * @param comtype       compression type
@@ -81,10 +105,24 @@ cr_CompressionType cr_detect_compression(const char* filename, GError **err);
  * @param err           GError **
  * @return              pointer to a CR_FILE or NULL
  */
-CR_FILE *cr_open(const char *filename,
-                 cr_OpenMode mode,
-                 cr_CompressionType comtype,
-                 GError **err);
+#define cr_open(FILENAME, MODE, COMPRESSION, ERR) \
+                    cr_open_with_stats(FILENAME, MODE, COMPRESSION, NULL, ERR)
+
+/** Open/Create the specified file. For writting is possible pass
+ * a cr_ContentStat object and after cr_close() get stats of
+ * an open content (stats of uncompressed content).
+ * @param filename      filename
+ * @param mode          open mode
+ * @param comtype       type of compression
+ * @param stat          cr_ContentStat object
+ * @param err           GError **
+ * @return              pointer to a CR_FILE or NULL
+ */
+CR_FILE *cr_open_with_stats(const char *filename,
+                            cr_OpenMode mode,
+                            cr_CompressionType comtype,
+                            cr_ContentStat *stat,
+                            GError **err);
 
 /** Reads an array of len bytes from the CR_FILE.
  * @param cr_file       CR_FILE pointer
@@ -121,14 +159,14 @@ int cr_puts(CR_FILE *cr_file, const char *str, GError **err);
  * @param cr_file       CR_FILE pointer
  * @param format        format string
  * @param ...           list of additional arguments as specified in format
- * @return              CR_CW_OK or CR_CW_ERR
+ * @return              Number of bytes written or CR_CW_ERR (-1)
  */
 int cr_printf(GError **err, CR_FILE *cr_file, const char *format, ...);
 
 /** Closes the CR_FILE.
  * @param cr_file       CR_FILE pointer
  * @param err           GError **
- * @return              CR_CW_OK or CR_CW_ERR
+ * @return              cr_Error code
  */
 int cr_close(CR_FILE *cr_file, GError **err);
 

@@ -54,6 +54,49 @@
 #define FILE_COMPRESSED_1_XZ_BAD_SUFFIX         TEST_COMPRESSED_FILES_PATH"/01_plain.foo3"
 
 
+static void
+test_cr_contentstat(void)
+{
+    char *checksum;
+    cr_ContentStat *cs = NULL;
+    GError *tmp_err = NULL;
+
+    cs = cr_contentstat_new(CR_CHECKSUM_UNKNOWN, NULL);
+    g_assert(cs);
+    checksum = cr_contentstat_free(cs, NULL);
+    g_assert(!checksum);
+    cs = NULL;
+
+    cs = cr_contentstat_new(CR_CHECKSUM_UNKNOWN, &tmp_err);
+    g_assert(cs);
+    g_assert(!tmp_err);
+    checksum = cr_contentstat_free(cs, &tmp_err);
+    g_assert(!checksum);
+    g_assert(!tmp_err);
+    cs = NULL;
+
+    cs = cr_contentstat_new(CR_CHECKSUM_SHA256, NULL);
+    g_assert(cs);
+    checksum = cr_contentstat_free(cs, NULL);
+    g_assert(checksum);
+    g_assert_cmpstr(checksum, ==, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649"
+                                  "b934ca495991b7852b855");
+    g_free(checksum);
+    cs = NULL;
+    checksum = NULL;
+
+    cs = cr_contentstat_new(CR_CHECKSUM_SHA256, &tmp_err);
+    g_assert(cs);
+    g_assert(!tmp_err);
+    checksum = cr_contentstat_free(cs, &tmp_err);
+    g_assert(!tmp_err);
+    g_assert(checksum);
+    g_assert_cmpstr(checksum, ==, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649"
+                                  "b934ca495991b7852b855");
+    g_free(checksum);
+    cs = NULL;
+    checksum = NULL;
+}
 
 static void
 test_cr_compression_suffix(void)
@@ -78,7 +121,6 @@ test_cr_compression_suffix(void)
     suffix = cr_compression_suffix(CR_CW_XZ_COMPRESSION);
     g_assert_cmpstr(suffix, ==, ".xz");
 }
-
 
 static void
 test_cr_detect_compression(void)
@@ -190,7 +232,7 @@ test_helper_cw_input(const char *filename,
     buffer[ret] = '\0';
     g_assert_cmpstr(buffer, ==, content);
     ret = cr_close(file, &tmp_err);
-    g_assert_cmpint(ret, ==, CR_CW_OK);
+    g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(!tmp_err);
 }
 
@@ -283,7 +325,7 @@ test_helper_cw_output(int type,
 
         case OUTPUT_TYPE_PUTS:
             ret = cr_puts(file, content, &tmp_err);
-            g_assert_cmpint(ret, ==, CR_CW_OK);
+            g_assert_cmpint(ret, ==, CRE_OK);
             g_assert(!tmp_err);
             break;
 
@@ -298,7 +340,7 @@ test_helper_cw_output(int type,
     }
 
     ret = cr_close(file, &tmp_err);
-    g_assert_cmpint(ret, ==, CR_CW_OK);
+    g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(!tmp_err);
 
     // Read and compare
@@ -518,6 +560,8 @@ main(int argc, char *argv[])
 {
     g_test_init(&argc, &argv, NULL);
 
+    g_test_add_func("/compression_wrapper/test_cr_contentstat",
+            test_cr_contentstat);
     g_test_add_func("/compression_wrapper/test_cr_compression_suffix",
             test_cr_compression_suffix);
     g_test_add_func("/compression_wrapper/test_cr_detect_compression",

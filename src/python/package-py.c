@@ -314,19 +314,19 @@ get_list(_PackageObject *self, void *conv)
 static int
 set_num(_PackageObject *self, PyObject *value, void *member_offset)
 {
-    long val;
+    gint64 val;
     if (check_PackageStatus(self))
         return -1;
     if (PyLong_Check(value)) {
-        val = PyLong_AsLong(value);
+        val = (gint64) PyLong_AsLong(value);
     } else if (PyInt_Check(value)) {
-        val = PyInt_AS_LONG(value);
+        val = (gint64) PyInt_AS_LONG(value);
     } else {
         PyErr_SetString(PyExc_ValueError, "Number expected!");
         return -1;
     }
     cr_Package *pkg = self->package;
-    *((long *) ((size_t) pkg + (size_t) member_offset)) = val;
+    *((gint64 *) ((size_t) pkg + (size_t) member_offset)) = val;
     return 0;
 }
 

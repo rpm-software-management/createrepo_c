@@ -34,13 +34,13 @@
 #include "repomd_internal.h"
 #include "compression_wrapper.h"
 
-#define LOCATION_HREF_PREFIX            "repodata/"
-#define DEFAULT_DATABASE_VERSION        10
-#define BUFFER_SIZE          8192
+#define LOCATION_HREF_PREFIX        "repodata/"
+#define DEFAULT_DATABASE_VERSION    10
+#define BUFFER_SIZE                 8192
 
 typedef struct _contentStat {
     char *checksum;
-    long size;
+    gint64 size;
 } contentStat;
 
 cr_DistroTag *
@@ -145,7 +145,7 @@ cr_get_compressed_content_stat(const char *filename,
         return NULL;
     }
 
-    long size = 0;
+    gint64 size = 0;
     long readed;
     unsigned char buffer[BUFFER_SIZE];
 
@@ -322,8 +322,8 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
     char buf[BUFFER_SIZE];
     CR_FILE *cw_plain;
     CR_FILE *cw_compressed;
-    long gf_size = -1, cgf_size = -1;
-    long gf_time = -1, cgf_time = -1;
+    gint64 gf_size = -1, cgf_size = -1;
+    gint64 gf_time = -1, cgf_time = -1;
     struct stat gf_stat, cgf_stat;
     const char *checksum_str = cr_checksum_name_str(checksum_type);
     GError *tmp_err = NULL;

@@ -21,6 +21,7 @@
 
 #include "src/createrepo_c.h"
 
+#include "contentstat-py.h"
 #include "exception-py.h"
 #include "load_metadata-py.h"
 #include "locate_metadata-py.h"
@@ -70,6 +71,12 @@ init_createrepo_c(void)
     PyModule_AddObject(m, "CreaterepoCError", CrErr_Exception);
 
     /* Objects */
+
+    /* _createrepo_c.ContentStat */
+    if (PyType_Ready(&ContentStat_Type) < 0)
+        return;
+    Py_INCREF(&ContentStat_Type);
+    PyModule_AddObject(m, "ContentStat", (PyObject *)&ContentStat_Type);
 
     /* _createrepo_c.Package */
     if (PyType_Ready(&Package_Type) < 0)

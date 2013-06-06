@@ -46,6 +46,10 @@ XML_WARNING_BADATTRVAL  = _createrepo_c.XML_WARNING_BADATTRVAL
 
 CreaterepoCError = _createrepo_c.CreaterepoCError
 
+# ContentStat class
+
+ContentStat = _createrepo_c.ContentStat
+
 # Metadata class
 
 Metadata = _createrepo_c.Metadata
@@ -103,16 +107,22 @@ class OtherSqlite(Sqlite):
 XmlFile = _createrepo_c.XmlFile
 
 class PrimaryXmlFile(XmlFile):
-    def __init__(self, filename, compressiontype=GZ_COMPRESSION):
-        XmlFile.__init__(self, filename, XMLFILE_PRIMARY, compressiontype)
+    def __init__(self, filename, compressiontype=GZ_COMPRESSION,
+                 contentstat=None):
+        XmlFile.__init__(self, filename, XMLFILE_PRIMARY,
+                         compressiontype, contentstat)
 
 class FilelistsXmlFile(XmlFile):
-    def __init__(self, filename, compressiontype=GZ_COMPRESSION):
-        XmlFile.__init__(self, filename, XMLFILE_FILELISTS, compressiontype)
+    def __init__(self, filename, compressiontype=GZ_COMPRESSION,
+                 contentstat=None):
+        XmlFile.__init__(self, filename, XMLFILE_FILELISTS,
+                         compressiontype, contentstat)
 
 class OtherXmlFile(XmlFile):
-    def __init__(self, filename, compressiontype=GZ_COMPRESSION):
-        XmlFile.__init__(self, filename, XMLFILE_OTHER, compressiontype)
+    def __init__(self, filename, compressiontype=GZ_COMPRESSION,
+                 contentstat=None):
+        XmlFile.__init__(self, filename, XMLFILE_OTHER,
+                         compressiontype, contentstat)
 
 # Functions
 

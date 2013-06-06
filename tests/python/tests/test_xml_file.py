@@ -17,19 +17,22 @@ class TestCaseXmlFile(unittest.TestCase):
     def test_xmlfile_basic_operations(self):
         pri = cr.XmlFile(self.tmpdir+"/primary.xml.gz",
                          cr.XMLFILE_PRIMARY,
-                         cr.GZ_COMPRESSION)
+                         cr.GZ_COMPRESSION,
+                         None)
         self.assertTrue(pri)
         self.assertTrue(os.path.isfile(self.tmpdir+"/primary.xml.gz"))
 
         fil = cr.XmlFile(self.tmpdir+"/filelists.xml.gz",
                          cr.XMLFILE_FILELISTS,
-                         cr.GZ_COMPRESSION)
+                         cr.GZ_COMPRESSION,
+                         None)
         self.assertTrue(fil)
         self.assertTrue(os.path.isfile(self.tmpdir+"/filelists.xml.gz"))
 
         oth = cr.XmlFile(self.tmpdir+"/other.xml.gz",
                          cr.XMLFILE_OTHER,
-                         cr.GZ_COMPRESSION)
+                         cr.GZ_COMPRESSION,
+                         None)
         self.assertTrue(oth)
         self.assertTrue(os.path.isfile(self.tmpdir+"/other.xml.gz"))
 
@@ -54,16 +57,23 @@ class TestCaseXmlFile(unittest.TestCase):
         self.assertFalse(os.path.exists(path))
 
         # Bad file type
-        self.assertRaises(ValueError, cr.XmlFile, path, 86, cr.GZ_COMPRESSION)
+        self.assertRaises(ValueError, cr.XmlFile, path, 86,
+                          cr.GZ_COMPRESSION, None)
         self.assertFalse(os.path.exists(path))
 
         # Bad compression type
-        self.assertRaises(ValueError, cr.XmlFile, path, cr.XMLFILE_PRIMARY, 678)
+        self.assertRaises(ValueError, cr.XmlFile, path,
+                          cr.XMLFILE_PRIMARY, 678, None)
+        self.assertFalse(os.path.exists(path))
+
+        # Bad contentstat object
+        self.assertRaises(ValueError, cr.XmlFile, path,
+                          cr.XMLFILE_PRIMARY, 678, "foo")
         self.assertFalse(os.path.exists(path))
 
         # Non existing path
         self.assertRaises(cr.CreaterepoCError, cr.PrimaryXmlFile,
-                                            "foobar/foo/xxx/cvydmaticxuiowe")
+                          "foobar/foo/xxx/cvydmaticxuiowe")
 
         # Already existing file
         open(path, "w").write("foobar")

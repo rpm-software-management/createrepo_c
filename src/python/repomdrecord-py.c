@@ -288,6 +288,7 @@ set_int(_RepomdRecordObject *self, PyObject *value, void *member_offset)
     *((int *) ((size_t) rec + (size_t) member_offset)) = (int) val;
     return 0;
 }
+
 static int
 set_str(_RepomdRecordObject *self, PyObject *value, void *member_offset)
 {

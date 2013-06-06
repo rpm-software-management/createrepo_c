@@ -24,11 +24,13 @@
 #include "xml_file-py.h"
 #include "package-py.h"
 #include "exception-py.h"
+#include "contentstat-py.h"
 #include "typeconversion.h"
 
 typedef struct {
     PyObject_HEAD
     cr_XmlFile *xmlfile;
+    cr_ContentStat *stat;
 } _XmlFileObject;
 
 static PyObject * xmlfile_close(_XmlFileObject *self, void *nothing);
@@ -54,8 +56,10 @@ xmlfile_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     CR_UNUSED(args);
     CR_UNUSED(kwds);
     _XmlFileObject *self = (_XmlFileObject *)type->tp_alloc(type, 0);
-    if (self)
+    if (self) {
         self->xmlfile = NULL;
+        self->stat = NULL;
+    }
     return (PyObject *)self;
 }
 
@@ -65,11 +69,13 @@ xmlfile_init(_XmlFileObject *self, PyObject *args, PyObject *kwds)
     char *path;
     int type, comtype;
     GError *err = NULL;
-    PyObject *ret;
+    PyObject *py_stat, *ret;
+    cr_ContentStat *stat;
 
     CR_UNUSED(kwds);
 
-    if (!PyArg_ParseTuple(args, "sii|:xmlfile_init", &path, &type, &comtype))
+    if (!PyArg_ParseTuple(args, "siiO|:xmlfile_init",
+                          &path, &type, &comtype, &py_stat))
         return -1;
 
     /* Check arguments */
@@ -83,21 +89,34 @@ xmlfile_init(_XmlFileObject *self, PyObject *args, PyObject *kwds)
         return -1;
     }
 
+    if (py_stat == Py_None) {
+        stat = NULL;
+    } else if (ContentStatObject_Check(py_stat)) {
+        stat = ContentStat_FromPyObject(py_stat);
+    } else {
+        PyErr_SetString(PyExc_ValueError, "Use ContentStat or None");
+        return -1;
+    }
+
     /* Free all previous resources when reinitialization */
     ret = xmlfile_close(self, NULL);
     Py_XDECREF(ret);
+    Py_XDECREF(self->stat);
+    self->stat = NULL;
     if (ret == NULL) {
         // Error encountered!
         return -1;
     }
 
     /* Init */
-    self->xmlfile = cr_xmlfile_open(path, type, comtype, &err);
+    self->xmlfile = cr_xmlfile_sopen(path, type, comtype, stat, &err);
     if (err) {
         PyErr_Format(CrErr_Exception, "XmlFile initialization failed: %s", err->message);
         g_clear_error(&err);
         return -1;
     }
+    self->stat = stat;
+    Py_XINCREF(stat);
 
     return 0;
 }
@@ -106,6 +125,7 @@ static void
 xmlfile_dealloc(_XmlFileObject *self)
 {
     cr_xmlfile_close(self->xmlfile, NULL);
+    Py_XDECREF(self->stat);
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -206,6 +226,9 @@ xmlfile_close(_XmlFileObject *self, void *nothing)
 
     CR_UNUSED(nothing);
 
+    Py_XDECREF(self->stat);
+    self->stat = NULL;
+
     if (self->xmlfile) {
         cr_xmlfile_close(self->xmlfile, &err);
         self->xmlfile = NULL;
@@ -215,6 +238,7 @@ xmlfile_close(_XmlFileObject *self, void *nothing)
             return NULL;
         }
     }
+
     Py_RETURN_NONE;
 }
 

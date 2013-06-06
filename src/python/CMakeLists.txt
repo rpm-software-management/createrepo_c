@@ -13,11 +13,11 @@ SET (createrepo_c_COPIES __init__.py)
 FILE(COPY ${createrepo_c_COPIES} DESTINATION ./createrepo_c/)
 
 SET (craeterepo_cmodule_SRCS
+     contentstat-py.c
      createrepo_cmodule.c
      exception-py.c
      load_metadata-py.c
      locate_metadata-py.c
-     #metadata_hashtable.c
      package-py.c
      parsepkg-py.c
      repomd-py.c

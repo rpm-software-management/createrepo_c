@@ -857,6 +857,10 @@ main(int argc, char **argv)
     cr_XmlFile *fil_cr_file;
     cr_XmlFile *oth_cr_file;
 
+    cr_ContentStat *pri_stat;
+    cr_ContentStat *fil_stat;
+    cr_ContentStat *oth_stat;
+
     gchar *pri_xml_filename;
     gchar *fil_xml_filename;
     gchar *oth_xml_filename;
@@ -868,22 +872,29 @@ main(int argc, char **argv)
     fil_xml_filename = g_strconcat(tmp_out_repo, "/filelists.xml.gz", NULL);
     oth_xml_filename = g_strconcat(tmp_out_repo, "/other.xml.gz", NULL);
 
-    pri_cr_file = cr_xmlfile_open_primary(pri_xml_filename,
-                                          CR_CW_GZ_COMPRESSION,
-                                          NULL);
+    pri_stat = cr_contentstat_new(cmd_options->checksum_type, NULL);
+    pri_cr_file = cr_xmlfile_sopen_primary(pri_xml_filename,
+                                           CR_CW_GZ_COMPRESSION,
+                                           pri_stat,
+                                           NULL);
     if (!pri_cr_file) {
         g_critical("Cannot open file: %s", pri_xml_filename);
+        cr_contentstat_free(pri_stat, NULL);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
         exit(1);
     }
 
-    fil_cr_file = cr_xmlfile_open_filelists(fil_xml_filename,
+    fil_stat = cr_contentstat_new(cmd_options->checksum_type, NULL);
+    fil_cr_file = cr_xmlfile_sopen_filelists(fil_xml_filename,
                                             CR_CW_GZ_COMPRESSION,
+                                            fil_stat,
                                             NULL);
     if (!fil_cr_file) {
         g_critical("Cannot open file: %s", fil_xml_filename);
+        cr_contentstat_free(pri_stat, NULL);
+        cr_contentstat_free(fil_stat, NULL);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
@@ -891,11 +902,16 @@ main(int argc, char **argv)
         exit(1);
     }
 
-    oth_cr_file = cr_xmlfile_open_other(oth_xml_filename,
+    oth_stat = cr_contentstat_new(cmd_options->checksum_type, NULL);
+    oth_cr_file = cr_xmlfile_sopen_other(oth_xml_filename,
                                         CR_CW_GZ_COMPRESSION,
+                                        oth_stat,
                                         NULL);
     if (!oth_cr_file) {
         g_critical("Cannot open file: %s", oth_xml_filename);
+        cr_contentstat_free(pri_stat, NULL);
+        cr_contentstat_free(fil_stat, NULL);
+        cr_contentstat_free(oth_stat, NULL);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
@@ -1018,10 +1034,37 @@ main(int argc, char **argv)
 
     // XML
 
+    pri_xml_rec->checksum_open = cr_safe_string_chunk_insert(
+                                pri_xml_rec->chunk,
+                                pri_stat->checksum);
+    pri_xml_rec->checksum_open_type = cr_safe_string_chunk_insert(
+                                pri_xml_rec->chunk,
+                                cr_checksum_name_str(pri_stat->checksum_type));
+    pri_xml_rec->size_open = pri_stat->size;
+
+    fil_xml_rec->checksum_open = cr_safe_string_chunk_insert(
+                                fil_xml_rec->chunk,
+                                fil_stat->checksum);
+    fil_xml_rec->checksum_open_type = cr_safe_string_chunk_insert(
+                                fil_xml_rec->chunk,
+                                cr_checksum_name_str(fil_stat->checksum_type));
+    fil_xml_rec->size_open = fil_stat->size;
+
+    oth_xml_rec->checksum_open = cr_safe_string_chunk_insert(
+                                oth_xml_rec->chunk,
+                                oth_stat->checksum);
+    oth_xml_rec->checksum_open_type = cr_safe_string_chunk_insert(
+                                oth_xml_rec->chunk,
+                                cr_checksum_name_str(oth_stat->checksum_type));
+    oth_xml_rec->size_open = oth_stat->size;
+
     cr_repomd_record_fill(pri_xml_rec, cmd_options->checksum_type, NULL);
     cr_repomd_record_fill(fil_xml_rec, cmd_options->checksum_type, NULL);
     cr_repomd_record_fill(oth_xml_rec, cmd_options->checksum_type, NULL);
 
+    cr_contentstat_free(pri_stat, NULL);
+    cr_contentstat_free(fil_stat, NULL);
+    cr_contentstat_free(oth_stat, NULL);
 
     // Groupfile
 
@@ -1066,9 +1109,19 @@ main(int argc, char **argv)
 
         // Compress dbs
 
-        cr_compress_file(pri_db_filename, NULL, sqlite_compression, NULL);
-        cr_compress_file(fil_db_filename, NULL, sqlite_compression, NULL);
-        cr_compress_file(oth_db_filename, NULL, sqlite_compression, NULL);
+        cr_ContentStat *pri_db_stat = cr_contentstat_new(
+                                            cmd_options->checksum_type, NULL);
+        cr_ContentStat *fil_db_stat = cr_contentstat_new(
+                                            cmd_options->checksum_type, NULL);
+        cr_ContentStat *oth_db_stat = cr_contentstat_new(
+                                            cmd_options->checksum_type, NULL);
+
+        cr_compress_file_with_stat(pri_db_filename, NULL, sqlite_compression,
+                                   pri_db_stat, NULL);
+        cr_compress_file_with_stat(fil_db_filename, NULL, sqlite_compression,
+                                   fil_db_stat, NULL);
+        cr_compress_file_with_stat(oth_db_filename, NULL, sqlite_compression,
+                                   oth_db_stat, NULL);
 
         remove(pri_db_filename);
         remove(fil_db_filename);
@@ -1081,9 +1134,39 @@ main(int argc, char **argv)
         fil_db_rec = cr_repomd_record_new("filelists_db", fil_db_name);
         oth_db_rec = cr_repomd_record_new("other_db", oth_db_name);
 
+        pri_db_rec->checksum_open = cr_safe_string_chunk_insert(
+                                    pri_xml_rec->chunk,
+                                    pri_db_stat->checksum);
+        pri_db_rec->checksum_open_type = cr_safe_string_chunk_insert(
+                            pri_xml_rec->chunk,
+                            cr_checksum_name_str(pri_db_stat->checksum_type));
+        pri_db_rec->size_open = pri_db_stat->size;
+
+        fil_db_rec->checksum_open = cr_safe_string_chunk_insert(
+                                    fil_xml_rec->chunk,
+                                    fil_db_stat->checksum);
+        fil_db_rec->checksum_open_type = cr_safe_string_chunk_insert(
+                            fil_xml_rec->chunk,
+                            cr_checksum_name_str(fil_db_stat->checksum_type));
+        fil_db_rec->size_open = fil_db_stat->size;
+
+        oth_db_rec->checksum_open = cr_safe_string_chunk_insert(
+                                    oth_xml_rec->chunk,
+                                    oth_db_stat->checksum);
+        oth_db_rec->checksum_open_type = cr_safe_string_chunk_insert(
+                            oth_xml_rec->chunk,
+                            cr_checksum_name_str(oth_db_stat->checksum_type));
+        oth_db_rec->size_open = oth_db_stat->size;
+
+        cr_contentstat_free(pri_db_stat, NULL);
+        cr_contentstat_free(fil_db_stat, NULL);
+        cr_contentstat_free(oth_db_stat, NULL);
+
         cr_repomd_record_fill(pri_db_rec, cmd_options->checksum_type, NULL);
         cr_repomd_record_fill(fil_db_rec, cmd_options->checksum_type, NULL);
         cr_repomd_record_fill(oth_db_rec, cmd_options->checksum_type, NULL);
+
+
 
         g_free(pri_db_name);
         g_free(fil_db_name);

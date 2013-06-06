@@ -206,14 +206,6 @@ cr_xml_dump_repomd(cr_Repomd *repomd, GError **err)
 
     // Dump IT!
 
-    xmlBufferPtr buf = xmlBufferCreate();
-    if (buf == NULL) {
-        g_critical("%s: Error creating the xml buffer", __func__);
-        g_set_error(err, CR_XML_DUMP_REPOMD_ERROR, CRE_MEMORY,
-                    "Cannot create an xml buffer");
-        return NULL;
-    }
-
     doc = xmlNewDoc(BAD_CAST XML_DOC_VERSION);
     root = xmlNewNode(NULL, BAD_CAST "repomd");
     cr_xml_dump_repomd_body(root, repomd);

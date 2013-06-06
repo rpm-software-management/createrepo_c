@@ -91,7 +91,7 @@ typedef struct {
             cr_xmlfile_open(FILENAME, CR_XMLFILE_OTHER, COMTYPE, ERR)
 
 #define cr_xmlfile_sopen_other(FILENAME, COMTYPE, STAT, ERR) \
-            cr_xmlfile_open(FILENAME, CR_XMLFILE_OTHER, COMTYPE, STAT, ERR)
+            cr_xmlfile_sopen(FILENAME, CR_XMLFILE_OTHER, COMTYPE, STAT, ERR)
 
 /** Open a new XML file with stats.
  * Note: Opened file must not exists! This function cannot

@@ -1007,58 +1007,80 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     // Create/Open output xml files
 
+    cr_ContentStat *pri_stat = cr_contentstat_new(CR_CHECKSUM_SHA256, NULL);
+    cr_ContentStat *fil_stat = cr_contentstat_new(CR_CHECKSUM_SHA256, NULL);
+    cr_ContentStat *oth_stat = cr_contentstat_new(CR_CHECKSUM_SHA256, NULL);
+
     cr_XmlFile *pri_f;
     cr_XmlFile *fil_f;
     cr_XmlFile *oth_f;
 
-    const char *groupfile_suffix = cr_compression_suffix(cmd_options->groupfile_compression_type);
+    const char *groupfile_suffix = cr_compression_suffix(
+                                    cmd_options->groupfile_compression_type);
 
-    gchar *pri_xml_filename = g_strconcat(cmd_options->tmp_out_repo, "/primary.xml.gz", NULL);
-    gchar *fil_xml_filename = g_strconcat(cmd_options->tmp_out_repo, "/filelists.xml.gz", NULL);
-    gchar *oth_xml_filename = g_strconcat(cmd_options->tmp_out_repo, "/other.xml.gz", NULL);
+    gchar *pri_xml_filename = g_strconcat(cmd_options->tmp_out_repo,
+                                          "/primary.xml.gz", NULL);
+    gchar *fil_xml_filename = g_strconcat(cmd_options->tmp_out_repo,
+                                          "/filelists.xml.gz", NULL);
+    gchar *oth_xml_filename = g_strconcat(cmd_options->tmp_out_repo,
+                                          "/other.xml.gz", NULL);
     gchar *update_info_filename = NULL;
     if (!cmd_options->noupdateinfo)
         update_info_filename  = g_strconcat(cmd_options->tmp_out_repo,
                                             "/updateinfo.xml",
                                             groupfile_suffix, NULL);
 
-    pri_f = cr_xmlfile_open_primary(pri_xml_filename,
-                                    CR_CW_GZ_COMPRESSION,
-                                    &tmp_err);
+    pri_f = cr_xmlfile_sopen_primary(pri_xml_filename,
+                                     CR_CW_GZ_COMPRESSION,
+                                     pri_stat,
+                                     &tmp_err);
     if (tmp_err) {
         g_critical("Cannot open %s: %s", pri_xml_filename, tmp_err->message);
-        g_error_free(tmp_err);
+        cr_contentstat_free(pri_stat, NULL);
+        cr_contentstat_free(fil_stat, NULL);
+        cr_contentstat_free(oth_stat, NULL);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
         g_free(update_info_filename);
+        g_error_free(tmp_err);
         return 0;
     }
 
-    fil_f = cr_xmlfile_open_filelists(fil_xml_filename,
-                                      CR_CW_GZ_COMPRESSION,
-                                      &tmp_err);
+    fil_f = cr_xmlfile_sopen_filelists(fil_xml_filename,
+                                       CR_CW_GZ_COMPRESSION,
+                                       fil_stat,
+                                       &tmp_err);
     if (tmp_err) {
         g_critical("Cannot open %s: %s", fil_xml_filename, tmp_err->message);
+        cr_contentstat_free(pri_stat, NULL);
+        cr_contentstat_free(fil_stat, NULL);
+        cr_contentstat_free(oth_stat, NULL);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
         g_free(update_info_filename);
         cr_xmlfile_close(pri_f, NULL);
+        g_error_free(tmp_err);
         return 0;
     }
 
-    oth_f = cr_xmlfile_open_other(oth_xml_filename,
-                                  CR_CW_GZ_COMPRESSION,
-                                  &tmp_err);
+    oth_f = cr_xmlfile_sopen_other(oth_xml_filename,
+                                   CR_CW_GZ_COMPRESSION,
+                                   oth_stat,
+                                   &tmp_err);
     if (tmp_err) {
         g_critical("Cannot open %s: %s", oth_xml_filename, tmp_err->message);
+        cr_contentstat_free(pri_stat, NULL);
+        cr_contentstat_free(fil_stat, NULL);
+        cr_contentstat_free(oth_stat, NULL);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
         g_free(update_info_filename);
         cr_xmlfile_close(fil_f, NULL);
         cr_xmlfile_close(pri_f, NULL);
+        g_error_free(tmp_err);
         return 0;
     }
 
@@ -1079,9 +1101,12 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         gchar *fil_db_filename = NULL;
         gchar *oth_db_filename = NULL;
 
-        pri_db_filename = g_strconcat(cmd_options->tmp_out_repo, "/primary.sqlite", NULL);
-        fil_db_filename = g_strconcat(cmd_options->tmp_out_repo, "/filelists.sqlite", NULL);
-        oth_db_filename = g_strconcat(cmd_options->tmp_out_repo, "/other.sqlite", NULL);
+        pri_db_filename = g_strconcat(cmd_options->tmp_out_repo,
+                                      "/primary.sqlite", NULL);
+        fil_db_filename = g_strconcat(cmd_options->tmp_out_repo,
+                                      "/filelists.sqlite", NULL);
+        oth_db_filename = g_strconcat(cmd_options->tmp_out_repo,
+                                      "/other.sqlite", NULL);
 
         pri_db = cr_db_open_primary(pri_db_filename, NULL);
         fil_db = cr_db_open_filelists(fil_db_filename, NULL);
@@ -1176,10 +1201,37 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     // XML
 
+    pri_xml_rec->checksum_open = cr_safe_string_chunk_insert(
+                                pri_xml_rec->chunk,
+                                pri_stat->checksum);
+    pri_xml_rec->checksum_open_type = cr_safe_string_chunk_insert(
+                                pri_xml_rec->chunk,
+                                cr_checksum_name_str(pri_stat->checksum_type));
+    pri_xml_rec->size_open = pri_stat->size;
+
+    fil_xml_rec->checksum_open = cr_safe_string_chunk_insert(
+                                fil_xml_rec->chunk,
+                                fil_stat->checksum);
+    fil_xml_rec->checksum_open_type = cr_safe_string_chunk_insert(
+                                fil_xml_rec->chunk,
+                                cr_checksum_name_str(fil_stat->checksum_type));
+    fil_xml_rec->size_open = fil_stat->size;
+
+    oth_xml_rec->checksum_open = cr_safe_string_chunk_insert(
+                                oth_xml_rec->chunk,
+                                oth_stat->checksum);
+    oth_xml_rec->checksum_open_type = cr_safe_string_chunk_insert(
+                                oth_xml_rec->chunk,
+                                cr_checksum_name_str(oth_stat->checksum_type));
+    oth_xml_rec->size_open = oth_stat->size;
+
     cr_repomd_record_fill(pri_xml_rec, CR_CHECKSUM_SHA256, NULL);
     cr_repomd_record_fill(fil_xml_rec, CR_CHECKSUM_SHA256, NULL);
     cr_repomd_record_fill(oth_xml_rec, CR_CHECKSUM_SHA256, NULL);
 
+    cr_contentstat_free(pri_stat, NULL);
+    cr_contentstat_free(fil_stat, NULL);
+    cr_contentstat_free(oth_stat, NULL);
 
     // Groupfile
 
@@ -1238,12 +1290,19 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         gchar *fil_db_c_filename = g_strconcat(fil_db_filename, db_suffix, NULL);
         gchar *oth_db_c_filename = g_strconcat(oth_db_filename, db_suffix, NULL);
 
-        cr_compress_file(pri_db_filename, NULL,
-                         cmd_options->db_compression_type, NULL);
-        cr_compress_file(fil_db_filename, NULL,
-                         cmd_options->db_compression_type, NULL);
-        cr_compress_file(oth_db_filename, NULL,
-                         cmd_options->db_compression_type, NULL);
+        cr_ContentStat *pri_db_stat = cr_contentstat_new(CR_CHECKSUM_SHA256,
+                                                         NULL);
+        cr_ContentStat *fil_db_stat = cr_contentstat_new(CR_CHECKSUM_SHA256,
+                                                         NULL);
+        cr_ContentStat *oth_db_stat = cr_contentstat_new(CR_CHECKSUM_SHA256,
+                                                         NULL);
+
+        cr_compress_file_with_stat(pri_db_filename, NULL,
+                         cmd_options->db_compression_type, pri_db_stat, NULL);
+        cr_compress_file_with_stat(fil_db_filename, NULL,
+                         cmd_options->db_compression_type, fil_db_stat, NULL);
+        cr_compress_file_with_stat(oth_db_filename, NULL,
+                         cmd_options->db_compression_type, oth_db_stat, NULL);
 
         remove(pri_db_filename);
         remove(fil_db_filename);
@@ -1261,6 +1320,34 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         g_free(pri_db_c_filename);
         g_free(fil_db_c_filename);
         g_free(oth_db_c_filename);
+
+        pri_db_rec->checksum_open = cr_safe_string_chunk_insert(
+                                    pri_xml_rec->chunk,
+                                    pri_db_stat->checksum);
+        pri_db_rec->checksum_open_type = cr_safe_string_chunk_insert(
+                            pri_xml_rec->chunk,
+                            cr_checksum_name_str(pri_db_stat->checksum_type));
+        pri_db_rec->size_open = pri_db_stat->size;
+
+        fil_db_rec->checksum_open = cr_safe_string_chunk_insert(
+                                    fil_xml_rec->chunk,
+                                    fil_db_stat->checksum);
+        fil_db_rec->checksum_open_type = cr_safe_string_chunk_insert(
+                            fil_xml_rec->chunk,
+                            cr_checksum_name_str(fil_db_stat->checksum_type));
+        fil_db_rec->size_open = fil_db_stat->size;
+
+        oth_db_rec->checksum_open = cr_safe_string_chunk_insert(
+                                    oth_xml_rec->chunk,
+                                    oth_db_stat->checksum);
+        oth_db_rec->checksum_open_type = cr_safe_string_chunk_insert(
+                            oth_xml_rec->chunk,
+                            cr_checksum_name_str(oth_db_stat->checksum_type));
+        oth_db_rec->size_open = oth_db_stat->size;
+
+        cr_contentstat_free(pri_db_stat, NULL);
+        cr_contentstat_free(fil_db_stat, NULL);
+        cr_contentstat_free(oth_db_stat, NULL);
 
         cr_repomd_record_fill(pri_db_rec, CR_CHECKSUM_SHA256, NULL);
         cr_repomd_record_fill(fil_db_rec, CR_CHECKSUM_SHA256, NULL);
@@ -1303,7 +1390,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_repomd_free(repomd_obj);
 
     if (repomd_xml) {
-        gchar *repomd_path = g_strconcat(cmd_options->tmp_out_repo, "repomd.xml", NULL);
+        gchar *repomd_path = g_strconcat(cmd_options->tmp_out_repo,
+                                         "repomd.xml",
+                                         NULL);
         FILE *frepomd = fopen(repomd_path, "w");
         if (frepomd) {
             fputs(repomd_xml, frepomd);

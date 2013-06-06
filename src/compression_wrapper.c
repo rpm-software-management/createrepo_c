@@ -88,46 +88,25 @@ cr_ContentStat *
 cr_contentstat_new(cr_ChecksumType type, GError **err)
 {
     cr_ContentStat *cstat;
-    cr_ChecksumCtx *checksum;
-    GError *tmp_err = NULL;
 
     assert(!err || *err == NULL);
 
-    if (type == CR_CHECKSUM_UNKNOWN) {
-        checksum = NULL;
-    } else {
-        checksum = cr_checksum_new(type, &tmp_err);
-        if (tmp_err) {
-            g_propagate_error(err, tmp_err);
-            return NULL;
-        }
-    }
-
     cstat = g_malloc0(sizeof(cr_ContentStat));
-    cstat->checksum = checksum;
+    cstat->checksum_type = type;
 
     return cstat;
 }
 
-char *
+void
 cr_contentstat_free(cr_ContentStat *cstat, GError **err)
 {
-    char *checksum_str = NULL;
-    GError *tmp_err = NULL;
-
     assert(!err || *err == NULL);
 
     if (!cstat)
-        return NULL;
+        return;
 
-    if (cstat->checksum) {
-        checksum_str = cr_checksum_final(cstat->checksum, &tmp_err);
-        if (tmp_err)
-            g_propagate_error(err, tmp_err);
-    }
-
+    g_free(cstat->checksum);
     g_free(cstat);
-    return checksum_str;
 }
 
 typedef struct {
@@ -504,7 +483,21 @@ cr_open_with_stat(const char *filename,
         return NULL;
     }
 
-    file->stat = stat;
+    if (stat) {
+        file->stat = stat;
+
+        if (stat->checksum_type == CR_CHECKSUM_UNKNOWN) {
+            file->checksum_ctx = NULL;
+        } else {
+            file->checksum_ctx = cr_checksum_new(stat->checksum_type,
+                                                 &tmp_err);
+            if (tmp_err) {
+                g_propagate_error(err, tmp_err);
+                cr_close(file, NULL);
+                return NULL;
+            }
+        }
+    }
 
     assert(!err || (!file && *err != NULL) || (file && *err == NULL));
 
@@ -674,6 +667,10 @@ cr_close(CR_FILE *cr_file, GError **err)
                         "Bad compressed file type");
             break;
     }
+
+    if (cr_file->stat)
+        cr_file->stat->checksum = cr_checksum_final(cr_file->checksum_ctx,
+                                                    NULL);
 
     g_free(cr_file);
 
@@ -891,18 +888,14 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
     }
 
     if (cr_file->stat) {
-        // Do open content stat
-
-        cr_ContentStat *stat = cr_file->stat;
-        GError *tmp_err = NULL;
-
-        stat->size += len;
-        if (stat->checksum)
-            cr_checksum_update(stat->checksum, buffer, len, &tmp_err);
-
-        if (tmp_err) {
-            g_propagate_error(err, tmp_err);
-            return CR_CW_ERR;
+        cr_file->stat->size += len;
+        if (cr_file->checksum_ctx) {
+            GError *tmp_err = NULL;
+            cr_checksum_update(cr_file->checksum_ctx, buffer, len, &tmp_err);
+            if (tmp_err) {
+                g_propagate_error(err, tmp_err);
+                return CR_CW_ERR;
+            }
         }
     }
 

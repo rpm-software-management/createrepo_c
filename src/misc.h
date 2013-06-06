@@ -165,7 +165,7 @@ int cr_copy_file(const char *src,
  *                      compression suffix is used.
  *                      If dst is NULL, src + compression suffix is used)
  * @param comtype       type of compression
- * @param stat          cr_ContentStat object or NULL
+ * @param stat          pointer to cr_ContentStat or NULL
  * @param err           GError **
  * @return              cr_Error return code
  */

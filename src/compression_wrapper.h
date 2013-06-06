@@ -54,8 +54,9 @@ typedef enum {
 /** Stat build about open content during compression (writting).
  */
 typedef struct {
-    gint64          size;       /*!< Size of content */
-    cr_ChecksumCtx  *checksum;  /*!< Checksum context */
+    gint64          size;           /*!< Size of content */
+    cr_ChecksumType checksum_type;  /*!< Checksum type */
+    char            *checksum;      /*!< Checksum */
 } cr_ContentStat;
 
 /** Creates new cr_ContentStat object
@@ -69,18 +70,17 @@ cr_ContentStat *cr_contentstat_new(cr_ChecksumType type, GError **err);
 /** Frees cr_ContentStat object.
  * @param cstat     cr_ContentStat object
  * @param err       GError **
- * @return          checksum or NULL on error or if checksum calculation
- *                  was disabled (CR_CHECKSUM_UNKNOWN was used)
  */
-char *cr_contentstat_free(cr_ContentStat *cstat, GError **err);
+void cr_contentstat_free(cr_ContentStat *cstat, GError **err);
 
 /** Structure represents a compressed file.
  */
 typedef struct {
-    cr_CompressionType  type;   /*!< Type of compression */
-    void                *FILE;  /*!< Pointer to gzFile, BZFILE or plain FILE */
-    cr_OpenMode         mode;   /*!< Mode */
-    cr_ContentStat      *stat;  /*!< Content stats */
+    cr_CompressionType  type;           /*!< Type of compression */
+    void                *FILE;          /*!< Pointer to gzFile, BZFILE, ... */
+    cr_OpenMode         mode;           /*!< Mode */
+    cr_ContentStat      *stat;          /*!< Content stats */
+    cr_ChecksumCtx      *checksum_ctx;  /*!< Checksum contenxt */
 } CR_FILE;
 
 #define CR_CW_ERR       -1      /*!< Return value - Error */
@@ -114,7 +114,7 @@ cr_CompressionType cr_detect_compression(const char* filename, GError **err);
  * @param filename      filename
  * @param mode          open mode
  * @param comtype       type of compression
- * @param stat          cr_ContentStat object or NULL
+ * @param stat          pointer to cr_ContentStat or NULL
  * @param err           GError **
  * @return              pointer to a CR_FILE or NULL
  */

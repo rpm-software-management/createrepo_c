@@ -566,7 +566,7 @@ compressfile_with_stat_test_text_file(Copyfiletest *copyfiletest, gconstpointer 
 {
     CR_UNUSED(test_data);
     int ret;
-    char *checksum, *checksum_;
+    char *checksum;
     cr_ContentStat *stat;
     GError *tmp_err = NULL;
 
@@ -575,18 +575,15 @@ compressfile_with_stat_test_text_file(Copyfiletest *copyfiletest, gconstpointer 
     g_assert(!tmp_err);
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    ret = cr_compress_file(TEST_TEXT_FILE, copyfiletest->dst_file,
-                           CR_CW_GZ_COMPRESSION, &tmp_err);
+    ret = cr_compress_file_with_stat(TEST_TEXT_FILE, copyfiletest->dst_file,
+                                     CR_CW_GZ_COMPRESSION, stat, &tmp_err);
     g_assert(!tmp_err);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
-    checksum = cr_contentstat_free(stat, &tmp_err);
-    g_assert(checksum);
+    checksum = cr_checksum_file(TEST_TEXT_FILE, CR_CHECKSUM_SHA256, NULL);
+    g_assert_cmpstr(stat->checksum, ==, checksum);
+    cr_contentstat_free(stat, &tmp_err);
     g_assert(!tmp_err);
-    checksum_ = cr_checksum_file(TEST_TEXT_FILE, CR_CHECKSUM_SHA256, NULL);
-    g_assert_cmpstr(checksum, ==, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649"
-                                  "b934ca495991b7852b855");
-    g_free(checksum);
 }
 
 static void

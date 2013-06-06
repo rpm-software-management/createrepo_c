@@ -57,45 +57,22 @@
 static void
 test_cr_contentstat(void)
 {
-    char *checksum;
     cr_ContentStat *cs = NULL;
     GError *tmp_err = NULL;
 
     cs = cr_contentstat_new(CR_CHECKSUM_UNKNOWN, NULL);
     g_assert(cs);
-    checksum = cr_contentstat_free(cs, NULL);
-    g_assert(!checksum);
+    g_assert(!cs->checksum);
+    cr_contentstat_free(cs, NULL);
     cs = NULL;
 
     cs = cr_contentstat_new(CR_CHECKSUM_UNKNOWN, &tmp_err);
     g_assert(cs);
     g_assert(!tmp_err);
-    checksum = cr_contentstat_free(cs, &tmp_err);
-    g_assert(!checksum);
+    g_assert(!cs->checksum);
+    cr_contentstat_free(cs, &tmp_err);
     g_assert(!tmp_err);
     cs = NULL;
-
-    cs = cr_contentstat_new(CR_CHECKSUM_SHA256, NULL);
-    g_assert(cs);
-    checksum = cr_contentstat_free(cs, NULL);
-    g_assert(checksum);
-    g_assert_cmpstr(checksum, ==, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649"
-                                  "b934ca495991b7852b855");
-    g_free(checksum);
-    cs = NULL;
-    checksum = NULL;
-
-    cs = cr_contentstat_new(CR_CHECKSUM_SHA256, &tmp_err);
-    g_assert(cs);
-    g_assert(!tmp_err);
-    checksum = cr_contentstat_free(cs, &tmp_err);
-    g_assert(!tmp_err);
-    g_assert(checksum);
-    g_assert_cmpstr(checksum, ==, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649"
-                                  "b934ca495991b7852b855");
-    g_free(checksum);
-    cs = NULL;
-    checksum = NULL;
 }
 
 static void
@@ -561,7 +538,6 @@ test_contentstating_singlewrite(Outputtest *outputtest, gconstpointer test_data)
     CR_FILE *f;
     int ret;
     cr_ContentStat *stat;
-    char *checksum;
     GError *tmp_err = NULL;
 
     CR_UNUSED(test_data);
@@ -593,12 +569,9 @@ test_contentstating_singlewrite(Outputtest *outputtest, gconstpointer test_data)
     g_assert(!tmp_err);
 
     g_assert_cmpint(stat->size, ==, content_len);
-    checksum = cr_contentstat_free(stat, &tmp_err);
-    g_assert(checksum);
+    g_assert_cmpstr(stat->checksum, ==, content_sha256);
+    cr_contentstat_free(stat, &tmp_err);
     g_assert(!tmp_err);
-    g_assert_cmpstr(checksum, ==, content_sha256);
-    g_free(checksum);
-    checksum = NULL;
 
     // Gz compression
 
@@ -622,12 +595,9 @@ test_contentstating_singlewrite(Outputtest *outputtest, gconstpointer test_data)
     g_assert(!tmp_err);
 
     g_assert_cmpint(stat->size, ==, content_len);
-    checksum = cr_contentstat_free(stat, &tmp_err);
-    g_assert(checksum);
+    g_assert_cmpstr(stat->checksum, ==, content_sha256);
+    cr_contentstat_free(stat, &tmp_err);
     g_assert(!tmp_err);
-    g_assert_cmpstr(checksum, ==, content_sha256);
-    g_free(checksum);
-    checksum = NULL;
 
     // Bz2 compression
 
@@ -651,12 +621,9 @@ test_contentstating_singlewrite(Outputtest *outputtest, gconstpointer test_data)
     g_assert(!tmp_err);
 
     g_assert_cmpint(stat->size, ==, content_len);
-    checksum = cr_contentstat_free(stat, &tmp_err);
-    g_assert(checksum);
+    g_assert_cmpstr(stat->checksum, ==, content_sha256);
+    cr_contentstat_free(stat, &tmp_err);
     g_assert(!tmp_err);
-    g_assert_cmpstr(checksum, ==, content_sha256);
-    g_free(checksum);
-    checksum = NULL;
 
     // Xz compression
 
@@ -680,12 +647,9 @@ test_contentstating_singlewrite(Outputtest *outputtest, gconstpointer test_data)
     g_assert(!tmp_err);
 
     g_assert_cmpint(stat->size, ==, content_len);
-    checksum = cr_contentstat_free(stat, &tmp_err);
-    g_assert(checksum);
+    g_assert_cmpstr(stat->checksum, ==, content_sha256);
+    cr_contentstat_free(stat, &tmp_err);
     g_assert(!tmp_err);
-    g_assert_cmpstr(checksum, ==, content_sha256);
-    g_free(checksum);
-    checksum = NULL;
 }
 
 static void
@@ -694,7 +658,6 @@ test_contentstating_multiwrite(Outputtest *outputtest, gconstpointer test_data)
     CR_FILE *f;
     int ret;
     cr_ContentStat *stat;
-    char *checksum;
     GError *tmp_err = NULL;
 
     CR_UNUSED(test_data);
@@ -730,12 +693,9 @@ test_contentstating_multiwrite(Outputtest *outputtest, gconstpointer test_data)
     g_assert(!tmp_err);
 
     g_assert_cmpint(stat->size, ==, content_len);
-    checksum = cr_contentstat_free(stat, &tmp_err);
-    g_assert(checksum);
+    g_assert_cmpstr(stat->checksum, ==, content_sha256);
+    cr_contentstat_free(stat, &tmp_err);
     g_assert(!tmp_err);
-    g_assert_cmpstr(checksum, ==, content_sha256);
-    g_free(checksum);
-    checksum = NULL;
 }
 
 

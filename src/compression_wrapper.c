@@ -668,9 +668,14 @@ cr_close(CR_FILE *cr_file, GError **err)
             break;
     }
 
-    if (cr_file->stat)
-        cr_file->stat->checksum = cr_checksum_final(cr_file->checksum_ctx,
-                                                    NULL);
+    if (cr_file->stat) {
+        g_free(cr_file->stat->checksum);
+        if (cr_file->checksum_ctx)
+            cr_file->stat->checksum = cr_checksum_final(cr_file->checksum_ctx,
+                                                        NULL);
+        else
+            cr_file->stat->checksum = NULL;
+    }
 
     g_free(cr_file);
 

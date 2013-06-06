@@ -64,7 +64,10 @@ typedef struct {
  * @return              Opened cr_XmlFile or NULL on error
  */
 #define cr_xmlfile_open_primary(FILENAME, COMTYPE, ERR) \
-                cr_xmlfile_open(FILENAME, CR_XMLFILE_PRIMARY, COMTYPE, ERR)
+            cr_xmlfile_open(FILENAME, CR_XMLFILE_PRIMARY, COMTYPE, ERR)
+
+#define cr_xmlfile_sopen_primary(FILENAME, COMTYPE, STAT, ERR) \
+            cr_xmlfile_sopen(FILENAME, CR_XMLFILE_PRIMARY, COMTYPE, STAT,  ERR)
 
 /** Open a new filelists XML file.
  * @param FILENAME      Filename.
@@ -73,7 +76,10 @@ typedef struct {
  * @return              Opened cr_XmlFile or NULL on error
  */
 #define cr_xmlfile_open_filelists(FILENAME, COMTYPE, ERR) \
-                cr_xmlfile_open(FILENAME, CR_XMLFILE_FILELISTS, COMTYPE, ERR)
+            cr_xmlfile_open(FILENAME, CR_XMLFILE_FILELISTS, COMTYPE, ERR)
+
+#define cr_xmlfile_sopen_filelists(FILENAME, COMTYPE, STAT, ERR) \
+            cr_xmlfile_sopen(FILENAME, CR_XMLFILE_FILELISTS, COMTYPE, STAT, ERR)
 
 /** Open a new other XML file.
  * @param FILENAME      Filename.
@@ -82,9 +88,12 @@ typedef struct {
  * @return              Opened cr_XmlFile or NULL on error
  */
 #define cr_xmlfile_open_other(FILENAME, COMTYPE, ERR) \
-                cr_xmlfile_open(FILENAME, CR_XMLFILE_OTHER, COMTYPE, ERR)
+            cr_xmlfile_open(FILENAME, CR_XMLFILE_OTHER, COMTYPE, ERR)
 
-/** Open a new XML file.
+#define cr_xmlfile_sopen_other(FILENAME, COMTYPE, STAT, ERR) \
+            cr_xmlfile_open(FILENAME, CR_XMLFILE_OTHER, COMTYPE, STAT, ERR)
+
+/** Open a new XML file with stats.
  * Note: Opened file must not exists! This function cannot
  * open existing file!.
  * @param filename      Filename.
@@ -93,10 +102,24 @@ typedef struct {
  * @param err           **GError
  * @return              Opened cr_XmlFile or NULL on error
  */
-cr_XmlFile *cr_xmlfile_open(const char *filename,
-                            cr_XmlFileType type,
-                            cr_CompressionType comtype,
-                            GError **err);
+#define cr_xmlfile_open(FILENAME, TYPE, COMTYPE, ERR) \
+            cr_xmlfile_sopen(FILENAME, TYPE, COMTYPE, NULL, ERR)
+
+/** Open a new XML file.
+ * Note: Opened file must not exists! This function cannot
+ * open existing file!.
+ * @param filename      Filename.
+ * @param type          Type of XML file.
+ * @param comtype       Type of used compression.
+ * @param stat          pointer to cr_ContentStat or NULL
+ * @param err           **GError
+ * @return              Opened cr_XmlFile or NULL on error
+ */
+cr_XmlFile *cr_xmlfile_sopen(const char *filename,
+                             cr_XmlFileType type,
+                             cr_CompressionType comtype,
+                             cr_ContentStat *stat,
+                             GError **err);
 
 /** Set total number of packages that will be in the file.
  * This number must be set before any write operation

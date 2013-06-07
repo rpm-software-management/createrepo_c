@@ -129,7 +129,7 @@ CR_FILE *cr_open_with_stat(const char *filename,
  * @param buffer        target buffer
  * @param len           number of bytes to read
  * @param err           GError **
- * @return              number of readed bytes or CR_CW_ERR
+ * @return              number of readed bytes or CR_CW_ERR (-1)
  */
 int cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err);
 
@@ -139,7 +139,7 @@ int cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err);
  * @param len           number of bytes to read
  * @param err           GError **
  * @return              number of uncompressed bytes readed (0 = EOF)
- *                      or CR_CW_ERR
+ *                      or CR_CW_ERR (-1)
  */
 int cr_write(CR_FILE *cr_file,
              const void *buffer,

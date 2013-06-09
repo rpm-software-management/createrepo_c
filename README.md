@@ -74,6 +74,10 @@ Note: For a verbose output of testing use: ``make ARGS="-V" test``
 
     PYTHONPATH=`readlink -f ./build/src/python/` nosetests -s tests/python/tests/
 
+### Links
+
+[Bugzilla](https://bugzilla.redhat.com/buglist.cgi?bug_status=NEW&bug_status=ASSIGNED&bug_status=MODIFIED&bug_status=VERIFIED&component=createrepo_c&query_format=advanced)
+
 ---------------------------------------------------
 
 # Differences in behavior between createrepo_c and createrepo

@@ -70,8 +70,14 @@ c_newpkgcb(cr_Package **pkg,
         return CR_CB_RET_ERR;
     }
 
-    *pkg = Package_FromPyObject(result);
-    data->py_pkg = result; // Store reference to current package
+    if (result == Py_None) {
+        *pkg = NULL;
+        data->py_pkg = NULL;
+        Py_DECREF(result);
+    } else {
+        *pkg = Package_FromPyObject(result);
+        data->py_pkg = result; // Store reference to current package
+    }
 
     return CR_CB_RET_OK;
 }

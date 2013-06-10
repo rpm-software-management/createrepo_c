@@ -28,27 +28,63 @@ class DeltaModule(object):
     def _path(self, path, record):
         return os.path.join(path, record.location_href)
 
-class PrimaryDeltaModule(DeltaModule):
-    def do(old_path, old_rec, new_path, new_rec, delta_path, data):
-
-        old_fn = self._path(old_path, old_rec)
+class MainDeltaModule(DeltaModule):
+    def do(self, pri_old_fn, pri_new_fn, pri_f,
+           fil_new_fn, fil_f, oth_new_fn, oth_f, removed):
 
         old_packages = set()
+        added_packages = {}         # dict { 'pkgId': pkg }
+        added_packages_ids = []     # list of package ids
 
-        def pkgcb(pkg):
-            old_packages.add(pkg.pkgId, pkg.location_href, location_base)
+        def old_pkgcb(pkg):
+            old_packages.add((pkg.pkgId, pkg.location_href, pkg.location_base))
 
-        cr.xml_parse_primary(old_fn, pkgcb=pkgcb)
+        def new_pkgcb(pkg):
+            pkg_tuple = (pkg.pkgId, pkg.location_href, pkg.location_base)
+            if not pkg_tuple in old_packages:
+                # This package is only in new repodata
+                added_packages[pkg.pkgId] = pkg
+                added_packages_ids.append(pkg.pkgId)
+            else:
+                # This package is also in the old repodata
+                old_packages.remove(pkg_tuple)
 
-        print old_packages
-        print "DONE"
+        cr.xml_parse_primary(pri_old_fn, pkgcb=old_pkgcb)
+        cr.xml_parse_primary(pri_new_fn, pkgcb=new_pkgcb)
 
+        removed_pkgs = sorted(old_packages)
+        for _, location_href, location_base in removed_pkgs:
+            removed.add_pkg_locations(location_href, location_base)
 
-_DELTA_MODULES = {
-        "primary": PrimaryDeltaModule,
-#        "filelists": FilelistsDeltaModule,
-#        "other": OtherDeltaModule,
-    }
+        num_of_packages = len(added_packages)
+
+        # Write out primary delta
+        pri_f.set_num_of_pkgs(num_of_packages)
+        for pkgid in added_packages_ids:
+            pri_f.add_pkg(added_packages[pkgid])
+        pri_f.close()
+
+        ",".join(("a", "b"))
+
+        # Filelists and Other cb
+        def newpkgcb(pkgId, name, arch):
+            return added_packages.get(pkgId, None)
+
+        # Write out filelists delta
+        if fil_f and fil_new_fn:
+            cr.xml_parse_filelists(fil_new_fn, newpkgcb=newpkgcb)
+            fil_f.set_num_of_pkgs(num_of_packages)
+            for pkgid in added_packages_ids:
+                fil_f.add_pkg(added_packages[pkgid])
+            fil_f.close()
+
+        # Write out other delta
+        if oth_f and oth_new_fn:
+            cr.xml_parse_other(oth_new_fn, newpkgcb=newpkgcb)
+            oth_f.set_num_of_pkgs(num_of_packages)
+            for pkgid in added_packages_ids:
+                oth_f.add_pkg(added_packages[pkgid])
+            oth_f.close()
 
 class RemovedXml(object):
     def __init__(self):
@@ -61,6 +97,9 @@ class RemovedXml(object):
 
     def add_pkg(self, pkg):
         self.packages[pkg.location_href] = pkg.location_base
+
+    def add_pkg_locations(self, location_href, location_base):
+        self.packages[location_href] = location_base
 
     def add_record(self, rec):
         self.files[rec.location_href] = rec.location_base
@@ -175,63 +214,57 @@ class DeltaRepoGenerator(LoggingInterface):
                 "removedxml": removedxml,
             }
 
-        # Do deltas for the "primary
+        # Do deltas for the "primary", "filelists" and "other"
         if not "primary" in old_records or not "primary" in new_records:
             raise DeltaRepoError("Missing primary metadata")
 
-        delta_fn = os.path.join(delta_repodata_path, "primary.xml")
-        deltamodule = _DELTA_MODULES["primary"]()
-        deltamodule.do(old_path, old_records["primary"],
-                       new_path, new_records["primary"],
-                       delta_fn, delta_data)
+        pri_old_fn = os.path.join(old_path, old_records["primary"].location_href)
+        pri_new_fn = os.path.join(new_path, new_records["primary"].location_href)
+        pri_out_fn = os.path.join(delta_repodata_path, "primary.xml.gz")
+        pri_out_f_stat = cr.ContentStat(cr.SHA256)
+        pri_out_f = cr.PrimaryXmlFile(pri_out_fn, cr.GZ_COMPRESSION)
 
-        # Do deltas for the rest of the metadata
-        for record_type in added_repomd_record_types:
-            # Added records
-            self._debug("Added: %s" % record_type)
-            rec = new_records[record_type]
-            rec_path = os.path.join(new_path, rec.location_href)
-            shutil.copy2(rec_path, delta_repodata_path)
-            delta_repomd.set_record(rec)
+        fil_new_fn = None
+        fil_out_fn = None
+        fil_out_f_stat = None
+        fil_out_f = None
+        if ("filelists" in new_records):
+            fil_new_fn = os.path.join(new_path, new_records["filelists"].location_href)
+            fil_out_fn = os.path.join(delta_repodata_path, "filelists.xml.gz")
+            fil_out_f_stat = cr.ContentStat(cr.SHA256)
+            fil_out_f = cr.FilelistsXmlFile(fil_out_fn, cr.GZ_COMPRESSION)
 
-        # Do deltas for individual records
-        for record in old_repomd.records:
-            if record.type == "primary":
-                # primary record is already done
-                continue
+        oth_new_fn = None
+        out_out_fn = None
+        oth_out_f_stat = None
+        oth_out_f = None
+        if ("other" in new_records):
+            oth_new_fn = os.path.join(new_path, new_records["other"].location_href)
+            oth_out_fn = os.path.join(delta_repodata_path, "other.xml.gz")
+            oth_out_f_stat = cr.ContentStat(cr.SHA256)
+            oth_out_f = cr.OtherXmlFile(oth_out_fn, cr.GZ_COMPRESSION)
 
-            if record.type in deleted_repomd_record_types:
-                # Removed record
-                removedxml.add_record(record)
-                self._debug("Removed: %s" % record.type)
-                continue
+        deltamodule = MainDeltaModule()
+        deltamodule.do(pri_old_fn, pri_new_fn, pri_out_f, fil_new_fn,
+                       fil_out_f, oth_new_fn, oth_out_f, removedxml)
 
-            old_rec = old_records[record.type]
-            new_rec = new_records[record.type]
-            if old_rec.checksum == new_rec.checksum and \
-               old_rec.checksum_open == new_rec.checksum_open:
-                # File unchanged
-                self._debug("Unchanged: %s" % record.type)
-                continue
+        pri_rec = cr.RepomdRecord("primary", pri_out_fn)
+        # TODO: Function for this
+        pri_rec.size_open = pri_out_f_stat.size
+        pri_rec.checksum_open = pri_out_f_stat.checksum
+        pri_rec.checksum_open_type = cr.checksum_name_str(pri_out_f_stat.checksum_type)
+        pri_rec.fill(cr.SHA256)
+        delta_repomd.set_record(pri_rec)
 
-            if (skip and record.type in skip) or \
-               (do_only and record.type not in do_only) or \
-               (record.type not in _DELTA_MODULES):
-                # Do not do delta of this file, just copy it
-                self._debug("No delta for: %s" % record.type)
-                rec = new_records[record.type]
-                rec_path = os.path.join(new_path, rec.location_href)
-                shutil.copy2(rec_path, delta_repodata_path)
-                delta_repomd.set_record(record)
-                continue
+        if fil_out_fn:
+            fil_rec = cr.RepomdRecord("filelists", fil_out_fn)
+            fil_rec.fill(cr.SHA256)
+            delta_repomd.set_record(fil_rec)
 
-            # TODO: Do delta
-            delta_fn = os.path.join(delta_repodata_path,
-                            self._fn_without_checksum(record.location_href))
-            print delta_fn
-            deltamodule = _DELTA_MODULES[record.type]()
-            deltamodule.do(old_rec, new_rec, delta_fn, delta_data)
-            # TODO
+        if oth_out_fn:
+            oth_rec = cr.RepomdRecord("other", oth_out_fn)
+            oth_rec.fill(cr.SHA256)
+            delta_repomd.set_record(oth_rec)
 
         # Write out removed.xml
         # TODO: Compressed!!

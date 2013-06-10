@@ -62,7 +62,7 @@ cr_checksum_type(const char *name)
         // SHA* family
         char *sha_type = name_lower + 3;
         if (!strcmp(sha_type, ""))
-            return CR_CHECKSUM_SHA1;
+            return CR_CHECKSUM_SHA;
         else if (!strcmp(sha_type, "1"))
             return CR_CHECKSUM_SHA1;
         else if (!strcmp(sha_type, "224"))

@@ -253,7 +253,7 @@ static struct PyMethodDef xmlfile_methods[] = {
 PyTypeObject XmlFile_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                              /* ob_size */
-    "_librepo.XmlFile",             /* tp_name */
+    "createrepo_c.XmlFile",         /* tp_name */
     sizeof(_XmlFileObject),         /* tp_basicsize */
     0,                              /* tp_itemsize */
     (destructor) xmlfile_dealloc,   /* tp_dealloc */

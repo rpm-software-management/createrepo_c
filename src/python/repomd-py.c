@@ -389,7 +389,7 @@ static PyGetSetDef repomd_getsetters[] = {
 PyTypeObject Repomd_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                              /* ob_size */
-    "_librepo.Repomd",              /* tp_name */
+    "createrepo_c.Repomd",          /* tp_name */
     sizeof(_RepomdObject),          /* tp_basicsize */
     0,                              /* tp_itemsize */
     (destructor) repomd_dealloc,    /* tp_dealloc */

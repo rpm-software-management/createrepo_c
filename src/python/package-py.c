@@ -472,7 +472,7 @@ static PyGetSetDef package_getsetters[] = {
 PyTypeObject Package_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                              /* ob_size */
-    "_librepo.Package",             /* tp_name */
+    "createrepo_c.Package",         /* tp_name */
     sizeof(_PackageObject),         /* tp_basicsize */
     0,                              /* tp_itemsize */
     (destructor) package_dealloc,   /* tp_dealloc */

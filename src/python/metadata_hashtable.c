@@ -213,7 +213,7 @@ static struct PyMethodDef metadata_methods[] = {
 PyTypeObject MetadataHashtable_Type = {
     PyObject_HEAD_INIT(NULL)
     0,                              /* ob_size */
-    "_librepo.MetadataHashtable",   /* tp_name */
+    "createrepo_c.MetadataHashtable",/* tp_name */
     sizeof(_MetadataHashtableObject),/* tp_basicsize */
     0,                              /* tp_itemsize */
     (destructor)metadata_dealloc,   /* tp_dealloc */

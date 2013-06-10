@@ -21,6 +21,7 @@
 
 #include "src/createrepo_c.h"
 
+#include "checksum-py.h"
 #include "contentstat-py.h"
 #include "exception-py.h"
 #include "load_metadata-py.h"
@@ -54,6 +55,10 @@ static struct PyMethodDef createrepo_c_methods[] = {
     {"xml_parse_other",         (PyCFunction)py_xml_parse_other,
      METH_VARARGS, NULL},
     {"xml_parse_repomd",        (PyCFunction)py_xml_parse_repomd,
+     METH_VARARGS, NULL},
+    {"checksum_name_str",       (PyCFunction)py_checksum_name_str,
+     METH_VARARGS, NULL},
+    {"checksum_type",           (PyCFunction)py_checksum_type,
      METH_VARARGS, NULL},
     { NULL }
 };

@@ -13,6 +13,7 @@ SET (createrepo_c_COPIES __init__.py)
 FILE(COPY ${createrepo_c_COPIES} DESTINATION ./createrepo_c/)
 
 SET (craeterepo_cmodule_SRCS
+     checksum-py.c
      contentstat-py.c
      createrepo_cmodule.c
      exception-py.c

@@ -154,3 +154,6 @@ def xml_parse_other(path, newpkgcb=None, pkgcb=None, warningcb=None):
 
 def xml_parse_repomd(path, repomdobj, warning_cb=None):
     return _createrepo_c.xml_parse_repomd(path, repomdobj, warning_cb)
+
+checksum_name_str   = _createrepo_c.checksum_name_str
+checksum_type       = _createrepo_c.checksum_type

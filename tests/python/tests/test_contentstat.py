@@ -21,6 +21,9 @@ class TestCaseContentStat(unittest.TestCase):
         pkg = cr.package_from_rpm(PKG_ARCHER_PATH)
         self.assertTrue(pkg)
 
+        pkg.time_file = 1
+        pkg.time_build = 1
+
         cs = cr.ContentStat(cr.SHA256)
         self.assertEqual(cs.size, 0)
         self.assertEqual(cs.checksum_type, cr.SHA256)
@@ -35,8 +38,8 @@ class TestCaseContentStat(unittest.TestCase):
 
         self.assertTrue(os.path.isfile(path))
 
-        self.assertEqual(cs.size, 2686)
+        self.assertEqual(cs.size, 2668)
         self.assertEqual(cs.checksum_type, cr.SHA256)
-        self.assertEqual(cs.checksum, "05509ef37239eb123d41c077626b788352ef94"\
-                                      "5200231a901802ef59e565978f")
+        self.assertEqual(cs.checksum, "67bc6282915fad80dc11f3d7c3210977a0bde"\
+                                      "05a762256d86083c2447d425776")
 

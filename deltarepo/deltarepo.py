@@ -95,12 +95,15 @@ if __name__ == "__main__":
 
     logger = setup_logging(options.quiet, options.verbose)
 
+    generator = deltarepo.DeltaRepoGenerator(id_type=options.id_type,
+                                             logger=logger)
+
+    # TODO: check if repo is really delta repo (must has a repoid and removed.xml)
+
     if options.apply:
         # Applying delta
-        pass
+        generator.applydelta(args[0], args[1], out_path=options.outputdir)
     else:
         # Do delta
-        generator = deltarepo.DeltaRepoGenerator(id_type=options.id_type,
-                                                 logger=logger)
         generator.gendelta(args[0], args[1], out_path=options.outputdir,
                            do_only=options.do_only, skip=options.skip)

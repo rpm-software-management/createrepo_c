@@ -26,6 +26,7 @@
 #include "exception-py.h"
 #include "load_metadata-py.h"
 #include "locate_metadata-py.h"
+#include "misc-py.h"
 #include "package-py.h"
 #include "parsepkg-py.h"
 #include "repomd-py.h"
@@ -59,6 +60,8 @@ static struct PyMethodDef createrepo_c_methods[] = {
     {"checksum_name_str",       (PyCFunction)py_checksum_name_str,
      METH_VARARGS, NULL},
     {"checksum_type",           (PyCFunction)py_checksum_type,
+     METH_VARARGS, NULL},
+    {"compress_file",           (PyCFunction)py_compress_file_with_stat,
      METH_VARARGS, NULL},
     { NULL }
 };

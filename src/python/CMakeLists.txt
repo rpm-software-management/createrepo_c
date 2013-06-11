@@ -19,6 +19,7 @@ SET (craeterepo_cmodule_SRCS
      exception-py.c
      load_metadata-py.c
      locate_metadata-py.c
+     misc-py.c
      package-py.c
      parsepkg-py.c
      repomd-py.c

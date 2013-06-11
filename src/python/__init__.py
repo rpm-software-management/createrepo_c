@@ -157,3 +157,6 @@ def xml_parse_repomd(path, repomdobj, warning_cb=None):
 
 checksum_name_str   = _createrepo_c.checksum_name_str
 checksum_type       = _createrepo_c.checksum_type
+
+def compress_file(src, dst, comtype, stat=None):
+    return _createrepo_c.compress_file(src, dst, comtype, stat)

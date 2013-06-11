@@ -131,8 +131,11 @@ cr_RepomdRecord *cr_repomd_record_copy(const cr_RepomdRecord *orig);
 
 /** Fill unfilled items in the cr_RepomdRecord (calculate checksums,
  * get file size before/after compression, etc.).
- * Note: For groupfile you shoud use cr_repomd_record_compress_and_fill
- * function.
+ * Note: If checksum_open, checksum_open_type and size_open are filed
+ * then their calculation will be skiped. This items could be filled
+ * directly on our own or use function for load them from a cr_ContentStat.
+ * If no open stats are supplied, then this function has to decompress
+ * the file for the open checksum calculation.
  * @param record                cr_RepomdRecord object
  * @param checksum_type         type of checksum to use
  * @param err                   GError **
@@ -165,6 +168,14 @@ int cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
  * @return                      cr_Error code
  */
 int cr_repomd_record_rename_file(cr_RepomdRecord *record, GError **err);
+
+/** Load the open stats (checksum_open, checksum_open_type and size_open)
+ * from the cr_ContentStat object.
+ * @param record                cr_RepomdRecord
+ * @param stats                 cr_ContentStat
+ */
+void cr_repomd_record_load_contentstat(cr_RepomdRecord *record,
+                                       cr_ContentStat *stats);
 
 /** Create new empty cr_Repomd object wich represents content of repomd.xml.
  */

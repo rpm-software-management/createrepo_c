@@ -128,3 +128,22 @@ class TestCaseRepomdRecord(unittest.TestCase):
             sorted(['10091f8e2e235ae875cb18c91c443891c7f1a599d41f44d518e8af759a6c8109-primary.xml.gz',
                     'b33fc63178d852333a826385bc15d9b72cb6658be7fb927ec28c4e40b5d426fb-primary.xml']))
 
+    def test_repomdrecord_load_contentstat(self):
+        rec = cr.RepomdRecord("primary", None)
+        self.assertTrue(rec)
+
+        stat = cr.ContentStat(cr.SHA256)
+        stat.checksum = "foobar"
+        stat.checksum_type = cr.SHA256
+        stat.size = 123
+
+        self.assertEqual(rec.checksum_open, None)
+        self.assertEqual(rec.checksum_open_type, None)
+        self.assertEqual(rec.size, 0)
+
+        rec.load_contentstat(stat);
+
+        self.assertEqual(rec.checksum_open, "foobar")
+        self.assertEqual(rec.checksum_open_type, "sha256")
+        self.assertEqual(rec.size_open, 123)
+

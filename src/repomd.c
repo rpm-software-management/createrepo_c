@@ -589,6 +589,20 @@ cr_repomd_record_rename_file(cr_RepomdRecord *md, GError **err)
     return CRE_OK;
 }
 
+void
+cr_repomd_record_load_contentstat(cr_RepomdRecord *record,
+                                  cr_ContentStat *stats)
+{
+    if (!stats)
+        return;
+
+    record->checksum_open = cr_safe_string_chunk_insert(record->chunk,
+                                                        stats->checksum);
+    record->checksum_open_type = cr_safe_string_chunk_insert(record->chunk,
+                                cr_checksum_name_str(stats->checksum_type));
+    record->size_open = stats->size;
+}
+
 cr_Repomd *
 cr_repomd_new()
 {

@@ -24,6 +24,7 @@
 #include "repomdrecord-py.h"
 #include "exception-py.h"
 #include "typeconversion.h"
+#include "contentstat-py.h"
 
 typedef struct {
     PyObject_HEAD
@@ -207,11 +208,30 @@ rename_file(_RepomdRecordObject *self, void *nothing)
     Py_RETURN_NONE;
 }
 
+static PyObject *
+load_contentstat(_RepomdRecordObject *self, PyObject *args)
+{
+    PyObject *contentstat;
+
+    if (!PyArg_ParseTuple(args, "O!:load_contentstat",
+                          &ContentStat_Type,
+                          &contentstat))
+        return NULL;
+
+    if (check_RepomdRecordStatus(self))
+        return NULL;
+
+    cr_repomd_record_load_contentstat(self->record,
+                                      ContentStat_FromPyObject(contentstat));
+    Py_RETURN_NONE;
+}
+
 static struct PyMethodDef repomdrecord_methods[] = {
     {"copy", (PyCFunction)copy_repomdrecord, METH_NOARGS, NULL},
     {"fill", (PyCFunction)fill, METH_VARARGS, NULL},
     {"compress_and_fill", (PyCFunction)compress_and_fill, METH_VARARGS, NULL},
     {"rename_file", (PyCFunction)rename_file, METH_NOARGS, NULL},
+    {"load_contentstat", (PyCFunction)load_contentstat, METH_VARARGS, NULL},
     {NULL} /* sentinel */
 };
 

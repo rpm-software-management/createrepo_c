@@ -1201,29 +1201,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     // XML
 
-    pri_xml_rec->checksum_open = cr_safe_string_chunk_insert(
-                                pri_xml_rec->chunk,
-                                pri_stat->checksum);
-    pri_xml_rec->checksum_open_type = cr_safe_string_chunk_insert(
-                                pri_xml_rec->chunk,
-                                cr_checksum_name_str(pri_stat->checksum_type));
-    pri_xml_rec->size_open = pri_stat->size;
-
-    fil_xml_rec->checksum_open = cr_safe_string_chunk_insert(
-                                fil_xml_rec->chunk,
-                                fil_stat->checksum);
-    fil_xml_rec->checksum_open_type = cr_safe_string_chunk_insert(
-                                fil_xml_rec->chunk,
-                                cr_checksum_name_str(fil_stat->checksum_type));
-    fil_xml_rec->size_open = fil_stat->size;
-
-    oth_xml_rec->checksum_open = cr_safe_string_chunk_insert(
-                                oth_xml_rec->chunk,
-                                oth_stat->checksum);
-    oth_xml_rec->checksum_open_type = cr_safe_string_chunk_insert(
-                                oth_xml_rec->chunk,
-                                cr_checksum_name_str(oth_stat->checksum_type));
-    oth_xml_rec->size_open = oth_stat->size;
+    cr_repomd_record_load_contentstat(pri_xml_rec, pri_stat);
+    cr_repomd_record_load_contentstat(fil_xml_rec, fil_stat);
+    cr_repomd_record_load_contentstat(oth_xml_rec, oth_stat);
 
     cr_repomd_record_fill(pri_xml_rec, CR_CHECKSUM_SHA256, NULL);
     cr_repomd_record_fill(fil_xml_rec, CR_CHECKSUM_SHA256, NULL);

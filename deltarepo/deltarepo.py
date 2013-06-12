@@ -18,16 +18,16 @@ def parse_options():
                       help="Run in quiet mode.")
     parser.add_option("-v", "--verbose", action="store_true",
                       help="Run in verbose mode.")
-    parser.add_option("-l", "--list-datatypes", action="store_true",
-                      help="List datatypes for which delta is supported.")
+    #parser.add_option("-l", "--list-datatypes", action="store_true",
+    #                  help="List datatypes for which delta is supported.")
     parser.add_option("-o", "--outputdir", action="store", metavar="DIR",
                       help="Output directory.", default="./")
 
     group = OptionGroup(parser, "Delta generation")
-    group.add_option("-s", "--skip", action="append", metavar="DATATYPE",
+    group.add_option("--skip", action="append", metavar="DATATYPE",
                      help="Skip delta on the DATATYPE. Could be specified "\
                      "multiple times. (E.g., --skip=comps)")
-    group.add_option("-d", "--do-only", action="append", metavar="DATATYPE",
+    group.add_option("--do-only", action="append", metavar="DATATYPE",
                      help="Do delta only for the DATATYPE. Could be specified "\
                      "multiple times. (E.g., --do-only=primary)")
     group.add_option("-t", "--id-type", action="store", metavar="HASHTYPE",
@@ -38,6 +38,8 @@ def parse_options():
     group = OptionGroup(parser, "Delta application")
     group.add_option("-a", "--apply", action="store_true",
                      help="Enable delta application mode.")
+    group.add_option("-d", "--database", action="store_true",
+                     help="Gen database.")
     parser.add_option_group(group)
 
     options, args = parser.parse_args()
@@ -102,7 +104,8 @@ if __name__ == "__main__":
 
     if options.apply:
         # Applying delta
-        generator.applydelta(args[0], args[1], out_path=options.outputdir)
+        generator.applydelta(args[0], args[1], out_path=options.outputdir,
+                             database=options.database)
     else:
         # Do delta
         generator.gendelta(args[0], args[1], out_path=options.outputdir,

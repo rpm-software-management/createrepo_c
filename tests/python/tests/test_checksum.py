@@ -33,3 +33,5 @@ class TestCaseChecksum(unittest.TestCase):
         self.assertEqual(cr.checksum_type("sha384"), cr.SHA384)
         self.assertEqual(cr.checksum_type("sha512"), cr.SHA512)
 
+        self.assertEqual(cr.checksum_type("foobar"), cr.UNKNOWN_CHECKSUM)
+

@@ -144,6 +144,7 @@ init_createrepo_c(void)
     PyModule_AddIntConstant(m, "VERSION_PATCH", CR_VERSION_PATCH);
 
     /* Checksum types */
+    PyModule_AddIntConstant(m, "CHECKSUM_UNKNOWN", CR_CHECKSUM_UNKNOWN);
     PyModule_AddIntConstant(m, "MD5", CR_CHECKSUM_MD5);
     PyModule_AddIntConstant(m, "SHA", CR_CHECKSUM_SHA);
     PyModule_AddIntConstant(m, "SHA1", CR_CHECKSUM_SHA1);

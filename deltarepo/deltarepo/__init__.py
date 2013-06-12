@@ -72,7 +72,7 @@ class DeltaModule(LoggingInterface):
             self._warning("Missing pkgId in a package!")
         if not pkg.location_href:
             self._warning("Missing location_href at package %s %s" % \
-                          pkg.name, pkg.pkgId)
+                          (pkg.name, pkg.pkgId))
         return "%s%s%s" % (pkg.pkgId or '',
                            pkg.location_href or '',
                            pkg.location_base or '')
@@ -423,7 +423,7 @@ class DeltaRepoGenerator(LoggingInterface):
         self.checksum_type = cr.checksum_type(delta_records["primary"].checksum_type)
         if self.checksum_type == cr.UNKNOWN_CHECKSUM:
             raise DeltaRepoError("Unknown checksum type detected: %s" % \
-                    new_records["primary"].checksum_type)
+                    delta_records["primary"].checksum_type)
 
         # Detection if use unique md filenames
         if delta_records["primary"].location_href.split("primary")[0] != "":

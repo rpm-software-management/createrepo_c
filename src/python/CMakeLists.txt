@@ -14,6 +14,7 @@ FILE(COPY ${createrepo_c_COPIES} DESTINATION ./createrepo_c/)
 
 SET (craeterepo_cmodule_SRCS
      checksum-py.c
+     compression_wrapper-py.c
      contentstat-py.c
      createrepo_cmodule.c
      exception-py.c

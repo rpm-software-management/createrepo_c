@@ -22,6 +22,7 @@
 #include "src/createrepo_c.h"
 
 #include "checksum-py.h"
+#include "compression_wrapper-py.h"
 #include "contentstat-py.h"
 #include "exception-py.h"
 #include "load_metadata-py.h"
@@ -85,6 +86,12 @@ init_createrepo_c(void)
         return;
     Py_INCREF(&ContentStat_Type);
     PyModule_AddObject(m, "ContentStat", (PyObject *)&ContentStat_Type);
+
+    /* _createrepo_c.CrFile */
+    if (PyType_Ready(&CrFile_Type) < 0)
+        return;
+    Py_INCREF(&CrFile_Type);
+    PyModule_AddObject(m, "CrFile", (PyObject *)&CrFile_Type);
 
     /* _createrepo_c.Package */
     if (PyType_Ready(&Package_Type) < 0)
@@ -152,6 +159,10 @@ init_createrepo_c(void)
     PyModule_AddIntConstant(m, "SHA256", CR_CHECKSUM_SHA256);
     PyModule_AddIntConstant(m, "SHA384", CR_CHECKSUM_SHA384);
     PyModule_AddIntConstant(m, "SHA512", CR_CHECKSUM_SHA512);
+
+    /* File open modes */
+    PyModule_AddIntConstant(m, "MODE_READ", CR_CW_MODE_READ);
+    PyModule_AddIntConstant(m, "MODE_WRITE", CR_CW_MODE_WRITE);
 
     /* Compression types */
     PyModule_AddIntConstant(m, "AUTO_DETECT_COMPRESSION", CR_CW_AUTO_DETECT_COMPRESSION);

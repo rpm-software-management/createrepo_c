@@ -43,7 +43,7 @@ class TestCaseContentStat(unittest.TestCase):
         self.assertEqual(cs.checksum, "67bc6282915fad80dc11f3d7c3210977a0bde"\
                                       "05a762256d86083c2447d425776")
 
-    def test_contentstat_2(self):
+    def test_contentstat_ref_in_xmlfile(self):
         """Test if reference is saved properly"""
 
         pkg = cr.package_from_rpm(PKG_ARCHER_PATH)
@@ -63,6 +63,24 @@ class TestCaseContentStat(unittest.TestCase):
         self.assertTrue(os.path.isfile(path))
         del cs
         f.add_pkg(pkg)
+        f.close()
+
+        self.assertTrue(os.path.isfile(path))
+
+    def test_contentstat_ref_in_crfile(self):
+        """Test if reference is saved properly"""
+
+        cs = cr.ContentStat(cr.SHA256)
+        self.assertEqual(cs.size, 0)
+        self.assertEqual(cs.checksum_type, cr.SHA256)
+        self.assertEqual(cs.checksum, None)
+
+        path = os.path.join(self.tmpdir, "foofile.gz")
+        f = cr.CrFile(path, cr.MODE_WRITE, cr.GZ_COMPRESSION, cs)
+        self.assertTrue(f)
+        self.assertTrue(os.path.isfile(path))
+        del cs
+        f.write("foobar")
         f.close()
 
         self.assertTrue(os.path.isfile(path))

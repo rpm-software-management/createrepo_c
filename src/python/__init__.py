@@ -18,6 +18,9 @@ SHA256              = _createrepo_c.SHA256
 SHA384              = _createrepo_c.SHA384
 SHA512              = _createrepo_c.SHA512
 
+MODE_READ   = _createrepo_c.MODE_READ
+MODE_WRITE  = _createrepo_c.MODE_WRITE
+
 AUTO_DETECT_COMPRESSION = _createrepo_c.AUTO_DETECT_COMPRESSION
 UNKNOWN_COMPRESSION     = _createrepo_c.UNKNOWN_COMPRESSION
 NO_COMPRESSION          = _createrepo_c.NO_COMPRESSION
@@ -51,6 +54,13 @@ CreaterepoCError = _createrepo_c.CreaterepoCError
 # ContentStat class
 
 ContentStat = _createrepo_c.ContentStat
+
+# CrFile class
+
+class CrFile(_createrepo_c.CrFile):
+    def __init__(self, filename, mode=MODE_READ,
+                 comtype=NO_COMPRESSION, stat=None):
+        _createrepo_c.CrFile.__init__(self, filename, mode, comtype, stat)
 
 # Metadata class
 

@@ -26,6 +26,49 @@
 #include "contentstat-py.h"
 #include "typeconversion.h"
 
+/*
+ * Module functions
+ */
+
+PyObject *
+py_compression_suffix(PyObject *self, PyObject *args)
+{
+    int type;
+
+    CR_UNUSED(self);
+
+    if (!PyArg_ParseTuple(args, "i:py_compression_suffix", &type))
+        return NULL;
+
+    return PyStringOrNone_FromString(cr_compression_suffix(type));
+}
+
+PyObject *
+py_detect_compression(PyObject *self, PyObject *args)
+{
+    long type;
+    char *filename;
+    GError *tmp_err = NULL;
+
+    CR_UNUSED(self);
+
+    if (!PyArg_ParseTuple(args, "s:py_detect_compression", &filename))
+        return NULL;
+
+    type = cr_detect_compression(filename, &tmp_err);
+    if (tmp_err) {
+        PyErr_Format(CrErr_Exception, "%s", tmp_err->message);
+        g_clear_error(&tmp_err);
+        return NULL;
+    }
+
+    return PyLong_FromLong(type);
+}
+
+/*
+ * CrFile object
+ */
+
 typedef struct {
     PyObject_HEAD
     CR_FILE *f;

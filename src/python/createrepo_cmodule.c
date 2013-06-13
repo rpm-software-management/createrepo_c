@@ -64,6 +64,10 @@ static struct PyMethodDef createrepo_c_methods[] = {
      METH_VARARGS, NULL},
     {"compress_file",           (PyCFunction)py_compress_file_with_stat,
      METH_VARARGS, NULL},
+    {"compression_suffix",      (PyCFunction)py_compression_suffix,
+     METH_VARARGS, NULL},
+    {"detect_compression",      (PyCFunction)py_detect_compression,
+     METH_VARARGS, NULL},
     { NULL }
 };
 

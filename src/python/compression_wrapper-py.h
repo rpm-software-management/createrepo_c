@@ -26,4 +26,7 @@ extern PyTypeObject CrFile_Type;
 
 #define CrFileObject_Check(o)   PyObject_TypeCheck(o, &CrFile_Type)
 
+PyObject *py_compression_suffix(PyObject *self, PyObject *args);
+PyObject *py_detect_compression(PyObject *self, PyObject *args);
+
 #endif

@@ -94,7 +94,7 @@ xmlfile_init(_XmlFileObject *self, PyObject *args, PyObject *kwds)
     } else if (ContentStatObject_Check(py_stat)) {
         stat = ContentStat_FromPyObject(py_stat);
     } else {
-        PyErr_SetString(PyExc_ValueError, "Use ContentStat or None");
+        PyErr_SetString(PyExc_TypeError, "Use ContentStat or None");
         return -1;
     }
 
@@ -111,8 +111,7 @@ xmlfile_init(_XmlFileObject *self, PyObject *args, PyObject *kwds)
     /* Init */
     self->xmlfile = cr_xmlfile_sopen(path, type, comtype, stat, &err);
     if (err) {
-        PyErr_Format(CrErr_Exception, "XmlFile initialization failed: %s", err->message);
-        g_clear_error(&err);
+        nice_exception(&err, NULL);
         return -1;
     }
 
@@ -168,8 +167,7 @@ set_num_of_pkgs(_XmlFileObject *self, PyObject *args)
 
     cr_xmlfile_set_num_of_pkgs(self->xmlfile, num, &err);
     if (err) {
-        PyErr_Format(CrErr_Exception, "XmlFile set_num_of_pkgs error: %s", err->message);
-        g_clear_error(&err);
+        nice_exception(&err, NULL);
         return NULL;
     }
 
@@ -190,8 +188,7 @@ add_pkg(_XmlFileObject *self, PyObject *args)
 
     cr_xmlfile_add_pkg(self->xmlfile, Package_FromPyObject(py_pkg), &err);
     if (err) {
-        PyErr_Format(CrErr_Exception, "Cannot add package: %s", err->message);
-        g_clear_error(&err);
+        nice_exception(&err, NULL);
         return NULL;
     }
 
@@ -212,8 +209,7 @@ add_chunk(_XmlFileObject *self, PyObject *args)
 
     cr_xmlfile_add_chunk(self->xmlfile, chunk, &err);
     if (err) {
-        PyErr_Format(CrErr_Exception, "Cannot add chunk: %s", err->message);
-        g_clear_error(&err);
+        nice_exception(&err, NULL);
         return NULL;
     }
 
@@ -236,8 +232,7 @@ xmlfile_close(_XmlFileObject *self, void *nothing)
     self->py_stat = NULL;
 
     if (err) {
-        PyErr_Format(CrErr_Exception, "Error while closing: %s", err->message);
-        g_clear_error(&err);
+        nice_exception(&err, NULL);
         return NULL;
     }
 

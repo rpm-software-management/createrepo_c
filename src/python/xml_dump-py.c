@@ -41,9 +41,7 @@ py_xml_dump_primary(PyObject *self, PyObject *args)
 
     xml = cr_xml_dump_primary(Package_FromPyObject(py_pkg), &err);
     if (err) {
-        PyErr_Format(CrErr_Exception, "Error while dumping primary xml: %s",
-                     err->message);
-        g_clear_error(&err);
+        nice_exception(&err, NULL);
         return NULL;
     }
 
@@ -66,9 +64,7 @@ py_xml_dump_filelists(PyObject *self, PyObject *args)
 
     xml = cr_xml_dump_filelists(Package_FromPyObject(py_pkg), &err);
     if (err) {
-        PyErr_Format(CrErr_Exception, "Error while dumping filelists xml: %s",
-                     err->message);
-        g_clear_error(&err);
+        nice_exception(&err, NULL);
         return NULL;
     }
 
@@ -91,9 +87,7 @@ py_xml_dump_other(PyObject *self, PyObject *args)
 
     xml = cr_xml_dump_other(Package_FromPyObject(py_pkg), &err);
     if (err) {
-        PyErr_Format(CrErr_Exception, "Error while dumping other xml: %s",
-                     err->message);
-        g_clear_error(&err);
+        nice_exception(&err, NULL);
         return NULL;
     }
 
@@ -117,9 +111,7 @@ py_xml_dump(PyObject *self, PyObject *args)
 
     xml_res = cr_xml_dump(Package_FromPyObject(py_pkg), &err);
     if (err) {
-        PyErr_Format(CrErr_Exception, "Error while dumping xml: %s",
-                     err->message);
-        g_clear_error(&err);
+        nice_exception(&err, NULL);
         return NULL;
     }
 

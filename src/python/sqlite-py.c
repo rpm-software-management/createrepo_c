@@ -76,7 +76,7 @@ sqlite_init(_SqliteObject *self, PyObject *args, PyObject *kwds)
 
     /* Check arguments */
     if (db_type < CR_DB_PRIMARY || db_type >= CR_DB_SENTINEL) {
-        PyErr_SetString(PyExc_ValueError, "Unknown type value");
+        PyErr_SetString(PyExc_ValueError, "Unknown db type");
         return -1;
     }
 
@@ -91,8 +91,7 @@ sqlite_init(_SqliteObject *self, PyObject *args, PyObject *kwds)
     /* Init */
     self->db = cr_db_open(path, db_type, &err);
     if (err) {
-        PyErr_Format(CrErr_Exception, "Sqlite initialization failed: %s", err->message);
-        g_clear_error(&err);
+        nice_exception(&err, NULL);
         return -1;
     }
 
@@ -141,8 +140,7 @@ add_pkg(_SqliteObject *self, PyObject *args)
 
     cr_db_add_pkg(self->db, Package_FromPyObject(py_pkg), &err);
     if (err) {
-        PyErr_Format(CrErr_Exception, "Cannot add package: %s", err->message);
-        g_clear_error(&err);
+        nice_exception(&err, NULL);
         return NULL;
     }
 
@@ -163,8 +161,7 @@ dbinfo_update(_SqliteObject *self, PyObject *args)
 
     cr_db_dbinfo_update(self->db, checksum, &err);
     if (err) {
-        PyErr_Format(CrErr_Exception, "Sqlite dbinfo_update error: %s", err->message);
-        g_clear_error(&err);
+        nice_exception(&err, NULL);
         return NULL;
     }
 
@@ -182,8 +179,7 @@ close_db(_SqliteObject *self, void *nothing)
         cr_db_close(self->db, &err);
         self->db = NULL;
         if (err) {
-            PyErr_Format(CrErr_Exception, "Sqlite close error: %s", err->message);
-            g_clear_error(&err);
+            nice_exception(&err, NULL);
             return NULL;
         }
     }

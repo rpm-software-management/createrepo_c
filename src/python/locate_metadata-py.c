@@ -85,8 +85,7 @@ metadatalocation_init(_MetadataLocationObject *self, PyObject *args, PyObject *k
     /* Init */
     self->ml = cr_locate_metadata(repopath, ignore_db, &tmp_err);
     if (tmp_err) {
-        PyErr_SetString(CrErr_Exception, tmp_err->message);
-        g_clear_error(&tmp_err);
+        nice_exception(&tmp_err, NULL);
         return -1;
     }
     return 0;
@@ -132,7 +131,7 @@ getitem(_MetadataLocationObject *self, PyObject *pykey)
         return NULL;
 
     if (!PyString_Check(pykey)) {
-        PyErr_SetString(PyExc_ValueError, "String expected!");
+        PyErr_SetString(PyExc_TypeError, "String expected!");
         return NULL;
     }
 

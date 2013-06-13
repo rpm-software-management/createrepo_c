@@ -49,12 +49,12 @@ class TestCaseCrFile(unittest.TestCase):
         self.assertFalse(os.path.exists(path))
 
         # Bad contentstat object
-        self.assertRaises(ValueError, cr.XmlFile, path,
+        self.assertRaises(TypeError, cr.XmlFile, path,
                           cr.MODE_READ, cr.GZ_COMPRESSION, "foo")
         self.assertFalse(os.path.exists(path))
 
         # Non existing path
-        self.assertRaises(cr.CreaterepoCError, cr.CrFile,
+        self.assertRaises(IOError, cr.CrFile,
                           "foobar/foo/xxx/cvydmaticxuiowe")
 
     def test_crfile_no_compression(self):

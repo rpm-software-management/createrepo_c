@@ -83,9 +83,7 @@ contentstat_init(_ContentStatObject *self, PyObject *args, PyObject *kwds)
     /* Init */
     self->stat = cr_contentstat_new(type, &tmp_err);
     if (tmp_err) {
-        PyErr_Format(CrErr_Exception, "ContentStat initialization failed: %s",
-                     tmp_err->message);
-        g_error_free(tmp_err);
+        nice_exception(&tmp_err, "ContentStat init failed: ");
         return -1;
     }
 
@@ -154,7 +152,7 @@ set_num(_ContentStatObject *self, PyObject *value, void *member_offset)
     } else if (PyInt_Check(value)) {
         val = (gint64) PyInt_AS_LONG(value);
     } else {
-        PyErr_SetString(PyExc_ValueError, "Number expected!");
+        PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;
     }
     cr_ContentStat *rec = self->stat;
@@ -173,7 +171,7 @@ set_int(_ContentStatObject *self, PyObject *value, void *member_offset)
     } else if (PyInt_Check(value)) {
         val = PyInt_AS_LONG(value);
     } else {
-        PyErr_SetString(PyExc_ValueError, "Number expected!");
+        PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;
     }
     cr_ContentStat *rec = self->stat;
@@ -187,7 +185,7 @@ set_str(_ContentStatObject *self, PyObject *value, void *member_offset)
     if (check_ContentStatStatus(self))
         return -1;
     if (!PyString_Check(value) && value != Py_None) {
-        PyErr_SetString(PyExc_ValueError, "String or None expected!");
+        PyErr_SetString(PyExc_TypeError, "String or None expected!");
         return -1;
     }
     cr_ContentStat *rec = self->stat;

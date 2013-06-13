@@ -67,7 +67,7 @@ class TestCaseXmlFile(unittest.TestCase):
         self.assertFalse(os.path.exists(path))
 
         # Bad contentstat object
-        self.assertRaises(ValueError, cr.XmlFile, path,
+        self.assertRaises(TypeError, cr.XmlFile, path,
                           cr.XMLFILE_PRIMARY, cr.GZ_COMPRESSION, "foo")
         self.assertFalse(os.path.exists(path))
 
@@ -77,7 +77,7 @@ class TestCaseXmlFile(unittest.TestCase):
 
         # Already existing file
         open(path, "w").write("foobar")
-        self.assertRaises(cr.CreaterepoCError, cr.PrimaryXmlFile, path)
+        self.assertRaises(IOError, cr.PrimaryXmlFile, path)
 
     def test_xmlfile_no_compression(self):
         path = os.path.join(self.tmpdir, "primary.xml")

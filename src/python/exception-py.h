@@ -26,4 +26,11 @@ extern PyObject *CrErr_Exception;
 
 int init_exceptions();
 
+/* Set exception by its return code (e.g., for CRE_IO, CRE_NOFILE, etc. will
+ * be used a build-in python IOError exception) and free the GError.
+ * @param err           GError **, must be !=  NULL
+ * @param format        Prefix for the error message.
+ */
+void nice_exception(GError **err, const char *format, ...);
+
 #endif

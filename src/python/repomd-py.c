@@ -194,8 +194,7 @@ xml_dump(_RepomdObject *self, void *nothing)
     GError *tmp_err = NULL;
     char *xml = cr_xml_dump_repomd(self->repomd, &tmp_err);
     if (tmp_err) {
-        PyErr_Format(CrErr_Exception, "dump failed: %s", tmp_err->message);
-        g_clear_error(&tmp_err);
+        nice_exception(&tmp_err, NULL);
         return NULL;
     }
     py_str = PyStringOrNone_FromString(xml);
@@ -238,7 +237,7 @@ static int
 CheckPyString(PyObject *dep)
 {
     if (!PyString_Check(dep)) {
-        PyErr_SetString(PyExc_ValueError, "Element of list has to be a string");
+        PyErr_SetString(PyExc_TypeError, "Element of list has to be a string");
         return 1;
     }
     return 0;
@@ -248,7 +247,7 @@ static int
 CheckPyDistroTag(PyObject *dep)
 {
     if (!PyTuple_Check(dep) || PyTuple_Size(dep) != 2) {
-        PyErr_SetString(PyExc_ValueError, "Element of list has to be a tuple with 2 items.");
+        PyErr_SetString(PyExc_TypeError, "Element of list has to be a tuple with 2 items.");
         return 1;
     }
     return 0;
@@ -325,7 +324,7 @@ set_str(_RepomdObject *self, PyObject *value, void *member_offset)
     if (check_RepomdStatus(self))
         return -1;
     if (!PyString_Check(value) && value != Py_None) {
-        PyErr_SetString(PyExc_ValueError, "String or None expected!");
+        PyErr_SetString(PyExc_TypeError, "String or None expected!");
         return -1;
     }
     cr_Repomd *repomd = self->repomd;
@@ -347,7 +346,7 @@ set_list(_RepomdObject *self, PyObject *list, void *conv)
         return -1;
 
     if (!PyList_Check(list)) {
-        PyErr_SetString(PyExc_ValueError, "List expected!");
+        PyErr_SetString(PyExc_TypeError, "List expected!");
         return -1;
     }
 

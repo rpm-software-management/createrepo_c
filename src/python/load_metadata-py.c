@@ -43,7 +43,7 @@ check_MetadataStatus(const _MetadataObject *self)
     assert(self != NULL);
     assert(MetadataObject_Check(self));
     if (self->md == NULL) {
-        PyErr_SetString(CrErr_Exception, "Improper createrepo_c Metadata object.");
+        PyErr_SetString(PyExc_TypeError, "Improper createrepo_c Metadata object.");
         return -1;
     }
     return 0;
@@ -152,8 +152,7 @@ load_xml(_MetadataObject *self, PyObject *args)
 
     cr_metadata_load_xml(self->md, MetadataLocation_FromPyObject(ml), &tmp_err);
     if (tmp_err) {
-        PyErr_SetString(CrErr_Exception, tmp_err->message);
-        g_clear_error(&tmp_err);
+        nice_exception(&tmp_err, NULL);
         return NULL;
     }
 
@@ -174,8 +173,7 @@ locate_and_load_xml(_MetadataObject *self, PyObject *args)
 
     cr_metadata_locate_and_load_xml(self->md, path, &tmp_err);
     if (tmp_err) {
-        PyErr_SetString(CrErr_Exception, tmp_err->message);
-        g_clear_error(&tmp_err);
+        nice_exception(&tmp_err, NULL);
         return NULL;
     }
     Py_RETURN_NONE;

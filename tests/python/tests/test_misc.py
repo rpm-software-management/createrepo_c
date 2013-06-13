@@ -20,7 +20,7 @@ class TestCaseMisc(unittest.TestCase):
 
     def test_compress_file(self):
         # Non exist file
-        self.assertRaises(cr.CreaterepoCError, cr.compress_file,
+        self.assertRaises(IOError, cr.compress_file,
                           self.nofile, None, cr.BZ2)
 
         # Compression - use the same name+suffix

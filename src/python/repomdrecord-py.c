@@ -37,7 +37,7 @@ Object_FromRepomdRecord(cr_RepomdRecord *rec)
     PyObject *py_rec;
 
     if (!rec) {
-        PyErr_SetString(PyExc_TypeError, "Expected a cr_RepomdRecord pointer not NULL.");
+        PyErr_SetString(PyExc_ValueError, "Expected a cr_RepomdRecord pointer not NULL.");
         return NULL;
     }
 
@@ -152,8 +152,7 @@ fill(_RepomdRecordObject *self, PyObject *args)
 
     cr_repomd_record_fill(self->record, checksum_type, &err);
     if (err) {
-        PyErr_Format(CrErr_Exception, "fill method failed: %s", err->message);
-        g_clear_error(&err);
+        nice_exception(&err, NULL);
         return NULL;
     }
 
@@ -167,7 +166,7 @@ compress_and_fill(_RepomdRecordObject *self, PyObject *args)
     PyObject *compressed_repomdrecord;
     GError *err = NULL;
 
-    if (!PyArg_ParseTuple(args, "O!ii:fill",
+    if (!PyArg_ParseTuple(args, "O!ii:compress_and_fill",
                           &RepomdRecord_Type,
                           &compressed_repomdrecord,
                           &checksum_type,
@@ -183,8 +182,7 @@ compress_and_fill(_RepomdRecordObject *self, PyObject *args)
                                        compression_type,
                                        &err);
     if (err) {
-        PyErr_Format(CrErr_Exception, "compress_and_fill method failed: %s", err->message);
-        g_clear_error(&err);
+        nice_exception(&err, NULL);
         return NULL;
     }
 
@@ -200,8 +198,7 @@ rename_file(_RepomdRecordObject *self, void *nothing)
 
     cr_repomd_record_rename_file(self->record, &err);
     if (err) {
-        PyErr_Format(CrErr_Exception, "rename_file method failed: %s", err->message);
-        g_clear_error(&err);
+        nice_exception(&err, NULL);
         return NULL;
     }
 
@@ -282,7 +279,7 @@ set_num(_RepomdRecordObject *self, PyObject *value, void *member_offset)
     } else if (PyInt_Check(value)) {
         val = (gint64) PyInt_AS_LONG(value);
     } else {
-        PyErr_SetString(PyExc_ValueError, "Number expected!");
+        PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;
     }
     cr_RepomdRecord *rec = self->record;
@@ -301,7 +298,7 @@ set_int(_RepomdRecordObject *self, PyObject *value, void *member_offset)
     } else if (PyInt_Check(value)) {
         val = PyInt_AS_LONG(value);
     } else {
-        PyErr_SetString(PyExc_ValueError, "Number expected!");
+        PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;
     }
     cr_RepomdRecord *rec = self->record;
@@ -315,7 +312,7 @@ set_str(_RepomdRecordObject *self, PyObject *value, void *member_offset)
     if (check_RepomdRecordStatus(self))
         return -1;
     if (!PyString_Check(value) && value != Py_None) {
-        PyErr_SetString(PyExc_ValueError, "String or None expected!");
+        PyErr_SetString(PyExc_TypeError, "String or None expected!");
         return -1;
     }
     cr_RepomdRecord *rec = self->record;

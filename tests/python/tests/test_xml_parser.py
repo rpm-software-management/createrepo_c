@@ -122,7 +122,7 @@ class TestCaseXmlParserPrimary(unittest.TestCase):
             ['fake_bash', 'super_kernel'])
 
     def test_xml_parser_primary_repo02_no_cbs(self):
-        self.assertRaises(TypeError,
+        self.assertRaises(ValueError,
                           cr.xml_parse_primary,
                           REPO_02_PRIXML, None, None, None, 1)
 
@@ -300,7 +300,7 @@ class TestCaseXmlParserFilelists(unittest.TestCase):
             ['fake_bash', 'super_kernel'])
 
     def test_xml_parser_filelists_repo02_no_cbs(self):
-        self.assertRaises(TypeError,
+        self.assertRaises(ValueError,
                           cr.xml_parse_filelists,
                           REPO_02_FILXML, None, None, None)
 
@@ -478,7 +478,7 @@ class TestCaseXmlParserOther(unittest.TestCase):
             ['fake_bash', 'super_kernel'])
 
     def test_xml_parser_other_repo02_no_cbs(self):
-        self.assertRaises(TypeError,
+        self.assertRaises(ValueError,
                           cr.xml_parse_other,
                           REPO_02_OTHXML, None, None, None)
 
@@ -551,6 +551,11 @@ class TestCaseXmlParserOther(unittest.TestCase):
                           newpkgcb, None, warningcb)
 
 class TestCaseXmlParserRepomd(unittest.TestCase):
+
+    def test_xml_parser_repomd_bad_repomd_object(self):
+        self.assertRaises(TypeError,
+                          cr.xml_parse_repomd,
+                          REPO_01_REPOMD, "foo", None)
 
     def test_xml_parser_repomd_repo01(self):
 

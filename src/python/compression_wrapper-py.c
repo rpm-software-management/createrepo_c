@@ -57,8 +57,7 @@ py_detect_compression(PyObject *self, PyObject *args)
 
     type = cr_detect_compression(filename, &tmp_err);
     if (tmp_err) {
-        PyErr_Format(CrErr_Exception, "%s", tmp_err->message);
-        g_clear_error(&tmp_err);
+        nice_exception(&tmp_err, NULL);
         return NULL;
     }
 
@@ -121,6 +120,7 @@ crfile_init(_CrFileObject *self, PyObject *args, PyObject *kwds)
         return -1;
 
     /* Check arguments */
+
     if (mode != CR_CW_MODE_READ && mode != CR_CW_MODE_WRITE) {
         PyErr_SetString(PyExc_ValueError, "Bad open mode");
         return -1;
@@ -136,7 +136,7 @@ crfile_init(_CrFileObject *self, PyObject *args, PyObject *kwds)
     } else if (ContentStatObject_Check(py_stat)) {
         stat = ContentStat_FromPyObject(py_stat);
     } else {
-        PyErr_SetString(PyExc_ValueError, "Use ContentStat or None");
+        PyErr_SetString(PyExc_TypeError, "Use ContentStat or None");
         return -1;
     }
 
@@ -153,8 +153,7 @@ crfile_init(_CrFileObject *self, PyObject *args, PyObject *kwds)
     /* Init */
     self->f = cr_sopen(path, mode, comtype, stat, &err);
     if (err) {
-        PyErr_Format(CrErr_Exception, "CrFile initialization failed: %s", err->message);
-        g_clear_error(&err);
+        nice_exception(&err, "CrFile %s init failed: ", path);
         return -1;
     }
 
@@ -208,8 +207,7 @@ py_write(_CrFileObject *self, PyObject *args)
 
     cr_write(self->f, str, len, &tmp_err);
     if (tmp_err) {
-        PyErr_Format(CrErr_Exception, "%s", tmp_err->message);
-        g_clear_error(&tmp_err);
+        nice_exception(&tmp_err, NULL);
         return NULL;
     }
 
@@ -232,8 +230,7 @@ py_close(_CrFileObject *self, void *nothing)
     self->py_stat = NULL;
 
     if (tmp_err) {
-        PyErr_Format(CrErr_Exception, "Close error: %s", tmp_err->message);
-        g_clear_error(&tmp_err);
+        nice_exception(&tmp_err, "Close error: ");
         return NULL;
     }
 

@@ -48,7 +48,7 @@ Object_FromPackage(cr_Package *pkg, int free_on_destroy)
     PyObject *pypkg;
 
     if (!pkg) {
-        PyErr_SetString(PyExc_TypeError, "Expected a cr_Package pointer not NULL.");
+        PyErr_SetString(PyExc_ValueError, "Expected a cr_Package pointer not NULL.");
         return NULL;
     }
 
@@ -322,7 +322,7 @@ set_num(_PackageObject *self, PyObject *value, void *member_offset)
     } else if (PyInt_Check(value)) {
         val = (gint64) PyInt_AS_LONG(value);
     } else {
-        PyErr_SetString(PyExc_ValueError, "Number expected!");
+        PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;
     }
     cr_Package *pkg = self->package;
@@ -336,7 +336,7 @@ set_str(_PackageObject *self, PyObject *value, void *member_offset)
     if (check_PackageStatus(self))
         return -1;
     if (!PyString_Check(value) && value != Py_None) {
-        PyErr_SetString(PyExc_ValueError, "String or None expected!");
+        PyErr_SetString(PyExc_TypeError, "String or None expected!");
         return -1;
     }
     cr_Package *pkg = self->package;
@@ -366,7 +366,7 @@ static int
 CheckPyDependency(PyObject *dep)
 {
     if (!PyTuple_Check(dep) || PyTuple_Size(dep) != 6) {
-        PyErr_SetString(PyExc_ValueError, "Element of list has to be a tuple with 6 items.");
+        PyErr_SetString(PyExc_TypeError, "Element of list has to be a tuple with 6 items.");
         return 1;
     }
     return 0;
@@ -376,7 +376,7 @@ static int
 CheckPyPackageFile(PyObject *dep)
 {
     if (!PyTuple_Check(dep) || PyTuple_Size(dep) != 3) {
-        PyErr_SetString(PyExc_ValueError, "Element of list has to be a tuple with 3 items.");
+        PyErr_SetString(PyExc_TypeError, "Element of list has to be a tuple with 3 items.");
         return 1;
     }
     return 0;
@@ -386,7 +386,7 @@ static int
 CheckPyChangelogEntry(PyObject *dep)
 {
     if (!PyTuple_Check(dep) || PyTuple_Size(dep) != 3) {
-        PyErr_SetString(PyExc_ValueError, "Element of list has to be a tuple with 3 items.");
+        PyErr_SetString(PyExc_TypeError, "Element of list has to be a tuple with 3 items.");
         return 1;
     }
     return 0;
@@ -403,7 +403,7 @@ set_list(_PackageObject *self, PyObject *list, void *conv)
         return -1;
 
     if (!PyList_Check(list)) {
-        PyErr_SetString(PyExc_ValueError, "List expected!");
+        PyErr_SetString(PyExc_TypeError, "List expected!");
         return -1;
     }
 

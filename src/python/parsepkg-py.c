@@ -48,17 +48,10 @@ py_package_from_rpm(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    if (!g_file_test(filename, G_FILE_TEST_IS_REGULAR)) {
-        PyErr_Format(PyExc_IOError, "File %s doesn't exist", filename);
-        return NULL;
-    }
-
     pkg = cr_package_from_rpm(filename, checksum_type, location_href,
                               location_base, changelog_limit, NULL, &tmp_err);
     if (tmp_err) {
-        PyErr_Format(CrErr_Exception, "Cannot load %s: %s",
-                     filename, tmp_err->message);
-        g_clear_error(&tmp_err);
+        nice_exception(&tmp_err, "Cannot load %s: ", filename);
         return NULL;
     }
 
@@ -86,18 +79,10 @@ py_xml_from_rpm(PyObject *self, PyObject *args)
         return NULL;
     }
 
-    if (!g_file_test(filename, G_FILE_TEST_IS_REGULAR)) {
-        PyErr_Format(PyExc_IOError, "File %s doesn't exist", filename);
-        return NULL;
-    }
-
-
     xml_res = cr_xml_from_rpm(filename, checksum_type, location_href,
                               location_base, changelog_limit, NULL, &tmp_err);
     if (tmp_err) {
-        PyErr_Format(CrErr_Exception, "Cannot load %s: %s",
-                     filename, tmp_err->message);
-        g_clear_error(&tmp_err);
+        nice_exception(&tmp_err, "Cannot load %s: ", filename);
         return NULL;
     }
 

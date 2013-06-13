@@ -170,7 +170,7 @@ py_xml_parse_primary(PyObject *self, PyObject *args)
     }
 
     if (py_newpkgcb == Py_None && py_pkgcb == Py_None) {
-        PyErr_SetString(PyExc_TypeError, "both pkgcb and newpkgcb cannot be None");
+        PyErr_SetString(PyExc_ValueError, "both pkgcb and newpkgcb cannot be None");
         return NULL;
     }
 
@@ -210,8 +210,7 @@ py_xml_parse_primary(PyObject *self, PyObject *args)
     Py_XDECREF(cbdata.py_pkg);
 
     if (tmp_err) {
-        PyErr_Format(CrErr_Exception, "%s", tmp_err->message);
-        g_clear_error(&tmp_err);
+        nice_exception(&tmp_err, NULL);
         return NULL;
     }
 
@@ -252,7 +251,7 @@ py_xml_parse_filelists(PyObject *self, PyObject *args)
     }
 
     if (py_newpkgcb == Py_None && py_pkgcb == Py_None) {
-        PyErr_SetString(PyExc_TypeError, "both pkgcb and newpkgcb cannot be None");
+        PyErr_SetString(PyExc_ValueError, "both pkgcb and newpkgcb cannot be None");
         return NULL;
     }
 
@@ -291,8 +290,7 @@ py_xml_parse_filelists(PyObject *self, PyObject *args)
     Py_XDECREF(cbdata.py_pkg);
 
     if (tmp_err) {
-        PyErr_Format(CrErr_Exception, "%s", tmp_err->message);
-        g_clear_error(&tmp_err);
+        nice_exception(&tmp_err, NULL);
         return NULL;
     }
 
@@ -333,7 +331,7 @@ py_xml_parse_other(PyObject *self, PyObject *args)
     }
 
     if (py_newpkgcb == Py_None && py_pkgcb == Py_None) {
-        PyErr_SetString(PyExc_TypeError, "both pkgcb and newpkgcb cannot be None");
+        PyErr_SetString(PyExc_ValueError, "both pkgcb and newpkgcb cannot be None");
         return NULL;
     }
 
@@ -372,8 +370,7 @@ py_xml_parse_other(PyObject *self, PyObject *args)
     Py_XDECREF(cbdata.py_pkg);
 
     if (tmp_err) {
-        PyErr_Format(CrErr_Exception, "%s", tmp_err->message);
-        g_clear_error(&tmp_err);
+        nice_exception(&tmp_err, NULL);
         return NULL;
     }
 
@@ -391,15 +388,11 @@ py_xml_parse_repomd(PyObject *self, PyObject *args)
     cr_Repomd *repomd;
     GError *tmp_err = NULL;
 
-    if (!PyArg_ParseTuple(args, "sOO:py_xml_parse_repomd",
+    if (!PyArg_ParseTuple(args, "sO!O:py_xml_parse_repomd",
                                          &filename,
+                                         &Repomd_Type,
                                          &py_repomd,
                                          &py_warningcb)) {
-        return NULL;
-    }
-
-    if (!RepomdObject_Check(py_repomd)) {
-        PyErr_SetString(PyExc_TypeError, "Bad type");
         return NULL;
     }
 
@@ -433,8 +426,7 @@ py_xml_parse_repomd(PyObject *self, PyObject *args)
     Py_XDECREF(py_warningcb);
 
     if (tmp_err) {
-        PyErr_Format(CrErr_Exception, "%s", tmp_err->message);
-        g_clear_error(&tmp_err);
+        nice_exception(&tmp_err, NULL);
         return NULL;
     }
 

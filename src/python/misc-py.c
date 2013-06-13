@@ -53,8 +53,7 @@ py_compress_file_with_stat(PyObject *self, PyObject *args)
 
     cr_compress_file_with_stat(src, dst, type, contentstat, &tmp_err);
     if (tmp_err) {
-        PyErr_SetString(CrErr_Exception, tmp_err->message);
-        g_clear_error(&tmp_err);
+        nice_exception(&tmp_err, NULL);
         return NULL;
     }
 

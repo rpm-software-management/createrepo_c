@@ -553,11 +553,11 @@ test_contentstating_singlewrite(Outputtest *outputtest, gconstpointer test_data)
     g_assert(stat);
     g_assert(!tmp_err);
 
-    f = cr_open_with_stat(outputtest->tmp_filename,
-                          CR_CW_MODE_WRITE,
-                          CR_CW_NO_COMPRESSION,
-                          stat,
-                          &tmp_err);
+    f = cr_sopen(outputtest->tmp_filename,
+                 CR_CW_MODE_WRITE,
+                 CR_CW_NO_COMPRESSION,
+                 stat,
+                 &tmp_err);
     g_assert(f);
     g_assert(!tmp_err);
 
@@ -579,11 +579,11 @@ test_contentstating_singlewrite(Outputtest *outputtest, gconstpointer test_data)
     g_assert(stat);
     g_assert(!tmp_err);
 
-    f = cr_open_with_stat(outputtest->tmp_filename,
-                          CR_CW_MODE_WRITE,
-                          CR_CW_GZ_COMPRESSION,
-                          stat,
-                          &tmp_err);
+    f = cr_sopen(outputtest->tmp_filename,
+                 CR_CW_MODE_WRITE,
+                 CR_CW_GZ_COMPRESSION,
+                 stat,
+                 &tmp_err);
     g_assert(f);
     g_assert(!tmp_err);
 
@@ -605,11 +605,11 @@ test_contentstating_singlewrite(Outputtest *outputtest, gconstpointer test_data)
     g_assert(stat);
     g_assert(!tmp_err);
 
-    f = cr_open_with_stat(outputtest->tmp_filename,
-                          CR_CW_MODE_WRITE,
-                          CR_CW_BZ2_COMPRESSION,
-                          stat,
-                          &tmp_err);
+    f = cr_sopen(outputtest->tmp_filename,
+                 CR_CW_MODE_WRITE,
+                 CR_CW_BZ2_COMPRESSION,
+                 stat,
+                 &tmp_err);
     g_assert(f);
     g_assert(!tmp_err);
 
@@ -631,11 +631,11 @@ test_contentstating_singlewrite(Outputtest *outputtest, gconstpointer test_data)
     g_assert(stat);
     g_assert(!tmp_err);
 
-    f = cr_open_with_stat(outputtest->tmp_filename,
-                          CR_CW_MODE_WRITE,
-                          CR_CW_XZ_COMPRESSION,
-                          stat,
-                          &tmp_err);
+    f = cr_sopen(outputtest->tmp_filename,
+                 CR_CW_MODE_WRITE,
+                 CR_CW_XZ_COMPRESSION,
+                 stat,
+                 &tmp_err);
     g_assert(f);
     g_assert(!tmp_err);
 
@@ -673,11 +673,11 @@ test_contentstating_multiwrite(Outputtest *outputtest, gconstpointer test_data)
     g_assert(stat);
     g_assert(!tmp_err);
 
-    f = cr_open_with_stat(outputtest->tmp_filename,
-                          CR_CW_MODE_WRITE,
-                          CR_CW_GZ_COMPRESSION,
-                          stat,
-                          &tmp_err);
+    f = cr_sopen(outputtest->tmp_filename,
+                 CR_CW_MODE_WRITE,
+                 CR_CW_GZ_COMPRESSION,
+                 stat,
+                 &tmp_err);
     g_assert(f);
     g_assert(!tmp_err);
 

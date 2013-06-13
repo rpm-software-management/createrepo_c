@@ -468,7 +468,7 @@ cr_compress_file_with_stat(const char *src,
         goto compress_file_cleanup;
     }
 
-    new = cr_open_with_stat(dst, CR_CW_MODE_WRITE, compression, stat, &tmp_err);
+    new = cr_sopen(dst, CR_CW_MODE_WRITE, compression, stat, &tmp_err);
     if (tmp_err) {
         g_debug("%s: Cannot open destination file %s", __func__, dst);
         g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", dst);

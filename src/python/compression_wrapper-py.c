@@ -151,7 +151,7 @@ crfile_init(_CrFileObject *self, PyObject *args, PyObject *kwds)
     }
 
     /* Init */
-    self->f = cr_open_with_stat(path, mode, comtype, stat, &err);
+    self->f = cr_sopen(path, mode, comtype, stat, &err);
     if (err) {
         PyErr_Format(CrErr_Exception, "CrFile initialization failed: %s", err->message);
         g_clear_error(&err);

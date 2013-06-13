@@ -61,11 +61,11 @@ cr_xmlfile_sopen(const char *filename,
         return NULL;
     }
 
-    CR_FILE *cr_f = cr_open_with_stat(filename,
-                                      CR_CW_MODE_WRITE,
-                                      comtype,
-                                      stat,
-                                      &tmp_err);
+    CR_FILE *cr_f = cr_sopen(filename,
+                             CR_CW_MODE_WRITE,
+                             comtype,
+                             stat,
+                             &tmp_err);
     if (tmp_err) {
         g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", filename);
         return NULL;

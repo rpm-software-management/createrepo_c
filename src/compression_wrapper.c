@@ -264,11 +264,11 @@ cr_gz_strerror(gzFile f)
 
 
 CR_FILE *
-cr_open_with_stat(const char *filename,
-                  cr_OpenMode mode,
-                  cr_CompressionType comtype,
-                  cr_ContentStat *stat,
-                  GError **err)
+cr_sopen(const char *filename,
+         cr_OpenMode mode,
+         cr_CompressionType comtype,
+         cr_ContentStat *stat,
+         GError **err)
 {
     CR_FILE *file = NULL;
     cr_CompressionType type = comtype;

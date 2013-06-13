@@ -43,3 +43,26 @@ class TestCaseContentStat(unittest.TestCase):
         self.assertEqual(cs.checksum, "67bc6282915fad80dc11f3d7c3210977a0bde"\
                                       "05a762256d86083c2447d425776")
 
+    def test_contentstat_2(self):
+        """Test if reference is saved properly"""
+
+        pkg = cr.package_from_rpm(PKG_ARCHER_PATH)
+        self.assertTrue(pkg)
+
+        pkg.time_file = 1
+        pkg.time_build = 1
+
+        cs = cr.ContentStat(cr.SHA256)
+        self.assertEqual(cs.size, 0)
+        self.assertEqual(cs.checksum_type, cr.SHA256)
+        self.assertEqual(cs.checksum, None)
+
+        path = os.path.join(self.tmpdir, "primary.xml.gz")
+        f = cr.PrimaryXmlFile(path, cr.GZ_COMPRESSION, cs)
+        self.assertTrue(f)
+        self.assertTrue(os.path.isfile(path))
+        del cs
+        f.add_pkg(pkg)
+        f.close()
+
+        self.assertTrue(os.path.isfile(path))

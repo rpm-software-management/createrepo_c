@@ -30,7 +30,7 @@
 typedef struct {
     PyObject_HEAD
     cr_XmlFile *xmlfile;
-    cr_ContentStat *stat;
+    PyObject *py_stat;
 } _XmlFileObject;
 
 static PyObject * xmlfile_close(_XmlFileObject *self, void *nothing);
@@ -58,7 +58,7 @@ xmlfile_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     _XmlFileObject *self = (_XmlFileObject *)type->tp_alloc(type, 0);
     if (self) {
         self->xmlfile = NULL;
-        self->stat = NULL;
+        self->py_stat = NULL;
     }
     return (PyObject *)self;
 }
@@ -101,8 +101,8 @@ xmlfile_init(_XmlFileObject *self, PyObject *args, PyObject *kwds)
     /* Free all previous resources when reinitialization */
     ret = xmlfile_close(self, NULL);
     Py_XDECREF(ret);
-    Py_XDECREF(self->stat);
-    self->stat = NULL;
+    Py_XDECREF(self->py_stat);
+    self->py_stat = NULL;
     if (ret == NULL) {
         // Error encountered!
         return -1;
@@ -115,8 +115,9 @@ xmlfile_init(_XmlFileObject *self, PyObject *args, PyObject *kwds)
         g_clear_error(&err);
         return -1;
     }
-    self->stat = stat;
-    Py_XINCREF(stat);
+
+    self->py_stat = py_stat;
+    Py_XINCREF(py_stat);
 
     return 0;
 }
@@ -125,7 +126,7 @@ static void
 xmlfile_dealloc(_XmlFileObject *self)
 {
     cr_xmlfile_close(self->xmlfile, NULL);
-    Py_XDECREF(self->stat);
+    Py_XDECREF(self->py_stat);
     Py_TYPE(self)->tp_free(self);
 }
 
@@ -226,17 +227,18 @@ xmlfile_close(_XmlFileObject *self, void *nothing)
 
     CR_UNUSED(nothing);
 
-    Py_XDECREF(self->stat);
-    self->stat = NULL;
-
     if (self->xmlfile) {
         cr_xmlfile_close(self->xmlfile, &err);
         self->xmlfile = NULL;
-        if (err) {
-            PyErr_Format(CrErr_Exception, "Error while closing: %s", err->message);
-            g_clear_error(&err);
-            return NULL;
-        }
+    }
+
+    Py_XDECREF(self->py_stat);
+    self->py_stat = NULL;
+
+    if (err) {
+        PyErr_Format(CrErr_Exception, "Error while closing: %s", err->message);
+        g_clear_error(&err);
+        return NULL;
     }
 
     Py_RETURN_NONE;

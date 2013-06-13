@@ -68,7 +68,7 @@ class TestCaseXmlFile(unittest.TestCase):
 
         # Bad contentstat object
         self.assertRaises(ValueError, cr.XmlFile, path,
-                          cr.XMLFILE_PRIMARY, 678, "foo")
+                          cr.XMLFILE_PRIMARY, cr.GZ_COMPRESSION, "foo")
         self.assertFalse(os.path.exists(path))
 
         # Non existing path

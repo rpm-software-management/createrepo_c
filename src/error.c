@@ -131,6 +131,12 @@ cr_repomd_record_error_quark(void)
 }
 
 GQuark
+cr_threads_error_quark(void)
+{
+    return g_quark_from_static_string("cr_threads_error");
+}
+
+GQuark
 cr_xml_dump_filelists_error_quark(void)
 {
     return g_quark_from_static_string("cr_xml_dump_filelists_error");

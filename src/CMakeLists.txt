@@ -10,6 +10,7 @@ SET (createrepo_c_SRCS
      parsepkg.c
      repomd.c
      sqlite.c
+     threads.c
      xml_dump.c
      xml_dump_filelists.c
      xml_dump_other.c
@@ -36,6 +37,7 @@ SET(headers
     parsepkg.h
     repomd.h
     sqlite.h
+    threads.h
     version.h
     xml_dump.h
     xml_file.h

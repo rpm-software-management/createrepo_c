@@ -51,6 +51,7 @@ extern "C" {
 #include "parsepkg.h"
 #include "repomd.h"
 #include "sqlite.h"
+#include "threads.h"
 #include "version.h"
 #include "xml_dump.h"
 #include "xml_file.h"

@@ -1114,29 +1114,9 @@ main(int argc, char **argv)
         fil_db_rec = cr_repomd_record_new("filelists_db", fil_db_name);
         oth_db_rec = cr_repomd_record_new("other_db", oth_db_name);
 
-        pri_db_rec->checksum_open = cr_safe_string_chunk_insert(
-                                    pri_xml_rec->chunk,
-                                    pri_db_stat->checksum);
-        pri_db_rec->checksum_open_type = cr_safe_string_chunk_insert(
-                            pri_xml_rec->chunk,
-                            cr_checksum_name_str(pri_db_stat->checksum_type));
-        pri_db_rec->size_open = pri_db_stat->size;
-
-        fil_db_rec->checksum_open = cr_safe_string_chunk_insert(
-                                    fil_xml_rec->chunk,
-                                    fil_db_stat->checksum);
-        fil_db_rec->checksum_open_type = cr_safe_string_chunk_insert(
-                            fil_xml_rec->chunk,
-                            cr_checksum_name_str(fil_db_stat->checksum_type));
-        fil_db_rec->size_open = fil_db_stat->size;
-
-        oth_db_rec->checksum_open = cr_safe_string_chunk_insert(
-                                    oth_xml_rec->chunk,
-                                    oth_db_stat->checksum);
-        oth_db_rec->checksum_open_type = cr_safe_string_chunk_insert(
-                            oth_xml_rec->chunk,
-                            cr_checksum_name_str(oth_db_stat->checksum_type));
-        oth_db_rec->size_open = oth_db_stat->size;
+        cr_repomd_record_load_contentstat(pri_db_rec, pri_db_stat);
+        cr_repomd_record_load_contentstat(fil_db_rec, fil_db_stat);
+        cr_repomd_record_load_contentstat(oth_db_rec, oth_db_stat);
 
         cr_contentstat_free(pri_db_stat, NULL);
         cr_contentstat_free(fil_db_stat, NULL);
@@ -1145,8 +1125,6 @@ main(int argc, char **argv)
         cr_repomd_record_fill(pri_db_rec, cmd_options->checksum_type, NULL);
         cr_repomd_record_fill(fil_db_rec, cmd_options->checksum_type, NULL);
         cr_repomd_record_fill(oth_db_rec, cmd_options->checksum_type, NULL);
-
-
 
         g_free(pri_db_name);
         g_free(fil_db_name);

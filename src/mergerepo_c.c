@@ -35,6 +35,7 @@
 #include "xml_dump.h"
 #include "repomd.h"
 #include "sqlite.h"
+#include "threads.h"
 #include "xml_file.h"
 
 
@@ -1270,23 +1271,35 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         gchar *fil_db_c_filename = g_strconcat(fil_db_filename, db_suffix, NULL);
         gchar *oth_db_c_filename = g_strconcat(oth_db_filename, db_suffix, NULL);
 
-        cr_ContentStat *pri_db_stat = cr_contentstat_new(CR_CHECKSUM_SHA256,
-                                                         NULL);
-        cr_ContentStat *fil_db_stat = cr_contentstat_new(CR_CHECKSUM_SHA256,
-                                                         NULL);
-        cr_ContentStat *oth_db_stat = cr_contentstat_new(CR_CHECKSUM_SHA256,
-                                                         NULL);
+        GThreadPool *compress_pool =  g_thread_pool_new(cr_compressing_thread,
+                                                        NULL, 3, FALSE, NULL);
 
-        cr_compress_file_with_stat(pri_db_filename, NULL,
-                         cmd_options->db_compression_type, pri_db_stat, NULL);
-        cr_compress_file_with_stat(fil_db_filename, NULL,
-                         cmd_options->db_compression_type, fil_db_stat, NULL);
-        cr_compress_file_with_stat(oth_db_filename, NULL,
-                         cmd_options->db_compression_type, oth_db_stat, NULL);
+        cr_CompressionTask *pri_db_task;
+        cr_CompressionTask *fil_db_task;
+        cr_CompressionTask *oth_db_task;
 
-        remove(pri_db_filename);
-        remove(fil_db_filename);
-        remove(oth_db_filename);
+        pri_db_task = cr_compressiontask_new(pri_db_filename,
+                                             pri_db_c_filename,
+                                             cmd_options->db_compression_type,
+                                             CR_CHECKSUM_SHA256,
+                                             1, NULL);
+        g_thread_pool_push(compress_pool, pri_db_task, NULL);
+
+        fil_db_task = cr_compressiontask_new(fil_db_filename,
+                                             fil_db_c_filename,
+                                             cmd_options->db_compression_type,
+                                             CR_CHECKSUM_SHA256,
+                                             1, NULL);
+        g_thread_pool_push(compress_pool, fil_db_task, NULL);
+
+        oth_db_task = cr_compressiontask_new(oth_db_filename,
+                                             oth_db_c_filename,
+                                             cmd_options->db_compression_type,
+                                             CR_CHECKSUM_SHA256,
+                                             1, NULL);
+        g_thread_pool_push(compress_pool, oth_db_task, NULL);
+
+        g_thread_pool_free(compress_pool, FALSE, TRUE);
 
         // Prepare repomd records
         pri_db_rec = cr_repomd_record_new("primary_db", pri_db_c_filename);
@@ -1301,13 +1314,13 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         g_free(fil_db_c_filename);
         g_free(oth_db_c_filename);
 
-        cr_repomd_record_load_contentstat(pri_db_rec, pri_db_stat);
-        cr_repomd_record_load_contentstat(fil_db_rec, fil_db_stat);
-        cr_repomd_record_load_contentstat(oth_db_rec, oth_db_stat);
+        cr_repomd_record_load_contentstat(pri_db_rec, pri_db_task->stat);
+        cr_repomd_record_load_contentstat(fil_db_rec, fil_db_task->stat);
+        cr_repomd_record_load_contentstat(oth_db_rec, oth_db_task->stat);
 
-        cr_contentstat_free(pri_db_stat, NULL);
-        cr_contentstat_free(fil_db_stat, NULL);
-        cr_contentstat_free(oth_db_stat, NULL);
+        cr_compressiontask_free(pri_db_task, NULL);
+        cr_compressiontask_free(fil_db_task, NULL);
+        cr_compressiontask_free(oth_db_task, NULL);
 
         cr_repomd_record_fill(pri_db_rec, CR_CHECKSUM_SHA256, NULL);
         cr_repomd_record_fill(fil_db_rec, CR_CHECKSUM_SHA256, NULL);

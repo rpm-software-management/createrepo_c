@@ -37,6 +37,7 @@
 #include "parsepkg.h"
 #include "repomd.h"
 #include "sqlite.h"
+#include "threads.h"
 #include "version.h"
 #include "xml_dump.h"
 #include "xml_file.h"
@@ -1089,24 +1090,35 @@ main(int argc, char **argv)
 
         // Compress dbs
 
-        cr_ContentStat *pri_db_stat = cr_contentstat_new(
-                                            cmd_options->checksum_type, NULL);
-        cr_ContentStat *fil_db_stat = cr_contentstat_new(
-                                            cmd_options->checksum_type, NULL);
-        cr_ContentStat *oth_db_stat = cr_contentstat_new(
-                                            cmd_options->checksum_type, NULL);
+        GThreadPool *compress_pool =  g_thread_pool_new(cr_compressing_thread,
+                                                        NULL, 3, FALSE, NULL);
 
-        cr_compress_file_with_stat(pri_db_filename, NULL, sqlite_compression,
-                                   pri_db_stat, NULL);
-        cr_compress_file_with_stat(fil_db_filename, NULL, sqlite_compression,
-                                   fil_db_stat, NULL);
-        cr_compress_file_with_stat(oth_db_filename, NULL, sqlite_compression,
-                                   oth_db_stat, NULL);
+        cr_CompressionTask *pri_db_task;
+        cr_CompressionTask *fil_db_task;
+        cr_CompressionTask *oth_db_task;
 
-        remove(pri_db_filename);
-        remove(fil_db_filename);
-        remove(oth_db_filename);
+        pri_db_task = cr_compressiontask_new(pri_db_filename,
+                                             pri_db_name,
+                                             sqlite_compression,
+                                             cmd_options->checksum_type,
+                                             1, NULL);
+        g_thread_pool_push(compress_pool, pri_db_task, NULL);
 
+        fil_db_task = cr_compressiontask_new(fil_db_filename,
+                                             fil_db_name,
+                                             sqlite_compression,
+                                             cmd_options->checksum_type,
+                                             1, NULL);
+        g_thread_pool_push(compress_pool, fil_db_task, NULL);
+
+        oth_db_task = cr_compressiontask_new(oth_db_filename,
+                                             oth_db_name,
+                                             sqlite_compression,
+                                             cmd_options->checksum_type,
+                                             1, NULL);
+        g_thread_pool_push(compress_pool, oth_db_task, NULL);
+
+        g_thread_pool_free(compress_pool, FALSE, TRUE);
 
         // Prepare repomd records
 
@@ -1114,13 +1126,13 @@ main(int argc, char **argv)
         fil_db_rec = cr_repomd_record_new("filelists_db", fil_db_name);
         oth_db_rec = cr_repomd_record_new("other_db", oth_db_name);
 
-        cr_repomd_record_load_contentstat(pri_db_rec, pri_db_stat);
-        cr_repomd_record_load_contentstat(fil_db_rec, fil_db_stat);
-        cr_repomd_record_load_contentstat(oth_db_rec, oth_db_stat);
+        cr_repomd_record_load_contentstat(pri_db_rec, pri_db_task->stat);
+        cr_repomd_record_load_contentstat(fil_db_rec, fil_db_task->stat);
+        cr_repomd_record_load_contentstat(oth_db_rec, oth_db_task->stat);
 
-        cr_contentstat_free(pri_db_stat, NULL);
-        cr_contentstat_free(fil_db_stat, NULL);
-        cr_contentstat_free(oth_db_stat, NULL);
+        cr_compressiontask_free(pri_db_task, NULL);
+        cr_compressiontask_free(fil_db_task, NULL);
+        cr_compressiontask_free(oth_db_task, NULL);
 
         cr_repomd_record_fill(pri_db_rec, cmd_options->checksum_type, NULL);
         cr_repomd_record_fill(fil_db_rec, cmd_options->checksum_type, NULL);

@@ -30,6 +30,35 @@ extern "C" {
 
 /** \defgroup   threads     Useful thread function to use in GThreadPool.
  *
+ * Paralelized compression example:
+ * \code
+ * cr_CompressionTask *task_1, *task_2;
+ * GThreadPool *pool;
+ *
+ * // Prepare tasks
+ * task_1 = cr_compressiontask_new("foo", "foo.gz", CR_CW_GZ_COMPRESSION, 1,
+ *                                 CR_CHECKSUM_SHA256, NULL);
+ * task_2 = cr_compressiontask_new("bar", "bar.gz", CR_CW_GZ_COMPRESSION, 1,
+ *                                 CR_CHECKSUM_SHA512, NULL);
+ *
+ * // Create pool for tasks
+ * pool = g_thread_pool_new(cr_compressing_thread, NULL, 2, FALSE, NULL);
+ *
+ * // Push tasks to the pool
+ * g_thread_pool_push(pool, task_1, NULL);
+ * g_thread_pool_push(pool, task_2, NULL);
+ *
+ * // Wait until both treats finish and free the pool.
+ * g_thread_pool_free(pool, FALSE, TRUE);
+ *
+ * // Use results
+ * // Do whatever you want or need to do
+ *
+ * // Clean up
+ * cr_compressiontask_free(task_1, NULL);
+ * cr_compressiontask_free(task_2, NULL);
+ * \endcode
+ *
  * \addtogroup threads
  * @{
  */

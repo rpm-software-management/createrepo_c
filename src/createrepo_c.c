@@ -1039,13 +1039,31 @@ main(int argc, char **argv)
     cr_repomd_record_load_contentstat(fil_xml_rec, fil_stat);
     cr_repomd_record_load_contentstat(oth_xml_rec, oth_stat);
 
-    cr_repomd_record_fill(pri_xml_rec, cmd_options->checksum_type, NULL);
-    cr_repomd_record_fill(fil_xml_rec, cmd_options->checksum_type, NULL);
-    cr_repomd_record_fill(oth_xml_rec, cmd_options->checksum_type, NULL);
-
     cr_contentstat_free(pri_stat, NULL);
     cr_contentstat_free(fil_stat, NULL);
     cr_contentstat_free(oth_stat, NULL);
+
+    GThreadPool *fill_pool = g_thread_pool_new(cr_repomd_record_fill_thread,
+                                               NULL, 3, FALSE, NULL);
+
+    cr_RepomdRecordFillTask *pri_fill_task;
+    cr_RepomdRecordFillTask *fil_fill_task;
+    cr_RepomdRecordFillTask *oth_fill_task;
+
+    pri_fill_task = cr_repomdrecordfilltask_new(pri_xml_rec,
+                                                cmd_options->checksum_type,
+                                                NULL);
+    g_thread_pool_push(fill_pool, pri_fill_task, NULL);
+
+    fil_fill_task = cr_repomdrecordfilltask_new(fil_xml_rec,
+                                                cmd_options->checksum_type,
+                                                NULL);
+    g_thread_pool_push(fill_pool, fil_fill_task, NULL);
+
+    oth_fill_task = cr_repomdrecordfilltask_new(oth_xml_rec,
+                                                cmd_options->checksum_type,
+                                                NULL);
+    g_thread_pool_push(fill_pool, oth_fill_task, NULL);
 
     // Groupfile
 
@@ -1067,6 +1085,14 @@ main(int argc, char **argv)
         cr_repomd_record_fill(updateinfo_rec, cmd_options->checksum_type, NULL);
     }
 
+
+    // Wait till repomd record fill task of xml files ends.
+
+    g_thread_pool_free(fill_pool, FALSE, TRUE);
+
+    cr_repomdrecordfilltask_free(pri_fill_task, NULL);
+    cr_repomdrecordfilltask_free(fil_fill_task, NULL);
+    cr_repomdrecordfilltask_free(oth_fill_task, NULL);
 
     // Sqlite db
 
@@ -1126,6 +1152,10 @@ main(int argc, char **argv)
         fil_db_rec = cr_repomd_record_new("filelists_db", fil_db_name);
         oth_db_rec = cr_repomd_record_new("other_db", oth_db_name);
 
+        g_free(pri_db_name);
+        g_free(fil_db_name);
+        g_free(oth_db_name);
+
         cr_repomd_record_load_contentstat(pri_db_rec, pri_db_task->stat);
         cr_repomd_record_load_contentstat(fil_db_rec, fil_db_task->stat);
         cr_repomd_record_load_contentstat(oth_db_rec, oth_db_task->stat);
@@ -1134,13 +1164,33 @@ main(int argc, char **argv)
         cr_compressiontask_free(fil_db_task, NULL);
         cr_compressiontask_free(oth_db_task, NULL);
 
-        cr_repomd_record_fill(pri_db_rec, cmd_options->checksum_type, NULL);
-        cr_repomd_record_fill(fil_db_rec, cmd_options->checksum_type, NULL);
-        cr_repomd_record_fill(oth_db_rec, cmd_options->checksum_type, NULL);
+        fill_pool = g_thread_pool_new(cr_repomd_record_fill_thread,
+                                      NULL, 3, FALSE, NULL);
 
-        g_free(pri_db_name);
-        g_free(fil_db_name);
-        g_free(oth_db_name);
+        cr_RepomdRecordFillTask *pri_db_fill_task;
+        cr_RepomdRecordFillTask *fil_db_fill_task;
+        cr_RepomdRecordFillTask *oth_db_fill_task;
+
+        pri_db_fill_task = cr_repomdrecordfilltask_new(pri_db_rec,
+                                                       cmd_options->checksum_type,
+                                                       NULL);
+        g_thread_pool_push(fill_pool, pri_db_fill_task, NULL);
+
+        fil_db_fill_task = cr_repomdrecordfilltask_new(fil_db_rec,
+                                                       cmd_options->checksum_type,
+                                                       NULL);
+        g_thread_pool_push(fill_pool, fil_db_fill_task, NULL);
+
+        oth_db_fill_task = cr_repomdrecordfilltask_new(oth_db_rec,
+                                                       cmd_options->checksum_type,
+                                                       NULL);
+        g_thread_pool_push(fill_pool, oth_db_fill_task, NULL);
+
+        g_thread_pool_free(fill_pool, FALSE, TRUE);
+
+        cr_repomdrecordfilltask_free(pri_db_fill_task, NULL);
+        cr_repomdrecordfilltask_free(fil_db_fill_task, NULL);
+        cr_repomdrecordfilltask_free(oth_db_fill_task, NULL);
     }
 
 

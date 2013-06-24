@@ -22,7 +22,7 @@
 #include "error.h"
 #include "misc.h"
 
-/** Compression */
+/** Parallel Compression */
 
 cr_CompressionTask *
 cr_compressiontask_new(const char *src,
@@ -104,5 +104,53 @@ cr_compressing_thread(gpointer data, gpointer user_data)
         // Compression was successful
         if (task->delsrc)
             remove(task->src);
+    }
+}
+
+/** Parallel Repomd Record Fill */
+
+cr_RepomdRecordFillTask *
+cr_repomdrecordfilltask_new(cr_RepomdRecord *record,
+                            cr_ChecksumType checksum_type,
+                            GError **err)
+{
+    cr_RepomdRecordFillTask *task;
+
+    assert(record);
+    assert(!err || *err == NULL);
+
+    task = g_malloc0(sizeof(cr_RepomdRecord));
+    task->record = record;
+    task->checksum_type = checksum_type;
+
+    return task;
+}
+
+void
+cr_repomdrecordfilltask_free(cr_RepomdRecordFillTask *task,
+                             GError **err)
+{
+    assert(!err || *err == NULL);
+
+    if (task->err)
+        g_error_free(task->err);
+    g_free(task);
+}
+
+void
+cr_repomd_record_fill_thread(gpointer data, gpointer user_data)
+{
+    cr_RepomdRecordFillTask *task = data;
+    GError *tmp_err = NULL;
+
+    CR_UNUSED(user_data);
+
+    assert(task);
+
+    cr_repomd_record_fill(task->record, task->checksum_type, &tmp_err);
+
+    if (tmp_err) {
+        // Error encountered
+        g_propagate_error(&task->err, tmp_err);
     }
 }

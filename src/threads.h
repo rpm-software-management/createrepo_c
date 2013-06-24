@@ -23,6 +23,7 @@
 #include <glib.h>
 #include "compression_wrapper.h"
 #include "checksum.h"
+#include "repomd.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -98,6 +99,7 @@ typedef struct {
  *                          cr_compresiontask_new function. The GError
  *                          that will be at created cr_CompressionTask is
  *                          different.
+ * @return                  New cr_CompressionTask.
  */
 cr_CompressionTask *
 cr_compressiontask_new(const char *src,
@@ -109,7 +111,7 @@ cr_compressiontask_new(const char *src,
 
 /** Frees cr_CompressionTask and all its components.
  * @param task      cr_CompressionTask task
- * @param err       GError **.
+ * @param err       GError **
  */
 void
 cr_compressiontask_free(cr_CompressionTask *task, GError **err);
@@ -118,6 +120,35 @@ cr_compressiontask_free(cr_CompressionTask *task, GError **err);
  */
 void
 cr_compressing_thread(gpointer data, gpointer user_data);
+
+/** Repomd record fill */
+
+typedef struct {
+    cr_RepomdRecord *record;
+    cr_ChecksumType checksum_type;
+    GError *err;
+} cr_RepomdRecordFillTask;
+
+/** Function to prepare a new cr_RepomdRecordFillTask.
+ * @param record            cr_RepomdRecord.
+ * @param checksum_type     Type of checksum.
+ * @param err               GError **
+ * @return                  New cr_RepomdRecordFillTask.
+ */
+cr_RepomdRecordFillTask *
+cr_repomdrecordfilltask_new(cr_RepomdRecord *record,
+                            cr_ChecksumType checksum_type,
+                            GError **err);
+
+/** Frees cr_RepomdRecordFillTask
+ */
+void
+cr_repomdrecordfilltask_free(cr_RepomdRecordFillTask *task, GError **err);
+
+/** Function for GThread Pool.
+ */
+void
+cr_repomd_record_fill_thread(gpointer data, gpointer user_data);
 
 /** @} */
 

@@ -543,25 +543,26 @@ main(int argc, char **argv)
 
     struct CmdOptions *cmd_options;
     cmd_options = parse_arguments(&argc, &argv);
-    if (!cmd_options) {
-        exit(1);
-    }
+    if (!cmd_options)
+        exit(EXIT_FAILURE);
 
 
     // Arguments pre-check
 
     if (cmd_options->version) {
+        // Just print version
         printf("Version: %d.%d.%d\n", CR_VERSION_MAJOR,
                                       CR_VERSION_MINOR,
                                       CR_VERSION_PATCH);
         free_options(cmd_options);
-        exit(0);
+        exit(EXIT_SUCCESS);
     } else if (argc != 2) {
+        // No mandatory arguments
         fprintf(stderr, "Must specify exactly one directory to index.\n");
         fprintf(stderr, "Usage: %s [options] <directory_to_index>\n\n",
                          cr_get_filename(argv[0]));
         free_options(cmd_options);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
 
@@ -581,25 +582,22 @@ main(int argc, char **argv)
         in_dir = cr_normalize_dir_path(argv[1]);
     }
 
-    cmd_options->input_dir = g_strdup(in_dir);
-
-
     // Check if inputdir exists
 
-    if (!g_file_test(in_dir, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
+    if (!g_file_test(in_dir, G_FILE_TEST_IS_DIR)) {
         g_warning("Directory %s must exist", in_dir);
         g_free(in_dir);
         free_options(cmd_options);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
 
     // Check parsed arguments
 
-    if (!check_arguments(cmd_options)) {
+    if (!check_arguments(cmd_options, in_dir)) {
         g_free(in_dir);
         free_options(cmd_options);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
 
@@ -659,7 +657,7 @@ main(int argc, char **argv)
                        tmp_out_repo, strerror(errno));
         }
 
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
 
@@ -674,7 +672,7 @@ main(int argc, char **argv)
     sigact.sa_flags = 0;
     if (sigaction(SIGINT, &sigact, NULL) == -1) {
         g_critical("sigaction(): %s", strerror(errno));
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     // Unblock SIGINT
@@ -692,7 +690,7 @@ main(int argc, char **argv)
         if (!output_pkg_list) {
             g_critical("Cannot open \"%s\" for writing",
                        cmd_options->read_pkgs_list);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
     }
 
@@ -884,7 +882,7 @@ main(int argc, char **argv)
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     fil_stat = cr_contentstat_new(cmd_options->checksum_type, NULL);
@@ -900,7 +898,7 @@ main(int argc, char **argv)
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
         cr_xmlfile_close(pri_cr_file, NULL);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
     oth_stat = cr_contentstat_new(cmd_options->checksum_type, NULL);
@@ -918,7 +916,7 @@ main(int argc, char **argv)
         g_free(oth_xml_filename);
         cr_xmlfile_close(fil_cr_file, NULL);
         cr_xmlfile_close(pri_cr_file, NULL);
-        exit(1);
+        exit(EXIT_FAILURE);
     }
 
 
@@ -1253,7 +1251,7 @@ main(int argc, char **argv)
     FILE *frepomd = fopen(repomd_path, "w");
     if (!frepomd || !repomd_xml) {
         g_critical("Generate of repomd.xml failed");
-        return 1;
+        exit(EXIT_FAILURE);
     }
     fputs(repomd_xml, frepomd);
     fclose(frepomd);
@@ -1275,7 +1273,7 @@ main(int argc, char **argv)
         dirp = g_dir_open (out_repo, 0, NULL);
         if (!dirp) {
             g_critical("Cannot open directory: %s", out_repo);
-            exit(1);
+            exit(EXIT_FAILURE);
         }
 
         const gchar *filename;
@@ -1348,5 +1346,5 @@ main(int argc, char **argv)
     cr_package_parser_cleanup();
 
     g_debug("All done");
-    return 0;
+    exit(EXIT_SUCCESS);
 }

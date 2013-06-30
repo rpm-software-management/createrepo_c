@@ -30,11 +30,6 @@
  */
 struct CmdOptions {
 
-    /* Items filled by hand (from createrepo_c.c) */
-
-    char *input_dir;            /*!< Input directory (the mandatory argument
-                                     of createrepo) */
-
     /* Items filled by cmd option parser */
 
     char *basedir;              /*!< basedir for path to directories */
@@ -102,7 +97,7 @@ struct CmdOptions *parse_arguments(int *argc, char ***argv);
  * Performs some checks of arguments and fill some other items.
  * in the CmdOptions structure.
  */
-gboolean check_arguments(struct CmdOptions *options);
+gboolean check_arguments(struct CmdOptions *options, const char *inputdir);
 
 /**
  * Frees CmdOptions.

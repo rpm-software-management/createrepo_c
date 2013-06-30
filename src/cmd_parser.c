@@ -149,7 +149,7 @@ struct CmdOptions *parse_arguments(int *argc, char ***argv)
 
 
 gboolean
-check_arguments(struct CmdOptions *options)
+check_arguments(struct CmdOptions *options, const char *input_dir)
 {
     // Check outputdir
     if (options->outputdir && !g_file_test(options->outputdir, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
@@ -236,7 +236,7 @@ check_arguments(struct CmdOptions *options)
             options->groupfile_fullpath = g_strdup(options->groupfile);
         } else {
             // Relative path (from intput_dir)
-            options->groupfile_fullpath = g_strconcat(options->input_dir,
+            options->groupfile_fullpath = g_strconcat(input_dir,
                                                       options->groupfile,
                                                       NULL);
         }
@@ -328,7 +328,6 @@ void
 free_options(struct CmdOptions *options)
 {
     g_free(options->basedir);
-    g_free(options->input_dir);
     g_free(options->location_base);
     g_free(options->outputdir);
     g_free(options->pkglist);

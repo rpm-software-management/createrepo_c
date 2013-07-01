@@ -9,8 +9,11 @@ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-strict-aliasing")
 set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fno-strict-aliasing")
 set (CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-strict-aliasing")
 
-SET (createrepo_c_COPIES __init__.py)
-FILE(COPY ${createrepo_c_COPIES} DESTINATION ./createrepo_c/)
+IF (${CMAKE_VERSION} VERSION_LESS "2.8.0")
+    CONFIGURE_FILE(__init__.py ./createrepo_c/__init__.py COPYONLY)
+ELSE()
+    FILE(COPY __init__.py DESTINATION ./createrepo_c/)
+ENDIF()
 
 SET (craeterepo_cmodule_SRCS
      checksum-py.c

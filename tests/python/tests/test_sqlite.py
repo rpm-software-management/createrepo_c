@@ -211,10 +211,10 @@ class TestCaseSqlite(unittest.TestCase):
             [(1, u'4e0b775220c67f0f2c1fd2177e626b9c863a098130224ff09778ede25cea9a9e')])
 
         # Check files table
-        self.assertEqual(con.execute("select * from filelist").fetchall(),
-            [(1, u'/usr/share/doc', u'Archer-3.4.5', u'd'),
+        self.assertEqual(set(con.execute("select * from filelist").fetchall()),
+            set([(1, u'/usr/share/doc', u'Archer-3.4.5', u'd'),
              (1, u'/usr/bin', u'complex_a', u'f'),
-             (1, u'/usr/share/doc/Archer-3.4.5', u'README', u'f')])
+             (1, u'/usr/share/doc/Archer-3.4.5', u'README', u'f')]))
 
         # Check db_info table
         self.assertEqual(con.execute("select * from db_info").fetchall(),
@@ -237,10 +237,10 @@ class TestCaseSqlite(unittest.TestCase):
             [(1, u'4e0b775220c67f0f2c1fd2177e626b9c863a098130224ff09778ede25cea9a9e')])
 
         # Check filelist table
-        self.assertEqual(con.execute("select * from filelist").fetchall(),
-            [(1, u'/usr/share/doc', u'Archer-3.4.5', u'd'),
+        self.assertEqual(set(con.execute("select * from filelist").fetchall()),
+            set([(1, u'/usr/share/doc', u'Archer-3.4.5', u'd'),
              (1, u'/usr/bin', u'complex_a', u'f'),
-             (1, u'/usr/share/doc/Archer-3.4.5', u'README', u'f')])
+             (1, u'/usr/share/doc/Archer-3.4.5', u'README', u'f')]))
 
         # Check db_info table
         self.assertEqual(con.execute("select * from db_info").fetchall(),

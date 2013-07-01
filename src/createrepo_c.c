@@ -168,34 +168,34 @@ write_pkg(long id,
     g_mutex_lock(udata->mutex_pri);
     while (udata->id_pri != id)
         g_cond_wait (udata->cond_pri, udata->mutex_pri);
-    udata->id_pri++;
+    ++udata->id_pri;
     cr_xmlfile_add_chunk(udata->pri_f, (const char *) res.primary, NULL);
     if (udata->pri_db)
         cr_db_add_pkg(udata->pri_db, pkg, NULL);
-    g_mutex_unlock(udata->mutex_pri);
     g_cond_broadcast(udata->cond_pri);
+    g_mutex_unlock(udata->mutex_pri);
 
     // Write fielists data
     g_mutex_lock(udata->mutex_fil);
     while (udata->id_fil != id)
         g_cond_wait (udata->cond_fil, udata->mutex_fil);
-    udata->id_fil++;
+    ++udata->id_fil;
     cr_xmlfile_add_chunk(udata->fil_f, (const char *) res.filelists, NULL);
     if (udata->fil_db)
         cr_db_add_pkg(udata->fil_db, pkg, NULL);
-    g_mutex_unlock(udata->mutex_fil);
     g_cond_broadcast(udata->cond_fil);
+    g_mutex_unlock(udata->mutex_fil);
 
     // Write other data
     g_mutex_lock(udata->mutex_oth);
     while (udata->id_oth != id)
         g_cond_wait (udata->cond_oth, udata->mutex_oth);
-    udata->id_oth++;
+    ++udata->id_oth;
     cr_xmlfile_add_chunk(udata->oth_f, (const char *) res.other, NULL);
     if (udata->oth_db)
         cr_db_add_pkg(udata->oth_db, pkg, NULL);
-    g_mutex_unlock(udata->mutex_oth);
     g_cond_broadcast(udata->cond_oth);
+    g_mutex_unlock(udata->mutex_oth);
 }
 
 
@@ -227,8 +227,8 @@ dumper_thread(gpointer data, gpointer user_data)
     // Update stuff
     if (udata->old_metadata) {
         // We have old metadata
-        md = (cr_Package *) g_hash_table_lookup (udata->old_metadata->ht,
-                                                 task->filename);
+        md = (cr_Package *) g_hash_table_lookup(udata->old_metadata->ht,
+                                                task->filename);
 
         if (md) {
             g_debug("CACHE HIT %s", task->filename);
@@ -272,23 +272,30 @@ dumper_thread(gpointer data, gpointer user_data)
         res = cr_xml_dump(md, NULL);
     }
 
+    // Buffering stuff
     g_mutex_lock(udata->mutex_buffer);
     if (g_queue_get_length(udata->buffer) < MAX_TASK_BUFFER_LEN
         && udata->id_pri != task->id
         && udata->package_count != (task->id + 1))
     {
-        // If it isn't our turn and buffer isn't full and this isn't
-        // last task -> save task to buffer
+        // If:
+        //  * this isn't our turn
+        //  * the buffer isn't full
+        //  * this isn't the last task
+        // Then: save the task to the buffer
+
         struct BufferedTask *buf_task = malloc(sizeof(struct BufferedTask));
         buf_task->id  = task->id;
         buf_task->res = res;
         buf_task->pkg = pkg;
         buf_task->location_href = NULL;
         buf_task->pkg_from_md = (pkg == md) ? 1 : 0;
-        // We MUST store location_href for reused packages who goes to the buffer
-        // We don't need to store location_base because it is "alive" in
-        // user data during this function calls.
+
         if (pkg == md) {
+            // We MUST store location_href for reused packages who goes to the buffer
+            // We don't need to store location_base because it is allocated in
+            // user_data during this function calls.
+
             buf_task->location_href = g_strdup(location_href);
             buf_task->pkg->location_href = buf_task->location_href;
         }
@@ -303,6 +310,7 @@ dumper_thread(gpointer data, gpointer user_data)
 
         return;
     }
+
     g_mutex_unlock(udata->mutex_buffer);
 
     // Dump XML and SQLite
@@ -346,23 +354,23 @@ task_cleanup:
         g_mutex_lock(udata->mutex_pri);
         while (udata->id_pri != task->id)
             g_cond_wait (udata->cond_pri, udata->mutex_pri);
-        udata->id_pri++;
-        g_mutex_unlock(udata->mutex_pri);
+        ++udata->id_pri;
         g_cond_broadcast(udata->cond_pri);
+        g_mutex_unlock(udata->mutex_pri);
 
         g_mutex_lock(udata->mutex_fil);
         while (udata->id_fil != task->id)
             g_cond_wait (udata->cond_fil, udata->mutex_fil);
-        udata->id_fil++;
-        g_mutex_unlock(udata->mutex_fil);
+        ++udata->id_fil;
         g_cond_broadcast(udata->cond_fil);
+        g_mutex_unlock(udata->mutex_fil);
 
         g_mutex_lock(udata->mutex_oth);
         while (udata->id_oth != task->id)
             g_cond_wait (udata->cond_oth, udata->mutex_oth);
-        udata->id_oth++;
-        g_mutex_unlock(udata->mutex_oth);
+        ++udata->id_oth;
         g_cond_broadcast(udata->cond_oth);
+        g_mutex_unlock(udata->mutex_oth);
     }
 
     g_free(task->full_path);
@@ -432,9 +440,7 @@ fill_pool(GThreadPool *pool,
 
                 // Non .rpm files
                 if (!g_str_has_suffix (filename, ".rpm")) {
-                    if (!g_file_test(full_path, G_FILE_TEST_IS_REGULAR) &&
-                        g_file_test(full_path, G_FILE_TEST_IS_DIR))
-                    {
+                    if (g_file_test(full_path, G_FILE_TEST_IS_DIR)) {
                         // Directory
                         gchar *sub_dir_in_chunk;
                         sub_dir_in_chunk = g_string_chunk_insert(sub_dirs_chunk,
@@ -473,8 +479,9 @@ fill_pool(GThreadPool *pool,
                     *current_pkglist = g_slist_prepend(*current_pkglist, task->filename);
                     // TODO: One common path for all tasks with the same path?
                     g_queue_insert_sorted(&queue, task, task_cmp, NULL);
-                } else
+                } else {
                     g_free(full_path);
+                }
             }
 
             // Cleanup
@@ -492,21 +499,17 @@ fill_pool(GThreadPool *pool,
         for (; element; element=g_slist_next(element)) {
             gchar *relative_path = (gchar *) element->data;
             //     ^^^ path from pkglist e.g. packages/i386/foobar.rpm
-            gchar *filename;  // foobar.rpm
+            gchar *filename; // foobar.rpm
 
             // Get index of last '/'
-            int rel_path_len = strlen(relative_path);
-            int x = rel_path_len;
-            for (; x > 0; x--)
-                if (relative_path[x] == '/')
-                    break;
+            int x = strlen(relative_path);
+            for (; x > 0 && relative_path[x] != '/'; x--)
+                ;
 
-            if (!x) {
-                // There was no '/' in path
+            if (!x) // There was no '/' in path
                 filename = relative_path;
-            } else {
+            else    // Use only a last part of the path
                 filename = relative_path + x + 1;
-            }
 
             if (allowed_file(filename, cmd_options)) {
                 // Check filename against exclude glob masks
@@ -529,7 +532,7 @@ fill_pool(GThreadPool *pool,
     while ((task = g_queue_pop_head(&queue)) != NULL) {
         task->id = package_count;
         g_thread_pool_push(pool, task, NULL);
-        package_count++;
+        ++package_count;
     }
 
     return package_count;

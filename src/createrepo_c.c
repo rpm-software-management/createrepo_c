@@ -274,9 +274,10 @@ dumper_thread(gpointer data, gpointer user_data)
 
     // Buffering stuff
     g_mutex_lock(udata->mutex_buffer);
+
     if (g_queue_get_length(udata->buffer) < MAX_TASK_BUFFER_LEN
         && udata->id_pri != task->id
-        && udata->package_count != (task->id + 1))
+        && udata->package_count > (task->id + 1))
     {
         // If:
         //  * this isn't our turn
@@ -323,31 +324,6 @@ dumper_thread(gpointer data, gpointer user_data)
     g_free(res.filelists);
     g_free(res.other);
 
-    // Try to write all results from buffer which was waiting for us
-    while (1) {
-        struct BufferedTask *buf_task;
-        g_mutex_lock(udata->mutex_buffer);
-        buf_task = g_queue_peek_head(udata->buffer);
-        if (buf_task && buf_task->id == udata->id_pri) {
-            buf_task = g_queue_pop_head (udata->buffer);
-            g_mutex_unlock(udata->mutex_buffer);
-            // Dump XML and SQLite
-            write_pkg(buf_task->id, buf_task->res, buf_task->pkg, udata);
-            // Clean up
-            if (!buf_task->pkg_from_md)
-                cr_package_free(buf_task->pkg);
-            g_free(buf_task->res.primary);
-            g_free(buf_task->res.filelists);
-            g_free(buf_task->res.other);
-            g_free(buf_task->location_href);
-            g_free(buf_task);
-        } else {
-            g_mutex_unlock(udata->mutex_buffer);
-            break;
-        }
-    }
-
-
 task_cleanup:
     if (udata->id_pri <= task->id) {
         // An error was encountered and we have to wait to increment counters
@@ -377,6 +353,30 @@ task_cleanup:
     g_free(task->filename);
     g_free(task->path);
     g_free(task);
+
+    // Try to write all results from buffer which was waiting for us
+    while (1) {
+        struct BufferedTask *buf_task;
+        g_mutex_lock(udata->mutex_buffer);
+        buf_task = g_queue_peek_head(udata->buffer);
+        if (buf_task && buf_task->id == udata->id_pri) {
+            buf_task = g_queue_pop_head (udata->buffer);
+            g_mutex_unlock(udata->mutex_buffer);
+            // Dump XML and SQLite
+            write_pkg(buf_task->id, buf_task->res, buf_task->pkg, udata);
+            // Clean up
+            if (!buf_task->pkg_from_md)
+                cr_package_free(buf_task->pkg);
+            g_free(buf_task->res.primary);
+            g_free(buf_task->res.filelists);
+            g_free(buf_task->res.other);
+            g_free(buf_task->location_href);
+            g_free(buf_task);
+        } else {
+            g_mutex_unlock(udata->mutex_buffer);
+            break;
+        }
+    }
 
     return;
 }

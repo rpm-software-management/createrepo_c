@@ -17,6 +17,8 @@
  * USA.
  */
 
+#define _XOPEN_SOURCE 700
+
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <stdlib.h>
@@ -37,7 +39,7 @@ fixtures_setup(TestFixtures *fixtures, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
     gchar *template = g_strdup(TMPDIR_TEMPLATE);
-    fixtures->tmpdir = g_mkdtemp(template);
+    fixtures->tmpdir = mkdtemp(template);
     g_assert(fixtures->tmpdir);
 }
 

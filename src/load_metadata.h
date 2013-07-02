@@ -81,10 +81,6 @@ cr_HashTableKey cr_metadata_key(cr_Metadata *md);
  */
 GHashTable *cr_metadata_hashtable(cr_Metadata *md);
 
-// XXX TODO Remove
-/** Return GStringChunk from a cr_Metadata */
-//#define cr_metadata_chunk(X)        ((X)->chunk)
-
 /** Create new (empty) metadata hashtable.
  * It is NOT thread safe to load data into single cr_Metadata
  * from multiple threads. But non modifying access to the loaded data

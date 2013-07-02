@@ -186,12 +186,12 @@ cr_xml_dump(cr_Package *pkg, GError **err)
 
     assert(!err || *err == NULL);
 
-    if (!pkg) {
-        result.primary   = NULL;
-        result.filelists = NULL;
-        result.other     = NULL;
+    result.primary   = NULL;
+    result.filelists = NULL;
+    result.other     = NULL;
+
+    if (!pkg)
         return result;
-    }
 
     result.primary = cr_xml_dump_primary(pkg, &tmp_err);
     if (tmp_err) {

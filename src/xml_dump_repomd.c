@@ -78,16 +78,19 @@ cr_xml_dump_repomd_record(xmlNodePtr root, cr_RepomdRecord *rec)
                       BAD_CAST rec->location_base);
 
     // Timestamp element
-    g_snprintf(str_buffer, DATESIZE_STR_MAX_LEN, "%ld", rec->timestamp);
+    g_snprintf(str_buffer, DATESIZE_STR_MAX_LEN,
+               "%"G_GINT64_FORMAT, rec->timestamp);
     xmlNewChild(data, NULL, BAD_CAST "timestamp", BAD_CAST str_buffer);
 
     // Size element
-    g_snprintf(str_buffer, DATESIZE_STR_MAX_LEN, "%ld", rec->size);
+    g_snprintf(str_buffer, DATESIZE_STR_MAX_LEN,
+               "%"G_GINT64_FORMAT, rec->size);
     xmlNewChild(data, NULL, BAD_CAST "size", BAD_CAST str_buffer);
 
     // Open-size element
     if (rec->size_open != -1) {
-        g_snprintf(str_buffer, DATESIZE_STR_MAX_LEN, "%ld", rec->size_open);
+        g_snprintf(str_buffer, DATESIZE_STR_MAX_LEN,
+                   "%"G_GINT64_FORMAT, rec->size_open);
         xmlNewChild(data, NULL, BAD_CAST "open-size", BAD_CAST str_buffer);
     }
 

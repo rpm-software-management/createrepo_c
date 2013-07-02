@@ -63,7 +63,7 @@ cr_xml_dump_other_changelog(xmlNodePtr root, cr_Package *package)
 
         // Write param date
         char date_str[DATE_STR_MAX_LEN];
-        g_snprintf(date_str, DATE_STR_MAX_LEN, "%lld", (long long int) entry->date);
+        g_snprintf(date_str, DATE_STR_MAX_LEN, "%"G_GINT64_FORMAT, entry->date);
         xmlNewProp(changelog, BAD_CAST "date", BAD_CAST date_str);
     }
 }

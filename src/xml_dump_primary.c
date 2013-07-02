@@ -224,13 +224,13 @@ cr_xml_dump_primary_base_items(xmlNodePtr root, cr_Package *package)
     time = xmlNewChild(root, NULL, BAD_CAST "time", NULL);
 
     // Write time attribute file
-    g_snprintf(date_str, DATE_STR_MAX_LEN, "%lld",
-               (long long int) package->time_file);
+    g_snprintf(date_str, DATE_STR_MAX_LEN, "%"G_GINT64_FORMAT,
+               package->time_file);
     xmlNewProp(time, BAD_CAST "file", BAD_CAST date_str);
 
     // Write time attribute build
-    g_snprintf(date_str, DATE_STR_MAX_LEN, "%lld",
-               (long long int) package->time_build);
+    g_snprintf(date_str, DATE_STR_MAX_LEN, "%"G_GINT64_FORMAT,
+               package->time_build);
     xmlNewProp(time, BAD_CAST "build", BAD_CAST date_str);
 
 
@@ -244,18 +244,18 @@ cr_xml_dump_primary_base_items(xmlNodePtr root, cr_Package *package)
     size = xmlNewChild(root, NULL, BAD_CAST "size", NULL);
 
     // Write size attribute package
-    g_snprintf(size_str, SIZE_STR_MAX_LEN, "%lld",
-               (long long int) package->size_package);
+    g_snprintf(size_str, SIZE_STR_MAX_LEN, "%"G_GINT64_FORMAT,
+               package->size_package);
     xmlNewProp(size, BAD_CAST "package", BAD_CAST size_str);
 
     // Write size attribute installed
-    g_snprintf(size_str, SIZE_STR_MAX_LEN, "%lld",
-               (long long int) package->size_installed);
+    g_snprintf(size_str, SIZE_STR_MAX_LEN, "%"G_GINT64_FORMAT,
+               package->size_installed);
     xmlNewProp(size, BAD_CAST "installed", BAD_CAST size_str);
 
     // Write size attribute archive
-    g_snprintf(size_str, SIZE_STR_MAX_LEN, "%lld",
-               (long long int) package->size_archive);
+    g_snprintf(size_str, SIZE_STR_MAX_LEN, "%"G_GINT64_FORMAT,
+               package->size_archive);
     xmlNewProp(size, BAD_CAST "archive", BAD_CAST size_str);
 
 
@@ -338,15 +338,15 @@ cr_xml_dump_primary_base_items(xmlNodePtr root, cr_Package *package)
     // Write header-range attribute hdrstart
     g_snprintf(size_str,
                SIZE_STR_MAX_LEN,
-               "%lld",
-               (long long int) package->rpm_header_start);
+               "%"G_GINT64_FORMAT,
+               package->rpm_header_start);
     xmlNewProp(header_range, BAD_CAST "start", BAD_CAST size_str);
 
     // Write header-range attribute hdrend
     g_snprintf(size_str,
                SIZE_STR_MAX_LEN,
-               "%lld",
-               (long long int) package->rpm_header_end);
+               "%"G_GINT64_FORMAT,
+               package->rpm_header_end);
     xmlNewProp(header_range, BAD_CAST "end", BAD_CAST size_str);
 
 

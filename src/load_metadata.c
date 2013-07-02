@@ -307,7 +307,7 @@ cr_metadata_load_xml(cr_Metadata md,
                 // and it SHOULD set only valid key values)
                 g_critical("%s: Unknown hash table key selected", __func__);
                 assert(0);
-                break;
+                return CRE_ERROR;
         }
 
         if (g_hash_table_lookup(md->ht, new_key)) {

@@ -78,7 +78,6 @@ INSTALL(FILES createrepo_c.bash
 #message("Gen manpage")
 #execute_process(COMMAND bash gen_manpage.sh src/cmd_parser.c ../doc/ WORKING_DIRECTORY utils/)
 
-
 # Add custom target for tests
 
 ADD_CUSTOM_TARGET(tests)

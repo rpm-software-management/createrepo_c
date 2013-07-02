@@ -70,6 +70,8 @@ Note: For a verbose output of testing use: ``make ARGS="-V" test``
 
     build/tests/run_gtester.sh
 
+Note: The C tests have to be builded by ``make tests``)!
+
 ### Run only Python unittests (from your checkout dir):
 
     PYTHONPATH=`readlink -f ./build/src/python/` nosetests -s tests/python/tests/

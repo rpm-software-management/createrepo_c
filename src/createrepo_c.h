@@ -36,7 +36,6 @@ extern "C" {
  */
 
 /** \defgroup   main    Complete API of createrepo_c library
- * Usage: #include <createrepo_c/createrepo_c.h>
  */
 
 #include <glib.h>

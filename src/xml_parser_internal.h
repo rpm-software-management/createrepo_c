@@ -43,7 +43,8 @@ extern "C" {
  *   of the callback has to set the GError by himself.
  */
 
-/* File types in filelists.xml */
+/** File types in filelists.xml
+ */
 typedef enum {
     FILE_FILE,
     FILE_DIR,
@@ -51,6 +52,8 @@ typedef enum {
     FILE_SENTINEL,
 } cr_FileType;
 
+/** Structure used for elements in the state switches in XML parsers
+ */
 typedef struct {
     unsigned int    from;       /*!< State (current tag) */
     char            *ename;     /*!< String name of sub-tag */
@@ -58,9 +61,11 @@ typedef struct {
     int             docontent;  /*!< Read text content of element? */
 } cr_StatesSwitch;
 
+/** Parser data
+ */
 typedef struct _cr_ParserData {
-    int          depth;
-    int          statedepth;
+    int          depth;      /*!< Current depth in a XML tree */
+    int          statedepth; /*!< Depth of the last known state (element) */
     unsigned int state;      /*!< current state */
     GError       *err;       /*!< Error message */
 
@@ -78,7 +83,7 @@ typedef struct _cr_ParserData {
 
     /* Package stuff */
 
-    void                    *newpkgcb_data;    /*!<
+    void                    *newpkgcb_data;     /*!<
         User data for the newpkgcb. */
     cr_XmlParserNewPkgCb    newpkgcb;           /*!<
         Callback called to get (create new or use existing from a previous
@@ -90,7 +95,8 @@ typedef struct _cr_ParserData {
         Callback called when a signel pkg data are completly parsed. */
     void                    *warningcb_data;    /*!<
         User data fot he warningcb. */
-    cr_XmlParserWarningCb   warningcb;
+    cr_XmlParserWarningCb   warningcb;          /*!<
+        Warning callback */
     cr_Package              *pkg;               /*!<
         The package which is currently loaded. */
 
@@ -107,17 +113,22 @@ typedef struct _cr_ParserData {
 
     /* Filelists + Primary related stuff */
 
-    cr_FileType last_file_type;
+    cr_FileType last_file_type; /*!<
+        Type of file in a currently parsed element */
 
     /* Other related stuff */
 
-    cr_ChangelogEntry *changelog;
+    cr_ChangelogEntry *changelog; /*!<
+        Changelog entry object for currently parsed element (entry) */
 
     /* Repomd related stuff */
 
-    cr_Repomd *repomd;
-    cr_RepomdRecord *repomdrecord;
-    char *cpeid;
+    cr_Repomd *repomd; /*!<
+        Repomd object */
+    cr_RepomdRecord *repomdrecord; /*!<
+        Repomd record object for a currently parsed element */
+    char *cpeid; /*!<
+        cpeid value for the currently parsed distro tag */
 
 } cr_ParserData;
 

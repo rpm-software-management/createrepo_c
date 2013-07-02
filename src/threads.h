@@ -64,8 +64,8 @@ extern "C" {
  * @{
  */
 
-/** Compression */
-
+/** Object representing a single compression task
+ */
 typedef struct {
     char *src; /*!<
         Path to the original file. Must be specified by user. */
@@ -121,12 +121,12 @@ cr_compressiontask_free(cr_CompressionTask *task, GError **err);
 void
 cr_compressing_thread(gpointer data, gpointer user_data);
 
-/** Repomd record fill */
-
+/** Object representing a single repomd record fill task
+ */
 typedef struct {
-    cr_RepomdRecord *record;
-    cr_ChecksumType checksum_type;
-    GError *err;
+    cr_RepomdRecord *record;        /*!< Repomd record to be filled */
+    cr_ChecksumType checksum_type;  /*!< Type of checksum to be used */
+    GError *err;                    /*!< GError ** */
 } cr_RepomdRecordFillTask;
 
 /** Function to prepare a new cr_RepomdRecordFillTask.

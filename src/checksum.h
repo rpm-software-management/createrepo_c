@@ -29,6 +29,8 @@ extern "C" {
  *  @{
  */
 
+/** Checksum context.
+ */
 typedef struct _cr_ChecksumCtx cr_ChecksumCtx;
 
 /**

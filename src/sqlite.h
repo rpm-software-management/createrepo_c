@@ -67,14 +67,19 @@ typedef enum {
     CR_DB_SENTINEL,     /*!< sentinel of the list */
 } cr_DatabaseType;
 
-typedef struct _DbPrimaryStatements   * cr_DbPrimaryStatements;
-typedef struct _DbFilelistsStatements * cr_DbFilelistsStatements;
-typedef struct _DbOtherStatements     * cr_DbOtherStatements;
+typedef struct _DbPrimaryStatements   * cr_DbPrimaryStatements; /*!<
+    Compiled  primary database statements */
+typedef struct _DbFilelistsStatements * cr_DbFilelistsStatements; /*!<
+    Compiled filelists database statements */
+typedef struct _DbOtherStatements     * cr_DbOtherStatements; /*!<
+    Compiled other database statements */
 
+/** Union of precompiled database statements
+ */
 typedef union {
-    cr_DbPrimaryStatements pri;
-    cr_DbFilelistsStatements fil;
-    cr_DbOtherStatements oth;
+    cr_DbPrimaryStatements pri;     /*!< Primary statements */
+    cr_DbFilelistsStatements fil;   /*!< Filelists statements */
+    cr_DbOtherStatements oth;       /*!< Other statements */
 } cr_Statements;
 
 /** cr_SqliteDb structure.

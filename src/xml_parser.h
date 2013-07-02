@@ -32,9 +32,11 @@ extern "C" {
  *  @{
  */
 
-#define CR_CB_RET_OK    0
-#define CR_CB_RET_ERR   1
+#define CR_CB_RET_OK    0 /*!< Return value for callbacks signalizing success */
+#define CR_CB_RET_ERR   1 /*!< Return value for callbacks signalizing error */
 
+/** Type of warnings reported by parsers by the warning callback.
+ */
 typedef enum {
     CR_XML_WARNING_UNKNOWNTAG,  /*!< Unknown tag */
     CR_XML_WARNING_MISSINGATTR, /*!< Missing attribute */
@@ -70,7 +72,7 @@ typedef int (*cr_XmlParserNewPkgCb)(cr_Package **pkg,
 /** Callback for XML parser wich is called when a package element is parsed.
  * @param pkg       Currently parsed package.
  * @param cbdata    User data.
- * @err             GError **
+ * @param err       GError **
  * @return          CR_CB_RET_OK (0) or CR_CB_RET_ERR (1) - stops the parsing
  */
 typedef int (*cr_XmlParserPkgCb)(cr_Package *pkg,
@@ -93,7 +95,7 @@ typedef int (*cr_XmlParserWarningCb)(cr_XmlParserWarningType type,
                                      GError **err);
 
 /** Parse primary.xml. File could be compressed.
- * @param path           Path to filelists.xml (plain or compressed)
+ * @param path           Path to filelists.xml
  * @param newpkgcb       Callback for new package (Called when new package
  *                       xml chunk is found and package object to store
  *                       the data is needed). If NULL cr_newpkgcb is used.
@@ -119,7 +121,7 @@ int cr_xml_parse_primary(const char *path,
                          GError **err);
 
 /** Parse filelists.xml. File could be compressed.
- * @param path           Path to filelists.xml (plain or compressed)
+ * @param path           Path to filelists.xml
  * @param newpkgcb       Callback for new package (Called when new package
  *                       xml chunk is found and package object to store
  *                       the data is needed). If NULL cr_newpkgcb is used.
@@ -143,7 +145,7 @@ int cr_xml_parse_filelists(const char *path,
                            GError **err);
 
 /** Parse other.xml. File could be compressed.
- * @param path           Path to other.xml (plain or compressed)
+ * @param path           Path to other.xml
  * @param newpkgcb       Callback for new package (Called when new package
  *                       xml chunk is found and package object to store
  *                       the data is needed). If NULL cr_newpkgcb is used.
@@ -167,7 +169,8 @@ int cr_xml_parse_other(const char *path,
                        GError **err);
 
 /** Parse repomd.xml. File could be compressed.
- * @param repom          cr_Repomd object.
+ * @param path           Path to repomd.xml
+ * @param repomd         cr_Repomd object.
  * @param warningcb      Callback for warning messages.
  * @param warningcb_data User data for the warningcb.
  * @param err            GError **

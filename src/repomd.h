@@ -90,8 +90,8 @@ typedef struct {
 /** Distro tag structure
  */
 typedef struct {
-    gchar *cpeid;
-    gchar *val;
+    gchar *cpeid;   /*!< cpeid value or NULL */
+    gchar *val;     /*!< Tag value */
 } cr_DistroTag;
 
 /** Internal representation of cr_Repomd object

@@ -59,13 +59,20 @@ typedef struct {
 
 /** Open a new primary XML file.
  * @param FILENAME      Filename.
- * @param COMTYPE       Type of used compression.
+ * @param COMTYPE       Type of compression.
  * @param ERR           GError **
  * @return              Opened cr_XmlFile or NULL on error
  */
 #define cr_xmlfile_open_primary(FILENAME, COMTYPE, ERR) \
             cr_xmlfile_open(FILENAME, CR_XMLFILE_PRIMARY, COMTYPE, ERR)
 
+/** Open a new primary XML file.
+ * @param FILENAME      Filename.
+ * @param COMTYPE       Type of compression.
+ * @param STAT          cr_ContentStat object or NULL.
+ * @param ERR           GError **
+ * @return              Opened cr_XmlFile or NULL on error
+ */
 #define cr_xmlfile_sopen_primary(FILENAME, COMTYPE, STAT, ERR) \
             cr_xmlfile_sopen(FILENAME, CR_XMLFILE_PRIMARY, COMTYPE, STAT,  ERR)
 
@@ -78,6 +85,13 @@ typedef struct {
 #define cr_xmlfile_open_filelists(FILENAME, COMTYPE, ERR) \
             cr_xmlfile_open(FILENAME, CR_XMLFILE_FILELISTS, COMTYPE, ERR)
 
+/** Open a new filelists XML file.
+ * @param FILENAME      Filename.
+ * @param COMTYPE       Type of compression.
+ * @param STAT          cr_ContentStat object or NULL.
+ * @param ERR           GError **
+ * @return              Opened cr_XmlFile or NULL on error
+ */
 #define cr_xmlfile_sopen_filelists(FILENAME, COMTYPE, STAT, ERR) \
             cr_xmlfile_sopen(FILENAME, CR_XMLFILE_FILELISTS, COMTYPE, STAT, ERR)
 
@@ -90,16 +104,23 @@ typedef struct {
 #define cr_xmlfile_open_other(FILENAME, COMTYPE, ERR) \
             cr_xmlfile_open(FILENAME, CR_XMLFILE_OTHER, COMTYPE, ERR)
 
+/** Open a new other XML file.
+ * @param FILENAME      Filename.
+ * @param COMTYPE       Type of compression.
+ * @param STAT          cr_ContentStat object or NULL.
+ * @param ERR           GError **
+ * @return              Opened cr_XmlFile or NULL on error
+ */
 #define cr_xmlfile_sopen_other(FILENAME, COMTYPE, STAT, ERR) \
             cr_xmlfile_sopen(FILENAME, CR_XMLFILE_OTHER, COMTYPE, STAT, ERR)
 
 /** Open a new XML file with stats.
  * Note: Opened file must not exists! This function cannot
  * open existing file!.
- * @param filename      Filename.
- * @param type          Type of XML file.
- * @param comtype       Type of used compression.
- * @param err           **GError
+ * @param FILENAME      Filename.
+ * @param TYPE          Type of XML file.
+ * @param COMTYPE       Type of used compression.
+ * @param ERR           **GError
  * @return              Opened cr_XmlFile or NULL on error
  */
 #define cr_xmlfile_open(FILENAME, TYPE, COMTYPE, ERR) \

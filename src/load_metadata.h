@@ -35,7 +35,7 @@ extern "C" {
  *
  * \code
  * int ret;
- * cr_Metadata oldmetadata;
+ * cr_Metadata *oldmetadata;
  * GHashTable hashtable;
  *
  * // Create new metadata object
@@ -65,25 +65,25 @@ typedef enum {
     CR_HT_KEY_SENTINEL,                 /*!< last element, terminator, .. */
 } cr_HashTableKey;
 
-/** Return cr_HashTableKey from a cr_Metadata */
-#define cr_metadata_key(X)          ((X)->key)
-/** Return hashtable from a cr_Metadata */
-#define cr_metadata_hashtable(X)    ((X)->ht)
+/** Metadata object
+ */
+typedef struct _cr_Metadata cr_Metadata;
+
+/** Return cr_HashTableKey from a cr_Metadata
+ * @param md        cr_Metadata object.
+ * @return          Key type
+ */
+cr_HashTableKey cr_metadata_key(cr_Metadata *md);
+
+/** Return hashtable from a cr_Metadata
+ * @param md        cr_Metadata object.
+ * @return          Pointer to internal GHashTable.
+ */
+GHashTable *cr_metadata_hashtable(cr_Metadata *md);
+
+// XXX TODO Remove
 /** Return GStringChunk from a cr_Metadata */
-#define cr_metadata_chunk(X)        ((X)->chunk)
-
-/** Structure for loaded metadata
- */
-struct _cr_Metadata {
-    cr_HashTableKey key;    /*!< key used in hashtable */
-    GHashTable *ht;         /*!< hashtable with packages */
-    GStringChunk *chunk;    /*!< NULL or string chunk with strings from htn */
-    GHashTable *pkglist_ht; /*!< list of allowed package basenames to load */
-};
-
-/** Pointer to structure with loaded metadata
- */
-typedef struct _cr_Metadata *cr_Metadata;
+//#define cr_metadata_chunk(X)        ((X)->chunk)
 
 /** Create new (empty) metadata hashtable.
  * It is NOT thread safe to load data into single cr_Metadata
@@ -99,14 +99,14 @@ typedef struct _cr_Metadata *cr_Metadata;
  *                          list. If param is NULL all packages are loaded.
  * @return                  empty cr_Metadata object
  */
-cr_Metadata cr_metadata_new(cr_HashTableKey key,
-                            int use_single_chunk,
-                            GSList *pkglist);
+cr_Metadata *cr_metadata_new(cr_HashTableKey key,
+                             int use_single_chunk,
+                             GSList *pkglist);
 
 /** Destroy metadata.
  * @param md            cr_Metadata object
  */
-void cr_metadata_free(cr_Metadata md);
+void cr_metadata_free(cr_Metadata *md);
 
 /** Load metadata from the specified location.
  * @param md            metadata object
@@ -114,7 +114,7 @@ void cr_metadata_free(cr_Metadata md);
  * @param err           GError **
  * @return              cr_Error code
  */
-int cr_metadata_load_xml(cr_Metadata md,
+int cr_metadata_load_xml(cr_Metadata *md,
                          struct cr_MetadataLocation *ml,
                          GError **err);
 
@@ -124,7 +124,7 @@ int cr_metadata_load_xml(cr_Metadata md,
  * @param err           GError **
  * @return              cr_Error code
  */
-int cr_metadata_locate_and_load_xml(cr_Metadata md,
+int cr_metadata_locate_and_load_xml(cr_Metadata *md,
                                     const char *repopath,
                                     GError **err);
 

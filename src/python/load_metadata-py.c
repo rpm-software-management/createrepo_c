@@ -34,7 +34,7 @@
 
 typedef struct {
     PyObject_HEAD
-    cr_Metadata md;
+    cr_Metadata *md;
 } _MetadataObject;
 
 static int
@@ -115,24 +115,12 @@ get_key(_MetadataObject *self, void *nothing)
     CR_UNUSED(nothing);
     if (check_MetadataStatus(self))
         return NULL;
-    cr_HashTableKey val = self->md->key;
+    cr_HashTableKey val = cr_metadata_key(self->md);
     return PyLong_FromLong((long) val);
 }
 
-/*
-static PyObject *
-get_ht(_MetadataObject *self, void *nothing)
-{
-    CR_UNUSED(nothing);
-    if (check_MetadataStatus(self))
-        return NULL;
-    return Object_FromGHashtable((PyObject *) self, self->md->ht);
-}
-*/
-
 static PyGetSetDef metadata_getsetters[] = {
     {"key", (getter)get_key, NULL, NULL, NULL},
-//    {"ht",  (getter)get_ht, NULL, NULL, NULL},
     {NULL, NULL, NULL, NULL, NULL} /* sentinel */
 };
 
@@ -188,8 +176,9 @@ ht_len(_MetadataObject *self, PyObject *noarg)
     unsigned long len = 0;
     if (check_MetadataStatus(self))
         return NULL;
-    if (self->md->ht)
-        len = (unsigned long) g_hash_table_size(self->md->ht);
+    GHashTable *ht = cr_metadata_hashtable(self->md);
+    if (ht)
+        len = (unsigned long) g_hash_table_size(ht);
     return PyLong_FromUnsignedLong(len);
 }
 
@@ -227,7 +216,7 @@ ht_has_key(_MetadataObject *self, PyObject *args)
     if (check_MetadataStatus(self))
         return NULL;
 
-    if (g_hash_table_lookup(self->md->ht, key))
+    if (g_hash_table_lookup(cr_metadata_hashtable(self->md), key))
         Py_RETURN_TRUE;
     Py_RETURN_FALSE;
 }
@@ -240,7 +229,7 @@ ht_keys(_MetadataObject *self, PyObject *args)
     if (check_MetadataStatus(self))
         return NULL;
 
-    GList *keys = g_hash_table_get_keys(self->md->ht);
+    GList *keys = g_hash_table_get_keys(cr_metadata_hashtable(self->md));
     PyObject *list = PyList_New(0);
 
     for (GList *elem = keys; elem; elem = g_list_next(elem)) {
@@ -268,7 +257,7 @@ ht_remove(_MetadataObject *self, PyObject *args)
     if (check_MetadataStatus(self))
         return NULL;
 
-    if (g_hash_table_remove(self->md->ht, key))
+    if (g_hash_table_remove(cr_metadata_hashtable(self->md), key))
         Py_RETURN_TRUE;
     Py_RETURN_FALSE;
 }
@@ -283,7 +272,7 @@ ht_get(_MetadataObject *self, PyObject *args)
     if (check_MetadataStatus(self))
         return NULL;
 
-    cr_Package *pkg = g_hash_table_lookup(self->md->ht, key);
+    cr_Package *pkg = g_hash_table_lookup(cr_metadata_hashtable(self->md), key);
     if (!pkg)
         Py_RETURN_NONE;
     return (Object_FromPackage_WithParent(pkg, 0, (PyObject *) self));

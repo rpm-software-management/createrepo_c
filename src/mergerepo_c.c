@@ -564,7 +564,7 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
     repoid = 0;
     for (element = repos; element; element = g_slist_next(element)) {
         struct cr_MetadataLocation *ml;
-        cr_Metadata metadata;
+        cr_Metadata *metadata;
         GHashTableIter iter;
         gpointer key, void_pkg;
 
@@ -881,7 +881,7 @@ merge_repos(GHashTable *merged,
     GSList *element = NULL;
     for (element = repo_list; element; element = g_slist_next(element)) {
         gchar *repopath;                    // base url of current repodata
-        cr_Metadata metadata;               // current repodata
+        cr_Metadata *metadata;              // current repodata
         struct cr_MetadataLocation *ml;     // location of current repodata
 
         ml = (struct cr_MetadataLocation *) element->data;
@@ -1583,8 +1583,8 @@ main(int argc, char **argv)
 
     // Load noarch repo
 
-    cr_Metadata noarch_metadata = NULL;
-    // noarch_metadata->ht:
+    cr_Metadata *noarch_metadata = NULL;
+    // cr_metadata_hashtable(noarch_metadata):
     //   Key: CR_HT_KEY_FILENAME aka pkg->location_href
     //   Value: package
 

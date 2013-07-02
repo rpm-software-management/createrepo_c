@@ -38,6 +38,29 @@
 
 #define STRINGCHUNK_SIZE        16384
 
+/** Structure for loaded metadata
+ */
+struct _cr_Metadata {
+    cr_HashTableKey key;    /*!< key used in hashtable */
+    GHashTable *ht;         /*!< hashtable with packages */
+    GStringChunk *chunk;    /*!< NULL or string chunk with strings from htn */
+    GHashTable *pkglist_ht; /*!< list of allowed package basenames to load */
+};
+
+cr_HashTableKey
+cr_metadata_key(cr_Metadata *md)
+{
+    assert(md);
+    return md->key;
+}
+
+GHashTable *
+cr_metadata_hashtable(cr_Metadata *md)
+{
+    assert(md);
+    return md->ht;
+}
+
 void
 cr_free_values(gpointer data)
 {
@@ -59,10 +82,10 @@ cr_destroy_metadata_hashtable(GHashTable *hashtable)
         g_hash_table_destroy (hashtable);
 }
 
-cr_Metadata
+cr_Metadata *
 cr_metadata_new(cr_HashTableKey key, int use_single_chunk, GSList *pkglist)
 {
-    cr_Metadata md;
+    cr_Metadata *md;
 
     assert(key < CR_HT_KEY_SENTINEL);
 
@@ -94,7 +117,7 @@ cr_metadata_new(cr_HashTableKey key, int use_single_chunk, GSList *pkglist)
 }
 
 void
-cr_metadata_free(cr_Metadata md)
+cr_metadata_free(cr_Metadata *md)
 {
     if (!md)
         return;
@@ -242,7 +265,7 @@ cr_load_xml_files(GHashTable *hashtable,
 }
 
 int
-cr_metadata_load_xml(cr_Metadata md,
+cr_metadata_load_xml(cr_Metadata *md,
                      struct cr_MetadataLocation *ml,
                      GError **err)
 {
@@ -331,7 +354,7 @@ cr_metadata_load_xml(cr_Metadata md,
 }
 
 int
-cr_metadata_locate_and_load_xml(cr_Metadata md,
+cr_metadata_locate_and_load_xml(cr_Metadata *md,
                                 const char *repopath,
                                 GError **err)
 {

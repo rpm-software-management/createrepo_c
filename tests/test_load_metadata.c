@@ -49,14 +49,14 @@ static const char *REPO_FILENAME_KEYS_02[] = {"super_kernel-6.0.1-2.x86_64.rpm",
 static void test_cr_metadata_new(void)
 {
     guint len;
-    cr_Metadata metadata = NULL;
+    cr_Metadata *metadata = NULL;
 
     // Get new metadata object
     metadata = cr_metadata_new(CR_HT_KEY_DEFAULT, 0, NULL);
     g_assert(metadata);
 
     // Check if it is empty
-    len = g_hash_table_size(metadata->ht);
+    len = g_hash_table_size(cr_metadata_hashtable(metadata));
     g_assert_cmpint(len, ==, 0);
 
     cr_metadata_free(metadata);
@@ -69,17 +69,18 @@ void test_helper_check_keys(const char *repopath, cr_HashTableKey key, guint rep
     guint i;
     guint size;
     gpointer value;
-    cr_Metadata metadata;
+    cr_Metadata *metadata;
 
     metadata = cr_metadata_new(key, 0, NULL);
     g_assert(metadata);
-    g_assert(metadata->ht);
+    g_assert(cr_metadata_hashtable(metadata));
     ret = cr_metadata_locate_and_load_xml(metadata, repopath, NULL);
     g_assert_cmpint(ret, ==, CRE_OK);
-    size = g_hash_table_size(metadata->ht);
+    size = g_hash_table_size(cr_metadata_hashtable(metadata));
     g_assert_cmpuint(size, ==, repo_size);
     for (i=0; i < repo_size; i++) {
-        value = g_hash_table_lookup(metadata->ht, (gconstpointer) keys[i]);
+        value = g_hash_table_lookup(cr_metadata_hashtable(metadata),
+                                    (gconstpointer) keys[i]);
         if (!value)
             g_critical("Key \"%s\" not present!", keys[i]);
     }
@@ -108,15 +109,16 @@ static void test_cr_metadata_locate_and_load_xml_detailed(void)
     int ret;
     guint size;
     cr_Package *pkg;
-    cr_Metadata metadata;
+    cr_Metadata *metadata;
 
     metadata = cr_metadata_new(CR_HT_KEY_NAME, 0, NULL);
     g_assert(metadata);
     ret = cr_metadata_locate_and_load_xml(metadata, TEST_REPO_01, NULL);
     g_assert_cmpint(ret, ==, CRE_OK);
-    size = g_hash_table_size(metadata->ht);
+    size = g_hash_table_size(cr_metadata_hashtable(metadata));
     g_assert_cmpuint(size, ==, REPO_SIZE_01);
-    pkg = (cr_Package *) g_hash_table_lookup(metadata->ht, "super_kernel");
+    pkg = (cr_Package *) g_hash_table_lookup(cr_metadata_hashtable(metadata),
+                                             "super_kernel");
     g_assert(pkg);
 
     g_assert_cmpstr(pkg->pkgId, ==, "152824bff2aa6d54f429d43e87a3ff3a0286505c6d93ec87692b5e3a9e3b97bf");

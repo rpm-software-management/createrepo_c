@@ -66,7 +66,7 @@ struct UserData {
 
     // Update stuff
     gboolean skip_stat;             // Skip stat() while updating
-    cr_Metadata old_metadata;       // Loaded metadata
+    cr_Metadata *old_metadata;      // Loaded metadata
 
     // Thread serialization
     GMutex *mutex_pri;              // Mutex for primary metadata
@@ -227,8 +227,9 @@ dumper_thread(gpointer data, gpointer user_data)
     // Update stuff
     if (udata->old_metadata) {
         // We have old metadata
-        md = (cr_Package *) g_hash_table_lookup(udata->old_metadata->ht,
-                                                task->filename);
+        md = (cr_Package *) g_hash_table_lookup(
+                                cr_metadata_hashtable(udata->old_metadata),
+                                task->filename);
 
         if (md) {
             g_debug("CACHE HIT %s", task->filename);
@@ -731,7 +732,7 @@ main(int argc, char **argv)
 
     // Load old metadata if --update
 
-    cr_Metadata old_metadata = NULL;
+    cr_Metadata *old_metadata = NULL;
     struct cr_MetadataLocation *old_metadata_location = NULL;
 
     if (!package_count)
@@ -767,7 +768,7 @@ main(int argc, char **argv)
         }
 
         g_message("Loaded information about %d packages",
-                  g_hash_table_size(old_metadata->ht));
+                  g_hash_table_size(cr_metadata_hashtable(old_metadata)));
     }
 
     g_slist_free(current_pkglist);

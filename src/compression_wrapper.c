@@ -285,12 +285,20 @@ cr_sopen(const char *filename,
             g_debug("%s: CR_CW_AUTO_DETECT_COMPRESSION cannot be used if "
                     "mode is CR_CW_MODE_WRITE", __func__);
             assert(0);
+            g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_ASSERT,
+                        "CR_CW_AUTO_DETECT_COMPRESSION cannot be used if "
+                        "mode is CR_CW_MODE_WRITE");
+            return NULL;
         }
 
         if (comtype == CR_CW_UNKNOWN_COMPRESSION) {
             g_debug("%s: CR_CW_UNKNOWN_COMPRESSION cannot be used if mode"
-            " is CR_CW_MODE_WRITE", __func__);
+                    " is CR_CW_MODE_WRITE", __func__);
             assert(0);
+            g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_ASSERT,
+                        "CR_CW_UNKNOWN_COMPRESSION cannot be used if mode "
+                        "is CR_CW_MODE_WRITE");
+            return NULL;
         }
     }
 

@@ -307,7 +307,9 @@ cr_metadata_load_xml(cr_Metadata md,
                 // and it SHOULD set only valid key values)
                 g_critical("%s: Unknown hash table key selected", __func__);
                 assert(0);
-                return CRE_ERROR;
+                g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_ASSERT,
+                            "Bad db type");
+                return CRE_ASSERT;
         }
 
         if (g_hash_table_lookup(md->ht, new_key)) {

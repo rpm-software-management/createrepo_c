@@ -114,7 +114,10 @@ cr_xmlfile_write_xml_header(cr_XmlFile *f, GError **err)
         xml_header = XML_OTHER_HEADER;
         break;
     default:
+        g_critical("%s: Bad file type", __func__);
         assert(0);
+        g_set_error(err, CR_XML_FILE_ERROR, CRE_ASSERT, "Bad file type");
+        return CRE_ASSERT;
     }
 
     if (cr_printf(&tmp_err, f->f, xml_header, f->pkgs) == CR_CW_ERR) {
@@ -149,7 +152,10 @@ cr_xmlfile_write_xml_footer(cr_XmlFile *f, GError **err)
         xml_footer = XML_OTHER_FOOTER;
         break;
     default:
+        g_critical("%s: Bad file type", __func__);
         assert(0);
+        g_set_error(err, CR_XML_FILE_ERROR, CRE_ASSERT, "Bad file type");
+        return CRE_ASSERT;
     }
 
     cr_puts(f->f, xml_footer, &tmp_err);
@@ -186,7 +192,10 @@ cr_xmlfile_add_pkg(cr_XmlFile *f, cr_Package *pkg, GError **err)
         xml = cr_xml_dump_other(pkg, &tmp_err);
         break;
     default:
-        assert(0);  // This shoud not happend
+        g_critical("%s: Bad file type", __func__);
+        assert(0);
+        g_set_error(err, CR_XML_FILE_ERROR, CRE_ASSERT, "Bad file type");
+        return CRE_ASSERT;
     }
 
     if (tmp_err) {

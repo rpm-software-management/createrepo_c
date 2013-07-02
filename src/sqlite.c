@@ -1410,7 +1410,10 @@ cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
                 db_create_other_tables(db, &tmp_err);
                 break;
             default:
+                g_critical("%s: Bad db_type", __func__);
                 assert(0);
+                g_set_error(err, CR_DB_ERROR, CRE_ASSERT, "Bad db type");
+                return NULL;
         }
 
         if (tmp_err) {
@@ -1432,7 +1435,10 @@ cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
             statements = cr_db_prepare_other_statements(db, &tmp_err);
             break;
         default:
+            g_critical("%s: Bad db_type", __func__);
             assert(0);
+            g_set_error(err, CR_DB_ERROR, CRE_ASSERT, "Bad db type");
+            return NULL;
     }
 
     if (tmp_err) {
@@ -1441,9 +1447,9 @@ cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
             return NULL;
     }
 
-    sqlitedb = g_new0(cr_SqliteDb, 1);
-    sqlitedb->db         = db;
-    sqlitedb->type       = db_type;
+    sqlitedb       = g_new0(cr_SqliteDb, 1);
+    sqlitedb->db   = db;
+    sqlitedb->type = db_type;
 
     switch (db_type) {
         case CR_DB_PRIMARY:
@@ -1456,7 +1462,10 @@ cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
             sqlitedb->statements.oth = statements;
             break;
         default:
+            g_critical("%s: Bad db_type", __func__);
             assert(0);
+            g_set_error(err, CR_DB_ERROR, CRE_ASSERT, "Bad db type");
+            return NULL;
     }
 
     return sqlitedb;
@@ -1487,7 +1496,10 @@ cr_db_close(cr_SqliteDb *sqlitedb, GError **err)
             cr_db_destroy_other_statements(sqlitedb->statements.oth);
             break;
         default:
+            g_critical("%s: Bad db type", __func__);
             assert(0);
+            g_set_error(err, CR_DB_ERROR, CRE_ASSERT, "Bad db type");
+            return CRE_ASSERT;
     }
 
     if (tmp_err) {
@@ -1528,7 +1540,10 @@ cr_db_add_pkg(cr_SqliteDb *sqlitedb, cr_Package *pkg, GError **err)
         cr_db_add_other_pkg(sqlitedb->statements.oth, pkg, &tmp_err);
         break;
     default:
+        g_critical("%s: Bad db type", __func__);
         assert(0);
+        g_set_error(err, CR_DB_ERROR, CRE_ASSERT, "Bad db type");
+        return CRE_ASSERT;
     }
 
     if (tmp_err) {

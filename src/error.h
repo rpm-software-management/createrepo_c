@@ -74,6 +74,10 @@ typedef enum {
         (23) OpenSSL library related error */
     CRE_CURL, /*!<
         (24) Curl library related error */
+    CRE_ASSERT, /*!<
+        (25) Ideally this error should never happend. Nevertheless if
+        it happend, probable reason is that some values of createrepo_c
+        object was changed (by you - a programmer) in a bad way */
 } cr_Error;
 
 /** Converts cr_Error return code to error string.

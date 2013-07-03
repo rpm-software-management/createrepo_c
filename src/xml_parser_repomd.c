@@ -36,7 +36,6 @@
 
 /* TODO:
  * - replace atol function with better alternative
- * - maybe in repomdrecord struct use gint64 instead of long
  */
 
 typedef enum {

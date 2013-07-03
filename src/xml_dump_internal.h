@@ -42,8 +42,7 @@ extern "C" {
 #define DATESIZE_STR_MAX_LEN    SIZE_STR_MAX_LEN
 #endif
 
-/**
- * Dump files from the package and append them to the node as childrens.
+/** Dump files from the package and append them to the node as childrens.
  * @param node          parent xml node
  * @param package       cr_Package
  * @param primary       process only primary files (see cr_is_primary() function
@@ -51,8 +50,7 @@ extern "C" {
  */
 void cr_xml_dump_files(xmlNodePtr node, cr_Package *package, int primary);
 
-/**
- * Createrepo wrapper over libxml xmlNewTextChild.
+/** Createrepo_c wrapper over libxml xmlNewTextChild.
  * It allows content to be NULL and non UTF-8 (if content is no UTF8
  * then iso-8859-1 is assumed).
  */
@@ -61,7 +59,10 @@ xmlNodePtr cr_xmlNewTextChild(xmlNodePtr parent,
                               const xmlChar *name,
                               const xmlChar *content);
 
-/** TODO */
+/** Createrepo_c wrapper over the libxml xmlNewProp.
+ * It allows content to be NULL and non UTF-8 (if content is no UTF8
+ * then iso-8859-1 is assumed)
+ */
 xmlAttrPtr cr_xmlNewProp(xmlNodePtr node,
                          const xmlChar *name,
                          const xmlChar *value);

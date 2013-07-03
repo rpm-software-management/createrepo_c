@@ -118,12 +118,6 @@ sqlite_repr(_SqliteObject *self)
     return PyString_FromFormat("<createrepo_c.Sqlite %s object>", type);
 }
 
-/* getsetters */
-
-/* TODO:
- * Export sqlite object - Maybe in future version?
- */
-
 /* Sqlite methods */
 
 static PyObject *

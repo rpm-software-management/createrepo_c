@@ -166,13 +166,6 @@ cr_detect_compression(const char *filename, GError **err)
         return CR_CW_UNKNOWN_COMPRESSION;
     }
 
-    if (magic_check(myt, NULL) == -1) {
-        g_critical("%s: magic_check() failed: %s", __func__, magic_error(myt));
-        g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_MAGIC,
-                    "magic_check() failed: %s", magic_error(myt));
-        return CR_CW_UNKNOWN_COMPRESSION;
-    }
-
     const char *mime_type = magic_file(myt, filename);
 
     if (mime_type) {

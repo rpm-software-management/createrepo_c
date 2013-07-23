@@ -138,7 +138,8 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
 
         val = cr_find_attr("type", attr);
         if (val)
-            pd->repomd->repoid_type = g_strdup(val);
+            pd->repomd->repoid_type = g_string_chunk_insert(pd->repomd->chunk,
+                                                            val);
         break;
 
     case STATE_DISTRO:
@@ -271,7 +272,8 @@ cr_end_handler(void *pdata, const char *element)
         assert(pd->repomd);
         assert(!pd->repomdrecord);
 
-        pd->repomd->repoid = g_strdup(pd->content);
+        pd->repomd->repoid = g_string_chunk_insert(pd->repomd->chunk,
+                                                   pd->content);
         break;
 
     case STATE_TAGS:

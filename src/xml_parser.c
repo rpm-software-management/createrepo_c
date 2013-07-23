@@ -188,7 +188,7 @@ cr_xml_parser_generic(XML_Parser parser,
         void *buf = XML_GetBuffer(parser, XML_BUFFER_SIZE);
         if (!buf) {
             ret = CRE_MEMORY;
-            g_set_error(err, CR_XML_PARSER_FIL_ERROR, CRE_MEMORY,
+            g_set_error(err, CR_XML_PARSER_ERROR, CRE_MEMORY,
                         "Out of memory: Cannot allocate buffer for xml parser");
             break;
         }
@@ -206,7 +206,7 @@ cr_xml_parser_generic(XML_Parser parser,
             ret = CRE_XMLPARSER;
             g_critical("%s: parsing error: %s\n",
                        __func__, XML_ErrorString(XML_GetErrorCode(parser)));
-            g_set_error(err, CR_XML_PARSER_FIL_ERROR, CRE_XMLPARSER,
+            g_set_error(err, CR_XML_PARSER_ERROR, CRE_XMLPARSER,
                         "Parse error at line: %d (%s)",
                         (int) XML_GetCurrentLineNumber(parser),
                         (char *) XML_ErrorString(XML_GetErrorCode(parser)));

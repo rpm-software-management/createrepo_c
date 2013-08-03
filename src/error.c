@@ -71,9 +71,19 @@ cr_strerror(cr_Error rc)
             return "OpenSSL library related error";
         case CRE_CURL:
             return "Curl library related error";
+        case CRE_ASSERT:
+            return "Assert error";
+        case CRE_BADCMDARG:
+            return "Bad command line argument(s)";
         default:
             return "Unknown error";
     }
+}
+
+GQuark
+cr_cmd_error_quark(void)
+{
+    return g_quark_from_static_string("cr_cmd_error");
 }
 
 GQuark

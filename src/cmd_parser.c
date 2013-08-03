@@ -18,7 +18,9 @@
  */
 
 #include <string.h>
+#include <assert.h>
 #include "cmd_parser.h"
+#include "error.h"
 #include "compression_wrapper.h"
 #include "misc.h"
 
@@ -125,23 +127,23 @@ static GOptionEntry cmd_entries[] =
 
 
 
-struct CmdOptions *parse_arguments(int *argc, char ***argv)
+struct CmdOptions *parse_arguments(int *argc, char ***argv, GError **err)
 {
-    GError *error = NULL;
+    gboolean ret;
     GOptionContext *context;
+
+    assert(!err || *err = NULL);
 
     context = g_option_context_new("- program that creates a repomd (xml-based"
                                    " rpm metadata) repository from a set of"
                                    " rpms.");
     g_option_context_add_main_entries(context, cmd_entries, NULL);
 
-    gboolean ret = g_option_context_parse(context, argc, argv, &error);
+    ret = g_option_context_parse(context, argc, argv, err);
     g_option_context_free(context);
-    if (!ret) {
-        g_print("Option parsing failed: %s\n", error->message);
-        g_error_free(error);
+
+    if (!ret)
         return NULL;
-    }
 
     return &(_cmd_options);
 }
@@ -149,11 +151,17 @@ struct CmdOptions *parse_arguments(int *argc, char ***argv)
 
 
 gboolean
-check_arguments(struct CmdOptions *options, const char *input_dir)
+check_arguments(struct CmdOptions *options,
+                const char *input_dir,
+                GError **err)
 {
+    assert(!err || *err == NULL);
+
     // Check outputdir
     if (options->outputdir && !g_file_test(options->outputdir, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
-        g_warning("Specified outputdir \"%s\" doesn't exists", options->outputdir);
+        g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+                    "Specified outputdir \"%s\" doesn't exists",
+                    options->outputdir);
         return FALSE;
     }
 
@@ -179,7 +187,9 @@ check_arguments(struct CmdOptions *options, const char *input_dir)
         cr_ChecksumType type;
         type = cr_checksum_type(options->checksum);
         if (type == CR_CHECKSUM_UNKNOWN) {
-            g_critical("Unknown/Unsupported checksum type \"%s\"", options->checksum);
+            g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+                        "Unknown/Unsupported checksum type \"%s\"",
+                        options->checksum);
             return FALSE;
         }
         options->checksum_type = type;
@@ -196,8 +206,9 @@ check_arguments(struct CmdOptions *options, const char *input_dir)
             options->compression_type = CR_CW_XZ_COMPRESSION;
         } else {
             g_string_free(compress_str, TRUE);
-            g_critical("Unknown/Unsupported compression type \"%s\"",
-                       options->compress_type);
+            g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+                        "Unknown/Unsupported compression type \"%s\"",
+                        options->compress_type);
             return FALSE;
         }
         g_string_free(compress_str, TRUE);
@@ -242,7 +253,9 @@ check_arguments(struct CmdOptions *options, const char *input_dir)
         }
 
         if (!remote && !g_file_test(options->groupfile_fullpath, G_FILE_TEST_IS_REGULAR)) {
-            g_warning("groupfile %s doesn't exists", options->groupfile_fullpath);
+            g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+                        "groupfile %s doesn't exists",
+                        options->groupfile_fullpath);
             return FALSE;
         }
     }

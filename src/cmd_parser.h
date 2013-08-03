@@ -91,18 +91,23 @@ struct CmdOptions {
  * @param argv          pointer to argv
  * @return              CmdOptions filled by command line arguments
  */
-struct CmdOptions *parse_arguments(int *argc, char ***argv);
+struct CmdOptions *
+parse_arguments(int *argc, char ***argv, GError **err);
 
 /**
  * Performs some checks of arguments and fill some other items.
  * in the CmdOptions structure.
  */
-gboolean check_arguments(struct CmdOptions *options, const char *inputdir);
+gboolean
+check_arguments(struct CmdOptions *options,
+                const char *inputdir,
+                GError **err);
 
 /**
  * Frees CmdOptions.
  * @param options       pointer to struct with command line options
  */
-void free_options(struct CmdOptions *options);
+void
+free_options(struct CmdOptions *options);
 
 #endif /* __C_CREATEREPOLIB_CMD_PARSER_H__ */

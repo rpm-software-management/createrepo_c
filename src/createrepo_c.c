@@ -543,12 +543,18 @@ fill_pool(GThreadPool *pool,
 int
 main(int argc, char **argv)
 {
+    struct CmdOptions *cmd_options;
+    GError *tmp_err = NULL;
+
+
     // Arguments parsing
 
-    struct CmdOptions *cmd_options;
-    cmd_options = parse_arguments(&argc, &argv);
-    if (!cmd_options)
+    cmd_options = parse_arguments(&argc, &argv, &tmp_err);
+    if (!cmd_options) {
+        fprintf(stderr, "Argument parsing failed: %s\n", tmp_err->message);
+        g_error_free(tmp_err);
         exit(EXIT_FAILURE);
+    }
 
 
     // Arguments pre-check
@@ -560,7 +566,9 @@ main(int argc, char **argv)
                                       CR_VERSION_PATCH);
         free_options(cmd_options);
         exit(EXIT_SUCCESS);
-    } else if (argc != 2) {
+    }
+
+    if (argc != 2) {
         // No mandatory arguments
         fprintf(stderr, "Must specify exactly one directory to index.\n");
         fprintf(stderr, "Usage: %s [options] <directory_to_index>\n\n",
@@ -589,7 +597,7 @@ main(int argc, char **argv)
     // Check if inputdir exists
 
     if (!g_file_test(in_dir, G_FILE_TEST_IS_DIR)) {
-        g_warning("Directory %s must exist", in_dir);
+        fprintf(stderr, "Directory %s must exist\n", in_dir);
         g_free(in_dir);
         free_options(cmd_options);
         exit(EXIT_FAILURE);
@@ -598,7 +606,9 @@ main(int argc, char **argv)
 
     // Check parsed arguments
 
-    if (!check_arguments(cmd_options, in_dir)) {
+    if (!check_arguments(cmd_options, in_dir, &tmp_err)) {
+        fprintf(stderr, "%s\n", tmp_err->message);
+        g_error_free(tmp_err);
         g_free(in_dir);
         free_options(cmd_options);
         exit(EXIT_FAILURE);

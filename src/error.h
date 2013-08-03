@@ -78,6 +78,8 @@ typedef enum {
         (25) Ideally this error should never happend. Nevertheless if
         it happend, probable reason is that some values of createrepo_c
         object was changed (by you - a programmer) in a bad way */
+    CRE_BADCMDARG, /*!<
+        Bad command line argument(s) */
 } cr_Error;
 
 /** Converts cr_Error return code to error string.
@@ -87,6 +89,7 @@ typedef enum {
 const char *cr_strerror(cr_Error rc);
 
 /* Error domains */
+#define CR_CMD_ERROR                    cr_cmd_error_quark()
 #define CR_CHECKSUM_ERROR               cr_checksum_error_quark()
 #define CR_COMPRESSION_WRAPPER_ERROR    cr_compression_wrapper_error_quark()
 #define CR_DB_ERROR                     cr_db_error_quark()
@@ -108,6 +111,7 @@ const char *cr_strerror(cr_Error rc);
 #define CR_XML_PARSER_PRI_ERROR         cr_xml_parser_pri_error_quark()
 #define CR_XML_PARSER_REPOMD_ERROR      cr_xml_parser_repomd_error_quark()
 
+GQuark cr_cmd_error_quark(void);
 GQuark cr_checksum_error_quark(void);
 GQuark cr_compression_wrapper_error_quark(void);
 GQuark cr_db_error_quark(void);

@@ -20,6 +20,7 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <errno.h>
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -163,15 +164,29 @@ write_pkg(long id,
           cr_Package *pkg,
           struct UserData *udata)
 {
+    GError *tmp_err = NULL;
 
     // Write primary data
     g_mutex_lock(udata->mutex_pri);
     while (udata->id_pri != id)
         g_cond_wait (udata->cond_pri, udata->mutex_pri);
     ++udata->id_pri;
-    cr_xmlfile_add_chunk(udata->pri_f, (const char *) res.primary, NULL);
-    if (udata->pri_db)
-        cr_db_add_pkg(udata->pri_db, pkg, NULL);
+    cr_xmlfile_add_chunk(udata->pri_f, (const char *) res.primary, &tmp_err);
+    if (tmp_err) {
+        g_critical("Cannot add primary chunk:\n%s\nError: %s",
+                   res.primary, tmp_err->message);
+        g_clear_error(&tmp_err);
+    }
+
+    if (udata->pri_db) {
+        cr_db_add_pkg(udata->pri_db, pkg, &tmp_err);
+        if (tmp_err) {
+            g_critical("Cannot add record of %s (%s) to primary db: %s",
+                       pkg->name, pkg->pkgId, tmp_err->message);
+            g_clear_error(&tmp_err);
+        }
+    }
+
     g_cond_broadcast(udata->cond_pri);
     g_mutex_unlock(udata->mutex_pri);
 
@@ -180,9 +195,22 @@ write_pkg(long id,
     while (udata->id_fil != id)
         g_cond_wait (udata->cond_fil, udata->mutex_fil);
     ++udata->id_fil;
-    cr_xmlfile_add_chunk(udata->fil_f, (const char *) res.filelists, NULL);
-    if (udata->fil_db)
-        cr_db_add_pkg(udata->fil_db, pkg, NULL);
+    cr_xmlfile_add_chunk(udata->fil_f, (const char *) res.filelists, &tmp_err);
+    if (tmp_err) {
+        g_critical("Cannot add filelists chunk:\n%s\nError: %s",
+                   res.filelists, tmp_err->message);
+        g_clear_error(&tmp_err);
+    }
+
+    if (udata->fil_db) {
+        cr_db_add_pkg(udata->fil_db, pkg, &tmp_err);
+        if (tmp_err) {
+            g_critical("Cannot add record of %s (%s) to filelists db: %s",
+                       pkg->name, pkg->pkgId, tmp_err->message);
+            g_clear_error(&tmp_err);
+        }
+    }
+
     g_cond_broadcast(udata->cond_fil);
     g_mutex_unlock(udata->mutex_fil);
 
@@ -191,9 +219,22 @@ write_pkg(long id,
     while (udata->id_oth != id)
         g_cond_wait (udata->cond_oth, udata->mutex_oth);
     ++udata->id_oth;
-    cr_xmlfile_add_chunk(udata->oth_f, (const char *) res.other, NULL);
-    if (udata->oth_db)
+    cr_xmlfile_add_chunk(udata->oth_f, (const char *) res.other, &tmp_err);
+    if (tmp_err) {
+        g_critical("Cannot add other chunk:\n%s\nError: %s",
+                   res.other, tmp_err->message);
+        g_clear_error(&tmp_err);
+    }
+
+    if (udata->oth_db) {
         cr_db_add_pkg(udata->oth_db, pkg, NULL);
+        if (tmp_err) {
+            g_critical("Cannot add record of %s (%s) to other db: %s",
+                       pkg->name, pkg->pkgId, tmp_err->message);
+            g_clear_error(&tmp_err);
+        }
+    }
+
     g_cond_broadcast(udata->cond_oth);
     g_mutex_unlock(udata->mutex_oth);
 }
@@ -202,6 +243,7 @@ write_pkg(long id,
 void
 dumper_thread(gpointer data, gpointer user_data)
 {
+    GError *tmp_err = NULL;
     gboolean old_used = FALSE;  // To use old metadata?
     cr_Package *md  = NULL;     // Package from loaded MetaData
     cr_Package *pkg = NULL;     // Package from file
@@ -261,16 +303,33 @@ dumper_thread(gpointer data, gpointer user_data)
         // Load package from file
         pkg = cr_package_from_rpm(task->full_path, udata->checksum_type,
                                    location_href, udata->location_base,
-                                   udata->changelog_limit, NULL, NULL);
+                                   udata->changelog_limit, NULL, &tmp_err);
+        assert(pkg || tmp_err);
+
         if (!pkg) {
-            g_warning("Cannot read package: %s", task->full_path);
+            g_warning("Cannot read package: %s: %s",
+                      task->full_path, tmp_err->message);
+            g_clear_error(&tmp_err);
             goto task_cleanup;
         }
-        res = cr_xml_dump(pkg, NULL);
+
+        res = cr_xml_dump(pkg, &tmp_err);
+        if (tmp_err) {
+            g_critical("Cannot dump XML for %s (%s): %s",
+                       pkg->name, pkg->pkgId, tmp_err->message);
+            g_clear_error(&tmp_err);
+            goto task_cleanup;
+        }
     } else {
         // Just gen XML from old loaded metadata
         pkg = md;
-        res = cr_xml_dump(md, NULL);
+        res = cr_xml_dump(md, &tmp_err);
+        if (tmp_err) {
+            g_critical("Cannot dump XML for %s (%s): %s",
+                       md->name, md->pkgId, tmp_err->message);
+            g_clear_error(&tmp_err);
+            goto task_cleanup;
+        }
     }
 
     // Buffering stuff
@@ -662,7 +721,7 @@ main(int argc, char **argv)
 
     // Check if tmp_out_repo exists & Create tmp_out_repo dir
 
-    if (g_mkdir (tmp_out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
+    if (g_mkdir(tmp_out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
         if (errno == EEXIST) {
             g_critical("Temporary repodata directory: %s already exists! ("
                        "Another createrepo process is running?)", tmp_out_repo);
@@ -702,8 +761,8 @@ main(int argc, char **argv)
     if (cmd_options->read_pkgs_list) {
         output_pkg_list = fopen(cmd_options->read_pkgs_list, "w");
         if (!output_pkg_list) {
-            g_critical("Cannot open \"%s\" for writing",
-                       cmd_options->read_pkgs_list);
+            g_critical("Cannot open \"%s\" for writing: %s",
+                       cmd_options->read_pkgs_list, strerror(errno));
             exit(EXIT_FAILURE);
         }
     }
@@ -758,11 +817,18 @@ main(int argc, char **argv)
             old_metadata_location = cr_locate_metadata(in_dir, 1, NULL);
 
         if (old_metadata_location) {
-            ret = cr_metadata_load_xml(old_metadata, old_metadata_location, NULL);
-            if (ret == CRE_OK)
+            ret = cr_metadata_load_xml(old_metadata,
+                                       old_metadata_location,
+                                       &tmp_err);
+            assert(ret == CRE_OK || tmp_err);
+
+            if (ret == CRE_OK) {
                 g_debug("Old metadata from: %s - loaded", out_dir);
-            else
-                g_debug("Old metadata from %s - loading failed", out_dir);
+            } else {
+                g_debug("Old metadata from %s - loading failed: %s",
+                        out_dir, tmp_err->message);
+                g_clear_error(&tmp_err);
+            }
         }
 
         // Load repodata from --update-md-path
@@ -770,11 +836,17 @@ main(int argc, char **argv)
         for (; element; element = g_slist_next(element)) {
             char *path = (char *) element->data;
             g_message("Loading metadata from md-path: %s", path);
-            ret = cr_metadata_locate_and_load_xml(old_metadata, path, NULL);
-            if (ret == CRE_OK)
+
+            ret = cr_metadata_locate_and_load_xml(old_metadata, path, &tmp_err);
+            assert(ret == CRE_OK || tmp_err);
+
+            if (ret == CRE_OK) {
                 g_debug("Metadata from md-path %s - loaded", path);
-            else
-                g_warning("Metadata from md-path %s - loading failed", path);
+            } else {
+                g_warning("Metadata from md-path %s - loading failed: %s",
+                          path, tmp_err->message);
+                g_clear_error(&tmp_err);
+            }
         }
 
         g_message("Loaded information about %d packages",
@@ -799,10 +871,17 @@ main(int argc, char **argv)
                 cmd_options->groupfile_fullpath, groupfile);
 
         int ret;
-        ret = cr_better_copy_file(cmd_options->groupfile_fullpath, groupfile, NULL);
+        ret = cr_better_copy_file(cmd_options->groupfile_fullpath,
+                                  groupfile,
+                                  &tmp_err);
+        assert(ret == CRE_OK || tmp_err);
+
         if (ret != CRE_OK) {
-            g_critical("Error while copy %s -> %s",
-                       cmd_options->groupfile_fullpath, groupfile);
+            g_critical("Error while copy %s -> %s: %s",
+                       cmd_options->groupfile_fullpath,
+                       groupfile,
+                       tmp_err->message);
+            g_clear_error(&tmp_err);
         }
     } else if (cmd_options->update && cmd_options->keep_all_metadata &&
                old_metadata_location && old_metadata_location->groupfile_href)
@@ -818,8 +897,14 @@ main(int argc, char **argv)
 
         g_debug("Copy groupfile %s -> %s", src_groupfile, groupfile);
 
-        if (cr_better_copy_file(src_groupfile, groupfile, NULL) != CRE_OK)
-            g_critical("Error while copy %s -> %s", src_groupfile, groupfile);
+        int ret = cr_better_copy_file(src_groupfile, groupfile, &tmp_err);
+        assert(ret == CRE_OK || tmp_err);
+
+        if (ret != CRE_OK) {
+            g_critical("Error while copy %s -> %s: %s",
+                       src_groupfile, groupfile, tmp_err->message);
+            g_clear_error(&tmp_err);
+        }
     }
 
 
@@ -830,6 +915,7 @@ main(int argc, char **argv)
     if (cmd_options->update && cmd_options->keep_all_metadata &&
         old_metadata_location && old_metadata_location->updateinfo_href)
     {
+        int ret;
         gchar *src_updateinfo = old_metadata_location->updateinfo_href;
         updateinfo = g_strconcat(tmp_out_repo,
                                  cr_get_filename(src_updateinfo),
@@ -837,8 +923,14 @@ main(int argc, char **argv)
 
         g_debug("Copy updateinfo %s -> %s", src_updateinfo, updateinfo);
 
-        if (cr_better_copy_file(src_updateinfo, updateinfo, NULL) != CRE_OK)
-            g_critical("Error while copy %s -> %s", src_updateinfo, updateinfo);
+        ret = cr_better_copy_file(src_updateinfo, updateinfo, &tmp_err);
+        assert(ret == CRE_OK || tmp_err);
+
+        if (ret != CRE_OK) {
+            g_critical("Error while copy %s -> %s: %s",
+                       src_updateinfo, updateinfo, tmp_err->message);
+            g_clear_error(&tmp_err);
+        }
     }
 
     cr_metadatalocation_free(old_metadata_location);
@@ -889,9 +981,12 @@ main(int argc, char **argv)
     pri_cr_file = cr_xmlfile_sopen_primary(pri_xml_filename,
                                            CR_CW_GZ_COMPRESSION,
                                            pri_stat,
-                                           NULL);
+                                           &tmp_err);
+    assert(pri_cr_file || tmp_err);
     if (!pri_cr_file) {
-        g_critical("Cannot open file: %s", pri_xml_filename);
+        g_critical("Cannot open file %s: %s",
+                   pri_xml_filename, tmp_err->message);
+        g_clear_error(&tmp_err);
         cr_contentstat_free(pri_stat, NULL);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
@@ -903,9 +998,12 @@ main(int argc, char **argv)
     fil_cr_file = cr_xmlfile_sopen_filelists(fil_xml_filename,
                                             CR_CW_GZ_COMPRESSION,
                                             fil_stat,
-                                            NULL);
+                                            &tmp_err);
+    assert(fil_cr_file || tmp_err);
     if (!fil_cr_file) {
-        g_critical("Cannot open file: %s", fil_xml_filename);
+        g_critical("Cannot open file %s: %s",
+                   fil_xml_filename, tmp_err->message);
+        g_clear_error(&tmp_err);
         cr_contentstat_free(pri_stat, NULL);
         cr_contentstat_free(fil_stat, NULL);
         g_free(pri_xml_filename);
@@ -919,9 +1017,12 @@ main(int argc, char **argv)
     oth_cr_file = cr_xmlfile_sopen_other(oth_xml_filename,
                                         CR_CW_GZ_COMPRESSION,
                                         oth_stat,
-                                        NULL);
+                                        &tmp_err);
+    assert(oth_cr_file || tmp_err);
     if (!oth_cr_file) {
-        g_critical("Cannot open file: %s", oth_xml_filename);
+        g_critical("Cannot open file %s: %s",
+                   oth_xml_filename, tmp_err->message);
+        g_clear_error(&tmp_err);
         cr_contentstat_free(pri_stat, NULL);
         cr_contentstat_free(fil_stat, NULL);
         cr_contentstat_free(oth_stat, NULL);
@@ -957,9 +1058,33 @@ main(int argc, char **argv)
         pri_db_filename = g_strconcat(tmp_out_repo, "/primary.sqlite", NULL);
         fil_db_filename = g_strconcat(tmp_out_repo, "/filelists.sqlite", NULL);
         oth_db_filename = g_strconcat(tmp_out_repo, "/other.sqlite", NULL);
-        pri_db = cr_db_open_primary(pri_db_filename, NULL);
-        fil_db = cr_db_open_filelists(fil_db_filename, NULL);
-        oth_db = cr_db_open_other(oth_db_filename, NULL);
+
+        pri_db = cr_db_open_primary(pri_db_filename, &tmp_err);
+        assert(pri_db || tmp_err);
+        if (!pri_db) {
+            g_critical("Cannot open %s: %s",
+                       pri_db_filename, tmp_err->message);
+            g_clear_error(&tmp_err);
+            exit(EXIT_FAILURE);
+        }
+
+        fil_db = cr_db_open_filelists(fil_db_filename, &tmp_err);
+        assert(fil_db || tmp_err);
+        if (!fil_db) {
+            g_critical("Cannot open %s: %s",
+                       fil_db_filename, tmp_err->message);
+            g_clear_error(&tmp_err);
+            exit(EXIT_FAILURE);
+        }
+
+        oth_db = cr_db_open_other(oth_db_filename, &tmp_err);
+        assert(oth_db || tmp_err);
+        if (!oth_db) {
+            g_critical("Cannot open %s: %s",
+                       oth_db_filename, tmp_err->message);
+            g_clear_error(&tmp_err);
+            exit(EXIT_FAILURE);
+        }
     }
 
 
@@ -1086,7 +1211,13 @@ main(int argc, char **argv)
                                           compressed_groupfile_rec,
                                           cmd_options->checksum_type,
                                           groupfile_compression,
-                                          NULL);
+                                          &tmp_err);
+        if (tmp_err) {
+            g_critical("Cannot process groupfile %s: %s",
+                       groupfile, tmp_err->message);
+            g_clear_error(&tmp_err);
+            exit(EXIT_FAILURE);
+        }
     }
 
 
@@ -1094,7 +1225,15 @@ main(int argc, char **argv)
 
     if (updateinfo) {
         updateinfo_rec = cr_repomd_record_new("updateinfo", updateinfo);
-        cr_repomd_record_fill(updateinfo_rec, cmd_options->checksum_type, NULL);
+        cr_repomd_record_fill(updateinfo_rec,
+                              cmd_options->checksum_type,
+                              &tmp_err);
+        if (tmp_err) {
+            g_critical("Cannot process updateinfo %s: %s",
+                       updateinfo, tmp_err->message);
+            g_clear_error(&tmp_err);
+            exit(EXIT_FAILURE);
+        }
     }
 
 
@@ -1254,17 +1393,22 @@ main(int argc, char **argv)
     if (cmd_options->revision)
         cr_repomd_set_revision(repomd_obj, cmd_options->revision);
 
-    char *repomd_xml = cr_xml_dump_repomd(repomd_obj, NULL);
-
+    char *repomd_xml = cr_xml_dump_repomd(repomd_obj, &tmp_err);
+    assert(repomd_xml || tmp_err);
     cr_repomd_free(repomd_obj);
 
+    if (!repomd_xml) {
+        g_critical("Cannot generate repomd.xml: %s", tmp_err->message);
+        g_clear_error(&tmp_err);
+        exit(EXIT_FAILURE);
+    }
 
     // Write repomd.xml
 
     gchar *repomd_path = g_strconcat(tmp_out_repo, "repomd.xml", NULL);
     FILE *frepomd = fopen(repomd_path, "w");
-    if (!frepomd || !repomd_xml) {
-        g_critical("Generate of repomd.xml failed");
+    if (!frepomd) {
+        g_critical("Cannot open %s: %s", repomd_path, strerror(errno));
         exit(EXIT_FAILURE);
     }
     fputs(repomd_xml, frepomd);

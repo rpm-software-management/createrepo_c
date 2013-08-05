@@ -494,12 +494,14 @@ cr_repomd_record_rename_file(cr_RepomdRecord *md, GError **err)
         return CRE_OK;
 
     if (!(md->location_real) || !strlen(md->location_real)) {
+        g_debug("Empty locations in repomd record object");
         g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_BADARG,
                     "Empty locations in repomd record object");
         return CRE_BADARG;
     }
 
     if (!md->checksum) {
+        g_debug("Record doesn't contain checksum");
         g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_BADARG,
                     "Record doesn't contain checksum");
         return CRE_BADARG;

@@ -5,7 +5,7 @@ BUILD_DIR="$RPMBUILD_DIR/BUILD"
 TARGETDIR=`pwd -P`
 SCRIPTDIR=$( cd "$(dirname "$0")" ; pwd -P )
 PROJECTROOTDIR=`realpath "$SCRIPTDIR/../"`
-GITREV=""
+GITREV=`git rev-parse --short HEAD`
 
 echo "Cleaning $BUILD_DIR"
 rm -rf $BUILD_DIR
@@ -38,7 +38,7 @@ fi
 echo "Tarball done"
 
 echo "> Copying tarball and .spec file into the $RPMBUILD_DIR .."
-cp createrepo_c-*.tar.xz $RPMBUILD_DIR/SOURCES/
+cp createrepo_c-$GITREV.tar.xz $RPMBUILD_DIR/SOURCES/
 if [ ! $? == "0" ]; then
     echo "Error while: cp createrepo_c-*.tar.xz $RPMBUILD_DIR/SOURCES/"
     exit 1

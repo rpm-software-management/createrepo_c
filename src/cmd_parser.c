@@ -132,7 +132,7 @@ struct CmdOptions *parse_arguments(int *argc, char ***argv, GError **err)
     gboolean ret;
     GOptionContext *context;
 
-    assert(!err || *err = NULL);
+    assert(!err || *err == NULL);
 
     context = g_option_context_new("- program that creates a repomd (xml-based"
                                    " rpm metadata) repository from a set of"

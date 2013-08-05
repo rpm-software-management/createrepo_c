@@ -1206,13 +1206,31 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_repomd_record_load_contentstat(fil_xml_rec, fil_stat);
     cr_repomd_record_load_contentstat(oth_xml_rec, oth_stat);
 
-    cr_repomd_record_fill(pri_xml_rec, CR_CHECKSUM_SHA256, NULL);
-    cr_repomd_record_fill(fil_xml_rec, CR_CHECKSUM_SHA256, NULL);
-    cr_repomd_record_fill(oth_xml_rec, CR_CHECKSUM_SHA256, NULL);
-
     cr_contentstat_free(pri_stat, NULL);
     cr_contentstat_free(fil_stat, NULL);
     cr_contentstat_free(oth_stat, NULL);
+
+    GThreadPool *fill_pool = g_thread_pool_new(cr_repomd_record_fill_thread,
+                                               NULL, 3, FALSE, NULL);
+
+    cr_RepomdRecordFillTask *pri_fill_task;
+    cr_RepomdRecordFillTask *fil_fill_task;
+    cr_RepomdRecordFillTask *oth_fill_task;
+
+    pri_fill_task = cr_repomdrecordfilltask_new(pri_xml_rec,
+                                                CR_CHECKSUM_SHA256,
+                                                NULL);
+    g_thread_pool_push(fill_pool, pri_fill_task, NULL);
+
+    fil_fill_task = cr_repomdrecordfilltask_new(fil_xml_rec,
+                                                CR_CHECKSUM_SHA256,
+                                                NULL);
+    g_thread_pool_push(fill_pool, fil_fill_task, NULL);
+
+    oth_fill_task = cr_repomdrecordfilltask_new(oth_xml_rec,
+                                                CR_CHECKSUM_SHA256,
+                                                NULL);
+    g_thread_pool_push(fill_pool, oth_fill_task, NULL);
 
     // Groupfile
 
@@ -1243,6 +1261,14 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         cr_repomd_record_fill(pkgorigins_rec, CR_CHECKSUM_SHA256, NULL);
         g_free(pkgorigins_path);
     }
+
+    // Wait till repomd record fill task of xml files ends.
+
+    g_thread_pool_free(fill_pool, FALSE, TRUE);
+
+    cr_repomdrecordfilltask_free(pri_fill_task, NULL);
+    cr_repomdrecordfilltask_free(fil_fill_task, NULL);
+    cr_repomdrecordfilltask_free(oth_fill_task, NULL);
 
 
     // Sqlite db
@@ -1322,9 +1348,34 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         cr_compressiontask_free(fil_db_task, NULL);
         cr_compressiontask_free(oth_db_task, NULL);
 
-        cr_repomd_record_fill(pri_db_rec, CR_CHECKSUM_SHA256, NULL);
-        cr_repomd_record_fill(fil_db_rec, CR_CHECKSUM_SHA256, NULL);
-        cr_repomd_record_fill(oth_db_rec, CR_CHECKSUM_SHA256, NULL);
+        fill_pool = g_thread_pool_new(cr_repomd_record_fill_thread,
+                                      NULL, 3, FALSE, NULL);
+
+        cr_RepomdRecordFillTask *pri_db_fill_task;
+        cr_RepomdRecordFillTask *fil_db_fill_task;
+        cr_RepomdRecordFillTask *oth_db_fill_task;
+
+        pri_db_fill_task = cr_repomdrecordfilltask_new(pri_db_rec,
+                                                       CR_CHECKSUM_SHA256,
+                                                       NULL);
+        g_thread_pool_push(fill_pool, pri_db_fill_task, NULL);
+
+        fil_db_fill_task = cr_repomdrecordfilltask_new(fil_db_rec,
+                                                       CR_CHECKSUM_SHA256,
+                                                       NULL);
+        g_thread_pool_push(fill_pool, fil_db_fill_task, NULL);
+
+        oth_db_fill_task = cr_repomdrecordfilltask_new(oth_db_rec,
+                                                       CR_CHECKSUM_SHA256,
+                                                       NULL);
+        g_thread_pool_push(fill_pool, oth_db_fill_task, NULL);
+
+        g_thread_pool_free(fill_pool, FALSE, TRUE);
+
+        cr_repomdrecordfilltask_free(pri_db_fill_task, NULL);
+        cr_repomdrecordfilltask_free(fil_db_fill_task, NULL);
+        cr_repomdrecordfilltask_free(oth_db_fill_task, NULL);
+
     }
 
 

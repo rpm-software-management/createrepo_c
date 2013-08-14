@@ -1,5 +1,5 @@
-FIND_PACKAGE (PythonLibs)
-FIND_PACKAGE (PythonInterp REQUIRED)
+FIND_PACKAGE (PythonLibs 2)
+FIND_PACKAGE (PythonInterp 2 REQUIRED)
 EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} -c "from sys import stdout; from distutils import sysconfig; stdout.write(sysconfig.get_python_lib(True))" OUTPUT_VARIABLE PYTHON_INSTALL_DIR)
 INCLUDE_DIRECTORIES (${PYTHON_INCLUDE_PATH})
 

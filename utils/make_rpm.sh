@@ -21,6 +21,8 @@ if [ $# -eq "1" ]; then
     GITREV="$1"
 fi
 
+echo "Generating rpm for $GITREV"
+
 if [ ! -d "$RPMBUILD_DIR" ]; then
     echo "rpmbuild dir $RPMBUILD_DIR doesn't exist!"
     echo "init rpmbuild dir with command: rpmdev-setuptree"

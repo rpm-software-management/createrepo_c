@@ -80,6 +80,11 @@ Note: The C tests have to be builded by ``make tests``)!
 
 [Bugzilla](https://bugzilla.redhat.com/buglist.cgi?bug_status=NEW&bug_status=ASSIGNED&bug_status=MODIFIED&bug_status=VERIFIED&component=createrepo_c&query_format=advanced)
 
+### Important notes
+
+In original createrepo ``sha`` is a nickname for the ``sha1`` checksum.
+Createrepo_c mimics this behaviour.
+
 ---------------------------------------------------
 
 # Differences in behavior between createrepo_c and createrepo

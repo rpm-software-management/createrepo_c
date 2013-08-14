@@ -123,7 +123,7 @@ cr_checksum_file(const char *filename,
     switch (type) {
         //case CR_CHECKSUM_MD2:    ctx_type = EVP_md2();    break;
         case CR_CHECKSUM_MD5:    ctx_type = EVP_md5();    break;
-        case CR_CHECKSUM_SHA:    ctx_type = EVP_sha();    break;
+        case CR_CHECKSUM_SHA:    ctx_type = EVP_sha1();   break;
         case CR_CHECKSUM_SHA1:   ctx_type = EVP_sha1();   break;
         case CR_CHECKSUM_SHA224: ctx_type = EVP_sha224(); break;
         case CR_CHECKSUM_SHA256: ctx_type = EVP_sha256(); break;
@@ -189,7 +189,7 @@ cr_checksum_new(cr_ChecksumType type, GError **err)
     switch (type) {
         //case CR_CHECKSUM_MD2:    ctx_type = EVP_md2();    break;
         case CR_CHECKSUM_MD5:    ctx_type = EVP_md5();    break;
-        case CR_CHECKSUM_SHA:    ctx_type = EVP_sha();    break;
+        case CR_CHECKSUM_SHA:    ctx_type = EVP_sha1();   break;
         case CR_CHECKSUM_SHA1:   ctx_type = EVP_sha1();   break;
         case CR_CHECKSUM_SHA224: ctx_type = EVP_sha224(); break;
         case CR_CHECKSUM_SHA256: ctx_type = EVP_sha256(); break;

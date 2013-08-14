@@ -35,6 +35,8 @@ typedef struct _cr_ChecksumCtx cr_ChecksumCtx;
 
 /**
  * Enum of supported checksum types.
+ * Note: SHA is just a "nickname" for the SHA1. This
+ * is for the compatibility with original createrepo.
  */
 typedef enum {
     CR_CHECKSUM_UNKNOWN,    /*!< Unknown checksum */

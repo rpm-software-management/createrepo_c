@@ -49,6 +49,30 @@ XML_WARNING_MISSINGATTR = _createrepo_c.XML_WARNING_MISSINGATTR
 XML_WARNING_UNKNOWNVAL  = _createrepo_c.XML_WARNING_UNKNOWNVAL
 XML_WARNING_BADATTRVAL  = _createrepo_c.XML_WARNING_BADATTRVAL
 
+# Helper contants
+
+
+# Tuple indexes for provide, conflict, obsolete or require entry
+PCOR_ENTRY_NAME    = 0
+PCOR_ENTRY_FLAGS   = 1
+PCOR_ENTRY_EPOCH   = 2
+PCOR_ENTRY_VERSION = 3
+PCOR_ENTRY_RELEASE = 4
+PCOR_ENTRY_PRE     = 5
+
+# Tuple indexes for file entry
+FILE_ENTRY_TYPE = 0
+FILE_ENTRY_PATH = 1
+FILE_ENTRY_NAME = 2
+
+# Tuple indexes for changelog entry
+CHANGELOG_ENTRY_AUTHOR    = 0
+CHANGELOG_ENTRY_DATE      = 1
+CHANGELOG_ENTRY_CHANGELOG = 2
+
+
+# Exception
+
 CreaterepoCError = _createrepo_c.CreaterepoCError
 
 # ContentStat class
@@ -164,8 +188,8 @@ def xml_parse_filelists(path, newpkgcb=None, pkgcb=None, warningcb=None):
 def xml_parse_other(path, newpkgcb=None, pkgcb=None, warningcb=None):
     return _createrepo_c.xml_parse_other(path, newpkgcb, pkgcb, warningcb)
 
-def xml_parse_repomd(path, repomdobj, warning_cb=None):
-    return _createrepo_c.xml_parse_repomd(path, repomdobj, warning_cb)
+def xml_parse_repomd(path, repomdobj, warningcb=None):
+    return _createrepo_c.xml_parse_repomd(path, repomdobj, warningcb)
 
 checksum_name_str   = _createrepo_c.checksum_name_str
 checksum_type       = _createrepo_c.checksum_type

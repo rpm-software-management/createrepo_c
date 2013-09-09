@@ -507,6 +507,8 @@ cr_repomd_record_rename_file(cr_RepomdRecord *md, GError **err)
         return CRE_BADARG;
     }
 
+    location_filename = md->location_real;
+
     x = strlen(md->location_real);
     for (; x > 0; x--) {
         if (md->location_real[x] == '/') {
@@ -515,6 +517,10 @@ cr_repomd_record_rename_file(cr_RepomdRecord *md, GError **err)
             break;
         }
     }
+
+    if (!location_prefix)
+        // In case that the location_real doesn't contain '/'
+        location_prefix = g_strdup("");
 
     // Check if the rename is necessary
     // During update with --keep-all-metadata some files (groupfile,

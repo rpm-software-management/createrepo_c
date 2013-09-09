@@ -176,7 +176,7 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
                                             cr_find_attr("rel", attr));
         break;
 
-    case STATE_CHANGELOG:
+    case STATE_CHANGELOG: {
         assert(pd->pkg);
         assert(!pd->changelog);
 
@@ -200,6 +200,7 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         pd->changelog = changelog;
 
         break;
+    }
 
     default:
         break;

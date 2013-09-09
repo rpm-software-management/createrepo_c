@@ -515,9 +515,18 @@ cr_db_dbinfo_update(cr_SqliteDb *sqlitedb, const char *checksum, GError **err)
     /* Perform insert */
     sqlite3_bind_int(handle, 1, CR_DB_CACHE_DBVERSION);
     sqlite3_bind_text(handle, 2, checksum, -1, SQLITE_STATIC);
-    sqlite3_step(handle);
-    rc = sqlite3_finalize(handle);
 
+    rc = sqlite3_step(handle);
+    if (rc != SQLITE_DONE) {
+        g_set_error(err, CR_DB_ERROR, CRE_DB,
+                      "Cannot update dbinfo table: %s",
+                       sqlite3_errmsg (sqlitedb->db));
+        g_critical("%s: Cannot update dbinfo table: %s",
+                    __func__, sqlite3_errmsg(sqlitedb->db));
+        return CRE_DB;
+    }
+
+    rc = sqlite3_finalize(handle);
     if (rc != SQLITE_OK) {
         g_set_error(err, CR_DB_ERROR, CRE_DB,
                       "Cannot update dbinfo table: %s",

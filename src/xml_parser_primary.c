@@ -324,7 +324,7 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
     case STATE_RPM_ENTRY_PROVIDES:
     case STATE_RPM_ENTRY_REQUIRES:
     case STATE_RPM_ENTRY_CONFLICTS:
-    case STATE_RPM_ENTRY_OBSOLETES:
+    case STATE_RPM_ENTRY_OBSOLETES: {
         assert(pd->pkg);
 
         cr_Dependency *dep = cr_dependency_new();
@@ -382,6 +382,7 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         }
 
         break;
+    }
 
     case STATE_FILE:
         assert(pd->pkg);

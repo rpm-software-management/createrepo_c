@@ -266,10 +266,10 @@ check_arguments(struct CmdOptions *options,
             g_warning("pkglist file \"%s\" doesn't exists", options->pkglist);
         } else {
             char *content = NULL;
-            GError *err = NULL;
-            if (!g_file_get_contents(options->pkglist, &content, NULL, &err)) {
-                g_warning("Error while reading pkglist file: %s", err->message);
-                g_error_free(err);
+            GError *tmp_err = NULL;
+            if (!g_file_get_contents(options->pkglist, &content, NULL, &tmp_err)) {
+                g_warning("Error while reading pkglist file: %s", tmp_err->message);
+                g_error_free(tmp_err);
                 g_free(content);
             } else {
                 x = 0;

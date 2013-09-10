@@ -209,11 +209,6 @@ class OtherXmlFile(XmlFile):
 
 # Functions
 
-xml_dump_primary    = _createrepo_c.xml_dump_primary
-xml_dump_filelists  = _createrepo_c.xml_dump_filelists
-xml_dump_other      = _createrepo_c.xml_dump_other
-xml_dump            = _createrepo_c.xml_dump
-
 def package_from_rpm(filename, checksum_type=SHA256, location_href=None,
                      location_base=None, changelog_limit=10):
     """:class:`.Package` object from the rpm package"""
@@ -225,6 +220,11 @@ def xml_from_rpm(filename, checksum_type=SHA256, location_href=None,
     """XML for the rpm package"""
     return _createrepo_c.xml_from_rpm(filename, checksum_type,
                       location_href, location_base, changelog_limit)
+
+xml_dump_primary    = _createrepo_c.xml_dump_primary
+xml_dump_filelists  = _createrepo_c.xml_dump_filelists
+xml_dump_other      = _createrepo_c.xml_dump_other
+xml_dump            = _createrepo_c.xml_dump
 
 def xml_parse_primary(path, newpkgcb=None, pkgcb=None,
                       warningcb=None, do_files=1):

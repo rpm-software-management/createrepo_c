@@ -243,8 +243,8 @@ texinfo_documents = [
 #texinfo_show_urls = 'footnote'
 
 def skip(app, what, name, obj, skip, options):
-    #if what == "module" and type(obj).__name__ == "builtin_function_or_method":
-    #    return False
+    if what == "module" and type(obj).__name__ == "builtin_function_or_method":
+        return False
     if name == "__init__":
         return type(obj).__name__ == "wrapper_descriptor"
     return skip

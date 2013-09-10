@@ -66,6 +66,13 @@ metadatalocation_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return (PyObject *)self;
 }
 
+PyDoc_STRVAR(metadatalocation_init__doc__,
+"Class representing location of metadata\n\n"
+".. method:: __init__(path, ignore_db)\n\n"
+"    :arg path: String with url/path to the repository\n"
+"    :arg ignore_db: Boolean. If False then in case of remote repository\n"
+"                    databases will not be downloaded)\n");
+
 static int
 metadatalocation_init(_MetadataLocationObject *self, PyObject *args, PyObject *kwds)
 {
@@ -194,7 +201,7 @@ PyTypeObject MetadataLocation_Type = {
     0,                              /* tp_setattro */
     0,                              /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /* tp_flags */
-    "MetadataLocation object",      /* tp_doc */
+    metadatalocation_init__doc__,   /* tp_doc */
     0,                              /* tp_traverse */
     0,                              /* tp_clear */
     0,                              /* tp_richcompare */

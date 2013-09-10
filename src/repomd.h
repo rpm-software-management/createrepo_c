@@ -145,7 +145,7 @@ int cr_repomd_record_fill(cr_RepomdRecord *record,
                           cr_ChecksumType checksum_type,
                           GError **err);
 
-/** Almost analogue of cr_repomd_record_fill but suitable for groupfile.
+/** Almost analogous to cr_repomd_record_fill but suitable for groupfile.
  * Record must be set with the path to existing non compressed groupfile.
  * Compressed file will be created and compressed_record updated.
  * @param record                cr_RepomdRecord initialized to an existing

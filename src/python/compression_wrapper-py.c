@@ -192,6 +192,10 @@ crfile_repr(_CrFileObject *self)
 
 /* CrFile methods */
 
+PyDoc_STRVAR(write__doc__,
+"write() -> None\n\n"
+"Write a data to the file");
+
 static PyObject *
 py_write(_CrFileObject *self, PyObject *args)
 {
@@ -213,6 +217,10 @@ py_write(_CrFileObject *self, PyObject *args)
 
     Py_RETURN_NONE;
 }
+
+PyDoc_STRVAR(close__doc__,
+"close() -> None\n\n"
+"Close the file");
 
 static PyObject *
 py_close(_CrFileObject *self, void *nothing)
@@ -238,8 +246,8 @@ py_close(_CrFileObject *self, void *nothing)
 }
 
 static struct PyMethodDef crfile_methods[] = {
-    {"write", (PyCFunction)py_write, METH_VARARGS, NULL},
-    {"close", (PyCFunction)py_close, METH_NOARGS, NULL},
+    {"write", (PyCFunction)py_write, METH_VARARGS, write__doc__},
+    {"close", (PyCFunction)py_close, METH_NOARGS, close__doc__},
     {NULL} /* sentinel */
 };
 

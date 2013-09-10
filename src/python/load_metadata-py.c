@@ -63,6 +63,16 @@ metadata_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return (PyObject *)self;
 }
 
+PyDoc_STRVAR(metadata_init__doc__,
+".. method:: __init__(key=HT_KEY_DEFAULT, use_single_chunk=False, pkglist=[])\n\n"
+"    :arg key: Which value shoud be used as a key. One of HT_KEY_* constants.\n"
+"    :arg use_single_chunk: Specify if all package strings should be stored\n"
+"        in metadata object instead of package iself. This save some\n"
+"        space if you need to have a all packages loaded into a memory.\n"
+"    :arg pkglist: Package list that specify which packages shloud be\n"
+"        loaded. Use its base filename (e.g.\n"
+"        \"GConf2-3.2.6-6.fc19.i686.rpm\").\n");
+
 static int
 metadata_init(_MetadataObject *self, PyObject *args, PyObject *kwds)
 {
@@ -120,11 +130,15 @@ get_key(_MetadataObject *self, void *nothing)
 }
 
 static PyGetSetDef metadata_getsetters[] = {
-    {"key", (getter)get_key, NULL, NULL, NULL},
+    {"key", (getter)get_key, NULL, "Type of used key", NULL},
     {NULL, NULL, NULL, NULL, NULL} /* sentinel */
 };
 
 /* Metadata methods */
+
+PyDoc_STRVAR(load_xml__doc__,
+"load_xml(metadata_location_object) -> None\n\n"
+"Load XML specified by MetadataLocation Object");
 
 static PyObject *
 load_xml(_MetadataObject *self, PyObject *args)
@@ -147,6 +161,10 @@ load_xml(_MetadataObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+PyDoc_STRVAR(locate_and_load_xml__doc__,
+"locate_and_load_xml(path) -> None"
+"Load XML specified by path");
+
 static PyObject *
 locate_and_load_xml(_MetadataObject *self, PyObject *args)
 {
@@ -168,6 +186,10 @@ locate_and_load_xml(_MetadataObject *self, PyObject *args)
 }
 
 /* Hashtable methods */
+
+PyDoc_STRVAR(len__doc__,
+"len() -> long\n\n"
+"Number of packages");
 
 static PyObject *
 ht_len(_MetadataObject *self, PyObject *noarg)
@@ -206,6 +228,10 @@ ht_add(_MetadataObject *self, PyObject *args)
 }
 */
 
+PyDoc_STRVAR(has_key__doc__,
+"has_key(key) -> bool\n\n"
+"Test if metadata contains the key");
+
 static PyObject *
 ht_has_key(_MetadataObject *self, PyObject *args)
 {
@@ -220,6 +246,10 @@ ht_has_key(_MetadataObject *self, PyObject *args)
         Py_RETURN_TRUE;
     Py_RETURN_FALSE;
 }
+
+PyDoc_STRVAR(keys__doc__,
+"keys() -> list\n\n"
+"List of all keys");
 
 static PyObject *
 ht_keys(_MetadataObject *self, PyObject *args)
@@ -247,6 +277,10 @@ ht_keys(_MetadataObject *self, PyObject *args)
     return list;
 }
 
+PyDoc_STRVAR(remove__doc__,
+"remove(key) -> bool\n\n"
+"Remove package which has a key key from the metadata");
+
 static PyObject *
 ht_remove(_MetadataObject *self, PyObject *args)
 {
@@ -261,6 +295,10 @@ ht_remove(_MetadataObject *self, PyObject *args)
         Py_RETURN_TRUE;
     Py_RETURN_FALSE;
 }
+
+PyDoc_STRVAR(get__doc__,
+"get(key) -> Package\n\n"
+"Get Package which has a key key");
 
 static PyObject *
 ht_get(_MetadataObject *self, PyObject *args)
@@ -279,14 +317,16 @@ ht_get(_MetadataObject *self, PyObject *args)
 }
 
 static struct PyMethodDef metadata_methods[] = {
-    {"load_xml", (PyCFunction)load_xml, METH_VARARGS, NULL},
-    {"locate_and_load_xml", (PyCFunction)locate_and_load_xml, METH_VARARGS, NULL},
-    {"len",     (PyCFunction)ht_len, METH_NOARGS, NULL},
+    {"load_xml", (PyCFunction)load_xml, METH_VARARGS,
+        load_xml__doc__},
+    {"locate_and_load_xml", (PyCFunction)locate_and_load_xml, METH_VARARGS,
+        locate_and_load_xml__doc__},
+    {"len",     (PyCFunction)ht_len, METH_NOARGS, len__doc__},
 //    {"add",     (PyCFunction)ht_add, METH_VARARGS, NULL},
-    {"has_key", (PyCFunction)ht_has_key, METH_VARARGS, NULL},
-    {"keys",    (PyCFunction)ht_keys, METH_NOARGS, NULL},
-    {"remove",  (PyCFunction)ht_remove, METH_VARARGS, NULL},
-    {"get",     (PyCFunction)ht_get, METH_VARARGS, NULL},
+    {"has_key", (PyCFunction)ht_has_key, METH_VARARGS, has_key__doc__},
+    {"keys",    (PyCFunction)ht_keys, METH_NOARGS, keys__doc__},
+    {"remove",  (PyCFunction)ht_remove, METH_VARARGS, remove__doc__},
+    {"get",     (PyCFunction)ht_get, METH_VARARGS, get__doc__},
     {NULL} /* sentinel */
 };
 
@@ -314,7 +354,7 @@ PyTypeObject Metadata_Type = {
     0,                              /* tp_setattro */
     0,                              /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /* tp_flags */
-    "Metadata object",              /* tp_doc */
+    metadata_init__doc__,           /* tp_doc */
     0,                              /* tp_traverse */
     0,                              /* tp_clear */
     0,                              /* tp_richcompare */

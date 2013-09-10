@@ -184,6 +184,10 @@ keys(_MetadataHashtableObject *self, PyObject *args)
     return list;
 }
 
+PyDoc_STRVAR(del_doc,
+"del(key) -> bool\n\n"
+"Delete a package specified by key from the hashtable.");
+
 static PyObject *
 del(_MetadataHashtableObject *self, PyObject *args)
 {
@@ -204,7 +208,7 @@ static struct PyMethodDef metadata_methods[] = {
 //    {"add", (PyCFunction)add, METH_VARARGS, NULL},
     {"has_key", (PyCFunction)has_key, METH_VARARGS, NULL},
     {"keys", (PyCFunction)keys, METH_NOARGS, NULL},
-    {"del", (PyCFunction)del, METH_VARARGS, NULL},
+    {"del", (PyCFunction)del, METH_VARARGS, del_doc},
     {NULL} /* sentinel */
 };
 

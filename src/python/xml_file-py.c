@@ -63,6 +63,15 @@ xmlfile_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return (PyObject *)self;
 }
 
+PyDoc_STRVAR(xmlfile_init__doc__,
+"XmlFile object represents a single XML file (primary, filelists or other).\n\n"
+".. method:: __init__(path, type, compression_type, contentstat)\n\n"
+"    :arg path: Path to the database\n"
+"    :arg type: Type of the XML file. One from XMLFILE_PRIMARY,\n"
+"               XMLFILE_FILELISTS, XMLFILE_OTHER constants\n"
+"    :arg compression_type: Compression type specified by constant\n"
+"    :arg contentstat: ContentStat object to gather content statistics or None");
+
 static int
 xmlfile_init(_XmlFileObject *self, PyObject *args, PyObject *kwds)
 {
@@ -153,6 +162,10 @@ xmlfile_repr(_XmlFileObject *self)
 
 /* XmlFile methods */
 
+PyDoc_STRVAR(set_num_of_pkgs__doc__,
+"set_num_of_pkgs(number_of_packages) -> None\n\n"
+"Set number of all packages");
+
 static PyObject *
 set_num_of_pkgs(_XmlFileObject *self, PyObject *args)
 {
@@ -173,6 +186,10 @@ set_num_of_pkgs(_XmlFileObject *self, PyObject *args)
 
     Py_RETURN_NONE;
 }
+
+PyDoc_STRVAR(add_pkg__doc__,
+"add_pkg(Package) -> None\n\n"
+"Add Package to the xml");
 
 static PyObject *
 add_pkg(_XmlFileObject *self, PyObject *args)
@@ -195,6 +212,10 @@ add_pkg(_XmlFileObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+PyDoc_STRVAR(add_chunk__doc__,
+"add_chunk(chunk) -> None\n\n"
+"Add a string chunk to the xml");
+
 static PyObject *
 add_chunk(_XmlFileObject *self, PyObject *args)
 {
@@ -215,6 +236,10 @@ add_chunk(_XmlFileObject *self, PyObject *args)
 
     Py_RETURN_NONE;
 }
+
+PyDoc_STRVAR(close__doc__,
+"close() -> None\n\n"
+"Close the XML file");
 
 static PyObject *
 xmlfile_close(_XmlFileObject *self, void *nothing)
@@ -240,10 +265,14 @@ xmlfile_close(_XmlFileObject *self, void *nothing)
 }
 
 static struct PyMethodDef xmlfile_methods[] = {
-    {"set_num_of_pkgs", (PyCFunction)set_num_of_pkgs, METH_VARARGS, NULL},
-    {"add_pkg", (PyCFunction)add_pkg, METH_VARARGS, NULL},
-    {"add_chunk", (PyCFunction)add_chunk, METH_VARARGS, NULL},
-    {"close", (PyCFunction)xmlfile_close, METH_NOARGS, NULL},
+    {"set_num_of_pkgs", (PyCFunction)set_num_of_pkgs, METH_VARARGS,
+        set_num_of_pkgs__doc__},
+    {"add_pkg", (PyCFunction)add_pkg, METH_VARARGS,
+        add_pkg__doc__},
+    {"add_chunk", (PyCFunction)add_chunk, METH_VARARGS,
+        add_chunk__doc__},
+    {"close", (PyCFunction)xmlfile_close, METH_NOARGS,
+        close__doc__},
     {NULL} /* sentinel */
 };
 
@@ -269,7 +298,7 @@ PyTypeObject XmlFile_Type = {
     0,                              /* tp_setattro */
     0,                              /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /* tp_flags */
-    "XmlFile object",               /* tp_doc */
+    xmlfile_init__doc__,            /* tp_doc */
     0,                              /* tp_traverse */
     0,                              /* tp_clear */
     0,                              /* tp_richcompare */

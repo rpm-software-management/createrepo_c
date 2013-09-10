@@ -2,73 +2,101 @@
 """
 
 import _createrepo_c
+from _createrepo_c import *
 
-VERSION_MAJOR = _createrepo_c.VERSION_MAJOR
-VERSION_MINOR = _createrepo_c.VERSION_MINOR
-VERSION_PATCH = _createrepo_c.VERSION_PATCH
+VERSION_MAJOR = _createrepo_c.VERSION_MAJOR  #: Major version
+VERSION_MINOR = _createrepo_c.VERSION_MINOR  #: Minor version
+VERSION_PATCH = _createrepo_c.VERSION_PATCH  #: Patch version
+
+#: Version string
 VERSION = u"%d.%d.%d" % (VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 
-UNKNOWN_CHECKSUM    = _createrepo_c.CHECKSUM_UNKNOWN
-CHECKSUM_UNKNOWN    = _createrepo_c.CHECKSUM_UNKNOWN
-MD5                 = _createrepo_c.MD5
-SHA                 = _createrepo_c.SHA
-SHA1                = _createrepo_c.SHA1
-SHA224              = _createrepo_c.SHA224
-SHA256              = _createrepo_c.SHA256
-SHA384              = _createrepo_c.SHA384
-SHA512              = _createrepo_c.SHA512
+UNKNOWN_CHECKSUM    = _createrepo_c.CHECKSUM_UNKNOWN #: Checksum unknown
+CHECKSUM_UNKNOWN    = _createrepo_c.CHECKSUM_UNKNOWN #: Checksum unknown
+MD5                 = _createrepo_c.MD5              #: MD5 checksum
+SHA                 = _createrepo_c.SHA              #: SHA1 checksum alias
+SHA1                = _createrepo_c.SHA1             #: SHA1 checksum
+SHA224              = _createrepo_c.SHA224           #: SHA224 checksum
+SHA256              = _createrepo_c.SHA256           #: SHA256 checksum
+SHA384              = _createrepo_c.SHA384           #: SHA384 checksum
+SHA512              = _createrepo_c.SHA512           #: SHA512 checksum
 
-MODE_READ   = _createrepo_c.MODE_READ
-MODE_WRITE  = _createrepo_c.MODE_WRITE
+MODE_READ   = _createrepo_c.MODE_READ  #: Read open mode
+MODE_WRITE  = _createrepo_c.MODE_WRITE #: Write open mode
 
+#: Use compression autodetection
 AUTO_DETECT_COMPRESSION = _createrepo_c.AUTO_DETECT_COMPRESSION
+
+#: Unknown compression
 UNKNOWN_COMPRESSION     = _createrepo_c.UNKNOWN_COMPRESSION
+
+#: No compression
 NO_COMPRESSION          = _createrepo_c.NO_COMPRESSION
+
+#: Gzip compression
 GZ_COMPRESSION          = _createrepo_c.GZ_COMPRESSION
+
+#: Bzip2 compression
 BZ2_COMPRESSION         = _createrepo_c.BZ2_COMPRESSION
+
+#: XZ compression
 XZ_COMPRESSION          = _createrepo_c.XZ_COMPRESSION
+
+#: Gzip compression alias
 GZ                      = _createrepo_c.GZ_COMPRESSION
+
+#: Bzip2 compression alias
 BZ2                     = _createrepo_c.BZ2_COMPRESSION
+
+#: XZ compression alias
 XZ                      = _createrepo_c.XZ_COMPRESSION
 
-HT_KEY_DEFAULT  = _createrepo_c.HT_KEY_DEFAULT
-HT_KEY_HASH     = _createrepo_c.HT_KEY_HASH
-HT_KEY_NAME     = _createrepo_c.HT_KEY_NAME
-HT_KEY_FILENAME = _createrepo_c.HT_KEY_FILENAME
+HT_KEY_DEFAULT  = _createrepo_c.HT_KEY_DEFAULT  #: Default key (hash)
+HT_KEY_HASH     = _createrepo_c.HT_KEY_HASH     #: Package hash as a key
+HT_KEY_NAME     = _createrepo_c.HT_KEY_NAME     #: Package name as a key
+HT_KEY_FILENAME = _createrepo_c.HT_KEY_FILENAME #: Package filename as a key
 
-DB_PRIMARY      = _createrepo_c.DB_PRIMARY
-DB_FILELISTS    = _createrepo_c.DB_FILELISTS
-DB_OTHER        = _createrepo_c.DB_OTHER
+DB_PRIMARY      = _createrepo_c.DB_PRIMARY   #: Primary database
+DB_FILELISTS    = _createrepo_c.DB_FILELISTS #: Filelists database
+DB_OTHER        = _createrepo_c.DB_OTHER     #: Other database
 
-XMLFILE_PRIMARY   = _createrepo_c.XMLFILE_PRIMARY
-XMLFILE_FILELISTS = _createrepo_c.XMLFILE_FILELISTS
-XMLFILE_OTHER     = _createrepo_c.XMLFILE_OTHER
+XMLFILE_PRIMARY   = _createrepo_c.XMLFILE_PRIMARY    #: Primary xml file
+XMLFILE_FILELISTS = _createrepo_c.XMLFILE_FILELISTS  #: Filelists xml file
+XMLFILE_OTHER     = _createrepo_c.XMLFILE_OTHER      #: Other xml file
 
+#: XML warning - Unknown tag
 XML_WARNING_UNKNOWNTAG  = _createrepo_c.XML_WARNING_UNKNOWNTAG
+
+#: XML warning - Missing attribute
 XML_WARNING_MISSINGATTR = _createrepo_c.XML_WARNING_MISSINGATTR
+
+#: XML warning - Unknown value
 XML_WARNING_UNKNOWNVAL  = _createrepo_c.XML_WARNING_UNKNOWNVAL
+
+#: XML warning - Bad attribute value
 XML_WARNING_BADATTRVAL  = _createrepo_c.XML_WARNING_BADATTRVAL
 
 # Helper contants
 
 
 # Tuple indexes for provide, conflict, obsolete or require entry
-PCOR_ENTRY_NAME    = 0
-PCOR_ENTRY_FLAGS   = 1
-PCOR_ENTRY_EPOCH   = 2
-PCOR_ENTRY_VERSION = 3
-PCOR_ENTRY_RELEASE = 4
-PCOR_ENTRY_PRE     = 5
+PCOR_ENTRY_NAME    = 0 #: PCOR entry tuple index - name
+PCOR_ENTRY_FLAGS   = 1 #: PCOR entry tuple index - flags
+PCOR_ENTRY_EPOCH   = 2 #: PCOR entry tuple index - epoch
+PCOR_ENTRY_VERSION = 3 #: PCOR entry tuple index - version
+PCOR_ENTRY_RELEASE = 4 #: PCOR entry tuple index - release
+PCOR_ENTRY_PRE     = 5 #: PCOR entry tuple index - pre
+
 
 # Tuple indexes for file entry
-FILE_ENTRY_TYPE = 0
-FILE_ENTRY_PATH = 1
-FILE_ENTRY_NAME = 2
+FILE_ENTRY_TYPE = 0 #: File entry tuple index - file type
+FILE_ENTRY_PATH = 1 #: File entry tuple index - path
+FILE_ENTRY_NAME = 2 #: File entry tuple index - file name
 
 # Tuple indexes for changelog entry
-CHANGELOG_ENTRY_AUTHOR    = 0
-CHANGELOG_ENTRY_DATE      = 1
-CHANGELOG_ENTRY_CHANGELOG = 2
+CHANGELOG_ENTRY_AUTHOR    = 0 #: Changelog entry tuple index - Author
+CHANGELOG_ENTRY_DATE      = 1 #: Changelog entry tuple index - Date
+CHANGELOG_ENTRY_CHANGELOG = 2 #: Changelog entry tuple index - Changelog
 
 
 # Exception
@@ -84,6 +112,10 @@ ContentStat = _createrepo_c.ContentStat
 class CrFile(_createrepo_c.CrFile):
     def __init__(self, filename, mode=MODE_READ,
                  comtype=NO_COMPRESSION, stat=None):
+        """:arg filename: Filename
+        :arg mode: MODE_READ or MODE_WRITE
+        :arg comtype: Compression type (GZ, BZ, XZ or NO_COMPRESSION)
+        :arg stat: ContentStat object or None"""
         _createrepo_c.CrFile.__init__(self, filename, mode, comtype, stat)
 
 # Metadata class
@@ -127,16 +159,19 @@ class RepomdRecord(_createrepo_c.RepomdRecord):
 Sqlite = _createrepo_c.Sqlite
 
 class PrimarySqlite(Sqlite):
-    def __init__(self, filename):
-        Sqlite.__init__(self, filename, DB_PRIMARY)
+    def __init__(self, path):
+        """:arg path: path to the primary.sqlite database"""
+        Sqlite.__init__(self, path, DB_PRIMARY)
 
 class FilelistsSqlite(Sqlite):
-    def __init__(self, filename):
-        Sqlite.__init__(self, filename, DB_FILELISTS)
+    def __init__(self, path):
+        """:arg path: Path to the filelists.sqlite database"""
+        Sqlite.__init__(self, path, DB_FILELISTS)
 
 class OtherSqlite(Sqlite):
-    def __init__(self, filename):
-        Sqlite.__init__(self, filename, DB_OTHER)
+    def __init__(self, path):
+        """:arg path: Path to the other.sqlite database"""
+        Sqlite.__init__(self, path, DB_OTHER)
 
 # XmlFile class
 
@@ -169,33 +204,39 @@ xml_dump            = _createrepo_c.xml_dump
 
 def package_from_rpm(filename, checksum_type=SHA256, location_href=None,
                      location_base=None, changelog_limit=10):
+    """:class:`.Package` object from the rpm package"""
     return _createrepo_c.package_from_rpm(filename, checksum_type,
                       location_href, location_base, changelog_limit)
 
 def xml_from_rpm(filename, checksum_type=SHA256, location_href=None,
                      location_base=None, changelog_limit=10):
+    """XML for the rpm package"""
     return _createrepo_c.xml_from_rpm(filename, checksum_type,
                       location_href, location_base, changelog_limit)
 
 def xml_parse_primary(path, newpkgcb=None, pkgcb=None,
                       warningcb=None, do_files=1):
+    """Parse primary.xml"""
     return _createrepo_c.xml_parse_primary(path, newpkgcb, pkgcb,
                                            warningcb, do_files)
 
 def xml_parse_filelists(path, newpkgcb=None, pkgcb=None, warningcb=None):
+    """Parse filelists.xml"""
     return _createrepo_c.xml_parse_filelists(path, newpkgcb, pkgcb, warningcb)
 
 def xml_parse_other(path, newpkgcb=None, pkgcb=None, warningcb=None):
+    """Parse other.xml"""
     return _createrepo_c.xml_parse_other(path, newpkgcb, pkgcb, warningcb)
 
 def xml_parse_repomd(path, repomdobj, warningcb=None):
+    """Parse repomd.xml"""
     return _createrepo_c.xml_parse_repomd(path, repomdobj, warningcb)
 
 checksum_name_str   = _createrepo_c.checksum_name_str
 checksum_type       = _createrepo_c.checksum_type
 
 def compress_file(src, dst, comtype, stat=None):
-    return _createrepo_c.compress_file(src, dst, comtype, stat)
+    return _createrepo_c.compress_file_with_stat(src, dst, comtype, stat)
 
 compression_suffix  = _createrepo_c.compression_suffix
 detect_compression  = _createrepo_c.detect_compression

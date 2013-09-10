@@ -61,6 +61,12 @@ sqlite_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return (PyObject *)self;
 }
 
+PyDoc_STRVAR(sqlite_init__doc__,
+"Sqlite object\n\n"
+".. method:: __init__(path, db_type)\n\n"
+"    :arg path: Path to the database\n"
+"    :arg db_type: One from DB_PRIMARY, DB_FILELISTS, DB_OTHER constans\n");
+
 static int
 sqlite_init(_SqliteObject *self, PyObject *args, PyObject *kwds)
 {
@@ -120,6 +126,10 @@ sqlite_repr(_SqliteObject *self)
 
 /* Sqlite methods */
 
+PyDoc_STRVAR(add_pkg__doc__,
+"add_pkg(Package) -> None\n\n"
+"Add Package to the database");
+
 static PyObject *
 add_pkg(_SqliteObject *self, PyObject *args)
 {
@@ -140,6 +150,10 @@ add_pkg(_SqliteObject *self, PyObject *args)
 
     Py_RETURN_NONE;
 }
+
+PyDoc_STRVAR(dbinfo_update__doc__,
+"dbinfo_update(checksum) -> None\n\n"
+"Set checksum of the xml file representing same data");
 
 static PyObject *
 dbinfo_update(_SqliteObject *self, PyObject *args)
@@ -162,6 +176,10 @@ dbinfo_update(_SqliteObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+PyDoc_STRVAR(close__doc__,
+"close() -> None\n\n"
+"Close the sqlite database");
+
 static PyObject *
 close_db(_SqliteObject *self, void *nothing)
 {
@@ -182,9 +200,12 @@ close_db(_SqliteObject *self, void *nothing)
 }
 
 static struct PyMethodDef sqlite_methods[] = {
-    {"add_pkg", (PyCFunction)add_pkg, METH_VARARGS, NULL},
-    {"dbinfo_update", (PyCFunction)dbinfo_update, METH_VARARGS, NULL},
-    {"close", (PyCFunction)close_db, METH_NOARGS, NULL},
+    {"add_pkg", (PyCFunction)add_pkg, METH_VARARGS,
+        add_pkg__doc__},
+    {"dbinfo_update", (PyCFunction)dbinfo_update, METH_VARARGS,
+        dbinfo_update__doc__},
+    {"close", (PyCFunction)close_db, METH_NOARGS,
+        close__doc__},
     {NULL} /* sentinel */
 };
 
@@ -210,7 +231,7 @@ PyTypeObject Sqlite_Type = {
     0,                              /* tp_setattro */
     0,                              /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /* tp_flags */
-    "Sqlite object",                /* tp_doc */
+    sqlite_init__doc__,             /* tp_doc */
     0,                              /* tp_traverse */
     0,                              /* tp_clear */
     0,                              /* tp_richcompare */

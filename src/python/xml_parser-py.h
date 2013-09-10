@@ -22,9 +22,28 @@
 
 #include "src/createrepo_c.h"
 
+PyDoc_STRVAR(xml_parse_primary__doc__,
+"xml_parse_primary(filename, newpkgcb, pkgcb, warningcb, do_files) -> None\n\n"
+"Parse primary.xml");
+
 PyObject *py_xml_parse_primary(PyObject *self, PyObject *args);
+
+PyDoc_STRVAR(xml_parse_filelists__doc__,
+"xml_parse_filelists(filename, newpkgcb, pkgcb, warningcb) -> None\n\n"
+"Parse filelists.xml");
+
 PyObject *py_xml_parse_filelists(PyObject *self, PyObject *args);
+
+PyDoc_STRVAR(xml_parse_other__doc__,
+"xml_parse_other(filename, newpkgcb, pkgcb, warningcb) -> None\n\n"
+"Parse other.xml");
+
 PyObject *py_xml_parse_other(PyObject *self, PyObject *args);
+
+PyDoc_STRVAR(xml_parse_repomd__doc__,
+"xml_parse_repomd(filename, repomd_object, warningcb) -> None\n\n"
+"Parse repomd.xml");
+
 PyObject *py_xml_parse_repomd(PyObject *self, PyObject *args);
 
 #endif

@@ -68,6 +68,9 @@ repomd_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return (PyObject *)self;
 }
 
+PyDoc_STRVAR(repomd_init__doc__,
+"Repomd object");
+
 static int
 repomd_init(_RepomdObject *self, PyObject *args, PyObject *kwds)
 {
@@ -106,6 +109,10 @@ repomd_repr(_RepomdObject *self)
 
 /* Repomd methods */
 
+PyDoc_STRVAR(set_record__doc__,
+"set_record(repomdrecord) -> None\n\n"
+"Add RepomdRecord");
+
 static PyObject *
 set_record(_RepomdObject *self, PyObject *args)
 {
@@ -123,6 +130,10 @@ set_record(_RepomdObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+PyDoc_STRVAR(set_revision__doc__,
+"set_revision(revision) -> None\n\n"
+"Set revision string");
+
 static PyObject *
 set_revision(_RepomdObject *self, PyObject *args)
 {
@@ -134,6 +145,10 @@ set_revision(_RepomdObject *self, PyObject *args)
     cr_repomd_set_revision(self->repomd, revision);
     Py_RETURN_NONE;
 }
+
+PyDoc_STRVAR(set_repoid__doc__,
+"set_repoid(repoid, repoid_type) -> None\n\n"
+"Set repoid value and repoid_type");
 
 static PyObject *
 set_repoid(_RepomdObject *self, PyObject *args)
@@ -147,7 +162,11 @@ set_repoid(_RepomdObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
-    static PyObject *
+PyDoc_STRVAR(add_distro_tag__doc__,
+"add_distro_tag(tag[, cpeid=None]) -> None\n\n"
+"Add distro tag");
+
+static PyObject *
 add_distro_tag(_RepomdObject *self, PyObject *args, PyObject *kwargs)
 {
     static char *kwlist[] = { "tag", "cpeid", NULL };
@@ -162,6 +181,10 @@ add_distro_tag(_RepomdObject *self, PyObject *args, PyObject *kwargs)
     Py_RETURN_NONE;
 }
 
+PyDoc_STRVAR(add_repo_tag__doc__,
+"add_repo_tag(tag) -> None\n\n"
+"Add repo tag");
+
 static PyObject *
 add_repo_tag(_RepomdObject *self, PyObject *args)
 {
@@ -174,6 +197,10 @@ add_repo_tag(_RepomdObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+PyDoc_STRVAR(add_content_tag__doc__,
+"add_content_tag(tag) -> None\n\n"
+"Add content tag");
+
 static PyObject *
 add_content_tag(_RepomdObject *self, PyObject *args)
 {
@@ -185,6 +212,10 @@ add_content_tag(_RepomdObject *self, PyObject *args)
     cr_repomd_add_content_tag(self->repomd, tag);
     Py_RETURN_NONE;
 }
+
+PyDoc_STRVAR(xml_dump__doc__,
+"xml_dump() -> str\n\n"
+"Generate xml representation of the repomd");
 
 static PyObject *
 xml_dump(_RepomdObject *self, void *nothing)
@@ -203,13 +234,20 @@ xml_dump(_RepomdObject *self, void *nothing)
 }
 
 static struct PyMethodDef repomd_methods[] = {
-    {"set_record", (PyCFunction)set_record, METH_VARARGS, NULL},
-    {"set_revision", (PyCFunction)set_revision, METH_VARARGS, NULL},
-    {"set_repoid", (PyCFunction)set_repoid, METH_VARARGS, NULL},
-    {"add_distro_tag", (PyCFunction)add_distro_tag, METH_VARARGS|METH_KEYWORDS, NULL},
-    {"add_repo_tag", (PyCFunction)add_repo_tag, METH_VARARGS, NULL},
-    {"add_content_tag", (PyCFunction)add_content_tag, METH_VARARGS, NULL},
-    {"xml_dump", (PyCFunction)xml_dump, METH_NOARGS, NULL},
+    {"set_record", (PyCFunction)set_record, METH_VARARGS,
+        set_record__doc__},
+    {"set_revision", (PyCFunction)set_revision, METH_VARARGS,
+        set_revision__doc__},
+    {"set_repoid", (PyCFunction)set_repoid, METH_VARARGS,
+        set_repoid__doc__},
+    {"add_distro_tag", (PyCFunction)add_distro_tag, METH_VARARGS|METH_KEYWORDS,
+        add_distro_tag__doc__},
+    {"add_repo_tag", (PyCFunction)add_repo_tag, METH_VARARGS,
+        add_repo_tag__doc__},
+    {"add_content_tag", (PyCFunction)add_content_tag, METH_VARARGS,
+        add_content_tag__doc__},
+    {"xml_dump", (PyCFunction)xml_dump, METH_NOARGS,
+        xml_dump__doc__},
     {NULL} /* sentinel */
 };
 
@@ -372,13 +410,20 @@ set_list(_RepomdObject *self, PyObject *list, void *conv)
 #define OFFSET(member) (void *) offsetof(cr_Repomd, member)
 
 static PyGetSetDef repomd_getsetters[] = {
-    {"revision",         (getter)get_str,  (setter)set_str,  NULL, OFFSET(revision)},
-    {"repoid",           (getter)get_str,  (setter)set_str,  NULL, OFFSET(repoid)},
-    {"repoid_type",      (getter)get_str,  (setter)set_str,  NULL, OFFSET(repoid_type)},
-    {"repo_tags",        (getter)get_list, (setter)set_list, NULL, &(list_convertors[0])},
-    {"distro_tags",      (getter)get_list, (setter)set_list, NULL, &(list_convertors[1])},
-    {"content_tags",     (getter)get_list, (setter)set_list, NULL, &(list_convertors[2])},
-    {"records",          (getter)get_list, (setter)NULL,     NULL, &(list_convertors[3])},
+    {"revision",         (getter)get_str,  (setter)set_str,
+        "Revision value", OFFSET(revision)},
+    {"repoid",           (getter)get_str,  (setter)set_str,
+        "Repoid value", OFFSET(repoid)},
+    {"repoid_type",      (getter)get_str,  (setter)set_str,
+        "Repoid type value", OFFSET(repoid_type)},
+    {"repo_tags",        (getter)get_list, (setter)set_list,
+        "List of repo tags", &(list_convertors[0])},
+    {"distro_tags",      (getter)get_list, (setter)set_list,
+        "List of distro tags", &(list_convertors[1])},
+    {"content_tags",     (getter)get_list, (setter)set_list,
+        "List of content tags", &(list_convertors[2])},
+    {"records",          (getter)get_list, (setter)NULL,
+        "List of RepomdRecords", &(list_convertors[3])},
     {NULL, NULL, NULL, NULL, NULL} /* sentinel */
 };
 
@@ -407,7 +452,7 @@ PyTypeObject Repomd_Type = {
     0,                              /* tp_setattro */
     0,                              /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /* tp_flags */
-    "Repomd object",                /* tp_doc */
+    repomd_init__doc__,             /* tp_doc */
     0,                              /* tp_traverse */
     0,                              /* tp_clear */
     0,                              /* tp_richcompare */

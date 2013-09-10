@@ -22,6 +22,11 @@
 
 #include "src/createrepo_c.h"
 
+PyDoc_STRVAR(compress_file_with_stat__doc__,
+"compress_file_with_stat(source, destination, compression_type, "
+"contentstat_object) -> None\n\n"
+"Compress file. destination and contentstat_object could be None");
+
 PyObject *py_compress_file_with_stat(PyObject *self, PyObject *args);
 
 #endif

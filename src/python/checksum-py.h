@@ -22,7 +22,16 @@
 
 #include "src/createrepo_c.h"
 
+PyDoc_STRVAR(checksum_name_str__doc__,
+"checksum_name_str(checksum_type) -> str\n\n"
+"Checksum name from checksum type constant");
+
 PyObject *py_checksum_name_str(PyObject *self, PyObject *args);
+
+PyDoc_STRVAR(checksum_type__doc__,
+"checksum_type(checksum_name) -> long\n\n"
+"Checksum type from checksum name");
+
 PyObject *py_checksum_type(PyObject *self, PyObject *args);
 
 #endif

@@ -102,6 +102,11 @@ package_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return (PyObject *)self;
 }
 
+PyDoc_STRVAR(package_init__doc__,
+"Package object\n\n"
+".. method:: __init__()\n\n"
+"    Default constructor\n");
+
 static int
 package_init(_PackageObject *self, PyObject *args, PyObject *kwds)
 {
@@ -170,6 +175,10 @@ package_str(_PackageObject *self)
 
 /* Package methods */
 
+PyDoc_STRVAR(nvra__doc__,
+"nvra() -> str\n\n"
+"Package NVRA string (Name-Version-Release-Architecture)");
+
 static PyObject *
 nvra(_PackageObject *self, void *nothing)
 {
@@ -182,6 +191,10 @@ nvra(_PackageObject *self, void *nothing)
     free(nvra);
     return pystr;
 }
+
+PyDoc_STRVAR(nevra__doc__,
+"nevra() -> str\n\n"
+"Package NEVRA string (Name-Epoch-Version-Release-Architecture)");
 
 static PyObject *
 nevra(_PackageObject *self, void *nothing)
@@ -196,6 +209,10 @@ nevra(_PackageObject *self, void *nothing)
     return pystr;
 }
 
+PyDoc_STRVAR(copy__doc__,
+"copy() -> Package\n\n"
+"Copy of the package object");
+
 static PyObject *
 copy_pkg(_PackageObject *self, void *nothing)
 {
@@ -206,9 +223,9 @@ copy_pkg(_PackageObject *self, void *nothing)
 }
 
 static struct PyMethodDef package_methods[] = {
-    {"nvra", (PyCFunction)nvra, METH_NOARGS, NULL},
-    {"nevra", (PyCFunction)nevra, METH_NOARGS, NULL},
-    {"copy", (PyCFunction)copy_pkg, METH_NOARGS, NULL},
+    {"nvra", (PyCFunction)nvra, METH_NOARGS, nvra__doc__},
+    {"nevra", (PyCFunction)nevra, METH_NOARGS, nevra__doc__},
+    {"copy", (PyCFunction)copy_pkg, METH_NOARGS, copy__doc__},
     {NULL} /* sentinel */
 };
 
@@ -433,37 +450,77 @@ set_list(_PackageObject *self, PyObject *list, void *conv)
 }
 
 static PyGetSetDef package_getsetters[] = {
-    {"pkgId",            (getter)get_str, (setter)set_str, NULL, OFFSET(pkgId)},
-    {"name",             (getter)get_str, (setter)set_str, NULL, OFFSET(name)},
-    {"arch",             (getter)get_str, (setter)set_str, NULL, OFFSET(arch)},
-    {"version",          (getter)get_str, (setter)set_str, NULL, OFFSET(version)},
-    {"epoch",            (getter)get_str, (setter)set_str, NULL, OFFSET(epoch)},
-    {"release",          (getter)get_str, (setter)set_str, NULL, OFFSET(release)},
-    {"summary",          (getter)get_str, (setter)set_str, NULL, OFFSET(summary)},
-    {"description",      (getter)get_str, (setter)set_str, NULL, OFFSET(description)},
-    {"url",              (getter)get_str, (setter)set_str, NULL, OFFSET(url)},
-    {"time_file",        (getter)get_num, (setter)set_num, NULL, OFFSET(time_file)},
-    {"time_build",       (getter)get_num, (setter)set_num, NULL, OFFSET(time_build)},
-    {"rpm_license",      (getter)get_str, (setter)set_str, NULL, OFFSET(rpm_license)},
-    {"rpm_vendor",       (getter)get_str, (setter)set_str, NULL, OFFSET(rpm_vendor)},
-    {"rpm_group",        (getter)get_str, (setter)set_str, NULL, OFFSET(rpm_group)},
-    {"rpm_buildhost",    (getter)get_str, (setter)set_str, NULL, OFFSET(rpm_buildhost)},
-    {"rpm_sourcerpm",    (getter)get_str, (setter)set_str, NULL, OFFSET(rpm_sourcerpm)},
-    {"rpm_header_start", (getter)get_num, (setter)set_num, NULL, OFFSET(rpm_header_start)},
-    {"rpm_header_end",   (getter)get_num, (setter)set_num, NULL, OFFSET(rpm_header_end)},
-    {"rpm_packager",     (getter)get_str, (setter)set_str, NULL, OFFSET(rpm_packager)},
-    {"size_package",     (getter)get_num, (setter)set_num, NULL, OFFSET(size_package)},
-    {"size_installed",   (getter)get_num, (setter)set_num, NULL, OFFSET(size_installed)},
-    {"size_archive",     (getter)get_num, (setter)set_num, NULL, OFFSET(size_archive)},
-    {"location_href",    (getter)get_str, (setter)set_str, NULL, OFFSET(location_href)},
-    {"location_base",    (getter)get_str, (setter)set_str, NULL, OFFSET(location_base)},
-    {"checksum_type",    (getter)get_str, (setter)set_str, NULL, OFFSET(checksum_type)},
-    {"requires",         (getter)get_list, (setter)set_list, NULL, &(list_convertors[0])},
-    {"provides",         (getter)get_list, (setter)set_list, NULL, &(list_convertors[1])},
-    {"conflicts",        (getter)get_list, (setter)set_list, NULL, &(list_convertors[2])},
-    {"obsoletes",        (getter)get_list, (setter)set_list, NULL, &(list_convertors[3])},
-    {"files",            (getter)get_list, (setter)set_list, NULL, &(list_convertors[4])},
-    {"changelogs",       (getter)get_list, (setter)set_list, NULL, &(list_convertors[5])},
+    {"pkgId",            (getter)get_str, (setter)set_str,
+      "Checksum of the package file", OFFSET(pkgId)},
+    {"name",             (getter)get_str, (setter)set_str,
+        "Name of the package", OFFSET(name)},
+    {"arch",             (getter)get_str, (setter)set_str,
+        "Architecture for which the package was built", OFFSET(arch)},
+    {"version",          (getter)get_str, (setter)set_str,
+        "Version of the packaged software", OFFSET(version)},
+    {"epoch",            (getter)get_str, (setter)set_str,
+        "Epoch", OFFSET(epoch)},
+    {"release",          (getter)get_str, (setter)set_str,
+        "Release number of the package", OFFSET(release)},
+    {"summary",          (getter)get_str, (setter)set_str,
+        "Short description of the packaged software", OFFSET(summary)},
+    {"description",      (getter)get_str, (setter)set_str,
+        "In-depth description of the packaged software",
+        OFFSET(description)},
+    {"url",              (getter)get_str, (setter)set_str,
+        "URL with more information about packaged software", OFFSET(url)},
+    {"time_file",        (getter)get_num, (setter)set_num,
+        "mtime of the package file", OFFSET(time_file)},
+    {"time_build",       (getter)get_num, (setter)set_num,
+        "Time when package was builded", OFFSET(time_build)},
+    {"rpm_license",      (getter)get_str, (setter)set_str,
+        "License term applicable to the package software (GPLv2, etc.)",
+        OFFSET(rpm_license)},
+    {"rpm_vendor",       (getter)get_str, (setter)set_str,
+        "Name of the organization producing the package",
+        OFFSET(rpm_vendor)},
+    {"rpm_group",        (getter)get_str, (setter)set_str,
+        "RPM group (See: http://fedoraproject.org/wiki/RPMGroups)",
+        OFFSET(rpm_group)},
+    {"rpm_buildhost",    (getter)get_str, (setter)set_str,
+        "Hostname of the system that built the package",
+        OFFSET(rpm_buildhost)},
+    {"rpm_sourcerpm",    (getter)get_str, (setter)set_str,
+        "Name of the source package from which this binary package was built",
+        OFFSET(rpm_sourcerpm)},
+    {"rpm_header_start", (getter)get_num, (setter)set_num,
+        "First byte of the header", OFFSET(rpm_header_start)},
+    {"rpm_header_end",   (getter)get_num, (setter)set_num,
+        "Last byte of the header", OFFSET(rpm_header_end)},
+    {"rpm_packager",     (getter)get_str, (setter)set_str,
+        "Person or persons responsible for creating the package",
+        OFFSET(rpm_packager)},
+    {"size_package",     (getter)get_num, (setter)set_num,
+        "Size, in bytes, of the package", OFFSET(size_package)},
+    {"size_installed",   (getter)get_num, (setter)set_num,
+        "Total size, in bytes, of every file installed by this package",
+        OFFSET(size_installed)},
+    {"size_archive",     (getter)get_num, (setter)set_num,
+        "Size, in bytes, of the archive portion of the original package file",
+        OFFSET(size_archive)},
+    {"location_href",    (getter)get_str, (setter)set_str,
+        "Relative location of package to the repodata", OFFSET(location_href)},
+    {"location_base",    (getter)get_str, (setter)set_str,
+        "Base location of this package", OFFSET(location_base)},
+    {"checksum_type",    (getter)get_str, (setter)set_str,
+        "Type of checksum", OFFSET(checksum_type)},
+    {"requires",         (getter)get_list, (setter)set_list,
+        "Capabilities the package requires", &(list_convertors[0])},
+    {"provides",         (getter)get_list, (setter)set_list,
+        "Capabilities the package provides", &(list_convertors[1])},
+    {"conflicts",        (getter)get_list, (setter)set_list,
+        "Capability the package conflicts with", &(list_convertors[2])},
+    {"obsoletes",        (getter)get_list, (setter)set_list,
+        "Capability the package obsoletes", &(list_convertors[3])},
+    {"files",            (getter)get_list, (setter)set_list,
+        "Files that package contains", &(list_convertors[4])},
+    {"changelogs",       (getter)get_list, (setter)set_list,
+        "Changelogs that package contains", &(list_convertors[5])},
     {NULL, NULL, NULL, NULL, NULL} /* sentinel */
 };
 
@@ -491,7 +548,7 @@ PyTypeObject Package_Type = {
     0,                              /* tp_setattro */
     0,                              /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /* tp_flags */
-    "Package object",               /* tp_doc */
+    package_init__doc__,            /* tp_doc */
     0,                              /* tp_traverse */
     0,                              /* tp_clear */
     0,                              /* tp_richcompare */

@@ -22,9 +22,28 @@
 
 #include "src/createrepo_c.h"
 
+PyDoc_STRVAR(xml_dump_primary__doc__,
+"xml_dump_primary(pkg) -> str\n\n"
+"Generate primary xml chunk from the package");
+
 PyObject *py_xml_dump_primary(PyObject *self, PyObject *args);
+
+PyDoc_STRVAR(xml_dump_filelists__doc__,
+"xml_dump_filelists(pkg) -> str\n\n"
+"Generate filelists xml chunk from the package");
+
 PyObject *py_xml_dump_filelists(PyObject *self, PyObject *args);
+
+PyDoc_STRVAR(xml_dump_other__doc__,
+"xml_dump_other(pkg) -> str\n\n"
+"Generate other xml chunk from the package");
+
 PyObject *py_xml_dump_other(PyObject *self, PyObject *args);
+
+PyDoc_STRVAR(xml_dump__doc__,
+"xml_dump(pkg) -> (str, str, str)\n\n"
+"Generate primary, filelists and other xml chunks from the package");
+
 PyObject *py_xml_dump(PyObject *self, PyObject *args);
 
 #endif

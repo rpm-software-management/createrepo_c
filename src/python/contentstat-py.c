@@ -195,9 +195,12 @@ set_str(_ContentStatObject *self, PyObject *value, void *member_offset)
 }
 
 static PyGetSetDef contentstat_getsetters[] = {
-    {"size",            (getter)get_num, (setter)set_num, NULL, OFFSET(size)},
-    {"checksum_type",   (getter)get_int, (setter)set_int, NULL, OFFSET(checksum_type)},
-    {"checksum",        (getter)get_str, (setter)set_str, NULL, OFFSET(checksum)},
+    {"size",            (getter)get_num, (setter)set_num,
+        "Number of uncompressed bytes written", OFFSET(size)},
+    {"checksum_type",   (getter)get_int, (setter)set_int,
+        "Type of used checksum", OFFSET(checksum_type)},
+    {"checksum",        (getter)get_str, (setter)set_str,
+        "Calculated checksum", OFFSET(checksum)},
     {NULL, NULL, NULL, NULL, NULL} /* sentinel */
 };
 

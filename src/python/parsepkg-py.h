@@ -22,7 +22,18 @@
 
 #include "src/createrepo_c.h"
 
+PyDoc_STRVAR(package_from_rpm__doc__,
+"package_from_rpm(filename, checksum_type, location_href, "
+"location_base, changelog_limit) -> Package\n\n"
+"Package object from the rpm package");
+
 PyObject *py_package_from_rpm(PyObject *self, PyObject *args);
+
+PyDoc_STRVAR(xml_from_rpm__doc__,
+"xml_from_rpm(filename, checksum_type, location_href, "
+"location_base, changelog_limit) -> (str, str, str)\n\n"
+"XML for the package rpm package");
+
 PyObject *py_xml_from_rpm(PyObject *self, PyObject *args);
 
 #endif

@@ -84,6 +84,11 @@ repomdrecord_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return (PyObject *)self;
 }
 
+PyDoc_STRVAR(repomdrecord_init__doc__,
+".. method:: __init__([type[, path]])\n\n"
+"    :arg type: String with type of the file (e.g. primary, primary_db, etc.)\n"
+"    :arg path: Path to the file\n");
+
 static int
 repomdrecord_init(_RepomdRecordObject *self, PyObject *args, PyObject *kwds)
 {
@@ -129,6 +134,10 @@ repomdrecord_repr(_RepomdRecordObject *self)
 
 /* RepomdRecord methods */
 
+PyDoc_STRVAR(copy__doc__,
+"copy() -> RepomdRecord\n\n"
+"Return copy of the RepomdRecord object");
+
 static PyObject *
 copy_repomdrecord(_RepomdRecordObject *self, void *nothing)
 {
@@ -137,6 +146,10 @@ copy_repomdrecord(_RepomdRecordObject *self, void *nothing)
         return NULL;
     return Object_FromRepomdRecord(cr_repomd_record_copy(self->record));
 }
+
+PyDoc_STRVAR(fill__doc__,
+"fill() -> None\n\n"
+"Fill unfilled items in the RepomdRecord (sizes and checksums)");
 
 static PyObject *
 fill(_RepomdRecordObject *self, PyObject *args)
@@ -158,6 +171,13 @@ fill(_RepomdRecordObject *self, PyObject *args)
 
     Py_RETURN_NONE;
 }
+
+PyDoc_STRVAR(compress_and_fill__doc__,
+"compress_and_fill(empty_repomdrecord[, checksum_type, compression_type]) "
+"-> None\n\n"
+"Almost analogous to fill() but suitable for groupfile. "
+"Record must be set with the path to existing non compressed groupfile. "
+"Compressed file will be created and compressed_record updated.");
 
 static PyObject *
 compress_and_fill(_RepomdRecordObject *self, PyObject *args)
@@ -189,6 +209,10 @@ compress_and_fill(_RepomdRecordObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+PyDoc_STRVAR(rename_file__doc__,
+"rename_file() -> None\n\n"
+"Add (prepend) file checksum to the filename");
+
 static PyObject *
 rename_file(_RepomdRecordObject *self, void *nothing)
 {
@@ -204,6 +228,12 @@ rename_file(_RepomdRecordObject *self, void *nothing)
 
     Py_RETURN_NONE;
 }
+
+PyDoc_STRVAR(load_contentstat__doc__,
+"load_contentstat(contentstat) -> None\n\n"
+"Load some content statistics from the ContentStat object. "
+"The statistics loaded from ContentStat doesn't have to be "
+"calculated during a fill() method call and thus speed up the method.");
 
 static PyObject *
 load_contentstat(_RepomdRecordObject *self, PyObject *args)
@@ -224,11 +254,16 @@ load_contentstat(_RepomdRecordObject *self, PyObject *args)
 }
 
 static struct PyMethodDef repomdrecord_methods[] = {
-    {"copy", (PyCFunction)copy_repomdrecord, METH_NOARGS, NULL},
-    {"fill", (PyCFunction)fill, METH_VARARGS, NULL},
-    {"compress_and_fill", (PyCFunction)compress_and_fill, METH_VARARGS, NULL},
-    {"rename_file", (PyCFunction)rename_file, METH_NOARGS, NULL},
-    {"load_contentstat", (PyCFunction)load_contentstat, METH_VARARGS, NULL},
+    {"copy", (PyCFunction)copy_repomdrecord, METH_NOARGS,
+        copy__doc__},
+    {"fill", (PyCFunction)fill, METH_VARARGS,
+        fill__doc__},
+    {"compress_and_fill", (PyCFunction)compress_and_fill, METH_VARARGS,
+        compress_and_fill__doc__},
+    {"rename_file", (PyCFunction)rename_file, METH_NOARGS,
+        rename_file__doc__},
+    {"load_contentstat", (PyCFunction)load_contentstat, METH_VARARGS,
+        load_contentstat__doc__},
     {NULL} /* sentinel */
 };
 
@@ -323,18 +358,31 @@ set_str(_RepomdRecordObject *self, PyObject *value, void *member_offset)
 }
 
 static PyGetSetDef repomdrecord_getsetters[] = {
-    {"type",                (getter)get_str, (setter)set_str, NULL, OFFSET(type)},
-    {"location_real",       (getter)get_str, (setter)set_str, NULL, OFFSET(location_real)},
-    {"location_href",       (getter)get_str, (setter)set_str, NULL, OFFSET(location_href)},
-    {"location_base",       (getter)get_str, (setter)set_str, NULL, OFFSET(location_base)},
-    {"checksum",            (getter)get_str, (setter)set_str, NULL, OFFSET(checksum)},
-    {"checksum_type",       (getter)get_str, (setter)set_str, NULL, OFFSET(checksum_type)},
-    {"checksum_open",       (getter)get_str, (setter)set_str, NULL, OFFSET(checksum_open)},
-    {"checksum_open_type",  (getter)get_str, (setter)set_str, NULL, OFFSET(checksum_open_type)},
-    {"timestamp",           (getter)get_num, (setter)set_num, NULL, OFFSET(timestamp)},
-    {"size",                (getter)get_num, (setter)set_num, NULL, OFFSET(size)},
-    {"size_open",           (getter)get_num, (setter)set_num, NULL, OFFSET(size_open)},
-    {"db_ver",              (getter)get_int, (setter)set_int, NULL, OFFSET(db_ver)},
+    {"type",                (getter)get_str, (setter)set_str,
+        "Record type", OFFSET(type)},
+    {"location_real",       (getter)get_str, (setter)set_str,
+        "Currentlocation of the file in the system", OFFSET(location_real)},
+    {"location_href",       (getter)get_str, (setter)set_str,
+        "Relative location of the file in a repository", OFFSET(location_href)},
+    {"location_base",       (getter)get_str, (setter)set_str,
+        "Base location of the file", OFFSET(location_base)},
+    {"checksum",            (getter)get_str, (setter)set_str,
+        "Checksum of the file", OFFSET(checksum)},
+    {"checksum_type",       (getter)get_str, (setter)set_str,
+        "Type of the file checksum", OFFSET(checksum_type)},
+    {"checksum_open",       (getter)get_str, (setter)set_str,
+        "Checksum of the archive content", OFFSET(checksum_open)},
+    {"checksum_open_type",  (getter)get_str, (setter)set_str,
+        "Type of the archive content checksum", OFFSET(checksum_open_type)},
+    {"timestamp",           (getter)get_num, (setter)set_num,
+        "Mtime of the file", OFFSET(timestamp)},
+    {"size",                (getter)get_num, (setter)set_num,
+        "Size of the file", OFFSET(size)},
+    {"size_open",           (getter)get_num, (setter)set_num,
+        "Size of the archive content", OFFSET(size_open)},
+    {"db_ver",              (getter)get_int, (setter)set_int,
+        "Database version (used only for sqlite databases like "
+        "primary.sqlite etc.)", OFFSET(db_ver)},
     {NULL, NULL, NULL, NULL, NULL} /* sentinel */
 };
 
@@ -362,7 +410,7 @@ PyTypeObject RepomdRecord_Type = {
     0,                              /* tp_setattro */
     0,                              /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /* tp_flags */
-    "RepomdRecord object",          /* tp_doc */
+    repomdrecord_init__doc__,       /* tp_doc */
     0,                              /* tp_traverse */
     0,                              /* tp_clear */
     0,                              /* tp_richcompare */

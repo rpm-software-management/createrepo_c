@@ -65,6 +65,11 @@ contentstat_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
     return (PyObject *)self;
 }
 
+PyDoc_STRVAR(contentstat_init__doc__,
+"ContentStat object representing statistical information about content\n\n"
+".. method:: __init__(checksum_type)\n\n"
+"    :arg checksum_type: Type of checksum that should be used\n");
+
 static int
 contentstat_init(_ContentStatObject *self, PyObject *args, PyObject *kwds)
 {
@@ -228,7 +233,7 @@ PyTypeObject ContentStat_Type = {
     0,                              /* tp_setattro */
     0,                              /* tp_as_buffer */
     Py_TPFLAGS_DEFAULT|Py_TPFLAGS_BASETYPE, /* tp_flags */
-    "ContentStat object",           /* tp_doc */
+    contentstat_init__doc__,        /* tp_doc */
     0,                              /* tp_traverse */
     0,                              /* tp_clear */
     0,                              /* tp_richcompare */

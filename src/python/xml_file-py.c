@@ -66,7 +66,7 @@ xmlfile_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 PyDoc_STRVAR(xmlfile_init__doc__,
 "XmlFile object represents a single XML file (primary, filelists or other).\n\n"
 ".. method:: __init__(path, type, compression_type, contentstat)\n\n"
-"    :arg path: Path to the database\n"
+"    :arg path: Path to the xml file\n"
 "    :arg type: Type of the XML file. One from XMLFILE_PRIMARY,\n"
 "               XMLFILE_FILELISTS, XMLFILE_OTHER constants\n"
 "    :arg compression_type: Compression type specified by constant\n"

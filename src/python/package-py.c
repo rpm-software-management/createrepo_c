@@ -222,10 +222,24 @@ copy_pkg(_PackageObject *self, void *nothing)
     return Object_FromPackage(cr_package_copy(self->package), 1);
 }
 
+static PyObject *
+deepcopy_pkg(_PackageObject *self, PyObject *args)
+{
+    PyObject *obj;
+
+    if (!PyArg_ParseTuple(args, "O:deepcopy_pkg", &obj))
+        return NULL;
+    if (check_PackageStatus(self))
+        return NULL;
+    return Object_FromPackage(cr_package_copy(self->package), 1);
+}
+
 static struct PyMethodDef package_methods[] = {
     {"nvra", (PyCFunction)nvra, METH_NOARGS, nvra__doc__},
     {"nevra", (PyCFunction)nevra, METH_NOARGS, nevra__doc__},
     {"copy", (PyCFunction)copy_pkg, METH_NOARGS, copy__doc__},
+    {"__copy__", (PyCFunction)copy_pkg, METH_NOARGS, copy__doc__},
+    {"__deepcopy__", (PyCFunction)deepcopy_pkg, METH_VARARGS, copy__doc__},
     {NULL} /* sentinel */
 };
 

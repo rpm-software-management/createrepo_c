@@ -128,16 +128,13 @@ MetadataLocation = _createrepo_c.MetadataLocation
 
 # Package class
 
-class Package(_createrepo_c.Package):
-    def __copy__(self):
-        return self.copy()
-    def __deepcopy__(self, _):
-        return self.copy()
+Package = _createrepo_c.Package
 
 # Repomd class
 
 class Repomd(_createrepo_c.Repomd):
     def __init__(self, path=None):
+        """:arg path: Path to existing repomd.xml or None"""
         _createrepo_c.Repomd.__init__(self)
         if path:
             xml_parse_repomd(path, self)
@@ -145,6 +142,12 @@ class Repomd(_createrepo_c.Repomd):
 # RepomdRecord class
 
 class RepomdRecord(_createrepo_c.RepomdRecord):
+    def __init__(self, type=None, path=None):
+        """:arg type: String with type of the file (e.g. other, other_db etc.)
+        :arg path: Path to the file
+        """
+        _createrepo_c.RepomdRecord.__init__(self, type, path)
+
     def compress_and_fill(self, hashtype, compresstype):
         rec = RepomdRecord(self.type + "_gz", None)
         _createrepo_c.RepomdRecord.compress_and_fill(self,
@@ -178,21 +181,30 @@ class OtherSqlite(Sqlite):
 XmlFile = _createrepo_c.XmlFile
 
 class PrimaryXmlFile(XmlFile):
-    def __init__(self, filename, compressiontype=GZ_COMPRESSION,
+    def __init__(self, path, compressiontype=GZ_COMPRESSION,
                  contentstat=None):
-        XmlFile.__init__(self, filename, XMLFILE_PRIMARY,
+        """:arg path: Path to the primary xml file
+        :arg compressiontype: Compression type
+        :arg contentstat: ContentStat object"""
+        XmlFile.__init__(self, path, XMLFILE_PRIMARY,
                          compressiontype, contentstat)
 
 class FilelistsXmlFile(XmlFile):
-    def __init__(self, filename, compressiontype=GZ_COMPRESSION,
+    def __init__(self, path, compressiontype=GZ_COMPRESSION,
                  contentstat=None):
-        XmlFile.__init__(self, filename, XMLFILE_FILELISTS,
+        """:arg path: Path to the filelists xml file
+        :arg compressiontype: Compression type
+        :arg contentstat: ContentStat object"""
+        XmlFile.__init__(self, path, XMLFILE_FILELISTS,
                          compressiontype, contentstat)
 
 class OtherXmlFile(XmlFile):
-    def __init__(self, filename, compressiontype=GZ_COMPRESSION,
+    def __init__(self, path, compressiontype=GZ_COMPRESSION,
                  contentstat=None):
-        XmlFile.__init__(self, filename, XMLFILE_OTHER,
+        """:arg path: Path to the other xml file
+        :arg compressiontype: Compression type
+        :arg contentstat: ContentStat object"""
+        XmlFile.__init__(self, path, XMLFILE_OTHER,
                          compressiontype, contentstat)
 
 # Functions

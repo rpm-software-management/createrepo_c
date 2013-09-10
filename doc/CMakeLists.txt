@@ -1,3 +1,5 @@
+ADD_SUBDIRECTORY (python)
+
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
     CONFIGURE_FILE("Doxyfile.in.in" "${CMAKE_CURRENT_BINARY_DIR}/Doxyfile.in" @ONLY)
@@ -11,4 +13,4 @@ INSTALL(FILES createrepo_c.8.gz mergerepo_c.8.gz
         COMPONENT bin)
 
 ADD_CUSTOM_TARGET (doc)
-ADD_DEPENDENCIES (doc doc-c)
+ADD_DEPENDENCIES (doc doc-python doc-c)

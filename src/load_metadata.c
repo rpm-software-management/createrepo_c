@@ -31,11 +31,6 @@
 #include "locate_metadata.h"
 #include "xml_parser.h"
 
-/** TODO:
- * - Add support for single chunk (?)
- * - Support for warning cbs
- */
-
 #define STRINGCHUNK_SIZE        16384
 
 /** Structure for loaded metadata

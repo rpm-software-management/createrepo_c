@@ -34,10 +34,6 @@
 #define ERR_DOMAIN      CR_XML_PARSER_REPOMD_ERROR
 #define ERR_CODE_XML    CRE_BADXMLREPOMD
 
-/* TODO:
- * - replace atol function with better alternative
- */
-
 typedef enum {
     STATE_START,
     STATE_REPOMD,
@@ -336,28 +332,30 @@ cr_end_handler(void *pdata, const char *element)
         assert(pd->repomd);
         assert(pd->repomdrecord);
 
-        pd->repomdrecord->timestamp = atol(pd->content);
+        pd->repomdrecord->timestamp = cr_xml_parser_strtoll(pd, pd->content, 0);
         break;
 
     case STATE_SIZE:
         assert(pd->repomd);
         assert(pd->repomdrecord);
 
-        pd->repomdrecord->size = atol(pd->content);
+        pd->repomdrecord->size = cr_xml_parser_strtoll(pd, pd->content, 0);
         break;
 
     case STATE_OPENSIZE:
         assert(pd->repomd);
         assert(pd->repomdrecord);
 
-        pd->repomdrecord->size_open = atol(pd->content);
+        pd->repomdrecord->size_open = cr_xml_parser_strtoll(pd, pd->content, 0);
         break;
 
     case STATE_DBVERSION:
         assert(pd->repomd);
         assert(pd->repomdrecord);
 
-        pd->repomdrecord->db_ver = atol(pd->content);
+        pd->repomdrecord->db_ver = (int) cr_xml_parser_strtoll(pd,
+                                                               pd->content,
+                                                               0);
         break;
 
     default:

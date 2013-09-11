@@ -26,7 +26,6 @@
 #include "package-py.h"
 #include "exception-py.h"
 #include "typeconversion.h"
-#include "metadata_hashtable.h"
 
 /* TODO:
  * keys() and records() method (same method - alias only)

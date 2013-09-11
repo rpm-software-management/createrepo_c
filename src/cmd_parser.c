@@ -289,6 +289,9 @@ check_arguments(struct CmdOptions *options,
     }
 
     // Process update_md_paths
+    if (options->update_md_paths && !options->update)
+        g_warning("Usage of --update-md-path without --update has no effect!");
+
     x = 0;
     while (options->update_md_paths && options->update_md_paths[x] != NULL) {
         char *path = options->update_md_paths[x];

@@ -139,6 +139,18 @@ typedef struct {
 } cr_CbData;
 
 static int
+warning_cb(cr_XmlParserWarningType type,
+           char *msg,
+           void *cbdata,
+           GError **err)
+{
+    CR_UNUSED(type);
+    CR_UNUSED(err);
+
+    g_warning("%s: %s", cbdata, msg);
+}
+
+static int
 primary_newpkgcb(cr_Package **pkg,
          const char *pkgId,
          const char *name,
@@ -218,7 +230,7 @@ newpkgcb(cr_Package **pkg,
 
     *pkg = g_hash_table_lookup(cb_data->ht, pkgId);
 
-    if (cb_data->chunk) {
+    if (*pkg && cb_data->chunk) {
         assert(!(*pkg)->chunk);
         (*pkg)->chunk = cb_data->chunk;
     }
@@ -265,8 +277,8 @@ cr_load_xml_files(GHashTable *hashtable,
                          &cb_data,
                          primary_pkgcb,
                          &cb_data,
-                         NULL,
-                         NULL,
+                         warning_cb,
+                         "Primary XML parser",
                          (filelists_xml_path) ? 0 : 1,
                          &tmp_err);
     if (tmp_err) {
@@ -282,8 +294,8 @@ cr_load_xml_files(GHashTable *hashtable,
                                &cb_data,
                                pkgcb,
                                &cb_data,
-                               NULL,
-                               NULL,
+                               warning_cb,
+                               "Filelists XML parser",
                                &tmp_err);
         if (tmp_err) {
             int code = tmp_err->code;
@@ -299,8 +311,8 @@ cr_load_xml_files(GHashTable *hashtable,
                            &cb_data,
                            pkgcb,
                            &cb_data,
-                           NULL,
-                           NULL,
+                           warning_cb,
+                           "Other XML parser",
                            &tmp_err);
         if (tmp_err) {
             int code = tmp_err->code;

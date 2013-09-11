@@ -139,7 +139,33 @@ typedef struct {
 } cr_CbData;
 
 static int
-pkgcb(cr_Package *pkg, void *cbdata, GError **err)
+primary_newpkgcb(cr_Package **pkg,
+         const char *pkgId,
+         const char *name,
+         const char *arch,
+         void *cbdata,
+         GError **err)
+{
+    cr_CbData *cb_data = cbdata;
+
+    CR_UNUSED(name);
+    CR_UNUSED(arch);
+    CR_UNUSED(err);
+
+    assert(*pkg == NULL);
+
+    if (cb_data->chunk) {
+        *pkg = cr_package_new_without_chunk();
+        (*pkg)->chunk = cb_data->chunk;
+    } else {
+        *pkg = cr_package_new();
+    }
+
+    return CR_CB_RET_OK;
+}
+
+static int
+primary_pkgcb(cr_Package *pkg, void *cbdata, GError **err)
 {
     gboolean store_pkg = TRUE;
     cr_CbData *cb_data = cbdata;
@@ -157,7 +183,10 @@ pkgcb(cr_Package *pkg, void *cbdata, GError **err)
                                                      NULL, NULL);
     }
 
-    // TODO: Remove pointer to shared string chunk
+    if (cb_data->chunk) {
+        assert(pkg->chunk == cb_data->chunk);
+        pkg->chunk = NULL;
+    }
 
     if (!store_pkg) {
         cr_package_free(pkg);
@@ -189,6 +218,26 @@ newpkgcb(cr_Package **pkg,
 
     *pkg = g_hash_table_lookup(cb_data->ht, pkgId);
 
+    if (cb_data->chunk) {
+        assert(!(*pkg)->chunk);
+        (*pkg)->chunk = cb_data->chunk;
+    }
+
+    return CR_CB_RET_OK;
+}
+
+static int
+pkgcb(cr_Package *pkg, void *cbdata, GError **err)
+{
+    cr_CbData *cb_data = cbdata;
+
+    CR_UNUSED(err);
+
+    if (cb_data->chunk) {
+        assert(pkg->chunk == cb_data->chunk);
+        pkg->chunk = NULL;
+    }
+
     return CR_CB_RET_OK;
 }
 
@@ -212,9 +261,9 @@ cr_load_xml_files(GHashTable *hashtable,
     cb_data.pkglist_ht  = pkglist_ht;
 
     cr_xml_parse_primary(primary_xml_path,
-                         NULL,
-                         NULL,
-                         pkgcb,
+                         primary_newpkgcb,
+                         &cb_data,
+                         primary_pkgcb,
                          &cb_data,
                          NULL,
                          NULL,
@@ -231,8 +280,8 @@ cr_load_xml_files(GHashTable *hashtable,
         cr_xml_parse_filelists(filelists_xml_path,
                                newpkgcb,
                                &cb_data,
-                               NULL,
-                               NULL,
+                               pkgcb,
+                               &cb_data,
                                NULL,
                                NULL,
                                &tmp_err);
@@ -248,8 +297,8 @@ cr_load_xml_files(GHashTable *hashtable,
         cr_xml_parse_other(other_xml_path,
                            newpkgcb,
                            &cb_data,
-                           NULL,
-                           NULL,
+                           pkgcb,
+                           &cb_data,
                            NULL,
                            NULL,
                            &tmp_err);

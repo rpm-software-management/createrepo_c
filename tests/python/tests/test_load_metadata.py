@@ -58,7 +58,7 @@ class TestCaseLoadMetadata(unittest.TestCase):
         self.assertEqual(pkg.name, "fake_bash")
 
     def test_load_metadata_repo02_destructor(self):
-        md = cr.Metadata()
+        md = cr.Metadata(use_single_chunk=True)
         md.locate_and_load_xml(REPO_02_PATH)
         pkg = md.get('90f61e546938a11449b710160ad294618a5bd3062e46f8cf851fd0088af184b7')
         del(md)  # in fact, md shoudnot be destroyed yet, because it is

@@ -28,6 +28,8 @@
 #include "logging.h"
 #include "misc.h"
 #include "locate_metadata.h"
+#include "repomd.h"
+#include "xml_parser.h"
 
 #define TMPDIR_PATTERN  "/tmp/createrepo_c_tmp_repo_XXXXXX"
 
@@ -63,63 +65,33 @@ cr_metadatalocation_free(struct cr_MetadataLocation *ml)
     g_free(ml);
 }
 
+static int
+warning_cb(cr_XmlParserWarningType type,
+           char *msg,
+           void *cbdata,
+           GError **err)
+{
+    CR_UNUSED(type);
+    CR_UNUSED(cbdata);
+    CR_UNUSED(err);
 
+    g_warning("Repomd xml parser: %s", msg);
+}
 
 static struct cr_MetadataLocation *
-cr_parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite)
+cr_parse_repomd(const char *repomd_path,
+                const char *repopath,
+                int ignore_sqlite)
 {
-    int ret;
-    xmlChar *name;
-    xmlTextReaderPtr reader;
+    assert(repomd_path);
 
+    GError *tmp_err = NULL;
+    cr_Repomd *repomd = cr_repomd_new();
 
-    // Parsing
-    reader = xmlReaderForFile(repomd_path, NULL, XML_PARSE_NOBLANKS);
-    if (!reader) {
-        g_warning("%s: Error while xmlReaderForFile()", __func__);
-        return NULL;
-    }
-
-    ret = xmlTextReaderRead(reader);
-    name = xmlTextReaderName(reader);
-    if (g_strcmp0((char *) name, "repomd")) {
-        g_warning("%s: Bad xml - missing repomd element? (%s)",
-                  __func__, name);
-        xmlFree(name);
-        xmlFreeTextReader(reader);
-        return NULL;
-    }
-    xmlFree(name);
-
-    ret = xmlTextReaderRead(reader);
-    name = xmlTextReaderName(reader);
-    if (g_strcmp0((char *) name, "revision")) {
-        g_warning("%s: Bad xml - missing revision element? (%s)",
-                  __func__, name);
-        xmlFree(name);
-        xmlFreeTextReader(reader);
-        return NULL;
-    }
-    xmlFree(name);
-
-
-    // Parse data elements
-
-    while (ret) {
-        // Find first data element
-        ret = xmlTextReaderRead(reader);
-        name = xmlTextReaderName(reader);
-        if (!g_strcmp0((char *) name, "data")) {
-            xmlFree(name);
-            break;
-        }
-        xmlFree(name);
-    }
-
-    if (!ret) {
-        // No elements left -> Bad xml
-        g_warning("%s: Bad xml - missing data elements?", __func__);
-        xmlFreeTextReader(reader);
+    cr_xml_parse_repomd(repomd_path, repomd, warning_cb, NULL, &tmp_err);
+    if (tmp_err) {
+        g_error("%s: %s", __func__, tmp_err->message);
+        g_error_free(tmp_err);
         return NULL;
     }
 
@@ -128,95 +100,39 @@ cr_parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite
     mdloc->repomd = g_strdup(repomd_path);
     mdloc->local_path = g_strdup(repopath);
 
-    xmlChar *data_type = NULL;
-    xmlChar *location_href = NULL;
+    for (GSList *elem = repomd->records; elem; elem = g_slist_next(elem)) {
+        cr_RepomdRecord *record = elem->data;
 
-    while (ret) {
-        if (xmlTextReaderNodeType(reader) != 1) {
-            ret = xmlTextReaderNext(reader);
-            continue;
-        }
+        gchar *full_location_href = g_strconcat(repopath,
+                                                (char *) record->location_href,
+                                                NULL);
 
-        xmlNodePtr data_node = xmlTextReaderExpand(reader);
-        data_type = xmlGetProp(data_node, (xmlChar *) "type");
-        xmlNodePtr sub_node = data_node->children;
-
-        while (sub_node) {
-            if (sub_node->type != XML_ELEMENT_NODE) {
-                sub_node = xmlNextElementSibling(sub_node);
-                continue;
-            }
-
-            if (!g_strcmp0((char *) sub_node->name, "location")) {
-                location_href = xmlGetProp(sub_node, (xmlChar *) "href");
-            }
-
-            // TODO: Check repodata validity checksum? mtime? size?
-
-            sub_node = xmlNextElementSibling(sub_node);
-        }
-
-
-        // Build absolute path
-
-        gchar *full_location_href;
-        full_location_href = g_strconcat(repopath, (char *) location_href, NULL);
-
-
-        // Store the path
-
-        if (!g_strcmp0((char *) data_type, "primary")) {
+        if (!g_strcmp0(record->type, "primary"))
             mdloc->pri_xml_href = full_location_href;
-        } else if (!g_strcmp0((char *) data_type, "filelists")) {
-            mdloc->fil_xml_href = full_location_href;
-        } else if (!g_strcmp0((char *) data_type, "other")) {
-            mdloc->oth_xml_href = full_location_href;
-        } else if (!g_strcmp0((char *) data_type, "primary_db")) {
-            if (ignore_sqlite) {
-                g_free(full_location_href);
-                full_location_href = NULL;
-            }
+        else if (!g_strcmp0(record->type, "primary_db") && !ignore_sqlite)
             mdloc->pri_sqlite_href = full_location_href;
-        } else if (!g_strcmp0((char *) data_type, "filelists_db")) {
-            if (ignore_sqlite) {
-                g_free(full_location_href);
-                full_location_href = NULL;
-            }
+        else if (!g_strcmp0(record->type, "filelists"))
+            mdloc->fil_xml_href = full_location_href;
+        else if (!g_strcmp0(record->type, "filelists_db") && !ignore_sqlite)
             mdloc->fil_sqlite_href = full_location_href;
-        } else if (!g_strcmp0((char *) data_type, "other_db")) {
-            if (ignore_sqlite) {
-                g_free(full_location_href);
-                full_location_href = NULL;
-            }
+        else if (!g_strcmp0(record->type, "other"))
+            mdloc->oth_xml_href = full_location_href;
+        else if (!g_strcmp0(record->type, "other_db") && !ignore_sqlite)
             mdloc->oth_sqlite_href = full_location_href;
-        } else if (!g_strcmp0((char *) data_type, "group")) {
+        else if (!g_strcmp0(record->type, "group"))
             mdloc->groupfile_href = full_location_href;
-        } else if (!g_strcmp0((char *) data_type, "group_gz")) {
-            // even with a createrepo param --xz this name has a _gz suffix
+        else if (!g_strcmp0(record->type, "group_gz"))
             mdloc->cgroupfile_href = full_location_href;
-        } else if (!g_strcmp0((char *) data_type, "updateinfo")) {
+        else if (!g_strcmp0(record->type, "updateinfo"))
             mdloc->updateinfo_href = full_location_href;
-        } else {
-            g_warning("Unknown data in repomd.xml \"%s\"", data_type);
+        else
             g_free(full_location_href);
-        }
-
-
-        // Memory cleanup
-
-        xmlFree(data_type);
-        xmlFree(location_href);
-        location_href = NULL;
-
-        ret = xmlTextReaderNext(reader);
     }
 
-    xmlFreeTextReader(reader);
+    cr_repomd_free(repomd);
 
     return mdloc;
 }
-
-
 
 static struct cr_MetadataLocation *
 cr_get_local_metadata(const char *in_repopath, int ignore_sqlite)

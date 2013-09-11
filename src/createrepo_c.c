@@ -768,6 +768,12 @@ main(int argc, char **argv)
     }
 
 
+    // Init package parser
+
+    cr_package_parser_init();
+    cr_xml_dump_init();
+
+
     // Thread pool - Creation
 
     struct UserData user_data;
@@ -1086,13 +1092,6 @@ main(int argc, char **argv)
             exit(EXIT_FAILURE);
         }
     }
-
-
-    // Init package parser
-
-    cr_package_parser_init();
-    cr_xml_dump_init();
-
 
     // Thread pool - User data initialization
 

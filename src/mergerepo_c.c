@@ -319,19 +319,17 @@ check_arguments(struct CmdOptions *options)
 
     // Compress type
     if (options->compress_type) {
-        if (!g_strcmp0(options->compress_type, "gz")) {
-            options->db_compression_type = CR_CW_GZ_COMPRESSION;
-            options->groupfile_compression_type = CR_CW_GZ_COMPRESSION;
-        } else if (!g_strcmp0(options->compress_type, "bz2")) {
-            options->db_compression_type = CR_CW_BZ2_COMPRESSION;
-            options->groupfile_compression_type = CR_CW_BZ2_COMPRESSION;
-        } else if (!g_strcmp0(options->compress_type, "xz")) {
-            options->db_compression_type = CR_CW_XZ_COMPRESSION;
-            options->groupfile_compression_type = CR_CW_XZ_COMPRESSION;
-        } else {
+
+        cr_CompressionType type;
+        type = cr_compression_type(options->compress_type);
+
+        if (type == CR_CW_UNKNOWN_COMPRESSION) {
             g_critical("Compression %s not available: Please choose from: "
                        "gz or bz2 or xz", options->compress_type);
             ret = FALSE;
+        } else {
+            options->db_compression_type = type;
+            options->groupfile_compression_type = type;
         }
     }
 

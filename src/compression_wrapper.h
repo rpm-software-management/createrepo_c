@@ -98,6 +98,12 @@ const char *cr_compression_suffix(cr_CompressionType comtype);
  */
 cr_CompressionType cr_detect_compression(const char* filename, GError **err);
 
+/** Return compression type.
+ * @param name      compression name
+ * @return          compression type
+ */
+cr_CompressionType cr_compression_type(const char *name);
+
 /** Open/Create the specified file.
  * @param FILENAME      filename
  * @param MODE          open mode

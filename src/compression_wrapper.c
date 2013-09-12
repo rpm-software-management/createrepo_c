@@ -228,6 +228,25 @@ cr_detect_compression(const char *filename, GError **err)
     return type;
 }
 
+cr_CompressionType
+cr_compression_type(const char *name)
+{
+    if (!name)
+        return CR_CW_UNKNOWN_COMPRESSION;
+
+    gchar *name_lower = g_strdup(name);
+    for (gchar *c = name_lower; *c; c++)
+        *c = tolower(*c);
+
+    if (!g_strcmp0(name_lower, "gz") || !g_strcmp0(name_lower, "gzip"))
+        return CR_CW_GZ_COMPRESSION;
+    if (!g_strcmp0(name_lower, "bz2") || !g_strcmp0(name_lower, "bzip2"))
+        return CR_CW_BZ2_COMPRESSION;
+    if (!g_strcmp0(name_lower, "xz"))
+        return CR_CW_XZ_COMPRESSION;
+
+    return CR_CW_UNKNOWN_COMPRESSION;
+}
 
 const char *
 cr_compression_suffix(cr_CompressionType comtype)

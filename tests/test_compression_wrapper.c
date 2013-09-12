@@ -100,6 +100,42 @@ test_cr_compression_suffix(void)
 }
 
 static void
+test_cr_compression_type(void)
+{
+    cr_CompressionType type;
+
+    type = cr_compression_type(NULL);
+    g_assert_cmpint(type, ==, CR_CW_UNKNOWN_COMPRESSION);
+
+    type = cr_compression_type("");
+    g_assert_cmpint(type, ==, CR_CW_UNKNOWN_COMPRESSION);
+
+    type = cr_compression_type("foo");
+    g_assert_cmpint(type, ==, CR_CW_UNKNOWN_COMPRESSION);
+
+    type = cr_compression_type("gz");
+    g_assert_cmpint(type, ==, CR_CW_GZ_COMPRESSION);
+
+    type = cr_compression_type("gzip");
+    g_assert_cmpint(type, ==, CR_CW_GZ_COMPRESSION);
+
+    type = cr_compression_type("GZ");
+    g_assert_cmpint(type, ==, CR_CW_GZ_COMPRESSION);
+
+    type = cr_compression_type("Gz");
+    g_assert_cmpint(type, ==, CR_CW_GZ_COMPRESSION);
+
+    type = cr_compression_type("bz2");
+    g_assert_cmpint(type, ==, CR_CW_BZ2_COMPRESSION);
+
+    type = cr_compression_type("bzip2");
+    g_assert_cmpint(type, ==, CR_CW_BZ2_COMPRESSION);
+
+    type = cr_compression_type("xz");
+    g_assert_cmpint(type, ==, CR_CW_XZ_COMPRESSION);
+}
+
+static void
 test_cr_detect_compression(void)
 {
     cr_CompressionType ret;
@@ -710,6 +746,8 @@ main(int argc, char *argv[])
             test_cr_compression_suffix);
     g_test_add_func("/compression_wrapper/test_cr_detect_compression",
             test_cr_detect_compression);
+    g_test_add_func("/compression_wrapper/test_cr_compression_type",
+            test_cr_compression_type);
     g_test_add_func("/compression_wrapper/test_cr_detect_compression_bad_suffix",
             test_cr_detect_compression_bad_suffix);
     g_test_add_func("/compression_wrapper/test_cr_read_with_autodetection",

@@ -65,19 +65,6 @@ cr_metadatalocation_free(struct cr_MetadataLocation *ml)
     g_free(ml);
 }
 
-static int
-warning_cb(cr_XmlParserWarningType type,
-           char *msg,
-           void *cbdata,
-           GError **err)
-{
-    CR_UNUSED(type);
-    CR_UNUSED(cbdata);
-    CR_UNUSED(err);
-
-    g_warning("Repomd xml parser: %s", msg);
-}
-
 static struct cr_MetadataLocation *
 cr_parse_repomd(const char *repomd_path,
                 const char *repopath,
@@ -88,7 +75,8 @@ cr_parse_repomd(const char *repomd_path,
     GError *tmp_err = NULL;
     cr_Repomd *repomd = cr_repomd_new();
 
-    cr_xml_parse_repomd(repomd_path, repomd, warning_cb, NULL, &tmp_err);
+    cr_xml_parse_repomd(repomd_path, repomd, cr_warning_cb,
+                        "Repomd xml parser", &tmp_err);
     if (tmp_err) {
         g_error("%s: %s", __func__, tmp_err->message);
         g_error_free(tmp_err);

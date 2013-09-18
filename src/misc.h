@@ -28,6 +28,7 @@ extern "C" {
 #include <string.h>
 #include <curl/curl.h>
 #include "compression_wrapper.h"
+#include "xml_parser.h"
 
 /** \defgroup   misc    Miscellaneous useful functions and macros.
  *  \addtogroup misc
@@ -312,6 +313,17 @@ cr_safe_string_chunk_insert_const(GStringChunk *chunk, const char *str)
     if (!str) return NULL;
     return g_string_chunk_insert_const(chunk, str);
 }
+
+/** Warning callback for xml parser warnings.
+ * For use in xml parsers like primary, filelists, other or repomd parser.
+ * Name of the parser should be passed as a string via
+ * warning callback data (warningcb_data) argument of the parser.
+ */
+int
+cr_warning_cb(cr_XmlParserWarningType type,
+           char *msg,
+           void *cbdata,
+           GError **err);
 
 /** @} */
 

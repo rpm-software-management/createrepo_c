@@ -969,3 +969,15 @@ cr_cmp_evr(const char *e1, const char *v1, const char *r1,
     rc = cr_compare_values(r1, r2);
     return rc;
 }
+
+int
+cr_warning_cb(cr_XmlParserWarningType type,
+           char *msg,
+           void *cbdata,
+           GError **err)
+{
+    CR_UNUSED(type);
+    CR_UNUSED(err);
+
+    g_warning("%s: %s", cbdata, msg);
+}

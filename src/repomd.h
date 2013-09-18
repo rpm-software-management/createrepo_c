@@ -223,6 +223,13 @@ void cr_repomd_add_repo_tag(cr_Repomd *repomd, const char *tag);
  */
 void cr_repomd_add_content_tag(cr_Repomd *repomd, const char *tag);
 
+/** Get repomd record from the repomd object.
+ * @param repomd                cr_Repomd object
+ * @param type                  Type of the record
+ * @return                      Pointer to a record of desired type or NULL
+ */
+cr_RepomdRecord *cr_repomd_get_record(cr_Repomd *repomd, const char *type);
+
 /** Frees cr_Repomd object and all its cr_RepomdRecord objects
  * @param repomd                cr_Repomd object
  */

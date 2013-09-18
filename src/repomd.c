@@ -684,3 +684,17 @@ cr_repomd_add_content_tag(cr_Repomd *repomd, const char *tag)
                             cr_safe_string_chunk_insert(repomd->chunk, tag));
 }
 
+cr_RepomdRecord *
+cr_repomd_get_record(cr_Repomd *repomd, const char *type)
+{
+    if (!repomd || !type)
+        return NULL;
+
+    for (GSList *elem = repomd->records; elem; elem = g_slist_next(elem)) {
+        cr_RepomdRecord *rec = elem->data;
+        assert(rec);
+        if (!g_strcmp0(rec->type, type))
+            return rec;
+    }
+    return NULL;
+}

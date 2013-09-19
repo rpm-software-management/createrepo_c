@@ -214,7 +214,7 @@ cmd_options_to_task(GSList **modifyrepotasks,
     task->new_name = cr_safe_string_chunk_insert_null(task->chunk,
                                                       options->new_name);
 
-    *modifyrepotasks = g_slist_prepend(*modifyrepotasks, task);
+    *modifyrepotasks = g_slist_append(*modifyrepotasks, task);
 
     g_debug("Task: [path: %s, type: %s, remove: %d, compress: %d, "
             "compress_type: %d (%s), unique_md_filenames: %d, "

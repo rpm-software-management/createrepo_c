@@ -248,7 +248,7 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
                                             task->checksum_type, NULL);
         g_thread_pool_push(fill_pool, filltask, NULL);
 
-        repomdrecords = g_slist_prepend(repomdrecords, rec);
+        repomdrecords = g_slist_append(repomdrecords, rec);
         if (task->unique_md_filenames)
             repomdrecords_uniquefn = g_slist_prepend(repomdrecords_uniquefn, rec);
         repomdrecordfilltasks = g_slist_prepend(repomdrecordfilltasks,

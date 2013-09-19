@@ -185,8 +185,6 @@ cr_xml_dump_repomd_body(xmlNodePtr root, cr_Repomd *repomd)
 
     // Dump records
 
-    repomd->records = g_slist_sort(repomd->records, (GCompareFunc) g_strcmp0);
-
     for (element = repomd->records; element; element = g_slist_next(element)) {
         cr_RepomdRecord *rec = element->data;
         cr_xml_dump_repomd_record(root, rec);

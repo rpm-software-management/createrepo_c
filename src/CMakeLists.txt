@@ -5,6 +5,7 @@ SET (createrepo_c_SRCS
      load_metadata.c
      locate_metadata.c
      misc.c
+     modifyrepo_shared.c
      package.c
      parsehdr.c
      parsepkg.c
@@ -32,6 +33,7 @@ SET(headers
     load_metadata.h
     locate_metadata.h
     misc.h
+    modifyrepo_shared.h
     package.h
     parsehdr.h
     parsepkg.h
@@ -74,6 +76,12 @@ TARGET_LINK_LIBRARIES(mergerepo_c
                         ${GLIB2_LIBRARIES}
                         ${GTHREAD2_LIBRARIES})
 
+ADD_EXECUTABLE(modifyrepo_c modifyrepo_c.c)
+TARGET_LINK_LIBRARIES(modifyrepo_c
+                        libcreaterepo_c
+                        ${GLIB2_LIBRARIES}
+                        ${GTHREAD2_LIBRARIES})
+
 CONFIGURE_FILE("createrepo_c.pc.cmake" "${CMAKE_SOURCE_DIR}/src/createrepo_c.pc" @ONLY)
 CONFIGURE_FILE("version.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/version.h" @ONLY)
 
@@ -87,5 +95,6 @@ INSTALL(FILES "createrepo_c.pc" DESTINATION "${LIB_INSTALL_DIR}/pkgconfig")
 INSTALL(TARGETS libcreaterepo_c LIBRARY DESTINATION ${LIB_INSTALL_DIR})
 INSTALL(TARGETS createrepo_c DESTINATION bin/)
 INSTALL(TARGETS mergerepo_c DESTINATION bin/)
+INSTALL(TARGETS modifyrepo_c DESTINATION bin/)
 
 ADD_SUBDIRECTORY(python)

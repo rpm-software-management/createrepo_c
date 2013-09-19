@@ -128,6 +128,11 @@ cr_misc_error_quark(void)
     return g_quark_from_static_string("cr_misc_error");
 }
 
+GQuark cr_modifyrepo_error_quark(void)
+{
+    return g_quark_from_static_string("cr_modifyrepo_error");
+}
+
 GQuark
 cr_repomd_error_quark(void)
 {

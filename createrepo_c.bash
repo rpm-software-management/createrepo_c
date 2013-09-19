@@ -5,6 +5,11 @@ _cr_compress_type()
     COMPREPLY=( $( compgen -W "bz2 gz xz" -- "$2" ) )
 }
 
+_cr_checksum_type()
+{
+    COMPREPLY=( $( compgen -W "md5 sha sha1 sha224 sha256 sha384 sha512" -- "$2" ) )
+}
+
 _cr_createrepo()
 {
     COMPREPLY=()
@@ -24,7 +29,7 @@ _cr_createrepo()
             return 0
             ;;
         -s|--checksum)
-            COMPREPLY=( $( compgen -W 'md5 sha sha1 sha224 sha256 sha384 sha512' -- "$2" ) )
+            _cr_checksum_type "$1" "$2"
             return 0
             ;;
         -i|--pkglist|--read-pkgs-list)
@@ -103,6 +108,35 @@ _cr_mergerepo()
         --blocked' -- "$2" ) )
 } &&
 complete -F _cr_mergerepo -o filenames mergerepo_c
+
+_cr_modifyrepo()
+{
+    COMPREPLY=()
+
+    case $3 in
+        --version|-h|--help|-a|--archlist|--unique-md-filenames|--simple-md-filenames|--verbose)
+            return 0
+            ;;
+        -f|--batchfile)
+            COMPREPLY=( $( compgen -f -o plusdirs -- "$2" ) )
+            return 0
+            ;;
+        --compress-type)
+            _cr_compress_type "" "$2"
+            return 0
+            ;;
+        -s|--checksum)
+            _cr_checksum_type "$1" "$2"
+            return 0
+            ;;
+    esac
+
+    COMPREPLY=( $( compgen -W '--version --help --mdtype --remove
+        --compress --no-compress --compress-type --checksum
+        --unique-md-filenames --simple-md-filenames
+        --verbose --batchfile --new-name' -- "$2" ) )
+} &&
+complete -F _cr_modifyrepo -o filenames modifyrepo_c
 
 # Local variables:
 # mode: shell-script

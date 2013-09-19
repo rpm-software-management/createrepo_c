@@ -66,7 +66,7 @@ def parse_arguments_from_c_file(filename):
         print "Error: Cannot open file %s" % filename
         return args
 
-    re_cmd_entries = re.compile(r"static[ ]+GOptionEntry[^{]*{(?P<entries>.*)\s*NULL\s*}[,]?\s*};", re.MULTILINE|re.DOTALL)
+    re_cmd_entries = re.compile(r"\s*(static|const)[ ]+GOptionEntry[^{]*{(?P<entries>.*)\s*NULL\s*}[,]?\s*};", re.MULTILINE|re.DOTALL)
     match = re_cmd_entries.search(content)
     if not match:
         print "Warning: Cannot find GOptionEntry section in %s" % filename
@@ -133,8 +133,9 @@ def parse_arguments_from_c_file(filename):
 
 
 if __name__ == "__main__":
-    parser = OptionParser('usage: %prog [options] <filename> [--mergerepo]')
+    parser = OptionParser('usage: %prog [options] <filename> [--mergerepo|--modifyrepo]')
     parser.add_option('-m', '--mergerepo', action="store_true", help="Gen rst for mergerepo")
+    parser.add_option('-r', '--modifyrepo', action="store_true", help="Gen rst for modifyrepo")
     options, args = parser.parse_args()
 
     if len(args) < 1:
@@ -143,16 +144,22 @@ if __name__ == "__main__":
 
     args = parse_arguments_from_c_file(args[0])
 
-    if not options.mergerepo:
-        NAME = "createrepo_c"
-        info = Info(NAME,
-                description="C implementation of createrepo",
-                synopsis="%s [options] <directory>" % (NAME,),
-                options=args)
-    else:
+    if options.mergerepo:
         NAME = "mergerepo_c"
         info = Info(NAME,
                 description="C implementation of mergerepo",
+                synopsis="%s [options] <directory>" % (NAME,),
+                options=args)
+    elif options.modifyrepo:
+        NAME = "modifyrepo_c"
+        info = Info(NAME,
+                description="C implementation of modifyrepo",
+                synopsis="%s [options] <directory>" % (NAME,),
+                options=args)
+    else:
+        NAME = "createrepo_c"
+        info = Info(NAME,
+                description="C implementation of createrepo",
                 synopsis="%s [options] <directory>" % (NAME,),
                 options=args)
 

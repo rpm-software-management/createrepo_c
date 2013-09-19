@@ -167,3 +167,60 @@ Createrepo_c mimics this behaviour.
 - There are old metadata without checksum in the name too
 - (https://bugzilla.redhat.com/show_bug.cgi?id=836917)
 
+## Modifyrepo_c
+
+Modifyrepo_c is compatible with classical Modifyrepo except some misbehaviour:
+
+* TODO: Report bugs and add reference here
+
+### Batch file
+
+When there is need to do several modification to repository (``repomd.xml``)
+a batch file could be used.
+
+> Batch file is Modifyrepo_c specific. It is not supported by the classical
+Modifyrepo - at least not yet.
+
+#### Example
+
+    # Add:
+    #   [<path/to/file>]
+    #   <options>
+
+    # Metadata that use a bunch of config options
+    [some/path/comps.xml]
+    type=group
+    compress=true
+    compress-type=gz
+    unique-md-filenames=true
+    checksum=sha256
+    new-name=group.xml
+    
+    # Metadata that use default settings
+    [some/path/bar.xml]
+    
+    # Remove:
+    #   [<metadata name>]
+    #   remove=true
+    
+    [updateinfo]
+    remove=true
+    
+
+#### Supported options
+
+| Option name   | Description | Supported value(s) | Default |
+|---------------|-------------|--------------------|---------|
+| type          | Type of the metadata | Any string | Based on filename |
+| remove        | Remove specified file/type from repodata | ``true`` or ``false`` | ``false`` |
+| compress      | Compress the new metadata before adding it to repo | ``true`` or ``false`` | ``true`` |
+| compress-type | Compression format to use | ``gz``, ``bz2``, ``xz`` | ``gz`` |
+| checksum      | Checksum type to use | ``md5``, ``sha``, ``sha1``, ``sha224``, ``sha256``, ``sha384``, ``sha512`` | ``sha256`` |
+| unique-md-filenames | Include the file's checksum in the filename | ``true`` or ``false`` | ``true`` |
+| new-name      | New name for the file. If ``compress`` is ``true``, then compression suffix will be appended. If ``unique-md-filenames`` is ``true``, then checksum will be prepended. | Any string | Original source filename | 
+
+#### Notes
+
+* Lines beginning with a '#' and blank lines are considered comments.
+* If ``remove=true`` is used, no other config options should be used
+

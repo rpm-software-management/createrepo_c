@@ -230,6 +230,14 @@ void cr_repomd_add_content_tag(cr_Repomd *repomd, const char *tag);
  */
 cr_RepomdRecord *cr_repomd_get_record(cr_Repomd *repomd, const char *type);
 
+/** Detach this record from the repomd records list.
+ * Note: Responsibility of freeing record memory no longer belongs to
+ * cr_Repomd object.
+ * @param repomd                cr_Repomd object
+ * @param rec                   Record to be removed
+ */
+void cr_repomd_detach_record(cr_Repomd *repomd, cr_RepomdRecord *rec);
+
 /** Frees cr_Repomd object and all its cr_RepomdRecord objects
  * @param repomd                cr_Repomd object
  */

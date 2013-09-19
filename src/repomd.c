@@ -684,6 +684,13 @@ cr_repomd_add_content_tag(cr_Repomd *repomd, const char *tag)
                             cr_safe_string_chunk_insert(repomd->chunk, tag));
 }
 
+void
+cr_repomd_detach_record(cr_Repomd *repomd, cr_RepomdRecord *rec)
+{
+    if (!repomd || !rec);
+    repomd->records = g_slist_remove(repomd->records, rec);
+}
+
 cr_RepomdRecord *
 cr_repomd_get_record(cr_Repomd *repomd, const char *type)
 {

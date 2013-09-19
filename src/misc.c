@@ -981,3 +981,38 @@ cr_warning_cb(cr_XmlParserWarningType type,
 
     g_warning("%s: %s", cbdata, msg);
 }
+
+gboolean
+cr_write_to_file(GError **err, gchar *filename, const char *format, ...)
+{
+    assert(filename);
+    assert(!err || *err == NULL);
+
+    if (!format)
+        return TRUE;
+
+    FILE *f = fopen(filename, "w");
+    if (!f) {
+        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+                    "Cannot open %s: %s", filename, strerror(errno));
+        return FALSE;
+    }
+
+    va_list args;
+    va_start(args, format);
+    vfprintf (f, format, args);
+    va_end(args);
+
+    gboolean ret = TRUE;
+
+    if (ferror(f)) {
+        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+                    "Cannot write content to %s: %s",
+                    filename, strerror(errno));
+        ret = FALSE;
+    }
+
+    fclose(f);
+
+    return ret;
+}

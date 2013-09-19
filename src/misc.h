@@ -288,6 +288,20 @@ cr_safe_string_chunk_insert(GStringChunk *chunk, const char *str)
     return g_string_chunk_insert(chunk, str);
 }
 
+/** Safe insert into GStringChunk with free the str afterwards.
+ * @param chunk     a GStringChunk
+ * @param str       string to add or NULL
+ * @return          pointer to the copy of str on NULL if str was NULL
+ */
+static inline gchar *
+cr_safe_string_chunk_insert_and_free(GStringChunk *chunk, char *str)
+{
+    if (!str) return NULL;
+    gchar *copy = g_string_chunk_insert(chunk, str);
+    g_free(str);
+    return copy;
+}
+
 /** Safe insert into GStringChunk. If str is NULL or "\0" inserts nothing and
  * returns NULL.
  * @param chunk     a GStringChunk
@@ -314,6 +328,22 @@ cr_safe_string_chunk_insert_const(GStringChunk *chunk, const char *str)
     return g_string_chunk_insert_const(chunk, str);
 }
 
+static inline gboolean
+cr_key_file_get_boolean_default(GKeyFile *key_file,
+                                const gchar *group_name,
+                                const gchar *key,
+                                gboolean default_value,
+                                GError **error)
+{
+    GError *tmp_err = NULL;
+    gboolean ret = g_key_file_get_boolean(key_file, group_name, key, &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(error, tmp_err);
+        return default_value;
+    }
+    return ret;
+}
+
 /** Warning callback for xml parser warnings.
  * For use in xml parsers like primary, filelists, other or repomd parser.
  * Name of the parser should be passed as a string via
@@ -324,6 +354,15 @@ cr_warning_cb(cr_XmlParserWarningType type,
            char *msg,
            void *cbdata,
            GError **err);
+
+/** Open file and write content.
+ * @param err       GError **
+ * @param filename  Filename
+ * @param format    Format string
+ * @param ...       Arguments
+ */
+gboolean
+cr_write_to_file(GError **err, gchar *filename, const char *format, ...);
 
 /** @} */
 

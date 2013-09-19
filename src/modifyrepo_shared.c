@@ -299,7 +299,7 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
 
     // Write repomd.xml
     gchar *repomd_xml = cr_xml_dump_repomd(repomd, NULL);
-    printf("REPOMD.XML:\n%s", repomd_xml);
+    g_debug("Generated repomd.xml:\n%s", repomd_xml);
 
     g_debug("%s: Writing modified %s", __func__, repomd_path);
     gboolean ret = cr_write_to_file(err, repomd_path, "%s", repomd_xml);

@@ -383,14 +383,20 @@ cr_modifyrepo_parse_batchfile(const gchar *path,
         gchar *group = groups[x];
         assert(group);
 
-        g_debug("%s: Group: %s", __func__, group);
+        g_debug("%s: Group: \"%s\"", __func__, group);
 
         cr_ModifyRepoTask *task = cr_modifyrepotask_new();
         tasks = g_slist_append(tasks, task);
 
         gchar *tmp_str;
 
-        task->path = cr_safe_string_chunk_insert(task->chunk, group);
+        // As path use path option value or group
+        // name if no path option specified
+        task->path = cr_safe_string_chunk_insert_and_free(task->chunk,
+                g_key_file_get_string(keyfile, group, "path", NULL));
+        if (!task->path)
+            task->path = cr_safe_string_chunk_insert(task->chunk, group);
+
         task->type = cr_safe_string_chunk_insert_and_free(task->chunk,
                     g_key_file_get_string(keyfile, group, "type", NULL));
         task->remove = cr_key_file_get_boolean_default(keyfile, group,

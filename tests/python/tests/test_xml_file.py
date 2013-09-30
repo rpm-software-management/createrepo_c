@@ -173,7 +173,7 @@ class TestCaseXmlFile(unittest.TestCase):
 <package type="rpm">
   <name>Archer</name>
   <arch>x86_64</arch>
-  <version epoch="2" ver="3.4.5" rel="6"/>
+  <version epoch="2" ver="3.4.5" rel="6" vcs=""/>
   <checksum type="sha256" pkgid="YES">4e0b775220c67f0f2c1fd2177e626b9c863a098130224ff09778ede25cea9a9e</checksum>
   <summary>Complex package.</summary>
   <description>Archer package</description>

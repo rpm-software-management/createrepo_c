@@ -170,6 +170,7 @@ cr_package_copy(cr_Package *orig)
     pkg->arch             = cr_safe_string_chunk_insert(pkg->chunk, orig->arch);
     pkg->version          = cr_safe_string_chunk_insert(pkg->chunk, orig->version);
     pkg->epoch            = cr_safe_string_chunk_insert(pkg->chunk, orig->epoch);
+    pkg->vcs              = cr_safe_string_chunk_insert(pkg->chunk, orig->vcs);
     pkg->release          = cr_safe_string_chunk_insert(pkg->chunk, orig->release);
     pkg->summary          = cr_safe_string_chunk_insert(pkg->chunk, orig->summary);
     pkg->description      = cr_safe_string_chunk_insert(pkg->chunk, orig->description);

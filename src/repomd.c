@@ -27,7 +27,6 @@
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
 #include "error.h"
-#include "logging.h"
 #include "misc.h"
 #include "checksum.h"
 #include "repomd.h"

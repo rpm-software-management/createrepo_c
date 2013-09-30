@@ -20,7 +20,6 @@
 
 #include <string.h>
 #include "package.h"
-#include "logging.h"
 #include "misc.h"
 
 #define PACKAGE_CHUNK_SIZE 2048

@@ -25,7 +25,6 @@
 #include <assert.h>
 #include "error.h"
 #include "package.h"
-#include "logging.h"
 #include "misc.h"
 #include "load_metadata.h"
 #include "locate_metadata.h"

@@ -28,7 +28,6 @@
 #include "xml_parser.h"
 #include "error.h"
 #include "package.h"
-#include "logging.h"
 #include "misc.h"
 
 #define ERR_DOMAIN      CR_XML_PARSER_FIL_ERROR

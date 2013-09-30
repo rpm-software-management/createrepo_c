@@ -29,7 +29,6 @@
 #include <rpm/rpmlib.h>
 #include <rpm/rpmmacro.h>
 #include <rpm/rpmkeyring.h>
-#include "logging.h"
 #include "error.h"
 #include "parsehdr.h"
 #include "misc.h"

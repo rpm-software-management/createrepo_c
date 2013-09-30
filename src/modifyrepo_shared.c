@@ -22,7 +22,6 @@
 #include <string.h>
 #include <assert.h>
 #include "error.h"
-#include "logging.h"
 #include "misc.h"
 #include "checksum.h"
 #include "modifyrepo_shared.h"

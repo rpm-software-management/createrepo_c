@@ -43,8 +43,6 @@
 //  - rozvijet architekturu na listy tak jak to dela mergedrepo
 
 
-#define G_LOG_DOMAIN    ((gchar*) 0)
-
 #define DEFAULT_OUTPUTDIR               "merged_repo/"
 #define DEFAULT_DB_COMPRESSION_TYPE             CR_CW_BZ2_COMPRESSION
 #define DEFAULT_GROUPFILE_COMPRESSION_TYPE      CR_CW_GZ_COMPRESSION

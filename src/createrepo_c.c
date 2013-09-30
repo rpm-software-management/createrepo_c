@@ -44,7 +44,6 @@
 #include "xml_file.h"
 
 
-#define G_LOG_DOMAIN        ((gchar*) 0)
 #define MAX_TASK_BUFFER_LEN 20
 
 

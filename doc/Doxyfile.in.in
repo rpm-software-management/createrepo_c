@@ -714,7 +714,6 @@ EXCLUDE_SYMLINKS       = NO
 
 EXCLUDE_PATTERNS       = *_wrap.* \
                          cmd_parser.* \
-                         logging.h \
                          *_internal.h
 
 # The EXCLUDE_SYMBOLS tag can be used to specify one or more symbol names

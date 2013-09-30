@@ -24,7 +24,6 @@
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
 #include "error.h"
-#include "logging.h"
 #include "package.h"
 #include "xml_dump.h"
 #include "xml_dump_internal.h"

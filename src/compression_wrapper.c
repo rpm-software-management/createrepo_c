@@ -29,7 +29,6 @@
 #include <zlib.h>
 #include <bzlib.h>
 #include <lzma.h>
-#include "logging.h"
 #include "error.h"
 #include "compression_wrapper.h"
 

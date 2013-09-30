@@ -24,7 +24,6 @@
 #include <libxml/parser.h>
 #include <string.h>
 #include "error.h"
-#include "logging.h"
 #include "misc.h"
 #include "xml_dump.h"
 #include "xml_dump_internal.h"

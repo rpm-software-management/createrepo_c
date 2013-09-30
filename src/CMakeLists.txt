@@ -62,7 +62,8 @@ TARGET_LINK_LIBRARIES(libcreaterepo_c ${ZLIB_LIBRARY})
 SET_TARGET_PROPERTIES(libcreaterepo_c PROPERTIES
                       OUTPUT_NAME "createrepo_c"
                       SOVERSION ${CR_MAJOR}
-                      VERSION "${VERSION}")
+                      VERSION "${VERSION}"
+                      COMPILE_DEFINITIONS "G_LOG_DOMAIN=\"${G_LOG_DOMAIN}\"")
 
 ADD_EXECUTABLE(createrepo_c createrepo_c.c cmd_parser.c)
 TARGET_LINK_LIBRARIES(createrepo_c

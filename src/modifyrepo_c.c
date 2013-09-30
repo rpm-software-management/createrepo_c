@@ -37,8 +37,6 @@
 #include "xml_file.h"
 #include "modifyrepo_shared.h"
 
-#define G_LOG_DOMAIN            ((gchar*) 0)
-
 typedef struct {
 
     gboolean version;

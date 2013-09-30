@@ -26,7 +26,6 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include "logging.h"
 #include "misc.h"
 #include "sqlite.h"
 #include "error.h"

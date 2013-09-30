@@ -25,7 +25,6 @@
 #include <string.h>
 #include <errno.h>
 #include "error.h"
-#include "logging.h"
 #include "misc.h"
 #include "locate_metadata.h"
 #include "repomd.h"

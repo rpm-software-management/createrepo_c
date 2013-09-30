@@ -32,7 +32,6 @@
 #include <curl/curl.h>
 #include <rpm/rpmlib.h>
 #include "error.h"
-#include "logging.h"
 #include "misc.h"
 
 #define BUFFER_SIZE     4096

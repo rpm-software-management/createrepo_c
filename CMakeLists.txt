@@ -19,8 +19,9 @@ ENDIF()
 INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR})
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/Modules/")
 
+SET(G_LOG_DOMAIN "C_CREATEREPOLIB")
 
-# Find necessare libraries
+# Find necessary libraries
 
 find_package(BZip2 REQUIRED)
 find_package(CURL REQUIRED)

@@ -9,6 +9,10 @@ import deltarepo
 
 LOG_FORMAT = "%(message)s"
 
+# TODO:
+# - Support for different type of compression (?)
+
+
 def parse_options():
     parser = OptionParser("usage: %prog [options] <first_repo> <second_repo>\n" \
                           "       %prog --apply <repo> <delta_repo>")
@@ -24,12 +28,12 @@ def parse_options():
                       help="Output directory.", default="./")
 
     group = OptionGroup(parser, "Delta generation")
-    group.add_option("--skip", action="append", metavar="DATATYPE",
-                     help="Skip delta on the DATATYPE. Could be specified "\
-                     "multiple times. (E.g., --skip=comps)")
-    group.add_option("--do-only", action="append", metavar="DATATYPE",
-                     help="Do delta only for the DATATYPE. Could be specified "\
-                     "multiple times. (E.g., --do-only=primary)")
+    #group.add_option("--skip", action="append", metavar="DATATYPE",
+    #                 help="Skip delta on the DATATYPE. Could be specified "\
+    #                 "multiple times. (E.g., --skip=comps)")
+    #group.add_option("--do-only", action="append", metavar="DATATYPE",
+    #                 help="Do delta only for the DATATYPE. Could be specified "\
+    #                 "multiple times. (E.g., --do-only=primary)")
     group.add_option("-t", "--id-type", action="store", metavar="HASHTYPE",
                      help="Hash function for the ids (RepoId and DeltaRepoId). " \
                      "Default is sha256.", default="sha256")
@@ -38,8 +42,8 @@ def parse_options():
     group = OptionGroup(parser, "Delta application")
     group.add_option("-a", "--apply", action="store_true",
                      help="Enable delta application mode.")
-    group.add_option("-d", "--database", action="store_true",
-                     help="Gen database.")
+    #group.add_option("-d", "--database", action="store_true",
+    #                 help="Gen database.")
     parser.add_option_group(group)
 
     options, args = parser.parse_args()
@@ -97,16 +101,18 @@ if __name__ == "__main__":
 
     logger = setup_logging(options.quiet, options.verbose)
 
-    generator = deltarepo.DeltaRepoGenerator(id_type=options.id_type,
-                                             logger=logger)
-
-    # TODO: check if repo is really delta repo (must has a repoid and removed.xml)
-
     if options.apply:
         # Applying delta
-        generator.applydelta(args[0], args[1], out_path=options.outputdir,
-                             database=options.database)
+        da = deltarepo.DeltaRepoApplicator(args[0],
+                                           args[1],
+                                           out_path=options.outputdir,
+                                           logger=logger)
+        da.apply()
     else:
         # Do delta
-        generator.gendelta(args[0], args[1], out_path=options.outputdir,
-                           do_only=options.do_only, skip=options.skip)
+        dg = deltarepo.DeltaRepoGenerator(args[0],
+                                          args[1],
+                                          out_path=options.outputdir,
+                                          logger=logger,
+                                          repoid_type=options.id_type)
+        dg.gen()

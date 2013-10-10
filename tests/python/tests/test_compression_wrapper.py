@@ -57,3 +57,10 @@ class TestCaseCompressionWrapper(unittest.TestCase):
         comtype = cr.detect_compression(path)
         self.assertEqual(comtype, cr.XZ)
 
+    def test_compression_type(self):
+        self.assertEqual(cr.compression_type(None), cr.UNKNOWN_COMPRESSION)
+        self.assertEqual(cr.compression_type(""), cr.UNKNOWN_COMPRESSION)
+        self.assertEqual(cr.compression_type("gz"), cr.GZ)
+        self.assertEqual(cr.compression_type("bz2"), cr.BZ2)
+        self.assertEqual(cr.compression_type("xz"), cr.XZ)
+        self.assertEqual(cr.compression_type("XZ"), cr.XZ)

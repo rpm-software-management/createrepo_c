@@ -252,3 +252,4 @@ def compress_file(src, dst, comtype, stat=None):
 
 compression_suffix  = _createrepo_c.compression_suffix
 detect_compression  = _createrepo_c.detect_compression
+compression_type    = _createrepo_c.compression_type

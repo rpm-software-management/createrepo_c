@@ -64,6 +64,19 @@ py_detect_compression(PyObject *self, PyObject *args)
     return PyLong_FromLong(type);
 }
 
+PyObject *
+py_compression_type(PyObject *self, PyObject *args)
+{
+    char *name;
+
+    CR_UNUSED(self);
+
+    if (!PyArg_ParseTuple(args, "z:py_compression_type", &name))
+        return NULL;
+
+    return PyLong_FromLong((long) cr_compression_type(name));
+}
+
 /*
  * CrFile object
  */

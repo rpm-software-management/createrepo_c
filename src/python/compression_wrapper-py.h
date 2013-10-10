@@ -38,4 +38,11 @@ PyDoc_STRVAR(detect_compression__doc__,
 
 PyObject *py_detect_compression(PyObject *self, PyObject *args);
 
+PyDoc_STRVAR(compression_type__doc__,
+"compression_type(string) -> int\n\n"
+"Compression type value");
+
+PyObject *py_compression_type(PyObject *self, PyObject *args);
+
+
 #endif

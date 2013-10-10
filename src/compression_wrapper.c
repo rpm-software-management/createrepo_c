@@ -894,6 +894,19 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
     assert(!err || (ret == CR_CW_ERR && *err != NULL)
            || (ret != CR_CW_ERR && *err == NULL));
 
+    if (cr_file->stat && ret != CR_CW_ERR) {
+        GError *tmp_err = NULL;
+        cr_file->stat->size += ret;
+        if (cr_file->checksum_ctx) {
+            GError *tmp_err = NULL;
+            cr_checksum_update(cr_file->checksum_ctx, buffer, ret, &tmp_err);
+            if (tmp_err) {
+                g_propagate_error(err, tmp_err);
+                return CR_CW_ERR;
+            }
+        }
+    }
+
     return ret;
 }
 

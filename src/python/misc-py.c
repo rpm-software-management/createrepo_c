@@ -59,3 +59,35 @@ py_compress_file_with_stat(PyObject *self, PyObject *args)
 
     Py_RETURN_NONE;
 }
+
+PyObject *
+py_decompress_file_with_stat(PyObject *self, PyObject *args)
+{
+    int type;
+    char *src, *dst;
+    PyObject *py_contentstat = NULL;
+    cr_ContentStat *contentstat;
+    GError *tmp_err = NULL;
+
+    CR_UNUSED(self);
+
+    if (!PyArg_ParseTuple(args, "sziO:py_decompress_file", &src, &dst, &type,
+                          &py_contentstat))
+        return NULL;
+
+    if (!py_contentstat || py_contentstat == Py_None) {
+        contentstat = NULL;
+    } else {
+        contentstat = ContentStat_FromPyObject(py_contentstat);
+        if (!contentstat)
+            return NULL;
+    }
+
+    cr_decompress_file_with_stat(src, dst, type, contentstat, &tmp_err);
+    if (tmp_err) {
+        nice_exception(&tmp_err, NULL);
+        return NULL;
+    }
+
+    Py_RETURN_NONE;
+}

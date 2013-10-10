@@ -236,8 +236,8 @@ test_cr_db_add_primary_pkg(TestData *testdata, gconstpointer test_data)
     cr_db_close(db, &err);
     tclean = g_timer_elapsed(timer, NULL) - tmp;
 
-    printf("Stats:\nOpen:    %f\nAdd:     %f\nCleanup: %f\nSum:     %f\n",
-           topen, tadd, tclean, (tadd + tclean));
+    //printf("Stats:\nOpen:    %f\nAdd:     %f\nCleanup: %f\nSum:     %f\n",
+    //       topen, tadd, tclean, (tadd + tclean));
 
     // Cleanup
 

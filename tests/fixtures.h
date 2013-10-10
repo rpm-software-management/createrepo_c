@@ -67,9 +67,11 @@
 
 // Test files
 
-#define TEST_EMPTY_FILE         TEST_FILES_PATH"empty_file"
-#define TEST_TEXT_FILE          TEST_FILES_PATH"text_file"
-#define TEST_BINARY_FILE        TEST_FILES_PATH"binary_file"
+#define TEST_EMPTY_FILE          TEST_FILES_PATH"empty_file"
+#define TEST_TEXT_FILE           TEST_FILES_PATH"text_file"
+#define TEST_TEXT_FILE_SHA256SUM "2f395bdfa2750978965e4781ddf224c89646c7d7a1569b7ebb023b170f7bd8bb"
+#define TEST_TEXT_FILE_GZ        TEST_FILES_PATH"text_file.gz"
+#define TEST_BINARY_FILE         TEST_FILES_PATH"binary_file"
 
 // Other
 

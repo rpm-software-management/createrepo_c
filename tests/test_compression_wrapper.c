@@ -369,21 +369,18 @@ outputtest_cw_output(Outputtest *outputtest, gconstpointer test_data)
 
     // Plain
 
-    printf("Testing - plain\nwrite()\n");
     test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename,
                           CR_CW_NO_COMPRESSION, FILE_COMPRESSED_0_CONTENT,
                           FILE_COMPRESSED_0_CONTENT_LEN);
     test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename,
                           CR_CW_NO_COMPRESSION, FILE_COMPRESSED_1_CONTENT,
                           FILE_COMPRESSED_1_CONTENT_LEN);
-    printf("puts()\n");
     test_helper_cw_output(OUTPUT_TYPE_PUTS,   outputtest->tmp_filename,
                           CR_CW_NO_COMPRESSION, FILE_COMPRESSED_0_CONTENT,
                           FILE_COMPRESSED_0_CONTENT_LEN);
     test_helper_cw_output(OUTPUT_TYPE_PUTS,   outputtest->tmp_filename,
                           CR_CW_NO_COMPRESSION, FILE_COMPRESSED_1_CONTENT,
                           FILE_COMPRESSED_1_CONTENT_LEN);
-    printf("printf()\n");
     test_helper_cw_output(OUTPUT_TYPE_PRINTF, outputtest->tmp_filename,
                           CR_CW_NO_COMPRESSION, FILE_COMPRESSED_0_CONTENT,
                           FILE_COMPRESSED_0_CONTENT_LEN);
@@ -393,21 +390,18 @@ outputtest_cw_output(Outputtest *outputtest, gconstpointer test_data)
 
     // Gz
 
-    printf("Testing - gz\nwrite()\n");
     test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename,
                           CR_CW_GZ_COMPRESSION, FILE_COMPRESSED_0_CONTENT,
                           FILE_COMPRESSED_0_CONTENT_LEN);
     test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename,
                           CR_CW_GZ_COMPRESSION, FILE_COMPRESSED_1_CONTENT,
                           FILE_COMPRESSED_1_CONTENT_LEN);
-    printf("puts()\n");
     test_helper_cw_output(OUTPUT_TYPE_PUTS,   outputtest->tmp_filename,
                           CR_CW_GZ_COMPRESSION, FILE_COMPRESSED_0_CONTENT,
                           FILE_COMPRESSED_0_CONTENT_LEN);
     test_helper_cw_output(OUTPUT_TYPE_PUTS,   outputtest->tmp_filename,
                           CR_CW_GZ_COMPRESSION, FILE_COMPRESSED_1_CONTENT,
                           FILE_COMPRESSED_1_CONTENT_LEN);
-    printf("printf()\n");
     test_helper_cw_output(OUTPUT_TYPE_PRINTF, outputtest->tmp_filename,
                           CR_CW_GZ_COMPRESSION, FILE_COMPRESSED_0_CONTENT,
                           FILE_COMPRESSED_0_CONTENT_LEN);
@@ -417,21 +411,18 @@ outputtest_cw_output(Outputtest *outputtest, gconstpointer test_data)
 
     // Bz2
 
-    printf("Testing - bz2\nwrite()\n");
     test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename,
                           CR_CW_BZ2_COMPRESSION, FILE_COMPRESSED_0_CONTENT,
                           FILE_COMPRESSED_0_CONTENT_LEN);
     test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename,
                           CR_CW_BZ2_COMPRESSION, FILE_COMPRESSED_1_CONTENT,
                           FILE_COMPRESSED_1_CONTENT_LEN);
-    printf("puts()\n");
     test_helper_cw_output(OUTPUT_TYPE_PUTS,   outputtest->tmp_filename,
                           CR_CW_BZ2_COMPRESSION, FILE_COMPRESSED_0_CONTENT,
                           FILE_COMPRESSED_0_CONTENT_LEN);
     test_helper_cw_output(OUTPUT_TYPE_PUTS,   outputtest->tmp_filename,
                           CR_CW_BZ2_COMPRESSION, FILE_COMPRESSED_1_CONTENT,
                           FILE_COMPRESSED_1_CONTENT_LEN);
-    printf("printf()\n");
     test_helper_cw_output(OUTPUT_TYPE_PRINTF, outputtest->tmp_filename,
                           CR_CW_BZ2_COMPRESSION, FILE_COMPRESSED_0_CONTENT,
                           FILE_COMPRESSED_0_CONTENT_LEN);
@@ -441,21 +432,18 @@ outputtest_cw_output(Outputtest *outputtest, gconstpointer test_data)
 
     // Xz
 
-    printf("Testing - xz\nwrite()\n");
     test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename,
                           CR_CW_XZ_COMPRESSION, FILE_COMPRESSED_0_CONTENT,
                           FILE_COMPRESSED_0_CONTENT_LEN);
     test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename,
                           CR_CW_XZ_COMPRESSION, FILE_COMPRESSED_1_CONTENT,
                           FILE_COMPRESSED_1_CONTENT_LEN);
-    printf("puts()\n");
     test_helper_cw_output(OUTPUT_TYPE_PUTS,   outputtest->tmp_filename,
                           CR_CW_XZ_COMPRESSION, FILE_COMPRESSED_0_CONTENT,
                           FILE_COMPRESSED_0_CONTENT_LEN);
     test_helper_cw_output(OUTPUT_TYPE_PUTS,   outputtest->tmp_filename,
                           CR_CW_XZ_COMPRESSION, FILE_COMPRESSED_1_CONTENT,
                           FILE_COMPRESSED_1_CONTENT_LEN);
-    printf("printf()\n");
     test_helper_cw_output(OUTPUT_TYPE_PRINTF, outputtest->tmp_filename,
                           CR_CW_XZ_COMPRESSION, FILE_COMPRESSED_0_CONTENT,
                           FILE_COMPRESSED_0_CONTENT_LEN);

@@ -176,6 +176,36 @@ int cr_compress_file_with_stat(const char *src,
                                cr_ContentStat *stat,
                                GError **err);
 
+/** Decompress file.
+ * @param SRC           source filename
+ * @param DST           destination (If dst is dir, filename of src without
+ *                      compression suffix (if present) is used.
+ *                      If dst is NULL, src without compression suffix is used)
+ *                      Otherwise ".decompressed" suffix is used
+ * @param COMTYPE       type of compression
+ * @param ERR           GError **
+ * @return              cr_Error return code
+ */
+#define cr_decompress_file(SRC, DST, COMTYPE, ERR) \
+                    cr_decompress_file_with_stat(SRC, DST, COMTYPE, NULL, ERR)
+
+/** Decompress file.
+ * @param src           source filename
+ * @param dst           destination (If dst is dir, filename of src without
+ *                      compression suffix (if present) is used.
+ *                      If dst is NULL, src without compression suffix is used)
+ *                      Otherwise ".decompressed" suffix is used
+ * @param comtype       type of compression
+ * @param stat          pointer to cr_ContentStat or NULL
+ * @param err           GError **
+ * @return              cr_Error return code
+ */
+int cr_decompress_file_with_stat(const char *src,
+                                 const char *dst,
+                                 cr_CompressionType comtype,
+                                 cr_ContentStat *stat,
+                                 GError **err);
+
 /** Better copy file. Source (src) could be remote address (http:// or ftp://).
  * @param src           source filename
  * @param dst           destination (if dst is dir, filename of src is used)

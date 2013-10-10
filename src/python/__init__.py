@@ -250,6 +250,9 @@ checksum_type       = _createrepo_c.checksum_type
 def compress_file(src, dst, comtype, stat=None):
     return _createrepo_c.compress_file_with_stat(src, dst, comtype, stat)
 
+def decompress_file(src, dst, comtype, stat=None):
+    return _createrepo_c.decompress_file_with_stat(src, dst, comtype, stat)
+
 compression_suffix  = _createrepo_c.compression_suffix
 detect_compression  = _createrepo_c.detect_compression
 compression_type    = _createrepo_c.compression_type

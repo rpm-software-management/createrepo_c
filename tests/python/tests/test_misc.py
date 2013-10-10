@@ -45,3 +45,37 @@ class TestCaseMisc(unittest.TestCase):
         self.assertEqual(set(os.listdir(self.tmpdir)),
                          set(['file.bz2', 'file.xz', 'file', 'foobar.gz']))
 
+    def test_decompress_file(self):
+        # Non exist file
+        self.assertRaises(IOError, cr.decompress_file,
+                          self.nofile, None, cr.BZ2)
+
+        tmpfile_gz_comp = os.path.join(self.tmpdir, "gzipedfile.gz")
+        shutil.copy(FILE_TEXT_GZ, tmpfile_gz_comp)
+        tmpfile_gz_comp_ns = os.path.join(self.tmpdir, "gzipedfile_no_suffix")
+        shutil.copy(FILE_TEXT_GZ, tmpfile_gz_comp_ns)
+
+        # Decompression - use the same name without suffix
+        dest = os.path.join(self.tmpdir, "gzipedfile")
+        cr.decompress_file(tmpfile_gz_comp, None, cr.GZ)
+        self.assertTrue(os.path.isfile(dest))
+
+        # Decompression - use the specific name
+        dest = os.path.join(self.tmpdir, "decompressed.file")
+        cr.decompress_file(tmpfile_gz_comp, dest, cr.GZ)
+        self.assertTrue(os.path.isfile(dest))
+
+        # Decompression - bad suffix by default
+        dest = os.path.join(self.tmpdir, "gzipedfile_no_suffix.decompressed")
+        cr.decompress_file(tmpfile_gz_comp_ns, None, cr.GZ)
+        self.assertTrue(os.path.isfile(dest))
+
+        # Decompression - with stat
+        stat = cr.ContentStat(cr.SHA256)
+        dest = os.path.join(self.tmpdir, "gzipedfile")
+        cr.decompress_file(tmpfile_gz_comp, None, cr.AUTO_DETECT_COMPRESSION, stat)
+        self.assertTrue(os.path.isfile(dest))
+        self.assertEqual(stat.checksum, FILE_TEXT_SHA256SUM)
+        self.assertEqual(stat.checksum_type, cr.SHA256)
+        self.assertEqual(stat.size, 910L)
+

@@ -562,7 +562,8 @@ compressfile_test_text_file(Copyfiletest *copyfiletest, gconstpointer test_data)
 }
 
 static void
-compressfile_with_stat_test_text_file(Copyfiletest *copyfiletest, gconstpointer test_data)
+compressfile_with_stat_test_text_file(Copyfiletest *copyfiletest,
+                                      gconstpointer test_data)
 {
     CR_UNUSED(test_data);
     int ret;
@@ -585,6 +586,33 @@ compressfile_with_stat_test_text_file(Copyfiletest *copyfiletest, gconstpointer 
     cr_contentstat_free(stat, &tmp_err);
     g_assert(!tmp_err);
 }
+
+static void
+decompressfile_with_stat_test_text_file(Copyfiletest *copyfiletest,
+                                        gconstpointer test_data)
+{
+    CR_UNUSED(test_data);
+    int ret;
+    char *checksum;
+    cr_ContentStat *stat;
+    GError *tmp_err = NULL;
+
+    stat = cr_contentstat_new(CR_CHECKSUM_SHA256, &tmp_err);
+    g_assert(stat);
+    g_assert(!tmp_err);
+
+    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
+    ret = cr_decompress_file_with_stat(TEST_TEXT_FILE_GZ, copyfiletest->dst_file,
+                                       CR_CW_GZ_COMPRESSION, stat, &tmp_err);
+    g_assert(!tmp_err);
+    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
+    g_assert_cmpstr(stat->checksum, ==, TEST_TEXT_FILE_SHA256SUM);
+    cr_contentstat_free(stat, &tmp_err);
+    g_assert(!tmp_err);
+}
+
+
 
 static void
 test_cr_download_valid_url_1(Copyfiletest *copyfiletest, gconstpointer test_data)
@@ -1068,6 +1096,9 @@ main(int argc, char *argv[])
     g_test_add("/misc/compressfile_with_stat_test_text_file",
             Copyfiletest, NULL, copyfiletest_setup,
             compressfile_with_stat_test_text_file, copyfiletest_teardown);
+    g_test_add("/misc/decompressfile_with_stat_test_text_file",
+            Copyfiletest, NULL, copyfiletest_setup,
+            decompressfile_with_stat_test_text_file, copyfiletest_teardown);
 //    g_test_add("/misc/test_cr_download_valid_url_1",
 //          Copyfiletest, NULL, copyfiletest_setup,
 //          test_cr_download_valid_url_1, copyfiletest_teardown);

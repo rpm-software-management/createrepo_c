@@ -438,7 +438,7 @@ cr_compress_file_with_stat(const char *src,
 
     // Src must be a file NOT a directory
     if (!g_file_test(src, G_FILE_TEST_IS_REGULAR)) {
-        g_debug("%s: Source (%s) must be directory!", __func__, src);
+        g_debug("%s: Source (%s) must be a regular file!", __func__, src);
         g_set_error(err, CR_MISC_ERROR, CRE_NOFILE,
                     "Not a regular file: %s", src);
         return CRE_NOFILE;
@@ -505,6 +505,121 @@ compress_file_cleanup:
 
     if (new)
         cr_close(new, NULL);
+
+    return ret;
+}
+
+
+int
+cr_decompress_file_with_stat(const char *src,
+                             const char *in_dst,
+                             cr_CompressionType compression,
+                             cr_ContentStat *stat,
+                             GError **err)
+{
+    int ret = CRE_OK;
+    int readed;
+    char buf[BUFFER_SIZE];
+    FILE *new = NULL;
+    CR_FILE *orig = NULL;
+    gchar *dst = (gchar *) in_dst;
+    GError *tmp_err = NULL;
+
+    assert(src);
+    assert(!err || *err == NULL);
+
+    // Src must be a file NOT a directory
+    if (!g_file_test(src, G_FILE_TEST_IS_REGULAR)) {
+        g_debug("%s: Source (%s) must be a regular file!", __func__, src);
+        g_set_error(err, CR_MISC_ERROR, CRE_NOFILE,
+                    "Not a regular file: %s", src);
+        return CRE_NOFILE;
+    }
+
+    if (compression == CR_CW_AUTO_DETECT_COMPRESSION ||
+        compression == CR_CW_UNKNOWN_COMPRESSION)
+    {
+        compression = cr_detect_compression(src, NULL);
+    }
+
+    if (compression == CR_CW_UNKNOWN_COMPRESSION) {
+        g_set_error(err, CR_MISC_ERROR, CRE_UNKNOWNCOMPRESSION,
+                    "Cannot detect compression type");
+        return CRE_UNKNOWNCOMPRESSION;
+    }
+
+    const char *c_suffix = cr_compression_suffix(compression);
+
+    if (!in_dst || g_str_has_suffix(in_dst, "/")) {
+        char *filename = cr_get_filename(src);
+        if (g_str_has_suffix(filename, c_suffix)) {
+            filename = g_strndup(filename, strlen(filename) - strlen(c_suffix));
+        } else {
+            filename = g_strconcat(filename, ".decompressed", NULL);
+        }
+
+        if (!in_dst) {
+            // in_dst is NULL, use same dir as src
+            char *src_dir = g_strndup(src,
+                                strlen(src) - strlen(cr_get_filename(src)));
+            dst = g_strconcat(src_dir, filename, NULL);
+            g_free(src_dir);
+        } else {
+            // in_dst is dir
+            dst = g_strconcat(in_dst, filename, NULL);
+        }
+
+        g_free(filename);
+    }
+
+    orig = cr_sopen(src, CR_CW_MODE_READ, compression, stat, &tmp_err);
+    if (orig == NULL) {
+        g_debug("%s: Cannot open source file %s", __func__, src);
+        g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", src);
+        ret = CRE_IO;
+        goto compress_file_cleanup;
+    }
+
+    new = fopen(dst, "wb");
+    if (!new) {
+        g_debug("%s: Cannot open destination file %s (%s)",
+                __func__, dst, strerror(errno));
+        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+                    "Cannot open %s: %s", src, strerror(errno));
+        ret = CRE_IO;
+        goto compress_file_cleanup;
+    }
+
+    while ((readed = cr_read(orig, buf, BUFFER_SIZE, &tmp_err)) > 0) {
+        if (tmp_err) {
+            g_debug("%s: Error while copy %s -> %s (%s)", __func__, src,
+                    dst, tmp_err->message);
+            g_propagate_prefixed_error(err, tmp_err,
+                                       "Error while read %s: ", src);
+            ret = CRE_IO;
+            goto compress_file_cleanup;
+        }
+
+        if (fwrite(buf, 1, readed, new) != readed) {
+            g_debug("%s: Error while copy %s -> %s (%s)",
+                    __func__, src, dst, strerror(errno));
+            g_set_error(err, CR_MISC_ERROR, CRE_IO,
+                        "Error while write %s: %s", dst, strerror(errno));
+            ret = CRE_IO;
+            goto compress_file_cleanup;
+        }
+    }
+
+compress_file_cleanup:
+
+    if (dst != in_dst)
+        g_free(dst);
+
+    if (orig)
+        cr_close(orig, NULL);
+
+    if (new)
+        fclose(new);
 
     return ret;
 }

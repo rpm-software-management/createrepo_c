@@ -211,6 +211,7 @@ Modifyrepo - at least not yet.
 
 | Option name   | Description | Supported value(s) | Default |
 |---------------|-------------|--------------------|---------|
+| path          | Path to the file. When specified it override the path specified in group name (name between [] parenthesis) | Any string | group name (string between '[' ']') |
 | type          | Type of the metadata | Any string | Based on filename |
 | remove        | Remove specified file/type from repodata | ``true`` or ``false`` | ``false`` |
 | compress      | Compress the new metadata before adding it to repo | ``true`` or ``false`` | ``true`` |

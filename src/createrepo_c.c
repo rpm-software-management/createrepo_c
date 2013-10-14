@@ -1391,6 +1391,8 @@ main(int argc, char **argv)
     if (cmd_options->revision)
         cr_repomd_set_revision(repomd_obj, cmd_options->revision);
 
+    cr_repomd_sort_records(repomd_obj);
+
     char *repomd_xml = cr_xml_dump_repomd(repomd_obj, &tmp_err);
     assert(repomd_xml || tmp_err);
     cr_repomd_free(repomd_obj);

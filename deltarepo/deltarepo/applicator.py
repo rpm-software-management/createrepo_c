@@ -282,6 +282,7 @@ class DeltaRepoApplicator(LoggingInterface):
         # Prepare and write out the new repomd.xml
         self._debug("Preparing repomd.xml ...")
         self.new_repomd.set_repoid(self.new_id, self.repoid_type_str)
+        self.new_repomd.sort_records()
         new_repomd_xml = self.new_repomd.xml_dump()
 
         self._debug("Writing repomd.xml ...")

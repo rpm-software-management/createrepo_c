@@ -295,6 +295,7 @@ class DeltaRepoGenerator(LoggingInterface):
         deltarepoid = "{0}-{1}".format(self.bundle["old_repoid"],
                                        self.bundle["new_repoid"])
         self.delta_repomd.set_repoid(deltarepoid, self.repoid_type_str)
+        self.delta_repomd.sort_records()
         delta_repomd_xml = self.delta_repomd.xml_dump()
 
         self._debug("Writing repomd.xml ...")

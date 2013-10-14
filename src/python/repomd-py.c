@@ -213,6 +213,18 @@ add_content_tag(_RepomdObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+PyDoc_STRVAR(sort_records__doc__,
+"sort_records() -> str\n\n"
+"Sort repomd records to the createrepo_c prefered order");
+
+static PyObject *
+sort_records(_RepomdObject *self, void *nothing)
+{
+    CR_UNUSED(nothing);
+    cr_repomd_sort_records(self->repomd);
+    Py_RETURN_NONE;
+}
+
 PyDoc_STRVAR(xml_dump__doc__,
 "xml_dump() -> str\n\n"
 "Generate xml representation of the repomd");
@@ -246,6 +258,8 @@ static struct PyMethodDef repomd_methods[] = {
         add_repo_tag__doc__},
     {"add_content_tag", (PyCFunction)add_content_tag, METH_VARARGS,
         add_content_tag__doc__},
+    {"sort_records", (PyCFunction)sort_records, METH_NOARGS,
+        sort_records__doc__},
     {"xml_dump", (PyCFunction)xml_dump, METH_NOARGS,
         xml_dump__doc__},
     {NULL} /* sentinel */

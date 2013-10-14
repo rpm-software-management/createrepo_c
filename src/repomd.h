@@ -238,6 +238,13 @@ cr_RepomdRecord *cr_repomd_get_record(cr_Repomd *repomd, const char *type);
  */
 void cr_repomd_detach_record(cr_Repomd *repomd, cr_RepomdRecord *rec);
 
+/** Records are stored in order they were added to the repomd.
+ * Because sometimes deterministic output is desirable this function
+ * exists.
+ * @param repomd                cr_Repomd object
+ */
+void cr_repomd_sort_records(cr_Repomd *repomd);
+
 /** Frees cr_Repomd object and all its cr_RepomdRecord objects
  * @param repomd                cr_Repomd object
  */

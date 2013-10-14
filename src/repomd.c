@@ -704,3 +704,54 @@ cr_repomd_get_record(cr_Repomd *repomd, const char *type)
     }
     return NULL;
 }
+
+static gint
+record_type_value(const char *type) {
+    if (!g_strcmp0(type, "primary"))
+        return 1;
+    if (!g_strcmp0(type, "filelists"))
+        return 2;
+    if (!g_strcmp0(type, "other"))
+        return 3;
+    if (!g_strcmp0(type, "primary_db"))
+        return 4;
+    if (!g_strcmp0(type, "filelists_db"))
+        return 5;
+    if (!g_strcmp0(type, "other_db"))
+        return 6;
+    return 7;
+}
+
+static gint
+record_cmp(gconstpointer _a, gconstpointer _b)
+{
+    const cr_RepomdRecord *a = _a;
+    const cr_RepomdRecord *b = _b;
+
+    gint a_val = record_type_value(a->type);
+    gint b_val = record_type_value(b->type);
+
+    // Keep base metadata files sorted by logical order (primary, filelists, ..)
+    if (a_val < b_val) return -1;
+    if (a_val > b_val) return 1;
+
+    // Other metadta sort by the type
+    gint ret = g_strcmp0(a->type, b->type);
+    if (ret)
+        return ret;
+
+    // If even the type is not sufficient, use location href
+    ret = g_strcmp0(a->location_href, b->location_href);
+
+    // If even the location href is not sufficient, use the location base
+    return ret ? ret : g_strcmp0(a->location_base, b->location_base);
+}
+
+void
+cr_repomd_sort_records(cr_Repomd *repomd)
+{
+    if (!repomd)
+        return;
+
+    repomd->records = g_slist_sort(repomd->records, record_cmp);
+}

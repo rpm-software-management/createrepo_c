@@ -101,11 +101,15 @@ _cr_mergerepo()
             ;;
     esac
 
-    COMPREPLY=( $( compgen -W '--version --help --repo --archlist --database
-        --no-database --verbose --outputdir --nogroups --noupdateinfo
-        --compress-type --method --all --noarch-repo --unique-md-filenames
-        --simple-md-filenames --koji --groupfile
-        --blocked' -- "$2" ) )
+    if [[ $2 == -* ]] ; then
+        COMPREPLY=( $( compgen -W '--version --help --repo --archlist --database
+            --no-database --verbose --outputdir --nogroups --noupdateinfo
+            --compress-type --method --all --noarch-repo --unique-md-filenames
+            --simple-md-filenames --koji --groupfile
+            --blocked' -- "$2" ) )
+    else
+        COMPREPLY=( $( compgen -d -- "$2" ) )
+    fi
 } &&
 complete -F _cr_mergerepo -o filenames mergerepo_c
 
@@ -131,10 +135,14 @@ _cr_modifyrepo()
             ;;
     esac
 
-    COMPREPLY=( $( compgen -W '--version --help --mdtype --remove
-        --compress --no-compress --compress-type --checksum
-        --unique-md-filenames --simple-md-filenames
-        --verbose --batchfile --new-name' -- "$2" ) )
+    if [[ $2 == -* ]] ; then
+        COMPREPLY=( $( compgen -W '--version --help --mdtype --remove
+            --compress --no-compress --compress-type --checksum
+            --unique-md-filenames --simple-md-filenames
+            --verbose --batchfile --new-name' -- "$2" ) )
+    else
+        COMPREPLY=( $( compgen -f -- "$2" ) )
+    fi
 } &&
 complete -F _cr_modifyrepo -o filenames modifyrepo_c
 

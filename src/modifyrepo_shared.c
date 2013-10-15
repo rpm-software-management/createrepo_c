@@ -297,6 +297,7 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
     g_slist_free(repomdrecords);
 
     // Write repomd.xml
+    cr_repomd_sort_records(repomd);
     gchar *repomd_xml = cr_xml_dump_repomd(repomd, NULL);
     g_debug("Generated repomd.xml:\n%s", repomd_xml);
 

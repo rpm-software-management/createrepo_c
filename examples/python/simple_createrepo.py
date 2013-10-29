@@ -16,6 +16,7 @@ def do_repodata(path):
             if not os.path.exists(new_repodata_path):
                 shutil.move(repodata_path, new_repodata_path)
                 break
+            x += 1
     os.mkdir(repodata_path)
 
     # Prepare metadata files
@@ -23,9 +24,9 @@ def do_repodata(path):
     pri_xml_path = os.path.join(repodata_path, "primary.xml.gz")
     fil_xml_path = os.path.join(repodata_path, "filelists.xml.gz")
     oth_xml_path = os.path.join(repodata_path, "other.xml.gz")
-    pri_db_path  = os.path.join(repodata_path, "primary.sqlite.gz")
-    fil_db_path  = os.path.join(repodata_path, "filelists.sqlite.gz")
-    oth_db_path  = os.path.join(repodata_path, "other.sqlite.gz")
+    pri_db_path  = os.path.join(repodata_path, "primary.sqlite")
+    fil_db_path  = os.path.join(repodata_path, "filelists.sqlite")
+    oth_db_path  = os.path.join(repodata_path, "other.sqlite")
 
     pri_xml = cr.PrimaryXmlFile(pri_xml_path)
     fil_xml = cr.FilelistsXmlFile(fil_xml_path)
@@ -48,6 +49,7 @@ def do_repodata(path):
     # Process all packages
     for filename in pkg_list:
         pkg = cr.package_from_rpm(filename)
+        pkg.location_href = os.path.basename(filename)
         print "Processing: %s" % pkg.nevra()
         pri_xml.add_pkg(pkg)
         fil_xml.add_pkg(pkg)

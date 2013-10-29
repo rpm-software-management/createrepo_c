@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<repomd xmlns="http://linux.duke.edu/metadata/repo" xmlns:rpm="http://linux.duke.edu/metadata/rpm">
+  <revision>3th repo - md5</revision>
+  <tags>
+    <content>111</content>
+    <content>222</content>
+    <repo>aaa</repo>
+    <repo>bbb</repo>
+    <repo>ccc</repo>
+    <distro cpeid="one">foo</distro>
+    <distro>two:bar</distro>
+  </tags>
+  <data type="primary">
+    <checksum type="md5">6f167684fc6301b3cdf8c2f0d1ededad</checksum>
+    <open-checksum type="md5">9aa8568cbe4bcdffb59598ce184002ca</open-checksum>
+    <location href="repodata/6f167684fc6301b3cdf8c2f0d1ededad-primary.xml.gz"/>
+    <timestamp>1383056971</timestamp>
+    <size>2459</size>
+    <open-size>12924</open-size>
+  </data>
+  <data type="filelists">
+    <checksum type="md5">d240d93e678b4fcb30259335d3af15b7</checksum>
+    <open-checksum type="md5">f4ae5bf585d336c7ca7e7a3a1e8d2366</open-checksum>
+    <location href="repodata/d240d93e678b4fcb30259335d3af15b7-filelists.xml.gz"/>
+    <timestamp>1383056971</timestamp>
+    <size>819</size>
+    <open-size>3845</open-size>
+  </data>
+  <data type="other">
+    <checksum type="md5">73538b4dd5d121108f8b98f72672e8f7</checksum>
+    <open-checksum type="md5">01e62d3841a0e9ef6b5dec01aa40b6cc</open-checksum>
+    <location href="repodata/73538b4dd5d121108f8b98f72672e8f7-other.xml.gz"/>
+    <timestamp>1383056971</timestamp>
+    <size>1099</size>
+    <open-size>3909</open-size>
+  </data>
+  <data type="primary_db">
+    <checksum type="md5">802912716f5820b736afc409b831436e</checksum>
+    <open-checksum type="md5">6c9edb29222bdd23bb6616651b529eb0</open-checksum>
+    <location href="repodata/802912716f5820b736afc409b831436e-primary.sqlite.bz2"/>
+    <timestamp>1383056971</timestamp>
+    <size>4978</size>
+    <open-size>26624</open-size>
+    <database_version>10</database_version>
+  </data>
+  <data type="filelists_db">
+    <checksum type="md5">2cf05ca6ca26bfe4aea8c88c7980a7b0</checksum>
+    <open-checksum type="md5">189d7d00166efd5ac3b5a16c8304b53f</open-checksum>
+    <location href="repodata/2cf05ca6ca26bfe4aea8c88c7980a7b0-filelists.sqlite.bz2"/>
+    <timestamp>1383056971</timestamp>
+    <size>2273</size>
+    <open-size>12288</open-size>
+    <database_version>10</database_version>
+  </data>
+  <data type="other_db">
+    <checksum type="md5">de34683b2f4d0d987b4f6e0b09a9c87f</checksum>
+    <open-checksum type="md5">fef1771fb9c6b9686b7f830937c753d2</open-checksum>
+    <location href="repodata/de34683b2f4d0d987b4f6e0b09a9c87f-other.sqlite.bz2"/>
+    <timestamp>1383056971</timestamp>
+    <size>1924</size>
+    <open-size>8192</open-size>
+    <database_version>10</database_version>
+  </data>
+  <data type="group">
+    <checksum type="md5">71e71de922ccdaf23c1cb02d8b234c91</checksum>
+    <location href="repodata/71e71de922ccdaf23c1cb02d8b234c91-comps.xml"/>
+    <timestamp>1383056971</timestamp>
+    <size>140</size>
+  </data>
+  <data type="group_gz">
+    <checksum type="md5">959970da257ec7696a0bffdc52752d5f</checksum>
+    <open-checksum type="md5">71e71de922ccdaf23c1cb02d8b234c91</open-checksum>
+    <location href="repodata/959970da257ec7696a0bffdc52752d5f-comps.xml.gz"/>
+    <timestamp>1383056971</timestamp>
+    <size>141</size>
+    <open-size>140</open-size>
+  </data>
+</repomd>

@@ -1,0 +1,1 @@
+CREATEREPO=../../../../createrepo_c MODIFYREPO="../../../../modifyrepo_c" ./regenrepos.sh

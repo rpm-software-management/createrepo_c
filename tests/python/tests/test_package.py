@@ -14,7 +14,7 @@ class TestCasePackage(unittest.TestCase):
         self.assertEqual(pkg.epoch, "0")
         self.assertEqual(pkg.release, "0")
         self.assertEqual(pkg.summary, '""')
-        self.assertEqual(pkg.description, "")
+        self.assertEqual(pkg.description, None)
         self.assertEqual(pkg.url, None)
         #self.assertEqual(pkg.time_file, 1340709886)
         self.assertEqual(pkg.time_build, 1340696582)

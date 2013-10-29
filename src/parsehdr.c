@@ -147,7 +147,7 @@ cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
 
     pkg->release = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_RELEASE));
     pkg->summary = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_SUMMARY));
-    pkg->description = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_DESCRIPTION));
+    pkg->description = cr_safe_string_chunk_insert_null(pkg->chunk, headerGetString(hdr, RPMTAG_DESCRIPTION));
     pkg->url = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_URL));
     pkg->time_file = mtime;
     if (headerGet(hdr, RPMTAG_BUILDTIME, td, flags)) {

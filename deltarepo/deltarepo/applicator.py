@@ -12,7 +12,7 @@ import os
 import shutil
 import createrepo_c as cr
 from deltarepo.common import LoggingInterface, Metadata, RemovedXml
-from deltarepo.delta_plugins import PLUGINS
+from deltarepo.delta_plugins import PLUGINS, GENERAL_PLUGIN
 from deltarepo.errors import DeltaRepoError, DeltaRepoPluginError
 
 __all__ = ['DeltaRepoApplicator']
@@ -243,8 +243,35 @@ class DeltaRepoApplicator(LoggingInterface):
                 used_plugins.add(plugin)
                 plugin_used = True
 
-        # TODO:
         # Process rest of the metadata files
+        metadata_objects = {}
+        for rectype, rec in self.delta_records.items():
+            if rectype in ("primary_db", "filelists_db", "other_db", "removed"):
+                # Skip databases and removed
+                continue
+
+            if rectype not in processed_metadata:
+                metadata_object = self._new_metadata(rectype)
+                if metadata_object is not None:
+                    self._debug("To be processed by general delta plugin: %s" \
+                                % rectype)
+                    metadata_objects[rectype] = metadata_object
+                else:
+                    self._debug("Not processed: %s - SKIP", rectype)
+
+        if metadata_objects:
+            # Use the plugin
+            self._debug("Plugin {0}: Active".format(GENERAL_PLUGIN.NAME))
+            plugin_instance = GENERAL_PLUGIN()
+            plugin_instance.apply(metadata_objects, self.bundle)
+
+            for md in metadata_objects.values():
+                self._debug("Plugin {0}: Processed \"{1}\" delta record "\
+                            "which produced:".format(
+                            GENERAL_PLUGIN.NAME, md.metadata_type))
+                for repomd_record in md.generated_repomd_records:
+                    self._debug(" - {0}".format(repomd_record.type))
+                    self.new_repomd.set_record(repomd_record)
 
         self._debug("Used plugins: {0}".format([p.NAME for p in used_plugins]))
 

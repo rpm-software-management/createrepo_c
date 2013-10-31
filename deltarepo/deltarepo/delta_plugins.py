@@ -1,10 +1,12 @@
 import os
 import os.path
+import shutil
 import hashlib
 import createrepo_c as cr
 from deltarepo.errors import DeltaRepoError, DeltaRepoPluginError
 
 PLUGINS = []
+GENERAL_PLUGIN = None
 
 class DeltaRepoPlugin(object):
 
@@ -67,6 +69,65 @@ class DeltaRepoPlugin(object):
 
     def gen(self, metadata, bundle):
         raise NotImplementedError("Not implemented")
+
+
+class GeneralDeltaRepoPlugin(DeltaRepoPlugin):
+
+    NAME = "GeneralDeltaPlugin"
+    VERSION = 1
+    METADATA = []
+    APPLY_REQUIRED_BUNDLE_KEYS = ["removed_obj",
+                                  "unique_md_filenames"]
+    APPLY_BUNDLE_CONTRIBUTION = []
+    GEN_REQUIRED_BUNDLE_KEYS = ["removed_obj",
+                                "unique_md_filenames"]
+    GEN_BUNDLE_CONTRIBUTION = []
+
+    def _path(self, path, record):
+        """Return path to the repodata file."""
+        return os.path.join(path, record.location_href)
+
+    def apply(self, metadata, bundle):
+
+        # Get info from bundle
+        removed_obj = bundle["removed_obj"]
+        unique_md_filenames = bundle["unique_md_filenames"]
+
+        #
+        for md in metadata.values():
+            md.new_fn = os.path.join(md.out_dir, os.path.basename(md.delta_fn))
+            shutil.copy2(md.delta_fn, md.new_fn)
+
+            # Prepare repomd record of xml file
+            rec = cr.RepomdRecord(md.metadata_type, md.new_fn)
+            rec.fill(md.checksum_type)
+            if unique_md_filenames:
+                rec.rename_file()
+
+            md.generated_repomd_records.append(rec)
+
+    def gen(self, metadata, bundle):
+
+        ## TODO: Compress uncompressed data
+
+        # Get info from bundle
+        removed_obj = bundle["removed_obj"]
+        unique_md_filenames = bundle["unique_md_filenames"]
+
+        for md in metadata.values():
+            md.delta_fn = os.path.join(md.out_dir, os.path.basename(md.new_fn))
+            shutil.copy2(md.new_fn, md.delta_fn)
+
+            # Prepare repomd record of xml file
+            rec = cr.RepomdRecord(md.metadata_type, md.delta_fn)
+            rec.fill(md.checksum_type)
+            if unique_md_filenames:
+                rec.rename_file()
+
+            md.generated_repomd_records.append(rec)
+
+GENERAL_PLUGIN = GeneralDeltaRepoPlugin
+
 
 class MainDeltaRepoPlugin(DeltaRepoPlugin):
 

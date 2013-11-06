@@ -13,6 +13,6 @@ then
 fi
 
 pushd "$MY_DIR"
-$CREATEREPO --groupfile comps.xml --revision "3th repo" --content "Content tag 123456" .
+$CREATEREPO $EXTRAARGS --groupfile comps.xml --revision "3th repo" --content "Content tag 123456" .
 $MODIFYREPO foobar repodata/
 popd

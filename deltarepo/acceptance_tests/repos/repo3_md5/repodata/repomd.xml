@@ -11,67 +11,67 @@
     <distro>two:bar</distro>
   </tags>
   <data type="primary">
-    <checksum type="md5">6f167684fc6301b3cdf8c2f0d1ededad</checksum>
-    <open-checksum type="md5">9aa8568cbe4bcdffb59598ce184002ca</open-checksum>
-    <location href="repodata/6f167684fc6301b3cdf8c2f0d1ededad-primary.xml.gz"/>
-    <timestamp>1383747055</timestamp>
-    <size>2459</size>
-    <open-size>12924</open-size>
+    <checksum type="md5">f5dbbd04a90922679668e7452a0e0abc</checksum>
+    <open-checksum type="md5">b22dba6fb9c30eb93558f6da5f27731a</open-checksum>
+    <location href="repodata/f5dbbd04a90922679668e7452a0e0abc-primary.xml.gz"/>
+    <timestamp>1383752637</timestamp>
+    <size>1617</size>
+    <open-size>7834</open-size>
   </data>
   <data type="filelists">
-    <checksum type="md5">d240d93e678b4fcb30259335d3af15b7</checksum>
-    <open-checksum type="md5">f4ae5bf585d336c7ca7e7a3a1e8d2366</open-checksum>
-    <location href="repodata/d240d93e678b4fcb30259335d3af15b7-filelists.xml.gz"/>
-    <timestamp>1383747055</timestamp>
-    <size>819</size>
-    <open-size>3845</open-size>
+    <checksum type="md5">ab0ba3bc0c558a1c7232c81b542b3da6</checksum>
+    <open-checksum type="md5">d474974b0e0e377e61f9975b19e9a63f</open-checksum>
+    <location href="repodata/ab0ba3bc0c558a1c7232c81b542b3da6-filelists.xml.gz"/>
+    <timestamp>1383752637</timestamp>
+    <size>457</size>
+    <open-size>1057</open-size>
   </data>
   <data type="other">
-    <checksum type="md5">73538b4dd5d121108f8b98f72672e8f7</checksum>
-    <open-checksum type="md5">01e62d3841a0e9ef6b5dec01aa40b6cc</open-checksum>
-    <location href="repodata/73538b4dd5d121108f8b98f72672e8f7-other.xml.gz"/>
-    <timestamp>1383747055</timestamp>
-    <size>1099</size>
-    <open-size>3909</open-size>
+    <checksum type="md5">dbc187a3175af386b8fbc6b2773b2161</checksum>
+    <open-checksum type="md5">f1f261928fd216a42cbd5cc2a24c3f40</open-checksum>
+    <location href="repodata/dbc187a3175af386b8fbc6b2773b2161-other.xml.gz"/>
+    <timestamp>1383752637</timestamp>
+    <size>633</size>
+    <open-size>1703</open-size>
   </data>
   <data type="primary_db">
-    <checksum type="md5">802912716f5820b736afc409b831436e</checksum>
-    <open-checksum type="md5">6c9edb29222bdd23bb6616651b529eb0</open-checksum>
-    <location href="repodata/802912716f5820b736afc409b831436e-primary.sqlite.bz2"/>
-    <timestamp>1383747055</timestamp>
-    <size>4978</size>
-    <open-size>26624</open-size>
+    <checksum type="md5">37db64332a3db016fc06d8ab9da29fd3</checksum>
+    <open-checksum type="md5">98c10199cc3aa39bfd139610e2fb84e9</open-checksum>
+    <location href="repodata/37db64332a3db016fc06d8ab9da29fd3-primary.sqlite.bz2"/>
+    <timestamp>1383752638</timestamp>
+    <size>3272</size>
+    <open-size>23552</open-size>
     <database_version>10</database_version>
   </data>
   <data type="filelists_db">
-    <checksum type="md5">2cf05ca6ca26bfe4aea8c88c7980a7b0</checksum>
-    <open-checksum type="md5">189d7d00166efd5ac3b5a16c8304b53f</open-checksum>
-    <location href="repodata/2cf05ca6ca26bfe4aea8c88c7980a7b0-filelists.sqlite.bz2"/>
-    <timestamp>1383747055</timestamp>
-    <size>2273</size>
-    <open-size>12288</open-size>
+    <checksum type="md5">efb2d70f60ee5b5542b71c5e06ca2fbc</checksum>
+    <open-checksum type="md5">ab752ad5e0de0c50143384d91c94edc5</open-checksum>
+    <location href="repodata/efb2d70f60ee5b5542b71c5e06ca2fbc-filelists.sqlite.bz2"/>
+    <timestamp>1383752638</timestamp>
+    <size>1070</size>
+    <open-size>7168</open-size>
     <database_version>10</database_version>
   </data>
   <data type="other_db">
-    <checksum type="md5">de34683b2f4d0d987b4f6e0b09a9c87f</checksum>
-    <open-checksum type="md5">fef1771fb9c6b9686b7f830937c753d2</open-checksum>
-    <location href="repodata/de34683b2f4d0d987b4f6e0b09a9c87f-other.sqlite.bz2"/>
-    <timestamp>1383747055</timestamp>
-    <size>1924</size>
-    <open-size>8192</open-size>
+    <checksum type="md5">a3202fa64a762c9257df78a2a966c9fd</checksum>
+    <open-checksum type="md5">8571400245fb102ad06d23cf6fc4bd5a</open-checksum>
+    <location href="repodata/a3202fa64a762c9257df78a2a966c9fd-other.sqlite.bz2"/>
+    <timestamp>1383752638</timestamp>
+    <size>1172</size>
+    <open-size>6144</open-size>
     <database_version>10</database_version>
   </data>
   <data type="group">
     <checksum type="md5">71e71de922ccdaf23c1cb02d8b234c91</checksum>
     <location href="repodata/71e71de922ccdaf23c1cb02d8b234c91-comps.xml"/>
-    <timestamp>1383747055</timestamp>
+    <timestamp>1383752637</timestamp>
     <size>140</size>
   </data>
   <data type="group_gz">
     <checksum type="md5">959970da257ec7696a0bffdc52752d5f</checksum>
     <open-checksum type="md5">71e71de922ccdaf23c1cb02d8b234c91</open-checksum>
     <location href="repodata/959970da257ec7696a0bffdc52752d5f-comps.xml.gz"/>
-    <timestamp>1383747055</timestamp>
+    <timestamp>1383752637</timestamp>
     <size>141</size>
     <open-size>140</open-size>
   </data>

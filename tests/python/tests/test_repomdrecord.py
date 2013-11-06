@@ -37,7 +37,7 @@ class TestCaseRepomdRecord(unittest.TestCase):
         self.assertEqual(rec.checksum_open_type, None)
         self.assertEqual(rec.timestamp, 0)
         self.assertEqual(rec.size, 0)
-        self.assertEqual(rec.size_open, 0)
+        self.assertEqual(rec.size_open, -1)
         self.assertEqual(rec.db_ver, 0)
 
         rec.fill(cr.SHA256)

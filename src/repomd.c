@@ -54,6 +54,8 @@ cr_repomd_record_new(const char *type, const char *path)
     cr_RepomdRecord *md = g_malloc0(sizeof(*md));
     md->chunk = g_string_chunk_new(128);
     md->type  = cr_safe_string_chunk_insert(md->chunk, type);
+    md->size_open = -1;
+
     if (path) {
         gchar *filename = cr_get_filename(path);
         gchar *location_href = g_strconcat(LOCATION_HREF_PREFIX, filename, NULL);
@@ -61,6 +63,7 @@ cr_repomd_record_new(const char *type, const char *path)
         md->location_href = g_string_chunk_insert(md->chunk, location_href);
         g_free(location_href);
     }
+
     return md;
 }
 
@@ -235,7 +238,7 @@ cr_repomd_record_fill(cr_RepomdRecord *md,
 
     // Compute checksum of non compressed content and its size
 
-    if (!md->checksum_open_type || !md->checksum_open || !md->size_open) {
+    if (!md->checksum_open_type || !md->checksum_open || md->size_open == -1) {
         cr_CompressionType com_type = cr_detect_compression(path, &tmp_err);
         if (tmp_err) {
             int code = tmp_err->code;
@@ -261,7 +264,7 @@ cr_repomd_record_fill(cr_RepomdRecord *md,
 
             md->checksum_open_type = g_string_chunk_insert(md->chunk, checksum_str);
             md->checksum_open = g_string_chunk_insert(md->chunk, open_stat->checksum);
-            if (!md->size_open)
+            if (md->size_open == -1)
                 md->size_open = open_stat->size;
             g_free(open_stat->checksum);
             g_free(open_stat);

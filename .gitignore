@@ -10,6 +10,7 @@ createrepo_c
 tests/testcompression_wrapper
 tests/testload_metadata
 createrepo*.rpm
+python-createrepo*.rpm
 cmake_install.cmake
 install_manifest.txt
 CMakeCache.txt

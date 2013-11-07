@@ -235,10 +235,6 @@ class DeltaRepoGenerator(LoggingInterface):
         # Process rest of the metadata files
         metadata_objects = {}
         for rectype, rec in self.new_records.items():
-            if rectype in ("primary_db", "filelists_db", "other_db"):
-                # Skip databases
-                continue
-
             if rectype not in processed_metadata:
                 metadata_object = self._new_metadata(rectype)
                 if metadata_object is not None:

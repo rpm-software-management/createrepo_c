@@ -9,7 +9,7 @@ MY_DIR="$MY_DIR/"
 # E.g.:
 # $ CREATEREPO="createrepo" ./regenrepos.sh
 
-for dir in $MY_DIR/*/
+for dir in $MY_DIR/repo*/
 do
     echo "### Regeneration of $dir"
     $dir/gen.sh

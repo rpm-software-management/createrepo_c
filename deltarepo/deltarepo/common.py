@@ -29,12 +29,22 @@ class LoggingInterface(object):
 
 class RemovedXml(object):
     def __init__(self):
+        self.database = {}  # e.g.: {"primary": "1", "filelists": "1", "other": "1"}
         self.packages = {}  # { location_href: location_base }
         self.files = {}     # { location_href: location_base or Null }
 
     def __str__(self):
+        print self.database_gen
         print self.packages
         print self.files
+
+    def set_database(self, type, val):
+        self.database[type] = "1" if val else "0"
+
+    def get_database(self, type, default=False):
+        if type in self.database:
+            return self.database[type] != "0"
+        return default
 
     def add_pkg(self, pkg):
         self.packages[pkg.location_href] = pkg.location_base
@@ -47,6 +57,7 @@ class RemovedXml(object):
 
     def xml_dump(self):
         xmltree = etree.Element("removed")
+        database = etree.SubElement(xmltree, "database", self.database)
         packages = etree.SubElement(xmltree, "packages")
         for href, base in self.packages.iteritems():
             attrs = {}
@@ -73,8 +84,14 @@ class RemovedXml(object):
         dom = xml.dom.minidom.parse(tmp_path)
         os.remove(tmp_path)
 
+        database = dom.getElementsByTagName("database")
+        if database and database[0]:
+            for x in xrange(database[0].attributes.length):
+                attr = database[0].attributes.item(x)
+                self.database[attr.name] = attr.value
+
         packages = dom.getElementsByTagName("packages")
-        if packages:
+        if packages and packages[0]:
             for loc in packages[0].getElementsByTagName("location"):
                 href = loc.getAttribute("href")
                 base = loc.getAttribute("base")
@@ -85,7 +102,7 @@ class RemovedXml(object):
                 self.packages[href] = base
 
         files = dom.getElementsByTagName("files")
-        if files:
+        if files and files[0]:
             for loc in files[0].getElementsByTagName("location"):
                 href = loc.getAttribute("href")
                 base = loc.getAttribute("base")

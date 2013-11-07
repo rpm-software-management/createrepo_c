@@ -133,7 +133,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
 
     NAME = "MainDeltaPlugin"
     VERSION = 1
-    METADATA = ["primary", "filelists", "other"]
+    METADATA = ["primary", "filelists", "other", "primary_db", "filelists_db", "other_db"]
     APPLY_REQUIRED_BUNDLE_KEYS = ["repoid_type_str",
                                   "removed_obj",
                                   "unique_md_filenames"]
@@ -179,6 +179,9 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         fil_md = metadata.get("filelists")
         oth_md = metadata.get("other")
 
+        # Check if dbs should be created
+        make_dbs = True
+
         # Build and prepare destination paths
         # (And store them in the same Metadata object)
         def prepare_paths_in_metadata(md, xmlclass, dbclass):
@@ -193,9 +196,14 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             md.new_f = xmlclass(md.new_fn,
                                 md.compression_type,
                                 md.new_f_stat)
-            md.db_fn = os.path.join(md.out_dir, "{0}.sqlite".format(
-                                    md.metadata_type))
-            md.db = dbclass(md.db_fn)
+
+            if removed_obj and removed_obj.get_database(md.metadata_type, False):
+                md.db_fn = os.path.join(md.out_dir, "{0}.sqlite".format(
+                                        md.metadata_type))
+                md.db = dbclass(md.db_fn)
+            else:
+                md.db_fn = None
+                md.db = None
 
         # Primary
         prepare_paths_in_metadata(pri_md,
@@ -298,7 +306,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                 pri_md.db.add_pkg(pkg)
 
         # Write out filelists
-        if fil_md.new_f:
+        if fil_md and fil_md.new_f:
             fil_md.new_f.set_num_of_pkgs(num_of_packages)
             for pkg in all_packages_sorted:
                 fil_md.new_f.add_pkg(pkg)
@@ -306,7 +314,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                     fil_md.db.add_pkg(pkg)
 
         # Write out other
-        if oth_md.new_f:
+        if oth_md and oth_md.new_f:
             oth_md.new_f.set_num_of_pkgs(num_of_packages)
             for pkg in all_packages_sorted:
                 oth_md.new_f.add_pkg(pkg)
@@ -339,7 +347,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                 cr.compress_file(md.db_fn, None, cr.BZ2, db_stat)
                 os.remove(md.db_fn)
 
-                # Pripare repomd record of database file
+                # Prepare repomd record of database file
                 db_rec = cr.RepomdRecord("{0}_db".format(md.metadata_type),
                                          db_compressed)
                 db_rec.load_contentstat(db_stat)
@@ -384,6 +392,10 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             md.delta_f = xmlclass(md.delta_fn,
                                   md.compression_type,
                                   md.delta_f_stat)
+            if removed_obj:
+                db_type = "{0}_db".format(md.metadata_type)
+                available = metadata.get(db_type)
+                removed_obj.set_database(md.metadata_type, available)
             # Database for delta repo is redundant
             #md.db_fn = os.path.join(md.out_dir, "{0}.sqlite".format(
             #                        md.metadata_type))
@@ -468,7 +480,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             return added_packages.get(pkgId, None)
 
         # Write out filelists delta
-        if fil_md.delta_f and fil_md.new_fn:
+        if fil_md and fil_md.delta_f and fil_md.new_fn:
             cr.xml_parse_filelists(fil_md.new_fn, newpkgcb=newpkgcb)
             fil_md.delta_f.set_num_of_pkgs(num_of_packages)
             for pkgid in added_packages_ids:
@@ -476,7 +488,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             fil_md.delta_f.close()
 
         # Write out other delta
-        if oth_md.delta_f and oth_md.new_fn:
+        if oth_md and oth_md.delta_f and oth_md.new_fn:
             cr.xml_parse_other(oth_md.new_fn, newpkgcb=newpkgcb)
             oth_md.delta_f.set_num_of_pkgs(num_of_packages)
             for pkgid in added_packages_ids:

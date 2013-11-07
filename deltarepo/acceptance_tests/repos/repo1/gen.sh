@@ -8,5 +8,5 @@ then
 fi
 
 pushd "$MY_DIR"
-$CREATEREPO $EXTRAARGS --groupfile group.xml --revision "1st repo" --content "A content tag" .
+$CREATEREPO $EXTRAARGS --pkglist pkglist --groupfile group.xml --revision "1st repo" --content "A content tag" .
 popd

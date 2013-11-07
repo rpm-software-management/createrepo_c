@@ -13,5 +13,5 @@ then
 fi
 
 pushd "$MY_DIR"
-$CREATEREPO $EXTRAARGS --checksum "md5" --groupfile comps.xml --revision "3th repo - md5" --content "111" --content "222" --repo "aaa" --repo "bbb" --repo "ccc" --distro="one,foo" --distro="two:bar" .
+$CREATEREPO $EXTRAARGS --pkglist pkglist --checksum "md5" --groupfile comps.xml --revision "3th repo - md5" --content "111" --content "222" --repo "aaa" --repo "bbb" --repo "ccc" --distro="one,foo" --distro="two:bar" .
 popd

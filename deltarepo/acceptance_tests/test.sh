@@ -16,6 +16,7 @@ TEST_OUTDIR=`mktemp -d "$OUTDIR_TEMPLATE"`
 
 REPO1="repos/repo1"
 REPO2="repos/repo2"
+REPO2_INCOMPLETE="repos/repo2_incomplete"
 REPO3="repos/repo3"
 REPO3_MD5="repos/repo3_md5"
 
@@ -68,16 +69,20 @@ function testcase01 {
 }
 
 testcase01 $REPO1 $REPO2
+testcase01 $REPO1 $REPO2_INCOMPLETE
 testcase01 $REPO1 $REPO3
 testcase01 $REPO1 $REPO3_MD5
 testcase01 $REPO2 $REPO1
+testcase01 $REPO2 $REPO2_INCOMPLETE
 testcase01 $REPO2 $REPO3
 testcase01 $REPO2 $REPO3_MD5
 testcase01 $REPO3 $REPO1
 testcase01 $REPO3 $REPO2
+testcase01 $REPO3 $REPO2_INCOMPLETE
 testcase01 $REPO3 $REPO3_MD5
 testcase01 $REPO3_MD5 $REPO1
 testcase01 $REPO3_MD5 $REPO2
+testcase01 $REPO3_MD5 $REPO2_INCOMPLETE
 testcase01 $REPO3_MD5 $REPO3
 
 popd > /dev/null

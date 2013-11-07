@@ -34,6 +34,7 @@ function compare_repos {
     diff -r $1/repodata $2/repodata \
         -I "<timestamp>[0-9]*</timestamp>" \
         -I "<repoid .*>.*</repoid>"
+    echo
 
     return $?
 }
@@ -45,10 +46,11 @@ TESTCASEID=0
 function testcase01 {
     # Arguments are: REPO_old REPO_new
 
-    TCNAME="$TESTCASEID: $FUNCNAME $1 $2"
-    TCDIR=$(testcase_outdir "$TESTCASEID-$FUNCNAME")
-
+    IDSTR=$(printf "%02d\n" $TESTCASEID)
     TESTCASEID=$[$TESTCASEID+1]
+
+    TCNAME="$IDSTR: $FUNCNAME $1 $2"
+    TCDIR=$(testcase_outdir "$IDSTR-$FUNCNAME")
 
     echo "==============================================="
     echo "$TCNAME ($TCDIR)";
@@ -67,9 +69,15 @@ function testcase01 {
 
 testcase01 $REPO1 $REPO2
 testcase01 $REPO1 $REPO3
+testcase01 $REPO1 $REPO3_MD5
 testcase01 $REPO2 $REPO1
 testcase01 $REPO2 $REPO3
+testcase01 $REPO2 $REPO3_MD5
 testcase01 $REPO3 $REPO1
 testcase01 $REPO3 $REPO2
+testcase01 $REPO3 $REPO3_MD5
+testcase01 $REPO3_MD5 $REPO1
+testcase01 $REPO3_MD5 $REPO2
+testcase01 $REPO3_MD5 $REPO3
 
 popd > /dev/null

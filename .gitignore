@@ -24,3 +24,6 @@ src/createrepo_c.pc
 build/
 tags
 createrepo_c-*.tar.xz
+
+# Deltarepo acceptance tests
+deltarepo/acceptance_tests/repos/repo*/repodata

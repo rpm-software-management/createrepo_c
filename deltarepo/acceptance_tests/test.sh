@@ -20,6 +20,17 @@ REPO2_INCOMPLETE="repos/repo2_incomplete"
 REPO3="repos/repo3"
 REPO3_MD5="repos/repo3_md5"
 
+# Check if repos are available (if not regenrepos.sh must be run)
+
+if [ ! -d "$REPO1/repodata" ]; then
+  echo "It seems that the test repositories doesn't have metadata created."
+  echo "Running metadata regeneration script.."
+  echo
+  repos/regenrepos.sh
+  echo
+  echo "Metadata regenerated"
+fi
+
 # Helper functions
 
 function testcase_outdir {

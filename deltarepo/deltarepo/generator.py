@@ -228,7 +228,13 @@ class DeltaRepoGenerator(LoggingInterface):
                         self.delta_repomd.set_record(repomd_record)
 
                 # Organization stuff
-                processed_metadata.update(set(metadata_objects.keys()))
+                for md in metadata_objects.keys():
+                    if md in self.bundle["no_processed"]:
+                        self._debug("Plugin {0}: Skip processing of \"{1}\" delta record".format(
+                                    plugin.NAME, md))
+                        continue
+                    processed_metadata.add(md)
+
                 used_plugins.add(plugin)
                 plugin_used = True
 

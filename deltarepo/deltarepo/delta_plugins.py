@@ -137,11 +137,11 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
     APPLY_REQUIRED_BUNDLE_KEYS = ["repoid_type_str",
                                   "removed_obj",
                                   "unique_md_filenames"]
-    APPLY_BUNDLE_CONTRIBUTION = ["old_repoid", "new_repoid"]
+    APPLY_BUNDLE_CONTRIBUTION = ["old_repoid", "new_repoid", "no_processed"]
     GEN_REQUIRED_BUNDLE_KEYS = ["repoid_type_str",
                                 "removed_obj",
                                 "unique_md_filenames"]
-    GEN_BUNDLE_CONTRIBUTION = ["old_repoid", "new_repoid"]
+    GEN_BUNDLE_CONTRIBUTION = ["old_repoid", "new_repoid", "no_processed"]
 
     def _path(self, path, record):
         """Return path to the repodata file."""
@@ -160,9 +160,11 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         if not pkg.location_href:
             self._warning("Missing location_href at package %s %s" % \
                           (pkg.name, pkg.pkgId))
-        return "%s%s%s" % (pkg.pkgId or '',
-                           pkg.location_href or '',
-                           pkg.location_base or '')
+
+        idstr = "%s%s%s" % (pkg.pkgId or '',
+                          pkg.location_href or '',
+                          pkg.location_base or '')
+        return idstr
 
     def apply(self, metadata, bundle):
 
@@ -175,18 +177,33 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         if "primary" not in metadata:
             raise DeltaRepoPluginError("Primary metadata missing")
 
+        # Names of metadata that was not processed by this plugin
+        no_processed = []
+
+        # Metadata that no need to be processed, because they are just copies.
+        # This metadata are copied and compressed xml (filelists or other)
+        # Their sqlite databases have to be generated if they are required
+        no_processed_metadata = []
+
         pri_md = metadata.get("primary")
         fil_md = metadata.get("filelists")
         oth_md = metadata.get("other")
 
-        # Check if dbs should be created
-        make_dbs = True
 
         # Build and prepare destination paths
         # (And store them in the same Metadata object)
         def prepare_paths_in_metadata(md, xmlclass, dbclass):
             if md is None:
                 return
+
+            if not md.old_fn:
+                # Old file of this piece of metadata doesn't exist
+                # This file has to be newly added.
+                no_processed.append(md.metadata_type)
+                no_processed_metadata.append(md)
+                md.skip = True
+                return
+            md.skip = False
 
             suffix = cr.compression_suffix(md.compression_type) or ""
             md.new_fn = os.path.join(md.out_dir,
@@ -242,7 +259,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             all_packages[pkg.pkgId] = pkg
 
         do_primary_files = 1
-        if fil_md and fil_md.delta_fn and fil_md.old_fn:
+        if fil_md and not fil_md.skip and fil_md.delta_fn and fil_md.old_fn:
             # Don't read files from primary if there is filelists.xml
             do_primary_files = 0
 
@@ -267,9 +284,6 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             h.update(i)
         new_repoid = h.hexdigest()
 
-        bundle["old_repoid"] = old_repoid
-        bundle["new_repoid"] = new_repoid
-
         # Sort packages
         def cmp_pkgs(x, y):
             # Compare only by filename
@@ -287,12 +301,12 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             return all_packages.get(pkgId, None)
 
         # Parse filelists
-        if fil_md and fil_md.delta_fn and fil_md.old_fn:
+        if fil_md and not fil_md.skip and fil_md.delta_fn and fil_md.old_fn:
             cr.xml_parse_filelists(fil_md.old_fn, newpkgcb=newpkgcb)
             cr.xml_parse_filelists(fil_md.delta_fn, newpkgcb=newpkgcb)
 
         # Parse other
-        if oth_md and oth_md.delta_fn and oth_md.old_fn:
+        if oth_md and not oth_md.skip and oth_md.delta_fn and oth_md.old_fn:
             cr.xml_parse_other(oth_md.old_fn, newpkgcb=newpkgcb)
             cr.xml_parse_other(oth_md.delta_fn, newpkgcb=newpkgcb)
 
@@ -306,7 +320,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                 pri_md.db.add_pkg(pkg)
 
         # Write out filelists
-        if fil_md and fil_md.new_f:
+        if fil_md and not fil_md.skip and fil_md.new_f:
             fil_md.new_f.set_num_of_pkgs(num_of_packages)
             for pkg in all_packages_sorted:
                 fil_md.new_f.add_pkg(pkg)
@@ -314,16 +328,15 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                     fil_md.db.add_pkg(pkg)
 
         # Write out other
-        if oth_md and oth_md.new_f:
+        if oth_md and not oth_md.skip and oth_md.new_f:
             oth_md.new_f.set_num_of_pkgs(num_of_packages)
             for pkg in all_packages_sorted:
                 oth_md.new_f.add_pkg(pkg)
                 if oth_md.db:
                     oth_md.db.add_pkg(pkg)
-
         # Finish metadata
         def finish_metadata(md):
-            if md is None:
+            if md is None or md.skip:
                 return
 
             # Close XML file
@@ -363,6 +376,52 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         finish_metadata(fil_md)
         finish_metadata(oth_md)
 
+        # Process XML files that was not processed if sqlite should be generated
+        # TODO XXX
+        def finish_skipped_metadata(md):
+            if md is None:
+                return
+
+            # Check if sqlite should be generated
+            if removed_obj and removed_obj.get_database(md.metadata_type, False):
+                md.db_fn = os.path.join(md.out_dir, "{0}.sqlite".format(
+                                        md.metadata_type))
+
+                if md.metadata_type == "filelists":
+                    md.db = cr.FilelistsSqlite(md.db_fn)
+                    cr.xml_parse_filelists(md.delta_fn, newpkgcb=newpkgcb)
+                elif md.metadata_type == "other":
+                    md.db = cr.OtherSqlite(md.db_fn)
+                    cr.xml_parse_other(md.delta_fn, newpkgcb=newpkgcb)
+
+                for pkg in all_packages_sorted:
+                    md.db.add_pkg(pkg)
+
+                md.db.dbinfo_update(md.delta_checksum)
+                md.db.close()
+                db_stat = cr.ContentStat(md.checksum_type)
+                db_compressed = md.db_fn+".bz2"
+                cr.compress_file(md.db_fn, None, cr.BZ2, db_stat)
+                os.remove(md.db_fn)
+
+                # Prepare repomd record of database file
+                db_rec = cr.RepomdRecord("{0}_db".format(md.metadata_type),
+                                         db_compressed)
+                db_rec.load_contentstat(db_stat)
+                db_rec.fill(md.checksum_type)
+                if unique_md_filenames:
+                    db_rec.rename_file()
+
+                md.generated_repomd_records.append(db_rec)
+
+        for md in no_processed_metadata:
+            finish_skipped_metadata(md)
+
+        # Add other bundle stuff
+        bundle["old_repoid"] = old_repoid
+        bundle["new_repoid"] = new_repoid
+        bundle["no_processed"] = no_processed
+
     def gen(self, metadata, bundle):
 
         # Get info from bundle
@@ -374,6 +433,9 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         if "primary" not in metadata:
             raise DeltaRepoPluginError("Primary metadata missing")
 
+        # Metadata that was not processed by this plugin
+        no_processed = []
+
         pri_md = metadata.get("primary")
         fil_md = metadata.get("filelists")
         oth_md = metadata.get("other")
@@ -384,6 +446,20 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             if md is None:
                 return
 
+            if removed_obj:
+                # Make a note to the removed obj if the database should be generated
+                db_type = "{0}_db".format(md.metadata_type)
+                available = metadata.get(db_type)
+                removed_obj.set_database(md.metadata_type, available)
+
+            if not md.old_fn:
+                # Old file of this piece of metadata doesn't exist
+                # This file has to be newly added.
+                no_processed.append(md.metadata_type)
+                md.skip = True
+                return
+            md.skip = False
+
             suffix = cr.compression_suffix(md.compression_type) or ""
             md.delta_fn = os.path.join(md.out_dir,
                                      "{0}.xml{1}".format(
@@ -392,10 +468,6 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             md.delta_f = xmlclass(md.delta_fn,
                                   md.compression_type,
                                   md.delta_f_stat)
-            if removed_obj:
-                db_type = "{0}_db".format(md.metadata_type)
-                available = metadata.get(db_type)
-                removed_obj.set_database(md.metadata_type, available)
             # Database for delta repo is redundant
             #md.db_fn = os.path.join(md.out_dir, "{0}.sqlite".format(
             #                        md.metadata_type))
@@ -441,7 +513,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                 old_packages.remove(pkg_id_tuple)
 
         do_new_primary_files = 1
-        if fil_md.delta_f and fil_md.new_fn:
+        if fil_md and not fil_md.skip and fil_md.delta_f and fil_md.new_fn:
             # All files will be parsed from filelists
             do_new_primary_files = 0
 
@@ -465,9 +537,6 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             h.update(i)
         new_repoid = h.hexdigest()
 
-        bundle["old_repoid"] = old_repoid
-        bundle["new_repoid"] = new_repoid
-
         # Prepare list of removed packages
         removed_pkgs = sorted(old_packages)
         for _, location_href, location_base in removed_pkgs:
@@ -480,7 +549,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             return added_packages.get(pkgId, None)
 
         # Write out filelists delta
-        if fil_md and fil_md.delta_f and fil_md.new_fn:
+        if fil_md and not fil_md.skip and fil_md.delta_f and fil_md.new_fn:
             cr.xml_parse_filelists(fil_md.new_fn, newpkgcb=newpkgcb)
             fil_md.delta_f.set_num_of_pkgs(num_of_packages)
             for pkgid in added_packages_ids:
@@ -488,7 +557,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             fil_md.delta_f.close()
 
         # Write out other delta
-        if oth_md and oth_md.delta_f and oth_md.new_fn:
+        if oth_md and not oth_md.skip and oth_md.delta_f and oth_md.new_fn:
             cr.xml_parse_other(oth_md.new_fn, newpkgcb=newpkgcb)
             oth_md.delta_f.set_num_of_pkgs(num_of_packages)
             for pkgid in added_packages_ids:
@@ -505,7 +574,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
 
         # Finish metadata
         def finish_metadata(md):
-            if md is None:
+            if md is None or md.skip:
                 return
 
             # Close XML file
@@ -529,7 +598,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                 cr.compress_file(md.db_fn, None, cr.BZ2, db_stat)
                 os.remove(md.db_fn)
 
-                # Pripare repomd record of database file
+                # Prepare repomd record of database file
                 db_rec = cr.RepomdRecord("{0}_db".format(md.metadata_type),
                                          db_compressed)
                 db_rec.load_contentstat(db_stat)
@@ -544,6 +613,10 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         finish_metadata(pri_md)
         finish_metadata(fil_md)
         finish_metadata(oth_md)
+
+        bundle["old_repoid"] = old_repoid
+        bundle["new_repoid"] = new_repoid
+        bundle["no_processed"] = no_processed
 
 
 PLUGINS.append(MainDeltaRepoPlugin)

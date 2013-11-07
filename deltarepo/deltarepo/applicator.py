@@ -141,8 +141,10 @@ class DeltaRepoApplicator(LoggingInterface):
         metadata.delta_fn = os.path.join(self.delta_repo_path,
                             self.delta_records[metadata_type].location_href)
 
-        # Build old filename
+        metadata.delta_checksum = self.delta_records[metadata_type].checksum
+
         if metadata_type in self.old_records:
+            # Build old filename
             metadata.old_fn = os.path.join(self.old_repo_path,
                             self.old_records[metadata_type].location_href)
 
@@ -239,17 +241,21 @@ class DeltaRepoApplicator(LoggingInterface):
                         self.new_repomd.set_record(repomd_record)
 
                 # Organization stuff
-                processed_metadata.update(set(metadata_objects.keys()))
+                for md in metadata_objects.keys():
+                    if md in self.bundle["no_processed"]:
+                        self._debug("Plugin {0}: Skip processing of \"{1}\" delta record".format(
+                                    plugin.NAME, md))
+                        continue
+                    processed_metadata.add(md)
+
                 used_plugins.add(plugin)
                 plugin_used = True
 
         # Process rest of the metadata files
         metadata_objects = {}
         for rectype, rec in self.delta_records.items():
-            if rectype in ("primary_db", "filelists_db", "other_db", "removed"):
-                # Skip databases and removed
+            if rectype == "removed":
                 continue
-
             if rectype not in processed_metadata:
                 metadata_object = self._new_metadata(rectype)
                 if metadata_object is not None:

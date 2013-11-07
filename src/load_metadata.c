@@ -142,6 +142,7 @@ primary_newpkgcb(cr_Package **pkg,
 {
     cr_CbData *cb_data = cbdata;
 
+    CR_UNUSED(pkgId);
     CR_UNUSED(name);
     CR_UNUSED(arch);
     CR_UNUSED(err);

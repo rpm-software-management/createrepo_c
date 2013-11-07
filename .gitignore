@@ -1,16 +1,22 @@
+# "Garbage" from compilation
 *.o
 *.so
 *.pyc
 *_wrap.c
 snippets/
-notes
-Makefile
+
+# Binary files
 mergerepo_c
 createrepo_c
-tests/testcompression_wrapper
-tests/testload_metadata
+modifyrepo_c
+
+# Packages and tarball
 createrepo*.rpm
 python-createrepo*.rpm
+createrepo_c-*.tar.xz
+
+# Makefile generated files
+Makefile
 cmake_install.cmake
 install_manifest.txt
 CMakeCache.txt
@@ -18,12 +24,14 @@ CMakeFiles
 CPackConfig.cmake
 CPackSourceConfig.cmake
 _CPack_Packages/
-*_
 src/version.h
 src/createrepo_c.pc
+
+# Devel stuff
+notes
 build/
 tags
-createrepo_c-*.tar.xz
+*_
 
 # Deltarepo acceptance tests
 deltarepo/acceptance_tests/repos/repo*/repodata

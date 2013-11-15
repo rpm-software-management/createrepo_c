@@ -140,6 +140,9 @@ class DeltaRepoApplicator(LoggingInterface):
         # Build delta filename
         metadata.delta_fn = os.path.join(self.delta_repo_path,
                             self.delta_records[metadata_type].location_href)
+        if not os.path.isfile(metadata.delta_fn):
+            self._warning("Delta file {0} doesn't exist!".format(metadata.delta_fn))
+            return None
 
         metadata.delta_checksum = self.delta_records[metadata_type].checksum
 
@@ -147,6 +150,15 @@ class DeltaRepoApplicator(LoggingInterface):
             # Build old filename
             metadata.old_fn = os.path.join(self.old_repo_path,
                             self.old_records[metadata_type].location_href)
+            if not os.path.isfile(metadata.old_fn):
+                self._warning("File {0} doesn't exist in target repository" \
+                              " (but it should)!".format(metadata.old_fn))
+                self._warning("Metadata of the type \"{0}\" won't be " \
+                              "available in the generated repository".format(metadata_type))
+                self._warning("Output repository WON'T be a 1:1 identical " \
+                              "to the target repository!")
+                metadata.old_fn = None
+                return None
 
         # Set output directory
         metadata.out_dir = self.new_repodata_path
@@ -259,11 +271,11 @@ class DeltaRepoApplicator(LoggingInterface):
             if rectype not in processed_metadata:
                 metadata_object = self._new_metadata(rectype)
                 if metadata_object is not None:
-                    self._debug("To be processed by general delta plugin: %s" \
-                                % rectype)
+                    self._debug("To be processed by general delta plugin: " \
+                                "{0}".format(rectype))
                     metadata_objects[rectype] = metadata_object
                 else:
-                    self._debug("Not processed: %s - SKIP", rectype)
+                    self._debug("Not processed: {0} - SKIP".format(rectype))
 
         if metadata_objects:
             # Use the plugin

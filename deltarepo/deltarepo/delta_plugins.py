@@ -262,6 +262,10 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         if fil_md and not fil_md.skip and fil_md.delta_fn and fil_md.old_fn:
             # Don't read files from primary if there is filelists.xml
             do_primary_files = 0
+        if fil_md and fil_md.skip:
+            # We got whole original filelists.xml, we do not need parse
+            # files from primary.xml files.
+            do_primary_files = 0
 
         cr.xml_parse_primary(pri_md.old_fn, pkgcb=old_pkgcb,
                              do_files=do_primary_files)
@@ -304,6 +308,10 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         if fil_md and not fil_md.skip and fil_md.delta_fn and fil_md.old_fn:
             cr.xml_parse_filelists(fil_md.old_fn, newpkgcb=newpkgcb)
             cr.xml_parse_filelists(fil_md.delta_fn, newpkgcb=newpkgcb)
+        elif fil_md and fil_md.skip:
+            # We got original filelists.xml we need to parse it here, to fill
+            # package.
+            cr.xml_parse_filelists(fil_md.delta_fn, newpkgcb=newpkgcb)
 
         # Parse other
         if oth_md and not oth_md.skip and oth_md.delta_fn and oth_md.old_fn:
@@ -334,6 +342,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                 oth_md.new_f.add_pkg(pkg)
                 if oth_md.db:
                     oth_md.db.add_pkg(pkg)
+
         # Finish metadata
         def finish_metadata(md):
             if md is None or md.skip:
@@ -377,7 +386,6 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         finish_metadata(oth_md)
 
         # Process XML files that was not processed if sqlite should be generated
-        # TODO XXX
         def finish_skipped_metadata(md):
             if md is None:
                 return
@@ -387,9 +395,10 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                 md.db_fn = os.path.join(md.out_dir, "{0}.sqlite".format(
                                         md.metadata_type))
 
+                # Note: filelists (if needed) has been already parsed.
+                # Because it has to be parsed before primary.xml is written
                 if md.metadata_type == "filelists":
                     md.db = cr.FilelistsSqlite(md.db_fn)
-                    cr.xml_parse_filelists(md.delta_fn, newpkgcb=newpkgcb)
                 elif md.metadata_type == "other":
                     md.db = cr.OtherSqlite(md.db_fn)
                     cr.xml_parse_other(md.delta_fn, newpkgcb=newpkgcb)

@@ -123,11 +123,17 @@ class DeltaRepoGenerator(LoggingInterface):
         # Build new filename
         metadata.new_fn = os.path.join(self.new_repo_path,
                             self.new_records[metadata_type].location_href)
+        if not os.path.isfile(metadata.new_fn):
+            self._warning("The file {0} doesn't exist!".format(metadata.new_fn))
+            return None
 
         # Build old filename
         if metadata_type in self.old_records:
             metadata.old_fn = os.path.join(self.old_repo_path,
                             self.old_records[metadata_type].location_href)
+            if not os.path.isfile(metadata.old_fn):
+                self._warning("File {0} doesn't exist!".format(metadata.old_fn))
+                metadata.old_fn = None
 
         # Set output directory
         metadata.out_dir = self.delta_repodata_path
@@ -244,11 +250,12 @@ class DeltaRepoGenerator(LoggingInterface):
             if rectype not in processed_metadata:
                 metadata_object = self._new_metadata(rectype)
                 if metadata_object is not None:
-                    self._debug("To be processed by general delta plugin: %s" \
-                                % rectype)
+                    self._debug("To be processed by general delta plugin: " \
+                                "{0}".format(rectype))
                     metadata_objects[rectype] = metadata_object
                 else:
-                    self._debug("Not processed: %s - SKIP", rectype)
+                    self._debug("Not processed - even by general delta " \
+                                "plugin: {0}".format(rectype))
 
         if metadata_objects:
             # Use the plugin

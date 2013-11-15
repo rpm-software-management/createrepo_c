@@ -10,7 +10,7 @@ import deltarepo
 LOG_FORMAT = "%(message)s"
 
 # TODO:
-# - Support for different type of compression (?)
+# - Support for type of compression (?)
 
 
 def parse_options():

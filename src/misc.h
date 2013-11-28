@@ -404,10 +404,11 @@ typedef enum {
 } cr_CpFlags;
 
 /** Recursive copy of directory (works on files as well)
- * @param src                   Source (supports wildcards)
- * @param dst                   Destination (supports wildcards)
- * @param flags                 Flags
- * @param working_directory     Working directory
+ * @param src           Source (supports wildcards)
+ * @param dst           Destination (supports wildcards)
+ * @param flags         Flags
+ * @param working_dir   Working directory
+ * @param err           GError **
  */
 gboolean
 cr_cp(const char *src,
@@ -416,6 +417,26 @@ cr_cp(const char *src,
       const char *working_directory,
       GError **err);
 
+typedef enum {
+    CR_RM_DEFAULT       = (1<<0), /*!<
+        No attributes - default */
+    CR_RM_RECURSIVE     = (1<<1), /*!<
+        Copy directories recursively */
+    CR_RM_FORCE         = (1<<2), /*!<
+        Use force */
+} cr_RmFlags;
+
+/** Wrapper over rm command
+ * @param path                  Path (supports wildcards)
+ * @param flags         Flags
+ * @param working_dir   Working directory
+ * @param err           GError **
+ */
+gboolean
+cr_rm(const char *path,
+      cr_RmFlags flags,
+      const char *working_dir,
+      GError **err);
 /** @} */
 
 #ifdef __cplusplus

@@ -1133,11 +1133,54 @@ cr_write_to_file(GError **err, gchar *filename, const char *format, ...)
     return ret;
 }
 
+static gboolean
+cr_run_command(char **cmd, const char *working_dir, GError **err)
+{
+    assert(cmd);
+    assert(!err || *err == NULL);
+
+    GError *tmp_err = NULL;
+    gint status = 0;
+    gchar *error_str = NULL;
+    int spawn_flags = G_SPAWN_SEARCH_PATH
+                      | G_SPAWN_STDOUT_TO_DEV_NULL;
+
+    g_spawn_sync(working_dir,
+                 cmd,
+                 NULL, // envp
+                 spawn_flags,
+                 NULL, // child setup function
+                 NULL, // user data for child setup
+                 NULL, // stdout
+                 &error_str, // stderr
+                 &status,
+                 &tmp_err);
+
+    if (tmp_err) {
+        g_free(error_str);
+        g_propagate_error(err, tmp_err);
+        return FALSE;
+    }
+
+    gboolean ret = g_spawn_check_exit_status(status, &tmp_err);
+    if (!ret && error_str) {
+        // Remove newlines from error message
+        for (char *ptr = error_str; *ptr; ptr++)
+            if (*ptr == '\n') *ptr = ' ';
+
+        g_propagate_prefixed_error(err, tmp_err, "%s: ", error_str);
+    }
+
+    g_free(error_str);
+
+    return ret;
+}
+
 gboolean
 cr_cp(const char *src,
       const char *dst,
       cr_CpFlags flags,
-      const char *working_directory,
+      const char *working_dir,
       GError **err)
 {
     assert(src);
@@ -1148,50 +1191,44 @@ cr_cp(const char *src,
     g_ptr_array_add(argv_array, "cp");
     if (flags & CR_CP_RECURSIVE)
         g_ptr_array_add(argv_array, "-r");
-    if (flags & CR_CP_PRESERVE_ALL) {
+    if (flags & CR_CP_PRESERVE_ALL)
         g_ptr_array_add(argv_array, "--preserve=all");
-    }
     g_ptr_array_add(argv_array, (char *) src);
     g_ptr_array_add(argv_array, (char *) dst);
     g_ptr_array_add(argv_array, (char *) NULL);
 
-    GError *tmp_err = NULL;
-    gint status = 0;
-    int spawn_flags = G_SPAWN_SEARCH_PATH
-                      | G_SPAWN_STDOUT_TO_DEV_NULL;
-
-    gchar *error_str = NULL;
-
-    g_spawn_sync(working_directory,
-                 (char **) argv_array->pdata,
-                 NULL, // envp
-                 spawn_flags,
-                 NULL, // child setup function
-                 NULL, // user data for child setup
-                 NULL, // stdout
-                 &error_str, // stderr
-                 &status,
-                 &tmp_err);
+    gboolean ret = cr_run_command((char **) argv_array->pdata,
+                                  working_dir,
+                                  err);
 
     g_ptr_array_free(argv_array, TRUE);
 
-    if (tmp_err) {
-        g_free(error_str);
-        g_propagate_prefixed_error(err, tmp_err, "Error during copying: ");
-        return FALSE;
-    }
+    return ret;
+}
 
-    gboolean ret = g_spawn_check_exit_status(status, &tmp_err);
-    if (!ret && error_str) {
-        // Remove newlines from error message
-        for (char *ptr = error_str; *ptr; ptr++)
-            if (*ptr == '\n') *ptr = ' ';
+gboolean
+cr_rm(const char *path,
+      cr_RmFlags flags,
+      const char *working_dir,
+      GError **err)
+{
+    assert(path);
+    assert(!err || *err == NULL);
 
-        g_propagate_prefixed_error(err, tmp_err, "Error during copying: %s: ",
-                                   error_str);
-    }
+    GPtrArray *argv_array = g_ptr_array_new();
+    g_ptr_array_add(argv_array, "rm");
+    if (flags & CR_RM_RECURSIVE)
+        g_ptr_array_add(argv_array, "-r");
+    if (flags & CR_RM_FORCE)
+        g_ptr_array_add(argv_array, "-f");
+    g_ptr_array_add(argv_array, (char *) path);
+    g_ptr_array_add(argv_array, (char *) NULL);
 
-    g_free(error_str);
+    gboolean ret = cr_run_command((char **) argv_array->pdata,
+                                  working_dir,
+                                  err);
+
+    g_ptr_array_free(argv_array, TRUE);
 
     return ret;
 }

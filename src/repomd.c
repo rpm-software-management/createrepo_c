@@ -689,7 +689,7 @@ cr_repomd_add_content_tag(cr_Repomd *repomd, const char *tag)
 void
 cr_repomd_detach_record(cr_Repomd *repomd, cr_RepomdRecord *rec)
 {
-    if (!repomd || !rec);
+    if (!repomd || !rec) return;
     repomd->records = g_slist_remove(repomd->records, rec);
 }
 

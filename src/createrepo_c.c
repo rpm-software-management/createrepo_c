@@ -1417,16 +1417,48 @@ main(int argc, char **argv)
     g_free(repomd_path);
 
 
-    // Move files from out_repo into tmp_out_repo
-
-    g_debug("Moving data from %s", out_repo);
+    // Final move
     if (g_file_test(out_repo, G_FILE_TEST_EXISTS)) {
+        g_debug("Copying files from old repository to the new one");
 
-        // Delete old metadata
-        g_debug("Removing old metadata from %s", out_repo);
-        cr_remove_metadata_classic(out_dir, cmd_options->retain_old, NULL);
+        // Parse old repomd.xml
+        GError *tmp_err = NULL;
+        gchar *old_repomd_path = g_build_filename(out_repo, "repomd.xml", NULL);
+        cr_Repomd *repomd = cr_repomd_new();
+        cr_xml_parse_repomd(old_repomd_path, repomd, NULL, NULL, &tmp_err);
+        if (tmp_err) {
+            g_warning("Cannot parse repomd: %s", old_repomd_path);
+            g_clear_error(&tmp_err);
+            cr_repomd_free(repomd);
+            repomd = cr_repomd_new();
+        }
+        g_free(old_repomd_path);
 
-        // Move files from out_repo to tmp_out_repo
+        // Prepare list of basenames of metadata files in repomd.xml
+        GSList *old_basenames = NULL;
+        for (GSList *elem = repomd->records; elem; elem = g_slist_next(elem)) {
+            cr_RepomdRecord *rec = elem->data;
+
+            if (!rec->location_href) {
+                // Ignore bad records (records without location_href)
+                g_warning("Record without location href in old repo");
+                continue;
+            }
+
+            if (rec->location_base) {
+                // Ignore files with base location
+                g_debug("Old repomd record with base location is ignored: "
+                        "%s - %s", rec->location_base, rec->location_href);
+                continue;
+            }
+
+            old_basenames = g_slist_prepend(old_basenames,
+                                    g_path_get_basename(rec->location_href));
+
+        }
+
+        // Iterate over the files in the old repository and copy all
+        // that aren't listed in repomd.xml
         GDir *dirp;
         dirp = g_dir_open (out_repo, 0, NULL);
         if (!dirp) {
@@ -1436,45 +1468,84 @@ main(int argc, char **argv)
 
         const gchar *filename;
         while ((filename = g_dir_read_name(dirp))) {
+
+            if (g_slist_find_custom(old_basenames, filename, (GCompareFunc) g_strcmp0)) {
+                // This file is listed in repomd.xml, do not copy it
+                g_debug("Skipped file %s", filename);
+                continue;
+            }
+
             gchar *full_path = g_strconcat(out_repo, filename, NULL);
             gchar *new_full_path = g_strconcat(tmp_out_repo, filename, NULL);
 
             // Do not override new file with the old one
             if (g_file_test(new_full_path, G_FILE_TEST_EXISTS)) {
-                g_debug("Skip move of: %s -> %s (the destination file already exists)",
+                g_debug("Skipped copy: %s -> %s (file already exists)",
                         full_path, new_full_path);
-                g_debug("Removing: %s", full_path);
-                g_remove(full_path);
                 g_free(full_path);
                 g_free(new_full_path);
                 continue;
             }
 
-            if (g_rename(full_path, new_full_path) == -1)
-                g_critical("Cannot move file %s -> %s", full_path, new_full_path);
-            else
-                g_debug("Moved %s -> %s", full_path, new_full_path);
+            // COPY!
+            cr_cp(full_path,
+                  new_full_path,
+                  CR_CP_RECURSIVE|CR_CP_PRESERVE_ALL,
+                  NULL,
+                  &tmp_err);
+
+            if (tmp_err) {
+                g_warning("Cannot copy %s -> %s: %s",
+                          full_path, new_full_path, tmp_err->message);
+                g_clear_error(&tmp_err);
+            }
 
             g_free(full_path);
             g_free(new_full_path);
         }
 
+        // Cleanup
+        cr_repomd_free(repomd);
         g_dir_close(dirp);
-
-        // Remove out_repo
-        if (g_rmdir(out_repo) == -1) {
-            g_critical("Cannot remove %s", out_repo);
-        } else {
-            g_debug("Old out repo %s removed", out_repo);
-        }
     }
 
+    // === This section should be maximally atomic ===
+
+    sigset_t new_mask, old_mask;
+    sigemptyset(&old_mask);
+    sigfillset(&new_mask);
+    sigdelset(&new_mask, SIGKILL);  // These two signals cannot be
+    sigdelset(&new_mask, SIGSTOP);  // blocked
+
+    sigprocmask(SIG_BLOCK, &new_mask, &old_mask);
+
+    // Rename out_repo to "repodata.old"
+    gchar *old_repodata_path = g_build_filename(out_dir, "repodata.old", NULL);
+    if (g_rename(out_repo, old_repodata_path) == -1) {
+        g_error("Cannot rename %s -> %s", out_repo, old_repodata_path);
+        exit(EXIT_FAILURE);
+    } else {
+        g_debug("Renamed %s -> %s", out_repo, old_repodata_path);
+    }
 
     // Rename tmp_out_repo to out_repo
     if (g_rename(tmp_out_repo, out_repo) == -1) {
-        g_critical("Cannot rename %s -> %s", tmp_out_repo, out_repo);
+        g_error("Cannot rename %s -> %s", tmp_out_repo, out_repo);
+        exit(EXIT_FAILURE);
     } else {
         g_debug("Renamed %s -> %s", tmp_out_repo, out_repo);
+    }
+
+    sigprocmask(SIG_SETMASK, &old_mask, NULL);
+
+    // === End of section that has to be maximally atomic ===
+
+    // Remove "metadata.old" dir
+    if (cr_rm(old_repodata_path, CR_RM_RECURSIVE, NULL, &tmp_err)) {
+        g_debug("Old repo %s removed", old_repodata_path);
+    } else {
+        g_warning("Cannot remove %s: %s", old_repodata_path, tmp_err->message);
+        g_clear_error(&tmp_err);
     }
 
 

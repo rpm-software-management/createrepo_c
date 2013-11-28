@@ -394,6 +394,28 @@ cr_warning_cb(cr_XmlParserWarningType type,
 gboolean
 cr_write_to_file(GError **err, gchar *filename, const char *format, ...);
 
+typedef enum {
+    CR_CP_DEFAULT       = (1<<0), /*!<
+        No attributes - default */
+    CR_CP_RECURSIVE     = (1<<1), /*!<
+        Copy directories recursively */
+    CR_CP_PRESERVE_ALL  = (1<<2), /*!<
+        preserve the all attributes (if possible) */
+} cr_CpFlags;
+
+/** Recursive copy of directory (works on files as well)
+ * @param src                   Source (supports wildcards)
+ * @param dst                   Destination (supports wildcards)
+ * @param flags                 Flags
+ * @param working_directory     Working directory
+ */
+gboolean
+cr_cp(const char *src,
+      const char *dst,
+      cr_CpFlags flags,
+      const char *working_directory,
+      GError **err);
+
 /** @} */
 
 #ifdef __cplusplus

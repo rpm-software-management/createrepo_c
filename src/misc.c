@@ -1093,7 +1093,9 @@ cr_warning_cb(cr_XmlParserWarningType type,
     CR_UNUSED(type);
     CR_UNUSED(err);
 
-    g_warning("%s: %s", cbdata, msg);
+    g_warning("%s: %s", (char *) cbdata, msg);
+
+    return CR_CB_RET_OK;
 }
 
 gboolean
@@ -1127,6 +1129,69 @@ cr_write_to_file(GError **err, gchar *filename, const char *format, ...)
     }
 
     fclose(f);
+
+    return ret;
+}
+
+gboolean
+cr_cp(const char *src,
+      const char *dst,
+      cr_CpFlags flags,
+      const char *working_directory,
+      GError **err)
+{
+    assert(src);
+    assert(dst);
+    assert(!err || *err == NULL);
+
+    GPtrArray *argv_array = g_ptr_array_new();
+    g_ptr_array_add(argv_array, "cp");
+    if (flags & CR_CP_RECURSIVE)
+        g_ptr_array_add(argv_array, "-r");
+    if (flags & CR_CP_PRESERVE_ALL) {
+        g_ptr_array_add(argv_array, "--preserve=all");
+    }
+    g_ptr_array_add(argv_array, (char *) src);
+    g_ptr_array_add(argv_array, (char *) dst);
+    g_ptr_array_add(argv_array, (char *) NULL);
+
+    GError *tmp_err = NULL;
+    gint status = 0;
+    int spawn_flags = G_SPAWN_SEARCH_PATH
+                      | G_SPAWN_STDOUT_TO_DEV_NULL;
+
+    gchar *error_str = NULL;
+
+    g_spawn_sync(working_directory,
+                 (char **) argv_array->pdata,
+                 NULL, // envp
+                 spawn_flags,
+                 NULL, // child setup function
+                 NULL, // user data for child setup
+                 NULL, // stdout
+                 &error_str, // stderr
+                 &status,
+                 &tmp_err);
+
+    g_ptr_array_free(argv_array, TRUE);
+
+    if (tmp_err) {
+        g_free(error_str);
+        g_propagate_prefixed_error(err, tmp_err, "Error during copying: ");
+        return FALSE;
+    }
+
+    gboolean ret = g_spawn_check_exit_status(status, &tmp_err);
+    if (!ret && error_str) {
+        // Remove newlines from error message
+        for (char *ptr = error_str; *ptr; ptr++)
+            if (*ptr == '\n') *ptr = ' ';
+
+        g_propagate_prefixed_error(err, tmp_err, "Error during copying: %s: ",
+                                   error_str);
+    }
+
+    g_free(error_str);
 
     return ret;
 }

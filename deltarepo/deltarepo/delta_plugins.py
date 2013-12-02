@@ -8,6 +8,21 @@ from deltarepo.errors import DeltaRepoError, DeltaRepoPluginError
 PLUGINS = []
 GENERAL_PLUGIN = None
 
+class GlobalBundle(object):
+
+    __slots__ = ("repoid_type_str",
+                 "unique_md_filenames",
+                 "calculated_old_repoid",
+                 "calculated_new_repoid")
+
+    def __init__(self):
+        self.repoid_type_str = "sha256"
+        self.unique_md_filenames = True
+
+        # Filled by plugins
+        self.calculated_old_repoid = None
+        self.calculated_new_repoid = None
+
 class DeltaRepoPlugin(object):
 
     # Plugin name
@@ -21,53 +36,64 @@ class DeltaRepoPlugin(object):
     # to apply deltas on them!
     MATADATA = []
 
-    # Its highly recomended for plugin to be maximal independend on
-    # other plugins and metadata not specified in METADATA.
-    # But some kind of dependency mechanism can be implemented via
-    # *_REQUIRED_BUNDLE_KEYS and *_BUDLE_CONTRIBUTION.
+    def __init__(self, pluginbundle, globalbundle):
 
-    # List of bundle keys that have to be filled before
-    # apply() method of this plugin should be called
-    APPLY_REQUIRED_BUNDLE_KEYS = []
+        # PluginBundle object.
+        # This object store data in persistent way to the generated delta repodata.
+        # This object is empty when gen() plugin method is called and plugin
+        # should use it to store necessary information.
+        # During apply() this object should be filled with data
+        # previously stored during gen() method
+        self.pluginbundle = pluginbundle
 
-    # List of bundle key this pulugin adds during apply() method call
-    APPLY_BUNDLE_CONTRIBUTION = []
+        # Global bundle carry
+        self.globalbundle = globalbundle
 
-    # List of bundle keys that have to be filled before
-    # gen() method of this plugin should be called
-    GEN_REQUIRED_BUNDLE_KEYS = []
+    def gen_use_original(self, md):
+        """Function that takes original metadata file, and use it as a delta
+        Plugins could use this function when they cannot generate delta file
+        for some reason (eg. file is newly added, so delta is
+        meaningless/impossible)."""
+        md.delta_fn = os.path.join(md.out_dir, os.path.basename(md.new_fn))
+        shutil.copy2(md.new_fn, md.delta_fn)
 
-    # List of bundle key this pulugin adds during gen() method call
-    GEN_BUNDLE_CONTRIBUTION = []
+        # Prepare repomd record of xml file
+        rec = cr.RepomdRecord(md.metadata_type, md.delta_fn)
+        rec.fill(md.checksum_type)
+        if self.globalbundle.unique_md_filenames:
+            rec.rename_file()
 
-    # If two plugins want to add the same key to the bundle
-    # then exception is raised.
-    # If plugin requires a key that isn't provided by any of registered
-    # plugins then exception is raised.
-    # If plugin adds to bundle a key that is not listed in BUNDLE_CONTRIBUTION,
-    # then exception is raised.
+        md.generated_repomd_records.append(rec)
 
-    def __init__(self):
-        pass
+    def apply_use_original(self, md):
+        """Reversal function for the gen_use_original"""
+        md.new_fn = os.path.join(md.out_dir, os.path.basename(md.delta_fn))
+        shutil.copy2(md.delta_fn, md.new_fn)
 
-    def apply(self, metadata, bundle):
+        # Prepare repomd record of xml file
+        rec = cr.RepomdRecord(md.metadata_type, md.new_fn)
+        rec.fill(md.checksum_type)
+        if self.globalbundle.unique_md_filenames:
+            rec.rename_file()
+
+        md.generated_repomd_records.append(rec)
+
+    def apply(self, metadata):
         """
         :arg metadata: Dict with available metadata listed in METADATA.
             key is metadata type (e.g. "primary", "filelists", ...)
             value is Metadata object
             This method is called only if at least one metadata listed
             in METADATA are found in delta repomd.
-        :arg bundle: Dict with various metadata.
 
         Apply method has to do:
          * Raise DeltaRepoPluginError if something is bad
-         * Build a new filename for each metadata and store it
-           to Metadata Object.
-         * 
+         * Build a new filename and create a file for each metadata and
+           store it to Metadata Object.
         """
         raise NotImplementedError("Not implemented")
 
-    def gen(self, metadata, bundle):
+    def gen(self, metadata):
         raise NotImplementedError("Not implemented")
 
 
@@ -76,55 +102,19 @@ class GeneralDeltaRepoPlugin(DeltaRepoPlugin):
     NAME = "GeneralDeltaPlugin"
     VERSION = 1
     METADATA = []
-    APPLY_REQUIRED_BUNDLE_KEYS = ["removed_obj",
-                                  "unique_md_filenames"]
-    APPLY_BUNDLE_CONTRIBUTION = []
-    GEN_REQUIRED_BUNDLE_KEYS = ["removed_obj",
-                                "unique_md_filenames"]
-    GEN_BUNDLE_CONTRIBUTION = []
 
     def _path(self, path, record):
         """Return path to the repodata file."""
         return os.path.join(path, record.location_href)
 
-    def apply(self, metadata, bundle):
-
-        # Get info from bundle
-        removed_obj = bundle["removed_obj"]
-        unique_md_filenames = bundle["unique_md_filenames"]
-
-        #
+    def apply(self, metadata):
         for md in metadata.values():
-            md.new_fn = os.path.join(md.out_dir, os.path.basename(md.delta_fn))
-            shutil.copy2(md.delta_fn, md.new_fn)
+            self.apply_use_original(md)
 
-            # Prepare repomd record of xml file
-            rec = cr.RepomdRecord(md.metadata_type, md.new_fn)
-            rec.fill(md.checksum_type)
-            if unique_md_filenames:
-                rec.rename_file()
-
-            md.generated_repomd_records.append(rec)
-
-    def gen(self, metadata, bundle):
-
+    def gen(self, metadata):
         ## TODO: Compress uncompressed data
-
-        # Get info from bundle
-        removed_obj = bundle["removed_obj"]
-        unique_md_filenames = bundle["unique_md_filenames"]
-
         for md in metadata.values():
-            md.delta_fn = os.path.join(md.out_dir, os.path.basename(md.new_fn))
-            shutil.copy2(md.new_fn, md.delta_fn)
-
-            # Prepare repomd record of xml file
-            rec = cr.RepomdRecord(md.metadata_type, md.delta_fn)
-            rec.fill(md.checksum_type)
-            if unique_md_filenames:
-                rec.rename_file()
-
-            md.generated_repomd_records.append(rec)
+            self.gen_use_original(md)
 
 GENERAL_PLUGIN = GeneralDeltaRepoPlugin
 
@@ -133,15 +123,8 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
 
     NAME = "MainDeltaPlugin"
     VERSION = 1
-    METADATA = ["primary", "filelists", "other", "primary_db", "filelists_db", "other_db"]
-    APPLY_REQUIRED_BUNDLE_KEYS = ["repoid_type_str",
-                                  "removed_obj",
-                                  "unique_md_filenames"]
-    APPLY_BUNDLE_CONTRIBUTION = ["old_repoid", "new_repoid", "no_processed"]
-    GEN_REQUIRED_BUNDLE_KEYS = ["repoid_type_str",
-                                "removed_obj",
-                                "unique_md_filenames"]
-    GEN_BUNDLE_CONTRIBUTION = ["old_repoid", "new_repoid", "no_processed"]
+    METADATA = ["primary", "filelists", "other",
+                "primary_db", "filelists_db", "other_db"]
 
     def _path(self, path, record):
         """Return path to the repodata file."""
@@ -166,19 +149,34 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                           pkg.location_base or '')
         return idstr
 
-    def apply(self, metadata, bundle):
+    def apply(self, metadata):
 
-        # Get info from bundle
-        removed_obj = bundle["removed_obj"]
-        repoid_type_str = bundle["repoid_type_str"]
-        unique_md_filenames = bundle["unique_md_filenames"]
+        gen_db_for = set([])
+        only_copied_metadata = set({})
+        removed_packages = {}
+
+        # Make a set of md_types for which databases should be generated
+        for record in self.pluginbundle.get_list("metadata", []):
+            mdtype = record.get("type")
+            if not mdtype:
+                continue
+            if record.get("database", "") == "1":
+                gen_db_for.add(mdtype)
+            if record.get("original", "") == "1":
+                only_copied_metadata.add(mdtype)
+
+        # Make a dict of removed packages key is location_href,
+        # value is location_base
+        for record in self.pluginbundle.get_list("removedpackage", []):
+            location_href = record.get("location_href")
+            if not location_href:
+                continue
+            location_base = record.get("location_base")
+            removed_packages[location_href] = location_base
 
         # Check input arguments
         if "primary" not in metadata:
             raise DeltaRepoPluginError("Primary metadata missing")
-
-        # Names of metadata that was not processed by this plugin
-        no_processed = []
 
         # Metadata that no need to be processed, because they are just copies.
         # This metadata are copied and compressed xml (filelists or other)
@@ -189,7 +187,6 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         fil_md = metadata.get("filelists")
         oth_md = metadata.get("other")
 
-
         # Build and prepare destination paths
         # (And store them in the same Metadata object)
         def prepare_paths_in_metadata(md, xmlclass, dbclass):
@@ -197,12 +194,19 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                 return
 
             if not md.old_fn:
-                # Old file of this piece of metadata doesn't exist
-                # This file has to be newly added.
-                no_processed.append(md.metadata_type)
+                # The old file is missing, if the corresponding file
+                # in the deltarepo is not a copy (but just a delta),
+                # this metadata cannot not be generated! (because
+                # there is no file to which delta could be applied)
                 no_processed_metadata.append(md)
                 md.skip = True
                 return
+
+            if not md.old_fn or md.metadata_type in only_copied_metadata:
+                no_processed_metadata.append(md)
+                md.skip = True
+                return
+
             md.skip = False
 
             suffix = cr.compression_suffix(md.compression_type) or ""
@@ -214,7 +218,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                                 md.compression_type,
                                 md.new_f_stat)
 
-            if removed_obj and removed_obj.get_database(md.metadata_type, False):
+            if md.metadata_type in gen_db_for:
                 md.db_fn = os.path.join(md.out_dir, "{0}.sqlite".format(
                                         md.metadata_type))
                 md.db = dbclass(md.db_fn)
@@ -239,7 +243,6 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
 
         # Apply delta
 
-        removed_packages = set() # set of pkgIds (hashes)
         all_packages = {}        # dict { 'pkgId': pkg }
 
         old_repoid_strings = []
@@ -247,8 +250,8 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
 
         def old_pkgcb(pkg):
             old_repoid_strings.append(self._pkg_id_str(pkg))
-            if pkg.location_href in removed_obj.packages:
-                if removed_obj.packages[pkg.location_href] == pkg.location_base:
+            if pkg.location_href in removed_packages:
+                if removed_packages[pkg.location_href] == pkg.location_base:
                     # This package won't be in new metadata
                     return
             new_repoid_strings.append(self._pkg_id_str(pkg))
@@ -276,13 +279,13 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         old_repoid = ""
         new_repoid = ""
 
-        h = hashlib.new(repoid_type_str)
+        h = hashlib.new(self.globalbundle.repoid_type_str)
         old_repoid_strings.sort()
         for i in old_repoid_strings:
             h.update(i)
         old_repoid = h.hexdigest()
 
-        h = hashlib.new(repoid_type_str)
+        h = hashlib.new(self.globalbundle.repoid_type_str)
         new_repoid_strings.sort()
         for i in new_repoid_strings:
             h.update(i)
@@ -355,7 +358,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             rec = cr.RepomdRecord(md.metadata_type, md.new_fn)
             rec.load_contentstat(md.new_f_stat)
             rec.fill(md.checksum_type)
-            if unique_md_filenames:
+            if self.globalbundle.unique_md_filenames:
                 rec.rename_file()
 
             md.generated_repomd_records.append(rec)
@@ -374,7 +377,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                                          db_compressed)
                 db_rec.load_contentstat(db_stat)
                 db_rec.fill(md.checksum_type)
-                if unique_md_filenames:
+                if self.globalbundle.unique_md_filenames:
                     db_rec.rename_file()
 
                 md.generated_repomd_records.append(db_rec)
@@ -385,13 +388,27 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         finish_metadata(fil_md)
         finish_metadata(oth_md)
 
-        # Process XML files that was not processed if sqlite should be generated
+        # Process XML files that was just copied
         def finish_skipped_metadata(md):
             if md is None:
                 return
 
+            if not md.old_fn and md.metadata_type not in  only_copied_metadata:
+                # This metadata file is not a copy
+                # This is a delta
+                # But we don't have a original file on which the delta
+                # could be applied
+                # TODO: Add option to ignore this
+                raise DeltaRepoPluginError("Old file of type {0} "
+                    "is missing. The delta file {1} thus cannot be "
+                    "applied".format(md.metadata_type, md.delta_fn))
+                return
+
+            # Copy the file here
+            self.apply_use_original(md)
+
             # Check if sqlite should be generated
-            if removed_obj and removed_obj.get_database(md.metadata_type, False):
+            if md.metadata_type in gen_db_for:
                 md.db_fn = os.path.join(md.out_dir, "{0}.sqlite".format(
                                         md.metadata_type))
 
@@ -418,7 +435,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                                          db_compressed)
                 db_rec.load_contentstat(db_stat)
                 db_rec.fill(md.checksum_type)
-                if unique_md_filenames:
+                if self.globalbundle.unique_md_filenames:
                     db_rec.rename_file()
 
                 md.generated_repomd_records.append(db_rec)
@@ -426,24 +443,19 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         for md in no_processed_metadata:
             finish_skipped_metadata(md)
 
-        # Add other bundle stuff
-        bundle["old_repoid"] = old_repoid
-        bundle["new_repoid"] = new_repoid
-        bundle["no_processed"] = no_processed
+        self.globalbundle.calculated_old_repoid = old_repoid
+        self.globalbundle.calculated_new_repoid = new_repoid
 
-    def gen(self, metadata, bundle):
-
-        # Get info from bundle
-        removed_obj = bundle["removed_obj"]
-        repoid_type_str = bundle["repoid_type_str"]
-        unique_md_filenames = bundle["unique_md_filenames"]
-
+    def gen(self, metadata):
         # Check input arguments
         if "primary" not in metadata:
             raise DeltaRepoPluginError("Primary metadata missing")
 
-        # Metadata that was not processed by this plugin
+        # Metadata for which no delta will be generated
         no_processed = []
+
+        # Medadata info that will be persistently stored
+        persistent_metadata_info = {}
 
         pri_md = metadata.get("primary")
         fil_md = metadata.get("filelists")
@@ -455,16 +467,18 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             if md is None:
                 return
 
-            if removed_obj:
-                # Make a note to the removed obj if the database should be generated
-                db_type = "{0}_db".format(md.metadata_type)
-                available = metadata.get(db_type)
-                removed_obj.set_database(md.metadata_type, available)
+            # Make a note to the removed obj if the database should be generated
+            db_type = "{0}_db".format(md.metadata_type)
+            available = metadata.get(db_type)
+            if available:
+                persistent_metadata_info.setdefault(md.metadata_type, {})["database"] = "1"
+            else:
+                persistent_metadata_info.setdefault(md.metadata_type, {})["database"] = "0"
 
             if not md.old_fn:
                 # Old file of this piece of metadata doesn't exist
                 # This file has to be newly added.
-                no_processed.append(md.metadata_type)
+                no_processed.append(md)
                 md.skip = True
                 return
             md.skip = False
@@ -534,13 +548,13 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         old_repo_id = ""
         new_repo_id = ""
 
-        h = hashlib.new(repoid_type_str)
+        h = hashlib.new(self.globalbundle.repoid_type_str)
         old_repoid_strings.sort()
         for i in old_repoid_strings:
             h.update(i)
         old_repoid = h.hexdigest()
 
-        h = hashlib.new(repoid_type_str)
+        h = hashlib.new(self.globalbundle.repoid_type_str)
         new_repoid_strings.sort()
         for i in new_repoid_strings:
             h.update(i)
@@ -549,7 +563,10 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         # Prepare list of removed packages
         removed_pkgs = sorted(old_packages)
         for _, location_href, location_base in removed_pkgs:
-            removed_obj.add_pkg_locations(location_href, location_base)
+            dictionary = {"location_href": location_href}
+            if location_base:
+                dictionary["location_base"] = location_base
+            self.pluginbundle.append("removedpackage", dictionary)
 
         num_of_packages = len(added_packages)
 
@@ -593,7 +610,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             rec = cr.RepomdRecord(md.metadata_type, md.delta_fn)
             rec.load_contentstat(md.delta_f_stat)
             rec.fill(md.checksum_type)
-            if unique_md_filenames:
+            if self.globalbundle.unique_md_filenames:
                 rec.rename_file()
 
             md.generated_repomd_records.append(rec)
@@ -612,20 +629,28 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                                          db_compressed)
                 db_rec.load_contentstat(db_stat)
                 db_rec.fill(md.checksum_type)
-                if unique_md_filenames:
+                if self.globalbundle.unique_md_filenames:
                     db_rec.rename_file()
 
                 md.generated_repomd_records.append(db_rec)
 
-        # Add records to the bundle
-
+        # Add records to medata objects
         finish_metadata(pri_md)
         finish_metadata(fil_md)
         finish_metadata(oth_md)
 
-        bundle["old_repoid"] = old_repoid
-        bundle["new_repoid"] = new_repoid
-        bundle["no_processed"] = no_processed
+        # Process no processed items
+        # This files are just copied and compressed, no real delta
+        for md in no_processed:
+            self.gen_use_original(md)
+            persistent_metadata_info.setdefault(md.metadata_type, {})["original"] = "1"
 
+        # Store data persistently
+        for key, val in persistent_metadata_info.items():
+            val["type"] = key
+            self.pluginbundle.append("metadata", val)
+
+        self.globalbundle.calculated_old_repoid = old_repoid
+        self.globalbundle.calculated_new_repoid = new_repoid
 
 PLUGINS.append(MainDeltaRepoPlugin)

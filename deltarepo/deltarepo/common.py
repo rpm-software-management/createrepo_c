@@ -4,6 +4,7 @@ import logging
 import xml.dom.minidom
 import createrepo_c as cr
 from lxml import etree
+from deltarepo.errors import DeltaRepoError
 
 class LoggingInterface(object):
     def __init__(self, logger=None):
@@ -27,90 +28,159 @@ class LoggingInterface(object):
     def _critical(self, msg):
         self.logger.critical(msg)
 
-class RemovedXml(object):
+class AdditionalXmlData(object):
+    """
+    Interface to store/load additional data to/from xml.
+    """
+
+    ADDITIONAL_XML_DATA = True
+
     def __init__(self):
-        self.database = {}  # e.g.: {"primary": "1", "filelists": "1", "other": "1"}
-        self.packages = {}  # { location_href: location_base }
-        self.files = {}     # { location_href: location_base or Null }
+        self._data = {}
+        self._lists = {}
 
-    def __str__(self):
-        print self.database_gen
-        print self.packages
-        print self.files
+    def set(self, key, value):
+        if not isinstance(key, basestring):
+            raise TypeError("expected string as key")
+        if not isinstance(value, basestring):
+            raise TypeError("expected string as value")
+        self._data[key] = value
 
-    def set_database(self, type, val):
-        self.database[type] = "1" if val else "0"
+    def update(self, dictionary):
+        if not isinstance(dictionary, dict):
+            raise TypeError("expected dictionary")
 
-    def get_database(self, type, default=False):
-        if type in self.database:
-            return self.database[type] != "0"
-        return default
+        for key, val in dictionary.items():
+            self.set(key, val)
 
-    def add_pkg(self, pkg):
-        self.packages[pkg.location_href] = pkg.location_base
+    def append(self, listname, dictionary):
+        if not isinstance(listname, basestring):
+            raise TypeError("expected string")
+        if not isinstance(dictionary, dict):
+            raise TypeError("expected dict")
 
-    def add_pkg_locations(self, location_href, location_base):
-        self.packages[location_href] = location_base
+        if not listname in self._lists:
+            self._lists[listname] = []
 
-    def add_record(self, rec):
-        self.files[rec.location_href] = rec.location_base
+        # Validate items first
+        for key, val in dictionary.items():
+            if not isinstance(key, basestring) or not isinstance(val, basestring):
+                raise TypeError("Dict's keys and values must be string")
 
-    def xml_dump(self):
-        xmltree = etree.Element("removed")
-        database = etree.SubElement(xmltree, "database", self.database)
-        packages = etree.SubElement(xmltree, "packages")
-        for href, base in self.packages.iteritems():
-            attrs = {}
-            if href: attrs['href'] = href
-            if base: attrs['base'] = base
-            if not attrs: continue
-            etree.SubElement(packages, "location", attrs)
-        files = etree.SubElement(xmltree, "files")
-        for href, base in self.files.iteritems():
-            attrs = {}
-            if href: attrs['href'] = href
-            if base: attrs['base'] = base
-            if not attrs: continue
-            etree.SubElement(files, "location", attrs)
+        self._lists[listname].append(dictionary)
+
+    def get(self, key, default=None):
+        return self._data.get(key, default)
+
+    def get_list(self, key, default=None):
+        return self._lists.get(key, default)
+
+    def subelement(self, parent, name, in_attrs=None):
+        attrs = {}
+        attrs.update(self._data)
+        if in_attrs:
+            attrs.update(in_attrs)
+        elem = etree.SubElement(parent, name, attrs)
+
+        for listname, listvalues in self._lists.items():
+            for val in listvalues:
+                etree.SubElement(elem, listname, val)
+
+        return elem
+
+class PluginBundle(AdditionalXmlData):
+    def __init__(self, name, version):
+        AdditionalXmlData.__init__(self)
+
+        if not isinstance(name, basestring):
+            raise TypeError("string expected")
+        if not isinstance(version, int):
+            raise TypeError("integer expected")
+
+        self.name = name
+        self.version = version
+
+class DeltaMetadata(AdditionalXmlData):
+    """Object that represents bundle.xml file in deltarepository.
+    """
+
+    def __init__(self):
+        AdditionalXmlData.__init__(self)
+
+        self.usedplugins = {}
+
+    def add_pluginbundle(self, pluginbundle):
+        self.usedplugins[pluginbundle.name] = pluginbundle
+
+    def get_pluginbundle(self, name):
+        return self.usedplugins.get(name, None)
+
+
+    def xmldump(self):
+        xmltree = etree.Element("deltametadata")
+
+        usedplugins = etree.SubElement(xmltree, "usedplugins")
+        for plugin in self.usedplugins.values():
+            attrs = {"name": plugin.name, "version": str(plugin.version)}
+            plugin.subelement(usedplugins, "plugin", attrs)
         return etree.tostring(xmltree,
                               pretty_print=True,
                               encoding="UTF-8",
                               xml_declaration=True)
 
-    def xml_parse(self, path):
-
+    def xmlparse(self, path):
         _, tmp_path = tempfile.mkstemp()
         cr.decompress_file(path, tmp_path, cr.AUTO_DETECT_COMPRESSION)
         dom = xml.dom.minidom.parse(tmp_path)
         os.remove(tmp_path)
 
-        database = dom.getElementsByTagName("database")
-        if database and database[0]:
-            for x in xrange(database[0].attributes.length):
-                attr = database[0].attributes.item(x)
-                self.database[attr.name] = attr.value
+        deltametadata = dom.getElementsByTagName("deltametadata")
+        if not deltametadata or not deltametadata[0]:
+            raise DeltaRepoError("Cannot parse {0}".fromat(path))
 
-        packages = dom.getElementsByTagName("packages")
-        if packages and packages[0]:
-            for loc in packages[0].getElementsByTagName("location"):
-                href = loc.getAttribute("href")
-                base = loc.getAttribute("base")
-                if not href:
-                    continue
-                if not base:
-                    base = None
-                self.packages[href] = base
+        usedplugins = dom.getElementsByTagName("plugin")
+        for plugin_node in usedplugins:
+            name = None
+            version = None
+            other = {}
 
-        files = dom.getElementsByTagName("files")
-        if files and files[0]:
-            for loc in files[0].getElementsByTagName("location"):
-                href = loc.getAttribute("href")
-                base = loc.getAttribute("base")
-                if not href:
-                    continue
-                if not base:
-                    base = None
-                self.files[href] = base
+            # Parse attributes
+            for x in xrange(plugin_node.attributes.length):
+                attr = plugin_node.attributes.item(x)
+                if attr.name == "name":
+                    name = attr.value
+                elif attr.name == "version":
+                    version = attr.value
+                else:
+                    other[attr.name] = attr.value
+
+            if not name or not version:
+                raise DeltaRepoError("Bad XML: name or version attribute "
+                                     "of plugin element is missing")
+
+            try:
+                version_int = int(version)
+            except ValueError:
+                raise DeltaRepoError("Version {0} cannot be converted to "
+                                     "integer number".format(version))
+
+            bp = PluginBundle(name, version_int)
+            bp.update(other)
+
+            # Parse subelements
+            for list_item_node in plugin_node.childNodes:
+                if list_item_node.nodeType != xml.dom.minidom.Node.ELEMENT_NODE:
+                    continue;
+
+                dictionary = {}
+                listname = list_item_node.nodeName
+                for x in xrange(list_item_node.attributes.length):
+                    attr = list_item_node.attributes.item(x)
+                    dictionary[attr.name] = attr.value
+
+                bp.append(listname, dictionary)
+
+            self.usedplugins[bp.name] = bp
 
 class Metadata(object):
     """Metadata file"""

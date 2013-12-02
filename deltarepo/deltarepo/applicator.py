@@ -11,8 +11,8 @@ Copyright (C) 2013   Tomas Mlcoch
 import os
 import shutil
 import createrepo_c as cr
-from deltarepo.common import LoggingInterface, Metadata, RemovedXml
-from deltarepo.delta_plugins import PLUGINS, GENERAL_PLUGIN
+from deltarepo.common import LoggingInterface, Metadata, DeltaMetadata, PluginBundle
+from deltarepo.delta_plugins import GlobalBundle, PLUGINS, GENERAL_PLUGIN
 from deltarepo.errors import DeltaRepoError, DeltaRepoPluginError
 
 __all__ = ['DeltaRepoApplicator']
@@ -32,7 +32,7 @@ class DeltaRepoApplicator(LoggingInterface):
         self.repoid_type = None
         self.unique_md_filenames = False
         self.databases = False
-        self.removedxmlobj = RemovedXml()
+        self.deltametadata = DeltaMetadata()
 
         self.out_path = out_path or "./"
 
@@ -115,19 +115,18 @@ class DeltaRepoApplicator(LoggingInterface):
 
         # Load removedxml
         self.removedxml_path = None
-        if "removed" in self.delta_records:
-            self.removedxml_path = os.path.join(self.delta_repo_path,
-                                   self.delta_records["removed"].location_href)
-            self.removedxmlobj.xml_parse(self.removedxml_path)
+        if "deltametadata" in self.delta_records:
+            self.deltametadata_path = os.path.join(self.delta_repo_path,
+                                   self.delta_records["deltametadata"].location_href)
+            self.deltametadata.xmlparse(self.deltametadata_path)
         else:
-            self._warning("\"removed\" record is missing in repomd.xml "\
+            self._warning("\"deltametadata\" record is missing in repomd.xml "\
                           "of delta repo")
 
-        # Prepare bundle
-        self.bundle = {}
-        self.bundle["repoid_type_str"] = self.repoid_type_str
-        self.bundle["removed_obj"] = self.removedxmlobj
-        self.bundle["unique_md_filenames"] = self.unique_md_filenames
+        # Prepare global bundle
+        self.globalbundle = GlobalBundle()
+        self.globalbundle.repoid_type_str = self.repoid_type_str
+        self.globalbundle.unique_md_filenames = self.unique_md_filenames
 
     def _new_metadata(self, metadata_type):
         """Return Metadata Object for the metadata_type or None"""
@@ -153,12 +152,11 @@ class DeltaRepoApplicator(LoggingInterface):
             if not os.path.isfile(metadata.old_fn):
                 self._warning("File {0} doesn't exist in target repository" \
                               " (but it should)!".format(metadata.old_fn))
-                self._warning("Metadata of the type \"{0}\" won't be " \
+                self._warning("Metadata of the type \"{0}\" maybe won't be " \
                               "available in the generated repository".format(metadata_type))
-                self._warning("Output repository WON'T be a 1:1 identical " \
+                self._warning("Output repository maybe WON'T be a 1:1 identical " \
                               "to the target repository!")
                 metadata.old_fn = None
-                return None
 
         # Set output directory
         metadata.out_dir = self.new_repodata_path
@@ -180,93 +178,51 @@ class DeltaRepoApplicator(LoggingInterface):
         # Prepare output path
         os.mkdir(self.new_repodata_path)
 
+        # Set of types of processed metadata records ("primary", "primary_db"...)
         processed_metadata = set()
-        used_plugins = set()
-        plugin_used = True
 
-        while plugin_used:
-            # Iterate on plugins until any of them was used
-            plugin_used = False
+        for plugin in PLUGINS:
 
-            for plugin in PLUGINS:
+            # Prepare metadata for the plugin
+            metadata_objects = {}
+            for metadata_name in plugin.METADATA:
+                metadata_object = self._new_metadata(metadata_name)
+                if metadata_object is not None:
+                    metadata_objects[metadata_name] = metadata_object
 
-                # Use only plugins that haven't been already used
-                if plugin in used_plugins:
-                    continue
+            # Skip plugin if no supported metadata available
+            if not metadata_objects:
+                self._debug("Plugin {0}: Skipped - None of supported " \
+                            "metadata {1} available".format(
+                            plugin.NAME, plugin.METADATA))
+                continue
 
-                # Check which metadata this plugin want to process
-                conflicting_metadata = set(plugin.METADATA) & processed_metadata
-                if conflicting_metadata:
-                    message = "Plugin {0}: Error - Plugin want to process " \
-                              "already processed metadata {1}".format(
-                               plugin.NAME, conflicting_metadata)
-                    self._error(message)
-                    raise DeltaRepoError(message)
+            # Prepare plugin bundle
+            # TODO: Check plugin version
+            pluginbundle = self.deltametadata.get_pluginbundle(plugin.NAME)
 
-                # Prepare metadata for the plugin
-                metadata_objects = {}
-                for metadata_name in plugin.METADATA:
-                    metadata_object = self._new_metadata(metadata_name)
-                    if metadata_object is not None:
-                        metadata_objects[metadata_name] = metadata_object
+            # Use the plugin
+            self._debug("Plugin {0}: Active".format(plugin.NAME))
+            plugin_instance = plugin(pluginbundle, self.globalbundle)
+            plugin_instance.apply(metadata_objects)
 
-                # Skip plugin if no supported metadata available
-                if not metadata_objects:
-                    self._debug("Plugin {0}: Skipped - None of supported " \
-                                "metadata {1} available".format(
-                                plugin.NAME, plugin.METADATA))
-                    used_plugins.add(plugin)
-                    continue
+            # Put repomd records from processed metadatas to repomd
+            for md in metadata_objects.values():
+                self._debug("Plugin {0}: Processed \"{1}\" delta record "\
+                            "which produced:".format(
+                            plugin.NAME, md.metadata_type))
+                for repomd_record in md.generated_repomd_records:
+                    self._debug(" - {0}".format(repomd_record.type))
+                    self.new_repomd.set_record(repomd_record)
 
-                # Check if bundle contains all what plugin need
-                required_bundle_keys = set(plugin.APPLY_REQUIRED_BUNDLE_KEYS)
-                bundle_keys = set(self.bundle.keys())
-                if not required_bundle_keys.issubset(bundle_keys):
-                    self._debug("Plugin {0}: Skipped - Bundle keys {1} "\
-                                "are not available".format(plugin.NAME,
-                                (required_bundle_keys - bundle_keys)))
-                    continue
-
-                # Use the plugin
-                self._debug("Plugin {0}: Active".format(plugin.NAME))
-                plugin_instance = plugin()
-                plugin_instance.apply(metadata_objects, self.bundle)
-
-                # Check what bundle keys was added by the plugin
-                new_bundle_keys = set(self.bundle.keys())
-                diff = new_bundle_keys - bundle_keys
-                if diff != set(plugin.APPLY_BUNDLE_CONTRIBUTION):
-                    message = "Plugin {0}: Error - Plugin should add: {1} " \
-                               "bundle items but add: {2}".format(
-                               plugin.NAME, plugin.APPLY_BUNDLE_CONTRIBUTION,
-                               list(diff))
-                    self._error(message)
-                    raise DeltaRepoError(message)
-
-                # Put repomd records from processed metadatas to repomd
-                for md in metadata_objects.values():
-                    self._debug("Plugin {0}: Processed \"{1}\" delta record "\
-                                "which produced:".format(
-                                plugin.NAME, md.metadata_type))
-                    for repomd_record in md.generated_repomd_records:
-                        self._debug(" - {0}".format(repomd_record.type))
-                        self.new_repomd.set_record(repomd_record)
-
-                # Organization stuff
-                for md in metadata_objects.keys():
-                    if md in self.bundle["no_processed"]:
-                        self._debug("Plugin {0}: Skip processing of \"{1}\" delta record".format(
-                                    plugin.NAME, md))
-                        continue
-                    processed_metadata.add(md)
-
-                used_plugins.add(plugin)
-                plugin_used = True
+            # Organization stuff
+            for md in metadata_objects.keys():
+                processed_metadata.add(md)
 
         # Process rest of the metadata files
         metadata_objects = {}
         for rectype, rec in self.delta_records.items():
-            if rectype == "removed":
+            if rectype == "deltametadata":
                 continue
             if rectype not in processed_metadata:
                 metadata_object = self._new_metadata(rectype)
@@ -280,8 +236,8 @@ class DeltaRepoApplicator(LoggingInterface):
         if metadata_objects:
             # Use the plugin
             self._debug("Plugin {0}: Active".format(GENERAL_PLUGIN.NAME))
-            plugin_instance = GENERAL_PLUGIN()
-            plugin_instance.apply(metadata_objects, self.bundle)
+            plugin_instance = GENERAL_PLUGIN(None, self.globalbundle)
+            plugin_instance.apply(metadata_objects)
 
             for md in metadata_objects.values():
                 self._debug("Plugin {0}: Processed \"{1}\" delta record "\
@@ -291,38 +247,36 @@ class DeltaRepoApplicator(LoggingInterface):
                     self._debug(" - {0}".format(repomd_record.type))
                     self.new_repomd.set_record(repomd_record)
 
-        self._debug("Used plugins: {0}".format([p.NAME for p in used_plugins]))
-
         # Check if calculated repoids match
         self._debug("Checking expected repoids")
 
-        if "old_repoid" in self.bundle:
-            if self.old_id != self.bundle["old_repoid"]:
+        if self.globalbundle.calculated_old_repoid:
+            if self.old_id != self.globalbundle.calculated_old_repoid:
                 message = "Repoid of the \"{0}\" repository doesn't match "\
                           "the real repoid ({1} != {2}).".format(
                            self.old_repo_path, self.old_id,
-                           self.bundle["old_repoid"])
+                           self.globalbundle.calculate_old_repoid)
                 self._error(message)
                 raise DeltaRepoError(message)
             else:
                 self._debug("Repoid of the old repo matches ({0})".format(
                             self.old_id))
         else:
-            self._warning("\"old_repoid\" item is missing in bundle.")
+            self._warning("\"old_repoid\" item was not calculated.")
 
-        if "new_repoid" in self.bundle:
-            if self.new_id != self.bundle["new_repoid"]:
+        if self.globalbundle.calculated_new_repoid:
+            if self.new_id != self.globalbundle.calculated_new_repoid:
                 message = "Repoid of the \"{0}\" repository doesn't match "\
                           "the real repoid ({1} != {2}).".format(
                            self.new_repo_path, self.new_id,
-                           self.bundle["new_repoid"])
+                           self.globalbundle.calculated_new_repoid)
                 self._error(message)
                 raise DeltaRepoError(message)
             else:
                 self._debug("Repoid of the new repo matches ({0})".format(
                             self.new_id))
         else:
-            self._warning("\"new_repoid\" item is missing in bundle.")
+            self._warning("\"new_repoid\" item was not calculated.")
 
         # Prepare and write out the new repomd.xml
         self._debug("Preparing repomd.xml ...")

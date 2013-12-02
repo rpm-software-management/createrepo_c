@@ -9,7 +9,7 @@ Copyright (C) 2013   Tomas Mlcoch
 """
 
 import createrepo_c as cr
-from deltarepo.common import LoggingInterface, Metadata, RemovedXml
+from deltarepo.common import LoggingInterface, Metadata
 from deltarepo.applicator import DeltaRepoApplicator
 from deltarepo.generator import DeltaRepoGenerator
 from deltarepo.delta_plugins import PLUGINS

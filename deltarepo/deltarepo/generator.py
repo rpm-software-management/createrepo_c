@@ -11,8 +11,8 @@ Copyright (C) 2013   Tomas Mlcoch
 import os
 import shutil
 import createrepo_c as cr
-from deltarepo.common import LoggingInterface, Metadata, RemovedXml
-from deltarepo.delta_plugins import PLUGINS, GENERAL_PLUGIN
+from deltarepo.common import LoggingInterface, Metadata, DeltaMetadata, PluginBundle
+from deltarepo.delta_plugins import GlobalBundle, PLUGINS, GENERAL_PLUGIN
 from deltarepo.errors import DeltaRepoError, DeltaRepoPluginError
 
 __all__ = ['DeltaRepoGenerator']
@@ -103,14 +103,12 @@ class DeltaRepoGenerator(LoggingInterface):
         self.old_id = self.old_repomd.repoid
         self.new_id = self.new_repomd.repoid
 
-        # Prepare removed xml object
-        self.removedxmlobj = RemovedXml()
+        self.deltametadata = DeltaMetadata()
 
-        # Prepare bundle
-        self.bundle = {}
-        self.bundle["repoid_type_str"] = self.repoid_type_str
-        self.bundle["removed_obj"] = self.removedxmlobj
-        self.bundle["unique_md_filenames"] = self.unique_md_filenames
+        # Prepare global bundle
+        self.globalbundle = GlobalBundle()
+        self.globalbundle.repoid_type_str = self.repoid_type_str
+        self.globalbundle.unique_md_filenames = self.unique_md_filenames
 
     def _new_metadata(self, metadata_type):
         """Return Metadata Object for the metadata_type or None"""
@@ -152,97 +150,51 @@ class DeltaRepoGenerator(LoggingInterface):
 
         return metadata
 
-    def _run_plugin(plugin, metadata_objects):
-        # TODO XXX
-        pass
-
     def gen(self):
 
         # Prepare output path
         os.mkdir(self.delta_repodata_path)
 
+        # Set of types of processed metadata records ("primary", "primary_db"...)
         processed_metadata = set()
-        used_plugins = set()
-        plugin_used = True
 
-        while plugin_used:
-            # Iterate on plugins until any of them was used
-            plugin_used = False
+        for plugin in PLUGINS:
 
-            for plugin in PLUGINS:
+            # Prepare metadata for the plugin
+            metadata_objects = {}
+            for metadata_name in plugin.METADATA:
+                metadata_object = self._new_metadata(metadata_name)
+                if metadata_object is not None:
+                    metadata_objects[metadata_name] = metadata_object
 
-                # Use only plugins that haven't been already used
-                if plugin in used_plugins:
-                    continue
+            # Skip plugin if no supported metadata available
+            if not metadata_objects:
+                self._debug("Plugin {0}: Skipped - None of supported " \
+                            "metadata {1} available".format(
+                            plugin.NAME, plugin.METADATA))
+                continue
 
-                # Check which metadata this plugin want to process
-                conflicting_metadata = set(plugin.METADATA) & processed_metadata
-                if conflicting_metadata:
-                    message = "Plugin {0}: Error - Plugin want to process " \
-                              "already processed metadata {1}".format(
-                               plugin.NAME, conflicting_metadata)
-                    self._error(message)
-                    raise DeltaRepoError(message)
+            # Prepare plugin bundle
+            pluginbundle = PluginBundle(plugin.NAME, plugin.VERSION)
+            self.deltametadata.add_pluginbundle(pluginbundle)
 
-                # Prepare metadata for the plugin
-                metadata_objects = {}
-                for metadata_name in plugin.METADATA:
-                    metadata_object = self._new_metadata(metadata_name)
-                    if metadata_object is not None:
-                        metadata_objects[metadata_name] = metadata_object
+            # Use the plugin
+            self._debug("Plugin {0}: Active".format(plugin.NAME))
+            plugin_instance = plugin(pluginbundle, self.globalbundle)
+            plugin_instance.gen(metadata_objects)
 
-                # Skip plugin if no supported metadata available
-                if not metadata_objects:
-                    self._debug("Plugin {0}: Skipped - None of supported " \
-                                "metadata {1} available".format(
-                                plugin.NAME, plugin.METADATA))
-                    used_plugins.add(plugin)
-                    continue
+            # Put repomd records from processed metadatas to repomd
+            for md in metadata_objects.values():
+                self._debug("Plugin {0}: Processed \"{1}\" delta record "\
+                            "which produced:".format(
+                            plugin.NAME, md.metadata_type))
+                for repomd_record in md.generated_repomd_records:
+                    self._debug(" - {0}".format(repomd_record.type))
+                    self.delta_repomd.set_record(repomd_record)
 
-                # Check if bundle contains all what plugin need
-                required_bundle_keys = set(plugin.GEN_REQUIRED_BUNDLE_KEYS)
-                bundle_keys = set(self.bundle.keys())
-                if not required_bundle_keys.issubset(bundle_keys):
-                    self._debug("Plugin {0}: Skipped - Bundle keys {1} "\
-                                "are not available".format(plugin.NAME,
-                                (required_bundle_keys - bundle_keys)))
-                    continue
-
-                # Use the plugin
-                self._debug("Plugin {0}: Active".format(plugin.NAME))
-                plugin_instance = plugin()
-                plugin_instance.gen(metadata_objects, self.bundle)
-
-                # Check what bundle keys was added by the plugin
-                new_bundle_keys = set(self.bundle.keys())
-                diff = new_bundle_keys - bundle_keys
-                if diff != set(plugin.GEN_BUNDLE_CONTRIBUTION):
-                    message = "Plugin {0}: Error - Plugin should add: {1} " \
-                               "bundle items but add: {2}".format(
-                               plugin.NAME, plugin.GEN_BUNDLE_CONTRIBUTION,
-                               list(diff))
-                    self._error(message)
-                    raise DeltaRepoError(message)
-
-                # Put repomd records from processed metadatas to repomd
-                for md in metadata_objects.values():
-                    self._debug("Plugin {0}: Processed \"{1}\" delta record "\
-                                "which produced:".format(
-                                plugin.NAME, md.metadata_type))
-                    for repomd_record in md.generated_repomd_records:
-                        self._debug(" - {0}".format(repomd_record.type))
-                        self.delta_repomd.set_record(repomd_record)
-
-                # Organization stuff
-                for md in metadata_objects.keys():
-                    if md in self.bundle["no_processed"]:
-                        self._debug("Plugin {0}: Skip processing of \"{1}\" delta record".format(
-                                    plugin.NAME, md))
-                        continue
-                    processed_metadata.add(md)
-
-                used_plugins.add(plugin)
-                plugin_used = True
+            # Organization stuff
+            for md in metadata_objects.keys():
+                processed_metadata.add(md)
 
         # Process rest of the metadata files
         metadata_objects = {}
@@ -260,8 +212,8 @@ class DeltaRepoGenerator(LoggingInterface):
         if metadata_objects:
             # Use the plugin
             self._debug("Plugin {0}: Active".format(GENERAL_PLUGIN.NAME))
-            plugin_instance = GENERAL_PLUGIN()
-            plugin_instance.gen(metadata_objects, self.bundle)
+            plugin_instance = GENERAL_PLUGIN(None, self.globalbundle)
+            plugin_instance.gen(metadata_objects)
 
             for md in metadata_objects.values():
                 self._debug("Plugin {0}: Processed \"{1}\" delta record "\
@@ -271,41 +223,42 @@ class DeltaRepoGenerator(LoggingInterface):
                     self._debug(" - {0}".format(repomd_record.type))
                     self.delta_repomd.set_record(repomd_record)
 
-        # Write out removed.xml
-        self._debug("Writing removed.xml ...")
-        removedxml_xml = self.removedxmlobj.xml_dump()
-        removedxml_path = os.path.join(self.delta_repodata_path, "removed.xml")
+        # Write out deltametadata.xml
+        deltametadata_xml = self.deltametadata.xmldump()
+        deltametadata_path = os.path.join(self.delta_repodata_path, "deltametadata.xml")
 
         if (self.compression_type != cr.UNKNOWN_COMPRESSION):
-            removedxml_path += cr.compression_suffix(self.compression_type)
+            deltametadata_path += cr.compression_suffix(self.compression_type)
             stat = cr.ContentStat(self.checksum_type)
-            f = cr.CrFile(removedxml_path, cr.MODE_WRITE, cr.XZ, stat)
-            f.write(removedxml_xml)
+            f = cr.CrFile(deltametadata_path, cr.MODE_WRITE,
+                          self.compression_type, stat)
+            f.write(deltametadata_xml)
             f.close()
         else:
-            open(removedxml_path, "w").write(removedxml_xml)
+            open(deltametadata_path, "w").write(deltametadata_xml)
 
-        removedxml_rec = cr.RepomdRecord("removed", removedxml_path)
-        removedxml_rec.load_contentstat(stat)
-        removedxml_rec.fill(self.checksum_type)
+        deltametadata_rec = cr.RepomdRecord("deltametadata", deltametadata_path)
+        deltametadata_rec.load_contentstat(stat)
+        deltametadata_rec.fill(self.checksum_type)
         if self.unique_md_filenames:
-            removedxml_rec.rename_file()
-        self.delta_repomd.set_record(removedxml_rec)
+            deltametadata_rec.rename_file()
+        self.delta_repomd.set_record(deltametadata_rec)
 
         # Check if calculated repoids match
         self._debug("Checking expected repoids")
 
-        if not "new_repoid" in self.bundle or not "old_repoid" in self.bundle:
-            message = "\"new_repoid\" or \"old_repoid\" is missing in bundle"
+        if self.globalbundle.calculated_new_repoid is None \
+                or self.globalbundle.calculated_old_repoid is None:
+            message = "\"new_repoid\" or \"old_repoid\" wasn't calculated"
             self._error(message)
             raise DeltaRepoError(message)
 
         if self.old_id:
-            if self.old_id != self.bundle["old_repoid"]:
+            if self.old_id != self.globalbundle.calculated_old_repoid:
                 message = "Repoid of the \"{0}\" repository doesn't match "\
                           "the real repoid ({1} != {2}).".format(
                            self.old_repo_path, self.old_id,
-                           self.bundle["old_repoid"])
+                           self.globalbundle.calculated_old_repoid)
                 self._error(message)
                 raise DeltaRepoError(message)
             else:
@@ -316,11 +269,11 @@ class DeltaRepoGenerator(LoggingInterface):
                         "repomd".format(self.old_repo_path))
 
         if self.new_id:
-            if self.new_id and self.new_id != self.bundle["new_repoid"]:
+            if self.new_id != self.globalbundle.calculated_new_repoid:
                 message = "Repoid of the \"{0}\" repository doesn't match "\
                           "the real repoid ({1} != {2}).".format(
                            self.new_repo_path, self.new_id,
-                           self.bundle["new_repoid"])
+                           self.globalbundle.calculated_new_repoid)
                 self._error(message)
                 raise DeltaRepoError(message)
             else:
@@ -332,8 +285,8 @@ class DeltaRepoGenerator(LoggingInterface):
 
         # Prepare and write out the new repomd.xml
         self._debug("Preparing repomd.xml ...")
-        deltarepoid = "{0}-{1}".format(self.bundle["old_repoid"],
-                                       self.bundle["new_repoid"])
+        deltarepoid = "{0}-{1}".format(self.globalbundle.calculated_old_repoid,
+                                       self.globalbundle.calculated_new_repoid)
         self.delta_repomd.set_repoid(deltarepoid, self.repoid_type_str)
         self.delta_repomd.sort_records()
         delta_repomd_xml = self.delta_repomd.xml_dump()

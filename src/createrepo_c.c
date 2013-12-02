@@ -1434,27 +1434,32 @@ main(int argc, char **argv)
         }
         g_free(old_repomd_path);
 
-        // Prepare list of basenames of metadata files in repomd.xml
+        // Prepare list of basenames of metadata files in old repomd.xml
         GSList *old_basenames = NULL;
-        for (GSList *elem = repomd->records; elem; elem = g_slist_next(elem)) {
-            cr_RepomdRecord *rec = elem->data;
 
-            if (!rec->location_href) {
-                // Ignore bad records (records without location_href)
-                g_warning("Record without location href in old repo");
-                continue;
+        if (cmd_options->retain_old == 0) {
+            // If retain_old is equal to zero, it means remove old metadata
+            // If not qual to zero, this piece of code is skiped.
+            // It means that all files from old repo are copied
+            for (GSList *elem = repomd->records; elem; elem = g_slist_next(elem)) {
+                cr_RepomdRecord *rec = elem->data;
+
+                if (!rec->location_href) {
+                    // Ignore bad records (records without location_href)
+                    g_warning("Record without location href in old repo");
+                    continue;
+                }
+
+                if (rec->location_base) {
+                    // Ignore files with base location
+                    g_debug("Old repomd record with base location is ignored: "
+                            "%s - %s", rec->location_base, rec->location_href);
+                    continue;
+                }
+
+                old_basenames = g_slist_prepend(old_basenames,
+                                        g_path_get_basename(rec->location_href));
             }
-
-            if (rec->location_base) {
-                // Ignore files with base location
-                g_debug("Old repomd record with base location is ignored: "
-                        "%s - %s", rec->location_base, rec->location_href);
-                continue;
-            }
-
-            old_basenames = g_slist_prepend(old_basenames,
-                                    g_path_get_basename(rec->location_href));
-
         }
 
         // Iterate over the files in the old repository and copy all
@@ -1505,6 +1510,7 @@ main(int argc, char **argv)
         }
 
         // Cleanup
+        g_slist_free(old_basenames);
         cr_repomd_free(repomd);
         g_dir_close(dirp);
     }

@@ -37,6 +37,7 @@ struct CmdOptions _cmd_options = {
         .workers             = DEFAULT_WORKERS,
         .unique_md_filenames = DEFAULT_UNIQUE_MD_FILENAMES,
         .checksum_type       = CR_CHECKSUM_SHA256,
+        .retain_old          = 0,
         .compression_type    = CR_CW_UNKNOWN_COMPRESSION
     };
 

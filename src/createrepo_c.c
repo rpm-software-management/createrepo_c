@@ -1515,6 +1515,8 @@ main(int argc, char **argv)
         g_dir_close(dirp);
     }
 
+    gboolean old_repodata_renamed = FALSE;
+
     // === This section should be maximally atomic ===
 
     sigset_t new_mask, old_mask;
@@ -1528,10 +1530,11 @@ main(int argc, char **argv)
     // Rename out_repo to "repodata.old"
     gchar *old_repodata_path = g_build_filename(out_dir, "repodata.old", NULL);
     if (g_rename(out_repo, old_repodata_path) == -1) {
-        g_error("Cannot rename %s -> %s", out_repo, old_repodata_path);
-        exit(EXIT_FAILURE);
+        g_debug("Old repodata doesn't exists: Cannot rename %s -> %s: %s",
+                out_repo, old_repodata_path, strerror(errno));
     } else {
         g_debug("Renamed %s -> %s", out_repo, old_repodata_path);
+        old_repodata_renamed = TRUE;
     }
 
     // Rename tmp_out_repo to out_repo
@@ -1546,12 +1549,14 @@ main(int argc, char **argv)
 
     // === End of section that has to be maximally atomic ===
 
-    // Remove "metadata.old" dir
-    if (cr_rm(old_repodata_path, CR_RM_RECURSIVE, NULL, &tmp_err)) {
-        g_debug("Old repo %s removed", old_repodata_path);
-    } else {
-        g_warning("Cannot remove %s: %s", old_repodata_path, tmp_err->message);
-        g_clear_error(&tmp_err);
+    if (old_repodata_renamed) {
+        // Remove "metadata.old" dir
+        if (cr_rm(old_repodata_path, CR_RM_RECURSIVE, NULL, &tmp_err)) {
+            g_debug("Old repo %s removed", old_repodata_path);
+        } else {
+            g_warning("Cannot remove %s: %s", old_repodata_path, tmp_err->message);
+            g_clear_error(&tmp_err);
+        }
     }
 
 

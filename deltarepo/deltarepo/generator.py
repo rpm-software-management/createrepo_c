@@ -25,9 +25,13 @@ class DeltaRepoGenerator(LoggingInterface):
                  out_path=None,
                  logger=None,
                  repoid_type="sha256",
-                 compression_type="xz"):
+                 compression_type="xz",
+                 force_database=False,
+                 ignore_missing=False):
 
         # Initialization
+
+        self.ignore_missing = ignore_missing
 
         LoggingInterface.__init__(self, logger)
 
@@ -109,6 +113,8 @@ class DeltaRepoGenerator(LoggingInterface):
         self.globalbundle = GlobalBundle()
         self.globalbundle.repoid_type_str = self.repoid_type_str
         self.globalbundle.unique_md_filenames = self.unique_md_filenames
+        self.globalbundle.force_database = force_database
+        self.globalbundle.ignore_missing = ignore_missing
 
     def _new_metadata(self, metadata_type):
         """Return Metadata Object for the metadata_type or None"""
@@ -122,7 +128,12 @@ class DeltaRepoGenerator(LoggingInterface):
         metadata.new_fn = os.path.join(self.new_repo_path,
                             self.new_records[metadata_type].location_href)
         if not os.path.isfile(metadata.new_fn):
-            self._warning("The file {0} doesn't exist!".format(metadata.new_fn))
+            msg = "The file {0} doesn't exist in the destination " \
+                  "repository!".format(metadata.new_fn)
+            self._warning(msg)
+            if not self.ignore_missing:
+                raise DeltaRepoError(msg + " Use --ignore-missing option to "
+                                           "ignore this error")
             return None
 
         # Build old filename
@@ -130,7 +141,12 @@ class DeltaRepoGenerator(LoggingInterface):
             metadata.old_fn = os.path.join(self.old_repo_path,
                             self.old_records[metadata_type].location_href)
             if not os.path.isfile(metadata.old_fn):
-                self._warning("File {0} doesn't exist!".format(metadata.old_fn))
+                msg = "File {0} doesn't exist in the source " \
+                      "repository!".format(metadata.old_fn)
+                self._warning(msg)
+                if not self.ignore_missing:
+                    raise DeltaRepoError(msg + " Use --ignore-missing option "
+                                               "to ignore this error")
                 metadata.old_fn = None
 
         # Set output directory
@@ -180,7 +196,8 @@ class DeltaRepoGenerator(LoggingInterface):
 
             # Use the plugin
             self._debug("Plugin {0}: Active".format(plugin.NAME))
-            plugin_instance = plugin(pluginbundle, self.globalbundle)
+            plugin_instance = plugin(pluginbundle, self.globalbundle,
+                                     logger=self._get_logger())
             plugin_instance.gen(metadata_objects)
 
             # Put repomd records from processed metadatas to repomd
@@ -212,7 +229,8 @@ class DeltaRepoGenerator(LoggingInterface):
         if metadata_objects:
             # Use the plugin
             self._debug("Plugin {0}: Active".format(GENERAL_PLUGIN.NAME))
-            plugin_instance = GENERAL_PLUGIN(None, self.globalbundle)
+            plugin_instance = GENERAL_PLUGIN(None, self.globalbundle,
+                                             logger=self._get_logger())
             plugin_instance.gen(metadata_objects)
 
             for md in metadata_objects.values():
@@ -252,6 +270,11 @@ class DeltaRepoGenerator(LoggingInterface):
             message = "\"new_repoid\" or \"old_repoid\" wasn't calculated"
             self._error(message)
             raise DeltaRepoError(message)
+
+        self._debug("Calculated repoid of the old repo:   {0}".format(
+            self.globalbundle.calculated_old_repoid))
+        self._debug("Calculated repoid of the delta repo: {0}".format(
+            self.globalbundle.calculated_new_repoid))
 
         if self.old_id:
             if self.old_id != self.globalbundle.calculated_old_repoid:

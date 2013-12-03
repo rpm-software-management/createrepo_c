@@ -3,6 +3,7 @@ import os.path
 import shutil
 import hashlib
 import createrepo_c as cr
+from deltarepo.common import LoggingInterface
 from deltarepo.errors import DeltaRepoError, DeltaRepoPluginError
 
 PLUGINS = []
@@ -13,17 +14,21 @@ class GlobalBundle(object):
     __slots__ = ("repoid_type_str",
                  "unique_md_filenames",
                  "calculated_old_repoid",
-                 "calculated_new_repoid")
+                 "calculated_new_repoid",
+                 "force_database",
+                 "ignore_missing")
 
     def __init__(self):
         self.repoid_type_str = "sha256"
         self.unique_md_filenames = True
+        self.force_database = False
+        self.ignore_missing = False
 
         # Filled by plugins
         self.calculated_old_repoid = None
         self.calculated_new_repoid = None
 
-class DeltaRepoPlugin(object):
+class DeltaRepoPlugin(LoggingInterface):
 
     # Plugin name
     NAME = ""
@@ -34,9 +39,11 @@ class DeltaRepoPlugin(object):
     # List of Metadata this plugin takes care of.
     # The plugin HAS TO do deltas for each of listed metadata and be able
     # to apply deltas on them!
-    MATADATA = []
+    METADATA = []
 
-    def __init__(self, pluginbundle, globalbundle):
+    def __init__(self, pluginbundle, globalbundle, logger=None):
+
+        LoggingInterface.__init__(self, logger)
 
         # PluginBundle object.
         # This object store data in persistent way to the generated delta repodata.
@@ -160,7 +167,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             mdtype = record.get("type")
             if not mdtype:
                 continue
-            if record.get("database", "") == "1":
+            if self.globalbundle.force_database or record.get("database", "") == "1":
                 gen_db_for.add(mdtype)
             if record.get("original", "") == "1":
                 only_copied_metadata.add(mdtype)
@@ -176,6 +183,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
 
         # Check input arguments
         if "primary" not in metadata:
+            self._error("primary.xml metadata file is missing")
             raise DeltaRepoPluginError("Primary metadata missing")
 
         # Metadata that no need to be processed, because they are just copies.
@@ -193,21 +201,28 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             if md is None:
                 return
 
+            md.is_a_copy = False
+            md.could_be_processed = True
+
+            if md.metadata_type in only_copied_metadata:
+                # Metadata file in delta repo is a copy (not a delta).
+                # We don't want to process this file as delta file
+                no_processed_metadata.append(md)
+                md.is_a_copy = True
+                return
+
             if not md.old_fn:
                 # The old file is missing, if the corresponding file
                 # in the deltarepo is not a copy (but just a delta),
                 # this metadata cannot not be generated! (because
                 # there is no file to which delta could be applied)
-                no_processed_metadata.append(md)
-                md.skip = True
+                md.could_be_processed = False
                 return
 
-            if not md.old_fn or md.metadata_type in only_copied_metadata:
-                no_processed_metadata.append(md)
-                md.skip = True
+            if not md.delta_fn:
+                # The delfa file is missing. Thus delta cannot be applied
+                md.could_be_processed = False
                 return
-
-            md.skip = False
 
             suffix = cr.compression_suffix(md.compression_type) or ""
             md.new_fn = os.path.join(md.out_dir,
@@ -261,15 +276,21 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             new_repoid_strings.append(self._pkg_id_str(pkg))
             all_packages[pkg.pkgId] = pkg
 
-        do_primary_files = 1
-        if fil_md and not fil_md.skip and fil_md.delta_fn and fil_md.old_fn:
-            # Don't read files from primary if there is filelists.xml
-            do_primary_files = 0
-        if fil_md and fil_md.skip:
-            # We got whole original filelists.xml, we do not need parse
-            # files from primary.xml files.
-            do_primary_files = 0
+        do_primary_files = True
+        if fil_md and (fil_md.is_a_copy or fil_md.could_be_processed):
+            # We got:
+            # - whole original filelists.xml, we don't need parse
+            #   files from primary.xml files.
+            # OR:
+            # - We got old file and delta file so again we don't
+            #   need parse files from primary.xml files.
+            do_primary_files = False
+        else:
+            self._debug("Filelist's entries are going to be parsed "
+                        "from primary.xml because filelists.xml content"
+                        "is not available.")
 
+        # Parse both old and delta primary.xml files
         cr.xml_parse_primary(pri_md.old_fn, pkgcb=old_pkgcb,
                              do_files=do_primary_files)
         cr.xml_parse_primary(pri_md.delta_fn, pkgcb=delta_pkgcb,
@@ -308,16 +329,21 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             return all_packages.get(pkgId, None)
 
         # Parse filelists
-        if fil_md and not fil_md.skip and fil_md.delta_fn and fil_md.old_fn:
-            cr.xml_parse_filelists(fil_md.old_fn, newpkgcb=newpkgcb)
+        if fil_md and fil_md.is_a_copy:
+            # We got the original filelists.xml in the delta repo
+            # So it is sufficient to parse only this filelists.xml
             cr.xml_parse_filelists(fil_md.delta_fn, newpkgcb=newpkgcb)
-        elif fil_md and fil_md.skip:
-            # We got original filelists.xml we need to parse it here, to fill
-            # package.
+        elif fil_md and fil_md.could_be_processed:
+            cr.xml_parse_filelists(fil_md.old_fn, newpkgcb=newpkgcb)
             cr.xml_parse_filelists(fil_md.delta_fn, newpkgcb=newpkgcb)
 
         # Parse other
-        if oth_md and not oth_md.skip and oth_md.delta_fn and oth_md.old_fn:
+        # TODO
+        #if oth_md and oth_md.is_a_copy:
+        #    # We got the original other.xml in the delta repo
+        #    # So it is sufficient to parse only this other.xml
+        #    cr.xml_parse_other(oth_md.delta_fn, newpkgcb=newpkgcb)
+        if oth_md and oth_md.could_be_processed and not oth_md.is_a_copy:
             cr.xml_parse_other(oth_md.old_fn, newpkgcb=newpkgcb)
             cr.xml_parse_other(oth_md.delta_fn, newpkgcb=newpkgcb)
 
@@ -331,7 +357,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                 pri_md.db.add_pkg(pkg)
 
         # Write out filelists
-        if fil_md and not fil_md.skip and fil_md.new_f:
+        if fil_md and fil_md.could_be_processed and not fil_md.is_a_copy:
             fil_md.new_f.set_num_of_pkgs(num_of_packages)
             for pkg in all_packages_sorted:
                 fil_md.new_f.add_pkg(pkg)
@@ -339,7 +365,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                     fil_md.db.add_pkg(pkg)
 
         # Write out other
-        if oth_md and not oth_md.skip and oth_md.new_f:
+        if oth_md and oth_md.could_be_processed and not oth_md.is_a_copy:
             oth_md.new_f.set_num_of_pkgs(num_of_packages)
             for pkg in all_packages_sorted:
                 oth_md.new_f.add_pkg(pkg)
@@ -348,7 +374,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
 
         # Finish metadata
         def finish_metadata(md):
-            if md is None or md.skip:
+            if md is None or not md.could_be_processed or md.is_a_copy:
                 return
 
             # Close XML file
@@ -393,15 +419,18 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             if md is None:
                 return
 
-            if not md.old_fn and md.metadata_type not in  only_copied_metadata:
+            if not md.old_fn and not md.is_a_copy:
                 # This metadata file is not a copy
                 # This is a delta
                 # But we don't have a original file on which the delta
                 # could be applied
-                # TODO: Add option to ignore this
-                raise DeltaRepoPluginError("Old file of type {0} "
-                    "is missing. The delta file {1} thus cannot be "
-                    "applied".format(md.metadata_type, md.delta_fn))
+                msg = "Old file of type {0} is missing. The delta " \
+                      "file {1} thus cannot be applied.".format(
+                        md.metadata_type, md.delta_fn)
+                self._warning(msg)
+                if not self.globalbundle.ignore_missing:
+                    raise DeltaRepoPluginError(msg + "Use --ignore-missing "
+                                                     "to ignore this")
                 return
 
             # Copy the file here
@@ -449,6 +478,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
     def gen(self, metadata):
         # Check input arguments
         if "primary" not in metadata:
+            self._error("primary.xml metadata file is missing")
             raise DeltaRepoPluginError("Primary metadata missing")
 
         # Metadata for which no delta will be generated
@@ -469,8 +499,8 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
 
             # Make a note to the removed obj if the database should be generated
             db_type = "{0}_db".format(md.metadata_type)
-            available = metadata.get(db_type)
-            if available:
+            db_available = metadata.get(db_type)
+            if db_available or self.globalbundle.force_database:
                 persistent_metadata_info.setdefault(md.metadata_type, {})["database"] = "1"
             else:
                 persistent_metadata_info.setdefault(md.metadata_type, {})["database"] = "0"

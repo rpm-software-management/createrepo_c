@@ -103,7 +103,6 @@ function testcase01 {
         $DELTAREPO -a -o $FINALDIR $1 $DELTADIR
     fi
 
-
     compare_repos $2 $FINALDIR
 }
 
@@ -128,12 +127,8 @@ testcase01 $REPO1 $REPO2_NODATABASE
 testcase01 $REPO1 $REPO3
 testcase01 $REPO1 $REPO3_MD5
 
-testcase01 $REPO1_ONLY_PRI_FIL $REPO2
 testcase01 $REPO1_ONLY_PRI_FIL $REPO2_INCOMPLETE
 testcase01 $REPO1_ONLY_PRI_FIL $REPO2_INCOMPLETE_2
-testcase01 $REPO1_ONLY_PRI_FIL $REPO2_NODATABASE
-testcase01 $REPO1_ONLY_PRI_FIL $REPO3
-testcase01 $REPO1_ONLY_PRI_FIL $REPO3_MD5
 
 testcase01 $REPO2 $REPO1
 testcase01 $REPO2 $REPO2_INCOMPLETE
@@ -173,25 +168,120 @@ testcase01 $REPO3_MD5 $REPO2_INCOMPLETE
 testcase01 $REPO3_MD5 $REPO2_INCOMPLETE_2
 testcase01 $REPO3_MD5 $REPO3
 
-# Cases where repomd.xml will differ
+
+# 1nd test case that shoud failed
+#
+#   Scenario:
+# We have a repo where some metadata files are missing.
+# We want to do delta to the new repo version.
+# In this situation, delta generation should failed as long
+# as no --ignore-missing param is passed
+#   Expected result:
+# No deltarepo should be generated and bad return code should
+# be returned
+
+function testcase01_that_should_fail {
+    # Arguments are: REPO_old REPO_new
+
+    IDSTR=$(printf "%02d\n" $TESTCASEID)
+    TESTCASEID=$[$TESTCASEID+1]
+
+    TCNAME="$IDSTR: $FUNCNAME $1 -> $2 applied on: $1"
+    TCDIR=$(testcase_outdir "$IDSTR-$FUNCNAME")
+
+    echo "==============================================="
+    echo "$TCNAME ($TCDIR)";
+    echo "==============================================="
+
+    DELTADIR="$TCDIR/delta"
+    FINALDIR="$TCDIR/final"
+    mkdir $DELTADIR
+    mkdir $FINALDIR
+
+    $DELTAREPO --quiet -o $DELTADIR $1 $2 &> $TCDIR/output
+
+    if [ "$?" = 0 ]; then
+        echo "FAILED"
+        cat $TCDIR/output
+    fi
+
+    echo
+}
+
+testcase01_that_should_fail $REPO1_ONLY_PRI_FIL $REPO2
+testcase01_that_should_fail $REPO1_ONLY_PRI_FIL $REPO2_NODATABASE
+testcase01_that_should_fail $REPO1_ONLY_PRI_FIL $REPO3
+testcase01_that_should_fail $REPO1_ONLY_PRI_FIL $REPO3_MD5
+testcase01_that_should_fail $REPO1_ONLY_PRI_FIL $REPO1_ONLY_PRI_FIL
+testcase01_that_should_fail $REPO1 $REPO1_ONLY_PRI_FIL
+testcase01_that_should_fail $REPO2 $REPO1_ONLY_PRI_FIL
+testcase01_that_should_fail $REPO2_INCOMPLETE $REPO1_ONLY_PRI_FIL
+testcase01_that_should_fail $REPO2_INCOMPLETE_2 $REPO1_ONLY_PRI_FIL
+testcase01_that_should_fail $REPO3 $REPO1_ONLY_PRI_FIL
+testcase01_that_should_fail $REPO3_MD5 $REPO1_ONLY_PRI_FIL
+
+# 1nd test case that shoud succeed
+#
+#   Scenario:
+# We have a repo where some metadata files are missing.
+# We want to do delta to the new repo version.
+# In this situation, delta generation should pass because
+# --ignore-missing param is used
+#   Expected result:
+# Deltarepo should be generated and 0 return code should
+# be returned
+
+function testcase01_that_should_succeed {
+    # Arguments are: REPO_old REPO_new
+
+    IDSTR=$(printf "%02d\n" $TESTCASEID)
+    TESTCASEID=$[$TESTCASEID+1]
+
+    TCNAME="$IDSTR: $FUNCNAME $1 -> $2 applied on: $1"
+    TCDIR=$(testcase_outdir "$IDSTR-$FUNCNAME")
+
+    echo "==============================================="
+    echo "$TCNAME ($TCDIR)";
+    echo "==============================================="
+
+    DELTADIR="$TCDIR/delta"
+    FINALDIR="$TCDIR/final"
+    mkdir $DELTADIR
+    mkdir $FINALDIR
+
+    if [ "$DELTAREPO_QUIET" = 1 ]; then
+        $DELTAREPO --ignore-missing --quiet -o $DELTADIR $1 $2
+        $DELTAREPO --ignore-missing --quiet -a -o $FINALDIR $1 $DELTADIR
+    else
+        $DELTAREPO --ignore-missing -o $DELTADIR $1 $2
+        $DELTAREPO --ignore-missing -a -o $FINALDIR $1 $DELTADIR
+    fi
+
+    compare_repos $2 $FINALDIR
+}
 
 COMPAREREPOS_IGNORE_REPOMD_CONTENT=1
 DELTAREPO_QUIET=1
+testcase01_that_should_succeed $REPO1_ONLY_PRI_FIL $REPO2
+testcase01_that_should_succeed $REPO1_ONLY_PRI_FIL $REPO2_NODATABASE
+testcase01_that_should_succeed $REPO1_ONLY_PRI_FIL $REPO3
+testcase01_that_should_succeed $REPO1_ONLY_PRI_FIL $REPO3_MD5
+testcase01_that_should_succeed $REPO1_ONLY_PRI_FIL $REPO1_ONLY_PRI_FIL
+testcase01_that_should_succeed $REPO1 $REPO1_ONLY_PRI_FIL
+testcase01_that_should_succeed $REPO2 $REPO1_ONLY_PRI_FIL
+testcase01_that_should_succeed $REPO2_INCOMPLETE $REPO1_ONLY_PRI_FIL
+testcase01_that_should_succeed $REPO2_INCOMPLETE_2 $REPO1_ONLY_PRI_FIL
+testcase01_that_should_succeed $REPO3 $REPO1_ONLY_PRI_FIL
+testcase01_that_should_succeed $REPO3_MD5 $REPO1_ONLY_PRI_FIL
 
-testcase01 $REPO1_ONLY_PRI_FIL $REPO1_ONLY_PRI_FIL
-testcase01 $REPO1 $REPO1_ONLY_PRI_FIL
-testcase01 $REPO2 $REPO1_ONLY_PRI_FIL
-testcase01 $REPO2_INCOMPLETE $REPO1_ONLY_PRI_FIL
-testcase01 $REPO2_INCOMPLETE_2 $REPO1_ONLY_PRI_FIL
-testcase01 $REPO3 $REPO1_ONLY_PRI_FIL
-testcase01 $REPO3_MD5 $REPO1_ONLY_PRI_FIL
-
+COMPAREREPOS_IGNORE_REPOMD_CONTENT=0
+DELTAREPO_QUIET=0
 
 # 2nd test case
 #
 #   Scenario:
 # We have a regular delta from R1 -> R2 but our R1 is incomplete
-# and some metadata files are missing.
+# and some metadata files are missing. --ignore-missing option is used
 #   Expected result:
 # Deltarepo should update the available files and print warning
 # about the missing ones.
@@ -216,12 +306,11 @@ function testcase02 {
 
     if [ "$DELTAREPO_QUIET" = 1 ]; then
         $DELTAREPO --quiet -o $DELTADIR $1 $2
-        $DELTAREPO --quiet -a -o $FINALDIR $3 $DELTADIR
+        $DELTAREPO --ignore-missing --quiet -a -o $FINALDIR $3 $DELTADIR
     else
         $DELTAREPO -o $DELTADIR $1 $2
-        $DELTAREPO -a -o $FINALDIR $3 $DELTADIR
+        $DELTAREPO --ignore-missing -a -o $FINALDIR $3 $DELTADIR
     fi
-
 
     compare_repos $2 $FINALDIR
 }
@@ -237,12 +326,16 @@ testcase02 $REPO1 $REPO3 $REPO1_ONLY_PRI
 testcase02 $REPO2 $REPO1 $REPO2_ONLY_PRI
 testcase02 $REPO2 $REPO3 $REPO2_ONLY_PRI
 
+COMPAREREPOS_IGNORE_REPOMD_CONTENT=0
+DELTAREPO_QUIET=0
+
 
 # 3th test case
 #
 #   Scenario:
 # We have incomplete delta for R1 -> R2. And incomplete R1.
 # The delta contains only deltas for the files contained by our R1.
+# --ignore-missing option is used
 #   Expected result:
 # Available deltas are applicated on available metadata.
 
@@ -282,9 +375,9 @@ function testcase03 {
     # Apply this delta to incomplete repo
 
     if [ "$DELTAREPO_QUIET" = 1 ]; then
-        $DELTAREPO --quiet -a -o $FINALDIR $3 $DELTADIR
+        $DELTAREPO --ignore-missing --quiet -a -o $FINALDIR $3 $DELTADIR
     else
-        $DELTAREPO -a -o $FINALDIR $3 $DELTADIR
+        $DELTAREPO --ignore-missing -a -o $FINALDIR $3 $DELTADIR
     fi
 
     compare_repos $2 $FINALDIR
@@ -294,6 +387,10 @@ COMPAREREPOS_IGNORE_REPOMD_CONTENT=1
 DELTAREPO_QUIET=1
 
 testcase03 $REPO2 $REPO3 $REPO2_ONLY_PRI
+testcase03 $REPO1 $REPO3 $REPO1_ONLY_PRI_FIL
+
+COMPAREREPOS_IGNORE_REPOMD_CONTENT=0
+DELTAREPO_QUIET=0
 
 
 # 4th test case
@@ -377,5 +474,68 @@ function testcase05 {
 }
 
 testcase05 $REPO1 $REPO2_NODATABASE $REPO2
+
+
+# 6th test case
+#
+#   Scenario:
+# We have incomplete delta for R1 -> R2. And complete R1.
+# --ignore-missing option is used
+#   Expected result:
+# Available deltas are applicated on available metadata.
+# Other (no updated) metadata are no logner available.
+
+function testcase06 {
+    # Arguments are: REPO_old REPO_new REPO_for_apply
+
+    IDSTR=$(printf "%02d\n" $TESTCASEID)
+    TESTCASEID=$[$TESTCASEID+1]
+
+    TCNAME="$IDSTR: incomplete delta $FUNCNAME $1 -> $2 applied on: $3"
+    TCDIR=$(testcase_outdir "$IDSTR-$FUNCNAME")
+
+    echo "==============================================="
+    echo "$TCNAME ($TCDIR)";
+    echo "==============================================="
+
+    DELTADIR="$TCDIR/delta"
+    FINALDIR="$TCDIR/final"
+    mkdir $DELTADIR
+    mkdir $FINALDIR
+
+    # Gen delta
+
+    if [ "$DELTAREPO_QUIET" = 1 ]; then
+        $DELTAREPO --quiet -o $DELTADIR $1 $2
+    else
+        $DELTAREPO -o $DELTADIR $1 $2
+    fi
+
+    # Remove some metadata from delta
+
+    rm -f $DELTADIR/repodata/*filelists.sqlite*
+    rm -f $DELTADIR/repodata/*other*
+    rm -f $DELTADIR/repodata/*comps*
+    rm -f $DELTADIR/repodata/*foobar*
+
+    # Apply this delta to incomplete repo
+
+    if [ "$DELTAREPO_QUIET" = 1 ]; then
+        $DELTAREPO --ignore-missing --quiet -a -o $FINALDIR $3 $DELTADIR
+    else
+        $DELTAREPO --ignore-missing -a -o $FINALDIR $3 $DELTADIR
+    fi
+
+    compare_repos $2 $FINALDIR
+}
+
+COMPAREREPOS_IGNORE_REPOMD_CONTENT=1
+DELTAREPO_QUIET=1
+
+testcase06 $REPO2 $REPO3 $REPO2
+testcase06 $REPO1 $REPO3 $REPO1
+
+COMPAREREPOS_IGNORE_REPOMD_CONTENT=0
+DELTAREPO_QUIET=0
 
 popd > /dev/null

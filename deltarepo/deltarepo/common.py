@@ -28,6 +28,9 @@ class LoggingInterface(object):
     def _critical(self, msg):
         self.logger.critical(msg)
 
+    def _get_logger(self):
+        return self.logger
+
 class AdditionalXmlData(object):
     """
     Interface to store/load additional data to/from xml.

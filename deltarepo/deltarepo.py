@@ -1,5 +1,7 @@
 #!/usr/bin/env  python
 
+from __future__ import print_function
+
 import sys
 import os.path
 import hashlib
@@ -26,6 +28,12 @@ def parse_options():
     #                  help="List datatypes for which delta is supported.")
     parser.add_option("-o", "--outputdir", action="store", metavar="DIR",
                       help="Output directory.", default="./")
+    parser.add_option("-d", "--database", action="store_true",
+                      help="Force database generation")
+    parser.add_option("--ignore-missing", action="store_true",
+                      help="Ignore missing metadata files. (The files that"
+                           "are listed in repomd.xml but physically doesn't "
+                           "exists)")
 
     group = OptionGroup(parser, "Delta generation")
     #group.add_option("--skip", action="append", metavar="DATATYPE",
@@ -42,8 +50,6 @@ def parse_options():
     group = OptionGroup(parser, "Delta application")
     group.add_option("-a", "--apply", action="store_true",
                      help="Enable delta application mode.")
-    #group.add_option("-d", "--database", action="store_true",
-    #                 help="Gen database.")
     parser.add_option_group(group)
 
     options, args = parser.parse_args()
@@ -78,7 +84,7 @@ def parse_options():
     return (options, args)
 
 def print_version():
-    print "DeltaRepo: %s" % deltarepo.VERBOSE_VERSION
+    print("DeltaRepo: {0}".format(deltarepo.VERBOSE_VERSION))
 
 def setup_logging(quiet, verbose):
     logger = logging.getLogger("deltarepo_logger")
@@ -92,6 +98,27 @@ def setup_logging(quiet, verbose):
         logger.setLevel(logging.INFO)
     return logger
 
+def main(args, options, logger):
+    if options.apply:
+        # Applying delta
+        da = deltarepo.DeltaRepoApplicator(args[0],
+                                           args[1],
+                                           out_path=options.outputdir,
+                                           logger=logger,
+                                           force_database=options.database,
+                                           ignore_missing=options.ignore_missing)
+        da.apply()
+    else:
+        # Do delta
+        dg = deltarepo.DeltaRepoGenerator(args[0],
+                                          args[1],
+                                          out_path=options.outputdir,
+                                          logger=logger,
+                                          repoid_type=options.id_type,
+                                          force_database=options.database,
+                                          ignore_missing=options.ignore_missing)
+        dg.gen()
+
 if __name__ == "__main__":
     options, args = parse_options()
 
@@ -101,18 +128,10 @@ if __name__ == "__main__":
 
     logger = setup_logging(options.quiet, options.verbose)
 
-    if options.apply:
-        # Applying delta
-        da = deltarepo.DeltaRepoApplicator(args[0],
-                                           args[1],
-                                           out_path=options.outputdir,
-                                           logger=logger)
-        da.apply()
-    else:
-        # Do delta
-        dg = deltarepo.DeltaRepoGenerator(args[0],
-                                          args[1],
-                                          out_path=options.outputdir,
-                                          logger=logger,
-                                          repoid_type=options.id_type)
-        dg.gen()
+    try:
+        main(args, options, logger)
+    except Exception as err:
+        print("Error: {0}".format(err), file=sys.stderr)
+        sys.exit(1)
+
+    sys.exit(0)

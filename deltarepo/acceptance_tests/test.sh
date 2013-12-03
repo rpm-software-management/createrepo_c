@@ -20,9 +20,10 @@ REPO1="repos/repo1"
 REPO1_ONLY_PRI="repos/repo1_only_pri"
 REPO1_ONLY_PRI_FIL="repos/repo1_only_pri_fil"
 REPO2="repos/repo2"
-REPO2_ONLY_PRI="repos/repo2_only_pri"
 REPO2_INCOMPLETE="repos/repo2_incomplete"
 REPO2_INCOMPLETE_2="repos/repo2_incomplete_2"
+REPO2_ONLY_PRI="repos/repo2_only_pri"
+REPO2_NODATABASE="repos/repo2_nodatabase"
 REPO3="repos/repo3"
 REPO3_MD5="repos/repo3_md5"
 
@@ -113,6 +114,7 @@ testcase01 $REPO1 $REPO1
 testcase01 $REPO2 $REPO2
 testcase01 $REPO2_INCOMPLETE $REPO2_INCOMPLETE
 testcase01 $REPO2_INCOMPLETE_2 $REPO2_INCOMPLETE_2
+testcase01 $REPO2_NODATABASE $REPO2_NODATABASE
 testcase01 $REPO3 $REPO3
 testcase01 $REPO3_MD5 $REPO3_MD5
 
@@ -122,18 +124,21 @@ testcase01 $REPO3_MD5 $REPO3_MD5
 testcase01 $REPO1 $REPO2
 testcase01 $REPO1 $REPO2_INCOMPLETE
 testcase01 $REPO1 $REPO2_INCOMPLETE_2
+testcase01 $REPO1 $REPO2_NODATABASE
 testcase01 $REPO1 $REPO3
 testcase01 $REPO1 $REPO3_MD5
 
 testcase01 $REPO1_ONLY_PRI_FIL $REPO2
 testcase01 $REPO1_ONLY_PRI_FIL $REPO2_INCOMPLETE
 testcase01 $REPO1_ONLY_PRI_FIL $REPO2_INCOMPLETE_2
+testcase01 $REPO1_ONLY_PRI_FIL $REPO2_NODATABASE
 testcase01 $REPO1_ONLY_PRI_FIL $REPO3
 testcase01 $REPO1_ONLY_PRI_FIL $REPO3_MD5
 
 testcase01 $REPO2 $REPO1
 testcase01 $REPO2 $REPO2_INCOMPLETE
 testcase01 $REPO2 $REPO2_INCOMPLETE_2
+testcase01 $REPO2 $REPO2_NODATABASE
 testcase01 $REPO2 $REPO3
 testcase01 $REPO2 $REPO3_MD5
 
@@ -148,6 +153,13 @@ testcase01 $REPO2_INCOMPLETE_2 $REPO2
 testcase01 $REPO2_INCOMPLETE_2 $REPO2_INCOMPLETE
 testcase01 $REPO2_INCOMPLETE_2 $REPO3
 testcase01 $REPO2_INCOMPLETE_2 $REPO3_MD5
+
+testcase01 $REPO2_NODATABASE $REPO1
+testcase01 $REPO2_NODATABASE $REPO2
+testcase01 $REPO2_NODATABASE $REPO2_INCOMPLETE
+testcase01 $REPO2_NODATABASE $REPO2_INCOMPLETE_2
+testcase01 $REPO2_NODATABASE $REPO3
+testcase01 $REPO2_NODATABASE $REPO3_MD5
 
 testcase01 $REPO3 $REPO1
 testcase01 $REPO3 $REPO2
@@ -282,5 +294,88 @@ COMPAREREPOS_IGNORE_REPOMD_CONTENT=1
 DELTAREPO_QUIET=1
 
 testcase03 $REPO2 $REPO3 $REPO2_ONLY_PRI
+
+
+# 4th test case
+#
+#   Scenario:
+# We have delta where databases should not be generated.
+# We want the databases.
+#   Expected result:
+# deltarepo --apply with --database argument should generate repo
+# with databases
+
+function testcase04 {
+    # Arguments are: REPO_old REPO_new_nodbs REPO_new_dbs
+
+    IDSTR=$(printf "%02d\n" $TESTCASEID)
+    TESTCASEID=$[$TESTCASEID+1]
+
+    TCNAME="$IDSTR: $FUNCNAME $1 -> $2 applied on: $1"
+    TCDIR=$(testcase_outdir "$IDSTR-$FUNCNAME")
+
+    echo "==============================================="
+    echo "$TCNAME ($TCDIR)";
+    echo "==============================================="
+
+    DELTADIR="$TCDIR/delta"
+    FINALDIR="$TCDIR/final"
+    mkdir $DELTADIR
+    mkdir $FINALDIR
+
+    if [ "$DELTAREPO_QUIET" = 1 ]; then
+        $DELTAREPO --quiet -o $DELTADIR $1 $2
+        $DELTAREPO --quiet --database -a -o $FINALDIR $1 $DELTADIR
+    else
+        $DELTAREPO -o $DELTADIR $1 $2
+        $DELTAREPO --database -a -o $FINALDIR $1 $DELTADIR
+    fi
+
+    compare_repos $3 $FINALDIR
+}
+
+testcase04 $REPO1 $REPO2_NODATABASE $REPO2
+
+
+# 5th test case
+#
+#   Scenario:
+# We want create delta where destination repo doesn't have a databases
+# But we want the databases. We use deltarepo with --database argument
+# during delta repo generation
+#   Expected result:
+# deltarepo --apply even WITHOUT --database argument should generate repo
+# with databases.
+
+function testcase05 {
+    # Arguments are: REPO_old REPO_new_nodbs REPO_new_dbs
+
+    IDSTR=$(printf "%02d\n" $TESTCASEID)
+    TESTCASEID=$[$TESTCASEID+1]
+
+    TCNAME="$IDSTR: $FUNCNAME $1 -> $2 applied on: $1"
+    TCDIR=$(testcase_outdir "$IDSTR-$FUNCNAME")
+
+    echo "==============================================="
+    echo "$TCNAME ($TCDIR)";
+    echo "==============================================="
+
+    DELTADIR="$TCDIR/delta"
+    FINALDIR="$TCDIR/final"
+    mkdir $DELTADIR
+    mkdir $FINALDIR
+
+    if [ "$DELTAREPO_QUIET" = 1 ]; then
+        $DELTAREPO --quiet --database -o $DELTADIR $1 $2
+        $DELTAREPO --quiet -a -o $FINALDIR $1 $DELTADIR
+    else
+        $DELTAREPO --database -o $DELTADIR $1 $2
+        $DELTAREPO -a -o $FINALDIR $1 $DELTADIR
+    fi
+
+    compare_repos $3 $FINALDIR
+}
+
+testcase05 $REPO1 $REPO2_NODATABASE $REPO2
 
 popd > /dev/null

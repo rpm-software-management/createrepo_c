@@ -8,7 +8,7 @@ if(DOXYGEN_FOUND)
         COMMENT "Building C API documentation with Doxygen" VERBATIM)
 endif(DOXYGEN_FOUND)
 
-INSTALL(FILES createrepo_c.8.gz mergerepo_c.8.gz
+INSTALL(FILES createrepo_c.8.gz mergerepo_c.8.gz modifyrepo_c.8.gz
         DESTINATION share/man/man8
         COMPONENT bin)
 

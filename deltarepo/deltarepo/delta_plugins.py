@@ -3,8 +3,8 @@ import os.path
 import shutil
 import hashlib
 import createrepo_c as cr
-from deltarepo.common import LoggingInterface
-from deltarepo.errors import DeltaRepoError, DeltaRepoPluginError
+from .common import LoggingInterface
+from .errors import DeltaRepoPluginError
 
 PLUGINS = []
 GENERAL_PLUGIN = None

@@ -4,14 +4,26 @@ import logging
 import xml.dom.minidom
 import createrepo_c as cr
 from lxml import etree
-from deltarepo.errors import DeltaRepoError
+from .errors import DeltaRepoError
 
 class LoggingInterface(object):
+    """Base class with logging support.
+    Other classes inherit this class to obtain
+    support of logging methods.
+    """
+
     def __init__(self, logger=None):
+        self.logger = None
+        self._set_logger(logger)
+
+    def _set_logger(self, logger=None):
         if logger is None:
             logger = logging.getLogger()
             logger.disabled = True
         self.logger = logger
+
+    def _get_logger(self):
+        return self.logger
 
     def _debug(self, msg):
         self.logger.debug(msg)
@@ -28,12 +40,8 @@ class LoggingInterface(object):
     def _critical(self, msg):
         self.logger.critical(msg)
 
-    def _get_logger(self):
-        return self.logger
-
 class AdditionalXmlData(object):
-    """
-    Interface to store/load additional data to/from xml.
+    """Interface to store/load additional data to/from xml.
     """
 
     ADDITIONAL_XML_DATA = True
@@ -43,6 +51,10 @@ class AdditionalXmlData(object):
         self._lists = {}
 
     def set(self, key, value):
+        """Store a single key-value pair to the XML.
+        Both key and value have to be a string.
+        Each key could have only single string value.
+        No multiple keys with same name are allowed."""
         if not isinstance(key, basestring):
             raise TypeError("expected string as key")
         if not isinstance(value, basestring):
@@ -50,6 +62,10 @@ class AdditionalXmlData(object):
         self._data[key] = value
 
     def update(self, dictionary):
+        """Store multiple key-value pairs to the XML.
+        All keys and values have to be a strings.
+        Each key could have only single string value.
+        No multiple keys with same name are allowed."""
         if not isinstance(dictionary, dict):
             raise TypeError("expected dictionary")
 
@@ -57,6 +73,8 @@ class AdditionalXmlData(object):
             self.set(key, val)
 
     def append(self, listname, dictionary):
+        """Append a multiple key-value pairs to the XML.
+        One list/key could have multiple dictionaries."""
         if not isinstance(listname, basestring):
             raise TypeError("expected string")
         if not isinstance(dictionary, dict):
@@ -73,12 +91,20 @@ class AdditionalXmlData(object):
         self._lists[listname].append(dictionary)
 
     def get(self, key, default=None):
+        """Return a single valued key from the XML"""
         return self._data.get(key, default)
 
     def get_list(self, key, default=None):
+        """Return list (a key with multiple values) of dictionaries"""
         return self._lists.get(key, default)
 
-    def subelement(self, parent, name, in_attrs=None):
+    def _subelement(self, parent, name, in_attrs=None):
+        """Generate an XML element from the content of the object.
+
+        :param parent: Parent xml.dom.Node object
+        :param name: Name of the XML element
+        :param in_attrs: Dictionary with element attributes.
+                         Both keys and values have to be strings."""
         attrs = {}
         attrs.update(self._data)
         if in_attrs:
@@ -92,6 +118,9 @@ class AdditionalXmlData(object):
         return elem
 
 class PluginBundle(AdditionalXmlData):
+    """Object that persistently stores plugin configuration
+    in deltametadata.xml XML file.
+    To access data use the public methods from AdditionalXmlData object."""
     def __init__(self, name, version):
         AdditionalXmlData.__init__(self)
 
@@ -100,11 +129,12 @@ class PluginBundle(AdditionalXmlData):
         if not isinstance(version, int):
             raise TypeError("integer expected")
 
-        self.name = name
-        self.version = version
+        self.name = name        # Plugin name (string)
+        self.version = version  # Plugin version (integer)
 
 class DeltaMetadata(AdditionalXmlData):
-    """Object that represents bundle.xml file in deltarepository.
+    """Object that represents deltametadata.xml file in deltarepository.
+    The deltametadata.xml persistently stores plugin configuration.
     """
 
     def __init__(self):
@@ -113,25 +143,30 @@ class DeltaMetadata(AdditionalXmlData):
         self.usedplugins = {}
 
     def add_pluginbundle(self, pluginbundle):
+        """Add new pluginbundle to the object"""
+        if not isinstance(pluginbundle, PluginBundle):
+            raise TypeError("PluginBundle object expected")
         self.usedplugins[pluginbundle.name] = pluginbundle
 
     def get_pluginbundle(self, name):
+        """Get associate PluginBundle object"""
         return self.usedplugins.get(name, None)
 
-
     def xmldump(self):
+        """Get XML dump"""
         xmltree = etree.Element("deltametadata")
 
         usedplugins = etree.SubElement(xmltree, "usedplugins")
         for plugin in self.usedplugins.values():
             attrs = {"name": plugin.name, "version": str(plugin.version)}
-            plugin.subelement(usedplugins, "plugin", attrs)
+            plugin._subelement(usedplugins, "plugin", attrs)
         return etree.tostring(xmltree,
                               pretty_print=True,
                               encoding="UTF-8",
                               xml_declaration=True)
 
     def xmlparse(self, path):
+        """Parse data from an xml file"""
         _, tmp_path = tempfile.mkstemp()
         cr.decompress_file(path, tmp_path, cr.AUTO_DETECT_COMPRESSION)
         dom = xml.dom.minidom.parse(tmp_path)
@@ -193,9 +228,9 @@ class Metadata(object):
         self.metadata_type = metadata_type
 
         # Paths
-        self.old_fn = None
-        self.delta_fn = None
-        self.new_fn = None
+        self.old_fn = None      # in old (source) repository
+        self.delta_fn = None    # in delta repository
+        self.new_fn = None      # in new (target) repository
 
         self.out_dir = None
 

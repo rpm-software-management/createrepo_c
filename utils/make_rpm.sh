@@ -69,6 +69,8 @@ echo "> Moving rpms and srpm .."
 mv --verbose $RPMBUILD_DIR/SRPMS/createrepo_c-*.src.rpm $TARGETDIR/.
 mv --verbose $RPMBUILD_DIR/RPMS/*/createrepo_c-*.rpm $TARGETDIR/.
 mv --verbose $RPMBUILD_DIR/RPMS/*/python-createrepo_c-*.rpm $TARGETDIR/.
+mv --verbose $RPMBUILD_DIR/RPMS/*/python-deltarepo-*.rpm $TARGETDIR/.
+mv --verbose $RPMBUILD_DIR/RPMS/*/deltarepo-*.rpm $TARGETDIR/.
 echo "Moving done"
 
 echo "All done!"

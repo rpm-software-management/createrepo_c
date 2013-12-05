@@ -9,11 +9,11 @@ Copyright (C) 2013   Tomas Mlcoch
 """
 
 import createrepo_c as cr
-from deltarepo.common import LoggingInterface, Metadata
-from deltarepo.applicator import DeltaRepoApplicator
-from deltarepo.generator import DeltaRepoGenerator
-from deltarepo.delta_plugins import PLUGINS
-from deltarepo.errors import DeltaRepoError, DeltaRepoPluginError
+from .common import LoggingInterface, Metadata
+from .applicator import DeltaRepoApplicator
+from .generator import DeltaRepoGenerator
+from .delta_plugins import PLUGINS
+from .errors import DeltaRepoError, DeltaRepoPluginError
 
 __all__ = ['VERSION', 'VERBOSE_VERSION', 'DeltaRepoError',
            'DeltaRepoPluginError', 'DeltaRepoGenerator'

@@ -11,9 +11,9 @@ Copyright (C) 2013   Tomas Mlcoch
 import os
 import shutil
 import createrepo_c as cr
-from deltarepo.common import LoggingInterface, Metadata, DeltaMetadata, PluginBundle
-from deltarepo.delta_plugins import GlobalBundle, PLUGINS, GENERAL_PLUGIN
-from deltarepo.errors import DeltaRepoError, DeltaRepoPluginError
+from .common import LoggingInterface, Metadata, DeltaMetadata, PluginBundle
+from .delta_plugins import GlobalBundle, PLUGINS, GENERAL_PLUGIN
+from .errors import DeltaRepoError
 
 __all__ = ['DeltaRepoGenerator']
 

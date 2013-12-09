@@ -9,6 +9,14 @@ from .errors import DeltaRepoPluginError
 PLUGINS = []
 GENERAL_PLUGIN = None
 
+# Files with this suffixes will be considered as already compressed
+# The list is subset of:
+#   http://en.wikipedia.org/wiki/List_of_archive_formats
+# Feel free to extend this list
+COMPRESSION_SUFFIXES = [".bz2", ".gz", ".lz", ".lzma", ".lzo", ".xz",
+                        ".7z", ".s7z", ".apk", ".rar", ".sfx", ".tgz",
+                        ".tbz2", ".tlz", ".zip", ".zipx", ".zz"]
+
 class GlobalBundle(object):
 
     __slots__ = ("repoid_type_str",
@@ -56,32 +64,54 @@ class DeltaRepoPlugin(LoggingInterface):
         # Global bundle carry
         self.globalbundle = globalbundle
 
-    def gen_use_original(self, md):
-        """Function that takes original metadata file, and use it as a delta
+    def _log(self, level, msg):
+        new_msg = "{0}: {1}".format(self.NAME, msg)
+        LoggingInterface._log(self, level, new_msg)
+
+    def gen_use_original(self, md, compression_type=cr.NO_COMPRESSION):
+        """Function that takes original metadata file and
+        copy it to the delta repo unmodified.
         Plugins could use this function when they cannot generate delta file
         for some reason (eg. file is newly added, so delta is
         meaningless/impossible)."""
         md.delta_fn = os.path.join(md.out_dir, os.path.basename(md.new_fn))
-        shutil.copy2(md.new_fn, md.delta_fn)
+
+        # Compress or copy original file
+        stat = None
+        if (compression_type != cr.NO_COMPRESSION):
+            md.delta_fn += cr.compression_suffix(compression_type)
+            stat = cr.ContentStat(md.checksum_type)
+            cr.compress_file(md.new_fn, md.delta_fn, compression_type, stat)
+        else:
+            shutil.copy2(md.new_fn, md.delta_fn)
 
         # Prepare repomd record of xml file
         rec = cr.RepomdRecord(md.metadata_type, md.delta_fn)
+        if stat is not None:
+            rec.load_contentstat(stat)
         rec.fill(md.checksum_type)
         if self.globalbundle.unique_md_filenames:
             rec.rename_file()
+            md.delta_fn = rec.location_real
 
         md.generated_repomd_records.append(rec)
 
-    def apply_use_original(self, md):
+    def apply_use_original(self, md, decompress=False):
         """Reversal function for the gen_use_original"""
         md.new_fn = os.path.join(md.out_dir, os.path.basename(md.delta_fn))
-        shutil.copy2(md.delta_fn, md.new_fn)
+
+        if decompress:
+            md.new_fn = md.new_fn.rsplit('.', 1)[0]
+            cr.decompress_file(md.delta_fn, md.new_fn, cr.AUTO_DETECT_COMPRESSION)
+        else:
+            shutil.copy2(md.delta_fn, md.new_fn)
 
         # Prepare repomd record of xml file
         rec = cr.RepomdRecord(md.metadata_type, md.new_fn)
         rec.fill(md.checksum_type)
         if self.globalbundle.unique_md_filenames:
             rec.rename_file()
+            md.new_fn = rec.location_real
 
         md.generated_repomd_records.append(rec)
 
@@ -110,18 +140,52 @@ class GeneralDeltaRepoPlugin(DeltaRepoPlugin):
     VERSION = 1
     METADATA = []
 
-    def _path(self, path, record):
-        """Return path to the repodata file."""
-        return os.path.join(path, record.location_href)
-
     def apply(self, metadata):
+        # Prepare notes about metadata elements from deltametadata.xml
+        metadata_notes = {}
+        for dict in self.pluginbundle.get_list("metadata"):
+            if "type" not in dict:
+                self._warning("Metadata element in deltametadata.xml hasn't "
+                              "an attribute 'type'")
+                continue
+            metadata_notes[dict["type"]] = dict
+
         for md in metadata.values():
-            self.apply_use_original(md)
+            # Check if file is listed for the GeneralDeltaRepoPlugin
+            if not md.metadata_type in metadata_notes:
+                msg = "Delta of metadata of type \"{0}\" wasn't done "\
+                      "by the {1}.".format(md.metadata_type, self.NAME)
+                self._error(msg)
+                raise DeltaRepoPluginError(msg)
+
+            # Check if file should be uncompressed
+            decompress = False
+            if md.metadata_type in metadata_notes:
+                if metadata_notes[md.metadata_type].get("compressed"):
+                    decompress = True
+
+            self.apply_use_original(md, decompress)
 
     def gen(self, metadata):
-        ## TODO: Compress uncompressed data
         for md in metadata.values():
-            self.gen_use_original(md)
+            # If file is not compressed then compress it
+            compressed = False
+            for suffix in COMPRESSION_SUFFIXES:
+                if md.new_fn.endswith(suffix):
+                    compressed = True
+                    break
+
+            compression = cr.NO_COMPRESSION
+            if not compressed:
+                compression = cr.XZ
+
+            # Gen record
+            self.gen_use_original(md, compression_type=compression)
+            record_persistent_notes =  {'type': md.metadata_type,
+                                        'original': '1'}
+            if compression != cr.NO_COMPRESSION:
+                record_persistent_notes["compressed"] = "1"
+            self.pluginbundle.append("metadata", record_persistent_notes)
 
 GENERAL_PLUGIN = GeneralDeltaRepoPlugin
 
@@ -132,10 +196,6 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
     VERSION = 1
     METADATA = ["primary", "filelists", "other",
                 "primary_db", "filelists_db", "other_db"]
-
-    def _path(self, path, record):
-        """Return path to the repodata file."""
-        return os.path.join(path, record.location_href)
 
     def _pkg_id_tuple(self, pkg):
         """Return tuple identifying a package in repodata.
@@ -291,6 +351,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                         "is not available.")
 
         # Parse both old and delta primary.xml files
+        self._debug("Parsing primary xmls")
         cr.xml_parse_primary(pri_md.old_fn, pkgcb=old_pkgcb,
                              do_files=do_primary_files)
         cr.xml_parse_primary(pri_md.delta_fn, pkgcb=delta_pkgcb,
@@ -332,8 +393,10 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         if fil_md and fil_md.is_a_copy:
             # We got the original filelists.xml in the delta repo
             # So it is sufficient to parse only this filelists.xml
+            self._debug("Parsing filelists xml (delta only)")
             cr.xml_parse_filelists(fil_md.delta_fn, newpkgcb=newpkgcb)
         elif fil_md and fil_md.could_be_processed:
+            self._debug("Parsing filelists xmls")
             cr.xml_parse_filelists(fil_md.old_fn, newpkgcb=newpkgcb)
             cr.xml_parse_filelists(fil_md.delta_fn, newpkgcb=newpkgcb)
 
@@ -344,12 +407,14 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         #    # So it is sufficient to parse only this other.xml
         #    cr.xml_parse_other(oth_md.delta_fn, newpkgcb=newpkgcb)
         if oth_md and oth_md.could_be_processed and not oth_md.is_a_copy:
+            self._debug("Parsing other xmls")
             cr.xml_parse_other(oth_md.old_fn, newpkgcb=newpkgcb)
             cr.xml_parse_other(oth_md.delta_fn, newpkgcb=newpkgcb)
 
         num_of_packages = len(all_packages_sorted)
 
         # Write out primary
+        self._debug("Writing primary xml: {0}".format(pri_md.new_fn))
         pri_md.new_f.set_num_of_pkgs(num_of_packages)
         for pkg in all_packages_sorted:
             pri_md.new_f.add_pkg(pkg)
@@ -358,6 +423,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
 
         # Write out filelists
         if fil_md and fil_md.could_be_processed and not fil_md.is_a_copy:
+            self._debug("Writing filelists xml: {0}".format(fil_md.new_fn))
             fil_md.new_f.set_num_of_pkgs(num_of_packages)
             for pkg in all_packages_sorted:
                 fil_md.new_f.add_pkg(pkg)
@@ -366,6 +432,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
 
         # Write out other
         if oth_md and oth_md.could_be_processed and not oth_md.is_a_copy:
+            self._debug("Writing other xml: {0}".format(oth_md.new_fn))
             oth_md.new_f.set_num_of_pkgs(num_of_packages)
             for pkg in all_packages_sorted:
                 oth_md.new_f.add_pkg(pkg)
@@ -391,6 +458,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
 
             # Prepare database
             if hasattr(md, "db") and md.db:
+                self._debug("Generating database: {0}".format(md.db_fn))
                 md.db.dbinfo_update(rec.checksum)
                 md.db.close()
                 db_stat = cr.ContentStat(md.checksum_type)
@@ -435,11 +503,14 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
 
             # Copy the file here
             self.apply_use_original(md)
+            self._debug("Just a copy: {0}".format(md.new_fn))
 
             # Check if sqlite should be generated
             if md.metadata_type in gen_db_for:
                 md.db_fn = os.path.join(md.out_dir, "{0}.sqlite".format(
                                         md.metadata_type))
+
+                self._debug("Generating database: {0}".format(md.db_fn))
 
                 # Note: filelists (if needed) has been already parsed.
                 # Because it has to be parsed before primary.xml is written
@@ -684,3 +755,70 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         self.globalbundle.calculated_new_repoid = new_repoid
 
 PLUGINS.append(MainDeltaRepoPlugin)
+
+class GroupsDeltaRepoPlugin(DeltaRepoPlugin):
+
+    NAME = "GroupDeltaRepoPlugin"
+    VERSION = 1
+    METADATA = ["group", "group_gz"]
+
+    def apply(self, metadata):
+
+        md_group = metadata.get("group")
+        md_group_gz = metadata.get("group_gz")
+
+        # Prepare notes about metadata elements from deltametadata.xml
+        metadata_notes = {}
+        for dict in self.pluginbundle.get_list("metadata"):
+            if "type" not in dict:
+                self._warning("Metadata element in deltametadata.xml hasn't "
+                              "an attribute 'type'")
+                continue
+            metadata_notes[dict["type"]] = dict
+
+        for md in (md_group, md_group_gz):
+            if md and not md.metadata_type in metadata_notes:
+                msg = "Missing '{0}' record of {1} in the deltametadata.xml".format(
+                    md.metadata_type, self.NAME)
+                self._error(msg)
+                raise DeltaRepoPluginError(msg)
+
+        if md_group:
+            options = metadata_notes[md_group.metadata_type]
+            decompress = bool(options.get("compressed"))
+            self.apply_use_original(md_group, decompress=decompress)
+
+            if options.get("gen_group_gz"):
+                stat = cr.ContentStat(md_group.checksum_type)
+                group_gz_fn = md_group.new_fn+".gz"
+                cr.compress_file(md_group.new_fn, group_gz_fn, cr.GZ, stat)
+                rec = cr.RepomdRecord("group_gz", group_gz_fn)
+                rec.load_contentstat(stat)
+                rec.fill(md_group.checksum_type)
+                if self.globalbundle.unique_md_filenames:
+                    rec.rename_file()
+                md_group.generated_repomd_records.append(rec)
+        elif md_group_gz:
+            self.apply_use_original(md_group_gz)
+
+    def gen(self, metadata):
+
+        md_group = metadata.get("group")
+        md_group_gz = metadata.get("group_gz")
+
+        if md_group and md_group_gz:
+            self.gen_use_original(md_group, compression_type=cr.XZ)
+            self.pluginbundle.append("metadata", {"type": "group",
+                                                  "compressed": "1",
+                                                  "gen_group_gz": "1"})
+        elif md_group and not md_group_gz:
+            self.gen_use_original(md_group, compression_type=cr.XZ)
+            self.pluginbundle.append("metadata", {"type": "group",
+                                                  "compressed": "1",
+                                                  "gen_group_gz": "0"})
+        elif not md_group and md_group_gz:
+            self.gen_use_original(md_group)
+            self.pluginbundle.append("metadata", {"type": "group_gz",
+                                                  "original": "1"})
+
+PLUGINS.append(GroupsDeltaRepoPlugin)

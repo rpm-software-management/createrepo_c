@@ -228,8 +228,10 @@ class DeltaRepoGenerator(LoggingInterface):
 
         if metadata_objects:
             # Use the plugin
+            pluginbundle = PluginBundle(GENERAL_PLUGIN.NAME, GENERAL_PLUGIN.VERSION)
+            self.deltametadata.add_pluginbundle(pluginbundle)
             self._debug("Plugin {0}: Active".format(GENERAL_PLUGIN.NAME))
-            plugin_instance = GENERAL_PLUGIN(None, self.globalbundle,
+            plugin_instance = GENERAL_PLUGIN(pluginbundle, self.globalbundle,
                                              logger=self._get_logger())
             plugin_instance.gen(metadata_objects)
 

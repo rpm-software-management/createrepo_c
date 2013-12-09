@@ -6,7 +6,7 @@ import sys
 import os.path
 import hashlib
 import logging
-from optparse import OptionParser, OptionGroup
+import argparse
 import deltarepo
 
 LOG_FORMAT = "%(message)s"
@@ -16,72 +16,77 @@ LOG_FORMAT = "%(message)s"
 
 
 def parse_options():
-    parser = OptionParser("usage: %prog [options] <first_repo> <second_repo>\n" \
-                          "       %prog --apply <repo> <delta_repo>")
-    parser.add_option("--version", action="store_true",
+    parser = argparse.ArgumentParser(description="Gen/Apply delta on yum repository.",
+                usage="%(prog)s [options] <first_repo> <second_repo>\n" \
+                      "       %(prog)s --apply <repo> <delta_repo>")
+    parser.add_argument('path1', help="First repository")
+    parser.add_argument('path2', help="Second repository or delta repository")
+    parser.add_argument('--debug', action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--version", action="store_true",
                       help="Show version number and quit.")
-    parser.add_option("-q", "--quiet", action="store_true",
+    parser.add_argument("-q", "--quiet", action="store_true",
                       help="Run in quiet mode.")
-    parser.add_option("-v", "--verbose", action="store_true",
+    parser.add_argument("-v", "--verbose", action="store_true",
                       help="Run in verbose mode.")
     #parser.add_option("-l", "--list-datatypes", action="store_true",
     #                  help="List datatypes for which delta is supported.")
-    parser.add_option("-o", "--outputdir", action="store", metavar="DIR",
+    parser.add_argument("-o", "--outputdir", action="store", metavar="DIR",
                       help="Output directory.", default="./")
-    parser.add_option("-d", "--database", action="store_true",
+    parser.add_argument("-d", "--database", action="store_true",
                       help="Force database generation")
-    parser.add_option("--ignore-missing", action="store_true",
-                      help="Ignore missing metadata files. (The files that"
+    parser.add_argument("--ignore-missing", action="store_true",
+                      help="Ignore missing metadata files. (The files that "
                            "are listed in repomd.xml but physically doesn't "
                            "exists)")
 
-    group = OptionGroup(parser, "Delta generation")
-    #group.add_option("--skip", action="append", metavar="DATATYPE",
+    group = parser.add_argument_group("Delta generation")
+    #group.add_argument("--skip", action="append", metavar="DATATYPE",
     #                 help="Skip delta on the DATATYPE. Could be specified "\
     #                 "multiple times. (E.g., --skip=comps)")
-    #group.add_option("--do-only", action="append", metavar="DATATYPE",
+    #group.add_argument("--do-only", action="append", metavar="DATATYPE",
     #                 help="Do delta only for the DATATYPE. Could be specified "\
     #                 "multiple times. (E.g., --do-only=primary)")
-    group.add_option("-t", "--id-type", action="store", metavar="HASHTYPE",
+    group.add_argument("-t", "--id-type", action="store", metavar="HASHTYPE",
                      help="Hash function for the ids (RepoId and DeltaRepoId). " \
                      "Default is sha256.", default="sha256")
-    parser.add_option_group(group)
 
-    group = OptionGroup(parser, "Delta application")
-    group.add_option("-a", "--apply", action="store_true",
+    group = parser.add_argument_group("Delta application")
+    group.add_argument("-a", "--apply", action="store_true",
                      help="Enable delta application mode.")
-    parser.add_option_group(group)
 
-    options, args = parser.parse_args()
+    args = parser.parse_args()
 
     # Error checks
 
-    if options.version:
-        return (options.args)
+    if args.version:
+        return args
 
-    if len(args) != 2:
-        parser.error("Two repository paths have to be specified!")
+    #if len(args) != 2:
+    #    parser.error("Two repository paths have to be specified!")
 
-    if options.id_type not in hashlib.algorithms:
-        parser.error("Unsupported hash algorithm %s" % options.id_type)
+    if args.id_type not in hashlib.algorithms:
+        parser.error("Unsupported hash algorithm %s" % args.id_type)
 
-    if options.quiet and options.verbose:
+    if args.quiet and args.verbose:
         parser.error("Cannot use quiet and verbose simultaneously!")
 
-    if not os.path.isdir(args[0]) or \
-       not os.path.isdir(os.path.join(args[0], "repodata")) or \
-       not os.path.isfile(os.path.join(args[0], "repodata", "repomd.xml")):
-        parser.error("Not a repository: %s" % args[0])
+    if not os.path.isdir(args.path1) or \
+       not os.path.isdir(os.path.join(args.path1, "repodata")) or \
+       not os.path.isfile(os.path.join(args.path1, "repodata", "repomd.xml")):
+        parser.error("Not a repository: %s" % args.path1)
 
-    if not os.path.isdir(args[1]) or \
-       not os.path.isdir(os.path.join(args[1], "repodata")) or \
-       not os.path.isfile(os.path.join(args[1], "repodata", "repomd.xml")):
-        parser.error("Not a repository: %s" % args[1])
+    if not os.path.isdir(args.path2) or \
+       not os.path.isdir(os.path.join(args.path2, "repodata")) or \
+       not os.path.isfile(os.path.join(args.path2, "repodata", "repomd.xml")):
+        parser.error("Not a repository: %s" % args.path2)
 
-    if not os.path.isdir(options.outputdir):
-        parser.error("Not a directory: %s" % options.outputdir)
+    if not os.path.isdir(args.outputdir):
+        parser.error("Not a directory: %s" % args.outputdir)
 
-    return (options, args)
+    if args.debug:
+        args.verbose = True
+
+    return args
 
 def print_version():
     print("DeltaRepo: {0}".format(deltarepo.VERBOSE_VERSION))
@@ -98,39 +103,41 @@ def setup_logging(quiet, verbose):
         logger.setLevel(logging.INFO)
     return logger
 
-def main(args, options, logger):
-    if options.apply:
+def main(args, logger):
+    if args.apply:
         # Applying delta
-        da = deltarepo.DeltaRepoApplicator(args[0],
-                                           args[1],
-                                           out_path=options.outputdir,
+        da = deltarepo.DeltaRepoApplicator(args.path1,
+                                           args.path2,
+                                           out_path=args.outputdir,
                                            logger=logger,
-                                           force_database=options.database,
-                                           ignore_missing=options.ignore_missing)
+                                           force_database=args.database,
+                                           ignore_missing=args.ignore_missing)
         da.apply()
     else:
         # Do delta
-        dg = deltarepo.DeltaRepoGenerator(args[0],
-                                          args[1],
-                                          out_path=options.outputdir,
+        dg = deltarepo.DeltaRepoGenerator(args.path1,
+                                          args.path2,
+                                          out_path=args.outputdir,
                                           logger=logger,
-                                          repoid_type=options.id_type,
-                                          force_database=options.database,
-                                          ignore_missing=options.ignore_missing)
+                                          repoid_type=args.id_type,
+                                          force_database=args.database,
+                                          ignore_missing=args.ignore_missing)
         dg.gen()
 
 if __name__ == "__main__":
-    options, args = parse_options()
+    args = parse_options()
 
-    if options.version:
+    if args.version:
         print_version()
         sys.exit(0)
 
-    logger = setup_logging(options.quiet, options.verbose)
+    logger = setup_logging(args.quiet, args.verbose)
 
     try:
-        main(args, options, logger)
+        main(args, logger)
     except Exception as err:
+        if args.debug:
+            raise
         print("Error: {0}".format(err), file=sys.stderr)
         sys.exit(1)
 

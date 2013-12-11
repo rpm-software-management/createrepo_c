@@ -9,4 +9,5 @@ fi
 
 pushd "$MY_DIR"
 $CREATEREPO $EXTRAARGS --pkglist pkglist --groupfile group.xml --revision "1st repo" --content "A content tag" .
+$MODIFYREPO --mdtype="foobar"  foobar-1 repodata/
 popd

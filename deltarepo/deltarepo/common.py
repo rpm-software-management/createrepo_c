@@ -6,6 +6,11 @@ import createrepo_c as cr
 from lxml import etree
 from .errors import DeltaRepoError
 
+DEFAULT_CHECKSUM_NAME = "sha256"
+DEFAULT_CHECKSUM_TYPE = cr.SHA256
+DEFAULT_COMPRESSION_TYPE = cr.GZ
+
+
 class LoggingInterface(object):
     """Base class with logging support.
     Other classes inherit this class to obtain
@@ -230,21 +235,25 @@ class Metadata(object):
 
         self.metadata_type = metadata_type
 
+        # Output directory
+        self.out_dir = None
+
+        # Repomd records (if available in corresponding repomd.xml)
+        self.old_rec = None
+        self.delta_rec = None
+        self.new_rec = None
+
         # Paths
+        # If record is available in corresponding repomd.xml
         self.old_fn = None      # in old (source) repository
         self.delta_fn = None    # in delta repository
         self.new_fn = None      # in new (target) repository
 
-        self.out_dir = None
+        # Exists the file on the filesystem?
+        self.old_fn_exists = False
+        self.delta_fn_exists = False
+        self.new_fn_exists = False
 
         # Settings
         self.checksum_type = None
         self.compression_type = None
-
-        # Records
-
-        # List of new repomd records related to this delta file
-        # List because some deltafiles could lead to more output files.
-        # E.g.: delta of primary.xml generate new primary.xml and
-        # primary.sqlite as well.
-        self.generated_repomd_records = []

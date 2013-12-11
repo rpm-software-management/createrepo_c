@@ -12,7 +12,9 @@ import os
 import shutil
 import createrepo_c as cr
 from .common import LoggingInterface, Metadata, DeltaMetadata
+from .common import DEFAULT_CHECKSUM_TYPE, DEFAULT_COMPRESSION_TYPE
 from .delta_plugins import GlobalBundle, PLUGINS, GENERAL_PLUGIN
+from .util import calculate_content_hash, pkg_id_str
 from .errors import DeltaRepoError
 
 __all__ = ['DeltaRepoApplicator']
@@ -63,15 +65,17 @@ class DeltaRepoApplicator(LoggingInterface):
                 len(self.delta_repomd.repoid.split('-')) != 2:
             raise DeltaRepoError("Bad DeltaRepoId")
 
-        self.repoid_type_str = self.delta_repomd.repoid_type
-        self.old_id, self.new_id = self.delta_repomd.repoid.split('-')
-        self._debug("Delta %s -> %s" % (self.old_id, self.new_id))
+        self.contenthash_type_str = self.delta_repomd.repoid_type
+        res = self.delta_repomd.repoid.split('-')
+        self.old_contenthash, self.new_contenthash = res
+        self._debug("Delta %s -> %s" % (self.old_contenthash,
+                                        self.new_contenthash))
 
         if self.old_repomd.repoid_type == self.delta_repomd.repoid_type:
-            if self.old_repomd.repoid and self.old_repomd.repoid != self.old_id:
+            if self.old_repomd.repoid and self.old_repomd.repoid != self.old_contenthash:
                 raise DeltaRepoError("Not suitable delta for current repo " \
                         "(Expected: {0} Real: {1})".format(
-                            self.old_id, self.old_repomd.repoid))
+                            self.old_contenthash, self.old_repomd.repoid))
         else:
             self._debug("Different repoid types repo: {0} vs delta: {1}".format(
                     self.old_repomd.repoid_type, self.delta_repomd.repoid_type))
@@ -128,33 +132,31 @@ class DeltaRepoApplicator(LoggingInterface):
 
         # Prepare global bundle
         self.globalbundle = GlobalBundle()
-        self.globalbundle.repoid_type_str = self.repoid_type_str
+        self.globalbundle.contenthash_type_str = self.contenthash_type_str
         self.globalbundle.unique_md_filenames = self.unique_md_filenames
         self.globalbundle.force_database = self.force_database
         self.globalbundle.ignore_missing = self.ignore_missing
 
     def _new_metadata(self, metadata_type):
-        """Return Metadata Object for the metadata_type or None"""
-
-        if metadata_type not in self.delta_records:
-            return None
+        """Return Metadata Object for the metadata_type"""
 
         metadata = Metadata(metadata_type)
 
-        # Build delta filename
-        metadata.delta_fn = os.path.join(self.delta_repo_path,
-                            self.delta_records[metadata_type].location_href)
-        if not os.path.isfile(metadata.delta_fn):
-            self._warning("Delta file {0} doesn't exist!".format(metadata.delta_fn))
-            return None
+        metadata.checksum_type = DEFAULT_CHECKSUM_TYPE
+        metadata.compression_type = DEFAULT_COMPRESSION_TYPE
 
-        metadata.delta_checksum = self.delta_records[metadata_type].checksum
+        # Set output directory
+        metadata.out_dir = self.new_repodata_path
 
-        if metadata_type in self.old_records:
+        # Properties related to the first (old) repository
+        old_rec = self.old_records.get(metadata_type)
+        metadata.old_rec = old_rec
+        if old_rec:
             # Build old filename
-            metadata.old_fn = os.path.join(self.old_repo_path,
-                            self.old_records[metadata_type].location_href)
-            if not os.path.isfile(metadata.old_fn):
+            metadata.old_fn = os.path.join(self.old_repo_path, old_rec.location_href)
+            if os.path.isfile(metadata.old_fn):
+                metadata.old_fn_exists = True
+            else:
                 msg = "File {0} doesn't exist in the old repository" \
                       " (but it should - delta may rely on " \
                       "it)!".format(metadata.old_fn)
@@ -162,26 +164,83 @@ class DeltaRepoApplicator(LoggingInterface):
                 if not self.ignore_missing:
                     raise DeltaRepoError(msg + " Use --ignore-missing option "
                                                "to ignore this error")
-                #self._warning("Metadata of the type \"{0}\" maybe won't be " \
-                #              "available in the generated repository".format(metadata_type))
-                #self._warning("Output repository maybe WON'T be a 1:1 identical " \
-                #              "to the target repository!")
-                metadata.old_fn = None
 
-        # Set output directory
-        metadata.out_dir = self.new_repodata_path
+        # Properties related to the second (delta) repository
+        delta_rec = self.delta_records.get(metadata_type)
+        metadata.delta_rec = delta_rec
+        if delta_rec:
+            metadata.delta_fn = os.path.join(self.delta_repo_path, delta_rec.location_href)
+            if os.path.isfile(metadata.delta_fn):
+                metadata.delta_fn_exists = True
 
-        # Determine checksum type
-        metadata.checksum_type = cr.checksum_type(
-                self.delta_records[metadata_type].checksum_type)
+                # Determine compression type
+                detected_compression_type = cr.detect_compression(metadata.delta_fn)
+                if (detected_compression_type != cr.UNKNOWN_COMPRESSION):
+                    metadata.compression_type = detected_compression_type
+                else:
+                    self._warning("Cannot detect compression type for "
+                                         "{0}".format(metadata.delta_fn))
+            else:
+                msg = ("The file {0} doesn't exist in the delta"
+                       "repository!".format(metadata.new_fn))
+                self._warning(msg)
+                if not self.ignore_missing:
+                    raise DeltaRepoError(msg + " Use --ignore-missing option "
+                                               "to ignore this error")
 
-        # Determine compression type
-        metadata.compression_type = cr.detect_compression(metadata.delta_fn)
-        if (metadata.compression_type == cr.UNKNOWN_COMPRESSION):
-            raise DeltaRepoError("Cannot detect compression type for {0}".format(
-                    metadata.delta_fn))
+            metadata.checksum_type = cr.checksum_type(delta_rec.checksum_type)
 
         return metadata
+
+    def check_content_hashes(self):
+        self._debug("Checking expected content hashes")
+
+        c_old_contenthash = self.globalbundle.calculated_old_contenthash
+        c_new_contenthash = self.globalbundle.calculated_new_contenthash
+
+        if not c_old_contenthash or not c_new_contenthash:
+
+            pri_md = self._new_metadata("primary")
+
+            if not c_old_contenthash:
+                if not pri_md.old_fn_exists:
+                    raise DeltaRepoError("Old repository doesn't have "
+                                         "a primary metadata!")
+                c_old_contenthash = calculate_content_hash(pri_md.old_fn,
+                                                          self.contenthash_type_str,
+                                                          self._get_logger())
+            if not c_new_contenthash:
+                if not pri_md.new_fn_exists:
+                    raise DeltaRepoError("New repository doesn't have "
+                                         "a primary metadata!")
+                c_new_contenthash = calculate_content_hash(pri_md.new_fn,
+                                                          self.contenthash_type_str,
+                                                          self._get_logger())
+
+        self._debug("Calculated content hash of the old repo: {0}".format(
+                    c_old_contenthash))
+        self._debug("Calculated content hash of the new repo: {0}".format(
+                    c_new_contenthash))
+
+        if self.old_contenthash != c_old_contenthash:
+            message = "Content hash of the old repository doesn't match "\
+                      "the real one ({1} != {2}).".format(self.old_contenthash,
+                      self.globalbundle.calculated_old_contenthash)
+            self._error(message)
+            raise DeltaRepoError(message)
+        else:
+            self._debug("Calculated content hash of the old repo matches "
+                        "the expected one ({0})".format(self.old_contenthash))
+
+        if self.new_contenthash != c_new_contenthash:
+            message = "Content hash of the new repository doesn't match "\
+                      "the real one ({1} != {2}).".format(self.new_contenthash,
+                      self.globalbundle.calculated_new_contenthash)
+            self._error(message)
+            raise DeltaRepoError(message)
+        else:
+            self._debug("Calculated content hash of the new repo matches "
+                        "the expected one ({0})".format(self.new_contenthash))
 
     def apply(self):
 
@@ -209,7 +268,13 @@ class DeltaRepoApplicator(LoggingInterface):
 
             # Prepare plugin bundle
             pluginbundle = self.deltametadata.get_pluginbundle(plugin.NAME)
-            if pluginbundle.version > plugin.VERSION:
+
+            if not pluginbundle:
+                self._debug("Skipping {0} because it hasn't record in "
+                            "deltametadata.xml".format(plugin.NAME))
+                continue
+
+            if pluginbundle and pluginbundle.version > plugin.VERSION:
                 raise DeltaRepoError("Delta of {0} metadata is generated by "
                     "plugin {1} with version: {2}, but locally available "
                     "is only version: {3}".format(metadata_objects.keys(),
@@ -219,16 +284,14 @@ class DeltaRepoApplicator(LoggingInterface):
             self._debug("Plugin {0}: Active".format(plugin.NAME))
             plugin_instance = plugin(pluginbundle, self.globalbundle,
                                      logger=self._get_logger())
-            plugin_instance.apply(metadata_objects)
+            repomd_records = plugin_instance.apply(metadata_objects)
 
             # Put repomd records from processed metadatas to repomd
-            for md in metadata_objects.values():
-                self._debug("Plugin {0}: Processed \"{1}\" delta record "\
-                            "which produced:".format(
-                            plugin.NAME, md.metadata_type))
-                for repomd_record in md.generated_repomd_records:
-                    self._debug(" - {0}".format(repomd_record.type))
-                    self.new_repomd.set_record(repomd_record)
+            self._debug("Plugin {0}: Processed {1} delta record(s) " \
+                "and produced:".format(plugin.NAME, metadata_objects.keys()))
+            for rec in repomd_records:
+                self._debug(" - {0}".format(rec.type))
+                self.new_repomd.set_record(rec)
 
             # Organization stuff
             for md in metadata_objects.keys():
@@ -236,21 +299,27 @@ class DeltaRepoApplicator(LoggingInterface):
 
         # Process rest of the metadata files
         metadata_objects = {}
-        for rectype, rec in self.delta_records.items():
+        all_available_records = set()
+        all_available_records.update(self.delta_records.items())
+        all_available_records.update(self.old_records.items())
+        for rectype, rec in all_available_records:
             if rectype == "deltametadata":
                 continue
-            if rectype not in processed_metadata:
-                metadata_object = self._new_metadata(rectype)
-                if metadata_object is not None:
-                    self._debug("To be processed by general delta plugin: " \
-                                "{0}".format(rectype))
-                    metadata_objects[rectype] = metadata_object
-                else:
-                    self._debug("Not processed: {0} - SKIP".format(rectype))
+            if rectype in processed_metadata:
+                continue
 
-        if metadata_objects:
+            metadata_object = self._new_metadata(rectype)
+            if metadata_object is not None:
+                self._debug("To be processed by general delta plugin: " \
+                            "{0}".format(rectype))
+                metadata_objects[rectype] = metadata_object
+            else:
+                self._debug("Not processed: {0} - SKIP".format(rectype))
+
+        if metadata_objects and self.deltametadata.get_pluginbundle(GENERAL_PLUGIN.NAME):
             # Use the plugin
             pluginbundle = self.deltametadata.get_pluginbundle(GENERAL_PLUGIN.NAME)
+
             if pluginbundle.version > GENERAL_PLUGIN.VERSION:
                 raise DeltaRepoError("Delta of {0} metadata is generated by "
                     "plugin {1} with version: {2}, but locally available "
@@ -259,55 +328,21 @@ class DeltaRepoApplicator(LoggingInterface):
             self._debug("Plugin {0}: Active".format(GENERAL_PLUGIN.NAME))
             plugin_instance = GENERAL_PLUGIN(pluginbundle, self.globalbundle,
                                              logger=self._get_logger())
-            plugin_instance.apply(metadata_objects)
+            repomd_records = plugin_instance.apply(metadata_objects)
 
-            for md in metadata_objects.values():
-                self._debug("Plugin {0}: Processed \"{1}\" delta record "\
-                            "which produced:".format(
-                            GENERAL_PLUGIN.NAME, md.metadata_type))
-                for repomd_record in md.generated_repomd_records:
-                    self._debug(" - {0}".format(repomd_record.type))
-                    self.new_repomd.set_record(repomd_record)
+            # Put repomd records from processed metadatas to repomd
+            self._debug("Plugin {0}: Processed {1} delta record(s) " \
+                "and produced:".format(GENERAL_PLUGIN.NAME, metadata_objects.keys()))
+            for rec in repomd_records:
+                self._debug(" - {0}".format(rec.type))
+                self.new_repomd.set_record(rec)
 
         # Check if calculated repoids match
-        self._debug("Checking expected repoids")
-
-        self._debug("Calculated repoid of the old repo: {0}".format(
-            self.globalbundle.calculated_old_repoid))
-        self._debug("Calculated repoid of the new repo: {0}".format(
-            self.globalbundle.calculated_new_repoid))
-
-        if self.globalbundle.calculated_old_repoid:
-            if self.old_id != self.globalbundle.calculated_old_repoid:
-                message = "Repoid of the \"{0}\" repository doesn't match "\
-                          "the real repoid ({1} != {2}).".format(
-                           self.old_repo_path, self.old_id,
-                           self.globalbundle.calculate_old_repoid)
-                self._error(message)
-                raise DeltaRepoError(message)
-            else:
-                self._debug("Repoid of the old repo matches ({0})".format(
-                            self.old_id))
-        else:
-            self._warning("\"old_repoid\" item was not calculated.")
-
-        if self.globalbundle.calculated_new_repoid:
-            if self.new_id != self.globalbundle.calculated_new_repoid:
-                message = "Repoid of the \"{0}\" repository doesn't match "\
-                          "the real repoid ({1} != {2}).".format(
-                           self.new_repo_path, self.new_id,
-                           self.globalbundle.calculated_new_repoid)
-                self._error(message)
-                raise DeltaRepoError(message)
-            else:
-                self._debug("Repoid of the new repo matches ({0})".format(
-                            self.new_id))
-        else:
-            self._warning("\"new_repoid\" item was not calculated.")
+        self.check_content_hashes()
 
         # Prepare and write out the new repomd.xml
         self._debug("Preparing repomd.xml ...")
-        self.new_repomd.set_repoid(self.new_id, self.repoid_type_str)
+        self.new_repomd.set_repoid(self.new_contenthash, self.contenthash_type_str)
         self.new_repomd.sort_records()
         new_repomd_xml = self.new_repomd.xml_dump()
 

@@ -2,8 +2,9 @@ import os
 import os.path
 import shutil
 import hashlib
+import filecmp
 import createrepo_c as cr
-from .common import LoggingInterface
+from .common import LoggingInterface, DEFAULT_CHECKSUM_NAME
 from .errors import DeltaRepoPluginError
 
 PLUGINS = []
@@ -19,22 +20,22 @@ COMPRESSION_SUFFIXES = [".bz2", ".gz", ".lz", ".lzma", ".lzo", ".xz",
 
 class GlobalBundle(object):
 
-    __slots__ = ("repoid_type_str",
+    __slots__ = ("contenthash_type_str",
                  "unique_md_filenames",
-                 "calculated_old_repoid",
-                 "calculated_new_repoid",
+                 "calculated_old_contenthash",
+                 "calculated_new_contenthash",
                  "force_database",
                  "ignore_missing")
 
     def __init__(self):
-        self.repoid_type_str = "sha256"
+        self.contenthash_type_str = "sha256"
         self.unique_md_filenames = True
         self.force_database = False
         self.ignore_missing = False
 
         # Filled by plugins
-        self.calculated_old_repoid = None
-        self.calculated_new_repoid = None
+        self.calculated_old_contenthash = None
+        self.calculated_new_contenthash = None
 
 class DeltaRepoPlugin(LoggingInterface):
 
@@ -64,9 +65,32 @@ class DeltaRepoPlugin(LoggingInterface):
         # Global bundle carry
         self.globalbundle = globalbundle
 
+        # Internal stuff
+        self.__metadata_notes_cache = None
+
     def _log(self, level, msg):
         new_msg = "{0}: {1}".format(self.NAME, msg)
         LoggingInterface._log(self, level, new_msg)
+
+    def _metadata_notes_from_plugin_bundle(self, type):
+        """From the pluginbundle extract info about specific metadata element"""
+
+        if self.__metadata_notes_cache is None:
+            self.__metadata_notes_cache = {}
+            for dict in self.pluginbundle.get_list("metadata", []):
+                if "type" not in dict:
+                    self._warning("Metadata element in deltametadata.xml hasn't "
+                                  "an attribute 'type'")
+                    continue
+                self.__metadata_notes_cache[dict["type"]] = dict
+
+        return self.__metadata_notes_cache.get(type)
+
+    def _metadata_notes_to_plugin_bundle(self, type, dictionary):
+        """Store info about metadata persistently to pluginbundle"""
+        notes = {"type": type}
+        notes.update(dictionary)
+        self.pluginbundle.append("metadata", notes)
 
     def gen_use_original(self, md, compression_type=cr.NO_COMPRESSION):
         """Function that takes original metadata file and
@@ -74,6 +98,7 @@ class DeltaRepoPlugin(LoggingInterface):
         Plugins could use this function when they cannot generate delta file
         for some reason (eg. file is newly added, so delta is
         meaningless/impossible)."""
+
         md.delta_fn = os.path.join(md.out_dir, os.path.basename(md.new_fn))
 
         # Compress or copy original file
@@ -94,7 +119,7 @@ class DeltaRepoPlugin(LoggingInterface):
             rec.rename_file()
             md.delta_fn = rec.location_real
 
-        md.generated_repomd_records.append(rec)
+        return rec
 
     def apply_use_original(self, md, decompress=False):
         """Reversal function for the gen_use_original"""
@@ -113,21 +138,222 @@ class DeltaRepoPlugin(LoggingInterface):
             rec.rename_file()
             md.new_fn = rec.location_real
 
-        md.generated_repomd_records.append(rec)
+        return rec
+
+    def _gen_basic_delta(self, md, force_gen=False):
+        """Resolve some common situation during delta generation.
+
+        There is some situation which could appear during
+        delta generation:
+
+        # - Metadata file has a record in repomd.xml and the file really exists
+        O - Metadata file has a record in repomd.xml but the file is missing
+        X - Metadata file doesn't have a record in repomd.xml
+
+        Old repository | New repository
+        ---------------|---------------
+               #       |      #         - Valid case
+               #       |      X         - Valid case - metadata was removed
+               #       |      O         - Invalid case - incomplete repo
+               X       |      #         - Valid case - metadata was added
+               X       |      X         - This shouldn't happen
+               X       |      O         - Invalid case - incomplete repo
+               O       |      #         - Invalid case - incomplete repo
+               O       |      X         - Invalid case - incomplete repo
+               O       |      O         - Invalid case - both repos are incomplete
+
+        By default, Deltarepo should raise an exception when a invalid
+        case is meet. But user could use --ignore-missing option and
+        in that case, the Deltarepo should handle all invalid case
+        like a charm.
+
+        For example:
+
+        O | # - Just copy the new metadata to the delta repo as is
+        O | X - Just ignore that the old metadata is missing
+        O | O - Just ignore this
+        # | O - Just ignore this
+        X | O - Just ignore this
+
+        Most delta plugins should be only interested to "# | #" use case.
+        The case where we have the both, old and new, metadata available.
+        Other cases are mostly not important to the delta plugins.
+        This is the reason why this function exits. It should solve the
+        cases when the sophisticated delta is not possible.
+
+        Returns (SC - Status code,
+                 REC - Repomd record,
+                 NOTES - Dict with persistent notes)
+
+        If RC is True, then delta plugin shouldn't continue with
+        processing of this metadata.
+        """
+
+        if not md:
+            # No metadata - Nothing to do
+            return (True, None, None)
+
+        if not md.old_rec and not md.new_rec:
+            # None metadata record exists. This is weird and shouldn't happen
+            self._warning("\"{0}\": WEIRD CONDITIONS: doesn't exist "
+                          "in any repo".format())
+            return (True, None, None)
+
+        if not md.new_rec:
+            # This record doesn't exists in the new version of repodata
+            # This metadata were removed in the new version of repo
+            self._debug("\"{0}\": Removed in the new version of repodata"
+                        "".format(md.metadata_type))
+            return (True, None, None)
+
+        if not md.new_fn_exists:
+            # The new metadata file is missing
+            assert self.globalbundle.ignore_missing
+            self._warning("\"{0}\": Delta cannot be generated - new metadata "
+                          "are missing".format(md.metadata_type))
+            return (True, None, None)
+
+        if not md.old_rec or not md.old_fn_exists or \
+                (force_gen and not filecmp.cmp(md.old_fn, md.new_fn)):
+            # This metadata was newly added in the new version of repodata
+            # Or we are just missing the old version of this metadata
+            # Or we have both versions of metadata but the metadata are not
+            #    same and in that case we simply want to gen a delta as a copy
+            if md.old_fn_exists:
+                self._debug("\"{0}\": Newly added in the new version of repodata")
+            elif not md.old_fn_exists:
+                self._warning("\"{0}\": Delta cannot be generated - old metadata "
+                              "are missing - Using copy of the new one"
+                              "".format(md.metadata_type))
+            else:
+                self._debug("\"{0}\": Delta is just a copy of the new metadata")
+
+            # Suffix based detection of compression
+            compressed = False
+            for suffix in COMPRESSION_SUFFIXES:
+                if md.new_fn.endswith(suffix):
+                    compressed = True
+                    break
+
+            compression = cr.NO_COMPRESSION
+            if not compressed:
+                compression = cr.XZ
+
+            # Gen record
+            rec = self.gen_use_original(md, compression_type=compression)
+
+            notes = {}
+            notes["original"] = '1'
+            if compression != cr.NO_COMPRESSION:
+                notes["compressed"] = "1"
+
+            return (True, rec, notes)
+
+        # At this point we are sure that we have both metadata files
+
+        if filecmp.cmp(md.old_fn, md.new_fn):
+            # Both metadata files exists and are the same
+            self._debug("\"{0}\": Same in both version of repodata"
+                        "".format(md.metadata_type))
+            notes = {}
+            if os.path.basename(md.old_fn) != os.path.basename(md.new_fn):
+                notes["new_name"] = os.path.basename(md.new_fn)
+
+            notes["unchanged"] = "1"
+            notes["checksum_name"] = cr.checksum_name_str(md.checksum_type)
+            return (True, None, notes)
+
+        # Both metadata files exists and are different,
+        # this is job for a real delta plugin :)
+        return (False, None, None)
+
+    def _apply_basic_delta(self, md, notes):
+        """
+
+        """
+
+        if not md:
+            # No metadata - Nothing to do
+            return (True, None)
+
+        if not notes:
+            # No notes - Nothing to do
+            return (True, None)
+
+        if not md.old_rec and not md.delta_rec:
+            # None metadata record exists. This is weird and shouldn't happen
+            self._warning("\"{0}\": WEIRD CONDITIONS: doesn't exist "
+                          "in any repo".format())
+            return (True, None)
+
+        if not md.delta_rec:
+            # This record is missing in delta repo
+            if notes.get("unchanged") != "1":
+                # This metadata were removed in the new version of repo
+                self._debug("\"{0}\": Removed in the new version of repodata"
+                            "".format(md.metadata_type))
+                return (True, None)
+
+            # Copy from the old repo should be used
+            if not md.old_fn_exists:
+                # This is missing in the old repo
+                self._warning("\"{0}\": From old repo should be used, but "
+                              "it is missing".format(md.metadata_type))
+                return (True, None)
+
+            # Use copy from the old repo
+
+            # Check if old file should have a new name
+            basename = notes.get("new_name")
+            if not basename:
+                basename = os.path.basename(md.old_fn)
+
+            md.new_fn = os.path.join(md.out_dir, basename)
+
+            checksum_name = notes.get("checksum_name", DEFAULT_CHECKSUM_NAME)
+            checksum_type = cr.checksum_type(checksum_name)
+
+            # Copy the file and create repomd record
+            shutil.copy2(md.old_fn, md.new_fn)
+            rec = cr.RepomdRecord(md.metadata_type, md.new_fn)
+            rec.fill(checksum_type)
+            if self.globalbundle.unique_md_filenames:
+                rec.rename_file()
+                md.new_fn = rec.location_real
+            return (True, rec)
+
+        if not md.delta_fn_exists:
+            # Delta is missing
+            self._warning("\"{0}\": Delta file is missing"
+                          "".format(md.metadata_type))
+            return (True, None)
+
+        # At this point we are sure, we have a delta file
+
+        if notes.get("original") == "1":
+            # Delta file is the target file
+
+            # Check if file should be uncompressed
+            decompress = False
+            if notes.get("compressed") == "1":
+                decompress = True
+
+            rec = self.apply_use_original(md, decompress)
+            self._debug("\"{0}\": Used delta is just a copy")
+            return (True, rec)
+
+        if not md.old_fn_exists:
+            # Old file is missing
+            self._warning("\"{0}\": Old file is missing"
+                          "".format(md.metadata_type))
+            return (True, None)
+
+        # Delta file exists and it is not a copy nor metadata
+        # file from old repo should be used.
+        # this is job for a real delta plugin :)
+        return (False, None)
 
     def apply(self, metadata):
-        """
-        :arg metadata: Dict with available metadata listed in METADATA.
-            key is metadata type (e.g. "primary", "filelists", ...)
-            value is Metadata object
-            This method is called only if at least one metadata listed
-            in METADATA are found in delta repomd.
-
-        Apply method has to do:
-         * Raise DeltaRepoPluginError if something is bad
-         * Build a new filename and create a file for each metadata and
-           store it to Metadata Object.
-        """
         raise NotImplementedError("Not implemented")
 
     def gen(self, metadata):
@@ -140,52 +366,32 @@ class GeneralDeltaRepoPlugin(DeltaRepoPlugin):
     VERSION = 1
     METADATA = []
 
-    def apply(self, metadata):
-        # Prepare notes about metadata elements from deltametadata.xml
-        metadata_notes = {}
-        for dict in self.pluginbundle.get_list("metadata"):
-            if "type" not in dict:
-                self._warning("Metadata element in deltametadata.xml hasn't "
-                              "an attribute 'type'")
-                continue
-            metadata_notes[dict["type"]] = dict
-
-        for md in metadata.values():
-            # Check if file is listed for the GeneralDeltaRepoPlugin
-            if not md.metadata_type in metadata_notes:
-                msg = "Delta of metadata of type \"{0}\" wasn't done "\
-                      "by the {1}.".format(md.metadata_type, self.NAME)
-                self._error(msg)
-                raise DeltaRepoPluginError(msg)
-
-            # Check if file should be uncompressed
-            decompress = False
-            if md.metadata_type in metadata_notes:
-                if metadata_notes[md.metadata_type].get("compressed"):
-                    decompress = True
-
-            self.apply_use_original(md, decompress)
-
     def gen(self, metadata):
+
+        gen_repomd_recs = []
+
         for md in metadata.values():
-            # If file is not compressed then compress it
-            compressed = False
-            for suffix in COMPRESSION_SUFFIXES:
-                if md.new_fn.endswith(suffix):
-                    compressed = True
-                    break
+            rc, rec, notes = self._gen_basic_delta(md, force_gen=True)
+            assert rc
+            if rec:
+                gen_repomd_recs.append(rec)
+            if notes:
+                self._metadata_notes_to_plugin_bundle(md.metadata_type, notes)
 
-            compression = cr.NO_COMPRESSION
-            if not compressed:
-                compression = cr.XZ
+        return gen_repomd_recs
 
-            # Gen record
-            self.gen_use_original(md, compression_type=compression)
-            record_persistent_notes =  {'type': md.metadata_type,
-                                        'original': '1'}
-            if compression != cr.NO_COMPRESSION:
-                record_persistent_notes["compressed"] = "1"
-            self.pluginbundle.append("metadata", record_persistent_notes)
+    def apply(self, metadata):
+
+        gen_repomd_recs = []
+
+        for md in metadata.values():
+            notes = self._metadata_notes_from_plugin_bundle(md.metadata_type)
+            rc, rec = self._apply_basic_delta(md, notes)
+            assert rc
+            if rec:
+                gen_repomd_recs.append(rec)
+
+        return gen_repomd_recs
 
 GENERAL_PLUGIN = GeneralDeltaRepoPlugin
 
@@ -204,7 +410,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
 
     def _pkg_id_str(self, pkg):
         """Return string identifying a package in repodata.
-        This strings are used for the RepoId calculation."""
+        This strings are used for the content hash calculation."""
         if not pkg.pkgId:
             self._warning("Missing pkgId in a package!")
         if not pkg.location_href:
@@ -217,20 +423,62 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         return idstr
 
     def apply(self, metadata):
+        # Check input arguments
+        if "primary" not in metadata:
+            self._error("primary.xml metadata file is missing")
+            raise DeltaRepoPluginError("Primary metadata missing")
+
+        gen_repomd_recs = []
 
         gen_db_for = set([])
-        only_copied_metadata = set({})
         removed_packages = {}
 
+        pri_md = metadata.get("primary")
+        fil_md = metadata.get("filelists")
+        oth_md = metadata.get("other")
+
+        def try_simple_delta(md):
+            notes = self._metadata_notes_from_plugin_bundle(md.metadata_type)
+            if not notes:
+                self._warning("Metadata \"{0}\" doesn't have a record in "
+                              "deltametadata.xml - Ignoring")
+                return True
+            rc, rec = self._apply_basic_delta(md, notes)
+            if not rc:
+                return False
+            if rec:
+                gen_repomd_recs.append(rec)
+
+            # Gen DB here
+            # TODO: TODO
+
+            return True
+
+        # At first try to simple delta
+
+        simple_pri_delta = try_simple_delta(pri_md)
+        simple_fil_delta = try_simple_delta(fil_md)
+        simple_oth_delta = try_simple_delta(oth_md)
+
+        if simple_pri_delta:
+            assert simple_fil_delta
+            assert simple_oth_delta
+            return gen_repomd_recs
+
+        # Ignore already processed metadata
+        if simple_fil_delta:
+            fil_md = None
+        if simple_oth_delta:
+            oth_md = None
+
         # Make a set of md_types for which databases should be generated
+        # TODO: REFACTOR THIS
         for record in self.pluginbundle.get_list("metadata", []):
             mdtype = record.get("type")
             if not mdtype:
                 continue
-            if self.globalbundle.force_database or record.get("database", "") == "1":
+            if self.globalbundle.force_database or record.get("database") == "1":
                 gen_db_for.add(mdtype)
-            if record.get("original", "") == "1":
-                only_copied_metadata.add(mdtype)
 
         # Make a dict of removed packages key is location_href,
         # value is location_base
@@ -241,47 +489,11 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             location_base = record.get("location_base")
             removed_packages[location_href] = location_base
 
-        # Check input arguments
-        if "primary" not in metadata:
-            self._error("primary.xml metadata file is missing")
-            raise DeltaRepoPluginError("Primary metadata missing")
-
-        # Metadata that no need to be processed, because they are just copies.
-        # This metadata are copied and compressed xml (filelists or other)
-        # Their sqlite databases have to be generated if they are required
-        no_processed_metadata = []
-
-        pri_md = metadata.get("primary")
-        fil_md = metadata.get("filelists")
-        oth_md = metadata.get("other")
-
-        # Build and prepare destination paths
-        # (And store them in the same Metadata object)
+        # Prepare output xml files and check if dbs should be generated
+        # Note: This information are stored directly to the Metadata
+        # object which someone could see as little hacky.
         def prepare_paths_in_metadata(md, xmlclass, dbclass):
             if md is None:
-                return
-
-            md.is_a_copy = False
-            md.could_be_processed = True
-
-            if md.metadata_type in only_copied_metadata:
-                # Metadata file in delta repo is a copy (not a delta).
-                # We don't want to process this file as delta file
-                no_processed_metadata.append(md)
-                md.is_a_copy = True
-                return
-
-            if not md.old_fn:
-                # The old file is missing, if the corresponding file
-                # in the deltarepo is not a copy (but just a delta),
-                # this metadata cannot not be generated! (because
-                # there is no file to which delta could be applied)
-                md.could_be_processed = False
-                return
-
-            if not md.delta_fn:
-                # The delfa file is missing. Thus delta cannot be applied
-                md.could_be_processed = False
                 return
 
             suffix = cr.compression_suffix(md.compression_type) or ""
@@ -317,61 +529,46 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                                   cr.OtherSqlite)
 
         # Apply delta
-
         all_packages = {}        # dict { 'pkgId': pkg }
 
-        old_repoid_strings = []
-        new_repoid_strings = []
+        old_contenthash_strings = []
+        new_contenthash_strings = []
 
         def old_pkgcb(pkg):
-            old_repoid_strings.append(self._pkg_id_str(pkg))
+            old_contenthash_strings.append(self._pkg_id_str(pkg))
             if pkg.location_href in removed_packages:
                 if removed_packages[pkg.location_href] == pkg.location_base:
                     # This package won't be in new metadata
                     return
-            new_repoid_strings.append(self._pkg_id_str(pkg))
+            new_contenthash_strings.append(self._pkg_id_str(pkg))
             all_packages[pkg.pkgId] = pkg
 
         def delta_pkgcb(pkg):
-            new_repoid_strings.append(self._pkg_id_str(pkg))
+            new_contenthash_strings.append(self._pkg_id_str(pkg))
             all_packages[pkg.pkgId] = pkg
 
-        do_primary_files = True
-        if fil_md and (fil_md.is_a_copy or fil_md.could_be_processed):
-            # We got:
-            # - whole original filelists.xml, we don't need parse
-            #   files from primary.xml files.
-            # OR:
-            # - We got old file and delta file so again we don't
-            #   need parse files from primary.xml files.
-            do_primary_files = False
-        else:
-            self._debug("Filelist's entries are going to be parsed "
-                        "from primary.xml because filelists.xml content"
-                        "is not available.")
+        filelists_from_primary = True
+        if fil_md:
+            filelists_from_primary = False
 
         # Parse both old and delta primary.xml files
-        self._debug("Parsing primary xmls")
         cr.xml_parse_primary(pri_md.old_fn, pkgcb=old_pkgcb,
-                             do_files=do_primary_files)
+                             do_files=filelists_from_primary)
         cr.xml_parse_primary(pri_md.delta_fn, pkgcb=delta_pkgcb,
-                             do_files=do_primary_files)
+                             do_files=filelists_from_primary)
 
-        # Calculate RepoIds
-        old_repoid = ""
-        new_repoid = ""
-
-        h = hashlib.new(self.globalbundle.repoid_type_str)
-        old_repoid_strings.sort()
-        for i in old_repoid_strings:
+        # Calculate content hashes
+        h = hashlib.new(self.globalbundle.contenthash_type_str)
+        old_contenthash_strings.sort()
+        for i in old_contenthash_strings:
             h.update(i)
-        old_repoid = h.hexdigest()
+        self.globalbundle.calculated_old_contenthash = h.hexdigest()
 
-        h = hashlib.new(self.globalbundle.repoid_type_str)
-        new_repoid_strings.sort()
-        for i in new_repoid_strings:
+        h = hashlib.new(self.globalbundle.contenthash_type_str)
+        new_contenthash_strings.sort()
+        for i in new_contenthash_strings:
             h.update(i)
-        new_repoid = h.hexdigest()
+        self.globalbundle.calculated_new_contenthash = h.hexdigest()
 
         # Sort packages
         def cmp_pkgs(x, y):
@@ -390,23 +587,12 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             return all_packages.get(pkgId, None)
 
         # Parse filelists
-        if fil_md and fil_md.is_a_copy:
-            # We got the original filelists.xml in the delta repo
-            # So it is sufficient to parse only this filelists.xml
-            self._debug("Parsing filelists xml (delta only)")
-            cr.xml_parse_filelists(fil_md.delta_fn, newpkgcb=newpkgcb)
-        elif fil_md and fil_md.could_be_processed:
+        if fil_md:
             self._debug("Parsing filelists xmls")
             cr.xml_parse_filelists(fil_md.old_fn, newpkgcb=newpkgcb)
             cr.xml_parse_filelists(fil_md.delta_fn, newpkgcb=newpkgcb)
 
-        # Parse other
-        # TODO
-        #if oth_md and oth_md.is_a_copy:
-        #    # We got the original other.xml in the delta repo
-        #    # So it is sufficient to parse only this other.xml
-        #    cr.xml_parse_other(oth_md.delta_fn, newpkgcb=newpkgcb)
-        if oth_md and oth_md.could_be_processed and not oth_md.is_a_copy:
+        if oth_md:
             self._debug("Parsing other xmls")
             cr.xml_parse_other(oth_md.old_fn, newpkgcb=newpkgcb)
             cr.xml_parse_other(oth_md.delta_fn, newpkgcb=newpkgcb)
@@ -422,7 +608,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                 pri_md.db.add_pkg(pkg)
 
         # Write out filelists
-        if fil_md and fil_md.could_be_processed and not fil_md.is_a_copy:
+        if fil_md:
             self._debug("Writing filelists xml: {0}".format(fil_md.new_fn))
             fil_md.new_f.set_num_of_pkgs(num_of_packages)
             for pkg in all_packages_sorted:
@@ -431,7 +617,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                     fil_md.db.add_pkg(pkg)
 
         # Write out other
-        if oth_md and oth_md.could_be_processed and not oth_md.is_a_copy:
+        if oth_md:
             self._debug("Writing other xml: {0}".format(oth_md.new_fn))
             oth_md.new_f.set_num_of_pkgs(num_of_packages)
             for pkg in all_packages_sorted:
@@ -441,7 +627,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
 
         # Finish metadata
         def finish_metadata(md):
-            if md is None or not md.could_be_processed or md.is_a_copy:
+            if md is None:
                 return
 
             # Close XML file
@@ -454,7 +640,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             if self.globalbundle.unique_md_filenames:
                 rec.rename_file()
 
-            md.generated_repomd_records.append(rec)
+            gen_repomd_recs.append(rec)
 
             # Prepare database
             if hasattr(md, "db") and md.db:
@@ -474,7 +660,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                 if self.globalbundle.unique_md_filenames:
                     db_rec.rename_file()
 
-                md.generated_repomd_records.append(db_rec)
+                gen_repomd_recs.append(db_rec)
 
         # Add records to the bundle
 
@@ -482,69 +668,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         finish_metadata(fil_md)
         finish_metadata(oth_md)
 
-        # Process XML files that was just copied
-        def finish_skipped_metadata(md):
-            if md is None:
-                return
-
-            if not md.old_fn and not md.is_a_copy:
-                # This metadata file is not a copy
-                # This is a delta
-                # But we don't have a original file on which the delta
-                # could be applied
-                msg = "Old file of type {0} is missing. The delta " \
-                      "file {1} thus cannot be applied.".format(
-                        md.metadata_type, md.delta_fn)
-                self._warning(msg)
-                if not self.globalbundle.ignore_missing:
-                    raise DeltaRepoPluginError(msg + "Use --ignore-missing "
-                                                     "to ignore this")
-                return
-
-            # Copy the file here
-            self.apply_use_original(md)
-            self._debug("Just a copy: {0}".format(md.new_fn))
-
-            # Check if sqlite should be generated
-            if md.metadata_type in gen_db_for:
-                md.db_fn = os.path.join(md.out_dir, "{0}.sqlite".format(
-                                        md.metadata_type))
-
-                self._debug("Generating database: {0}".format(md.db_fn))
-
-                # Note: filelists (if needed) has been already parsed.
-                # Because it has to be parsed before primary.xml is written
-                if md.metadata_type == "filelists":
-                    md.db = cr.FilelistsSqlite(md.db_fn)
-                elif md.metadata_type == "other":
-                    md.db = cr.OtherSqlite(md.db_fn)
-                    cr.xml_parse_other(md.delta_fn, newpkgcb=newpkgcb)
-
-                for pkg in all_packages_sorted:
-                    md.db.add_pkg(pkg)
-
-                md.db.dbinfo_update(md.delta_checksum)
-                md.db.close()
-                db_stat = cr.ContentStat(md.checksum_type)
-                db_compressed = md.db_fn+".bz2"
-                cr.compress_file(md.db_fn, None, cr.BZ2, db_stat)
-                os.remove(md.db_fn)
-
-                # Prepare repomd record of database file
-                db_rec = cr.RepomdRecord("{0}_db".format(md.metadata_type),
-                                         db_compressed)
-                db_rec.load_contentstat(db_stat)
-                db_rec.fill(md.checksum_type)
-                if self.globalbundle.unique_md_filenames:
-                    db_rec.rename_file()
-
-                md.generated_repomd_records.append(db_rec)
-
-        for md in no_processed_metadata:
-            finish_skipped_metadata(md)
-
-        self.globalbundle.calculated_old_repoid = old_repoid
-        self.globalbundle.calculated_new_repoid = new_repoid
+        return gen_repomd_recs
 
     def gen(self, metadata):
         # Check input arguments
@@ -552,37 +676,66 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             self._error("primary.xml metadata file is missing")
             raise DeltaRepoPluginError("Primary metadata missing")
 
-        # Metadata for which no delta will be generated
-        no_processed = []
+        gen_repomd_recs = []
 
         # Medadata info that will be persistently stored
-        persistent_metadata_info = {}
+        metadata_notes = {}
 
         pri_md = metadata.get("primary")
         fil_md = metadata.get("filelists")
         oth_md = metadata.get("other")
 
-        # Build and prepare destination paths
-        # (And store them in the same Metadata object)
-        def prepare_paths_in_metadata(md, xmlclass, dbclass):
-            if md is None:
-                return
-
-            # Make a note to the removed obj if the database should be generated
-            db_type = "{0}_db".format(md.metadata_type)
-            db_available = metadata.get(db_type)
-            if db_available or self.globalbundle.force_database:
-                persistent_metadata_info.setdefault(md.metadata_type, {})["database"] = "1"
+        def try_simple_delta(md, force_gen=False):
+            """Try to do simple delta. If successful, return True"""
+            rc, rec, notes = self._gen_basic_delta(md, force_gen=force_gen)
+            if not rc:
+                return False
+            if rec:
+                gen_repomd_recs.append(rec)
+            if not notes:
+                notes = {}
+            if metadata.get(md.metadata_type+"_db").new_fn_exists:
+                notes["database"] = "1"
             else:
-                persistent_metadata_info.setdefault(md.metadata_type, {})["database"] = "0"
+                notes["database"] = "0"
+            self._metadata_notes_to_plugin_bundle(md.metadata_type, notes)
+            return True
 
-            if not md.old_fn:
-                # Old file of this piece of metadata doesn't exist
-                # This file has to be newly added.
-                no_processed.append(md)
-                md.skip = True
-                return
-            md.skip = False
+        # At first try to do simple delta for primary
+        # If successful, force simple delta for filelists and other too
+
+        simple_pri_delta = try_simple_delta(pri_md)
+        simple_fil_delta = try_simple_delta(fil_md, force_gen=simple_pri_delta)
+        simple_oth_delta = try_simple_delta(oth_md, force_gen=simple_pri_delta)
+
+        if simple_pri_delta:
+            # Simple delta for primary means that simple deltas were done
+            # for all other metadata too
+            return gen_repomd_recs
+
+        # At this point we know that simple delta for the primary wasn't done
+        # This mean that at lest for primary, both metadata files (the new one
+        # and the old one) exists, and we have to do a more sophisticated delta
+
+        # Ignore files for which, the simple delta was successful
+        if simple_fil_delta:
+            fil_md = None
+        if simple_oth_delta:
+            oth_md = None
+
+        # Prepare output xml files and check if dbs should be generated
+        # Note: This information are stored directly to the Metadata
+        # object which someone could see as little hacky.
+        def prepare_paths_in_metadata(md, xmlclass):
+            if md is None:
+                return None
+
+            # Make a note about if the database should be generated
+            db_available = metadata.get(md.metadata_type+"_db").new_fn_exists
+            if db_available or self.globalbundle.force_database:
+                metadata_notes.setdefault(md.metadata_type, {})["database"] = "1"
+            else:
+                metadata_notes.setdefault(md.metadata_type, {})["database"] = "0"
 
             suffix = cr.compression_suffix(md.compression_type) or ""
             md.delta_fn = os.path.join(md.out_dir,
@@ -592,25 +745,16 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             md.delta_f = xmlclass(md.delta_fn,
                                   md.compression_type,
                                   md.delta_f_stat)
-            # Database for delta repo is redundant
-            #md.db_fn = os.path.join(md.out_dir, "{0}.sqlite".format(
-            #                        md.metadata_type))
-            #md.db = dbclass(md.db_fn)
+            return md
 
         # Primary
-        prepare_paths_in_metadata(pri_md,
-                                  cr.PrimaryXmlFile,
-                                  cr.PrimarySqlite)
+        pri_md = prepare_paths_in_metadata(pri_md, cr.PrimaryXmlFile)
 
         # Filelists
-        prepare_paths_in_metadata(fil_md,
-                                  cr.FilelistsXmlFile,
-                                  cr.FilelistsSqlite)
+        fil_md = prepare_paths_in_metadata(fil_md, cr.FilelistsXmlFile)
 
         # Other
-        prepare_paths_in_metadata(oth_md,
-                                  cr.OtherXmlFile,
-                                  cr.OtherSqlite)
+        oth_md = prepare_paths_in_metadata(oth_md, cr.OtherXmlFile)
 
         # Gen delta
 
@@ -618,15 +762,15 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         added_packages = {}         # dict { 'pkgId': pkg }
         added_packages_ids = []     # list of package ids
 
-        old_repoid_strings = []
-        new_repoid_strings = []
+        old_contenthash_strings = []
+        new_contenthash_strings = []
 
         def old_pkgcb(pkg):
             old_packages.add(self._pkg_id_tuple(pkg))
-            old_repoid_strings.append(self._pkg_id_str(pkg))
+            old_contenthash_strings.append(self._pkg_id_str(pkg))
 
         def new_pkgcb(pkg):
-            new_repoid_strings.append(self._pkg_id_str(pkg))
+            new_contenthash_strings.append(self._pkg_id_str(pkg))
             pkg_id_tuple = self._pkg_id_tuple(pkg)
             if not pkg_id_tuple in old_packages:
                 # This package is only in new repodata
@@ -636,30 +780,27 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                 # This package is also in the old repodata
                 old_packages.remove(pkg_id_tuple)
 
-        do_new_primary_files = 1
-        if fil_md and not fil_md.skip and fil_md.delta_f and fil_md.new_fn:
-            # All files will be parsed from filelists
-            do_new_primary_files = 0
+        filelists_from_primary = True
+        if fil_md:
+            # Filelists will be parsed from filelists
+            filelists_from_primary = False
 
-        cr.xml_parse_primary(pri_md.old_fn, pkgcb=old_pkgcb, do_files=0)
+        cr.xml_parse_primary(pri_md.old_fn, pkgcb=old_pkgcb, do_files=False)
         cr.xml_parse_primary(pri_md.new_fn, pkgcb=new_pkgcb,
-                             do_files=do_new_primary_files)
+                             do_files=filelists_from_primary)
 
-        # Calculate RepoIds
-        old_repo_id = ""
-        new_repo_id = ""
-
-        h = hashlib.new(self.globalbundle.repoid_type_str)
-        old_repoid_strings.sort()
-        for i in old_repoid_strings:
+        # Calculate content hashes
+        h = hashlib.new(self.globalbundle.contenthash_type_str)
+        old_contenthash_strings.sort()
+        for i in old_contenthash_strings:
             h.update(i)
-        old_repoid = h.hexdigest()
+        self.globalbundle.calculated_old_contenthash = h.hexdigest()
 
-        h = hashlib.new(self.globalbundle.repoid_type_str)
-        new_repoid_strings.sort()
-        for i in new_repoid_strings:
+        h = hashlib.new(self.globalbundle.contenthash_type_str)
+        new_contenthash_strings.sort()
+        for i in new_contenthash_strings:
             h.update(i)
-        new_repoid = h.hexdigest()
+        self.globalbundle.calculated_new_contenthash = h.hexdigest()
 
         # Prepare list of removed packages
         removed_pkgs = sorted(old_packages)
@@ -675,16 +816,16 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         def newpkgcb(pkgId, name, arch):
             return added_packages.get(pkgId, None)
 
-        # Write out filelists delta
-        if fil_md and not fil_md.skip and fil_md.delta_f and fil_md.new_fn:
+        # Parse filelist.xml and write out its delta
+        if fil_md:
             cr.xml_parse_filelists(fil_md.new_fn, newpkgcb=newpkgcb)
             fil_md.delta_f.set_num_of_pkgs(num_of_packages)
             for pkgid in added_packages_ids:
                 fil_md.delta_f.add_pkg(added_packages[pkgid])
             fil_md.delta_f.close()
 
-        # Write out other delta
-        if oth_md and not oth_md.skip and oth_md.delta_f and oth_md.new_fn:
+        # Parse other.xml and write out its delta
+        if oth_md:
             cr.xml_parse_other(oth_md.new_fn, newpkgcb=newpkgcb)
             oth_md.delta_f.set_num_of_pkgs(num_of_packages)
             for pkgid in added_packages_ids:
@@ -693,7 +834,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
 
         # Write out primary delta
         # Note: Writing of primary delta has to be after parsing of filelists
-        # Otherway cause missing files if do_new_primary_files was 0
+        # Otherwise cause missing files if filelists_from_primary was False
         pri_md.delta_f.set_num_of_pkgs(num_of_packages)
         for pkgid in added_packages_ids:
             pri_md.delta_f.add_pkg(added_packages[pkgid])
@@ -701,7 +842,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
 
         # Finish metadata
         def finish_metadata(md):
-            if md is None or md.skip:
+            if md is None:
                 return
 
             # Close XML file
@@ -714,7 +855,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             if self.globalbundle.unique_md_filenames:
                 rec.rename_file()
 
-            md.generated_repomd_records.append(rec)
+            gen_repomd_recs.append(rec)
 
             # Prepare database
             if hasattr(md, "db") and md.db:
@@ -733,26 +874,18 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                 if self.globalbundle.unique_md_filenames:
                     db_rec.rename_file()
 
-                md.generated_repomd_records.append(db_rec)
+                gen_repomd_recs.append(db_rec)
 
         # Add records to medata objects
         finish_metadata(pri_md)
         finish_metadata(fil_md)
         finish_metadata(oth_md)
 
-        # Process no processed items
-        # This files are just copied and compressed, no real delta
-        for md in no_processed:
-            self.gen_use_original(md)
-            persistent_metadata_info.setdefault(md.metadata_type, {})["original"] = "1"
-
         # Store data persistently
-        for key, val in persistent_metadata_info.items():
-            val["type"] = key
-            self.pluginbundle.append("metadata", val)
+        for metadata_type, notes in metadata_notes.items():
+            self._metadata_notes_to_plugin_bundle(metadata_type, notes)
 
-        self.globalbundle.calculated_old_repoid = old_repoid
-        self.globalbundle.calculated_new_repoid = new_repoid
+        return gen_repomd_recs
 
 PLUGINS.append(MainDeltaRepoPlugin)
 
@@ -762,63 +895,81 @@ class GroupsDeltaRepoPlugin(DeltaRepoPlugin):
     VERSION = 1
     METADATA = ["group", "group_gz"]
 
-    def apply(self, metadata):
-
-        md_group = metadata.get("group")
-        md_group_gz = metadata.get("group_gz")
-
-        # Prepare notes about metadata elements from deltametadata.xml
-        metadata_notes = {}
-        for dict in self.pluginbundle.get_list("metadata"):
-            if "type" not in dict:
-                self._warning("Metadata element in deltametadata.xml hasn't "
-                              "an attribute 'type'")
-                continue
-            metadata_notes[dict["type"]] = dict
-
-        for md in (md_group, md_group_gz):
-            if md and not md.metadata_type in metadata_notes:
-                msg = "Missing '{0}' record of {1} in the deltametadata.xml".format(
-                    md.metadata_type, self.NAME)
-                self._error(msg)
-                raise DeltaRepoPluginError(msg)
-
-        if md_group:
-            options = metadata_notes[md_group.metadata_type]
-            decompress = bool(options.get("compressed"))
-            self.apply_use_original(md_group, decompress=decompress)
-
-            if options.get("gen_group_gz"):
-                stat = cr.ContentStat(md_group.checksum_type)
-                group_gz_fn = md_group.new_fn+".gz"
-                cr.compress_file(md_group.new_fn, group_gz_fn, cr.GZ, stat)
-                rec = cr.RepomdRecord("group_gz", group_gz_fn)
-                rec.load_contentstat(stat)
-                rec.fill(md_group.checksum_type)
-                if self.globalbundle.unique_md_filenames:
-                    rec.rename_file()
-                md_group.generated_repomd_records.append(rec)
-        elif md_group_gz:
-            self.apply_use_original(md_group_gz)
-
     def gen(self, metadata):
 
+        gen_repomd_recs = []
+
         md_group = metadata.get("group")
         md_group_gz = metadata.get("group_gz")
 
-        if md_group and md_group_gz:
-            self.gen_use_original(md_group, compression_type=cr.XZ)
-            self.pluginbundle.append("metadata", {"type": "group",
-                                                  "compressed": "1",
-                                                  "gen_group_gz": "1"})
-        elif md_group and not md_group_gz:
-            self.gen_use_original(md_group, compression_type=cr.XZ)
-            self.pluginbundle.append("metadata", {"type": "group",
-                                                  "compressed": "1",
-                                                  "gen_group_gz": "0"})
-        elif not md_group and md_group_gz:
-            self.gen_use_original(md_group)
-            self.pluginbundle.append("metadata", {"type": "group_gz",
-                                                  "original": "1"})
+        if md_group and not md_group.new_fn_exists:
+            md_group = None
+
+        if md_group_gz and not md_group_gz.new_fn_exists:
+            md_group_gz = None
+
+        if md_group:
+            rc, rec, notes = self._gen_basic_delta(md_group, force_gen=True)
+            assert rc
+            if rec:
+                gen_repomd_recs.append(rec)
+            if notes:
+                if md_group_gz:
+                    notes["gen_group_gz"] = "1"
+                else:
+                    notes["gen_group_gz"] = "0"
+                self._metadata_notes_to_plugin_bundle(md_group.metadata_type,
+                                                      notes)
+        elif md_group_gz:
+            rc, rec, notes = self._gen_basic_delta(md_group, force_gen=True)
+            assert rc
+            if rec:
+                gen_repomd_recs.append(rec)
+            if notes:
+                self._metadata_notes_to_plugin_bundle(md_group_gz.metadata_type,
+                                                      notes)
+
+        return gen_repomd_recs
+
+    def apply(self, metadata):
+
+        gen_repomd_recs = []
+
+        md_group = metadata.get("group")
+        md_group_gz = metadata.get("group_gz")
+
+        if md_group and (not md_group.delta_fn_exists
+                         and not md_group.old_fn_exists):
+            md_group = None
+
+        if md_group_gz and (not md_group_gz.delta_fn_exists
+                            and not md_group_gz.old_fn_exists):
+            md_group_gz = None
+
+        if md_group:
+            notes = self._metadata_notes_from_plugin_bundle(md_group.metadata_type)
+            rc, rec = self._apply_basic_delta(md_group, notes)
+            assert rc
+            if rec:
+                gen_repomd_recs.append(rec)
+                if notes.get("gen_group_gz"):
+                    # Gen group_gz metadata from the group metadata
+                    stat = cr.ContentStat(md_group.checksum_type)
+                    group_gz_fn = md_group.new_fn+".gz"
+                    cr.compress_file(md_group.new_fn, group_gz_fn, cr.GZ, stat)
+                    rec = cr.RepomdRecord("group_gz", group_gz_fn)
+                    rec.load_contentstat(stat)
+                    rec.fill(md_group.checksum_type)
+                    if self.globalbundle.unique_md_filenames:
+                        rec.rename_file()
+                    gen_repomd_recs.append(rec)
+        elif md_group_gz:
+            notes = self._metadata_notes_from_plugin_bundle(md_group_gz.metadata_type)
+            rc, rec = self._apply_basic_delta(md_group_gz, notes)
+            assert rc
+            if rec:
+                gen_repomd_recs.append(rec)
+
+        return gen_repomd_recs
 
 PLUGINS.append(GroupsDeltaRepoPlugin)

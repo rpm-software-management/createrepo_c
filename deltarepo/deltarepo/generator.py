@@ -12,7 +12,9 @@ import os
 import shutil
 import createrepo_c as cr
 from .common import LoggingInterface, Metadata, DeltaMetadata, PluginBundle
+from .common import DEFAULT_CHECKSUM_TYPE, DEFAULT_COMPRESSION_TYPE
 from .delta_plugins import GlobalBundle, PLUGINS, GENERAL_PLUGIN
+from .util import calculate_content_hash, pkg_id_str
 from .errors import DeltaRepoError
 
 __all__ = ['DeltaRepoGenerator']
@@ -52,7 +54,7 @@ class DeltaRepoGenerator(LoggingInterface):
         self.delta_repomd_path = os.path.join(self.delta_repodata_path, "repomd.xml")
 
         # Repoid type
-        self.repoid_type_str = repoid_type or "sha256"
+        self.contenthash_type_str = repoid_type or "sha256"
         self.compression_type_str = compression_type or "xz"
         self.compression_type = cr.compression_type(self.compression_type_str)
 
@@ -104,67 +106,130 @@ class DeltaRepoGenerator(LoggingInterface):
         if self.new_records["primary"].location_href.split("primary")[0] != "":
             self.unique_md_filenames = True
 
-        self.old_id = self.old_repomd.repoid
-        self.new_id = self.new_repomd.repoid
+        self.old_contenthash = self.old_repomd.repoid
+        self.new_contenthash = self.new_repomd.repoid
 
         self.deltametadata = DeltaMetadata()
 
         # Prepare global bundle
         self.globalbundle = GlobalBundle()
-        self.globalbundle.repoid_type_str = self.repoid_type_str
+        self.globalbundle.contenthash_type_str = self.contenthash_type_str
         self.globalbundle.unique_md_filenames = self.unique_md_filenames
         self.globalbundle.force_database = force_database
         self.globalbundle.ignore_missing = ignore_missing
 
     def _new_metadata(self, metadata_type):
-        """Return Metadata Object for the metadata_type or None"""
-
-        if metadata_type not in self.new_records:
-            return None
+        """Return Metadata Object for the metadata_type"""
 
         metadata = Metadata(metadata_type)
 
-        # Build new filename
-        metadata.new_fn = os.path.join(self.new_repo_path,
-                            self.new_records[metadata_type].location_href)
-        if not os.path.isfile(metadata.new_fn):
-            msg = "The file {0} doesn't exist in the destination " \
-                  "repository!".format(metadata.new_fn)
-            self._warning(msg)
-            if not self.ignore_missing:
-                raise DeltaRepoError(msg + " Use --ignore-missing option to "
-                                           "ignore this error")
-            return None
+        metadata.checksum_type = DEFAULT_CHECKSUM_TYPE
+        metadata.compression_type = DEFAULT_COMPRESSION_TYPE
 
-        # Build old filename
-        if metadata_type in self.old_records:
-            metadata.old_fn = os.path.join(self.old_repo_path,
-                            self.old_records[metadata_type].location_href)
-            if not os.path.isfile(metadata.old_fn):
-                msg = "File {0} doesn't exist in the source " \
+        # Output directory
+        metadata.out_dir = self.delta_repodata_path
+
+        # Properties related to the first (old) repository
+        old_rec = self.old_records.get(metadata_type)
+        metadata.old_rec = old_rec
+        if old_rec:
+            metadata.old_fn = os.path.join(self.old_repo_path, old_rec.location_href)
+            if os.path.isfile(metadata.old_fn):
+                metadata.old_fn_exists = True
+            else:
+                msg = "File {0} doesn't exist in the old " \
                       "repository!".format(metadata.old_fn)
                 self._warning(msg)
                 if not self.ignore_missing:
                     raise DeltaRepoError(msg + " Use --ignore-missing option "
                                                "to ignore this error")
-                metadata.old_fn = None
 
-        # Set output directory
-        metadata.out_dir = self.delta_repodata_path
+        # Properties related to the second (new) repository
+        new_rec = self.new_records.get(metadata_type)
+        metadata.new_rec = new_rec
+        if new_rec:
+            metadata.new_fn = os.path.join(self.new_repo_path, new_rec.location_href)
+            if os.path.isfile(metadata.new_fn):
+                metadata.new_fn_exists = True
 
-        # Determine checksum type (for this specific repodata)
-        # Detected checksum type should be probably same as the globally
-        # detected one, but it is not guaranted
-        metadata.checksum_type = cr.checksum_type(
-                self.new_records[metadata_type].checksum_type)
+                # Determine compression type
+                detected_compression_type = cr.detect_compression(metadata.new_fn)
+                if (detected_compression_type != cr.UNKNOWN_COMPRESSION):
+                    metadata.compression_type = detected_compression_type
+                else:
+                    self._warning("Cannot detect compression type for "
+                                         "{0}".format(metadata.new_fn))
+            else:
+                msg = ("The file {0} doesn't exist in the new"
+                       "repository!".format(metadata.new_fn))
+                self._warning(msg)
+                if not self.ignore_missing:
+                    raise DeltaRepoError(msg + " Use --ignore-missing option "
+                                               "to ignore this error")
 
-        # Determine compression type
-        metadata.compression_type = cr.detect_compression(metadata.new_fn)
-        if (metadata.compression_type == cr.UNKNOWN_COMPRESSION):
-            raise DeltaRepoError("Cannot detect compression type for {0}".format(
-                    metadata.new_fn))
+            metadata.checksum_type = cr.checksum_type(new_rec.checksum_type)
 
         return metadata
+
+    def check_content_hashes(self):
+        self._debug("Checking expected content hashes")
+
+        c_old_contenthash = self.globalbundle.calculated_old_contenthash
+        c_new_contenthash = self.globalbundle.calculated_new_contenthash
+
+        if not c_old_contenthash or not c_new_contenthash:
+
+            pri_md = self._new_metadata("primary")
+
+            if not c_old_contenthash:
+                if not pri_md.old_fn_exists:
+                    raise DeltaRepoError("Old repository doesn't have "
+                                         "a primary metadata!")
+                c_old_contenthash = calculate_content_hash(pri_md.old_fn,
+                                                          self.contenthash_type_str,
+                                                          self._get_logger())
+            if not c_new_contenthash:
+                if not pri_md.new_fn_exists:
+                    raise DeltaRepoError("New repository doesn't have "
+                                         "a primary metadata!")
+                c_new_contenthash = calculate_content_hash(pri_md.new_fn,
+                                                          self.contenthash_type_str,
+                                                          self._get_logger())
+
+        self._debug("Calculated content hash of the old repo: {0}".format(
+                    c_old_contenthash))
+        self._debug("Calculated content hash of the new repo: {0}".format(
+                    c_new_contenthash))
+
+        if self.old_contenthash:
+            if self.old_contenthash != c_old_contenthash:
+                message = "Content hash of the \"{0}\" repository doesn't match "\
+                          "the real one ({1} != {2}).".format(
+                           self.old_repo_path, self.old_contenthash,
+                           self.globalbundle.calculated_old_contenthash)
+                self._error(message)
+                raise DeltaRepoError(message)
+            else:
+                self._debug("Content hash of the old repo matches ({0})".format(
+                            self.old_contenthash))
+        else:
+            self._debug("Content hash of the \"{0}\" is not part of its "\
+                        "repomd".format(self.old_repo_path))
+
+        if self.new_contenthash:
+            if self.new_contenthash != c_new_contenthash:
+                message = "Content hash of the \"{0}\" repository doesn't match "\
+                          "the real one ({1} != {2}).".format(
+                           self.new_repo_path, self.new_contenthash,
+                           self.globalbundle.calculated_new_contenthash)
+                self._error(message)
+                raise DeltaRepoError(message)
+            else:
+                self._debug("Content hash of the new repo matches ({0})".format(
+                            self.new_contenthash))
+        else:
+            self._debug("Content hash of the \"{0}\" is not part of its "\
+                        "repomd".format(self.new_repo_path))
 
     def gen(self):
 
@@ -198,16 +263,14 @@ class DeltaRepoGenerator(LoggingInterface):
             self._debug("Plugin {0}: Active".format(plugin.NAME))
             plugin_instance = plugin(pluginbundle, self.globalbundle,
                                      logger=self._get_logger())
-            plugin_instance.gen(metadata_objects)
+            repomd_records = plugin_instance.gen(metadata_objects)
 
             # Put repomd records from processed metadatas to repomd
-            for md in metadata_objects.values():
-                self._debug("Plugin {0}: Processed \"{1}\" delta record "\
-                            "which produced:".format(
-                            plugin.NAME, md.metadata_type))
-                for repomd_record in md.generated_repomd_records:
-                    self._debug(" - {0}".format(repomd_record.type))
-                    self.delta_repomd.set_record(repomd_record)
+            self._debug("Plugin {0}: Processed {1} record(s) " \
+                "and produced:".format(plugin.NAME, metadata_objects.keys()))
+            for rec in repomd_records:
+                self._debug(" - {0}".format(rec.type))
+                self.delta_repomd.set_record(rec)
 
             # Organization stuff
             for md in metadata_objects.keys():
@@ -233,15 +296,14 @@ class DeltaRepoGenerator(LoggingInterface):
             self._debug("Plugin {0}: Active".format(GENERAL_PLUGIN.NAME))
             plugin_instance = GENERAL_PLUGIN(pluginbundle, self.globalbundle,
                                              logger=self._get_logger())
-            plugin_instance.gen(metadata_objects)
+            repomd_records = plugin_instance.gen(metadata_objects)
 
-            for md in metadata_objects.values():
-                self._debug("Plugin {0}: Processed \"{1}\" delta record "\
-                            "which produced:".format(
-                            GENERAL_PLUGIN.NAME, md.metadata_type))
-                for repomd_record in md.generated_repomd_records:
-                    self._debug(" - {0}".format(repomd_record.type))
-                    self.delta_repomd.set_record(repomd_record)
+            # Put repomd records from processed metadatas to repomd
+            self._debug("Plugin {0}: Processed {1} record(s) " \
+                "and produced:".format(GENERAL_PLUGIN.NAME, metadata_objects.keys()))
+            for rec in repomd_records:
+                self._debug(" - {0}".format(rec.type))
+                self.delta_repomd.set_record(rec)
 
         # Write out deltametadata.xml
         deltametadata_xml = self.deltametadata.xmldump()
@@ -265,54 +327,13 @@ class DeltaRepoGenerator(LoggingInterface):
         self.delta_repomd.set_record(deltametadata_rec)
 
         # Check if calculated repoids match
-        self._debug("Checking expected repoids")
-
-        if self.globalbundle.calculated_new_repoid is None \
-                or self.globalbundle.calculated_old_repoid is None:
-            message = "\"new_repoid\" or \"old_repoid\" wasn't calculated"
-            self._error(message)
-            raise DeltaRepoError(message)
-
-        self._debug("Calculated repoid of the old repo:   {0}".format(
-            self.globalbundle.calculated_old_repoid))
-        self._debug("Calculated repoid of the delta repo: {0}".format(
-            self.globalbundle.calculated_new_repoid))
-
-        if self.old_id:
-            if self.old_id != self.globalbundle.calculated_old_repoid:
-                message = "Repoid of the \"{0}\" repository doesn't match "\
-                          "the real repoid ({1} != {2}).".format(
-                           self.old_repo_path, self.old_id,
-                           self.globalbundle.calculated_old_repoid)
-                self._error(message)
-                raise DeltaRepoError(message)
-            else:
-                self._debug("Repoid of the old repo matches ({0})".format(
-                            self.old_id))
-        else:
-            self._debug("Repoid of the \"{0}\" is not part of its "\
-                        "repomd".format(self.old_repo_path))
-
-        if self.new_id:
-            if self.new_id != self.globalbundle.calculated_new_repoid:
-                message = "Repoid of the \"{0}\" repository doesn't match "\
-                          "the real repoid ({1} != {2}).".format(
-                           self.new_repo_path, self.new_id,
-                           self.globalbundle.calculated_new_repoid)
-                self._error(message)
-                raise DeltaRepoError(message)
-            else:
-                self._debug("Repoid of the new repo matches ({0})".format(
-                            self.new_id))
-        else:
-            self._debug("Repoid of the \"{0}\" is not part of its "\
-                        "repomd".format(self.new_repo_path))
+        self.check_content_hashes()
 
         # Prepare and write out the new repomd.xml
         self._debug("Preparing repomd.xml ...")
-        deltarepoid = "{0}-{1}".format(self.globalbundle.calculated_old_repoid,
-                                       self.globalbundle.calculated_new_repoid)
-        self.delta_repomd.set_repoid(deltarepoid, self.repoid_type_str)
+        deltarepoid = "{0}-{1}".format(self.globalbundle.calculated_old_contenthash,
+                                       self.globalbundle.calculated_new_contenthash)
+        self.delta_repomd.set_repoid(deltarepoid, self.contenthash_type_str)
         self.delta_repomd.sort_records()
         delta_repomd_xml = self.delta_repomd.xml_dump()
 

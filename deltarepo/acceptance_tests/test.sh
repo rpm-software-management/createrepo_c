@@ -66,7 +66,7 @@ function compare_repos {
 
     diff -r $1/repodata $2/repodata \
         -I "<timestamp>[0-9]*</timestamp>" \
-        -I "<repoid .*>.*</repoid>" \
+        -I "<contenthash .*>.*</contenthash>" \
         $OTHERARGUMENTS
     echo
 

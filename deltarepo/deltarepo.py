@@ -119,7 +119,7 @@ def main(args, logger):
                                           args.path2,
                                           out_path=args.outputdir,
                                           logger=logger,
-                                          repoid_type=args.id_type,
+                                          contenthash_type=args.id_type,
                                           force_database=args.database,
                                           ignore_missing=args.ignore_missing)
         dg.gen()

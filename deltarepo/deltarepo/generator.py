@@ -26,7 +26,7 @@ class DeltaRepoGenerator(LoggingInterface):
                  new_repo_path,
                  out_path=None,
                  logger=None,
-                 repoid_type="sha256",
+                 contenthash_type="sha256",
                  compression_type="xz",
                  force_database=False,
                  ignore_missing=False):
@@ -53,8 +53,8 @@ class DeltaRepoGenerator(LoggingInterface):
         self.delta_repodata_path = os.path.join(self.delta_repo_path, ".repodata/")
         self.delta_repomd_path = os.path.join(self.delta_repodata_path, "repomd.xml")
 
-        # Repoid type
-        self.contenthash_type_str = repoid_type or "sha256"
+        # contenthash type
+        self.contenthash_type_str = contenthash_type or "sha256"
         self.compression_type_str = compression_type or "xz"
         self.compression_type = cr.compression_type(self.compression_type_str)
 
@@ -106,8 +106,8 @@ class DeltaRepoGenerator(LoggingInterface):
         if self.new_records["primary"].location_href.split("primary")[0] != "":
             self.unique_md_filenames = True
 
-        self.old_contenthash = self.old_repomd.repoid
-        self.new_contenthash = self.new_repomd.repoid
+        self.old_contenthash = self.old_repomd.contenthash
+        self.new_contenthash = self.new_repomd.contenthash
 
         self.deltametadata = DeltaMetadata()
 
@@ -329,14 +329,14 @@ class DeltaRepoGenerator(LoggingInterface):
             deltametadata_rec.rename_file()
         self.delta_repomd.set_record(deltametadata_rec)
 
-        # Check if calculated repoids match
+        # Check if calculated contenthashes match
         self.check_content_hashes()
 
         # Prepare and write out the new repomd.xml
         self._debug("Preparing repomd.xml ...")
-        deltarepoid = "{0}-{1}".format(self.globalbundle.calculated_old_contenthash,
+        deltacontenthash = "{0}-{1}".format(self.globalbundle.calculated_old_contenthash,
                                        self.globalbundle.calculated_new_contenthash)
-        self.delta_repomd.set_repoid(deltarepoid, self.contenthash_type_str)
+        self.delta_repomd.set_contenthash(deltacontenthash, self.contenthash_type_str)
         self.delta_repomd.sort_records()
         delta_repomd_xml = self.delta_repomd.xml_dump()
 

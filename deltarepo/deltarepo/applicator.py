@@ -33,7 +33,7 @@ class DeltaRepoApplicator(LoggingInterface):
 
         LoggingInterface.__init__(self, logger)
 
-        self.repoid_type = None
+        self.contenthash_type = None
         self.unique_md_filenames = False
         self.force_database = force_database
         self.ignore_missing = ignore_missing
@@ -61,24 +61,24 @@ class DeltaRepoApplicator(LoggingInterface):
         self.new_repomd = cr.Repomd()
 
         # Check if delta repo id correspond with the old repo id
-        if not self.delta_repomd.repoid or \
-                len(self.delta_repomd.repoid.split('-')) != 2:
-            raise DeltaRepoError("Bad DeltaRepoId")
+        if not self.delta_repomd.contenthash or \
+                len(self.delta_repomd.contenthash.split('-')) != 2:
+            raise DeltaRepoError("Bad content hash")
 
-        self.contenthash_type_str = self.delta_repomd.repoid_type
-        res = self.delta_repomd.repoid.split('-')
+        self.contenthash_type_str = self.delta_repomd.contenthash_type
+        res = self.delta_repomd.contenthash.split('-')
         self.old_contenthash, self.new_contenthash = res
         self._debug("Delta %s -> %s" % (self.old_contenthash,
                                         self.new_contenthash))
 
-        if self.old_repomd.repoid_type == self.delta_repomd.repoid_type:
-            if self.old_repomd.repoid and self.old_repomd.repoid != self.old_contenthash:
+        if self.old_repomd.contenthash_type == self.delta_repomd.contenthash_type:
+            if self.old_repomd.contenthash and self.old_repomd.contenthash != self.old_contenthash:
                 raise DeltaRepoError("Not suitable delta for current repo " \
                         "(Expected: {0} Real: {1})".format(
-                            self.old_contenthash, self.old_repomd.repoid))
+                            self.old_contenthash, self.old_repomd.contenthash))
         else:
-            self._debug("Different repoid types repo: {0} vs delta: {1}".format(
-                    self.old_repomd.repoid_type, self.delta_repomd.repoid_type))
+            self._debug("Different contenthash types repo: {0} vs delta: {1}".format(
+                    self.old_repomd.contenthash_type, self.delta_repomd.contenthash_type))
 
         # Use revision and tags
         self.new_repomd.set_revision(self.delta_repomd.revision)
@@ -341,12 +341,12 @@ class DeltaRepoApplicator(LoggingInterface):
                 self._debug(" - {0}".format(rec.type))
                 self.new_repomd.set_record(rec)
 
-        # Check if calculated repoids match
+        # Check if calculated contenthashes match
         self.check_content_hashes(primary_metadata_object)
 
         # Prepare and write out the new repomd.xml
         self._debug("Preparing repomd.xml ...")
-        self.new_repomd.set_repoid(self.new_contenthash, self.contenthash_type_str)
+        self.new_repomd.set_contenthash(self.new_contenthash, self.contenthash_type_str)
         self.new_repomd.sort_records()
         new_repomd_xml = self.new_repomd.xml_dump()
 

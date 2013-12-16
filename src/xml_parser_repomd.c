@@ -38,6 +38,7 @@ typedef enum {
     STATE_REPOMD,
     STATE_REVISION,
     STATE_REPOID,
+    STATE_CONTENTHASH,
     STATE_TAGS,
     STATE_REPO,
     STATE_CONTENT,
@@ -62,6 +63,7 @@ static cr_StatesSwitch stateswitches[] = {
     { STATE_START,      "repomd",           STATE_REPOMD,       0 },
     { STATE_REPOMD,     "revision",         STATE_REVISION,     1 },
     { STATE_REPOMD,     "repoid",           STATE_REPOID,       1 },
+    { STATE_REPOMD,     "contenthash",      STATE_CONTENTHASH,  1 },
     { STATE_REPOMD,     "tags",             STATE_TAGS,         0 },
     { STATE_REPOMD,     "data",             STATE_DATA,         0 },
     { STATE_TAGS,       "repo",             STATE_REPO,         1 },
@@ -135,6 +137,16 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         if (val)
             pd->repomd->repoid_type = g_string_chunk_insert(pd->repomd->chunk,
                                                             val);
+        break;
+
+    case STATE_CONTENTHASH:
+        assert(pd->repomd);
+        assert(!pd->repomdrecord);
+
+        val = cr_find_attr("type", attr);
+        if (val)
+            pd->repomd->contenthash_type = g_string_chunk_insert(
+                                                    pd->repomd->chunk, val);
         break;
 
     case STATE_DISTRO:
@@ -269,6 +281,14 @@ cr_end_handler(void *pdata, const char *element)
 
         pd->repomd->repoid = g_string_chunk_insert(pd->repomd->chunk,
                                                    pd->content);
+        break;
+
+    case STATE_CONTENTHASH:
+        assert(pd->repomd);
+        assert(!pd->repomdrecord);
+
+        pd->repomd->contenthash = g_string_chunk_insert(pd->repomd->chunk,
+                                                        pd->content);
         break;
 
     case STATE_TAGS:

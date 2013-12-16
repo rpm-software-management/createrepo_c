@@ -657,6 +657,14 @@ cr_repomd_set_repoid(cr_Repomd *repomd, const char *repoid, const char *type)
 }
 
 void
+cr_repomd_set_contenthash(cr_Repomd *repomd, const char *hash, const char *type)
+{
+    if (!repomd) return;
+    repomd->contenthash = cr_safe_string_chunk_insert(repomd->chunk, hash);
+    repomd->contenthash_type = cr_safe_string_chunk_insert(repomd->chunk, type);
+}
+
+void
 cr_repomd_add_distro_tag(cr_Repomd *repomd,
                          const char *cpeid,
                          const char *tag)

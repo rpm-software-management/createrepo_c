@@ -98,8 +98,10 @@ typedef struct {
  */
 typedef struct {
     gchar *revision;            /*!< Revison */
-    gchar *repoid;              /*!< RepoId */
-    gchar *repoid_type;         /*!< RepoId type ("sha256", ...) */
+    gchar *repoid;              /*!< OBSOLETE, replaced by contenthash */
+    gchar *repoid_type;         /*!< OBSOLETE, replaced by contenthash_type */
+    gchar *contenthash;         /*!< Content hash */
+    gchar *contenthash_type;    /*!< Content hash type ("sha256", ...) */
     GSList *repo_tags;          /*!< List of strings */
     GSList *content_tags;       /*!< List of strings */
     GSList *distro_tags;        /*!< List of cr_DistroTag* */
@@ -193,14 +195,23 @@ void cr_repomd_set_record(cr_Repomd *repomd, cr_RepomdRecord *record);
  */
 void cr_repomd_set_revision(cr_Repomd *repomd, const char *revision);
 
-/** Set a repoid
+/** Set a repoid - OBSOLETE, use cr_repomd_set_contenthash instead
  * @param repomd                cr_Repomd object
- * @param type                  Type of hash function used to calculate repoid
  * @param repoid                RepoId
+ * @param type                  Type of hash function used to calculate repoid
  */
 void cr_repomd_set_repoid(cr_Repomd *repomd,
                           const char *repoid,
                           const char *type);
+
+/** Set a contenthash
+ * @param repomd                cr_Repomd object
+ * @param hash                  content hash
+ * @param type                  Type of hash function
+ */
+void cr_repomd_set_contenthash(cr_Repomd *repomd,
+                               const char *hash,
+                               const char *type);
 
 /** Add distro tag.
  * @param repomd                cr_Repomd object

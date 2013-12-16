@@ -145,6 +145,21 @@ cr_xml_dump_repomd_body(xmlNodePtr root, cr_Repomd *repomd)
     }
 
     // **********************************
+    // Element: Contenthash
+    // **********************************
+
+    if (repomd->contenthash) {
+        xmlNodePtr contenthash_elem = cr_xmlNewTextChild(root,
+                                                NULL,
+                                                BAD_CAST "contenthash",
+                                                BAD_CAST repomd->contenthash);
+        if (repomd->contenthash_type)
+            cr_xmlNewProp(contenthash_elem,
+                          BAD_CAST "type",
+                          BAD_CAST repomd->contenthash_type);
+    }
+
+    // **********************************
     // Element: Tags
     // **********************************
 

@@ -162,6 +162,22 @@ set_repoid(_RepomdObject *self, PyObject *args)
     Py_RETURN_NONE;
 }
 
+PyDoc_STRVAR(set_contenthash__doc__,
+"set_contenthash(contenthash, contenthash_type) -> None\n\n"
+"Set contenthash value and contenthash_type");
+
+static PyObject *
+set_contenthash(_RepomdObject *self, PyObject *args)
+{
+    char *contenthash, *contenthash_type;
+    if (!PyArg_ParseTuple(args, "zz:set_contenthash", &contenthash, &contenthash_type))
+        return NULL;
+    if (check_RepomdStatus(self))
+        return NULL;
+    cr_repomd_set_contenthash(self->repomd, contenthash, contenthash_type);
+    Py_RETURN_NONE;
+}
+
 PyDoc_STRVAR(add_distro_tag__doc__,
 "add_distro_tag(tag[, cpeid=None]) -> None\n\n"
 "Add distro tag");
@@ -252,6 +268,8 @@ static struct PyMethodDef repomd_methods[] = {
         set_revision__doc__},
     {"set_repoid", (PyCFunction)set_repoid, METH_VARARGS,
         set_repoid__doc__},
+    {"set_contenthash", (PyCFunction)set_contenthash, METH_VARARGS,
+        set_contenthash__doc__},
     {"add_distro_tag", (PyCFunction)add_distro_tag, METH_VARARGS|METH_KEYWORDS,
         add_distro_tag__doc__},
     {"add_repo_tag", (PyCFunction)add_repo_tag, METH_VARARGS,
@@ -430,6 +448,10 @@ static PyGetSetDef repomd_getsetters[] = {
         "Repoid value", OFFSET(repoid)},
     {"repoid_type",      (getter)get_str,  (setter)set_str,
         "Repoid type value", OFFSET(repoid_type)},
+     {"contenthash",     (getter)get_str,  (setter)set_str,
+        "Contenthash value", OFFSET(contenthash)},
+    {"contenthash_type", (getter)get_str,  (setter)set_str,
+        "contenthash type value", OFFSET(contenthash_type)},
     {"repo_tags",        (getter)get_list, (setter)set_list,
         "List of repo tags", &(list_convertors[0])},
     {"distro_tags",      (getter)get_list, (setter)set_list,

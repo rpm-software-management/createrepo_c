@@ -107,17 +107,14 @@ class DeltaRepoApplicator(LoggingInterface):
         if not "primary" in self.old_records:
             raise DeltaRepoError("Missing \"primary\" metadata in old repo")
 
-        if not "primary" in self.delta_records:
-            raise DeltaRepoError("Missing \"primary\" metadata in delta repo")
-
         # Detect type of checksum in the delta repomd.xml
-        self.checksum_type = cr.checksum_type(self.delta_records["primary"].checksum_type)
+        self.checksum_type = cr.checksum_type(self.delta_records["deltametadata"].checksum_type)
         if self.checksum_type == cr.UNKNOWN_CHECKSUM:
             raise DeltaRepoError("Unknown checksum type used in delta repo: %s" % \
-                    self.delta_records["primary"].checksum_type)
+                    self.delta_records["deltametadata"].checksum_type)
 
         # Detection if use unique md filenames
-        if self.delta_records["primary"].location_href.split("primary")[0] != "":
+        if self.delta_records["deltametadata"].location_href.split("deltametadata")[0] != "":
             self.unique_md_filenames = True
 
         # Load removedxml
@@ -142,7 +139,7 @@ class DeltaRepoApplicator(LoggingInterface):
 
         metadata = Metadata(metadata_type)
 
-        metadata.checksum_type = DEFAULT_CHECKSUM_TYPE
+        metadata.checksum_type = self.checksum_type
         metadata.compression_type = DEFAULT_COMPRESSION_TYPE
 
         # Set output directory
@@ -192,15 +189,16 @@ class DeltaRepoApplicator(LoggingInterface):
 
         return metadata
 
-    def check_content_hashes(self):
+    def check_content_hashes(self, pri_md):
         self._debug("Checking expected content hashes")
+
+        if not pri_md:
+            self._warning("Content hashes cannot be checked!")
 
         c_old_contenthash = self.globalbundle.calculated_old_contenthash
         c_new_contenthash = self.globalbundle.calculated_new_contenthash
 
         if not c_old_contenthash or not c_new_contenthash:
-
-            pri_md = self._new_metadata("primary")
 
             if not c_old_contenthash:
                 if not pri_md.old_fn_exists:
@@ -217,6 +215,9 @@ class DeltaRepoApplicator(LoggingInterface):
                                                           self.contenthash_type_str,
                                                           self._get_logger())
 
+            self.globalbundle.calculated_old_contenthash = c_old_contenthash
+            self.globalbundle.calculated_new_contenthash = c_new_contenthash
+
         self._debug("Calculated content hash of the old repo: {0}".format(
                     c_old_contenthash))
         self._debug("Calculated content hash of the new repo: {0}".format(
@@ -225,7 +226,7 @@ class DeltaRepoApplicator(LoggingInterface):
         if self.old_contenthash != c_old_contenthash:
             message = "Content hash of the old repository doesn't match "\
                       "the real one ({1} != {2}).".format(self.old_contenthash,
-                      self.globalbundle.calculated_old_contenthash)
+                      c_old_contenthash)
             self._error(message)
             raise DeltaRepoError(message)
         else:
@@ -235,7 +236,7 @@ class DeltaRepoApplicator(LoggingInterface):
         if self.new_contenthash != c_new_contenthash:
             message = "Content hash of the new repository doesn't match "\
                       "the real one ({1} != {2}).".format(self.new_contenthash,
-                      self.globalbundle.calculated_new_contenthash)
+                      c_new_contenthash)
             self._error(message)
             raise DeltaRepoError(message)
         else:
@@ -249,6 +250,7 @@ class DeltaRepoApplicator(LoggingInterface):
 
         # Set of types of processed metadata records ("primary", "primary_db"...)
         processed_metadata = set()
+        primary_metadata_object = None
 
         for plugin in PLUGINS:
 
@@ -256,6 +258,8 @@ class DeltaRepoApplicator(LoggingInterface):
             metadata_objects = {}
             for metadata_name in plugin.METADATA:
                 metadata_object = self._new_metadata(metadata_name)
+                if metadata_name == "primary":
+                    primary_metadata_object = metadata_object
                 if metadata_object is not None:
                     metadata_objects[metadata_name] = metadata_object
 
@@ -338,7 +342,7 @@ class DeltaRepoApplicator(LoggingInterface):
                 self.new_repomd.set_record(rec)
 
         # Check if calculated repoids match
-        self.check_content_hashes()
+        self.check_content_hashes(primary_metadata_object)
 
         # Prepare and write out the new repomd.xml
         self._debug("Preparing repomd.xml ...")

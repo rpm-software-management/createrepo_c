@@ -196,6 +196,9 @@ class DeltaRepoGenerator(LoggingInterface):
                                                           self.contenthash_type_str,
                                                           self._get_logger())
 
+            self.globalbundle.calculated_old_contenthash = c_old_contenthash
+            self.globalbundle.calculated_new_contenthash = c_new_contenthash
+
         self._debug("Calculated content hash of the old repo: {0}".format(
                     c_old_contenthash))
         self._debug("Calculated content hash of the new repo: {0}".format(

@@ -193,10 +193,13 @@ class DeltaRepoPlugin(LoggingInterface):
             # No metadata - Nothing to do
             return (True, None, None)
 
+        md.delta_rec = None
+        md.delta_fn_exists = False
+
         if not md.old_rec and not md.new_rec:
-            # None metadata record exists. This is weird and shouldn't happen
-            self._warning("\"{0}\": WEIRD CONDITIONS: doesn't exist "
-                          "in any repo".format())
+            # None metadata record exists.
+            self._debug("\"{0}\": Doesn't exist "
+                        "in any repo".format(md.metadata_type))
             return (True, None, None)
 
         if not md.new_rec:
@@ -247,6 +250,9 @@ class DeltaRepoPlugin(LoggingInterface):
             if compression != cr.NO_COMPRESSION:
                 notes["compressed"] = "1"
 
+            md.delta_rec = rec
+            md.delta_fn_exists = True
+
             return (True, rec, notes)
 
         # At this point we are sure that we have both metadata files
@@ -276,14 +282,20 @@ class DeltaRepoPlugin(LoggingInterface):
             # No metadata - Nothing to do
             return (True, None)
 
+        # Init some stuff in md
+        # This variables should be set only if new record was generated
+        # Otherwise it should by None/False
+        md.new_rec = None
+        md.new_fn_exists = False
+
         if not notes:
             # No notes - Nothing to do
             return (True, None)
 
         if not md.old_rec and not md.delta_rec:
-            # None metadata record exists. This is weird and shouldn't happen
-            self._warning("\"{0}\": WEIRD CONDITIONS: doesn't exist "
-                          "in any repo".format())
+            # None metadata record exists.
+            self._debug("\"{0}\": Doesn't exist "
+                        "in any repo".format(md.metadata_type))
             return (True, None)
 
         if not md.delta_rec:
@@ -320,6 +332,10 @@ class DeltaRepoPlugin(LoggingInterface):
             if self.globalbundle.unique_md_filenames:
                 rec.rename_file()
                 md.new_fn = rec.location_real
+
+            md.new_rec = rec
+            md.new_fn_exists = True
+
             return (True, rec)
 
         if not md.delta_fn_exists:
@@ -340,6 +356,10 @@ class DeltaRepoPlugin(LoggingInterface):
 
             rec = self.apply_use_original(md, decompress)
             self._debug("\"{0}\": Used delta is just a copy")
+
+            md.new_rec = rec
+            md.new_fn_exists = True
+
             return (True, rec)
 
         if not md.old_fn_exists:
@@ -422,6 +442,52 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                           pkg.location_base or '')
         return idstr
 
+    def _gen_db_from_xml(self, md, source="delta"):
+        """Gen sqlite db from the delta metadata.
+        """
+        mdtype = md.metadata_type
+
+        if mdtype == "primary":
+            dbclass = cr.PrimarySqlite
+            parsefunc = cr.xml_parse_primary
+        elif mdtype == "filelists":
+            dbclass = cr.FilelistsSqlite
+            parsefunc = cr.xml_parse_filelists
+        elif mdtype == "other":
+            dbclass = cr.OtherSqlite
+            parsefunc = cr.xml_parse_other
+        else:
+            raise DeltaRepoPluginError("Unsupported type of metadata {0}".format(mdtype))
+
+        src_fn = md.new_fn
+        src_rec = md.new_rec
+
+        md.db_fn = os.path.join(md.out_dir, "{0}.sqlite".format(mdtype))
+        db = dbclass(md.db_fn)
+
+        def pkgcb(pkg):
+            db.add_pkg(pkg)
+
+        parsefunc(src_fn, pkgcb=pkgcb)
+
+        db.dbinfo_update(src_rec.checksum)
+        db.close()
+
+        db_stat = cr.ContentStat(md.checksum_type)
+        db_compressed = md.db_fn+".bz2"
+        cr.compress_file(md.db_fn, None, cr.BZ2, db_stat)
+        os.remove(md.db_fn)
+
+        # Prepare repomd record of database file
+        db_rec = cr.RepomdRecord("{0}_db".format(md.metadata_type),
+                                 db_compressed)
+        db_rec.load_contentstat(db_stat)
+        db_rec.fill(md.checksum_type)
+        if self.globalbundle.unique_md_filenames:
+            db_rec.rename_file()
+
+        return db_rec
+
     def apply(self, metadata):
         # Check input arguments
         if "primary" not in metadata:
@@ -430,14 +496,16 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
 
         gen_repomd_recs = []
 
-        gen_db_for = set([])
         removed_packages = {}
 
         pri_md = metadata.get("primary")
         fil_md = metadata.get("filelists")
         oth_md = metadata.get("other")
 
-        def try_simple_delta(md):
+        def try_simple_delta(md, dbclass):
+            if not md:
+                return
+
             notes = self._metadata_notes_from_plugin_bundle(md.metadata_type)
             if not notes:
                 self._warning("Metadata \"{0}\" doesn't have a record in "
@@ -449,16 +517,21 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             if rec:
                 gen_repomd_recs.append(rec)
 
+            if not md.new_fn_exists:
+                return True
+
             # Gen DB here
-            # TODO: TODO
+            if self.globalbundle.force_database or notes.get("database") == "1":
+                rec = self._gen_db_from_xml(md)
+                gen_repomd_recs.append(rec)
 
             return True
 
         # At first try to simple delta
 
-        simple_pri_delta = try_simple_delta(pri_md)
-        simple_fil_delta = try_simple_delta(fil_md)
-        simple_oth_delta = try_simple_delta(oth_md)
+        simple_pri_delta = try_simple_delta(pri_md, cr.PrimarySqlite)
+        simple_fil_delta = try_simple_delta(fil_md, cr.FilelistsSqlite)
+        simple_oth_delta = try_simple_delta(oth_md, cr.OtherSqlite)
 
         if simple_pri_delta:
             assert simple_fil_delta
@@ -470,15 +543,6 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             fil_md = None
         if simple_oth_delta:
             oth_md = None
-
-        # Make a set of md_types for which databases should be generated
-        # TODO: REFACTOR THIS
-        for record in self.pluginbundle.get_list("metadata", []):
-            mdtype = record.get("type")
-            if not mdtype:
-                continue
-            if self.globalbundle.force_database or record.get("database") == "1":
-                gen_db_for.add(mdtype)
 
         # Make a dict of removed packages key is location_href,
         # value is location_base
@@ -496,6 +560,13 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             if md is None:
                 return
 
+            notes = self._metadata_notes_from_plugin_bundle(md.metadata_type)
+            if not notes:
+                # TODO PRIDAT NEJAKEJ FLAG NA INGONRACI
+                self._warning("Metadata \"{0}\" doesn't have a record in "
+                              "deltametadata.xml - Ignoring")
+                return
+
             suffix = cr.compression_suffix(md.compression_type) or ""
             md.new_fn = os.path.join(md.out_dir,
                                      "{0}.xml{1}".format(
@@ -505,7 +576,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                                 md.compression_type,
                                 md.new_f_stat)
 
-            if md.metadata_type in gen_db_for:
+            if self.globalbundle.force_database or notes.get("database") == "1":
                 md.db_fn = os.path.join(md.out_dir, "{0}.sqlite".format(
                                         md.metadata_type))
                 md.db = dbclass(md.db_fn)
@@ -639,6 +710,9 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             rec.fill(md.checksum_type)
             if self.globalbundle.unique_md_filenames:
                 rec.rename_file()
+
+            md.new_rec = rec
+            md.new_fn_exists = True
 
             gen_repomd_recs.append(rec)
 
@@ -854,6 +928,9 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
             rec.fill(md.checksum_type)
             if self.globalbundle.unique_md_filenames:
                 rec.rename_file()
+
+            md.delta_rec = rec
+            md.delta_fn_exists = True
 
             gen_repomd_recs.append(rec)
 

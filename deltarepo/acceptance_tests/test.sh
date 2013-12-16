@@ -1,6 +1,6 @@
 #!/bin/bash
 
-DELTAREPO="../deltarepo.py --debug"
+DELTAREPO="../deltarepo.py"
 
 MY_DIR=`dirname $0`
 
@@ -127,9 +127,6 @@ testcase01 $REPO1 $REPO2_NODATABASE
 testcase01 $REPO1 $REPO3
 testcase01 $REPO1 $REPO3_MD5
 
-testcase01 $REPO1_ONLY_PRI_FIL $REPO2_INCOMPLETE
-testcase01 $REPO1_ONLY_PRI_FIL $REPO2_INCOMPLETE_2
-
 testcase01 $REPO2 $REPO1
 testcase01 $REPO2 $REPO2_INCOMPLETE
 testcase01 $REPO2 $REPO2_INCOMPLETE_2
@@ -210,6 +207,8 @@ function testcase01_that_should_fail {
 
 testcase01_that_should_fail $REPO1_ONLY_PRI_FIL $REPO2
 testcase01_that_should_fail $REPO1_ONLY_PRI_FIL $REPO2_NODATABASE
+testcase01_that_should_fail $REPO1_ONLY_PRI_FIL $REPO2_INCOMPLETE
+testcase01_that_should_fail $REPO1_ONLY_PRI_FIL $REPO2_INCOMPLETE_2
 testcase01_that_should_fail $REPO1_ONLY_PRI_FIL $REPO3
 testcase01_that_should_fail $REPO1_ONLY_PRI_FIL $REPO3_MD5
 testcase01_that_should_fail $REPO1_ONLY_PRI_FIL $REPO1_ONLY_PRI_FIL
@@ -267,6 +266,8 @@ testcase01_that_should_succeed $REPO1_ONLY_PRI_FIL $REPO2_NODATABASE
 testcase01_that_should_succeed $REPO1_ONLY_PRI_FIL $REPO3
 testcase01_that_should_succeed $REPO1_ONLY_PRI_FIL $REPO3_MD5
 testcase01_that_should_succeed $REPO1_ONLY_PRI_FIL $REPO1_ONLY_PRI_FIL
+testcase01_that_should_succeed $REPO1_ONLY_PRI_FIL $REPO2_INCOMPLETE
+testcase01_that_should_succeed $REPO1_ONLY_PRI_FIL $REPO2_INCOMPLETE_2
 testcase01_that_should_succeed $REPO1 $REPO1_ONLY_PRI_FIL
 testcase01_that_should_succeed $REPO2 $REPO1_ONLY_PRI_FIL
 testcase01_that_should_succeed $REPO2_INCOMPLETE $REPO1_ONLY_PRI_FIL

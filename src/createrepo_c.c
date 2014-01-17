@@ -109,14 +109,23 @@ struct BufferedTask {
 char *tmp_repodata_path = NULL;     // Path to temporary dir - /foo/bar/.repodata
 
 
+void
+failure_exit_cleanup(int exit_status, void *data)
+{
+    CR_UNUSED(data);
+    if ((exit_status != EXIT_SUCCESS) && tmp_repodata_path) {
+        g_debug("Removing %s", tmp_repodata_path);
+        cr_remove_dir(tmp_repodata_path, NULL);
+    }
+}
+
+
 // Signal handler
 void
 sigint_catcher(int sig)
 {
     CR_UNUSED(sig);
     g_message("SIGINT catched: Terminating...");
-    if (tmp_repodata_path)
-        cr_remove_dir(tmp_repodata_path, NULL);
     exit(1);
 }
 
@@ -732,10 +741,13 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+    tmp_repodata_path = tmp_out_repo;
+
+    // Register cleanup function
+    if (on_exit(failure_exit_cleanup, NULL))
+        g_warning("Cannot set exit cleanup function by atexit()");
 
     // Set handler for sigint
-
-    tmp_repodata_path = tmp_out_repo;
 
     g_debug("SIGINT handler setup");
     struct sigaction sigact;

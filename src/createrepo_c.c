@@ -720,11 +720,20 @@ main(int argc, char **argv)
         tmp_out_repo = g_strconcat(out_dir, ".repodata/", NULL);
     }
 
-    // Block SIGINT
+    // Block signals that terminates the process
 
     sigset_t intmask;
     sigemptyset(&intmask);
+    sigaddset(&intmask, SIGHUP);
     sigaddset(&intmask, SIGINT);
+    sigaddset(&intmask, SIGPIPE);
+    sigaddset(&intmask, SIGALRM);
+    sigaddset(&intmask, SIGTERM);
+    sigaddset(&intmask, SIGUSR1);
+    sigaddset(&intmask, SIGUSR2);
+    sigaddset(&intmask, SIGPOLL);
+    sigaddset(&intmask, SIGPROF);
+    sigaddset(&intmask, SIGVTALRM);
     sigprocmask(SIG_BLOCK, &intmask, NULL);
 
     // Check if tmp_out_repo exists & Create tmp_out_repo dir
@@ -747,22 +756,44 @@ main(int argc, char **argv)
     if (on_exit(failure_exit_cleanup, NULL))
         g_warning("Cannot set exit cleanup function by atexit()");
 
-    // Set handler for sigint
+    // Set handler that call exit(EXIT_FAILURE) for signals that leads to
+    // process termination (list obtained from the "man 7 signal")
+    // Signals that are ignored (SIGCHILD) or lead just to stop (SIGSTOP, ..)
+    // SHOULDN'T GET THIS HANDLER - these signals do not terminate the process!
 
-    g_debug("SIGINT handler setup");
+    g_debug("Signal handler setup");
     struct sigaction sigact;
     sigact.sa_handler = sigint_catcher;
     sigemptyset(&sigact.sa_mask);
     sigact.sa_flags = 0;
-    if (sigaction(SIGINT, &sigact, NULL) == -1) {
-        g_critical("sigaction(): %s", strerror(errno));
-        exit(EXIT_FAILURE);
-    }
 
-    // Unblock SIGINT
+    // Signals that terminate (from the POSIX.1-1990)
+    sigaction(SIGHUP, &sigact, NULL);
+    sigaction(SIGINT, &sigact, NULL);
+    sigaction(SIGPIPE, &sigact, NULL);
+    sigaction(SIGALRM, &sigact, NULL);
+    sigaction(SIGTERM, &sigact, NULL);
+    sigaction(SIGUSR1, &sigact, NULL);
+    sigaction(SIGUSR2, &sigact, NULL);
+    // Signals that terminate (from the POSIX.1-2001)
+    sigaction(SIGPOLL, &sigact, NULL);
+    sigaction(SIGPROF, &sigact, NULL);
+    sigaction(SIGVTALRM, &sigact, NULL);
+
+
+    // Unblock the blocked signals
 
     sigemptyset(&intmask);
+    sigaddset(&intmask, SIGHUP);
     sigaddset(&intmask, SIGINT);
+    sigaddset(&intmask, SIGPIPE);
+    sigaddset(&intmask, SIGALRM);
+    sigaddset(&intmask, SIGTERM);
+    sigaddset(&intmask, SIGUSR1);
+    sigaddset(&intmask, SIGUSR2);
+    sigaddset(&intmask, SIGPOLL);
+    sigaddset(&intmask, SIGPROF);
+    sigaddset(&intmask, SIGVTALRM);
     sigprocmask(SIG_UNBLOCK, &intmask, NULL);
 
 

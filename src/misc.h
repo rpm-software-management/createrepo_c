@@ -427,7 +427,7 @@ typedef enum {
 } cr_RmFlags;
 
 /** Wrapper over rm command
- * @param path                  Path (supports wildcards)
+ * @param path          Path (supports wildcards)
  * @param flags         Flags
  * @param working_dir   Working directory
  * @param err           GError **
@@ -437,6 +437,14 @@ cr_rm(const char *path,
       cr_RmFlags flags,
       const char *working_dir,
       GError **err);
+
+/** Append "YYYYmmddHHMMSS.MICROSECONDS.PID" suffix to the str.
+ * @param str       String or NULL
+ * @param suffix    Another string that will be appended or NULL
+ * @param return    Newly allocated string
+ */
+gchar *
+cr_append_pid_and_datetime(const char *str, const char *suffix);
 /** @} */
 
 #ifdef __cplusplus

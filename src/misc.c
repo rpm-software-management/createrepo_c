@@ -1232,3 +1232,19 @@ cr_rm(const char *path,
 
     return ret;
 }
+
+gchar *
+cr_append_pid_and_datetime(const char *str, const char *suffix)
+{
+    GDateTime *cur_datetime = g_date_time_new_now_local();
+    gchar *datetime = g_date_time_format(cur_datetime, "%Y%m%d%H%M%S");
+    gchar *result = g_strdup_printf("%s%jd.%s.%d%s",
+                                    str ? str : "",
+                                    (intmax_t) getpid(),
+                                    datetime,
+                                    g_date_time_get_microsecond(cur_datetime),
+                                    suffix ? suffix : "");
+    g_free(datetime);
+    g_date_time_unref(cur_datetime);
+    return result;
+}

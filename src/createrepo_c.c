@@ -28,6 +28,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <stdint.h>
 #include "cmd_parser.h"
 #include "compression_wrapper.h"
 #include "checksum.h"
@@ -713,12 +714,12 @@ main(int argc, char **argv)
     if (cmd_options->outputdir) {
         out_dir = cr_normalize_dir_path(cmd_options->outputdir);
         out_repo = g_strconcat(out_dir, "repodata/", NULL);
-        tmp_out_repo = g_strconcat(out_dir, ".repodata/", NULL);
     } else {
         out_dir  = g_strdup(in_dir);
         out_repo = g_strdup(in_repo);
-        tmp_out_repo = g_strconcat(out_dir, ".repodata/", NULL);
     }
+    tmp_out_repo = g_strconcat(out_dir, ".repodata/", NULL);
+
 
     // Block signals that terminates the process
 
@@ -1553,7 +1554,7 @@ main(int argc, char **argv)
         }
 
         // Cleanup
-        g_slist_free(old_basenames);
+        g_slist_free_full(old_basenames, g_free);
         cr_repomd_free(repomd);
         g_dir_close(dirp);
     }
@@ -1570,8 +1571,18 @@ main(int argc, char **argv)
 
     sigprocmask(SIG_BLOCK, &new_mask, &old_mask);
 
-    // Rename out_repo to "repodata.old"
-    gchar *old_repodata_path = g_build_filename(out_dir, "repodata.old", NULL);
+    // Rename out_repo to "repodata.old.date.microsecs.pid.XXXXXX"
+    GDateTime *cur_datetime = g_date_time_new_now_local();
+    gchar *datetime = g_date_time_format(cur_datetime, "%Y%m%d%H%M%S");
+    gchar *strpid = g_strdup_printf(".%d.%jd", g_date_time_get_microsecond(
+                                    cur_datetime), (intmax_t)getpid());
+    gchar *tmp_dirname = g_strconcat("repodata.old.", datetime, strpid, NULL);
+    gchar *old_repodata_path = g_build_filename(out_dir, tmp_dirname, NULL);
+    g_free(datetime);
+    g_free(strpid);
+    g_free(tmp_dirname);
+    g_date_time_unref(cur_datetime);
+
     if (g_rename(out_repo, old_repodata_path) == -1) {
         g_debug("Old repodata doesn't exists: Cannot rename %s -> %s: %s",
                 out_repo, old_repodata_path, strerror(errno));
@@ -1582,7 +1593,8 @@ main(int argc, char **argv)
 
     // Rename tmp_out_repo to out_repo
     if (g_rename(tmp_out_repo, out_repo) == -1) {
-        g_error("Cannot rename %s -> %s", tmp_out_repo, out_repo);
+        g_error("Cannot rename %s -> %s: %s", tmp_out_repo, out_repo,
+                strerror(errno));
         exit(EXIT_FAILURE);
     } else {
         g_debug("Renamed %s -> %s", tmp_out_repo, out_repo);
@@ -1610,6 +1622,7 @@ main(int argc, char **argv)
     if (old_metadata)
         cr_metadata_free(old_metadata);
 
+    g_free(old_repodata_path);
     g_free(in_repo);
     g_free(out_repo);
     tmp_repodata_path = NULL;

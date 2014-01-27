@@ -29,6 +29,7 @@
 #include <dirent.h>
 #include <fcntl.h>
 #include <stdint.h>
+#include <unistd.h>
 #include "cmd_parser.h"
 #include "compression_wrapper.h"
 #include "checksum.h"
@@ -107,16 +108,28 @@ struct BufferedTask {
 
 
 // Global variables used by signal handler
-char *tmp_repodata_path = NULL;     // Path to temporary dir - /foo/bar/.repodata
+char *tmp_repodata_path = NULL;      // Path to temporary dir - /foo/bar/.repodata
+char *tmp_repodata_path_orig = NULL; /*!< If the --ignore-lock option is
+    used, then the tmp_repodata_path is unique (has time and pid in suffix).
+    But the old plain ".repodata/" dir exists too, but just as a lock to
+    inform other createrepo instances that a createrepo instance
+    is running. */
 
 
 void
 failure_exit_cleanup(int exit_status, void *data)
 {
     CR_UNUSED(data);
-    if ((exit_status != EXIT_SUCCESS) && tmp_repodata_path) {
-        g_debug("Removing %s", tmp_repodata_path);
-        cr_remove_dir(tmp_repodata_path, NULL);
+    if (exit_status != EXIT_SUCCESS) {
+        if (tmp_repodata_path) {
+            g_debug("Removing %s", tmp_repodata_path);
+            cr_remove_dir(tmp_repodata_path, NULL);
+        }
+
+        if (tmp_repodata_path_orig) {
+            g_debug("Removing %s", tmp_repodata_path_orig);
+            cr_remove_dir(tmp_repodata_path_orig, NULL);
+        }
     }
 }
 
@@ -740,15 +753,56 @@ main(int argc, char **argv)
     // Check if tmp_out_repo exists & Create tmp_out_repo dir
 
     if (g_mkdir(tmp_out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
-        if (errno == EEXIST) {
-            g_critical("Temporary repodata directory: %s already exists! ("
-                       "Another createrepo process is running?)", tmp_out_repo);
-        } else {
+        if (errno != EEXIST) {
             g_critical("Error while creating temporary repodata directory %s: %s",
                        tmp_out_repo, strerror(errno));
+            exit(EXIT_FAILURE);
         }
 
-        exit(EXIT_FAILURE);
+        g_critical("Temporary repodata directory: %s already exists! "
+                   "(Another createrepo process is running?)", tmp_out_repo);
+
+        if (cmd_options->ignore_lock == FALSE)
+            exit(EXIT_FAILURE);
+
+        // The next section takes place only if the --ignore-lock is used
+        // Ugly, but user wants it -> it's his fault
+
+        // Remove existing .repodata/
+        g_debug("(--ignore-lock enabled) Let's remove the old .repodata/");
+        if (cr_rm(tmp_out_repo, CR_RM_RECURSIVE, NULL, &tmp_err)) {
+            g_debug("(--ignore-lock enabled) Removed: %s", tmp_out_repo);
+        } else {
+            g_critical("(--ignore-lock enabled) Cannot remove %s: %s",
+                       tmp_out_repo, tmp_err->message);
+            exit(EXIT_FAILURE);
+        }
+
+        // Try to create own - just as a lock
+        if (g_mkdir(tmp_out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
+            g_critical("(--ignore-lock enabled) Cannot create %s: %s",
+                       tmp_out_repo, strerror(errno));
+            exit(EXIT_FAILURE);
+        } else {
+            g_debug("(--ignore-lock enabled) Own and empty %s created "
+                    "(serves as a lock)", tmp_out_repo);
+        }
+
+        tmp_repodata_path_orig = g_strdup(tmp_out_repo);
+
+        // To data generation use a different one
+        tmp_out_repo[strlen(tmp_out_repo)-1] = '.'; // Replace the last '/' with '.'
+        gchar * new_tmp_out_repo = cr_append_pid_and_datetime(tmp_out_repo, "/");
+        g_free(tmp_out_repo);
+        tmp_out_repo = new_tmp_out_repo;
+        if (g_mkdir(tmp_out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
+            g_critical("(--ignore-lock enabled) Cannot create %s: %s",
+                       tmp_out_repo, strerror(errno));
+            exit(EXIT_FAILURE);
+        } else {
+            g_debug("(--ignore-lock enabled) For data generation is used: %s",
+                    tmp_out_repo);
+        }
     }
 
     tmp_repodata_path = tmp_out_repo;
@@ -1571,17 +1625,10 @@ main(int argc, char **argv)
 
     sigprocmask(SIG_BLOCK, &new_mask, &old_mask);
 
-    // Rename out_repo to "repodata.old.date.microsecs.pid.XXXXXX"
-    GDateTime *cur_datetime = g_date_time_new_now_local();
-    gchar *datetime = g_date_time_format(cur_datetime, "%Y%m%d%H%M%S");
-    gchar *strpid = g_strdup_printf(".%d.%jd", g_date_time_get_microsecond(
-                                    cur_datetime), (intmax_t)getpid());
-    gchar *tmp_dirname = g_strconcat("repodata.old.", datetime, strpid, NULL);
+    // Rename out_repo to "repodata.old.pid.date.microsecs"
+    gchar *tmp_dirname = cr_append_pid_and_datetime("repodata.old.", NULL);
     gchar *old_repodata_path = g_build_filename(out_dir, tmp_dirname, NULL);
-    g_free(datetime);
-    g_free(strpid);
     g_free(tmp_dirname);
-    g_date_time_unref(cur_datetime);
 
     if (g_rename(out_repo, old_repodata_path) == -1) {
         g_debug("Old repodata doesn't exists: Cannot rename %s -> %s: %s",
@@ -1593,11 +1640,21 @@ main(int argc, char **argv)
 
     // Rename tmp_out_repo to out_repo
     if (g_rename(tmp_out_repo, out_repo) == -1) {
-        g_error("Cannot rename %s -> %s: %s", tmp_out_repo, out_repo,
-                strerror(errno));
+        g_critical("Cannot rename %s -> %s: %s", tmp_out_repo, out_repo,
+                   strerror(errno));
         exit(EXIT_FAILURE);
     } else {
         g_debug("Renamed %s -> %s", tmp_out_repo, out_repo);
+    }
+
+    // Free path stored for exit handler
+    tmp_repodata_path = NULL;
+    if (tmp_repodata_path_orig) {
+        // Remove the "lock" .repodata/ in case that .repodata/ was not used
+        // for repodata generation (--ignore-lock option)
+        cr_remove_dir(tmp_repodata_path_orig, NULL);
+        g_free(tmp_repodata_path_orig);
+        tmp_repodata_path_orig = NULL;
     }
 
     sigprocmask(SIG_SETMASK, &old_mask, NULL);
@@ -1625,7 +1682,6 @@ main(int argc, char **argv)
     g_free(old_repodata_path);
     g_free(in_repo);
     g_free(out_repo);
-    tmp_repodata_path = NULL;
     g_free(tmp_out_repo);
     g_free(in_dir);
     g_free(out_dir);

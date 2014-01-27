@@ -68,6 +68,10 @@ struct CmdOptions {
     gboolean xz_compression;    /*!< use xz for repodata compression */
     gboolean keep_all_metadata; /*!< keep groupfile and updateinfo from source
                                      repo during update */
+    gboolean ignore_lock;       /*!< Ignore existing .repodata/ - remove it,
+                                     create the new one (empty) to serve as
+                                     a lock and use a .repodata.date.pid for
+                                     data generation. */
 
     /* Items filled by check_arguments() */
 

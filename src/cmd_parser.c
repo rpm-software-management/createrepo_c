@@ -29,16 +29,17 @@
 #define DEFAULT_CHECKSUM                "sha256"
 #define DEFAULT_WORKERS                 5
 #define DEFAULT_UNIQUE_MD_FILENAMES     TRUE
-
+#define DEFAULT_IGNORE_LOCK             FALSE
 
 struct CmdOptions _cmd_options = {
-        .changelog_limit     = DEFAULT_CHANGELOG_LIMIT,
-        .checksum            = NULL,
-        .workers             = DEFAULT_WORKERS,
-        .unique_md_filenames = DEFAULT_UNIQUE_MD_FILENAMES,
-        .checksum_type       = CR_CHECKSUM_SHA256,
-        .retain_old          = 0,
-        .compression_type    = CR_CW_UNKNOWN_COMPRESSION
+        .changelog_limit      = DEFAULT_CHANGELOG_LIMIT,
+        .checksum             = NULL,
+        .workers              = DEFAULT_WORKERS,
+        .unique_md_filenames  = DEFAULT_UNIQUE_MD_FILENAMES,
+        .checksum_type        = CR_CHECKSUM_SHA256,
+        .retain_old           = 0,
+        .compression_type     = CR_CW_UNKNOWN_COMPRESSION,
+        .ignore_lock          = DEFAULT_IGNORE_LOCK
     };
 
 
@@ -127,11 +128,27 @@ static GOptionEntry cmd_entries[] =
 };
 
 
+static GOptionEntry expert_entries[] =
+{
+    { "ignore-lock", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.ignore_lock),
+      "Expert (risky) option: Ignore an existing .repodata/. "
+      "(Remove the existing .repodata/ and create an empty new one "
+      "to serve as a lock for other createrepo intances. For the repodata "
+      "generation, a different temporary dir with the name in format "
+      "\".repodata.time.microseconds.pid/\" will be used). "
+      "NOTE: Use this option on your "
+      "own risk! If two createrepos run simultaneously, then the state of the "
+      "generated metadata is not guaranted - it can be inconsistent and wrong.",
+      NULL },
+    { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL },
+};
+
 
 struct CmdOptions *parse_arguments(int *argc, char ***argv, GError **err)
 {
     gboolean ret;
     GOptionContext *context;
+    GOptionGroup *group_expert;
 
     assert(!err || *err == NULL);
 
@@ -139,6 +156,14 @@ struct CmdOptions *parse_arguments(int *argc, char ***argv, GError **err)
                                    " rpm metadata) repository from a set of"
                                    " rpms.");
     g_option_context_add_main_entries(context, cmd_entries, NULL);
+
+    group_expert = g_option_group_new("expert",
+                                      "Expert (risky) options",
+                                      "Expert (risky) options",
+                                      NULL,
+                                      NULL);
+    g_option_group_add_entries(group_expert, expert_entries);
+    g_option_context_add_group(context, group_expert);
 
     ret = g_option_context_parse(context, argc, argv, err);
     g_option_context_free(context);

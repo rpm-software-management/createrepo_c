@@ -285,9 +285,65 @@ class Solver(LoggingInterface):
         if not target_node:
             raise DeltaRepoError("Target repo ({0}) not available".format(self.target_ch))
 
-        # TODO: Implement Dijkstra's algorithm here
+        # Dijkstra's algorithm
+        # http://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
+        dist = {}       # Distance
+        previous = {}   # Predecessor
+        Q = []
 
-        pass
+        for _, node in graph.nodes.items():
+            dist[node] = -1 # -1 Stands for infinity here
+            previous[node] = None
+            Q.append(node)
+
+        dist[source_node] = 0
+
+        while Q:
+            u = None
+            val = -1
+            # Select node from Q with the smallest distance in dist
+            for node in Q:
+                if dist[node] == -1:
+                    continue
+                if val == -1 or dist[node] < val:
+                    val = dist[node]
+                    u = node
+
+            if u:
+                # Remove the u from the queue
+                Q.remove(u)
+            else:
+                # All remaining nodes are inaccessible from source
+                break
+
+            if u == target_node:
+                # Cool!
+                break
+
+            # Iterate over the u neighbors
+            for v, link in u.targets.items():
+                alt = dist[u] + link.cost()
+                if alt < dist[v] or dist[v] == -1:
+                    dist[v] = alt
+                    previous[v] = u
+
+        # At this point we have previous and dist filled
+        import pprint
+        print
+        pprint.pprint(previous)
+        print
+        pprint.pprint(dist)
+
+        resolved_path = []
+        u = target_node
+        while previous[u] is not None:
+            resolved_path.append(previous[u])
+            u = previous[u]
+
+        resolved_path.reverse()
+
+        print "xxxx"
+        pprint.pprint(resolved_path)
 
 class DRUpdater(object):
 

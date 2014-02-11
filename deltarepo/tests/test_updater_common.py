@@ -96,5 +96,5 @@ class TestCaseSolver(unittest.TestCase):
         links.append(TestCaseSolver.LinkMock("bbb", "ccc"))
 
         logger = logging.getLogger("testloger")
-        solver = Solver(links, "aaa", "bbb", logger=logger)
+        solver = Solver(links, "aaa", "ccc", logger=logger)
         solver.solve()

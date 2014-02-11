@@ -33,10 +33,6 @@ extern "C" {
  *  @{
  */
 
-/** Status of initialization of global structures for package parsing.
- */
-extern short cr_initialized;
-
 /** Initialize global structures for package parsing.
  * This function call rpmReadConfigFiles() and create global transaction set.
  * This function should be called only once! This function is not thread safe!

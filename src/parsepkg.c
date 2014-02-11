@@ -34,16 +34,12 @@
 #include "misc.h"
 #include "checksum.h"
 
-volatile short cr_initialized = 0;
 rpmts cr_ts = NULL;
 
 
-void
-cr_package_parser_init()
+static gpointer
+cr_package_parser_init_once_cb(gpointer user_data G_GNUC_UNUSED)
 {
-    if (cr_initialized)
-        return;
-    cr_initialized = 1;
     rpmReadConfigFiles(NULL, NULL);
     cr_ts = rpmtsCreate();
     if (!cr_ts)
@@ -56,17 +52,31 @@ cr_package_parser_init()
     rpmtsSetVSFlags(cr_ts, vsflags);
 }
 
-
 void
-cr_package_parser_cleanup()
+cr_package_parser_init()
 {
-    if (cr_ts)
+    static GOnce package_parser_init_once = G_ONCE_INIT;
+    g_once(&package_parser_init_once, cr_package_parser_init_once_cb, NULL);
+}
+
+static gpointer
+cr_package_parser_cleanup_once_cb(gpointer user_data G_GNUC_UNUSED)
+{
+    if (cr_ts) {
         rpmtsFree(cr_ts);
+        cr_ts = NULL;
+    }
 
     rpmFreeMacros(NULL);
     rpmFreeRpmrc();
 }
 
+void
+cr_package_parser_cleanup()
+{
+    static GOnce package_parser_cleanup_once = G_ONCE_INIT;
+    g_once(&package_parser_cleanup_once, cr_package_parser_cleanup_once_cb, NULL);
+}
 
 static int
 read_header(const char *filename, Header *hdr, GError **err)

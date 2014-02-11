@@ -9,15 +9,23 @@ Copyright (C) 2013   Tomas Mlcoch
 """
 
 import createrepo_c as cr
-from .common import LoggingInterface, Metadata
+from .common import LoggingInterface, calculate_contenthash
+from .plugins_common import Metadata
+from .deltarepos import DeltaRepos, DeltaReposRecord
+from .deltametadata import DeltaMetadata, PluginBundle
 from .applicator import DeltaRepoApplicator
 from .generator import DeltaRepoGenerator
-from .delta_plugins import PLUGINS
+from .plugins import PLUGINS
 from .errors import DeltaRepoError, DeltaRepoPluginError
 
-__all__ = ['VERSION', 'VERBOSE_VERSION', 'DeltaRepoError',
-           'DeltaRepoPluginError', 'DeltaRepoGenerator'
-           'DeltaRepoApplicator']
+__all__ = ['VERSION', 'VERBOSE_VERSION',
+           'LoggingInterface', 'calculate_contenthash',
+           'Metadata',
+           'DeltaRepos', 'DeltaReposRecord',
+           'DeltaMetadata', 'PluginBundle',
+           'DeltaRepoApplicator',
+           'DeltaRepoGenerator',
+           'DeltaRepoError', 'DeltaRepoPluginError']
 
 VERSION = "0.0.1"
 VERBOSE_VERSION = "%s (createrepo_c: %s)" % (VERSION, cr.VERSION)

@@ -11,9 +11,11 @@ Copyright (C) 2013   Tomas Mlcoch
 import os
 import shutil
 import createrepo_c as cr
-from .common import LoggingInterface, Metadata, DeltaMetadata, PluginBundle
+from .common import LoggingInterface
+from .plugins_common import GlobalBundle, Metadata
+from .deltametadata import DeltaMetadata, PluginBundle
 from .common import DEFAULT_CHECKSUM_TYPE, DEFAULT_COMPRESSION_TYPE
-from .delta_plugins import GlobalBundle, PLUGINS, GENERAL_PLUGIN
+from .plugins import GlobalBundle, PLUGINS, GENERAL_PLUGIN
 from .util import calculate_content_hash, pkg_id_str
 from .errors import DeltaRepoError
 
@@ -117,6 +119,32 @@ class DeltaRepoGenerator(LoggingInterface):
         self.globalbundle.unique_md_filenames = self.unique_md_filenames
         self.globalbundle.force_database = force_database
         self.globalbundle.ignore_missing = ignore_missing
+
+    def fill_deltametadata(self):
+        if not self.deltametadata:
+            return
+
+        # Set revisions
+        self.deltametadata.revision_src = self.old_repomd.revision
+        self.deltametadata.revision_dst = self.new_repomd.revision
+
+        # Set contenthashes
+        self.deltametadata.contenthash_type = \
+                    self.globalbundle.contenthash_type_str
+        self.deltametadata.contenthash_src = \
+                    self.globalbundle.calculated_old_contenthash
+        self.deltametadata.contenthash_dst = \
+                    self.globalbundle.calculated_new_contenthash
+
+        # Set timestamps
+        timestamp_src = 0
+        timestamp_dst = 0
+        for rec in self.old_repomd.records:
+            timestamp_src = max(rec.timestamp, timestamp_src)
+        for rec in self.new_repomd.records:
+            timestamp_dst = max(rec.timestamp, timestamp_dst)
+        self.deltametadata.timestamp_src = timestamp_src
+        self.deltametadata.timestamp_dst = timestamp_dst
 
     def _new_metadata(self, metadata_type):
         """Return Metadata Object for the metadata_type"""
@@ -309,6 +337,7 @@ class DeltaRepoGenerator(LoggingInterface):
                 self.delta_repomd.set_record(rec)
 
         # Write out deltametadata.xml
+        self.fill_deltametadata()
         deltametadata_xml = self.deltametadata.xmldump()
         deltametadata_path = os.path.join(self.delta_repodata_path, "deltametadata.xml")
 

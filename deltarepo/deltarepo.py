@@ -47,7 +47,7 @@ def parse_options():
     #                 help="Do delta only for the DATATYPE. Could be specified "\
     #                 "multiple times. (E.g., --do-only=primary)")
     group.add_argument("-t", "--id-type", action="store", metavar="HASHTYPE",
-                     help="Hash function for the ids (RepoId and DeltaRepoId). " \
+                     help="Hash function for the ids (Contenthash). " \
                      "Default is sha256.", default="sha256")
 
     group = parser.add_argument_group("Delta application")

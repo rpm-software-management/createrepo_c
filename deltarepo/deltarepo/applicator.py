@@ -11,9 +11,11 @@ Copyright (C) 2013   Tomas Mlcoch
 import os
 import shutil
 import createrepo_c as cr
-from .common import LoggingInterface, Metadata, DeltaMetadata
+from .common import LoggingInterface
+from .plugins_common import GlobalBundle, Metadata
+from .deltametadata import DeltaMetadata
 from .common import DEFAULT_CHECKSUM_TYPE, DEFAULT_COMPRESSION_TYPE
-from .delta_plugins import GlobalBundle, PLUGINS, GENERAL_PLUGIN
+from .plugins import GlobalBundle, PLUGINS, GENERAL_PLUGIN
 from .util import calculate_content_hash, pkg_id_str
 from .errors import DeltaRepoError
 

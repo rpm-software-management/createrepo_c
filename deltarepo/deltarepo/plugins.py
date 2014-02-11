@@ -4,6 +4,7 @@ import shutil
 import hashlib
 import filecmp
 import createrepo_c as cr
+from .plugins_common import GlobalBundle, Metadata
 from .common import LoggingInterface, DEFAULT_CHECKSUM_NAME
 from .errors import DeltaRepoPluginError
 
@@ -17,25 +18,6 @@ GENERAL_PLUGIN = None
 COMPRESSION_SUFFIXES = [".bz2", ".gz", ".lz", ".lzma", ".lzo", ".xz",
                         ".7z", ".s7z", ".apk", ".rar", ".sfx", ".tgz",
                         ".tbz2", ".tlz", ".zip", ".zipx", ".zz"]
-
-class GlobalBundle(object):
-
-    __slots__ = ("contenthash_type_str",
-                 "unique_md_filenames",
-                 "calculated_old_contenthash",
-                 "calculated_new_contenthash",
-                 "force_database",
-                 "ignore_missing")
-
-    def __init__(self):
-        self.contenthash_type_str = "sha256"
-        self.unique_md_filenames = True
-        self.force_database = False
-        self.ignore_missing = False
-
-        # Filled by plugins
-        self.calculated_old_contenthash = None
-        self.calculated_new_contenthash = None
 
 class DeltaRepoPlugin(LoggingInterface):
 
@@ -442,7 +424,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
                           pkg.location_base or '')
         return idstr
 
-    def _gen_db_from_xml(self, md, source="delta"):
+    def _gen_db_from_xml(self, md):
         """Gen sqlite db from the delta metadata.
         """
         mdtype = md.metadata_type
@@ -562,7 +544,7 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
 
             notes = self._metadata_notes_from_plugin_bundle(md.metadata_type)
             if not notes:
-                # TODO PRIDAT NEJAKEJ FLAG NA INGONRACI
+                # TODO: Add flag to ignore this kind of warnings (?)
                 self._warning("Metadata \"{0}\" doesn't have a record in "
                               "deltametadata.xml - Ignoring")
                 return
@@ -868,13 +850,20 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
         old_contenthash_strings.sort()
         for i in old_contenthash_strings:
             h.update(i)
-        self.globalbundle.calculated_old_contenthash = h.hexdigest()
+        src_contenthash = h.hexdigest()
+        self.globalbundle.calculated_old_contenthash = src_contenthash
 
         h = hashlib.new(self.globalbundle.contenthash_type_str)
         new_contenthash_strings.sort()
         for i in new_contenthash_strings:
             h.update(i)
-        self.globalbundle.calculated_new_contenthash = h.hexdigest()
+        dst_contenthash = h.hexdigest()
+        self.globalbundle.calculated_new_contenthash = dst_contenthash
+
+        # Set the content hashes to the plugin bundle
+        self.pluginbundle.set("contenthash_type", self.globalbundle.contenthash_type_str)
+        self.pluginbundle.set("src_contenthash", src_contenthash)
+        self.pluginbundle.set("dst_contenthash", dst_contenthash)
 
         # Prepare list of removed packages
         removed_pkgs = sorted(old_packages)

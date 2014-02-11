@@ -5,7 +5,7 @@ import librepo
 import tempfile
 import createrepo_c as cr
 from .deltarepos import DeltaRepos
-from .common import calculate_contenthash
+from .common import LoggingInterface, calculate_contenthash
 from .errors import DeltaRepoError
 
 class _Repo(object):
@@ -156,8 +156,8 @@ class Link(object):
     """
 
     def __init__(self):
-        self.deltareposrecord = None    # DeltaReposRecord()
-        self.drmirror = None            # DRMirror()
+        self._deltareposrecord = None    # DeltaReposRecord()
+        self._drmirror = None            # DRMirror()
 
     #def __getattr__(self, item):
     #    if hasattr(self.deltareposrecord, item):
@@ -167,17 +167,27 @@ class Link(object):
     @property
     def src(self):
         """Source content hash"""
-        return self.deltareposrecord.contenthash_src
+        return self._deltareposrecord.contenthash_src
 
     @property
     def dst(self):
         """Destination content hash."""
-        return self.deltareposrecord.contenthash_dst
+        return self._deltareposrecord.contenthash_dst
 
     @property
     def type(self):
         """Type of content hash (e.g., sha256, etc.) """
-        return self.deltareposrecord.contenthash_type
+        return self._deltareposrecord.contenthash_type
+
+    @property
+    def mirrorurl(self):
+        """Mirror url"""
+        return self._drmirror.url
+
+    def cost(self):
+        """Cost (currently just a total size).
+        In future maybe just sizes of needed delta metadata."""
+        return self._deltareposrecord.size_total
 
     @classmethod
     def links_from_drmirror(cls, drmirror):
@@ -189,7 +199,7 @@ class Link(object):
             links.append(link)
         return links
 
-class Solver(object):
+class Solver(LoggingInterface):
 
     class ResolvedPath(object):
         def __init__(self):
@@ -198,40 +208,85 @@ class Solver(object):
 
     class Node(object):
         """Single graph node"""
-        def __init__(self):
-            self.sources = []
-            self.targets = []
+        def __init__(self, value):
+            self.value = value   # Content hash
+            self.links = []      # List of all links that belong to the node
+                                 # All of them must have self.value as a src value
+            self.targets = {}    # { Node: Link }
+            self.sources = set() # set(Nodes)
+
+        def __repr__(self):
+            targets = [x.value for x in self.targets]
+            return "<Node {0} \'{1}\' points to: {2}>".format(
+                id(self), self.value, targets)
 
     class Graph(object):
-        def __init__(self):
-            self.links = []
-            self.nodes = []
+        def __init__(self, contenthash_type="sha256"):
+            #self.links = []
+            self.nodes = {}  # { 'content_hash': Node }
+            self.contenthash_type = contenthash_type
+
+        def get_node(self, contenthash):
+            return self.nodes.get(contenthash)
 
         @classmethod
-        def graph_from_links(cls, links):
-            nodes = []
-            # TODO
+        def graph_from_links(cls, links, logger, contenthash_type="sha256"):
+            already_processed_links = set() # Set of tuples (src, dst)
+            nodes = {}  # { 'content_hash': Node }
+
+            for link in links:
+                if contenthash_type != link.type.lower():
+                    logger.warning("Content hash type mishmash {0} vs {1}"
+                                   "".format(contenthash_type, link.type))
+
+                if (link.src, link.dst) in already_processed_links:
+                    logger.warning("Duplicated path {0}->{1} from {2} skipped"
+                                   "".format(link.src, link.dst, link.mirrorurl))
+                    continue
+
+                node = nodes.setdefault(link.src, Solver.Node(link.src))
+
+                if link.dst in node.targets:
+                    # Should not happen (the already_processed_links
+                    # list should avoid this)
+                    logger.warning("Duplicated path {0}->{1} from {2} skipped"
+                                   "".format(link.src, link.dst, link.mirrorurl))
+                    continue
+
+                #node.links.append(link)    # TODO: Remove (?)
+                dst_node = nodes.setdefault(link.dst, Solver.Node(link.dst))
+                dst_node.sources.add(node)
+                node.targets[dst_node] = link
+
             g = cls()
             g.links = links
             g.nodes = nodes
             return g
 
-    def __init__(self, links, start, target, contenthash_type="sha256"):
-        self.links = links      # List of hops
-        self.start = start      # Start hop
-        self.target = target    # Target hop
+    def __init__(self, links, source, target, contenthash_type="sha256", logger=None):
+        LoggingInterface.__init__(self, logger)
+
+        self.links = links      # Links
+        self.source_ch = source # Source content hash (str)
+        self.target_ch = target # Target content hash (str)
         self.contenthash_type = contenthash_type
 
-        # TODO: process (split) DRMirror objects to PathHops
-
-    def get_paths(self):
-        """Get all available paths"""
-        # TODO: Raise warning when multiple hops with the same src
-        # and destination exists
-        pass
-
     def solve(self):
+        # Build the graph
+        graph = self.Graph.graph_from_links(self.links,
+                                            self.logger,
+                                            self.contenthash_type)
+
+        # Find start and end node in the graph
+        source_node = graph.get_node(self.source_ch)
+        if not source_node:
+            raise DeltaRepoError("Source repo ({0}) not available".format(self.source_ch))
+        target_node = graph.get_node(self.target_ch)
+        if not target_node:
+            raise DeltaRepoError("Target repo ({0}) not available".format(self.target_ch))
+
         # TODO: Implement Dijkstra's algorithm here
+
         pass
 
 class DRUpdater(object):

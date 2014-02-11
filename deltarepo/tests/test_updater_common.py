@@ -1,6 +1,7 @@
 import os.path
+import logging
 import unittest
-from deltarepo.updater_common import LocalRepo, OriginRepo, DRMirror
+from deltarepo.updater_common import LocalRepo, OriginRepo, DRMirror, Solver
 
 from .fixtures import *
 
@@ -49,3 +50,51 @@ class TestCaseDRMirror(unittest.TestCase):
         self.assertTrue(drm)
         self.assertEqual(len(drm.records), 3)
         self.assertTrue(drm.deltarepos)
+
+class TestCaseSolver(unittest.TestCase):
+
+    class LinkMock(object):
+        def __init__(self, src, dst, type="sha256", mirrorurl="mockedlink", cost=100):
+            self.src = src
+            self.dst = dst
+            self.type = type
+            self.mirrorurl = mirrorurl
+            self._cost = cost
+
+        def cost(self):
+            return self._cost
+
+    def test_solver_graph_build(self):
+
+        links = []
+        links.append(TestCaseSolver.LinkMock("aaa", "bbb"))
+        links.append(TestCaseSolver.LinkMock("aaa", "ccc"))
+        links.append(TestCaseSolver.LinkMock("bbb", "ccc"))
+
+        logger = logging.getLogger("testloger")
+        graph = Solver.Graph().graph_from_links(links, logger)
+
+        self.assertTrue(graph)
+        self.assertEqual(len(graph.nodes), 3)
+        self.assertTrue("aaa" in graph.nodes)
+        self.assertTrue("bbb" in graph.nodes)
+        self.assertTrue("ccc" in graph.nodes)
+
+        self.assertEqual(len(graph.nodes["aaa"].targets), 2)
+        self.assertEqual(len(graph.nodes["bbb"].targets), 1)
+        self.assertEqual(len(graph.nodes["ccc"].targets), 0)
+
+        self.assertEqual(len(graph.nodes["aaa"].sources), 0)
+        self.assertEqual(len(graph.nodes["bbb"].sources), 1)
+        self.assertEqual(len(graph.nodes["ccc"].sources), 2)
+
+    def test_solver(self):
+
+        links = []
+        links.append(TestCaseSolver.LinkMock("aaa", "bbb"))
+        links.append(TestCaseSolver.LinkMock("aaa", "ccc"))
+        links.append(TestCaseSolver.LinkMock("bbb", "ccc"))
+
+        logger = logging.getLogger("testloger")
+        solver = Solver(links, "aaa", "bbb", logger=logger)
+        solver.solve()

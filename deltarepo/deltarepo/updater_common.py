@@ -1,5 +1,6 @@
 import shutil
 import os
+import pprint
 import os.path
 import librepo
 import tempfile
@@ -20,6 +21,18 @@ class _Repo(object):
         self.present_metadata = []  # ["primary", "filelists", ...]
         #self.repomd = None # createrepo_c.Repomd() object
 
+    def _fill_from_repomd_object(self, repomd):
+        timestamp = -1
+        present_metadata = []
+        for rec in repomd.records:
+            present_metadata.append(rec.type)
+            if rec.timestamp:
+                timestamp = max(timestamp, rec.timestamp)
+
+        self.revision = repomd.revision
+        self.timestamp = timestamp
+        self.present_metadata = present_metadata
+
     def _fill_from_path(self, path, contenthash=True, contenthash_type="sha256"):
         """Fill the repo attributes from a repository specified by path.
         @param path         path to repository (a dir that contains
@@ -37,15 +50,13 @@ class _Repo(object):
         repomd_path = os.path.join(path, "repodata/repomd.xml")
         repomd = cr.Repomd(repomd_path)
 
-        timestamp = -1
+        self._fill_from_repomd_object(repomd)
+
         primary_path = None
-        present_metadata = []
         for rec in repomd.records:
-            present_metadata.append(rec.type)
-            if rec.timestamp:
-                timestamp = max(timestamp, rec.timestamp)
             if rec.type == "primary":
                 primary_path = rec.location_href
+                break
 
         if not primary_path:
             raise DeltaRepoError("{0} - primary metadata are missing"
@@ -57,9 +68,6 @@ class _Repo(object):
             self.contenthash_type = contenthash_type
 
         self.path = path
-        self.revision = repomd.revision
-        self.timestamp = timestamp
-        self.present_metadata = present_metadata
 
 class LocalRepo(_Repo):
     def __init__ (self):
@@ -113,6 +121,15 @@ class OriginRepo(_Repo):
         shutil.rmtree(tmpdir)
         return repo
 
+    @classmethod
+    def from_local_repomd(cls, repomd_path):
+        """Create OriginRepo object from the local repomd.xml.
+        @param path      path to the repomd.xml"""
+        repomd = cr.Repomd(repomd_path)
+        repo = cls()
+        repo._fill_from_repomd_object(repomd)
+        return repo
+
 class DRMirror(object):
     def __init__(self):
         self.url = None
@@ -164,6 +181,10 @@ class Link(object):
     #        return getattr(self.deltareposrecord, item, None)
     #    raise AttributeError("object has no attribute '{0}'".format(item))
 
+    def __repr__(self):
+        return "<LinkMock \'{0}\'->\'{1}\' ({2})>".format(
+            self.src, self.dst, self.cost())
+
     @property
     def src(self):
         """Source content hash"""
@@ -180,9 +201,54 @@ class Link(object):
         return self._deltareposrecord.contenthash_type
 
     @property
+    def contenthash_src(self):
+        """Source content hash"""
+        return self._deltareposrecord.contenthash_src
+
+    @property
+    def contenthash_dst(self):
+        """Destination content hash."""
+        return self._deltareposrecord.contenthash_dst
+
+    @property
+    def contenthash_type(self):
+        """Type of content hash (e.g., sha256, etc.) """
+        return self._deltareposrecord.contenthash_type
+    @property
+    def revision_src(self):
+        """Source repo revision"""
+        return self._deltareposrecord.revision_src
+
+    @property
+    def revision_dst(self):
+        """Destination repo revision"""
+        return self._deltareposrecord.revision_dst
+
+    @property
+    def timestamp_src(self):
+        """Source repo timestamp"""
+        return self._deltareposrecord.timestamp_src
+
+    @property
+    def timestamp_dst(self):
+        """Destination repo timestamp"""
+        return self._deltareposrecord.timestamp_dst
+
+    @property
     def mirrorurl(self):
         """Mirror url"""
         return self._drmirror.url
+
+    @property
+    def deltarepourl(self):
+        """Delta repo url"""
+        if self._deltareposrecord.location_base:
+            url = os.path.join(self._deltareposrecord.location_base,
+                               self._deltareposrecord.location_href)
+        else:
+            url = os.path.join(self.mirrorurl,
+                               self._deltareposrecord.location_href)
+        return url
 
     def cost(self):
         """Cost (currently just a total size).
@@ -194,17 +260,38 @@ class Link(object):
         links = []
         for rec in drmirror.records:
             link = cls()
-            link.deltareposrecord = rec
-            link.drmirror = drmirror
+            link._deltareposrecord = rec
+            link._drmirror = drmirror
             links.append(link)
         return links
 
-class Solver(LoggingInterface):
+class ResolvedPath():
+    """Path resolved by solver"""
+    def __init__(self, resolved_path):
+        self._path = resolved_path  # List of Link objects
 
-    class ResolvedPath(object):
-        def __init__(self):
-            self.cost = -1  # Sum of hop sizes
-            self.links = [] # List of Link objects
+    def __str__(self):
+        return "<ResolvedPath {0}>".format(self._path)
+
+    def __len__(self):
+        return len(self._path)
+
+    def __iter__(self):
+        return self._path.__iter__()
+
+    def __getitem__(self, item):
+        return self._path.__getitem__(item)
+
+    def path(self):
+        return self._path
+
+    def cost(self):
+        cost = 0
+        for link in self._path:
+            cost += link.cost()
+        return cost
+
+class Solver(LoggingInterface):
 
     class Node(object):
         """Single graph node"""
@@ -220,27 +307,28 @@ class Solver(LoggingInterface):
             return "<Node {0} \'{1}\' points to: {2}>".format(
                 id(self), self.value, targets)
 
-    class Graph(object):
-        def __init__(self, contenthash_type="sha256"):
-            #self.links = []
+    class Graph(LoggingInterface):
+        def __init__(self, contenthash_type="sha256", logger=None):
+            LoggingInterface.__init__(self, logger)
+
             self.nodes = {}  # { 'content_hash': Node }
             self.contenthash_type = contenthash_type
 
         def get_node(self, contenthash):
             return self.nodes.get(contenthash)
 
-        @classmethod
-        def graph_from_links(cls, links, logger, contenthash_type="sha256"):
+        def graph_from_links(self, links):
             already_processed_links = set() # Set of tuples (src, dst)
             nodes = {}  # { 'content_hash': Node }
 
             for link in links:
-                if contenthash_type != link.type.lower():
-                    logger.warning("Content hash type mishmash {0} vs {1}"
-                                   "".format(contenthash_type, link.type))
+                if self.contenthash_type != link.type.lower():
+                    self._warning("Content hash type mishmash {0} vs {1}"
+                                   "".format(self.contenthash_type, link.type))
+                    continue
 
                 if (link.src, link.dst) in already_processed_links:
-                    logger.warning("Duplicated path {0}->{1} from {2} skipped"
+                    self._warning("Duplicated path {0}->{1} from {2} skipped"
                                    "".format(link.src, link.dst, link.mirrorurl))
                     continue
 
@@ -249,19 +337,16 @@ class Solver(LoggingInterface):
                 if link.dst in node.targets:
                     # Should not happen (the already_processed_links
                     # list should avoid this)
-                    logger.warning("Duplicated path {0}->{1} from {2} skipped"
+                    self._warning("Duplicated path {0}->{1} from {2} skipped"
                                    "".format(link.src, link.dst, link.mirrorurl))
                     continue
 
-                #node.links.append(link)    # TODO: Remove (?)
                 dst_node = nodes.setdefault(link.dst, Solver.Node(link.dst))
                 dst_node.sources.add(node)
                 node.targets[dst_node] = link
 
-            g = cls()
-            g.links = links
-            g.nodes = nodes
-            return g
+            self.links = links
+            self.nodes = nodes
 
     def __init__(self, links, source, target, contenthash_type="sha256", logger=None):
         LoggingInterface.__init__(self, logger)
@@ -273,9 +358,12 @@ class Solver(LoggingInterface):
 
     def solve(self):
         # Build the graph
-        graph = self.Graph.graph_from_links(self.links,
-                                            self.logger,
-                                            self.contenthash_type)
+        graph = self.Graph(self.contenthash_type, logger=self.logger)
+        graph.graph_from_links(self.links)
+
+        if self.source_ch == self.target_ch:
+            raise DeltaRepos("Source and target content hashes are same {0}"
+                             "".format(self.source_ch))
 
         # Find start and end node in the graph
         source_node = graph.get_node(self.source_ch)
@@ -327,46 +415,129 @@ class Solver(LoggingInterface):
                     dist[v] = alt
                     previous[v] = u
 
-        # At this point we have previous and dist filled
-        import pprint
-        print
-        pprint.pprint(previous)
-        print
-        pprint.pprint(dist)
+        # At this point we have previous and dist lists filled
+        self._debug("Solver: List of previous nodes:\n{0}"
+                          "".format(pprint.pformat(previous)))
+        self._debug("Solver: Distances:\n{0}"
+                          "".format(pprint.pformat(dist)))
 
         resolved_path = []
         u = target_node
         while previous[u] is not None:
-            resolved_path.append(previous[u])
+            resolved_path.append(previous[u].targets[u])
             u = previous[u]
-
         resolved_path.reverse()
+        self._debug("Resolved path {0}".format(resolved_path))
 
-        print "xxxx"
-        pprint.pprint(resolved_path)
+        if resolved_path:
+            return ResolvedPath(resolved_path)
+        return None
 
-class DRUpdater(object):
+class UpdateSolver(LoggingInterface):
 
-    def __init__(self, localrepo, drmirrors=None, originrepo=None,
-                 target_contenthash=None):
+    def __init__(self, drmirrors, logger=None):
+        LoggingInterface.__init__(self, logger)
+
+        if not isinstance(drmirrors, list):
+            raise AttributeError("List of drmirrors expected")
+
+        self._drmirrors = drmirrors or []   # [DeltaRepos, ...]
+        self._links = []            # Link objects from the DeltaRepos objects
+        self._cached_resolved_path = {} # { (src_ch, dst_ch, ch_type): ResolvedPath }
+
+        self._fill_links()
+
+    def _fill_links(self):
+        for drmirror in self._drmirrors:
+            links = Link.links_from_drmirror((drmirror))
+            self._links.extend(links)
+
+    def find_repo_contenthash(self, repo, contenthash_type="sha256"):
+        """Find (guess) Link for the OriginRepo.
+        Note: Currently, none of origin repos has contenthash in repomd.xml,
+        so we need to combine multiple metrics (revision, timestamp, ..)
+
+        @param repo     OriginRepo
+        @param links    list of Link objects
+        @return         (contenthash_type, contenthash) or None"""
+
+        if repo.contenthash and repo.contenthash_type \
+                and repo.contenthash_type == contenthash_type:
+            return (repo.contenthash_type, repo.contenthash)
+
+        for link in self._links:
+            matches = 0
+            if repo.revision and link.revision_src and repo.timestamp and link.timestamp_src:
+                if repo.revision == link.revision_src and repo.timestamp == link.timestamp_src:
+                    if link.contenthash_type == contenthash_type:
+                        return (contenthash_type, link.contenthash_src)
+            if repo.revision and link.revision_dst and repo.timestamp and link.timestamp_dst:
+                if repo.revision == link.revision_dst and repo.timestamp == link.timestamp_dst:
+                    if link.contenthash_type == contenthash_type:
+                        return (contenthash_type, link.contenthash_dst)
+
+        return (contenthash_type, None)
+
+    def resolve_path(self, source_contenthash, target_contenthash, contenthash_type="sha256"):
+        # Try cache first
+        key = (source_contenthash, target_contenthash, contenthash_type)
+        if key in self._cached_resolved_path:
+            return self._cached_resolved_path[key]
+
+        # Resolve the path
+        solver = Solver(self._links, source_contenthash,
+                        target_contenthash,
+                        contenthash_type=contenthash_type,
+                        logger=self.logger)
+        resolved_path = solver.solve()
+
+        # Cache result
+        self._cached_resolved_path[key] = resolved_path
+
+        return resolved_path
+
+class Updater(LoggingInterface):
+
+    def __init__(self, localrepo, updatesolver, logger=None):
+        LoggingInterface.__init__(self, logger)
         self.localrepo = localrepo
-        self.drmirrors = drmirrors or []
-        self.originrepo = originrepo
+        self.updatesolver = updatesolver
 
-        # TODO: Make hops from the drmirrors
+    def apply_resolved_path(self, resolved_path):
+        for link in resolved_path:
+            print link.deltarepourl
 
-        self.target_contenthash = target_contenthash
+    def update(self, target_contenthash, target_contenthash_type="sha256"):
+        """Transform the localrepo to the version specified
+        by the target_contenthash"""
 
-    def _find_dr_path(self):
-        pass
+        if not self.localrepo.contenthash or not self.localrepo.contenthash_type:
+            raise DeltaRepoError("content hash is not specified in localrepo")
 
-    def _use_originrepo(self):
-        """Replace the local repo with the origin one"""
-        pass
+        if self.localrepo.contenthash_type != target_contenthash_type:
+            raise DeltaRepoError("Contenthash type mishmash - LocalRepo {0}, "
+                                 "Target: {1}".format(self.localrepo.contenthash_type,
+                                                      target_contenthash_type))
 
-    def _use_dr_path(self):
-        """Update the local repo by the selected path of delta repos"""
-        pass
+        resolved_path = self.updatesolver.resolve_path(self.localrepo.contenthash,
+                                                       target_contenthash,
+                                                       target_contenthash_type)
 
-    def update(self):
-        pass
+        if not resolved_path:
+            raise DeltaRepoError("Path \'{0}\'->\'{1}\' ({2}) cannot "
+                                 "be resolved".format(self.localrepo.contenthash,
+                                                      target_contenthash,
+                                                      target_contenthash_type))
+
+        self.apply_resolved_path(resolved_path)
+
+    def update_to_current(self, originrepo):
+        target_contenthash_type = self.localrepo.contenthash_type
+        _, target_contenthash = self.find_repo_contenthash(originrepo,
+                                                           target_contenthash_type)
+        if not target_contenthash:
+            raise DeltaRepoError("Cannot determine contenthash ({0}) "
+                                 "of originrepo".format(target_contenthash_type))
+
+        self.update(target_contenthash,
+                    target_contenthash_type=target_contenthash_type)

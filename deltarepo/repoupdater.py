@@ -9,6 +9,7 @@ import argparse
 import librepo
 import deltarepo
 from deltarepo import DeltaRepoError, DeltaRepoPluginError
+from deltarepo.updater_common import LocalRepo, OriginRepo, DRMirror, UpdateSolver, Updater
 
 LOG_FORMAT = "%(message)s"
 
@@ -31,6 +32,10 @@ def parse_options():
                         help="Repo mirrorlist")
     parser.add_argument("--repometalink",
                         help="Repo metalink")
+    parser.add_argument("--target-contenthash",
+                        help="Target content hash (if no --repo(mirrorlist|metalink)? used)")
+    parser.add_argument("--target-contenthash-type", default="sha256",
+                        help="Type of target content hash. 'sha256' is default value.")
 
     args = parser.parse_args()
 
@@ -50,9 +55,9 @@ def parse_options():
     #elif args.outputdir and not os.path.isdir(args.outputdir):
     #    parser.error("--outputdir must be a directory: %s" % args.outputdir)
 
-    if not os.path.isdir(args.localrepo) or os.path.isdir(os.path.join(args.localrepo, "repodata")):
+    if not os.path.isdir(args.localrepo[0]) or not os.path.isdir(os.path.join(args.localrepo[0], "repodata")):
         parser.error("{0} is not a repository (a directory containing "
-                     "repodata/ dir expected)".format(args.localrepo))
+                     "repodata/ dir expected)".format(args.localrepo[0]))
 
     origin_repo = False
     if args.repo or args.repomirrorlist or args.repometalink:
@@ -60,6 +65,9 @@ def parse_options():
 
     if not args.drmirror and not origin_repo:
         parser.error("Nothing to do. No mirror with deltarepos nor origin repo specified.")
+
+    if origin_repo and args.target_contenthash:
+        parser.error("Origin repo shouldn't be specified if --target-contenthash is used")
 
     if args.debug:
         args.verbose = True
@@ -82,8 +90,61 @@ def setup_logging(quiet, verbose):
         logger.setLevel(logging.INFO)
     return logger
 
+def update_with_deltas(args, logger):
+    updatesolver = UpdateSolver([drmirror], logger)
+
+    # Get source hash
+    sch_t, sch = updatesolver.find_repo_contenthash(localrepo)
+    source_contenthash = sch
+    source_contenthash_type = sch_t
+
+    if not source_contenthash:
+        raise DeltaRepoError("No deltas available for {0}".format(localrepo.path))
+
+    # Get target hash
+    if originrepo:
+        # Get origin repo's contenthash
+        tch_t, tch = updatesolver.find_repo_contenthash(originrepo)
+        target_contenthash = tch
+        target_contenthash_type = tch_t
+    else:
+        # Use content hash specified by user
+        target_contenthash = args.target_contenthash
+        target_contenthash_type = args.target_contenthash_type
+
+    if not target_contenthash:
+        raise DeltaRepoError("No deltas available - Patch for the current "
+                             "version of the remote repo is not available")
+
+    if source_contenthash_type != target_contenthash_type:
+        raise DeltaRepoError("Types of contenthashes doesn't match {0} != {1}"
+                             "".format(source_contenthash_type, target_contenthash_type))
+
+    # Resolve path
+    resolved_path = updatesolver.resolve_path(source_contenthash, target_contenthash)
+
+    print(resolved_path)
+
 def main(args, logger):
-    pass
+    localrepo = LocalRepo.from_path(args.localrepo[0])
+    originrepo = None
+    drmirrors = []
+
+    source_contenthash = None
+    source_contenthash_type = None
+    target_contenthash = None
+    target_contenthash_type = None
+
+    if args.repo or args.repometalink or args.repomirrorlist:
+        originrepo = OriginRepo.from_url(urls=args.repo,
+                                         mirrorlist=args.repomirrorlist,
+                                         metalink=args.repometalink)
+
+    for i in args.drmirror:
+        drmirror = DRMirror.from_url(i)
+        drmirrors.append(drmirror)
+
+    update_with_deltas(args, logger)
 
 if __name__ == "__main__":
     args = parse_options()

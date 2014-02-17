@@ -620,6 +620,129 @@ fill_pool(GThreadPool *pool,
     return package_count;
 }
 
+gboolean
+cr_old_metadata_retention(const char *old_repo,
+                          const char *new_repo,
+                          int retain_old,
+                          GError **err)
+{
+    assert(!err || *err == NULL);
+
+    if (!g_file_test(old_repo, G_FILE_TEST_EXISTS))
+        return TRUE;
+
+    g_debug("Copying files from old repository to the new one");
+
+    // Parse old repomd.xml
+    GError *tmp_err = NULL;
+    gchar *old_repomd_path = g_build_filename(old_repo, "repomd.xml", NULL);
+    cr_Repomd *repomd = cr_repomd_new();
+    cr_xml_parse_repomd(old_repomd_path, repomd, NULL, NULL, &tmp_err);
+    if (tmp_err) {
+        g_warning("Cannot parse repomd: %s", old_repomd_path);
+        g_clear_error(&tmp_err);
+        cr_repomd_free(repomd);
+        repomd = cr_repomd_new();
+    }
+    g_free(old_repomd_path);
+
+    // Prepare list of basenames of metadata files in old repomd.xml
+    GSList *old_basenames = NULL;
+
+    if (retain_old == 0) {
+        // If retain_old == zero then remove old metadata
+        for (GSList *elem = repomd->records; elem; elem = g_slist_next(elem)) {
+            cr_RepomdRecord *rec = elem->data;
+
+            if (!rec->location_href) {
+                // Ignore bad records (records without location_href)
+                g_warning("Record without location href in old repo");
+                continue;
+            }
+
+            if (rec->location_base) {
+                // Ignore files with base location
+                g_debug("Old repomd record with base location is ignored: "
+                        "%s - %s", rec->location_base, rec->location_href);
+                continue;
+            }
+
+            // XXX: TODO: Remove in future -------------------------------
+            // Currently, remove only primary, filelists and other.
+            // Rest of metadata leave untouched for compatibility.
+            // Just for now.
+            if (g_strcmp0(rec->type, "primary")
+                && g_strcmp0(rec->type, "primary_db")
+                && g_strcmp0(rec->type, "filelists")
+                && g_strcmp0(rec->type, "filelists_db")
+                && g_strcmp0(rec->type, "other")
+                && g_strcmp0(rec->type, "other_db"))
+            {
+                // If the record's type is not one of the above mentioned
+                // skip removing this metadata
+                continue;
+            }
+            // XXX: TODO: Remove in future END ---------------------------
+
+            old_basenames = g_slist_prepend(old_basenames,
+                                    g_path_get_basename(rec->location_href));
+        }
+    }
+
+    // Iterate over the files in the old repository and copy all
+    // that aren't listed in repomd.xml
+    GDir *dirp;
+    dirp = g_dir_open (old_repo, 0, NULL);
+    if (!dirp) {
+        g_critical("Cannot open directory: %s", old_repo);
+        exit(EXIT_FAILURE);
+    }
+
+    const gchar *filename;
+    while ((filename = g_dir_read_name(dirp))) {
+
+        if (g_slist_find_custom(old_basenames, filename, (GCompareFunc) g_strcmp0)) {
+            // This file is listed in repomd.xml, do not copy it
+            g_debug("Skipped file %s", filename);
+            continue;
+        }
+
+        gchar *full_path = g_strconcat(old_repo, filename, NULL);
+        gchar *new_full_path = g_strconcat(new_repo, filename, NULL);
+
+        // Do not override new file with the old one
+        if (g_file_test(new_full_path, G_FILE_TEST_EXISTS)) {
+            g_debug("Skipped copy: %s -> %s (file already exists)",
+                    full_path, new_full_path);
+            g_free(full_path);
+            g_free(new_full_path);
+            continue;
+        }
+
+        // COPY!
+        cr_cp(full_path,
+              new_full_path,
+              CR_CP_RECURSIVE|CR_CP_PRESERVE_ALL,
+              NULL,
+              &tmp_err);
+
+        if (tmp_err) {
+            g_warning("Cannot copy %s -> %s: %s",
+                      full_path, new_full_path, tmp_err->message);
+            g_clear_error(&tmp_err);
+        }
+
+        g_free(full_path);
+        g_free(new_full_path);
+    }
+
+    // Cleanup
+    g_slist_free_full(old_basenames, g_free);
+    cr_repomd_free(repomd);
+    g_dir_close(dirp);
+
+    return TRUE;
+}
 
 int
 main(int argc, char **argv)
@@ -1516,101 +1639,17 @@ main(int argc, char **argv)
 
 
     // Final move
-    if (g_file_test(out_repo, G_FILE_TEST_EXISTS)) {
-        g_debug("Copying files from old repository to the new one");
 
-        // Parse old repomd.xml
-        GError *tmp_err = NULL;
-        gchar *old_repomd_path = g_build_filename(out_repo, "repomd.xml", NULL);
-        cr_Repomd *repomd = cr_repomd_new();
-        cr_xml_parse_repomd(old_repomd_path, repomd, NULL, NULL, &tmp_err);
-        if (tmp_err) {
-            g_warning("Cannot parse repomd: %s", old_repomd_path);
-            g_clear_error(&tmp_err);
-            cr_repomd_free(repomd);
-            repomd = cr_repomd_new();
-        }
-        g_free(old_repomd_path);
-
-        // Prepare list of basenames of metadata files in old repomd.xml
-        GSList *old_basenames = NULL;
-
-        if (cmd_options->retain_old == 0) {
-            // If retain_old is equal to zero, it means remove old metadata
-            // If not qual to zero, this piece of code is skiped.
-            // It means that all files from old repo are copied
-            for (GSList *elem = repomd->records; elem; elem = g_slist_next(elem)) {
-                cr_RepomdRecord *rec = elem->data;
-
-                if (!rec->location_href) {
-                    // Ignore bad records (records without location_href)
-                    g_warning("Record without location href in old repo");
-                    continue;
-                }
-
-                if (rec->location_base) {
-                    // Ignore files with base location
-                    g_debug("Old repomd record with base location is ignored: "
-                            "%s - %s", rec->location_base, rec->location_href);
-                    continue;
-                }
-
-                old_basenames = g_slist_prepend(old_basenames,
-                                        g_path_get_basename(rec->location_href));
-            }
-        }
-
-        // Iterate over the files in the old repository and copy all
-        // that aren't listed in repomd.xml
-        GDir *dirp;
-        dirp = g_dir_open (out_repo, 0, NULL);
-        if (!dirp) {
-            g_critical("Cannot open directory: %s", out_repo);
-            exit(EXIT_FAILURE);
-        }
-
-        const gchar *filename;
-        while ((filename = g_dir_read_name(dirp))) {
-
-            if (g_slist_find_custom(old_basenames, filename, (GCompareFunc) g_strcmp0)) {
-                // This file is listed in repomd.xml, do not copy it
-                g_debug("Skipped file %s", filename);
-                continue;
-            }
-
-            gchar *full_path = g_strconcat(out_repo, filename, NULL);
-            gchar *new_full_path = g_strconcat(tmp_out_repo, filename, NULL);
-
-            // Do not override new file with the old one
-            if (g_file_test(new_full_path, G_FILE_TEST_EXISTS)) {
-                g_debug("Skipped copy: %s -> %s (file already exists)",
-                        full_path, new_full_path);
-                g_free(full_path);
-                g_free(new_full_path);
-                continue;
-            }
-
-            // COPY!
-            cr_cp(full_path,
-                  new_full_path,
-                  CR_CP_RECURSIVE|CR_CP_PRESERVE_ALL,
-                  NULL,
-                  &tmp_err);
-
-            if (tmp_err) {
-                g_warning("Cannot copy %s -> %s: %s",
-                          full_path, new_full_path, tmp_err->message);
-                g_clear_error(&tmp_err);
-            }
-
-            g_free(full_path);
-            g_free(new_full_path);
-        }
-
-        // Cleanup
-        g_slist_free_full(old_basenames, g_free);
-        cr_repomd_free(repomd);
-        g_dir_close(dirp);
+    // Copy selected metadata from the old repository
+    gboolean ret;
+    ret = cr_old_metadata_retention(out_repo,
+                                    tmp_out_repo,
+                                    cmd_options->retain_old,
+                                    &tmp_err);
+    if (!ret) {
+        g_critical("%s", tmp_err->message);
+        g_clear_error(&tmp_err);
+        exit(EXIT_FAILURE);
     }
 
     gboolean old_repodata_renamed = FALSE;

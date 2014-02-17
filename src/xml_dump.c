@@ -42,6 +42,16 @@ cr_xml_dump_cleanup()
     xmlCleanupParser();
 }
 
+gboolean hascontrollchars(const unsigned char *str)
+{
+    while (*str) {
+        if (*str < 32 && (*str != 9 && *str != 10 && *str != 13))
+            return TRUE;
+        ++str;
+    }
+
+    return FALSE;
+}
 
 void
 cr_latin1_to_utf8(const unsigned char *in, unsigned char *out)
@@ -50,6 +60,10 @@ cr_latin1_to_utf8(const unsigned char *in, unsigned char *out)
     // This function converts latin1 to utf8 in effective and thread-safe way.
     while (*in) {
         if (*in<128) {
+            if (*in < 32 && (*in != 9 && *in != 10 && *in != 13)) {
+                ++in;
+                continue;
+            }
             *out++=*in++;
         } else if (*in<192) {
             // Found latin1 (iso-8859-1) control code.
@@ -77,7 +91,7 @@ cr_xmlNewTextChild(xmlNodePtr parent,
 
     if (!orig_content) {
         content = BAD_CAST "";
-    } else if (xmlCheckUTF8(orig_content)) {
+    } else if (xmlCheckUTF8(orig_content) && !hascontrollchars(orig_content)) {
         content = (xmlChar *) orig_content;
     } else {
         size_t len = strlen((const char *) orig_content);

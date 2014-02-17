@@ -26,9 +26,11 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
+#include <libxml/encoding.h>
 #include "misc.h"
 #include "sqlite.h"
 #include "error.h"
+#include "xml_dump.h"
 
 #define ENCODED_PACKAGE_FILE_FILES 2048
 #define ENCODED_PACKAGE_FILE_TYPES 60
@@ -54,6 +56,37 @@ struct _DbOtherStatements {
     sqlite3_stmt *package_id_handle;
     sqlite3_stmt *changelog_handle;
 };
+
+static inline int cr_sqlite3_bind_text(sqlite3_stmt *stmt, int i,
+                                       const char *orig_content, int len,
+                                       void(*desctructor)(void *))
+{
+    int ret;
+    int free_content = 0;
+    char *content;
+
+    if (!orig_content) {
+        content = (char *) orig_content;
+    } else if (xmlCheckUTF8(orig_content) && !hascontrollchars(orig_content)) {
+        content = (char *) orig_content;
+    } else {
+        desctructor = SQLITE_TRANSIENT;
+        size_t llen = strlen((const char *) orig_content);
+        content = malloc(sizeof(char)*llen*2 + 1);
+        cr_latin1_to_utf8(orig_content, content);
+        free_content = 1;
+    }
+
+    if (orig_content && g_str_has_prefix(orig_content, "font(ipa")) {
+        printf(">>>>>>>>>>>>>>>>>>> %s\n", content);
+    }
+    ret = sqlite3_bind_text(stmt, i, content, len, desctructor);
+
+    if (free_content)
+        free(content);
+
+    return ret;
+}
 
 /*
  * Base DB operation
@@ -513,7 +546,7 @@ cr_db_dbinfo_update(cr_SqliteDb *sqlitedb, const char *checksum, GError **err)
 
     /* Perform insert */
     sqlite3_bind_int(handle, 1, CR_DB_CACHE_DBVERSION);
-    sqlite3_bind_text(handle, 2, checksum, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text(handle, 2, checksum, -1, SQLITE_STATIC);
 
     rc = sqlite3_step(handle);
     if (rc != SQLITE_DONE) {
@@ -594,7 +627,6 @@ force_null(const char *str)
         return str;
 }
 
-
 static void
 db_package_write (sqlite3 *db,
                   sqlite3_stmt *handle,
@@ -605,31 +637,31 @@ db_package_write (sqlite3 *db,
 
     assert(!err || *err == NULL);
 
-    sqlite3_bind_text (handle, 1,  p->pkgId, -1, SQLITE_STATIC);
-    sqlite3_bind_text (handle, 2,  p->name, -1, SQLITE_STATIC);
-    sqlite3_bind_text (handle, 3,  p->arch, -1, SQLITE_STATIC);
-    sqlite3_bind_text (handle, 4,  p->version, -1, SQLITE_STATIC);
-    sqlite3_bind_text (handle, 5,  p->epoch, -1, SQLITE_STATIC);
-    sqlite3_bind_text (handle, 6,  p->release, -1, SQLITE_STATIC);
-    sqlite3_bind_text (handle, 7,  p->summary, -1, SQLITE_STATIC);
-    sqlite3_bind_text (handle, 8,  p->description, -1, SQLITE_STATIC);
-    sqlite3_bind_text (handle, 9,  force_null(p->url), -1, SQLITE_STATIC);  // {null}
+    cr_sqlite3_bind_text (handle, 1,  p->pkgId, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 2,  p->name, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 3,  p->arch, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 4,  p->version, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 5,  p->epoch, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 6,  p->release, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 7,  p->summary, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 8,  p->description, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 9,  force_null(p->url), -1, SQLITE_STATIC);  // {null}
     sqlite3_bind_int  (handle, 10, p->time_file);
     sqlite3_bind_int  (handle, 11, p->time_build);
-    sqlite3_bind_text (handle, 12, p->rpm_license, -1, SQLITE_STATIC);
-    sqlite3_bind_text (handle, 13, prevent_null(p->rpm_vendor), -1, SQLITE_STATIC);  // ""
-    sqlite3_bind_text (handle, 14, p->rpm_group, -1, SQLITE_STATIC);
-    sqlite3_bind_text (handle, 15, p->rpm_buildhost, -1, SQLITE_STATIC);
-    sqlite3_bind_text (handle, 16, prevent_null(p->rpm_sourcerpm), -1, SQLITE_STATIC); // ""
+    cr_sqlite3_bind_text (handle, 12, p->rpm_license, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 13, prevent_null(p->rpm_vendor), -1, SQLITE_STATIC);  // ""
+    cr_sqlite3_bind_text (handle, 14, p->rpm_group, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 15, p->rpm_buildhost, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 16, prevent_null(p->rpm_sourcerpm), -1, SQLITE_STATIC); // ""
     sqlite3_bind_int  (handle, 17, p->rpm_header_start);
     sqlite3_bind_int  (handle, 18, p->rpm_header_end);
-    sqlite3_bind_text (handle, 19, force_null(p->rpm_packager), -1, SQLITE_STATIC);  // {null}
+    cr_sqlite3_bind_text (handle, 19, force_null(p->rpm_packager), -1, SQLITE_STATIC);  // {null}
     sqlite3_bind_int64(handle, 20, p->size_package);
     sqlite3_bind_int64(handle, 21, p->size_installed);
     sqlite3_bind_int64(handle, 22, p->size_archive);
-    sqlite3_bind_text (handle, 23, p->location_href, -1, SQLITE_STATIC);
-    sqlite3_bind_text (handle, 24, force_null(p->location_base), -1, SQLITE_STATIC);  // {null}
-    sqlite3_bind_text (handle, 25, p->checksum_type, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 23, p->location_href, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 24, force_null(p->location_base), -1, SQLITE_STATIC);  // {null}
+    cr_sqlite3_bind_text (handle, 25, p->checksum_type, -1, SQLITE_STATIC);
 
     rc = sqlite3_step (handle);
     sqlite3_reset (handle);
@@ -693,18 +725,18 @@ db_dependency_write (sqlite3 *db,
 
     assert(!err || *err == NULL);
 
-    sqlite3_bind_text (handle, 1, dep->name,    -1, SQLITE_STATIC);
-    sqlite3_bind_text (handle, 2, dep->flags,   -1, SQLITE_STATIC);
-    sqlite3_bind_text (handle, 3, dep->epoch,   -1, SQLITE_STATIC);
-    sqlite3_bind_text (handle, 4, dep->version, -1, SQLITE_STATIC);
-    sqlite3_bind_text (handle, 5, dep->release, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 1, dep->name,    -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 2, dep->flags,   -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 3, dep->epoch,   -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 4, dep->version, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 5, dep->release, -1, SQLITE_STATIC);
     sqlite3_bind_int  (handle, 6, pkgKey);
 
     if (isRequirement) {
         if (dep->pre)
-            sqlite3_bind_text (handle, 7, "TRUE", -1, SQLITE_TRANSIENT);
+            cr_sqlite3_bind_text (handle, 7, "TRUE", -1, SQLITE_TRANSIENT);
         else
-            sqlite3_bind_text (handle, 7, "FALSE", -1, SQLITE_TRANSIENT);
+            cr_sqlite3_bind_text (handle, 7, "FALSE", -1, SQLITE_TRANSIENT);
     }
 
     rc = sqlite3_step (handle);
@@ -768,9 +800,9 @@ db_file_write (sqlite3 *db,
         file_type = "file";
     }
 
-    sqlite3_bind_text (handle, 1, fullpath, -1, SQLITE_TRANSIENT);
+    cr_sqlite3_bind_text (handle, 1, fullpath, -1, SQLITE_TRANSIENT);
     g_free(fullpath);
-    sqlite3_bind_text (handle, 2, file_type, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 2, file_type, -1, SQLITE_STATIC);
     sqlite3_bind_int  (handle, 3, pkgKey);
 
     rc = sqlite3_step (handle);
@@ -925,9 +957,9 @@ cr_db_write_file (sqlite3 *db,
     }
 
     sqlite3_bind_int (handle, 1, pkgKey);
-    sqlite3_bind_text(handle, 2, (const char *) key, (int) key_len, SQLITE_STATIC);
-    sqlite3_bind_text(handle, 3, file->files->str, -1, SQLITE_STATIC);
-    sqlite3_bind_text(handle, 4, file->types->str, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text(handle, 2, (const char *) key, (int) key_len, SQLITE_STATIC);
+    cr_sqlite3_bind_text(handle, 3, file->files->str, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text(handle, 4, file->types->str, -1, SQLITE_STATIC);
 
     rc = sqlite3_step (handle);
     sqlite3_reset (handle);
@@ -1008,7 +1040,7 @@ db_package_ids_write(sqlite3 *db,
 
     assert(!err || *err == NULL);
 
-    sqlite3_bind_text (handle, 1,  pkg->pkgId, -1, SQLITE_STATIC);
+    cr_sqlite3_bind_text (handle, 1,  pkg->pkgId, -1, SQLITE_STATIC);
     rc = sqlite3_step (handle);
     sqlite3_reset (handle);
 
@@ -1339,9 +1371,9 @@ cr_db_add_other_pkg(cr_DbOtherStatements stmts, cr_Package *pkg, GError **err)
         entry = (cr_ChangelogEntry *) iter->data;
 
         sqlite3_bind_int  (handle, 1, pkg->pkgKey);
-        sqlite3_bind_text (handle, 2, entry->author, -1, SQLITE_STATIC);
+        cr_sqlite3_bind_text (handle, 2, entry->author, -1, SQLITE_STATIC);
         sqlite3_bind_int  (handle, 3, entry->date);
-        sqlite3_bind_text (handle, 4, entry->changelog, -1, SQLITE_STATIC);
+        cr_sqlite3_bind_text (handle, 4, entry->changelog, -1, SQLITE_STATIC);
 
         rc = sqlite3_step (handle);
         sqlite3_reset (handle);

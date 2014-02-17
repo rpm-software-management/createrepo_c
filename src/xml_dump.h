@@ -126,11 +126,23 @@ char *cr_xml_dump_repomd(cr_Repomd *repomd, GError **err);
 /** Prepare string to xml dump.
  * If string is not utf8 it is converted (source encoding is supposed to be
  * iso-8859-1).
+ * Control chars (chars with value <32 except 9, 10 and 13) are excluded.
+ *
  * @param in            input string.
  * @param out           output string. space of output string must be
  *                      at least (strlen(in) * 2 + 1) * sizeof(char)
  */
-void cr_latin1_to_utf8(const unsigned char *in, unsigned char *out);
+void cr_latin1_to_utf8(const unsigned char *in,
+                       unsigned char *out)  __attribute__ ((hot));
+
+/**
+ * Check if string contains chars with value <32 (except 9, 10 and 13).
+ *
+ * @param str           String (NOT NULL!!!!)
+ * @return              TRUE if at leas one char with value <32 (except the
+ *                      9, 10, 13) is present in the string.
+ */
+gboolean hascontrollchars(const unsigned char *str);
 
 /** @} */
 

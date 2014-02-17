@@ -77,9 +77,6 @@ static inline int cr_sqlite3_bind_text(sqlite3_stmt *stmt, int i,
         free_content = 1;
     }
 
-    if (orig_content && g_str_has_prefix(orig_content, "font(ipa")) {
-        printf(">>>>>>>>>>>>>>>>>>> %s\n", content);
-    }
     ret = sqlite3_bind_text(stmt, i, content, len, desctructor);
 
     if (free_content)

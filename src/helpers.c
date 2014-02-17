@@ -163,10 +163,10 @@ cr_remove_metadata_classic(const char *repopath, int retain, GError **err)
 
     while ((file = g_dir_read_name (repodir))) {
         // Get filename without suffix
-        gchar *name_without_suffix, *dot = NULL, *i = (gchar *) file;
-        for (; *i != '\0'; i++) if (*i == '.') dot = i;
-        if (!dot) continue;  // Filename doesn't contain '.'
-        name_without_suffix = g_strndup(file, (dot - file));
+        gchar *name_without_suffix;
+        gchar *lastdot = strrchr(file, '.');
+        if (!lastdot) continue;  // Filename doesn't contain '.'
+        name_without_suffix = g_strndup(file, (lastdot - file));
 
         if (g_str_has_suffix(name_without_suffix, "primary.xml")) {
             cr_stat_and_insert(full_repopath, file, &pri_lst);
@@ -231,6 +231,8 @@ cleanup:
 int
 cr_remove_metadata(const char *repopath, GError **err)
 {
+    // XXX: TODO: This function is pretty old and ugly, refactore it
+
     int removed_files = 0;
     gchar *full_repopath;
     const gchar *file;
@@ -340,6 +342,7 @@ cr_old_metadata_retention(const char *old_repo,
 {
     gboolean ret = TRUE;
     GDir *dirp = NULL;
+    const gchar *filename;
     GSList *old_basenames = NULL; /*!< List of basenames that will be skipped
                                        during copying from the old repo to the
                                        new one. */
@@ -366,6 +369,10 @@ cr_old_metadata_retention(const char *old_repo,
     }
     g_free(old_repomd_path);
 
+    // repomd.xml skip always
+    old_basenames = g_slist_prepend(old_basenames, g_strdup("repomd.xml"));
+
+    // from the repomd.xml select metadata that will not be copied
     if (retain_old == 0) {
         // Parse the old repomd.xml and append its items
         // to the old_basenames list
@@ -429,6 +436,10 @@ cr_old_metadata_retention(const char *old_repo,
         GSList *pri_lst = NULL, *pri_db_lst = NULL;
         GSList *fil_lst = NULL, *fil_db_lst = NULL;
         GSList *oth_lst = NULL, *oth_db_lst = NULL;
+        GSList *lists[] = { pri_lst, pri_db_lst,
+                            fil_lst, fil_db_lst,
+                            oth_lst, oth_db_lst };
+        const int num_of_lists = CR_ARRAYLEN(lists);
 
         dirp = g_dir_open (old_repo, 0, &tmp_err);
         if (!dirp) {
@@ -440,10 +451,37 @@ cr_old_metadata_retention(const char *old_repo,
             return FALSE;
         }
 
-        // TODO
+        // Create sorted (by mtime) lists of old metadata files
+        // More recent files are first
+        while ((filename = g_dir_read_name (dirp))) {
+            // Get filename without suffix
+            gchar *name_without_suffix;
+            gchar *lastdot = strrchr(filename, '.');
+            if (!lastdot) continue;  // Filename doesn't contain '.'
+            name_without_suffix = g_strndup(filename, (lastdot - filename));
+
+            if (g_str_has_suffix(name_without_suffix, "primary.xml")) {
+                cr_stat_and_insert(old_repo, filename, &pri_lst);
+            } else if (g_str_has_suffix(name_without_suffix, "primary.sqlite")) {
+                cr_stat_and_insert(old_repo, filename, &pri_db_lst);
+            } else if (g_str_has_suffix(name_without_suffix, "filelists.xml")) {
+                cr_stat_and_insert(old_repo, filename, &fil_lst);
+            } else if (g_str_has_suffix(name_without_suffix, "filelists.sqlite")) {
+                cr_stat_and_insert(old_repo, filename, &fil_db_lst);
+            } else if (g_str_has_suffix(name_without_suffix, "other.xml")) {
+                cr_stat_and_insert(old_repo, filename, &oth_lst);
+            } else if (g_str_has_suffix(name_without_suffix, "other.sqlite")) {
+                cr_stat_and_insert(old_repo, filename, &oth_db_lst);
+            }
+            g_free(name_without_suffix);
+        }
 
         g_dir_close(dirp);
         dirp = NULL;
+
+        for (int x = 0; x < num_of_lists; x++) {
+            ; // TODO
+        }
 
     } // XXX: END
 
@@ -460,7 +498,6 @@ cr_old_metadata_retention(const char *old_repo,
         goto exit;
     }
 
-    const gchar *filename;
     while ((filename = g_dir_read_name(dirp))) {
 
         if (g_slist_find_custom(old_basenames, filename, (GCompareFunc) g_strcmp0)) {

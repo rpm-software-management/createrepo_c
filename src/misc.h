@@ -43,6 +43,10 @@ extern "C" {
  */
 #define CR_STATICSTRLEN(s) (sizeof(s)/sizeof(s[0]))
 
+/* Length of static defined array.
+ */
+#define CR_ARRAYLEN(x) ((sizeof(x)/sizeof(0[x])) / ((size_t)(!(sizeof(x) % sizeof(0[x])))))
+
 /** Convert flags from RPM header to a string representation.
  * @param flags         flags
  * @return              flags as constant string

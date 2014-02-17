@@ -27,6 +27,7 @@
 #include <string.h>
 #include "error.h"
 #include "version.h"
+#include "helpers.h"
 #include "compression_wrapper.h"
 #include "misc.h"
 #include "locate_metadata.h"

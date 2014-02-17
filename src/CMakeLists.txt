@@ -2,6 +2,7 @@ SET (createrepo_c_SRCS
      checksum.c
      compression_wrapper.c
      error.c
+     helpers.c
      load_metadata.c
      locate_metadata.c
      misc.c
@@ -30,6 +31,7 @@ SET(headers
     constants.h
     createrepo_c.h
     error.h
+    helpers.h
     load_metadata.h
     locate_metadata.h
     misc.h

@@ -105,6 +105,12 @@ cr_db_error_quark(void)
 }
 
 GQuark
+cr_helper_error_quark(void)
+{
+    return g_quark_from_static_string("cr_helper_error");
+}
+
+GQuark
 cr_load_metadata_error_quark(void)
 {
     return g_quark_from_static_string("cr_load_metadata_error");

@@ -70,6 +70,185 @@ cr_stat_and_insert(const gchar *dirname, const gchar *filename, GSList **list)
     *list = g_slist_insert_sorted(*list, old_file, cr_cmp_old_repodata_files);
 }
 
+/* List files that should be removed from the repo or not copied
+ * to the new repo. (except the repomd.xml)
+ */
+static gboolean
+cr_repodata_blacklist_classic(const char *repodata_path,
+                              int retain,
+                              GSList **blacklist,
+                              GError **err)
+{
+    /* This piece of code implement the retain_old functionality in
+     * the same way as original createrepo does.
+     * The way is pretty stupid. Because:
+     * - Old metadata are kept in the repodata/ but not referenced by
+     *   repomd.xml
+     * - Thus, old repodata are searched by its filename
+     * - It manipulate only with primary, filelists, other and
+     *   related databases.
+     */
+
+    /* By default, createrepo_c keeps (copy from the old repo
+     * to the new repo) all files that are in the repodata/ directory
+     * but are not referenced by the repomd.xml.
+     *
+     * But this hack appends to the old_basenames list a metadata
+     * that should be ignored (that should not be copied to the
+     * new repository).
+     */
+
+    GSList *pri_lst = NULL, *pri_db_lst = NULL;
+    GSList *fil_lst = NULL, *fil_db_lst = NULL;
+    GSList *oth_lst = NULL, *oth_db_lst = NULL;
+    GSList **lists[] = { &pri_lst, &pri_db_lst,
+                         &fil_lst, &fil_db_lst,
+                         &oth_lst, &oth_db_lst };
+    const int num_of_lists = CR_ARRAYLEN(lists);
+
+    GDir *dirp = NULL;
+    const gchar *filename;
+    GError *tmp_err = NULL;
+
+    assert(blacklist);
+    assert(!err || *err == NULL);
+
+    *blacklist = NULL;
+
+    if (retain == -1) {
+        // -1 means retain all - nothing to be blacklisted
+        return TRUE;
+    } else if (retain < 0) {
+        // other negative values are error
+        g_set_error(err, CR_HELPER_ERROR, CRE_BADARG,
+                    "Number of retained old metadatas "
+                    "must be integer number >= -1");
+        return FALSE;
+    }
+
+    // Open the repodata/ directory
+    dirp = g_dir_open (repodata_path, 0, &tmp_err);
+    if (!dirp) {
+        g_warning("Cannot open directory: %s: %s", repodata_path, tmp_err->message);
+        g_set_error(err, CR_HELPER_ERROR, CRE_IO,
+                    "Cannot open directory: %s: %s",
+                    repodata_path, tmp_err->message);
+        g_error_free(tmp_err);
+        return FALSE;
+    }
+
+    // Create sorted (by mtime) lists of old metadata files
+    // More recent files are first
+    while ((filename = g_dir_read_name (dirp))) {
+        // Get filename without suffix
+        gchar *name_without_suffix;
+        gchar *lastdot = strrchr(filename, '.');
+        if (!lastdot) continue;  // Filename doesn't contain '.'
+        name_without_suffix = g_strndup(filename, (lastdot - filename));
+
+        // XXX: This detection is pretty shitty, but it mimics
+        // behaviour of original createrepo
+        if (g_str_has_suffix(name_without_suffix, "primary.xml")) {
+            cr_stat_and_insert(repodata_path, filename, &pri_lst);
+        } else if (g_str_has_suffix(name_without_suffix, "primary.sqlite")) {
+            cr_stat_and_insert(repodata_path, filename, &pri_db_lst);
+        } else if (g_str_has_suffix(name_without_suffix, "filelists.xml")) {
+            cr_stat_and_insert(repodata_path, filename, &fil_lst);
+        } else if (g_str_has_suffix(name_without_suffix, "filelists.sqlite")) {
+            cr_stat_and_insert(repodata_path, filename, &fil_db_lst);
+        } else if (g_str_has_suffix(name_without_suffix, "other.xml")) {
+            cr_stat_and_insert(repodata_path, filename, &oth_lst);
+        } else if (g_str_has_suffix(name_without_suffix, "other.sqlite")) {
+            cr_stat_and_insert(repodata_path, filename, &oth_db_lst);
+        }
+        g_free(name_without_suffix);
+    }
+
+    g_dir_close(dirp);
+    dirp = NULL;
+
+    // Append files to the blacklist
+    for (int x = 0; x < num_of_lists; x++) {
+        for (GSList *el = g_slist_nth(*(lists[x]), retain); el; el = g_slist_next(el)) {
+            OldFile *of = (OldFile *) el->data;
+            *blacklist = g_slist_prepend(*blacklist, g_strdup(of->path));
+        }
+        // Free the list
+        cr_slist_free_full(*(lists[x]), cr_free_old_file);
+    }
+
+    return TRUE;
+}
+
+/* List files that should be removed from the repo or not copied
+ * to the new repo. (except the repomd.xml)
+ * This function blacklist all metadata files listed in repomd.xml
+ * if retain == 0, otherwise it don't blacklist any file
+ */
+static gboolean
+cr_repodata_blacklist(const char *repodata_path,
+                      int retain,
+                      GSList **blacklist,
+                      GError **err)
+{
+    gchar *old_repomd_path = NULL;
+    cr_Repomd *repomd = NULL;
+    GError *tmp_err = NULL;
+
+    assert(blacklist);
+    assert(!err || *err == NULL);
+
+    *blacklist = NULL;
+
+    if (retain == -1 || retain > 0) {
+        // retain all - nothing to be blacklisted
+        return TRUE;
+    } else if (retain < 0) {
+        // other negative values are error
+        g_set_error(err, CR_HELPER_ERROR, CRE_BADARG,
+                    "Number of retained old metadatas "
+                    "must be integer number >= -1");
+        return FALSE;
+    }
+
+    // Parse old repomd.xml
+    old_repomd_path = g_build_filename(repodata_path, "repomd.xml", NULL);
+    repomd = cr_repomd_new();
+    cr_xml_parse_repomd(old_repomd_path, repomd, NULL, NULL, &tmp_err);
+    if (tmp_err) {
+        g_warning("Cannot parse repomd: %s", old_repomd_path);
+        g_clear_error(&tmp_err);
+        cr_repomd_free(repomd);
+        repomd = cr_repomd_new();
+    }
+    g_free(old_repomd_path);
+
+    // Parse the old repomd.xml and append its items
+    // to the old_basenames list
+    for (GSList *elem = repomd->records; elem; elem = g_slist_next(elem)) {
+        cr_RepomdRecord *rec = elem->data;
+
+        if (!rec->location_href) {
+            // Ignore bad records (records without location_href)
+            g_warning("Record without location href in old repo");
+            continue;
+        }
+
+        if (rec->location_base) {
+            // Ignore files with base location
+            g_debug("Old repomd record with base location is ignored: "
+                    "%s - %s", rec->location_base, rec->location_href);
+            continue;
+        }
+
+        *blacklist = g_slist_prepend(*blacklist,
+                                     g_path_get_basename(rec->location_href));
+    }
+
+    cr_repomd_free(repomd);
+    return TRUE;
+}
+
 static int
 cr_remove_listed_files(GSList *list, int retain, GError **err)
 {
@@ -341,14 +520,11 @@ cr_old_metadata_retention(const char *old_repo,
                           GError **err)
 {
     gboolean ret = TRUE;
+    GSList *blacklist = NULL;
     GDir *dirp = NULL;
     const gchar *filename;
-    GSList *old_basenames = NULL; /*!< List of basenames that will be skipped
-                                       during copying from the old repo to the
-                                       new one. */
-    cr_Repomd *repomd = NULL;
-    gchar *old_repomd_path = NULL;
     GError *tmp_err = NULL;
+    int compatibility_mode = 0;
 
     assert(!err || *err == NULL);
 
@@ -357,133 +533,13 @@ cr_old_metadata_retention(const char *old_repo,
 
     g_debug("Copying files from old repository to the new one");
 
-    // Parse old repomd.xml
-    old_repomd_path = g_build_filename(old_repo, "repomd.xml", NULL);
-    repomd = cr_repomd_new();
-    cr_xml_parse_repomd(old_repomd_path, repomd, NULL, NULL, &tmp_err);
-    if (tmp_err) {
-        g_warning("Cannot parse repomd: %s", old_repomd_path);
-        g_clear_error(&tmp_err);
-        cr_repomd_free(repomd);
-        repomd = cr_repomd_new();
-    }
-    g_free(old_repomd_path);
-
-    // repomd.xml skip always
-    old_basenames = g_slist_prepend(old_basenames, g_strdup("repomd.xml"));
-
-    // from the repomd.xml select metadata that will not be copied
-    if (retain_old == 0) {
-        // Parse the old repomd.xml and append its items
-        // to the old_basenames list
-        for (GSList *elem = repomd->records; elem; elem = g_slist_next(elem)) {
-            cr_RepomdRecord *rec = elem->data;
-
-            if (!rec->location_href) {
-                // Ignore bad records (records without location_href)
-                g_warning("Record without location href in old repo");
-                continue;
-            }
-
-            if (rec->location_base) {
-                // Ignore files with base location
-                g_debug("Old repomd record with base location is ignored: "
-                        "%s - %s", rec->location_base, rec->location_href);
-                continue;
-            }
-
-            // XXX: TODO: Remove in future -------------------------------
-            // Currently, add to the list only primary, filelists, other
-            // and its databases. For now (for compatibility)
-            if (g_strcmp0(rec->type, "primary")
-                && g_strcmp0(rec->type, "primary_db")
-                && g_strcmp0(rec->type, "filelists")
-                && g_strcmp0(rec->type, "filelists_db")
-                && g_strcmp0(rec->type, "other")
-                && g_strcmp0(rec->type, "other_db"))
-            {
-                // If the record's type is not one of the above mentioned
-                // skip removing this metadata
-                continue;
-            }
-            // XXX: TODO: Remove in future END ---------------------------
-
-            old_basenames = g_slist_prepend(old_basenames,
-                                    g_path_get_basename(rec->location_href));
-        }
-    }
-
-    { // XXX: START
-        /* This piece of code implement the retain_old functionality in
-         * the same way as original createrepo does.
-         * The way is pretty stupid. Because:
-         * - Old metadata are kept in the repodata/ but not referenced by
-         *   repomd.xml
-         * - Thus, old repodata are searched by its filename
-         * - It manipulate only with primary, filelists, other and
-         *   related databases.
-         */
-
-        /* By default, createrepo_c keeps (copy from the old repo
-         * to the new repo) all files that are in the repodata/ directory
-         * but are not referenced by the repomd.xml.
-         *
-         * But this hack appends to the old_basenames list a metadata
-         * that should be ignored (that should not be copied to the
-         * new repository).
-         */
-
-        GSList *pri_lst = NULL, *pri_db_lst = NULL;
-        GSList *fil_lst = NULL, *fil_db_lst = NULL;
-        GSList *oth_lst = NULL, *oth_db_lst = NULL;
-        GSList *lists[] = { pri_lst, pri_db_lst,
-                            fil_lst, fil_db_lst,
-                            oth_lst, oth_db_lst };
-        const int num_of_lists = CR_ARRAYLEN(lists);
-
-        dirp = g_dir_open (old_repo, 0, &tmp_err);
-        if (!dirp) {
-            g_warning("Cannot open directory: %s: %s", old_repo, tmp_err->message);
-            g_set_error(err, CR_HELPER_ERROR, CRE_IO,
-                        "Cannot open directory: %s: %s",
-                        old_repo, tmp_err->message);
-            g_error_free(tmp_err);
-            return FALSE;
-        }
-
-        // Create sorted (by mtime) lists of old metadata files
-        // More recent files are first
-        while ((filename = g_dir_read_name (dirp))) {
-            // Get filename without suffix
-            gchar *name_without_suffix;
-            gchar *lastdot = strrchr(filename, '.');
-            if (!lastdot) continue;  // Filename doesn't contain '.'
-            name_without_suffix = g_strndup(filename, (lastdot - filename));
-
-            if (g_str_has_suffix(name_without_suffix, "primary.xml")) {
-                cr_stat_and_insert(old_repo, filename, &pri_lst);
-            } else if (g_str_has_suffix(name_without_suffix, "primary.sqlite")) {
-                cr_stat_and_insert(old_repo, filename, &pri_db_lst);
-            } else if (g_str_has_suffix(name_without_suffix, "filelists.xml")) {
-                cr_stat_and_insert(old_repo, filename, &fil_lst);
-            } else if (g_str_has_suffix(name_without_suffix, "filelists.sqlite")) {
-                cr_stat_and_insert(old_repo, filename, &fil_db_lst);
-            } else if (g_str_has_suffix(name_without_suffix, "other.xml")) {
-                cr_stat_and_insert(old_repo, filename, &oth_lst);
-            } else if (g_str_has_suffix(name_without_suffix, "other.sqlite")) {
-                cr_stat_and_insert(old_repo, filename, &oth_db_lst);
-            }
-            g_free(name_without_suffix);
-        }
-
-        g_dir_close(dirp);
-        dirp = NULL;
-
-        for (int x = 0; x < num_of_lists; x++) {
-            ; // TODO
-        }
-
-    } // XXX: END
+    // Get list of file that should be skiped during copying
+    if (compatibility_mode)
+        ret = cr_repodata_blacklist_classic(old_repo, retain_old, &blacklist, err);
+    else
+        ret = cr_repodata_blacklist(old_repo, retain_old, &blacklist, err);
+    if (!ret)
+        return FALSE;
 
     // Iterate over the files in the old repository and copy all
     // that aren't listed in repomd.xml
@@ -500,9 +556,8 @@ cr_old_metadata_retention(const char *old_repo,
 
     while ((filename = g_dir_read_name(dirp))) {
 
-        if (g_slist_find_custom(old_basenames, filename, (GCompareFunc) g_strcmp0)) {
-            // This file is listed in repomd.xml, do not copy it
-            g_debug("Skipped file %s", filename);
+        if (g_slist_find_custom(blacklist, filename, (GCompareFunc) g_strcmp0)) {
+            g_debug("Not be in the new repo: %s", filename);
             continue;
         }
 
@@ -529,6 +584,8 @@ cr_old_metadata_retention(const char *old_repo,
             g_warning("Cannot copy %s -> %s: %s",
                       full_path, new_full_path, tmp_err->message);
             g_clear_error(&tmp_err);
+        } else {
+            g_debug("Copied %s -> %s", full_path, new_full_path);
         }
 
         g_free(full_path);
@@ -538,8 +595,7 @@ cr_old_metadata_retention(const char *old_repo,
 exit:
 
     // Cleanup
-    g_slist_free_full(old_basenames, g_free);
-    cr_repomd_free(repomd);
+    g_slist_free_full(blacklist, g_free);
     if (dirp)
         g_dir_close(dirp);
 

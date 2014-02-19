@@ -171,7 +171,8 @@ cr_repodata_blacklist_classic(const char *repodata_path,
     for (int x = 0; x < num_of_lists; x++) {
         for (GSList *el = g_slist_nth(*(lists[x]), retain); el; el = g_slist_next(el)) {
             OldFile *of = (OldFile *) el->data;
-            *blacklist = g_slist_prepend(*blacklist, g_strdup(of->path));
+            *blacklist = g_slist_prepend(*blacklist,
+                                         g_path_get_basename(of->path));
         }
         // Free the list
         cr_slist_free_full(*(lists[x]), cr_free_old_file);
@@ -249,31 +250,6 @@ cr_repodata_blacklist(const char *repodata_path,
     return TRUE;
 }
 
-static int
-cr_remove_listed_files(GSList *list, int retain, GError **err)
-{
-    int removed = 0;
-
-    assert(!err || *err == NULL);
-
-    if (retain < 0) retain = 0;
-
-    for (GSList *el = g_slist_nth(list, retain); el; el = g_slist_next(el)) {
-        OldFile *of = (OldFile *) el->data;
-        g_debug("%s: Removing: %s", __func__, of->path);
-        if (g_remove(of->path) != -1) {
-            ++removed;
-        } else {
-            g_warning("%s: Cannot remove %s", __func__, of->path);
-            g_set_error(err, CR_LOCATE_METADATA_ERROR, CRE_IO,
-                        "Cannot remove %s: %s", of->path, strerror(errno));
-            break;
-        }
-    }
-
-    return removed;
-}
-
 // Return list of non-null pointers on strings in the passed structure
 static GSList *
 cr_get_list_of_md_locations(struct cr_MetadataLocation *ml)
@@ -309,102 +285,65 @@ cr_free_list_of_md_locations(GSList *list)
 int
 cr_remove_metadata_classic(const char *repopath, int retain, GError **err)
 {
-    gchar *full_repopath, *repomd_path;
-    GDir *repodir;
-    const gchar *file;
-    GSList *pri_lst = NULL, *pri_db_lst = NULL;
-    GSList *fil_lst = NULL, *fil_db_lst = NULL;
-    GSList *oth_lst = NULL, *oth_db_lst = NULL;
+    int rc = CRE_OK;
+    gboolean ret = TRUE;
+    gchar *full_repopath = NULL;
+    GSList *blacklist = NULL;
+    GDir *dirp = NULL;
+    const gchar *filename;
     GError *tmp_err = NULL;
 
     assert(repopath);
     assert(!err || *err == NULL);
 
-    if (!g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
-        g_debug("%s: Cannot remove %s", __func__, repopath);
-        g_set_error(err, CR_LOCATE_METADATA_ERROR, CRE_NODIR,
-                    "Directory %s doesn't exist", repopath);
-        return CRE_NODIR;
-    }
-
     full_repopath = g_strconcat(repopath, "/repodata/", NULL);
-    repodir = g_dir_open(full_repopath, 0, &tmp_err);
+
+    // Get list of files that should be deleted
+    ret = cr_repodata_blacklist_classic(full_repopath, retain, &blacklist, err);
+    if (!ret)
+        return FALSE;
+
+    // Always remove repomd.xml
+    blacklist = g_slist_prepend(blacklist, g_strdup("repomd.xml"));
+
+    // Open the repodata/ directory
+    dirp = g_dir_open(full_repopath, 0, &tmp_err);
     if (tmp_err) {
         g_debug("%s: Path %s doesn't exist", __func__, repopath);
         g_propagate_prefixed_error(err, tmp_err, "Cannot open a dir: ");
-        g_free(full_repopath);
-        return CRE_IO;
-    }
-
-
-    // Create sorted (by mtime) lists of old metadata files
-    // More recent files are first
-
-    while ((file = g_dir_read_name (repodir))) {
-        // Get filename without suffix
-        gchar *name_without_suffix;
-        gchar *lastdot = strrchr(file, '.');
-        if (!lastdot) continue;  // Filename doesn't contain '.'
-        name_without_suffix = g_strndup(file, (lastdot - file));
-
-        if (g_str_has_suffix(name_without_suffix, "primary.xml")) {
-            cr_stat_and_insert(full_repopath, file, &pri_lst);
-        } else if (g_str_has_suffix(name_without_suffix, "primary.sqlite")) {
-            cr_stat_and_insert(full_repopath, file, &pri_db_lst);
-        } else if (g_str_has_suffix(name_without_suffix, "filelists.xml")) {
-            cr_stat_and_insert(full_repopath, file, &fil_lst);
-        } else if (g_str_has_suffix(name_without_suffix, "filelists.sqlite")) {
-            cr_stat_and_insert(full_repopath, file, &fil_db_lst);
-        } else if (g_str_has_suffix(name_without_suffix, "other.xml")) {
-            cr_stat_and_insert(full_repopath, file, &oth_lst);
-        } else if (g_str_has_suffix(name_without_suffix, "other.sqlite")) {
-            cr_stat_and_insert(full_repopath, file, &oth_db_lst);
-        }
-        g_free(name_without_suffix);
-    }
-
-    g_dir_close(repodir);
-
-    // Remove old metadata
-
-    int ret = CRE_OK;
-    GSList *lists[] = { pri_lst, pri_db_lst,
-                        fil_lst, fil_db_lst,
-                        oth_lst, oth_db_lst };
-
-
-    // Remove repomd.xml
-
-    repomd_path = g_strconcat(full_repopath, "repomd.xml", NULL);
-
-    g_debug("%s: Removing: %s", __func__, repomd_path);
-    if (g_remove(repomd_path) == -1) {
-        g_set_error(err, CR_LOCATE_METADATA_ERROR, CRE_IO,
-                    "Cannot remove %s: %s", repomd_path, strerror(errno));
-        ret = CRE_IO;
+        rc = CRE_IO;
         goto cleanup;
     }
 
+    // Iterate over the files in the repository and remove all files
+    // that are listed on blacklist
+    while ((filename = g_dir_read_name(dirp))) {
+        gchar *full_path;
 
-    // Remove listed files
+        if (!g_slist_find_custom(blacklist, filename, (GCompareFunc) g_strcmp0))
+            // The filename is not blacklisted, skip it
+            continue;
 
-    for (int x = 0; x < 6; x++) {
-        cr_remove_listed_files(lists[x], retain, &tmp_err);
-        if (tmp_err) {
-            ret = tmp_err->code;
-            g_propagate_error(err, tmp_err);
-            break;
-        }
+        full_path = g_strconcat(full_repopath, filename, NULL);
+
+        // REMOVE
+        // TODO: Use more sophisticated function
+        if (g_remove(full_path) != -1)
+            g_debug("Removed %s", full_path);
+        else
+            g_warning("Cannot remove %s: %s", full_path, strerror(errno));
+
+        g_free(full_path);
     }
 
 cleanup:
-    g_free(repomd_path);
+
+    g_slist_free_full(blacklist, g_free);
     g_free(full_repopath);
+    if (dirp)
+        g_dir_close(dirp);
 
-    for (int x = 0; x < 6; x++)
-        cr_slist_free_full(lists[x], cr_free_old_file);
-
-    return ret;
+    return rc;
 }
 
 int
@@ -524,7 +463,7 @@ cr_old_metadata_retention(const char *old_repo,
     GDir *dirp = NULL;
     const gchar *filename;
     GError *tmp_err = NULL;
-    int compatibility_mode = 0;
+    int compatibility_mode = 1;
 
     assert(!err || *err == NULL);
 
@@ -541,8 +480,10 @@ cr_old_metadata_retention(const char *old_repo,
     if (!ret)
         return FALSE;
 
-    // Iterate over the files in the old repository and copy all
-    // that aren't listed in repomd.xml
+    // Never copy old repomd.xml to the new repository
+    blacklist = g_slist_prepend(blacklist, g_strdup("repomd.xml"));
+
+    // Open directory with old repo
     dirp = g_dir_open (old_repo, 0, &tmp_err);
     if (!dirp) {
         g_warning("Cannot open directory: %s: %s", old_repo, tmp_err->message);
@@ -554,10 +495,11 @@ cr_old_metadata_retention(const char *old_repo,
         goto exit;
     }
 
+    // Iterate over the files in the old repository and copy all
+    // that are not listed on blacklist
     while ((filename = g_dir_read_name(dirp))) {
-
         if (g_slist_find_custom(blacklist, filename, (GCompareFunc) g_strcmp0)) {
-            g_debug("Not be in the new repo: %s", filename);
+            g_debug("Blacklisted: %s", filename);
             continue;
         }
 

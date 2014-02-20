@@ -1162,7 +1162,7 @@ cr_run_command(char **cmd, const char *working_dir, GError **err)
         return FALSE;
     }
 
-    gboolean ret = g_spawn_check_exit_status(status, &tmp_err);
+    gboolean ret = cr_spawn_check_exit_status(status, &tmp_err);
     if (!ret && error_str) {
         // Remove newlines from error message
         for (char *ptr = error_str; *ptr; ptr++)
@@ -1247,4 +1247,34 @@ cr_append_pid_and_datetime(const char *str, const char *suffix)
     g_free(datetime);
     g_date_time_unref(cur_datetime);
     return result;
+}
+
+gboolean
+cr_spawn_check_exit_status(gint exit_status, GError **err)
+{
+    assert(!err || *err == NULL);
+
+    if (WIFEXITED(exit_status)) {
+        if (WEXITSTATUS(exit_status) == 0) {
+            // Exit code == 0 means success
+            return TRUE;
+        } else {
+            g_set_error (err, CR_MISC_ERROR, CRE_SPAWNERRCODE,
+                        "Child process exited with code %ld",
+                        (long) WEXITSTATUS(exit_status));
+        }
+    } else if (WIFSIGNALED(exit_status)) {
+        g_set_error (err, CR_MISC_ERROR, CRE_SPAWNKILLED,
+                     "Child process killed by signal %ld",
+                     (long) WTERMSIG(exit_status));
+    } else if (WIFSTOPPED(exit_status)) {
+        g_set_error (err, CR_MISC_ERROR, CRE_SPAWNSTOPED,
+                     "Child process stopped by signal %ld",
+                     (long) WSTOPSIG(exit_status));
+    } else {
+        g_set_error (err, CR_MISC_ERROR, CRE_SPAWNABNORMAL,
+                     "Child process exited abnormally");
+    }
+
+    return FALSE;
 }

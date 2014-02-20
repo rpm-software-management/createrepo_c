@@ -449,6 +449,18 @@ cr_rm(const char *path,
  */
 gchar *
 cr_append_pid_and_datetime(const char *str, const char *suffix);
+
+/** Createrepo_c's reimplementation of convinient
+ * g_spawn_check_exit_status() function which is available since
+ * glib 2.34 (createrepo_c is currently compatible with glib >= 2.28)
+ * @param exit_status   An exit code as returned from g_spawn_sync()
+ * @param error         GError **
+ * @returns             TRUE if child exited successfully,
+ *                      FALSE otherwise (and error will be set)
+ */
+gboolean
+cr_spawn_check_exit_status(gint exit_status, GError **error);
+
 /** @} */
 
 #ifdef __cplusplus

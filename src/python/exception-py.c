@@ -27,8 +27,13 @@ PyObject *CrErr_Exception = NULL;
 int
 init_exceptions()
 {
+#if (PY_MAJOR_VERSION == 2) && (PY_MINOR_VERSION < 7)
+    CrErr_Exception = PyErr_NewException("createrepo_c.CreaterepoCError", NULL, NULL);
+#else
     CrErr_Exception = PyErr_NewExceptionWithDoc("createrepo_c.CreaterepoCError",
                             "Createrepo_c library exception", NULL, NULL);
+#endif
+
     if (!CrErr_Exception)
         return 0;
     Py_INCREF(CrErr_Exception);

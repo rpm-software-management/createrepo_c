@@ -349,7 +349,7 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
             g_warning("Cannot remove \"%s\": %s", realpath, strerror(errno));
         g_free(realpath);
     }
-    g_slist_free_full(recordstoremove, (GDestroyNotify)cr_repomd_record_free);
+    cr_slist_free_full(recordstoremove, (GDestroyNotify)cr_repomd_record_free);
 
     cr_repomd_free(repomd);
 
@@ -429,7 +429,7 @@ cr_modifyrepo_parse_batchfile(const gchar *path,
     if (success) {
         *modifyrepotasks = g_slist_concat(*modifyrepotasks, tasks);
     } else {
-        g_slist_free_full(tasks, (GDestroyNotify)cr_modifyrepotask_free);
+        cr_slist_free_full(tasks, (GDestroyNotify)cr_modifyrepotask_free);
     }
 
     g_key_file_free(keyfile);

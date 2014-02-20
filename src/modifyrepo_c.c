@@ -316,7 +316,7 @@ main(int argc, char **argv)
     // Process the tasks
 
     ret = cr_modifyrepo(modifyrepotasks, repodatadir, &err);
-    g_slist_free_full(modifyrepotasks, (GDestroyNotify)cr_modifyrepotask_free);
+    cr_slist_free_full(modifyrepotasks, (GDestroyNotify)cr_modifyrepotask_free);
 
     if (!ret) {
         g_printerr("%s\n", err->message);

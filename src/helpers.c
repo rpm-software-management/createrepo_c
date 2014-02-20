@@ -306,7 +306,7 @@ cr_remove_metadata_classic(const char *repopath, int retain, GError **err)
 
 cleanup:
 
-    g_slist_free_full(blacklist, g_free);
+    cr_slist_free_full(blacklist, g_free);
     g_free(full_repopath);
     if (dirp)
         g_dir_close(dirp);
@@ -399,7 +399,7 @@ cr_old_metadata_retention(const char *old_repo,
 exit:
 
     // Cleanup
-    g_slist_free_full(blacklist, g_free);
+    cr_slist_free_full(blacklist, g_free);
     if (dirp)
         g_dir_close(dirp);
 

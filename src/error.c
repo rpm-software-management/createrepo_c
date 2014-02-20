@@ -75,6 +75,14 @@ cr_strerror(cr_Error rc)
             return "Assert error";
         case CRE_BADCMDARG:
             return "Bad command line argument(s)";
+        case CRE_SPAWNERRCODE:
+            return "Child process exited with error code != 0";
+        case CRE_SPAWNKILLED:
+            return "Child process killed by signal";
+        case CRE_SPAWNSTOPED:
+            return "Child process stopped by signal";
+        case CRE_SPAWNABNORMAL:
+            return "Child process exited abnormally";
         default:
             return "Unknown error";
     }

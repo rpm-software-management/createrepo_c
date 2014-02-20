@@ -79,7 +79,15 @@ typedef enum {
         it happend, probable reason is that some values of createrepo_c
         object was changed (by you - a programmer) in a bad way */
     CRE_BADCMDARG, /*!<
-        Bad command line argument(s) */
+        (26) Bad command line argument(s) */
+    CRE_SPAWNERRCODE, /*!<
+        (27) Child process exited with error code != 0 */
+    CRE_SPAWNKILLED, /*!<
+        (28) Child process killed by signal */
+    CRE_SPAWNSTOPED, /*!<
+        (29) Child process stopped by signal */
+    CRE_SPAWNABNORMAL, /*!<
+        (30) Child process exited abnormally */
 } cr_Error;
 
 /** Converts cr_Error return code to error string.

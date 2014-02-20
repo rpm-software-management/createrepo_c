@@ -1,9 +1,9 @@
 EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} -c "from sys import stdout; from distutils import sysconfig; stdout.write(sysconfig.get_python_lib(True))" OUTPUT_VARIABLE PYTHON_INSTALL_DIR)
 
 IF (${CMAKE_VERSION} VERSION_LESS "2.8.0")
-    CONFIGURE_FILE( "deltarepo/deltarepo.py" COPYONLY)
-    CONFIGURE_FILE( "deltarepo/managedeltarepos.py" COPYONLY)
-    CONFIGURE_FILE( "deltarepo/repoupdater.py" COPYONLY)
+    CONFIGURE_FILE( "deltarepo.py" COPYONLY)
+    CONFIGURE_FILE( "managedeltarepos.py" COPYONLY)
+    CONFIGURE_FILE( "repoupdater.py" COPYONLY)
 ELSE()
     FILE(COPY deltarepo.py DESTINATION ./)
     FILE(COPY managedeltarepos.py DESTINATION ./)

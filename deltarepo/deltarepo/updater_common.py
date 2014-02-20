@@ -5,6 +5,7 @@ import os.path
 import librepo
 import tempfile
 import createrepo_c as cr
+from .applicator import DeltaRepoApplicator
 from .deltarepos import DeltaRepos
 from .common import LoggingInterface, calculate_contenthash
 from .errors import DeltaRepoError
@@ -498,46 +499,91 @@ class UpdateSolver(LoggingInterface):
 
 class Updater(LoggingInterface):
 
+    class DownloadedRepo(object):
+        def __init__(self, url):
+            # TODO: Downloading only selected metadatas
+            self.url = url
+            self.destdir = None
+            self.h = None   # Librepo Handle()
+            self.r = None   # Librepo Result()
+
+        def download(self, destdir):
+            self.destdir = destdir
+
+            h = librepo.Handle()
+            h.urls = [self.url]
+            h.repotype = librepo.YUMREPO
+            h.interruptible = True
+            h.destdir = destdir
+            r = librepo.Result()
+            # TODO: Catch exceptions
+            h.perform(r)
+
+            self.h = h
+            self.r = r
+
     def __init__(self, localrepo, updatesolver, logger=None):
         LoggingInterface.__init__(self, logger)
         self.localrepo = localrepo
         self.updatesolver = updatesolver
 
     def apply_resolved_path(self, resolved_path):
+        # TODO: Make it look better (progressbar, etc.)
+        counter = 0
+        tmpdir = tempfile.mkdtemp(prefix="deltarepos-", dir="/tmp")
+        targetrepo = tempfile.mkdtemp(prefix="targetrepo", dir=tmpdir)
+        self._debug("Using temporary dir for downloading: {0}".format(tmpdir))
         for link in resolved_path:
-            print link.deltarepourl
 
-    def update(self, target_contenthash, target_contenthash_type="sha256"):
-        """Transform the localrepo to the version specified
-        by the target_contenthash"""
+            # Download repo
+            print("Downloading delta repo {0}".format(link.deltarepourl))
+            dirname = "deltarepo_{0:02}".format(counter)
+            destdir = os.path.join(tmpdir, dirname)
+            os.mkdir(destdir)
+            repo = Updater.DownloadedRepo(link.deltarepourl)
+            repo.download(destdir)
+            counter += 1
 
-        if not self.localrepo.contenthash or not self.localrepo.contenthash_type:
-            raise DeltaRepoError("content hash is not specified in localrepo")
+            # Apply repo
+            da = DeltaRepoApplicator(self.localrepo.path,
+                                     destdir,
+                                     out_path=targetrepo,
+                                     logger=self.logger,
+                                     ignore_missing=True)
+            da.apply()
 
-        if self.localrepo.contenthash_type != target_contenthash_type:
-            raise DeltaRepoError("Contenthash type mishmash - LocalRepo {0}, "
-                                 "Target: {1}".format(self.localrepo.contenthash_type,
-                                                      target_contenthash_type))
+    # def update(self, target_contenthash, target_contenthash_type="sha256"):
+    #     """Transform the localrepo to the version specified
+    #     by the target_contenthash"""
+    #
+    #     if not self.localrepo.contenthash or not self.localrepo.contenthash_type:
+    #         raise DeltaRepoError("content hash is not specified in localrepo")
+    #
+    #     if self.localrepo.contenthash_type != target_contenthash_type:
+    #         raise DeltaRepoError("Contenthash type mishmash - LocalRepo {0}, "
+    #                              "Target: {1}".format(self.localrepo.contenthash_type,
+    #                                                   target_contenthash_type))
+    #
+    #     resolved_path = self.updatesolver.resolve_path(self.localrepo.contenthash,
+    #                                                    target_contenthash,
+    #                                                    target_contenthash_type)
+    #
+    #     if not resolved_path:
+    #         raise DeltaRepoError("Path \'{0}\'->\'{1}\' ({2}) cannot "
+    #                              "be resolved".format(self.localrepo.contenthash,
+    #                                                   target_contenthash,
+    #                                                   target_contenthash_type))
+    #
+    #     self.apply_resolved_path(resolved_path)
 
-        resolved_path = self.updatesolver.resolve_path(self.localrepo.contenthash,
-                                                       target_contenthash,
-                                                       target_contenthash_type)
-
-        if not resolved_path:
-            raise DeltaRepoError("Path \'{0}\'->\'{1}\' ({2}) cannot "
-                                 "be resolved".format(self.localrepo.contenthash,
-                                                      target_contenthash,
-                                                      target_contenthash_type))
-
-        self.apply_resolved_path(resolved_path)
-
-    def update_to_current(self, originrepo):
-        target_contenthash_type = self.localrepo.contenthash_type
-        _, target_contenthash = self.find_repo_contenthash(originrepo,
-                                                           target_contenthash_type)
-        if not target_contenthash:
-            raise DeltaRepoError("Cannot determine contenthash ({0}) "
-                                 "of originrepo".format(target_contenthash_type))
-
-        self.update(target_contenthash,
-                    target_contenthash_type=target_contenthash_type)
+    #def update_to_current(self, originrepo):
+    #    target_contenthash_type = self.localrepo.contenthash_type
+    #    _, target_contenthash = self.find_repo_contenthash(originrepo,
+    #                                                       target_contenthash_type)
+    #    if not target_contenthash:
+    #        raise DeltaRepoError("Cannot determine contenthash ({0}) "
+    #                             "of originrepo".format(target_contenthash_type))
+    #
+    #    self.update(target_contenthash,
+    #                target_contenthash_type=target_contenthash_type)
+    #

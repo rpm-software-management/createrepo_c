@@ -90,8 +90,8 @@ def setup_logging(quiet, verbose):
         logger.setLevel(logging.INFO)
     return logger
 
-def update_with_deltas(args, logger):
-    updatesolver = UpdateSolver([drmirror], logger)
+def update_with_deltas(args, drmirros, localrepo, originrepo, logger):
+    updatesolver = UpdateSolver(drmirros, logger)
 
     # Get source hash
     sch_t, sch = updatesolver.find_repo_contenthash(localrepo)
@@ -122,8 +122,15 @@ def update_with_deltas(args, logger):
 
     # Resolve path
     resolved_path = updatesolver.resolve_path(source_contenthash, target_contenthash)
-
     print(resolved_path)
+
+    # TODO check cost, if bigger then cost of downloading
+    #      origin repo then download origin repo
+
+    # Apply the path
+    updater = Updater(localrepo, None, logger)
+    updater.apply_resolved_path(resolved_path)
+
 
 def main(args, logger):
     localrepo = LocalRepo.from_path(args.localrepo[0])
@@ -144,7 +151,11 @@ def main(args, logger):
         drmirror = DRMirror.from_url(i)
         drmirrors.append(drmirror)
 
-    update_with_deltas(args, logger)
+    if drmirrors:
+        update_with_deltas(args, drmirrors, localrepo, originrepo, logger)
+    else:
+        # TODO: Just download origin repo
+        pass
 
 if __name__ == "__main__":
     args = parse_options()

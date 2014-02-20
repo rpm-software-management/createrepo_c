@@ -227,7 +227,7 @@ class DeltaRepoApplicator(LoggingInterface):
 
         if self.old_contenthash != c_old_contenthash:
             message = "Content hash of the old repository doesn't match "\
-                      "the real one ({1} != {2}).".format(self.old_contenthash,
+                      "the real one ({0} != {1}).".format(self.old_contenthash,
                       c_old_contenthash)
             self._error(message)
             raise DeltaRepoError(message)
@@ -237,7 +237,7 @@ class DeltaRepoApplicator(LoggingInterface):
 
         if self.new_contenthash != c_new_contenthash:
             message = "Content hash of the new repository doesn't match "\
-                      "the real one ({1} != {2}).".format(self.new_contenthash,
+                      "the real one ({0} != {1}).".format(self.new_contenthash,
                       c_new_contenthash)
             self._error(message)
             raise DeltaRepoError(message)

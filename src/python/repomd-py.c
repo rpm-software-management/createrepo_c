@@ -338,14 +338,22 @@ typedef struct {
 
 /** List of convertors for converting a lists in cr_Package. */
 static ListConvertor list_convertors[] = {
-    { offsetof(cr_Repomd, repo_tags),    PyStringOrNone_FromString,
-      CheckPyString, PyObject_ToChunkedString },
-    { offsetof(cr_Repomd, distro_tags),  PyObject_FromDistroTag,
-      CheckPyDistroTag, PyObject_ToDistroTag },
-    { offsetof(cr_Repomd, content_tags), PyStringOrNone_FromString,
-      CheckPyString, PyObject_ToChunkedString },
-    { offsetof(cr_Repomd, records),      PyObject_FromRepomdRecord,
-      NULL, NULL },
+    { offsetof(cr_Repomd, repo_tags),
+      (ConversionFromFunc) PyStringOrNone_FromString,
+      (ConversionToCheckFunc) CheckPyString,
+      (ConversionToFunc) PyObject_ToChunkedString },
+    { offsetof(cr_Repomd, distro_tags),
+      (ConversionFromFunc) PyObject_FromDistroTag,
+      (ConversionToCheckFunc) CheckPyDistroTag,
+      (ConversionToFunc) PyObject_ToDistroTag },
+    { offsetof(cr_Repomd, content_tags),
+      (ConversionFromFunc) PyStringOrNone_FromString,
+      (ConversionToCheckFunc) CheckPyString,
+      (ConversionToFunc) PyObject_ToChunkedString },
+    { offsetof(cr_Repomd, records),
+      (ConversionFromFunc) PyObject_FromRepomdRecord,
+      (ConversionToCheckFunc) NULL,
+      (ConversionToFunc) NULL },
 };
 
 /* Getters */

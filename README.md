@@ -23,7 +23,8 @@ Package build requires - Pkg name in Fedora/Ubuntu:
 * sqlite3 (https://sqlite.org/) - sqlite-devel/libsqlite3-dev
 * xz (http://tukaani.org/xz/) - xz-devel/liblzma-dev
 * zlib (http://www.zlib.net/) - zlib-devel/zlib1g-dev
-* *Optional:* doxygen (http://doxygen.org/) - doxygen/doxygen
+* *Documentation:* doxygen (http://doxygen.org/) - doxygen/doxygen
+* *Documentation:* sphinx (http://sphinx-doc.org/) - python-sphinx/
 * **Test requires:** check (http://check.sourceforge.net/) - check-devel/check
 * **Test requires:** python-nose (https://nose.readthedocs.org/) - python-nose/python-nose
 

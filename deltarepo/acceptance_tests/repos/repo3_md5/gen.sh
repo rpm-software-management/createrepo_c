@@ -9,7 +9,7 @@ fi
 
 if [[ -z "$MODIFYREPO" ]]
 then
-    CREATEREPO="modifyrepo_c"
+    MODIFYREPO="modifyrepo_c"
 fi
 
 pushd "$MY_DIR"

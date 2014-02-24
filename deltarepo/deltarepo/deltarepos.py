@@ -12,6 +12,8 @@ from .xmlcommon import getNode, getRequiredNode
 from .xmlcommon import getAttribute, getRequiredAttribute, getNumAttribute
 from .xmlcommon import getValue
 
+# TODO: Remove total_size (it is redundant)
+
 class DeltaReposRecord(object):
     def __init__(self):
         self.location_base = None

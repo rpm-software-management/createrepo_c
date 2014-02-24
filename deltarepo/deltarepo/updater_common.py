@@ -2,6 +2,7 @@ import shutil
 import os
 import pprint
 import os.path
+import time
 import librepo
 import tempfile
 import createrepo_c as cr
@@ -533,61 +534,53 @@ class Updater(LoggingInterface):
 
     def apply_resolved_path(self, resolved_path):
         # TODO: Make it look better (progressbar, etc.)
-        counter = 0
+        counter = 1
         tmpdir = tempfile.mkdtemp(prefix="deltarepos-", dir="/tmp")
-        targetrepo = tempfile.mkdtemp(prefix="targetrepo", dir=tmpdir)
-        self._debug("Using temporary dir for downloading: {0}".format(tmpdir))
+        tmprepo = tempfile.mkdtemp(prefix="targetrepo", dir=tmpdir)
+        prevrepo = self.localrepo.path
+
+        self._debug("Using temporary directory: {0}".format(tmpdir))
         for link in resolved_path:
 
             # Download repo
-            print("Downloading delta repo {0}".format(link.deltarepourl))
+            self._info("{0:2}/{1:<2} Downloading delta repo {2}".format(
+                counter, len(resolved_path), link.deltarepourl))
             dirname = "deltarepo_{0:02}".format(counter)
             destdir = os.path.join(tmpdir, dirname)
             os.mkdir(destdir)
             repo = Updater.DownloadedRepo(link.deltarepourl)
             repo.download(destdir)
-            counter += 1
 
             # Apply repo
-            da = DeltaRepoApplicator(self.localrepo.path,
+            self._info("{0:2}/{1:<2} Applying delta repo".format(
+                counter, len(resolved_path)))
+            da = DeltaRepoApplicator(prevrepo,
                                      destdir,
-                                     out_path=targetrepo,
+                                     out_path=tmprepo,
                                      logger=self.logger,
                                      ignore_missing=True)
             da.apply()
 
-    # def update(self, target_contenthash, target_contenthash_type="sha256"):
-    #     """Transform the localrepo to the version specified
-    #     by the target_contenthash"""
-    #
-    #     if not self.localrepo.contenthash or not self.localrepo.contenthash_type:
-    #         raise DeltaRepoError("content hash is not specified in localrepo")
-    #
-    #     if self.localrepo.contenthash_type != target_contenthash_type:
-    #         raise DeltaRepoError("Contenthash type mishmash - LocalRepo {0}, "
-    #                              "Target: {1}".format(self.localrepo.contenthash_type,
-    #                                                   target_contenthash_type))
-    #
-    #     resolved_path = self.updatesolver.resolve_path(self.localrepo.contenthash,
-    #                                                    target_contenthash,
-    #                                                    target_contenthash_type)
-    #
-    #     if not resolved_path:
-    #         raise DeltaRepoError("Path \'{0}\'->\'{1}\' ({2}) cannot "
-    #                              "be resolved".format(self.localrepo.contenthash,
-    #                                                   target_contenthash,
-    #                                                   target_contenthash_type))
-    #
-    #     self.apply_resolved_path(resolved_path)
+            counter += 1
+            prevrepo = tmprepo
 
-    #def update_to_current(self, originrepo):
-    #    target_contenthash_type = self.localrepo.contenthash_type
-    #    _, target_contenthash = self.find_repo_contenthash(originrepo,
-    #                                                       target_contenthash_type)
-    #    if not target_contenthash:
-    #        raise DeltaRepoError("Cannot determine contenthash ({0}) "
-    #                             "of originrepo".format(target_contenthash_type))
-    #
-    #    self.update(target_contenthash,
-    #                target_contenthash_type=target_contenthash_type)
-    #
+        # Move updated repo to the final destination
+        dirname = os.path.dirname(self.localrepo.path)
+        basename = ".deltarepo-repodata-{0}-{1}".format(time.time(), os.getpid())
+        targettmprepodata = os.path.join(dirname, basename)
+        originaltmprepodata = targettmprepodata+"-original"
+        tmprepodata = os.path.join(tmprepo, "repodata")
+        originalrepodatapath = os.path.join(self.localrepo.path, "repodata")
+
+        self._debug("Final move to {0}".format(self.localrepo.path))
+
+        self._debug("Copying {0} -> {1}".format(tmprepodata, targettmprepodata))
+        shutil.copytree(tmprepodata, targettmprepodata)
+        self._debug("Moving {0} -> {1}".format(originalrepodatapath, originaltmprepodata))
+        shutil.move(originalrepodatapath, originaltmprepodata)
+        self._debug("Moving {0} -> {1}".format(targettmprepodata, originalrepodatapath))
+        shutil.move(targettmprepodata, originalrepodatapath)
+        self._debug("Removing {0}".format(originaltmprepodata))
+        shutil.rmtree(originaltmprepodata)
+        self._debug("Removing {0}".format(tmpdir))
+        shutil.rmtree(tmpdir)

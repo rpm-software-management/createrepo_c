@@ -31,7 +31,7 @@ def parse_options():
     #parser.add_option("-l", "--list-datatypes", action="store_true",
     #                  help="List datatypes for which delta is supported.")
     parser.add_argument("-o", "--outputdir", action="store", metavar="DIR",
-                      help="Output directory.", default="./")
+                      help="Output directory.", default=None)
     parser.add_argument("-d", "--database", action="store_true",
                       help="Force database generation")
     parser.add_argument("--ignore-missing", action="store_true",

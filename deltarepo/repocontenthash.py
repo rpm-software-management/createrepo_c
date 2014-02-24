@@ -77,7 +77,7 @@ def setup_logging(quiet, verbose):
 
 def print_contenthashes(args, logger):
     # Print content hash from the repomd.xml
-    localrepo = LocalRepo.from_path(args.path, calculate_contenthash=False)
+    localrepo = LocalRepo.from_path(args.path, calc_contenthash=False)
     if localrepo.repomd_contenthash and localrepo.repomd_contenthash_type:
         print("R {0} {1}".format(localrepo.repomd_contenthash_type, localrepo.repomd_contenthash))
 
@@ -90,7 +90,7 @@ def print_contenthashes(args, logger):
 
 def check(args, logger):
     # Get type and value of content hash in repomd
-    localrepo = LocalRepo.from_path(args.path, calculate_contenthash=False)
+    localrepo = LocalRepo.from_path(args.path, calc_contenthash=False)
     if not localrepo.repomd_contenthash or not localrepo.repomd_contenthash_type:
         if args.missing_contenthash_in_repomd_is_ok:
             return True

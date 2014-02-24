@@ -357,7 +357,7 @@ class DeltaRepoApplicator(LoggingInterface):
 
         # Final move
         if os.path.exists(self.final_path):
-            self._warning("Destination dir already exists! Removing %s" % \
+            self._debug("Destination dir already exists! Removing %s" % \
                           self.final_path)
             shutil.rmtree(self.final_path)
         self._debug("Moving %s -> %s" % (self.new_repodata_path, self.final_path))

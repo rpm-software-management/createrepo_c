@@ -122,7 +122,6 @@ def update_with_deltas(args, drmirros, localrepo, originrepo, logger):
 
     # Resolve path
     resolved_path = updatesolver.resolve_path(source_contenthash, target_contenthash)
-    print(resolved_path)
 
     # TODO check cost, if bigger then cost of downloading
     #      origin repo then download origin repo

@@ -158,11 +158,7 @@ def deltareposrecord_from_repopath(path, logger, strip_path_prefix=True):
     yum_repo_dict, yum_repomd_dict = parse_repomd(path, logger)
 
     repomd_path = os.path.join(path, "repodata/repomd.xml")
-    print(repomd_path)
     repomd = cr.Repomd(repomd_path)
-    print(repomd)
-    for repomd_rec in repomd.records:
-        print(repomd_rec.type)
 
     deltametadata_path = os.path.join(path, yum_repomd_dict["deltametadata"]["location_href"])
     dm = deltarepo.DeltaMetadata()
@@ -184,10 +180,9 @@ def deltareposrecord_from_repopath(path, logger, strip_path_prefix=True):
     rec.timestamp_dst = dm.timestamp_dst
 
     for repomd_rec in repomd.records:
-        pass # TODO
-        #if not repomd_rec.type:
-        #    continue
-        #rec.set_data(repomd_rec.type, repomd_rec.size)
+        if not repomd_rec.type:
+            continue
+        rec.set_data(repomd_rec.type, repomd_rec.size)
 
     repomd_path = yum_repo_dict["repomd"]
     rec.repomd_timestamp = int(os.path.getmtime(repomd_path))

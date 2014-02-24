@@ -17,10 +17,11 @@ class _Repo(object):
         self.path = None
         self.timestamp = None
         self.revision = None
-        self.contenthash = None
-        self.contenthash_type = None
+        self.contenthash = None             # Calculated content hash
+        self.contenthash_type = None        # Type of calculated content hash
+        self.repomd_contenthash = None      # Content hash from repomd
+        self.repomd_contenthash_type = None # Content hash from repomd
         self.present_metadata = []  # ["primary", "filelists", ...]
-        #self.repomd = None # createrepo_c.Repomd() object
 
     def _fill_from_repomd_object(self, repomd):
         timestamp = -1
@@ -36,10 +37,10 @@ class _Repo(object):
 
     def _fill_from_path(self, path, contenthash=True, contenthash_type="sha256"):
         """Fill the repo attributes from a repository specified by path.
-        @param path         path to repository (a dir that contains
-                            repodata/ subdirectory)
-        @param contenthash  calculate content hash? (primary metadata must
-                            be available in the repo)
+        @param path             path to repository (a dir that contains
+                                repodata/ subdirectory)
+        @param contenthash      calculate content hash? (primary metadata must
+                                be available in the repo)
         @param contenthash_type type of the calculated content hash
         """
 
@@ -51,20 +52,21 @@ class _Repo(object):
         repomd_path = os.path.join(path, "repodata/repomd.xml")
         repomd = cr.Repomd(repomd_path)
 
+        self.repomd_contenthash = repomd.contenthash
+        self.repomd_contenthash_type = repomd.contenthash_type
+
         self._fill_from_repomd_object(repomd)
 
-        primary_path = None
-        for rec in repomd.records:
-            if rec.type == "primary":
-                primary_path = rec.location_href
-                break
-
-        if not primary_path:
-            raise DeltaRepoError("{0} - primary metadata are missing"
-                                 "".format(primary_path))
-
-        primary_path = os.path.join(path, primary_path)
-        if contenthash and os.path.isfile(primary_path):
+        if contenthash:
+            primary_path = None
+            for rec in repomd.records:
+                if rec.type == "primary":
+                    primary_path = rec.location_href
+                    break
+            if not primary_path:
+                raise DeltaRepoError("{0} - primary metadata are missing"
+                                     "".format(primary_path))
+            primary_path = os.path.join(path, primary_path)
             self.contenthash = calculate_contenthash(primary_path, contenthash_type)
             self.contenthash_type = contenthash_type
 
@@ -75,10 +77,12 @@ class LocalRepo(_Repo):
         _Repo.__init__(self)
 
     @classmethod
-    def from_path(cls, path, contenthash_type="sha256"):
+    def from_path(cls, path, calc_contenthash=True, contenthash_type="sha256"):
         """Create a LocalRepo object from a path to the repo."""
         lr = cls()
-        lr._fill_from_path(path, contenthash_type=contenthash_type)
+        lr._fill_from_path(path,
+                           contenthash=calc_contenthash,
+                           contenthash_type=contenthash_type)
         return lr
 
 class OriginRepo(_Repo):
@@ -128,7 +132,7 @@ class OriginRepo(_Repo):
         @param path      path to the repomd.xml"""
         repomd = cr.Repomd(repomd_path)
         repo = cls()
-        repo._fill_from_repomd_object(repomd)
+        repo._fill_from_path(repomd, contenthash=False)
         return repo
 
 class DRMirror(object):

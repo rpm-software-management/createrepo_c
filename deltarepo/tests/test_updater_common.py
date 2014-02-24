@@ -28,7 +28,7 @@ class LinkMock(object):
         return "<LinkMock \'{0}\'->\'{1}\' ({2})>".format(
             self.src, self.dst, self.cost())
 
-    def cost(self):
+    def cost(self, whitelisted_metadata=None):
         return self._cost
 
 class TestCaseLocalRepo(unittest.TestCase):
@@ -44,7 +44,7 @@ class TestCaseLocalRepo(unittest.TestCase):
         self.assertEqual(lr.contenthash_type, "sha256")
 
     def test_localrepo_from_path_md5(self):
-        lr = LocalRepo.from_path(REPO_01_PATH, "md5")
+        lr = LocalRepo.from_path(REPO_01_PATH, contenthash_type="md5")
         self.assertEqual(lr.revision, "1378724582")
         self.assertEqual(lr.timestamp, 1378724581L)
         self.assertEqual(lr.contenthash_type, "md5")

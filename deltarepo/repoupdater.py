@@ -10,6 +10,7 @@ import librepo
 import deltarepo
 from deltarepo import DeltaRepoError, DeltaRepoPluginError
 from deltarepo.updater_common import LocalRepo, OriginRepo, DRMirror, UpdateSolver, Updater
+from deltarepo import needed_delta_metadata
 
 LOG_FORMAT = "%(message)s"
 
@@ -36,6 +37,10 @@ def parse_options():
                         help="Target content hash (if no --repo(mirrorlist|metalink)? used)")
     parser.add_argument("--target-contenthash-type", default="sha256",
                         help="Type of target content hash. 'sha256' is default value.")
+    parser.add_argument("--update-only-present", action="store_true",
+                        help="Update only metadata that are present in current repo. "
+                             "(Newly added metadata will not be downloaded, missing "
+                             "metadata will be ignored)")
 
     args = parser.parse_args()
 
@@ -91,7 +96,16 @@ def setup_logging(quiet, verbose):
     return logger
 
 def update_with_deltas(args, drmirros, localrepo, originrepo, logger):
-    updatesolver = UpdateSolver(drmirros, logger)
+    whitelisted_metadata = None
+    if args.update_only_present:
+        whitelisted_metadata = needed_delta_metadata(localrepo.present_metadata)
+        logger.debug("Using metadata whitelist")
+        logger.debug("Locally available metadata: {0}".format(localrepo.present_metadata))
+        logger.debug("Final whitelist: {0}".format(whitelisted_metadata))
+
+    updatesolver = UpdateSolver(drmirros,
+                                whitelisted_metadata=whitelisted_metadata,
+                                logger=logger)
 
     # Get source hash
     sch_t, sch = updatesolver.find_repo_contenthash(localrepo)
@@ -136,6 +150,7 @@ def main(args, logger):
     originrepo = None
     drmirrors = []
 
+    # TODO: Update to selected revision
     source_contenthash = None
     source_contenthash_type = None
     target_contenthash = None

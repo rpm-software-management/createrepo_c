@@ -16,6 +16,7 @@ from .deltametadata import DeltaMetadata, PluginBundle
 from .applicator import DeltaRepoApplicator
 from .generator import DeltaRepoGenerator
 from .plugins import PLUGINS
+from .plugins import needed_delta_metadata
 from .errors import DeltaRepoError, DeltaRepoPluginError
 
 __all__ = ['VERSION', 'VERBOSE_VERSION',
@@ -25,6 +26,7 @@ __all__ = ['VERSION', 'VERBOSE_VERSION',
            'DeltaMetadata', 'PluginBundle',
            'DeltaRepoApplicator',
            'DeltaRepoGenerator',
+           'needed_delta_metadata',
            'DeltaRepoError', 'DeltaRepoPluginError']
 
 VERSION = "0.0.1"

@@ -8,7 +8,15 @@ from .plugins_common import GlobalBundle, Metadata
 from .common import LoggingInterface, DEFAULT_CHECKSUM_NAME
 from .errors import DeltaRepoPluginError
 
+# List of available plugins
 PLUGINS = []
+
+# Mapping - which metadata from deltarepo must be downloaded
+# to get desired metadata.
+METADATA_MAPPING = {}  # { "wanted_metadata_type": ["required_metadata_from_deltarepo", ...] }
+
+# Plugin to gen/apply deltas over any metadata
+# (over data that are not supported by other plugins)
 GENERAL_PLUGIN = None
 
 # Files with this suffixes will be considered as already compressed
@@ -31,6 +39,10 @@ class DeltaRepoPlugin(LoggingInterface):
     # The plugin HAS TO do deltas for each of listed metadata and be able
     # to apply deltas on them!
     METADATA = []
+
+    # Says which delta metadata are needed to get required metadata
+    # e.g. { "primary": ["primary"], "filelists": ["primary", "filelists"] }
+    METADATA_MAPPING = {}
 
     def __init__(self, pluginbundle, globalbundle, logger=None):
 
@@ -367,6 +379,7 @@ class GeneralDeltaRepoPlugin(DeltaRepoPlugin):
     NAME = "GeneralDeltaPlugin"
     VERSION = 1
     METADATA = []
+    METADATA_MAPPING = {}
 
     def gen(self, metadata):
 
@@ -404,6 +417,14 @@ class MainDeltaRepoPlugin(DeltaRepoPlugin):
     VERSION = 1
     METADATA = ["primary", "filelists", "other",
                 "primary_db", "filelists_db", "other_db"]
+    METADATA_MAPPING = {
+        "primary":         ["primary"],
+        "filelists":       ["primary", "filelists"],
+        "other":           ["primary", "other"],
+        "primary_db":      ["primary"],
+        "filelists_db":    ["primary", "filelists"],
+        "other_db":        ["primary", "other"],
+    }
 
     def _pkg_id_tuple(self, pkg):
         """Return tuple identifying a package in repodata.
@@ -960,6 +981,10 @@ class GroupsDeltaRepoPlugin(DeltaRepoPlugin):
     NAME = "GroupDeltaRepoPlugin"
     VERSION = 1
     METADATA = ["group", "group_gz"]
+    METADATA_MAPPING = {
+        "group": ["group"],
+        "group_gz": ["group", "group_gz"]
+    }
 
     def gen(self, metadata):
 
@@ -987,7 +1012,7 @@ class GroupsDeltaRepoPlugin(DeltaRepoPlugin):
                 self._metadata_notes_to_plugin_bundle(md_group.metadata_type,
                                                       notes)
         elif md_group_gz:
-            rc, rec, notes = self._gen_basic_delta(md_group, force_gen=True)
+            rc, rec, notes = self._gen_basic_delta(md_group_gz, force_gen=True)
             assert rc
             if rec:
                 gen_repomd_recs.append(rec)
@@ -1039,3 +1064,28 @@ class GroupsDeltaRepoPlugin(DeltaRepoPlugin):
         return gen_repomd_recs
 
 PLUGINS.append(GroupsDeltaRepoPlugin)
+
+for plugin in PLUGINS:
+    METADATA_MAPPING.update(plugin.METADATA_MAPPING)
+
+def needed_delta_metadata(required_metadata):
+    """
+    @param required_metadata    List of required metadatas.
+    @return                     None if required_metadata is None
+                                List of needed delta metadata files
+                                in case that required_metadata is list
+    """
+
+    if required_metadata is None:
+        return None
+
+    needed_metadata = set(["deltametadata"])
+    needed_metadata.add("primary")  # Currently, we always need primary.xml
+
+    for required in required_metadata:
+        if required in METADATA_MAPPING:
+            needed_metadata |= set(METADATA_MAPPING[required])
+        else:
+            needed_metadata.add(required)
+
+    return list(needed_metadata)

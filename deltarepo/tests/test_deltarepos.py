@@ -19,6 +19,7 @@ XML_01 = """<?xml version="1.0" encoding="UTF-8"?>
     <revision src="1387077123" dst="1387087456" />
     <contenthash src="a" dst="b" type="md5" />
     <timestamp src="1387075111" dst="1387086222" />
+    <data type="primary" size="7766" />
     <repomd>
       <timestamp>123456789</timestamp>
       <size>963</size>
@@ -61,6 +62,8 @@ class TestCaseDeltaRepos(unittest.TestCase):
         rec.contenthash_type = "md5"
         rec.timestamp_src = 1387075111
         rec.timestamp_dst = 1387086222
+
+        rec.set_data("primary", size=7766)
 
         rec.repomd_timestamp = 123456789
         rec.repomd_size = 963
@@ -110,6 +113,8 @@ class TestCaseDeltaRepos(unittest.TestCase):
         self.assertEqual(rec.revision_dst, "1387087456")
         self.assertEqual(rec.timestamp_src, 1387075111)
         self.assertEqual(rec.timestamp_dst, 1387086222)
+
+        self.assertEqual(rec.get_data("primary").get("size"), 7766)
 
         #self.assertEqual(len(rec.plugins), 1)
         #self.assertTrue("MainDeltaPlugin" in rec.plugins)

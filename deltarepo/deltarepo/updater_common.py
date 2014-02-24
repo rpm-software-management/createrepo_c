@@ -78,7 +78,7 @@ class LocalRepo(_Repo):
         _Repo.__init__(self)
 
     @classmethod
-    def from_path(cls, path, calc_contenthash=True, contenthash_type="sha256"):
+    def from_path(cls, path, contenthash_type="sha256", calc_contenthash=True):
         """Create a LocalRepo object from a path to the repo."""
         lr = cls()
         lr._fill_from_path(path,
@@ -133,7 +133,7 @@ class OriginRepo(_Repo):
         @param path      path to the repomd.xml"""
         repomd = cr.Repomd(repomd_path)
         repo = cls()
-        repo._fill_from_path(repomd, contenthash=False)
+        repo._fill_from_repomd_object(repomd)
         return repo
 
 class DRMirror(object):
@@ -256,7 +256,7 @@ class Link(object):
                                self._deltareposrecord.location_href)
         return url
 
-    def cost(self):
+    def cost(self, whitelisted_metadata=None):
         """Cost (currently just a total size).
         In future maybe just sizes of needed delta metadata."""
         return self._deltareposrecord.size_total
@@ -291,10 +291,10 @@ class ResolvedPath():
     def path(self):
         return self._path
 
-    def cost(self):
+    def cost(self, whitelisted_metadata=None):
         cost = 0
         for link in self._path:
-            cost += link.cost()
+            cost += link.cost(whitelisted_metadata)
         return cost
 
 class Solver(LoggingInterface):
@@ -354,13 +354,15 @@ class Solver(LoggingInterface):
             self.links = links
             self.nodes = nodes
 
-    def __init__(self, links, source, target, contenthash_type="sha256", logger=None):
+    def __init__(self, links, source, target, contenthash_type="sha256",
+                 whitelisted_metadata=None, logger=None):
         LoggingInterface.__init__(self, logger)
 
         self.links = links      # Links
         self.source_ch = source # Source content hash (str)
         self.target_ch = target # Target content hash (str)
         self.contenthash_type = contenthash_type
+        self.whitelisted_metadata = whitelisted_metadata
 
     def solve(self):
         # Build the graph
@@ -416,7 +418,7 @@ class Solver(LoggingInterface):
 
             # Iterate over the u neighbors
             for v, link in u.targets.items():
-                alt = dist[u] + link.cost()
+                alt = dist[u] + link.cost(self.whitelisted_metadata)
                 if alt < dist[v] or dist[v] == -1:
                     dist[v] = alt
                     previous[v] = u
@@ -441,11 +443,13 @@ class Solver(LoggingInterface):
 
 class UpdateSolver(LoggingInterface):
 
-    def __init__(self, drmirrors, logger=None):
+    def __init__(self, drmirrors, whitelisted_metadata=None, logger=None):
         LoggingInterface.__init__(self, logger)
 
         if not isinstance(drmirrors, list):
             raise AttributeError("List of drmirrors expected")
+
+        self.whitelisted_metadata = whitelisted_metadata
 
         self._drmirrors = drmirrors or []   # [DeltaRepos, ...]
         self._links = []            # Link objects from the DeltaRepos objects
@@ -494,6 +498,7 @@ class UpdateSolver(LoggingInterface):
         solver = Solver(self._links, source_contenthash,
                         target_contenthash,
                         contenthash_type=contenthash_type,
+                        whitelisted_metadata=self.whitelisted_metadata,
                         logger=self.logger)
         resolved_path = solver.solve()
 

@@ -25,6 +25,8 @@ class DeltaReposRecord(object):
         self.timestamp_src = None
         self.timestamp_dst = None
 
+        self.data = {}  # { "primary": {"size": 123}, ... }
+
         self.repomd_timestamp = None
         self.repomd_size = None
         self.repomd_checksums = []  # [('type', 'value'), ...]
@@ -38,6 +40,12 @@ class DeltaReposRecord(object):
     #        if not isinstance(key, basestring) or not isinstance(val, basestring):
     #            raise TypeError("Strings expected, got ({0}, {1})".format(key, val))
     #    self.plugins[name] = attrs
+
+    def get_data(self, type):
+        return self.data.get(type, None)
+
+    def set_data(self, type, size):
+        self.data[type] = {"size": int(size)}
 
     def _subelement(self, parent):
         """Generate <deltarepo> element"""
@@ -75,6 +83,13 @@ class DeltaReposRecord(object):
             attrs = { "src": unicode(self.timestamp_src),
                       "dst": unicode(self.timestamp_dst) }
             etree.SubElement(deltarepo_el, "timestamp", attrs)
+
+        # <data>
+        metadata_types = sorted(self.data.keys())
+        for mtype in metadata_types:
+            attrs = { "type": unicode(mtype),
+                      "size": unicode(self.get_data(mtype).get("size", 0)) }
+            etree.SubElement(deltarepo_el, "data", attrs)
 
         # <repomd>
         repomd_el = etree.SubElement(deltarepo_el, "repomd", {})
@@ -156,6 +171,12 @@ class DeltaRepos(object):
             if subnode:
                 rec.timestamp_src = getNumAttribute(subnode, "src")
                 rec.timestamp_dst = getNumAttribute(subnode, "dst")
+
+            subnodes = node.getElementsByTagName("data") or []
+            for subnode in subnodes:
+                type = getAttribute(subnode, "type")
+                size= getNumAttribute(subnode, "size")
+                rec.set_data(type, size)
 
             # <repomd>
             repomdnode = getNode(node, "repomd")

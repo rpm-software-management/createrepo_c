@@ -5,9 +5,10 @@ MY_DIR="$MY_DIR/"
 
 # Note:
 # If you wanna use different createrepo tool, set the CREATEREPO
-# environ variable
+# environ variable (same for MERGEREPO)
 # E.g.:
 # $ CREATEREPO="createrepo" ./regenrepos.sh
+
 
 for dir in $MY_DIR/repo*/
 do

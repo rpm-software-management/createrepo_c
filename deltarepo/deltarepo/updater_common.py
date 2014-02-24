@@ -528,7 +528,7 @@ class Updater(LoggingInterface):
             self.h = None   # Librepo Handle()
             self.r = None   # Librepo Result()
 
-        def download(self, destdir):
+        def download(self, destdir, whitelisted_metadata=None):
             self.destdir = destdir
 
             h = librepo.Handle()
@@ -536,6 +536,7 @@ class Updater(LoggingInterface):
             h.repotype = librepo.YUMREPO
             h.interruptible = True
             h.destdir = destdir
+            h.yumdlist = whitelisted_metadata
             r = librepo.Result()
             # TODO: Catch exceptions
             h.perform(r)
@@ -543,10 +544,12 @@ class Updater(LoggingInterface):
             self.h = h
             self.r = r
 
-    def __init__(self, localrepo, updatesolver, logger=None):
+    def __init__(self, localrepo, updatesolver,
+                 whitelisted_metadata=None, logger=None):
         LoggingInterface.__init__(self, logger)
         self.localrepo = localrepo
         self.updatesolver = updatesolver
+        self.whitelisted_metadata = whitelisted_metadata
 
     def apply_resolved_path(self, resolved_path):
         # TODO: Make it look better (progressbar, etc.)
@@ -565,7 +568,7 @@ class Updater(LoggingInterface):
             destdir = os.path.join(tmpdir, dirname)
             os.mkdir(destdir)
             repo = Updater.DownloadedRepo(link.deltarepourl)
-            repo.download(destdir)
+            repo.download(destdir, whitelisted_metadata=self.whitelisted_metadata)
 
             # Apply repo
             self._info("{0:2}/{1:<2} Applying delta repo".format(
@@ -599,4 +602,4 @@ class Updater(LoggingInterface):
         self._debug("Removing {0}".format(originaltmprepodata))
         shutil.rmtree(originaltmprepodata)
         self._debug("Removing {0}".format(tmpdir))
-        shutil.rmtree(tmpdir)
+        #shutil.rmtree(tmpdir)

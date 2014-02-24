@@ -150,7 +150,9 @@ def update_with_deltas(args, drmirros, localrepo, originrepo, logger):
     #      origin repo then download origin repo
 
     # Apply the path
-    updater = Updater(localrepo, None, logger)
+    updater = Updater(localrepo, None,
+                      whitelisted_metadata=whitelisted_metadata,
+                      logger=logger)
     updater.apply_resolved_path(resolved_path)
 
 

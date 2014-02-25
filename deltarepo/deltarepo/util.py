@@ -37,3 +37,13 @@ def calculate_content_hash(path_to_primary_xml, type="sha256", logger=None):
     for i in pkg_id_strs:
         h.update(i)
     return h.hexdigest()
+
+def size_to_human_readable_str(size_in_bytes):
+    if size_in_bytes < 0:
+        return "{0}".format(size_in_bytes)
+
+    for x in ['b','KB','MB','GB']:
+        if size_in_bytes < 1024.0:
+            return "{0:1.3f} {1}".format(size_in_bytes, x)
+        size_in_bytes /= 1024.0
+    return "{0:1.3f} {1}".format(size_in_bytes, 'TB')

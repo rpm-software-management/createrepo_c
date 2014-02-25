@@ -22,8 +22,9 @@ class _Repo(object):
         self.contenthash_type = None        # Type of calculated content hash
         self.repomd_contenthash = None      # Content hash from repomd
         self.repomd_contenthash_type = None # Content hash from repomd
-        self.listed_metadata = []  # ["primary", "filelists", ...]
-        self.present_metadata = [] # Metadata files which really exist in repo
+        self.listed_metadata = []   # ["primary", "filelists", ...]
+        self.present_metadata = []  # Metadata files which really exist in repo
+        self._repomd = None          # createrepo_c.Repomd() object
 
     def _fill_from_repomd_object(self, repomd, check_metadata_presence=False):
         timestamp = -1
@@ -36,6 +37,7 @@ class _Repo(object):
         self.revision = repomd.revision
         self.timestamp = timestamp
         self.listed_metadata = listed_metadata
+        self._repomd = repomd
 
     def _fill_from_path(self, path, contenthash=True, contenthash_type="sha256"):
         """Fill the repo attributes from a repository specified by path.
@@ -76,6 +78,15 @@ class _Repo(object):
 
         self.path = path
 
+    def cost(self, whitelisted_metadata=None):
+        cost = 0  # TODO: Include size of repomd.xml (?)
+        for rec in self._repomd.records:
+            if whitelisted_metadata and rec.type not in whitelisted_metadata:
+                continue
+            cost += rec.size or 0
+        return cost
+
+
 class LocalRepo(_Repo):
     def __init__ (self):
         _Repo.__init__(self)
@@ -90,6 +101,8 @@ class LocalRepo(_Repo):
         return lr
 
 class OriginRepo(_Repo):
+    # TODO: Keep the downloaded repomd.xml
+
     def __init__ (self):
         _Repo.__init__(self)
 
@@ -521,22 +534,26 @@ class UpdateSolver(LoggingInterface):
 class Updater(LoggingInterface):
 
     class DownloadedRepo(object):
-        def __init__(self, url):
+        def __init__(self, urls=[], mirrorlist=None, metalink=None):
             # TODO: Downloading only selected metadatas
-            self.url = url
+            self.urls = urls
+            self.mirrorlist = mirrorlist
+            self.metalink = metalink
             self.destdir = None
             self.h = None   # Librepo Handle()
             self.r = None   # Librepo Result()
 
-        def download(self, destdir, whitelisted_metadata=None):
+        def download(self, destdir, wanted_metadata=None):
             self.destdir = destdir
 
             h = librepo.Handle()
-            h.urls = [self.url]
+            h.urls = self.urls
+            h.mirrorlisturl = self.mirrorlist
+            h.metalinkurl = self.metalink
             h.repotype = librepo.YUMREPO
             h.interruptible = True
             h.destdir = destdir
-            h.yumdlist = whitelisted_metadata
+            h.yumdlist = wanted_metadata
             r = librepo.Result()
             # TODO: Catch exceptions
             h.perform(r)
@@ -544,21 +561,43 @@ class Updater(LoggingInterface):
             self.h = h
             self.r = r
 
-    def __init__(self, localrepo, updatesolver,
-                 whitelisted_metadata=None, logger=None):
+    def __init__(self, localrepo, logger=None):
         LoggingInterface.__init__(self, logger)
         self.localrepo = localrepo
-        self.updatesolver = updatesolver
-        self.whitelisted_metadata = whitelisted_metadata
 
-    def apply_resolved_path(self, resolved_path):
+    def _get_tmpdir(self):
+        tmpdir = tempfile.mkdtemp(prefix="deltarepos-", dir="/tmp")
+        self._debug("Using temporary directory: {0}".format(tmpdir))
+        return tmpdir
+
+    def _final_move(self, src, dst, name="repodata"):
+        # TODO: Try - except and restore original data on error
+        # TODO: Skip copy if both src and dst are on the same device
+        dst_dirname = os.path.dirname(dst)
+        tmp_dst_basename = ".deltarepo-{0}-{1}-{2}".format(name, time.time(), os.getpid())
+        tmp_dst = os.path.join(dst_dirname, tmp_dst_basename)
+        tmp_dst_backup = tmp_dst+"-backup"
+
+        self._debug("Final move - STARTED")
+        self._debug("Source:      {0}".format(src))
+        self._debug("Destination: {0}".format(dst))
+        self._debug(" + Copying:  {0} -> {1}".format(src, tmp_dst))
+        shutil.copytree(src, tmp_dst)
+        self._debug(" + Moving:   {0} -> {1}".format(dst, tmp_dst_backup))
+        shutil.move(dst, tmp_dst_backup)
+        self._debug(" + Moving:   {0} -> {1}".format(tmp_dst, dst))
+        shutil.move(tmp_dst, dst)
+        self._debug(" + Removing: {0}".format(tmp_dst_backup))
+        shutil.rmtree(tmp_dst_backup)
+        self._debug("Final move - COMPLETE".format(src, dst))
+
+    def apply_resolved_path(self, resolved_path, whitelisted_metadata=None):
         # TODO: Make it look better (progressbar, etc.)
         counter = 1
-        tmpdir = tempfile.mkdtemp(prefix="deltarepos-", dir="/tmp")
+        tmpdir = self._get_tmpdir()
         tmprepo = tempfile.mkdtemp(prefix="targetrepo", dir=tmpdir)
         prevrepo = self.localrepo.path
 
-        self._debug("Using temporary directory: {0}".format(tmpdir))
         for link in resolved_path:
 
             # Download repo
@@ -567,8 +606,8 @@ class Updater(LoggingInterface):
             dirname = "deltarepo_{0:02}".format(counter)
             destdir = os.path.join(tmpdir, dirname)
             os.mkdir(destdir)
-            repo = Updater.DownloadedRepo(link.deltarepourl)
-            repo.download(destdir, whitelisted_metadata=self.whitelisted_metadata)
+            repo = Updater.DownloadedRepo(urls=[link.deltarepourl])
+            repo.download(destdir, wanted_metadata=whitelisted_metadata)
 
             # Apply repo
             self._info("{0:2}/{1:<2} Applying delta repo".format(
@@ -584,22 +623,20 @@ class Updater(LoggingInterface):
             prevrepo = tmprepo
 
         # Move updated repo to the final destination
-        dirname = os.path.dirname(self.localrepo.path)
-        basename = ".deltarepo-repodata-{0}-{1}".format(time.time(), os.getpid())
-        targettmprepodata = os.path.join(dirname, basename)
-        originaltmprepodata = targettmprepodata+"-original"
-        tmprepodata = os.path.join(tmprepo, "repodata")
-        originalrepodatapath = os.path.join(self.localrepo.path, "repodata")
+        src = os.path.join(tmprepo, "repodata")
+        dst = os.path.join(self.localrepo.path, "repodata")
+        self._final_move(src, dst)
+        shutil.rmtree(tmpdir)
 
-        self._debug("Final move to {0}".format(self.localrepo.path))
+    def update_from_origin(self, origin_repo, wanted_metadata=None):
+        tmpdir = self._get_tmpdir()
+        downloaded_repo = Updater.DownloadedRepo(urls=origin_repo.urls,
+                                                 mirrorlist=origin_repo.mirrorlist,
+                                                 metalink=origin_repo.metalink)
+        downloaded_repo.download(tmpdir, wanted_metadata=wanted_metadata)
 
-        self._debug("Copying {0} -> {1}".format(tmprepodata, targettmprepodata))
-        shutil.copytree(tmprepodata, targettmprepodata)
-        self._debug("Moving {0} -> {1}".format(originalrepodatapath, originaltmprepodata))
-        shutil.move(originalrepodatapath, originaltmprepodata)
-        self._debug("Moving {0} -> {1}".format(targettmprepodata, originalrepodatapath))
-        shutil.move(targettmprepodata, originalrepodatapath)
-        self._debug("Removing {0}".format(originaltmprepodata))
-        shutil.rmtree(originaltmprepodata)
-        self._debug("Removing {0}".format(tmpdir))
-        #shutil.rmtree(tmpdir)
+        # Move downloaded repo to the final destination
+        src = os.path.join(tmpdir, "repodata")
+        dst = os.path.join(self.localrepo.path, "repodata")
+        self._final_move(src, dst)
+        shutil.rmtree(tmpdir)

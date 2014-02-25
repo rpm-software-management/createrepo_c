@@ -11,8 +11,11 @@ import deltarepo
 from deltarepo import DeltaRepoError, DeltaRepoPluginError
 from deltarepo.updater_common import LocalRepo, OriginRepo, DRMirror, UpdateSolver, Updater
 from deltarepo import needed_delta_metadata
+from deltarepo.util import size_to_human_readable_str
 
 LOG_FORMAT = "%(message)s"
+
+# TODO: Multiple levels of verbosity (-v -vv -vvv)
 
 def parse_options():
     parser = argparse.ArgumentParser(description="Update a local repository",
@@ -41,6 +44,9 @@ def parse_options():
                         help="Update only metadata that are present in current repo. "
                              "(Newly added metadata will not be downloaded, missing "
                              "metadata will be ignored)")
+    parser.add_argument("--force-deltas", action="store_true",
+                        help="Always use deltas. Origin repo use only to determine "
+                             "target content hash.")
 
     args = parser.parse_args()
 
@@ -136,25 +142,41 @@ def update_with_deltas(args, drmirros, localrepo, originrepo, logger):
 
     # Resolve path
     resolved_path = updatesolver.resolve_path(source_contenthash, target_contenthash)
+    full_cost = resolved_path.cost()
+    real_cost = resolved_path.cost(whitelisted_metadata)
 
+    # Some debug output
     logger.debug("Resolved path:")
     x = 0
     for link in resolved_path:
         x += 1
-        logger.debug("{0:2}) {1} -> {2}".format(x, link.src, link.dst))
-    logger.debug("--------------------------")
-    logger.debug("Total cost: {0}".format(resolved_path.cost()))
-    logger.debug("Real: {0}".format(resolved_path.cost(whitelisted_metadata)))
+        logger.debug("{0:2} )".format(x))
+        logger.debug("URL:  {0}".format(link.deltarepourl))
+        logger.debug("Src:  {0}".format(link.src))
+        logger.debug("Dst:  {0}".format(link.dst))
+        logger.debug("Full cost: {0}".format(size_to_human_readable_str(link.cost())))
+        logger.debug("Real cost: {0}".format(size_to_human_readable_str(link.cost(whitelisted_metadata))))
+    logger.debug("----------------------------------------------------------")
+    logger.debug("Total full cost: {0}".format(size_to_human_readable_str(full_cost)))
+    logger.debug("Total real cost: {0}".format(size_to_human_readable_str(real_cost)))
 
-    # TODO check cost, if bigger then cost of downloading
-    #      origin repo then download origin repo
+    # Check cost of download of origin remote repo
+    if originrepo:
+        origin_full_cost = originrepo.cost()
+        origin_real_cost = originrepo.cost(localrepo.present_metadata)
+        logger.debug("Origin repo full cost: {0}".format(size_to_human_readable_str(origin_full_cost)))
+        logger.debug("Origin repo real cost: {0}".format(size_to_human_readable_str(origin_real_cost)))
 
-    # Apply the path
-    updater = Updater(localrepo, None,
-                      whitelisted_metadata=whitelisted_metadata,
-                      logger=logger)
-    updater.apply_resolved_path(resolved_path)
+        #Check if download origin repo or use deltas
+        if origin_real_cost < real_cost and not args.force_deltas:
+            logger.debug("Using the origin repo - its cost is less then cost of deltas")
+            updater = Updater(localrepo, logger=logger)
+            updater.update_from_origin(originrepo, localrepo.present_metadata)
+            return
 
+    # Download and apply deltarepos
+    updater = Updater(localrepo, logger=logger)
+    updater.apply_resolved_path(resolved_path, whitelisted_metadata=whitelisted_metadata)
 
 def main(args, logger):
     localrepo = LocalRepo.from_path(args.localrepo[0])

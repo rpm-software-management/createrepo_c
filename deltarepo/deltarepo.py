@@ -13,6 +13,7 @@ LOG_FORMAT = "%(message)s"
 
 # TODO:
 # - Support for type of compression (?)
+# - Multiple verbose levels
 
 
 def parse_options():

@@ -378,8 +378,9 @@ parse_arguments(int *argc, char ***argv)
     GError *error = NULL;
     GOptionContext *context;
 
-    context = g_option_context_new(": take 2 or more repositories and merge "
-                                   "their metadata into a new repo");
+    context = g_option_context_new("--repo=url --repo=url");
+    g_option_context_set_summary(context, "Take 2 or more repositories and "
+                                 "merge their metadata into a new repo");
     g_option_context_add_main_entries(context, cmd_entries, NULL);
 
     gboolean ret = g_option_context_parse(context, argc, argv, &error);
@@ -1547,7 +1548,7 @@ main(int argc, char **argv)
 
     if (g_slist_length(cmd_options->repo_list) < 2) {
         free_options(cmd_options);
-        fprintf(stderr, "Usage: %s [options]\n\n"
+        fprintf(stderr, "Usage: %s [OPTION...] --repo=url --repo=url\n\n"
                         "%s: take 2 or more repositories and merge their "
                         "metadata into a new repo\n\n",
                         cr_get_filename(argv[0]), cr_get_filename(argv[0]));

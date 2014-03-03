@@ -108,7 +108,10 @@ parse_arguments(int *argc, char ***argv, RawCmdOptions *options, GError **err)
     options->new_name = NULL;
 
     GOptionContext *context;
-    context = g_option_context_new(": Modify a repository's repomd.xml");
+    context = g_option_context_new("<input metadata> <output repodata>\n"
+            "  modifyrepo_c --remove <metadata type> <output repodata>\n"
+            "  modifyrepo_c [OPTION...] --batchfile <batch file> <output repodata>");
+    g_option_context_set_summary(context, "Modify a repository's repomd.xml");
     g_option_context_add_main_entries(context, cmd_entries, NULL);
     gboolean ret = g_option_context_parse(context, argc, argv, err);
     g_option_context_free(context);

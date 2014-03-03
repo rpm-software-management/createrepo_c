@@ -152,9 +152,9 @@ struct CmdOptions *parse_arguments(int *argc, char ***argv, GError **err)
 
     assert(!err || *err == NULL);
 
-    context = g_option_context_new("- program that creates a repomd (xml-based"
-                                   " rpm metadata) repository from a set of"
-                                   " rpms.");
+    context = g_option_context_new("<directory_to_index>");
+    g_option_context_set_summary(context, "Program that creates a repomd "
+            "(xml-based rpm metadata) repository from a set of rpms.");
     g_option_context_add_main_entries(context, cmd_entries, NULL);
 
     group_expert = g_option_group_new("expert",

@@ -7,8 +7,9 @@ from optparse import OptionParser
 
 
 class Info(object):
-    def __init__(self, name, description=None, synopsis=None, copyright=None, options=None):
+    def __init__(self, name, summary=None, description=None, synopsis=None, copyright=None, options=None):
         self.name = name
+        self.summary = summary
         self.description = description
         self.synopsis = synopsis
         self.copyright = copyright
@@ -20,13 +21,12 @@ class Info(object):
         rst += "%s\n" % self.name
         rst += "%s\n\n" % ("=" * len(self.name),)
 
-        # Add synopsis
-        #if self.synopsis:
-        #    rst += ":Synopsis: %s\n\n" % self.synopsis
-
-        # Add description
-        if self.description:
-            rst += ":Subtitle: %s\n\n" % self.description
+        # Add summary
+        if self.summary:
+            rst += "%s\n" % ("-" * len(self.summary))
+            rst += "%s\n" % self.summary
+            rst += "%s\n" % ("-" * len(self.summary))
+            rst += "\n"
 
         # Add copyright
         if self.copyright:
@@ -35,10 +35,17 @@ class Info(object):
         # Add date
         rst += ":Date: $Date: %s $\n\n" % datetime.datetime.strftime(datetime.datetime.utcnow(), format="%F %X")
 
+        # Add synopsis
+        if self.synopsis:
+            rst += "SYNOPSIS\n"
+            rst += "========\n\n"
+            for line in self.synopsis:
+                rst += "%s\n\n" % line
+            rst += "\n"
+
         # Add options
-        rst += "-------\n"
         rst += "OPTIONS\n"
-        rst += "-------\n"
+        rst += "=======\n"
 
         for command in self.options:
             cmd  = ""
@@ -147,20 +154,22 @@ if __name__ == "__main__":
     if options.mergerepo:
         NAME = "mergerepo_c"
         info = Info(NAME,
-                description="C implementation of mergerepo",
-                synopsis="%s [options] <directory>" % (NAME,),
+                summary="Merge multiple repositories together",
+                synopsis=["%s --repo repo1 --repo repo2" % (NAME,)],
                 options=args)
     elif options.modifyrepo:
         NAME = "modifyrepo_c"
         info = Info(NAME,
-                description="C implementation of modifyrepo",
-                synopsis="%s [options] <directory>" % (NAME,),
+                summary="Modify a repomd (xml-rpm-metadata) repository",
+                synopsis=["%s [options] <input metadata> <output repodata>" % (NAME,),
+                          "%s --remove <metadata type> <output repodata>" % (NAME,),
+                          "%s [options] --batchfile <batch file> <output repodata>" % (NAME,) ],
                 options=args)
     else:
         NAME = "createrepo_c"
         info = Info(NAME,
-                description="C implementation of createrepo",
-                synopsis="%s [options] <directory>" % (NAME,),
+                summary="Create repomd (xml-rpm-metadata) repository",
+                synopsis=["%s [options] <directory>" % (NAME,)],
                 options=args)
 
     ret = info.gen_rst()

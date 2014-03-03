@@ -2,7 +2,7 @@ PROJECT (createrepo_c)
 CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
 
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
-set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -Wall -Wextra")
+set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -ggdb -g -Wall -Wextra -Og")
 IF(NOT CMAKE_BUILD_TYPE)
     SET(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING
         "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel."
@@ -10,7 +10,7 @@ IF(NOT CMAKE_BUILD_TYPE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
 IF(CMAKE_BUILD_TYPE AND CMAKE_BUILD_TYPE STREQUAL "DEBUG")
-    MESSAGE("Build type is set do DEBUG!")
+    MESSAGE("Build type is set do DEBUG! (Used flags: \"${CMAKE_C_FLAGS_DEBUG}\")")
 ENDIF()
 
 

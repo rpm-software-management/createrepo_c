@@ -105,10 +105,10 @@ read_header(const char *filename, Header *hdr, GError **err)
                         __func__, filename);
                 break;
             default:
-                g_warning("%s: rpmReadPackageFile() error (%s)",
-                          __func__, strerror(errno));
+                g_warning("%s: rpmReadPackageFile() error",
+                          __func__);
                 g_set_error(err, CR_PARSEPKG_ERROR, CRE_IO,
-                            "rpmReadPackageFile() error: %s", strerror(errno));
+                            "rpmReadPackageFile() error");
                 Fclose(fd);
                 return CRE_IO;
         }

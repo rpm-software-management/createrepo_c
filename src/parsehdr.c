@@ -470,7 +470,7 @@ cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
         while ((rpmtdNext(changelogtimes) != -1) &&
                (rpmtdNext(changelognames) != -1) &&
                (rpmtdNext(changelogtexts) != -1) &&
-               (changelog_limit > 0))
+               (changelog_limit > 0 || changelog_limit == -1))
         {
             gint64 time = rpmtdGetNumber(changelogtimes);
 
@@ -495,7 +495,8 @@ cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
             }
 
             pkg->changelogs = g_slist_prepend(pkg->changelogs, changelog);
-            changelog_limit--;
+            if (changelog_limit != -1)
+                changelog_limit--;
 
             // If a previous entry has the same time, increment time of the previous
             // entry by one. Ugly but works!

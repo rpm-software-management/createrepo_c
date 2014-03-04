@@ -198,7 +198,7 @@ check_arguments(struct CmdOptions *options,
     }
 
     // Check changelog_limit
-    if ((options->changelog_limit < 0) || (options->changelog_limit > 100)) {
+    if ((options->changelog_limit < -1)) {
         g_warning("Wrong changelog limit \"%d\" - Using 10", options->changelog_limit);
         options->changelog_limit = DEFAULT_CHANGELOG_LIMIT;
     }

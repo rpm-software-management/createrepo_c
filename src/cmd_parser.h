@@ -52,19 +52,19 @@ struct CmdOptions {
     char *checksum;             /*!< type of checksum */
     char *compress_type;        /*!< which compression type to use */
     gboolean skip_symlinks;     /*!< ignore symlinks of packages */
-    int changelog_limit;        /*!< number of changelog messages in
+    gint changelog_limit;       /*!< number of changelog messages in
                                      other.(xml|sqlite) */
     gboolean unique_md_filenames;       /*!< include the file checksums in
                                              the filenames */
     gboolean simple_md_filenames;       /*!< simple filenames (names without
                                              checksums) */
-    int retain_old;             /*!< keep latest N copies of the old repodata */
+    gint retain_old;            /*!< keep latest N copies of the old repodata */
     char **distro_tags;         /*!< distro tag and optional cpeid */
     char **content_tags;        /*!< tags for the content in the repository */
     char **repo_tags;           /*!< tags to describe the repo_tagsitory itself */
     char *revision;             /*!< user-specified revision */
     char *read_pkgs_list;       /*!< output the paths to pkgs actually read */
-    int workers;                /*!< number of threads to spawn */
+    gint workers;               /*!< number of threads to spawn */
     gboolean xz_compression;    /*!< use xz for repodata compression */
     gboolean keep_all_metadata; /*!< keep groupfile and updateinfo from source
                                      repo during update */

@@ -39,6 +39,8 @@ struct _cr_Metadata {
     GHashTable *ht;         /*!< hashtable with packages */
     GStringChunk *chunk;    /*!< NULL or string chunk with strings from htn */
     GHashTable *pkglist_ht; /*!< list of allowed package basenames to load */
+    cr_HashTableKeyDupAction dupaction; /*!<
+        How to behave in case of duplicated items */
 };
 
 cr_HashTableKey
@@ -107,6 +109,8 @@ cr_metadata_new(cr_HashTableKey key, int use_single_chunk, GSList *pkglist)
             g_hash_table_insert(md->pkglist_ht, g_strdup(elem->data), NULL);
     }
 
+    md->dupaction = CR_HT_DUPACT_KEEPFIRST;
+
     return md;
 }
 
@@ -122,6 +126,15 @@ cr_metadata_free(cr_Metadata *md)
     if (md->pkglist_ht)
         g_hash_table_destroy(md->pkglist_ht);
     g_free(md);
+}
+
+gboolean
+cr_metadata_set_dupaction(cr_Metadata *md, cr_HashTableKeyDupAction dupaction)
+{
+    if (!md || dupaction >= CR_HT_DUPACT_SENTINEL)
+        return FALSE;
+    md->dupaction = dupaction;
+    return TRUE;
 }
 
 // Callbacks for XML parsers
@@ -366,6 +379,7 @@ cr_metadata_load_xml(cr_Metadata *md,
     int result;
     GError *tmp_err = NULL;
     GHashTable *intern_hashtable;  // key is checksum (pkgId)
+    cr_HashTableKeyDupAction dupaction = md->dupaction;
 
     assert(md);
     assert(ml);
@@ -402,10 +416,13 @@ cr_metadata_load_xml(cr_Metadata *md,
 
     GHashTableIter iter;
     gpointer p_key, p_value;
+    GHashTable *ignored_keys = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                                     g_free, NULL);
 
     g_hash_table_iter_init (&iter, intern_hashtable);
     while (g_hash_table_iter_next (&iter, &p_key, &p_value)) {
         cr_Package *pkg = (cr_Package *) p_value;
+        cr_Package *epkg;
         gpointer new_key;
 
         switch (md->key) {
@@ -429,9 +446,23 @@ cr_metadata_load_xml(cr_Metadata *md,
                 return CRE_ASSERT;
         }
 
-        if (g_hash_table_lookup(md->ht, new_key)) {
-            g_debug("%s: Key \"%s\" already exists in hashtable",
-                    __func__, (char *) new_key);
+        epkg = g_hash_table_lookup(md->ht, new_key);
+        if (epkg) {
+            // Such key already exists
+            if (dupaction == CR_HT_DUPACT_KEEPFIRST) {
+                g_debug("%s: Key \"%s\" already exists in hashtable - Keeping the first occurrence",
+                        __func__, (char *) new_key);
+            } else {
+                // We know that the packages with the same key have a different
+                // checksum, because cr_load_xml_files() load packages which
+                // have same checksums, basenames, mtime, sizes only once.
+                // So there is guaranted that each loaded package has different
+                // checksum then another one.
+                g_debug("%s: Key \"%s\" is present multiple times. Ignoring "
+                        "all occurrences.", __func__, new_key);
+                g_hash_table_insert(ignored_keys, g_strdup(new_key), NULL);
+            }
+            // Remove the package from the iterator anyway
             g_hash_table_iter_remove(&iter);
         } else {
             g_hash_table_insert(md->ht, new_key, p_value);
@@ -439,9 +470,20 @@ cr_metadata_load_xml(cr_Metadata *md,
         }
     }
 
+    // Remove ignored_keys from resulting hashtable
+    g_hash_table_iter_init(&iter, ignored_keys);
+    while (g_hash_table_iter_next(&iter, &p_key, &p_value)) {
+        char *key = (gchar *) p_key;
+        g_hash_table_remove(md->ht, key);
+    }
+
+    // How much items we really use
+    g_debug("%s: Really usable items: %d", __func__,
+            g_hash_table_size(intern_hashtable));
 
     // Cleanup
 
+    g_hash_table_destroy(ignored_keys);
     cr_destroy_metadata_hashtable(intern_hashtable);
 
     return CRE_OK;

@@ -56,6 +56,9 @@ HT_KEY_HASH     = _createrepo_c.HT_KEY_HASH     #: Package hash as a key
 HT_KEY_NAME     = _createrepo_c.HT_KEY_NAME     #: Package name as a key
 HT_KEY_FILENAME = _createrepo_c.HT_KEY_FILENAME #: Package filename as a key
 
+HT_DUPACT_KEEPFIRST = _createrepo_c.HT_DUPACT_KEEPFIRST #: If an key is duplicated, keep only the first occurrence
+HT_DUPACT_REMOVEALL = _createrepo_c.HT_DUPACT_REMOVEALL #: If an key is duplicated, discard all occurrences
+
 DB_PRIMARY      = _createrepo_c.DB_PRIMARY   #: Primary database
 DB_FILELISTS    = _createrepo_c.DB_FILELISTS #: Filelists database
 DB_OTHER        = _createrepo_c.DB_OTHER     #: Other database

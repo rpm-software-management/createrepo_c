@@ -65,6 +65,21 @@ typedef enum {
     CR_HT_KEY_SENTINEL,                 /*!< last element, terminator, .. */
 } cr_HashTableKey;
 
+/** Internally, and by default, the loaded metadata are
+ *  indexed by pkgId (pkg's hash). But when you select different
+ *  attribute for indexing (see cr_HashTableKey).
+ *  The situation that multiple packages has the same (key) attribute.
+ *  This enum lists provided methos for resolution of such conflicts.
+ */
+typedef enum {
+    CR_HT_DUPACT_KEEPFIRST = 0,    /*!<
+        First encontered item wins, other will be removed - Default */
+    CR_HT_DUPACT_REMOVEALL,        /*!<
+        Remove all conflicting items. */
+    CR_HT_DUPACT_SENTINEL,         /*!<
+         Last element, terminator, ... */
+} cr_HashTableKeyDupAction;
+
 /** Metadata object
  */
 typedef struct _cr_Metadata cr_Metadata;
@@ -98,6 +113,11 @@ GHashTable *cr_metadata_hashtable(cr_Metadata *md);
 cr_Metadata *cr_metadata_new(cr_HashTableKey key,
                              int use_single_chunk,
                              GSList *pkglist);
+
+/** Set action how to deal with duplicated items.
+ */
+gboolean
+cr_metadata_set_dupaction(cr_Metadata *md, cr_HashTableKeyDupAction dupaction);
 
 /** Destroy metadata.
  * @param md            cr_Metadata object

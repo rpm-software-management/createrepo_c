@@ -315,6 +315,30 @@ ht_get(_MetadataObject *self, PyObject *args)
     return (Object_FromPackage_WithParent(pkg, 0, (PyObject *) self));
 }
 
+PyDoc_STRVAR(metadata_dupaction__doc__,
+".. method:: dupaction(dupaction)\n\n"
+"    :arg dupation: What to do when we encounter already existing key.\n"
+"         use constants prefixed with HT_DUPACT_. I.e. \n"
+"         HT_DUPACT_KEEPFIRST, HT_DUPACT_REMOVEALL.\n");
+
+static PyObject *
+metadata_dupaction(_MetadataObject *self, PyObject *args)
+{
+    int dupaction;
+    gboolean res = TRUE;
+
+    if (!PyArg_ParseTuple(args, "i:dupaction", &dupaction))
+        return NULL;
+
+    res = cr_metadata_set_dupaction(self->md, dupaction);
+    if (!res) {
+        PyErr_SetString(CrErr_Exception, "Cannot set specified action");
+        return NULL;
+    }
+
+    Py_RETURN_NONE;
+}
+
 static struct PyMethodDef metadata_methods[] = {
     {"load_xml", (PyCFunction)load_xml, METH_VARARGS,
         load_xml__doc__},
@@ -326,6 +350,7 @@ static struct PyMethodDef metadata_methods[] = {
     {"keys",    (PyCFunction)ht_keys, METH_NOARGS, keys__doc__},
     {"remove",  (PyCFunction)ht_remove, METH_VARARGS, remove__doc__},
     {"get",     (PyCFunction)ht_get, METH_VARARGS, get__doc__},
+    {"dupaction",(PyCFunction)metadata_dupaction, METH_VARARGS, metadata_dupaction__doc__},
     {NULL} /* sentinel */
 };
 

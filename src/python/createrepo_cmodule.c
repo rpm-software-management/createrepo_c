@@ -186,6 +186,10 @@ init_createrepo_c(void)
     PyModule_AddIntConstant(m, "HT_KEY_NAME", CR_HT_KEY_NAME);
     PyModule_AddIntConstant(m, "HT_KEY_FILENAME", CR_HT_KEY_FILENAME);
 
+    /* Load Metadata key dup action */
+    PyModule_AddIntConstant(m, "HT_DUPACT_KEEPFIRST", CR_HT_DUPACT_KEEPFIRST);
+    PyModule_AddIntConstant(m, "HT_DUPACT_REMOVEALL", CR_HT_DUPACT_REMOVEALL);
+
     /* Sqlite DB types */
     PyModule_AddIntConstant(m, "DB_PRIMARY", CR_DB_PRIMARY);
     PyModule_AddIntConstant(m, "DB_FILELISTS", CR_DB_FILELISTS);

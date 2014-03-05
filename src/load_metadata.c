@@ -130,6 +130,14 @@ typedef struct {
     GHashTable      *ht;
     GStringChunk    *chunk;
     GHashTable      *pkglist_ht;
+    GHashTable      *ignored_pkgIds; /*!< If there are multiple packages
+        wich have the same checksum (pkgId) but they are in fact different
+        (they have different basenames, mtimes or sizes),
+        then we want to ignore these packages during
+        loading. It's because the pkgId is used to pair metadata from
+        primary.xml with metadata from filelists.xml and other.xml and
+        we want the pkgId to be unique.
+        Key is pkgId and value is NULL. */
 } cr_CbData;
 
 static int
@@ -164,18 +172,17 @@ primary_pkgcb(cr_Package *pkg, void *cbdata, GError **err)
 {
     gboolean store_pkg = TRUE;
     cr_CbData *cb_data = cbdata;
+    cr_Package *epkg;
+    char *basename = cr_get_filename(pkg->location_href);
 
     CR_UNUSED(err);
 
     assert(pkg);
     assert(pkg->pkgId);
 
-    if (cb_data->pkglist_ht) {
-        char *basename = cr_get_filename(pkg->location_href);
-        if (basename)
-            store_pkg = g_hash_table_lookup_extended(cb_data->pkglist_ht,
-                                                     basename,
-                                                     NULL, NULL);
+    if (cb_data->pkglist_ht && basename) {
+        store_pkg = g_hash_table_lookup_extended(cb_data->pkglist_ht,
+                                                 basename, NULL, NULL);
     }
 
     if (cb_data->chunk) {
@@ -183,13 +190,50 @@ primary_pkgcb(cr_Package *pkg, void *cbdata, GError **err)
         pkg->chunk = NULL;
     }
 
+    if (store_pkg) {
+        // Check if pkgId is not on the list of blocked Ids
+        if (g_hash_table_lookup_extended(cb_data->ignored_pkgIds, pkg->pkgId,
+                                         NULL, NULL))
+            // We should ignore this pkgId (package's hash)
+            store_pkg = FALSE;
+    }
+
     if (!store_pkg) {
+        // Drop the currently loaded package
         cr_package_free(pkg);
         return CR_CB_RET_OK;
     }
 
-    // Store package into the hashtable
-    g_hash_table_replace(cb_data->ht, pkg->pkgId, pkg);
+    epkg = g_hash_table_lookup(cb_data->ht, pkg->pkgId);
+
+    if (!epkg) {
+        // Store package into the hashtable
+        g_hash_table_replace(cb_data->ht, pkg->pkgId, pkg);
+    } else {
+        // Package with the same pkgId (hash) already exists
+        if (epkg->time_file == pkg->time_file
+            && epkg->size_package == pkg->size_package
+            && !g_strcmp0(cr_get_filename(pkg->location_href), basename))
+        {
+            // The existing package is the same as the current one.
+            // This is ok
+            g_debug("Multiple packages with the same checksum: %s. "
+                    "Loading the info only once.", pkg->pkgId);
+        } else {
+            // The existing package is different. We have two different
+            // packages with the same checksum -> drop both of them
+            // and append this checksum to the ignored_pkgIds
+            g_debug("Multiple different packages (basename, mtime or size "
+                    "doesn't match) with the same checksum: %s. "
+                    "Ignoring all packages with the checksum.", pkg->pkgId);
+            g_hash_table_remove(cb_data->ht, pkg->pkgId);
+            g_hash_table_replace(cb_data->ignored_pkgIds, g_strdup(pkg->pkgId), NULL);
+        }
+
+        // Drop the currently loaded package
+        cr_package_free(pkg);
+        return CR_CB_RET_OK;
+    }
 
     return CR_CB_RET_OK;
 }
@@ -251,9 +295,11 @@ cr_load_xml_files(GHashTable *hashtable,
     assert(hashtable);
 
     // Prepare cb data
-    cb_data.ht          = hashtable;
-    cb_data.chunk       = chunk;
-    cb_data.pkglist_ht  = pkglist_ht;
+    cb_data.ht              = hashtable;
+    cb_data.chunk           = chunk;
+    cb_data.pkglist_ht      = pkglist_ht;
+    cb_data.ignored_pkgIds  = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                                    g_free, NULL);
 
     cr_xml_parse_primary(primary_xml_path,
                          primary_newpkgcb,
@@ -264,6 +310,10 @@ cr_load_xml_files(GHashTable *hashtable,
                          "Primary XML parser",
                          (filelists_xml_path) ? 0 : 1,
                          &tmp_err);
+
+    g_hash_table_destroy(cb_data.ignored_pkgIds);
+    cb_data.ignored_pkgIds = NULL;
+
     if (tmp_err) {
         int code = tmp_err->code;
         g_debug("primary.xml parsing error: %s", tmp_err->message);

@@ -116,6 +116,10 @@ cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
     // Create new package structure
 
     pkg = cr_package_new();
+    pkg->loadingflags |= CR_PACKAGE_FROM_HEADER;
+    pkg->loadingflags |= CR_PACKAGE_LOADED_PRI;
+    pkg->loadingflags |= CR_PACKAGE_LOADED_FIL;
+    pkg->loadingflags |= CR_PACKAGE_LOADED_OTH;
 
 
     // Create rpm tag data container

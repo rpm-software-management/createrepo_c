@@ -139,6 +139,12 @@ cr_metadata_set_dupaction(cr_Metadata *md, cr_HashTableKeyDupAction dupaction)
 
 // Callbacks for XML parsers
 
+typedef enum {
+    PARSING_PRI,
+    PARSING_FIL,
+    PARSING_OTH,
+} cr_ParsingState;
+
 typedef struct {
     GHashTable      *ht;
     GStringChunk    *chunk;
@@ -151,6 +157,7 @@ typedef struct {
         primary.xml with metadata from filelists.xml and other.xml and
         we want the pkgId to be unique.
         Key is pkgId and value is NULL. */
+    cr_ParsingState state;
 } cr_CbData;
 
 static int
@@ -221,6 +228,8 @@ primary_pkgcb(cr_Package *pkg, void *cbdata, GError **err)
 
     if (!epkg) {
         // Store package into the hashtable
+        pkg->loadingflags |= CR_PACKAGE_FROM_XML;
+        pkg->loadingflags |= CR_PACKAGE_LOADED_PRI;
         g_hash_table_replace(cb_data->ht, pkg->pkgId, pkg);
     } else {
         // Package with the same pkgId (hash) already exists
@@ -270,9 +279,35 @@ newpkgcb(cr_Package **pkg,
 
     *pkg = g_hash_table_lookup(cb_data->ht, pkgId);
 
-    if (*pkg && cb_data->chunk) {
-        assert(!(*pkg)->chunk);
-        (*pkg)->chunk = cb_data->chunk;
+    if (*pkg) {
+        // If package with the pkgId was parsed from primary.xml, then...
+
+        if (cb_data->state == PARSING_FIL) {
+            if ((*pkg)->loadingflags & CR_PACKAGE_LOADED_FIL) {
+                // For package with this checksum, the filelist was
+                // already loaded.
+                *pkg = NULL;
+            } else {
+                // Make a note that filelist is parsed
+                (*pkg)->loadingflags |= CR_PACKAGE_LOADED_FIL;
+            }
+        }
+
+        if (cb_data->state == PARSING_OTH) {
+            if ((*pkg)->loadingflags & CR_PACKAGE_LOADED_OTH) {
+                // For package with this checksum, the other (changelogs) were
+                // already loaded.
+                *pkg = NULL;
+            } else {
+                // Make a note that other is parsed
+                (*pkg)->loadingflags |= CR_PACKAGE_LOADED_OTH;
+            }
+        }
+
+        if (*pkg && cb_data->chunk) {
+            assert(!(*pkg)->chunk);
+            (*pkg)->chunk = cb_data->chunk;
+        }
     }
 
     return CR_CB_RET_OK;
@@ -308,6 +343,7 @@ cr_load_xml_files(GHashTable *hashtable,
     assert(hashtable);
 
     // Prepare cb data
+    cb_data.state           = PARSING_PRI;
     cb_data.ht              = hashtable;
     cb_data.chunk           = chunk;
     cb_data.pkglist_ht      = pkglist_ht;
@@ -334,6 +370,8 @@ cr_load_xml_files(GHashTable *hashtable,
         return code;
     }
 
+    cb_data.state = PARSING_FIL;
+
     if (filelists_xml_path) {
         cr_xml_parse_filelists(filelists_xml_path,
                                newpkgcb,
@@ -350,6 +388,8 @@ cr_load_xml_files(GHashTable *hashtable,
             return code;
         }
     }
+
+    cb_data.state = PARSING_OTH;
 
     if (other_xml_path) {
         cr_xml_parse_other(other_xml_path,

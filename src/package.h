@@ -33,6 +33,15 @@ extern "C" {
  *  @{
  */
 
+typedef enum {
+    CR_PACKAGE_FROM_HEADER = (1<<1),    /*!< Metadata parsed from header */
+    CR_PACKAGE_FROM_XML    = (1<<2),    /*!< Metadata parsed xml */
+    /* Some values are reserved (for sqlite, solv, etc..) */
+    CR_PACKAGE_LOADED_PRI  = (1<<10),   /*!< Primary metadata was loaded */
+    CR_PACKAGE_LOADED_FIL  = (1<<11),   /*!< Filelists metadata was loaded */
+    CR_PACKAGE_LOADED_OTH  = (1<<12),   /*!< Other metadata was loaded */
+} cr_PackageLoadingFlags;
+
 /** Dependency (Provides, Conflicts, Obsoletes, Requires).
  */
 typedef struct {
@@ -107,6 +116,9 @@ typedef struct {
 
     GStringChunk *chunk;        /*!< string chunk for store all package strings
                                      on the single place */
+
+    cr_PackageLoadingFlags loadingflags; /*!<
+        Bitfield flags with information about package loading  */
 } cr_Package;
 
 /** Create new (empty) dependency structure.

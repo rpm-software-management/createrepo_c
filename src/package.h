@@ -108,6 +108,10 @@ typedef struct {
     GSList *provides;           /*!< provides (list of cr_Dependency structs) */
     GSList *conflicts;          /*!< conflicts (list of cr_Dependency structs) */
     GSList *obsoletes;          /*!< obsoletes (list of cr_Dependency structs) */
+    GSList *suggests;           /*!< suggests (list of cr_Dependency structs) */
+    GSList *enhances;           /*!< enhances (list of cr_Dependency structs) */
+    GSList *recommends;         /*!< recommends (list of cr_Dependency structs) */
+    GSList *supplements;        /*!< supplements (list of cr_Dependency structs) */
 
     GSList *files;              /*!< files in the package (list of
                                      cr_PackageFile structs) */

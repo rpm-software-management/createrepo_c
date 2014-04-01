@@ -39,6 +39,10 @@ class TestCasePackage(unittest.TestCase):
         ])
         self.assertEqual(pkg.conflicts, [])
         self.assertEqual(pkg.obsoletes, [])
+        self.assertEqual(pkg.suggests, [])
+        self.assertEqual(pkg.enhances, [])
+        self.assertEqual(pkg.recommends, [])
+        self.assertEqual(pkg.supplements, [])
         self.assertEqual(pkg.files, [])
         self.assertEqual(pkg.changelogs, [])
 
@@ -104,6 +108,10 @@ class TestCasePackage(unittest.TestCase):
             ('aad', 'LT', '0', '444', None, False),
             ('aae', 'GT', '0', '555', None, False)
             ])
+        self.assertEqual(pkg.suggests, [])
+        self.assertEqual(pkg.enhances, [])
+        self.assertEqual(pkg.recommends, [])
+        self.assertEqual(pkg.supplements, [])
         self.assertEqual(pkg.files, [
             ('', '/usr/bin/', 'complex_a'),
             ('dir', '/usr/share/doc/', 'Archer-3.4.5'),
@@ -184,6 +192,14 @@ class TestCasePackage(unittest.TestCase):
         self.assertEqual(pkg.conflicts, [('foobar', 'LT', '0', '1.0.0', None, False)])
         pkg.obsoletes = [('foobar', 'GE', '0', '1.1.0', None, False)]
         self.assertEqual(pkg.obsoletes, [('foobar', 'GE', '0', '1.1.0', None, False)])
+        pkg.suggests = [('foo_sug', 'GE', '0', '1.1.0', None, False)]
+        self.assertEqual(pkg.suggests, [('foo_sug', 'GE', '0', '1.1.0', None, False)])
+        pkg.enhances = [('foo_enh', 'GE', '0', '1.1.0', None, False)]
+        self.assertEqual(pkg.enhances, [('foo_enh', 'GE', '0', '1.1.0', None, False)])
+        pkg.recommends = [('foo_rec', 'GE', '0', '1.1.0', None, False)]
+        self.assertEqual(pkg.recommends, [('foo_rec', 'GE', '0', '1.1.0', None, False)])
+        pkg.supplements = [('foo_sup', 'GE', '0', '1.1.0', None, False)]
+        self.assertEqual(pkg.supplements, [('foo_sup', 'GE', '0', '1.1.0', None, False)])
         pkg.files = [(None, '/foo/', 'bar')]
         self.assertEqual(pkg.files, [(None, '/foo/', 'bar')])
         pkg.changelogs = [('me', 123456L, 'first commit')]

@@ -28,42 +28,50 @@
 #include "xml_dump.h"
 #include "xml_dump_internal.h"
 
-#define PROVIDES    0
-#define CONFLICTS   1
-#define OBSOLETES   2
-#define REQUIRES    3
+typedef enum {
+    PCO_TYPE_PROVIDES,
+    PCO_TYPE_CONFLICTS,
+    PCO_TYPE_OBSOLETES,
+    PCO_TYPE_REQUIRES,
+    PCO_TYPE_SUGGESTS,
+    PCO_TYPE_ENHANCES,
+    PCO_TYPE_RECOMMENDS,
+    PCO_TYPE_SUPPLEMENTS,
+    PCO_TYPE_SENTINEL,
+} PcoType;
 
+typedef struct {
+    const char *elemname;
+    size_t listoffset;
+} PcoInfo;
+
+// Order of this list MUST be the same as the order of the related constants above!
+static PcoInfo pco_info[] = {
+    { "rpm:provides",       offsetof(cr_Package, provides) },
+    { "rpm:conflicts",      offsetof(cr_Package, conflicts) },
+    { "rpm:obsoletes",      offsetof(cr_Package, obsoletes) },
+    { "rpm:requires",       offsetof(cr_Package, requires) },
+    { "rpm:suggests",       offsetof(cr_Package, suggests) },
+    { "rpm:enhances",       offsetof(cr_Package, enhances) },
+    { "rpm:recommends",     offsetof(cr_Package, recommends) },
+    { "rpm:supplements",    offsetof(cr_Package, supplements) },
+    { NULL,                 0 },
+};
 
 void
-cr_xml_dump_primary_dump_pco(xmlNodePtr root, cr_Package *package, int pcotype)
+cr_xml_dump_primary_dump_pco(xmlNodePtr root, cr_Package *package, PcoType pcotype)
 {
     const char *elem_name;
-    GSList *files = NULL;
+    GSList *list = NULL;
 
-    const char *provides  = "rpm:provides";
-    const char *conflicts = "rpm:conflicts";
-    const char *obsoletes = "rpm:obsoletes";
-    const char *requires  = "rpm:requires";
-
-    if (pcotype == PROVIDES) {
-        elem_name = provides;
-        files = package->provides;
-    } else if (pcotype == CONFLICTS) {
-        elem_name = conflicts;
-        files = package->conflicts;
-    } else if (pcotype == OBSOLETES) {
-        elem_name = obsoletes;
-        files = package->obsoletes;
-    } else if (pcotype == REQUIRES) {
-        elem_name = requires;
-        files = package->requires;
-    } else {
+    if (pcotype >= PCO_TYPE_SENTINEL)
         return;
-    }
 
-    if (!files) {
+    elem_name = pco_info[pcotype].elemname;
+    list = *((GSList **) ((size_t) package + pco_info[pcotype].listoffset));
+
+    if (!list)
         return;
-    }
 
 
     /***********************************
@@ -75,7 +83,7 @@ cr_xml_dump_primary_dump_pco(xmlNodePtr root, cr_Package *package, int pcotype)
     pcor_node = xmlNewChild(root, NULL, BAD_CAST elem_name, NULL);
 
     GSList *element = NULL;
-    for(element = files; element; element=element->next) {
+    for(element = list; element; element=element->next) {
 
         cr_Dependency *entry = (cr_Dependency*) element->data;
 
@@ -111,7 +119,7 @@ cr_xml_dump_primary_dump_pco(xmlNodePtr root, cr_Package *package, int pcotype)
             }
         }
 
-        if (pcotype == REQUIRES && entry->pre) {
+        if (pcotype == PCO_TYPE_REQUIRES && entry->pre) {
             // Add pre attribute
             xmlNewProp(entry_node, BAD_CAST "pre", BAD_CAST "1");
         }
@@ -351,10 +359,14 @@ cr_xml_dump_primary_base_items(xmlNodePtr root, cr_Package *package)
 
     // Files dump
 
-    cr_xml_dump_primary_dump_pco(format,   package, PROVIDES);
-    cr_xml_dump_primary_dump_pco(format,   package, REQUIRES);
-    cr_xml_dump_primary_dump_pco(format,   package, CONFLICTS);
-    cr_xml_dump_primary_dump_pco(format,   package, OBSOLETES);
+    cr_xml_dump_primary_dump_pco(format,   package, PCO_TYPE_PROVIDES);
+    cr_xml_dump_primary_dump_pco(format,   package, PCO_TYPE_REQUIRES);
+    cr_xml_dump_primary_dump_pco(format,   package, PCO_TYPE_CONFLICTS);
+    cr_xml_dump_primary_dump_pco(format,   package, PCO_TYPE_OBSOLETES);
+    cr_xml_dump_primary_dump_pco(format,   package, PCO_TYPE_SUGGESTS);
+    cr_xml_dump_primary_dump_pco(format,   package, PCO_TYPE_ENHANCES);
+    cr_xml_dump_primary_dump_pco(format,   package, PCO_TYPE_RECOMMENDS);
+    cr_xml_dump_primary_dump_pco(format,   package, PCO_TYPE_SUPPLEMENTS);
     cr_xml_dump_files(format, package, 1);
 }
 

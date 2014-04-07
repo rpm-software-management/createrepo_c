@@ -63,6 +63,14 @@ typedef enum {
               STATE_RPM_ENTRY_CONFLICTS,
             STATE_RPM_OBSOLETES,
               STATE_RPM_ENTRY_OBSOLETES,
+            STATE_RPM_SUGGESTS,
+              STATE_RPM_ENTRY_SUGGESTS,
+            STATE_RPM_ENHANCES,
+              STATE_RPM_ENTRY_ENHANCES,
+            STATE_RPM_RECOMMENDS,
+              STATE_RPM_ENTRY_RECOMMENDS,
+            STATE_RPM_SUPPLEMENTS,
+              STATE_RPM_ENTRY_SUPPLEMENTS,
             STATE_FILE,
     NUMSTATES,
 } cr_PriState;
@@ -97,11 +105,19 @@ static cr_StatesSwitch stateswitches[] = {
     { STATE_FORMAT,         "rpm:provides",     STATE_RPM_PROVIDES,     0 },
     { STATE_FORMAT,         "rpm:requires",     STATE_RPM_REQUIRES,     0 },
     { STATE_FORMAT,         "rpm:conflicts",    STATE_RPM_CONFLICTS,    0 },
-    { STATE_FORMAT,         "rpm:obsoletes",    STATE_RPM_OBSOLETES,       0 },
-    { STATE_RPM_PROVIDES,   "rpm:entry",        STATE_RPM_ENTRY_PROVIDES,  0 },
-    { STATE_RPM_REQUIRES,   "rpm:entry",        STATE_RPM_ENTRY_REQUIRES,  0 },
-    { STATE_RPM_CONFLICTS,  "rpm:entry",        STATE_RPM_ENTRY_CONFLICTS, 0 },
-    { STATE_RPM_OBSOLETES,  "rpm:entry",        STATE_RPM_ENTRY_OBSOLETES, 0 },
+    { STATE_FORMAT,         "rpm:obsoletes",    STATE_RPM_OBSOLETES,    0 },
+    { STATE_FORMAT,         "rpm:suggests",     STATE_RPM_SUGGESTS,     0 },
+    { STATE_FORMAT,         "rpm:enhances",     STATE_RPM_ENHANCES,     0 },
+    { STATE_FORMAT,         "rpm:recommends",   STATE_RPM_RECOMMENDS,   0 },
+    { STATE_FORMAT,         "rpm:supplements",  STATE_RPM_SUPPLEMENTS,  0 },
+    { STATE_RPM_PROVIDES,   "rpm:entry",        STATE_RPM_ENTRY_PROVIDES,    0 },
+    { STATE_RPM_REQUIRES,   "rpm:entry",        STATE_RPM_ENTRY_REQUIRES,    0 },
+    { STATE_RPM_CONFLICTS,  "rpm:entry",        STATE_RPM_ENTRY_CONFLICTS,   0 },
+    { STATE_RPM_OBSOLETES,  "rpm:entry",        STATE_RPM_ENTRY_OBSOLETES,   0 },
+    { STATE_RPM_SUGGESTS,   "rpm:entry",        STATE_RPM_ENTRY_SUGGESTS,    0 },
+    { STATE_RPM_ENHANCES,   "rpm:entry",        STATE_RPM_ENTRY_ENHANCES,    0 },
+    { STATE_RPM_RECOMMENDS, "rpm:entry",        STATE_RPM_ENTRY_RECOMMENDS,  0 },
+    { STATE_RPM_SUPPLEMENTS,"rpm:entry",        STATE_RPM_ENTRY_SUPPLEMENTS, 0 },
     { NUMSTATES,            NULL,               NUMSTATES,              0 },
 };
 
@@ -318,12 +334,21 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
     case STATE_RPM_REQUIRES:
     case STATE_RPM_CONFLICTS:
     case STATE_RPM_OBSOLETES:
+    case STATE_RPM_SUGGESTS:
+    case STATE_RPM_ENHANCES:
+    case STATE_RPM_RECOMMENDS:
+    case STATE_RPM_SUPPLEMENTS:
         break;
 
     case STATE_RPM_ENTRY_PROVIDES:
     case STATE_RPM_ENTRY_REQUIRES:
     case STATE_RPM_ENTRY_CONFLICTS:
-    case STATE_RPM_ENTRY_OBSOLETES: {
+    case STATE_RPM_ENTRY_OBSOLETES:
+    case STATE_RPM_ENTRY_SUGGESTS:
+    case STATE_RPM_ENTRY_ENHANCES:
+    case STATE_RPM_ENTRY_RECOMMENDS:
+    case STATE_RPM_ENTRY_SUPPLEMENTS:
+    {
         assert(pd->pkg);
 
         cr_Dependency *dep = cr_dependency_new();
@@ -376,6 +401,18 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
                 break;
             case STATE_RPM_ENTRY_OBSOLETES:
                 pd->pkg->obsoletes = g_slist_prepend(pd->pkg->obsoletes, dep);
+                break;
+            case STATE_RPM_ENTRY_SUGGESTS:
+                pd->pkg->suggests = g_slist_prepend(pd->pkg->suggests, dep);
+                break;
+            case STATE_RPM_ENTRY_ENHANCES:
+                pd->pkg->enhances = g_slist_prepend(pd->pkg->enhances, dep);
+                break;
+            case STATE_RPM_ENTRY_RECOMMENDS:
+                pd->pkg->recommends = g_slist_prepend(pd->pkg->recommends, dep);
+                break;
+            case STATE_RPM_ENTRY_SUPPLEMENTS:
+                pd->pkg->supplements = g_slist_prepend(pd->pkg->supplements, dep);
                 break;
             default: assert(0);
         }
@@ -566,6 +603,22 @@ cr_end_handler(void *pdata, const char *element)
 
     case STATE_RPM_OBSOLETES:
         pd->pkg->obsoletes = g_slist_reverse(pd->pkg->obsoletes);
+        break;
+
+    case STATE_RPM_SUGGESTS:
+        pd->pkg->suggests = g_slist_reverse(pd->pkg->suggests);
+        break;
+
+    case STATE_RPM_ENHANCES:
+        pd->pkg->enhances = g_slist_reverse(pd->pkg->enhances);
+        break;
+
+    case STATE_RPM_RECOMMENDS:
+        pd->pkg->recommends = g_slist_reverse(pd->pkg->recommends);
+        break;
+
+    case STATE_RPM_SUPPLEMENTS:
+        pd->pkg->supplements = g_slist_reverse(pd->pkg->supplements);
         break;
 
     case STATE_FILE: {

@@ -105,6 +105,26 @@ cr_package_free(cr_Package *package)
         g_slist_free (package->obsoletes);
     }
 
+    if (package->suggests) {
+        g_slist_foreach (package->suggests, (GFunc) g_free, NULL);
+        g_slist_free (package->suggests);
+    }
+
+    if (package->enhances) {
+        g_slist_foreach (package->enhances, (GFunc) g_free, NULL);
+        g_slist_free (package->enhances);
+    }
+
+    if (package->recommends) {
+        g_slist_foreach (package->recommends, (GFunc) g_free, NULL);
+        g_slist_free (package->recommends);
+    }
+
+    if (package->supplements) {
+        g_slist_foreach (package->supplements, (GFunc) g_free, NULL);
+        g_slist_free (package->supplements);
+    }
+
     if (package->files) {
         g_slist_foreach (package->files, (GFunc) g_free, NULL);
         g_slist_free (package->files);
@@ -190,10 +210,14 @@ cr_package_copy(cr_Package *orig)
     pkg->location_base    = cr_safe_string_chunk_insert(pkg->chunk, orig->location_base);
     pkg->checksum_type    = cr_safe_string_chunk_insert(pkg->chunk, orig->checksum_type);
 
-    pkg->requires  = cr_dependency_dup(pkg->chunk, orig->requires);
-    pkg->provides  = cr_dependency_dup(pkg->chunk, orig->provides);
-    pkg->conflicts = cr_dependency_dup(pkg->chunk, orig->conflicts);
-    pkg->obsoletes = cr_dependency_dup(pkg->chunk, orig->obsoletes);
+    pkg->requires    = cr_dependency_dup(pkg->chunk, orig->requires);
+    pkg->provides    = cr_dependency_dup(pkg->chunk, orig->provides);
+    pkg->conflicts   = cr_dependency_dup(pkg->chunk, orig->conflicts);
+    pkg->obsoletes   = cr_dependency_dup(pkg->chunk, orig->obsoletes);
+    pkg->suggests    = cr_dependency_dup(pkg->chunk, orig->suggests);
+    pkg->enhances    = cr_dependency_dup(pkg->chunk, orig->enhances);
+    pkg->recommends  = cr_dependency_dup(pkg->chunk, orig->recommends);
+    pkg->supplements = cr_dependency_dup(pkg->chunk, orig->supplements);
 
     for (GSList *elem = orig->files; elem; elem = g_slist_next(elem)) {
         cr_PackageFile *orig_file = elem->data;

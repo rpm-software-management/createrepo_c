@@ -43,6 +43,20 @@ To build the documentation, from the build/ directory:
 
     cmake -DCMAKE_BUILD_TYPE:STRING=DEBUG .. && make
 
+## Building from an rpm checkout
+
+E.g. when you want to try weak and rich dependencies.
+
+    cmake -D RPM_PATH="/home/tmlcoch/git/rpm" .. && make
+
+**Note:** The RPM must be buit in that directory
+
+Commands I am using for building of RPM:
+
+    cd /home/tmlcoch/git/rpm
+    CPPFLAGS='-I/usr/include/nss3/ -I/usr/include/nspr4/' ./autogen.sh --rpmconfigure --with-vendor=redhat --with-external-db --with-lua --with-selinux --with-cap --with-acl --enable-python
+    make clean && make
+
 ## Build tarball
 
     utils/make_tarball.sh [git revision]

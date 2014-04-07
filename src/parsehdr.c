@@ -25,8 +25,8 @@
 #include "xml_dump.h"
 #include "misc.h"
 
-#if defined(RPMTAG_SUGGESTNAME) && defined(RPMTAG_ENHANCENAME) \
-    && defined(RPMTAG_RECOMMENDNAME) && defined(RPMTAG_SUPPLEMENTNAME)
+#if defined(RPMTAG_SUGGESTS) && defined(RPMTAG_ENHANCES) \
+    && defined(RPMTAG_RECOMMENDS) && defined(RPMTAG_SUPPLEMENTS)
 #define RPM_WEAK_DEPS_SUPPORT 1
 #endif
 
@@ -35,6 +35,10 @@ typedef enum DepType_e {
     DEP_CONFLICTS,
     DEP_OBSOLETES,
     DEP_REQUIRES,
+    DEP_SUGGESTS,
+    DEP_ENHANCES,
+    DEP_RECOMMENDS,
+    DEP_SUPPLEMENTS,
     DEP_SENTINEL
 } DepType;
 
@@ -51,6 +55,12 @@ static DepItem dep_items[] = {
     { DEP_CONFLICTS, RPMTAG_CONFLICTNAME, RPMTAG_CONFLICTFLAGS, RPMTAG_CONFLICTVERSION },
     { DEP_OBSOLETES, RPMTAG_OBSOLETENAME, RPMTAG_OBSOLETEFLAGS, RPMTAG_OBSOLETEVERSION },
     { DEP_REQUIRES, RPMTAG_REQUIRENAME, RPMTAG_REQUIREFLAGS, RPMTAG_REQUIREVERSION },
+#ifdef RPM_WEAK_DEPS_SUPPORT
+    { DEP_SUGGESTS, RPMTAG_SUGGESTNAME, RPMTAG_SUGGESTFLAGS, RPMTAG_SUGGESTVERSION },
+    { DEP_ENHANCES, RPMTAG_ENHANCENAME, RPMTAG_ENHANCEFLAGS, RPMTAG_ENHANCEVERSION },
+    { DEP_RECOMMENDS, RPMTAG_RECOMMENDNAME, RPMTAG_RECOMMENDFLAGS, RPMTAG_RECOMMENDVERSION },
+    { DEP_SUPPLEMENTS, RPMTAG_SUPPLEMENTNAME, RPMTAG_SUPPLEMENTFLAGS, RPMTAG_SUPPLEMENTVERSION },
+#endif
     { DEP_SENTINEL, 0, 0, 0 },
 };
 
@@ -315,11 +325,10 @@ cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
                                                      NULL,
                                                      free);
 
-    int pcor_type = 0;
-    for (pcor_type=0; pcor_type < DEP_SENTINEL; pcor_type++) {
-        if (headerGet(hdr, dep_items[pcor_type].nametag, filenames, flags) &&
-            headerGet(hdr, dep_items[pcor_type].flagstag, fileflags, flags) &&
-            headerGet(hdr, dep_items[pcor_type].versiontag, fileversions, flags))
+    for (int deptype=0; dep_items[deptype].type != DEP_SENTINEL; deptype++) {
+        if (headerGet(hdr, dep_items[deptype].nametag, filenames, flags) &&
+            headerGet(hdr, dep_items[deptype].flagstag, fileflags, flags) &&
+            headerGet(hdr, dep_items[deptype].versiontag, fileversions, flags))
         {
 
             // Because we have to select only libc.so with highest version
@@ -340,7 +349,7 @@ cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
                 const char *full_version = rpmtdGetString(fileversions);
 
                 // Requires specific stuff
-                if (pcor_type == DEP_REQUIRES) {
+                if (deptype == DEP_REQUIRES) {
                     // Skip requires which start with "rpmlib("
                     if (!strncmp("rpmlib(", filename, 7)) {
                         continue;
@@ -388,7 +397,7 @@ cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
                 dependency->version = evr.version;
                 dependency->release = evr.release;
 
-                switch (pcor_type) {
+                switch (deptype) {
                     case DEP_PROVIDES:
                         g_hash_table_replace(provided_hashtable, dependency->name, dependency->name);
                         pkg->provides = g_slist_prepend(pkg->provides, dependency);
@@ -428,11 +437,23 @@ cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
                         value->pre = dependency->pre;
                         g_hash_table_replace(ap_hashtable, dependency->name, value);
                         break; //case REQUIRES end
+                    case DEP_SUGGESTS:
+                        pkg->suggests = g_slist_prepend(pkg->suggests, dependency);
+                        break;
+                    case DEP_ENHANCES:
+                        pkg->enhances = g_slist_prepend(pkg->enhances, dependency);
+                        break;
+                    case DEP_RECOMMENDS:
+                        pkg->recommends = g_slist_prepend(pkg->recommends, dependency);
+                        break;
+                    case DEP_SUPPLEMENTS:
+                        pkg->supplements = g_slist_prepend(pkg->supplements, dependency);
+                        break;
                 } // Switch end
             } // While end
 
             // XXX: libc.so filtering ////////////////////////////////
-            if (pcor_type == DEP_REQUIRES && libc_require_highest)
+            if (deptype == DEP_REQUIRES && libc_require_highest)
                 pkg->requires = g_slist_prepend(pkg->requires, libc_require_highest);
             // XXX: libc.so filtering - END ////////////////////////////////
         }
@@ -442,10 +463,14 @@ cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
         rpmtdFreeData(fileversions);
     }
 
-    pkg->provides  = g_slist_reverse (pkg->provides);
-    pkg->conflicts = g_slist_reverse (pkg->conflicts);
-    pkg->obsoletes = g_slist_reverse (pkg->obsoletes);
-    pkg->requires  = g_slist_reverse (pkg->requires);
+    pkg->provides    = g_slist_reverse (pkg->provides);
+    pkg->conflicts   = g_slist_reverse (pkg->conflicts);
+    pkg->obsoletes   = g_slist_reverse (pkg->obsoletes);
+    pkg->requires    = g_slist_reverse (pkg->requires);
+    pkg->suggests    = g_slist_reverse (pkg->suggests);
+    pkg->enhances    = g_slist_reverse (pkg->enhances);
+    pkg->recommends  = g_slist_reverse (pkg->recommends);
+    pkg->supplements = g_slist_reverse (pkg->supplements);
 
     g_hash_table_remove_all(filenames_hashtable);
     g_hash_table_remove_all(provided_hashtable);

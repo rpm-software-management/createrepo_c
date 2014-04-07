@@ -25,6 +25,34 @@
 #include "xml_dump.h"
 #include "misc.h"
 
+#if defined(RPMTAG_SUGGESTNAME) && defined(RPMTAG_ENHANCENAME) \
+    && defined(RPMTAG_RECOMMENDNAME) && defined(RPMTAG_SUPPLEMENTNAME)
+#define RPM_WEAK_DEPS_SUPPORT 1
+#endif
+
+typedef enum DepType_e {
+    DEP_PROVIDES,
+    DEP_CONFLICTS,
+    DEP_OBSOLETES,
+    DEP_REQUIRES,
+    DEP_SENTINEL
+} DepType;
+
+typedef struct DepItem_s {
+    DepType type;
+    int nametag;
+    int flagstag;
+    int versiontag;
+} DepItem;
+
+// Keep this list sorted in the same order as the enum DepType_e!
+static DepItem dep_items[] = {
+    { DEP_PROVIDES, RPMTAG_PROVIDENAME, RPMTAG_PROVIDEFLAGS, RPMTAG_PROVIDEVERSION },
+    { DEP_CONFLICTS, RPMTAG_CONFLICTNAME, RPMTAG_CONFLICTFLAGS, RPMTAG_CONFLICTVERSION },
+    { DEP_OBSOLETES, RPMTAG_OBSOLETENAME, RPMTAG_OBSOLETEFLAGS, RPMTAG_OBSOLETEVERSION },
+    { DEP_REQUIRES, RPMTAG_REQUIRENAME, RPMTAG_REQUIREFLAGS, RPMTAG_REQUIREVERSION },
+    { DEP_SENTINEL, 0, 0, 0 },
+};
 
 static inline int
 cr_compare_dependency(const char *dep1, const char *dep2)
@@ -271,26 +299,6 @@ cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
 
     rpmtd fileversions = rpmtdNew();
 
-    enum pcor {PROVIDES, CONFLICTS, OBSOLETES, REQUIRES};
-
-    int file_tags[REQUIRES+1] = { RPMTAG_PROVIDENAME,
-                                RPMTAG_CONFLICTNAME,
-                                RPMTAG_OBSOLETENAME,
-                                RPMTAG_REQUIRENAME
-                              };
-
-    int flag_tags[REQUIRES+1] = { RPMTAG_PROVIDEFLAGS,
-                                RPMTAG_CONFLICTFLAGS,
-                                RPMTAG_OBSOLETEFLAGS,
-                                RPMTAG_REQUIREFLAGS
-                              };
-
-    int version_tags[REQUIRES+1] = { RPMTAG_PROVIDEVERSION,
-                                    RPMTAG_CONFLICTVERSION,
-                                    RPMTAG_OBSOLETEVERSION,
-                                    RPMTAG_REQUIREVERSION
-                                   };
-
     // Struct used as value in ap_hashtable
     struct ap_value_struct {
         const char *flags;
@@ -307,11 +315,11 @@ cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
                                                      NULL,
                                                      free);
 
-    int pcor_type;
-    for (pcor_type=0; pcor_type <= REQUIRES; pcor_type++) {
-        if (headerGet(hdr, file_tags[pcor_type], filenames, flags) &&
-            headerGet(hdr, flag_tags[pcor_type], fileflags, flags) &&
-            headerGet(hdr, version_tags[pcor_type], fileversions, flags))
+    int pcor_type = 0;
+    for (pcor_type=0; pcor_type < DEP_SENTINEL; pcor_type++) {
+        if (headerGet(hdr, dep_items[pcor_type].nametag, filenames, flags) &&
+            headerGet(hdr, dep_items[pcor_type].flagstag, fileflags, flags) &&
+            headerGet(hdr, dep_items[pcor_type].versiontag, fileversions, flags))
         {
 
             // Because we have to select only libc.so with highest version
@@ -332,7 +340,7 @@ cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
                 const char *full_version = rpmtdGetString(fileversions);
 
                 // Requires specific stuff
-                if (pcor_type == REQUIRES) {
+                if (pcor_type == DEP_REQUIRES) {
                     // Skip requires which start with "rpmlib("
                     if (!strncmp("rpmlib(", filename, 7)) {
                         continue;
@@ -381,17 +389,17 @@ cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
                 dependency->release = evr.release;
 
                 switch (pcor_type) {
-                    case PROVIDES:
+                    case DEP_PROVIDES:
                         g_hash_table_replace(provided_hashtable, dependency->name, dependency->name);
                         pkg->provides = g_slist_prepend(pkg->provides, dependency);
                         break;
-                    case CONFLICTS:
+                    case DEP_CONFLICTS:
                         pkg->conflicts = g_slist_prepend(pkg->conflicts, dependency);
                         break;
-                    case OBSOLETES:
+                    case DEP_OBSOLETES:
                         pkg->obsoletes = g_slist_prepend(pkg->obsoletes, dependency);
                         break;
-                    case REQUIRES:
+                    case DEP_REQUIRES:
                         dependency->pre = pre;
 
                         // XXX: libc.so filtering ////////////////////////////
@@ -424,7 +432,7 @@ cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
             } // While end
 
             // XXX: libc.so filtering ////////////////////////////////
-            if (pcor_type == REQUIRES && libc_require_highest)
+            if (pcor_type == DEP_REQUIRES && libc_require_highest)
                 pkg->requires = g_slist_prepend(pkg->requires, libc_require_highest);
             // XXX: libc.so filtering - END ////////////////////////////////
         }

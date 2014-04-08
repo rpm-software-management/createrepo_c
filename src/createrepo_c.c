@@ -108,28 +108,24 @@ struct BufferedTask {
 };
 
 
-// Global variables used by signal handler
-char *tmp_repodata_path = NULL;      // Path to temporary dir - /foo/bar/.repodata
-char *tmp_repodata_path_orig = NULL; /*!< If the --ignore-lock option is
-    used, then the tmp_repodata_path is unique (has time and pid in suffix).
-    But the old plain ".repodata/" dir exists too, but just as a lock to
-    inform other createrepo instances that a createrepo instance
-    is running. */
-
+// Global variables used by the signal handler failure_exit_cleanup
+char *global_lock_dir     = NULL; // Path to .repodata/ dir that is used as a lock
+char *global_tmp_out_repo = NULL; // Path to tmpreodata directory, if NULL
+                                  // than it is same as the global_lock_dir
 
 void
 failure_exit_cleanup(int exit_status, void *data)
 {
     CR_UNUSED(data);
     if (exit_status != EXIT_SUCCESS) {
-        if (tmp_repodata_path) {
-            g_debug("Removing %s", tmp_repodata_path);
-            cr_remove_dir(tmp_repodata_path, NULL);
+        if (global_lock_dir) {
+            g_debug("Removing %s", global_lock_dir);
+            cr_remove_dir(global_lock_dir, NULL);
         }
 
-        if (tmp_repodata_path_orig) {
-            g_debug("Removing %s", tmp_repodata_path_orig);
-            cr_remove_dir(tmp_repodata_path_orig, NULL);
+        if (global_tmp_out_repo) {
+            g_debug("Removing %s", global_tmp_out_repo);
+            cr_remove_dir(global_tmp_out_repo, NULL);
         }
     }
 }
@@ -665,7 +661,9 @@ main(int argc, char **argv)
     gchar *in_repo      = NULL;  // path/to/repo/repodata/
     gchar *out_dir      = NULL;  // path/to/out_repo/
     gchar *out_repo     = NULL;  // path/to/out_repo/repodata/
-    gchar *tmp_out_repo = NULL;  // path/to/out_repo/.repodata/
+    gchar *tmp_out_repo = NULL;  // usually path/to/out_repo/.repodata/
+    gchar *lock_dir     = NULL;  // path/to/out_repo/.repodata/
+    int lock_dir_is_tmp_out_repo = 1;
 
     if (cmd_options->basedir && !g_str_has_prefix(argv[1], "/")) {
         gchar *tmp = cr_normalize_dir_path(argv[1]);
@@ -731,6 +729,7 @@ main(int argc, char **argv)
         out_dir  = g_strdup(in_dir);
         out_repo = g_strdup(in_repo);
     }
+    lock_dir = g_strconcat(out_dir, ".repodata/", NULL);
     tmp_out_repo = g_strconcat(out_dir, ".repodata/", NULL);
 
 
@@ -750,17 +749,17 @@ main(int argc, char **argv)
     sigaddset(&intmask, SIGVTALRM);
     sigprocmask(SIG_BLOCK, &intmask, NULL);
 
-    // Check if tmp_out_repo exists & Create tmp_out_repo dir
+    // Check if lock exists & Create lock dir
 
-    if (g_mkdir(tmp_out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
+    if (g_mkdir(lock_dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
         if (errno != EEXIST) {
             g_critical("Error while creating temporary repodata directory %s: %s",
-                       tmp_out_repo, strerror(errno));
+                       lock_dir, strerror(errno));
             exit(EXIT_FAILURE);
         }
 
         g_critical("Temporary repodata directory: %s already exists! "
-                   "(Another createrepo process is running?)", tmp_out_repo);
+                   "(Another createrepo process is running?)", lock_dir);
 
         if (cmd_options->ignore_lock == FALSE)
             exit(EXIT_FAILURE);
@@ -770,25 +769,25 @@ main(int argc, char **argv)
 
         // Remove existing .repodata/
         g_debug("(--ignore-lock enabled) Let's remove the old .repodata/");
-        if (cr_rm(tmp_out_repo, CR_RM_RECURSIVE, NULL, &tmp_err)) {
-            g_debug("(--ignore-lock enabled) Removed: %s", tmp_out_repo);
+        if (cr_rm(lock_dir, CR_RM_RECURSIVE, NULL, &tmp_err)) {
+            g_debug("(--ignore-lock enabled) Removed: %s", lock_dir);
         } else {
             g_critical("(--ignore-lock enabled) Cannot remove %s: %s",
-                       tmp_out_repo, tmp_err->message);
+                       lock_dir, tmp_err->message);
             exit(EXIT_FAILURE);
         }
 
         // Try to create own - just as a lock
-        if (g_mkdir(tmp_out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
+        if (g_mkdir(lock_dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
             g_critical("(--ignore-lock enabled) Cannot create %s: %s",
-                       tmp_out_repo, strerror(errno));
+                       lock_dir, strerror(errno));
             exit(EXIT_FAILURE);
         } else {
             g_debug("(--ignore-lock enabled) Own and empty %s created "
-                    "(serves as a lock)", tmp_out_repo);
+                    "(serves as a lock)", lock_dir);
         }
 
-        tmp_repodata_path_orig = g_strdup(tmp_out_repo);
+        global_lock_dir = lock_dir;
 
         // To data generation use a different one
         tmp_out_repo[strlen(tmp_out_repo)-1] = '.'; // Replace the last '/' with '.'
@@ -803,9 +802,12 @@ main(int argc, char **argv)
             g_debug("(--ignore-lock enabled) For data generation is used: %s",
                     tmp_out_repo);
         }
+
+        global_tmp_out_repo = tmp_out_repo;
+        lock_dir_is_tmp_out_repo = 0;
     }
 
-    tmp_repodata_path = tmp_out_repo;
+    global_lock_dir = lock_dir;
 
     // Register cleanup function
     if (on_exit(failure_exit_cleanup, NULL))
@@ -1564,15 +1566,13 @@ main(int argc, char **argv)
         g_debug("Renamed %s -> %s", tmp_out_repo, out_repo);
     }
 
-    // Free path stored for exit handler
-    tmp_repodata_path = NULL;
-    if (tmp_repodata_path_orig) {
-        // Remove the "lock" .repodata/ in case that .repodata/ was not used
-        // for repodata generation (--ignore-lock option)
-        cr_remove_dir(tmp_repodata_path_orig, NULL);
-        g_free(tmp_repodata_path_orig);
-        tmp_repodata_path_orig = NULL;
-    }
+    // Remove lock
+    if (!lock_dir_is_tmp_out_repo)
+        cr_remove_dir(lock_dir, NULL);
+
+    // Disable path stored for exit handler
+    global_lock_dir = NULL;
+    global_tmp_out_repo = NULL;
 
     sigprocmask(SIG_SETMASK, &old_mask, NULL);
 
@@ -1602,6 +1602,7 @@ main(int argc, char **argv)
     g_free(tmp_out_repo);
     g_free(in_dir);
     g_free(out_dir);
+    g_free(lock_dir);
     g_free(pri_xml_filename);
     g_free(fil_xml_filename);
     g_free(oth_xml_filename);

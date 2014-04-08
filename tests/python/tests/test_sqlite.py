@@ -74,7 +74,12 @@ class TestCaseSqlite(unittest.TestCase):
              (u'requires',),
              (u'provides',),
              (u'conflicts',),
-             (u'obsoletes',)])
+             (u'obsoletes',),
+             (u'suggests',),
+             (u'enhances',),
+             (u'recommends',),
+             (u'supplements',),
+            ])
         # Check indexes
         self.assertEqual(con.execute("""select name from sqlite_master where type="index";""").fetchall(),
             [(u'packagename',),
@@ -86,7 +91,12 @@ class TestCaseSqlite(unittest.TestCase):
              (u'pkgprovides',),
              (u'providesname',),
              (u'pkgconflicts',),
-             (u'pkgobsoletes',)])
+             (u'pkgobsoletes',),
+             (u'pkgsuggests',),
+             (u'pkgenhances',),
+             (u'pkgrecommends',),
+             (u'pkgsupplements',),
+            ])
         # Check triggers
         self.assertEqual(con.execute("""select name from sqlite_master where type="trigger";""").fetchall(),
             [(u'removals',)])

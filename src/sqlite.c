@@ -42,6 +42,10 @@ struct _DbPrimaryStatements {
     sqlite3_stmt *conflicts_handle;
     sqlite3_stmt *obsoletes_handle;
     sqlite3_stmt *requires_handle;
+    sqlite3_stmt *suggests_handle;
+    sqlite3_stmt *enhances_handle;
+    sqlite3_stmt *recommends_handle;
+    sqlite3_stmt *supplements_handle;
     sqlite3_stmt *files_handle;
 };
 
@@ -200,7 +204,9 @@ db_create_primary_tables(sqlite3 *db, GError **err)
         "  release TEXT,"
         "  pkgKey INTEGER %s)";
 
-    const char *deps[] = { "requires", "provides", "conflicts", "obsoletes", NULL };
+    const char *deps[] = { "requires", "provides", "conflicts", "obsoletes",
+                            "suggests", "enhances", "recommends", "supplements",
+                            NULL };
     int i;
 
     for (i = 0; deps[i]; i++) {
@@ -232,6 +238,10 @@ db_create_primary_tables(sqlite3 *db, GError **err)
         "    DELETE FROM provides WHERE pkgKey = old.pkgKey;"
         "    DELETE FROM conflicts WHERE pkgKey = old.pkgKey;"
         "    DELETE FROM obsoletes WHERE pkgKey = old.pkgKey;"
+        "    DELETE FROM suggests WHERE pkgKey = old.pkgKey;"
+        "    DELETE FROM enhances WHERE pkgKey = old.pkgKey;"
+        "    DELETE FROM recommends WHERE pkgKey = old.pkgKey;"
+        "    DELETE FROM supplements WHERE pkgKey = old.pkgKey;"
         "  END;";
 
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
@@ -411,6 +421,10 @@ db_index_primary_tables (sqlite3 *db, GError **err)
                            "provides",
                            "conflicts",
                            "obsoletes",
+                           "suggests",
+                           "enhances",
+                           "recommends",
+                           "supplements",
                            NULL
                          };
 
@@ -1067,13 +1081,17 @@ cr_db_prepare_primary_statements(sqlite3 *db, GError **err)
 
     assert(!err || *err == NULL);
 
-    ret->db               = db;
-    ret->pkg_handle       = NULL;
-    ret->provides_handle  = NULL;
-    ret->conflicts_handle = NULL;
-    ret->obsoletes_handle = NULL;
-    ret->requires_handle  = NULL;
-    ret->files_handle     = NULL;
+    ret->db                 = db;
+    ret->pkg_handle         = NULL;
+    ret->provides_handle    = NULL;
+    ret->conflicts_handle   = NULL;
+    ret->obsoletes_handle   = NULL;
+    ret->requires_handle    = NULL;
+    ret->suggests_handle    = NULL;
+    ret->enhances_handle    = NULL;
+    ret->recommends_handle  = NULL;
+    ret->supplements_handle = NULL;
+    ret->files_handle       = NULL;
 
     ret->pkg_handle = db_package_prepare(db, &tmp_err);
     if (tmp_err) {
@@ -1105,6 +1123,30 @@ cr_db_prepare_primary_statements(sqlite3 *db, GError **err)
         return ret;
     }
 
+    ret->suggests_handle = db_dependency_prepare(db, "suggests", &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        return ret;
+    }
+
+    ret->enhances_handle = db_dependency_prepare(db, "enhances", &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        return ret;
+    }
+
+    ret->recommends_handle = db_dependency_prepare(db, "recommends", &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        return ret;
+    }
+
+    ret->supplements_handle = db_dependency_prepare(db, "supplements", &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        return ret;
+    }
+
     ret->files_handle = db_file_prepare(db, &tmp_err);
     if (tmp_err) {
         g_propagate_error(err, tmp_err);
@@ -1131,6 +1173,14 @@ cr_db_destroy_primary_statements(cr_DbPrimaryStatements stmts)
         sqlite3_finalize(stmts->obsoletes_handle);
     if (stmts->requires_handle)
         sqlite3_finalize(stmts->requires_handle);
+    if (stmts->suggests_handle)
+        sqlite3_finalize(stmts->suggests_handle);
+    if (stmts->enhances_handle)
+        sqlite3_finalize(stmts->enhances_handle);
+    if (stmts->recommends_handle)
+        sqlite3_finalize(stmts->recommends_handle);
+    if (stmts->supplements_handle)
+        sqlite3_finalize(stmts->supplements_handle);
     if (stmts->files_handle)
         sqlite3_finalize(stmts->files_handle);
     free(stmts);
@@ -1195,6 +1245,58 @@ cr_db_add_primary_pkg(cr_DbPrimaryStatements stmts,
     for (iter = pkg->requires; iter; iter = iter->next) {
         db_dependency_write(stmts->db,
                             stmts->requires_handle,
+                            pkg->pkgKey,
+                            (cr_Dependency *) iter->data,
+                            TRUE,
+                            &tmp_err);
+        if (tmp_err) {
+            g_propagate_error(err, tmp_err);
+            return;
+        }
+    }
+
+    for (iter = pkg->suggests; iter; iter = iter->next) {
+        db_dependency_write(stmts->db,
+                            stmts->suggests_handle,
+                            pkg->pkgKey,
+                            (cr_Dependency *) iter->data,
+                            TRUE,
+                            &tmp_err);
+        if (tmp_err) {
+            g_propagate_error(err, tmp_err);
+            return;
+        }
+    }
+
+    for (iter = pkg->enhances; iter; iter = iter->next) {
+        db_dependency_write(stmts->db,
+                            stmts->enhances_handle,
+                            pkg->pkgKey,
+                            (cr_Dependency *) iter->data,
+                            TRUE,
+                            &tmp_err);
+        if (tmp_err) {
+            g_propagate_error(err, tmp_err);
+            return;
+        }
+    }
+
+    for (iter = pkg->recommends; iter; iter = iter->next) {
+        db_dependency_write(stmts->db,
+                            stmts->recommends_handle,
+                            pkg->pkgKey,
+                            (cr_Dependency *) iter->data,
+                            TRUE,
+                            &tmp_err);
+        if (tmp_err) {
+            g_propagate_error(err, tmp_err);
+            return;
+        }
+    }
+
+    for (iter = pkg->supplements; iter; iter = iter->next) {
+        db_dependency_write(stmts->db,
+                            stmts->supplements_handle,
                             pkg->pkgKey,
                             (cr_Dependency *) iter->data,
                             TRUE,

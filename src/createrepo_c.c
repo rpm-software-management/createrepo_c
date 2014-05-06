@@ -1525,6 +1525,7 @@ main(int argc, char **argv)
     ret = cr_old_metadata_retention(out_repo,
                                     tmp_out_repo,
                                     cmd_options->retain_old,
+                                    cmd_options->compatibility,
                                     &tmp_err);
     if (!ret) {
         g_critical("%s", tmp_err->message);

@@ -124,6 +124,8 @@ static GOptionEntry cmd_entries[] =
       "Which compression type to use.", "<compress_type>" },
     { "keep-all-metadata", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.keep_all_metadata),
       "Keep groupfile and updateinfo from source repo during update.", NULL },
+    { "compatibility", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.compatibility),
+      "Enforce maximal compatibility with classical createrepo.", NULL },
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL },
 };
 

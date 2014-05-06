@@ -40,6 +40,7 @@ gboolean
 cr_old_metadata_retention(const char *old_repo,
                           const char *new_repo,
                           int retain_old,
+                          int compatibility,
                           GError **err);
 
 /** Remove files related to repodata from the specified path.

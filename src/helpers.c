@@ -318,6 +318,7 @@ gboolean
 cr_old_metadata_retention(const char *old_repo,
                           const char *new_repo,
                           int retain_old,
+                          int compatibility,
                           GError **err)
 {
     gboolean ret = TRUE;
@@ -325,7 +326,6 @@ cr_old_metadata_retention(const char *old_repo,
     GDir *dirp = NULL;
     const gchar *filename;
     GError *tmp_err = NULL;
-    int compatibility_mode = 1;
 
     assert(!err || *err == NULL);
 
@@ -335,7 +335,7 @@ cr_old_metadata_retention(const char *old_repo,
     g_debug("Copying files from old repository to the new one");
 
     // Get list of file that should be skiped during copying
-    if (compatibility_mode)
+    if (compatibility)
         ret = cr_repodata_blacklist_classic(old_repo, retain_old, &blacklist, err);
     else
         ret = cr_repodata_blacklist(old_repo, retain_old, &blacklist, err);

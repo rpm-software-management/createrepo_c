@@ -72,6 +72,10 @@ struct CmdOptions {
                                      create the new one (empty) to serve as
                                      a lock and use a .repodata.date.pid for
                                      data generation. */
+    gboolean compatibility;     /*!< Enforce maximal compatibility with
+                                     createrepo. I.e. mimics some dump
+                                     behavior like perseve old comps file(s)
+                                     during update etc.*/
 
     /* Items filled by check_arguments() */
 

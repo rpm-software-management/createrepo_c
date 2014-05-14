@@ -50,6 +50,7 @@ cr_package_parser_init_once_cb(gpointer user_data G_GNUC_UNUSED)
     vsflags |= _RPMVSF_NOSIGNATURES;
     vsflags |= RPMVSF_NOHDRCHK;
     rpmtsSetVSFlags(cr_ts, vsflags);
+    return NULL;
 }
 
 void
@@ -69,6 +70,7 @@ cr_package_parser_cleanup_once_cb(gpointer user_data G_GNUC_UNUSED)
 
     rpmFreeMacros(NULL);
     rpmFreeRpmrc();
+    return NULL;
 }
 
 void

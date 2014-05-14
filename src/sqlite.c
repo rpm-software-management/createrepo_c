@@ -67,21 +67,22 @@ static inline int cr_sqlite3_bind_text(sqlite3_stmt *stmt, int i,
 {
     int ret;
     int free_content = 0;
-    char *content;
+    unsigned char *content;
 
     if (!orig_content) {
-        content = (char *) orig_content;
-    } else if (xmlCheckUTF8(orig_content) && !hascontrollchars(orig_content)) {
-        content = (char *) orig_content;
+        content = (unsigned char *) orig_content;
+    } else if (xmlCheckUTF8((const unsigned char *) orig_content)
+               && !hascontrollchars((const unsigned char *) orig_content)) {
+        content = (unsigned char *) orig_content;
     } else {
         desctructor = SQLITE_TRANSIENT;
         size_t llen = strlen((const char *) orig_content);
-        content = malloc(sizeof(char)*llen*2 + 1);
-        cr_latin1_to_utf8(orig_content, content);
+        content = malloc(sizeof(unsigned char)*llen*2 + 1);
+        cr_latin1_to_utf8((const unsigned char *) orig_content, content);
         free_content = 1;
     }
 
-    ret = sqlite3_bind_text(stmt, i, content, len, desctructor);
+    ret = sqlite3_bind_text(stmt, i, (char *) content, len, desctructor);
 
     if (free_content)
         free(content);

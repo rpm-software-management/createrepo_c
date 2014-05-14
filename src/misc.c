@@ -600,7 +600,7 @@ cr_decompress_file_with_stat(const char *src,
             goto compress_file_cleanup;
         }
 
-        if (fwrite(buf, 1, readed, new) != readed) {
+        if (fwrite(buf, 1, readed, new) != (size_t) readed) {
             g_debug("%s: Error while copy %s -> %s (%s)",
                     __func__, src, dst, strerror(errno));
             g_set_error(err, CR_MISC_ERROR, CRE_IO,

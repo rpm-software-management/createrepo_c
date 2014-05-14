@@ -499,8 +499,8 @@ cr_metadata_load_xml(cr_Metadata *md,
                 // So there is guaranted that each loaded package has different
                 // checksum then another one.
                 g_debug("%s: Key \"%s\" is present multiple times. Ignoring "
-                        "all occurrences.", __func__, new_key);
-                g_hash_table_insert(ignored_keys, g_strdup(new_key), NULL);
+                        "all occurrences.", __func__, (gchar *) new_key);
+                g_hash_table_insert(ignored_keys, g_strdup((gchar *) new_key), NULL);
             }
             // Remove the package from the iterator anyway
             g_hash_table_iter_remove(&iter);

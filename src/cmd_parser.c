@@ -39,7 +39,8 @@ struct CmdOptions _cmd_options = {
         .checksum_type        = CR_CHECKSUM_SHA256,
         .retain_old           = 0,
         .compression_type     = CR_CW_UNKNOWN_COMPRESSION,
-        .ignore_lock          = DEFAULT_IGNORE_LOCK
+        .ignore_lock          = DEFAULT_IGNORE_LOCK,
+        .md_max_age           = 0,
     };
 
 
@@ -126,6 +127,10 @@ static GOptionEntry cmd_entries[] =
       "Keep groupfile and updateinfo from source repo during update.", NULL },
     { "compatibility", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.compatibility),
       "Enforce maximal compatibility with classical createrepo.", NULL },
+    { "retain-old-md-by-age", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.retain_old_md_by_age),
+      "During --update, remove all files in repodata/ which are older "
+      "then the specified period of time. (e.g. '2h', '30d', ...). "
+      "Available units (m - minutes, h - hours, d - days)", "AGE" },
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL },
 };
 
@@ -176,7 +181,57 @@ struct CmdOptions *parse_arguments(int *argc, char ***argv, GError **err)
     return &(_cmd_options);
 }
 
+/** Convert a time period to seconds (gint64 value)
+ * Format: "[0-9]+[mhd]?"
+ * Units: m - minutes, h - hours, d - days, ...
+ * @param timeperiod    Time period
+ * @param time          Time period converted to gint64 will be stored here
+ */
+gboolean
+parse_period_of_time(const gchar *timeperiod, gint64 *time, GError **err)
+{
+    assert(!err || *err == NULL);
 
+    gchar *endptr = NULL;
+    gint64 val = g_ascii_strtoll(timeperiod, &endptr, 0);
+
+    *time = 0;
+
+    // Check the state of the conversion
+    if (val == 0 && endptr == timeperiod) {
+        g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+                    "Bad time period \"%s\"", timeperiod);
+        return FALSE;
+    }
+
+    if (val == G_MAXINT64) {
+        g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+                    "Time period \"%s\" is too high", timeperiod);
+        return FALSE;
+    }
+
+    if (val == G_MININT64) {
+        g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+                    "Time period \"%s\" is too low", timeperiod);
+        return FALSE;
+    }
+
+    if (!endptr || endptr[0] == '\0') // Secs
+        *time = val;
+    else if (!strcmp(endptr, "m"))    // Minutes
+        *time = val*60;
+    else if (!strcmp(endptr, "h"))    // Hours
+        *time = val*60*60;
+    else if (!strcmp(endptr, "d"))    // Days
+        *time = val*24*60*60;
+    else {
+        g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+                    "Bad time unit \"%s\"", endptr);
+        return FALSE;
+    }
+
+    return TRUE;
+}
 
 gboolean
 check_arguments(struct CmdOptions *options,
@@ -361,6 +416,22 @@ check_arguments(struct CmdOptions *options,
         options->distro_values = g_slist_append(options->distro_values,
                                                 g_strdup(items[1]));
         g_strfreev(items);
+    }
+
+    // Check retain-old-md-by-age
+    if (options->retain_old_md_by_age) {
+        if (options->retain_old) {
+            g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+                        "--retain-old-md-by-age cannot be combined "
+                        "with --retain-old-md");
+            return FALSE;
+        }
+
+        // Parse argument
+        if (!parse_period_of_time(options->retain_old_md_by_age,
+                                  &options->md_max_age,
+                                  err))
+            return FALSE;
     }
 
     return TRUE;

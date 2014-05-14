@@ -76,6 +76,13 @@ struct CmdOptions {
                                      createrepo. I.e. mimics some dump
                                      behavior like perseve old comps file(s)
                                      during update etc.*/
+    char *retain_old_md_by_age; /*!< Remove all files in repodata/ older
+                                     then specified period of time,
+                                     during --update.
+                                     Value examples: "360" (360 sec),
+                                     "5d" (5 days), ..
+                                     Available units: (m - minutes, h - hours,
+                                     d - days) */
 
     /* Items filled by check_arguments() */
 
@@ -90,7 +97,11 @@ struct CmdOptions {
     GSList *distro_values;      /*!< values from --distro params */
     cr_ChecksumType checksum_type;          /*!< checksum type */
     cr_CompressionType compression_type;    /*!< compression type */
-
+    gint64 md_max_age;          /*!< Max age of files in repodata/.
+                                     Older files will be removed
+                                     during --update.
+                                     Filled if --retain-old-md-by-age
+                                     is used */
 };
 
 /**

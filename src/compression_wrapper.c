@@ -895,7 +895,6 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
            || (ret != CR_CW_ERR && *err == NULL));
 
     if (cr_file->stat && ret != CR_CW_ERR) {
-        GError *tmp_err = NULL;
         cr_file->stat->size += ret;
         if (cr_file->checksum_ctx) {
             GError *tmp_err = NULL;

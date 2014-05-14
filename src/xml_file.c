@@ -66,7 +66,7 @@ cr_xmlfile_sopen(const char *filename,
                              comtype,
                              stat,
                              &tmp_err);
-    if (tmp_err) {
+    if (!cr_f) {
         g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", filename);
         return NULL;
     }

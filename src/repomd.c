@@ -223,7 +223,7 @@ cr_repomd_record_fill(cr_RepomdRecord *md,
         gchar *chksum;
 
         chksum = cr_checksum_file(path, checksum_t, &tmp_err);
-        if (tmp_err) {
+        if (!chksum) {
             int code = tmp_err->code;
             g_propagate_prefixed_error(err, tmp_err,
                 "Error while checksum calculation of %s:", path);
@@ -316,10 +316,12 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
                                    cr_CompressionType record_compression,
                                    GError **err)
 {
+    int ret = CRE_OK;
     const char *suffix;
     gchar *path, *cpath;
     gchar *clocation_real, *clocation_href;
-    gchar *checksum, *cchecksum;
+    gchar *checksum = NULL;
+    gchar *cchecksum = NULL;
     int readed;
     char buf[BUFFER_SIZE];
     CR_FILE *cw_plain;
@@ -373,9 +375,9 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
                        CR_CW_NO_COMPRESSION,
                        &tmp_err);
     if (!cw_plain) {
-        int code = tmp_err->code;
+        ret = tmp_err->code;
         g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", path);
-        return code;
+        return ret;
     }
 
     cw_compressed = cr_open(cpath,
@@ -383,9 +385,9 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
                             record_compression,
                             &tmp_err);
     if (!cw_compressed) {
-        int code = tmp_err->code;
+        ret = tmp_err->code;
         g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", cpath);
-        return code;
+        return ret;
     }
 
     while ((readed = cr_read(cw_plain, buf, BUFFER_SIZE, &tmp_err)) > 0) {
@@ -397,40 +399,39 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
     cr_close(cw_plain, NULL);
 
     if (tmp_err) {
-        int code = tmp_err->code;
+        ret = tmp_err->code;
         cr_close(cw_compressed, NULL);
         g_debug("%s: Error while repomd record compression: %s", __func__,
                 tmp_err->message);
         g_propagate_prefixed_error(err, tmp_err,
                 "Error while compression %s -> %s:", path, cpath);
-        return code;
+        return ret;
     }
 
     cr_close(cw_compressed, &tmp_err);
     if (tmp_err) {
-        int code = tmp_err->code;
+        ret = tmp_err->code;
         g_propagate_prefixed_error(err, tmp_err,
                 "Error while closing %s: ", path);
-        return code;
+        return ret;
     }
-
 
     // Compute checksums
 
     checksum  = cr_checksum_file(path, checksum_type, &tmp_err);
-    if (tmp_err) {
-        int code = tmp_err->code;
+    if (!checksum) {
+        ret = tmp_err->code;
         g_propagate_prefixed_error(err, tmp_err,
                                    "Error while checksum calculation:");
-        return code;
+        goto end;
     }
 
     cchecksum = cr_checksum_file(cpath, checksum_type, &tmp_err);
-    if (tmp_err) {
-        int code = tmp_err->code;
+    if (!cchecksum) {
+        ret = tmp_err->code;
         g_propagate_prefixed_error(err, tmp_err,
                                    "Error while checksum calculation:");
-        return code;
+        goto end;
     }
 
 
@@ -440,21 +441,23 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
         g_debug("%s: Error while stat() on %s", __func__, path);
         g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
                     "Cannot stat %s", path);
-        return CRE_IO;
-    } else {
-        gf_size = gf_stat.st_size;
-        gf_time = gf_stat.st_mtime;
+        ret = CRE_IO;
+        goto end;
     }
+
+    gf_size = gf_stat.st_size;
+    gf_time = gf_stat.st_mtime;
 
     if (stat(cpath, &cgf_stat)) {
         g_debug("%s: Error while stat() on %s", __func__, cpath);
         g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
                     "Cannot stat %s", cpath);
-        return CRE_IO;
-    } else {
-        cgf_size = cgf_stat.st_size;
-        cgf_time = cgf_stat.st_mtime;
+        ret = CRE_IO;
+        goto end;
     }
+
+    cgf_size = cgf_stat.st_size;
+    cgf_time = cgf_stat.st_mtime;
 
 
     // Results
@@ -475,10 +478,11 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
     crecord->size = cgf_size;
     crecord->size_open = gf_size;
 
+end:
     g_free(checksum);
     g_free(cchecksum);
 
-    return CRE_OK;
+    return ret;
 }
 
 int

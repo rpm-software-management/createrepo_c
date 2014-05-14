@@ -1,5 +1,5 @@
 #!/bin/bash
 
-rm -v createrepo_c-*.tar.xz
-rm -v createrepo_c-*.rpm python-createrepo_c-*.rpm
-rm -v deltarepo-*.rpm python-deltarepo-*.rpm
+rm -fv createrepo_c-*.tar.xz
+rm -fv createrepo_c-*.rpm python-createrepo_c-*.rpm
+rm -fv deltarepo-*.rpm python-deltarepo-*.rpm

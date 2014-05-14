@@ -422,7 +422,7 @@ cr_modifyrepo_parse_batchfile(const gchar *path,
                 task->unique_md_filenames, task->checksum_type,
                 cr_checksum_name_str(task->checksum_type), task->new_name);
 
- }
+    }
 
     g_strfreev(groups);
 

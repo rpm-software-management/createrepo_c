@@ -1168,7 +1168,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                                        CR_CW_MODE_WRITE,
                                        cmd_options->groupfile_compression_type,
                                        &tmp_err);
-        if (!tmp_err) {
+        if (update_info) {
             cr_puts(update_info,
                     "<?xml version=\"1.0\"?>\n<updates></updates>\n",
                     NULL);

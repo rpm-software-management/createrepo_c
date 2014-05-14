@@ -1074,90 +1074,6 @@ db_package_ids_write(sqlite3 *db,
 
 // Primary.sqlite interface
 
-cr_DbPrimaryStatements
-cr_db_prepare_primary_statements(sqlite3 *db, GError **err)
-{
-    GError *tmp_err = NULL;
-    cr_DbPrimaryStatements ret = malloc(sizeof(*ret));
-
-    assert(!err || *err == NULL);
-
-    ret->db                 = db;
-    ret->pkg_handle         = NULL;
-    ret->provides_handle    = NULL;
-    ret->conflicts_handle   = NULL;
-    ret->obsoletes_handle   = NULL;
-    ret->requires_handle    = NULL;
-    ret->suggests_handle    = NULL;
-    ret->enhances_handle    = NULL;
-    ret->recommends_handle  = NULL;
-    ret->supplements_handle = NULL;
-    ret->files_handle       = NULL;
-
-    ret->pkg_handle = db_package_prepare(db, &tmp_err);
-    if (tmp_err) {
-        g_propagate_error(err, tmp_err);
-        return ret;
-    }
-
-    ret->provides_handle = db_dependency_prepare(db, "provides", &tmp_err);
-    if (tmp_err) {
-        g_propagate_error(err, tmp_err);
-        return ret;
-    }
-
-    ret->conflicts_handle = db_dependency_prepare(db, "conflicts", &tmp_err);
-    if (tmp_err) {
-        g_propagate_error(err, tmp_err);
-        return ret;
-    }
-
-    ret->obsoletes_handle = db_dependency_prepare(db, "obsoletes", &tmp_err);
-    if (tmp_err) {
-        g_propagate_error(err, tmp_err);
-        return ret;
-    }
-
-    ret->requires_handle = db_dependency_prepare(db, "requires", &tmp_err);
-    if (tmp_err) {
-        g_propagate_error(err, tmp_err);
-        return ret;
-    }
-
-    ret->suggests_handle = db_dependency_prepare(db, "suggests", &tmp_err);
-    if (tmp_err) {
-        g_propagate_error(err, tmp_err);
-        return ret;
-    }
-
-    ret->enhances_handle = db_dependency_prepare(db, "enhances", &tmp_err);
-    if (tmp_err) {
-        g_propagate_error(err, tmp_err);
-        return ret;
-    }
-
-    ret->recommends_handle = db_dependency_prepare(db, "recommends", &tmp_err);
-    if (tmp_err) {
-        g_propagate_error(err, tmp_err);
-        return ret;
-    }
-
-    ret->supplements_handle = db_dependency_prepare(db, "supplements", &tmp_err);
-    if (tmp_err) {
-        g_propagate_error(err, tmp_err);
-        return ret;
-    }
-
-    ret->files_handle = db_file_prepare(db, &tmp_err);
-    if (tmp_err) {
-        g_propagate_error(err, tmp_err);
-        return ret;
-    }
-
-    return ret;
-}
-
-
 void
 cr_db_destroy_primary_statements(cr_DbPrimaryStatements stmts)
 {
@@ -1185,6 +1101,94 @@ cr_db_destroy_primary_statements(cr_DbPrimaryStatements stmts)
     if (stmts->files_handle)
         sqlite3_finalize(stmts->files_handle);
     free(stmts);
+}
+
+
+cr_DbPrimaryStatements
+cr_db_prepare_primary_statements(sqlite3 *db, GError **err)
+{
+    assert(!err || *err == NULL);
+
+    GError *tmp_err = NULL;
+    cr_DbPrimaryStatements ret = malloc(sizeof(*ret));
+
+    ret->db                 = db;
+    ret->pkg_handle         = NULL;
+    ret->provides_handle    = NULL;
+    ret->conflicts_handle   = NULL;
+    ret->obsoletes_handle   = NULL;
+    ret->requires_handle    = NULL;
+    ret->suggests_handle    = NULL;
+    ret->enhances_handle    = NULL;
+    ret->recommends_handle  = NULL;
+    ret->supplements_handle = NULL;
+    ret->files_handle       = NULL;
+
+    ret->pkg_handle = db_package_prepare(db, &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        goto error;
+    }
+
+    ret->provides_handle = db_dependency_prepare(db, "provides", &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        goto error;
+    }
+
+    ret->conflicts_handle = db_dependency_prepare(db, "conflicts", &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        goto error;
+    }
+
+    ret->obsoletes_handle = db_dependency_prepare(db, "obsoletes", &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        goto error;
+    }
+
+    ret->requires_handle = db_dependency_prepare(db, "requires", &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        goto error;
+    }
+
+    ret->suggests_handle = db_dependency_prepare(db, "suggests", &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        goto error;
+    }
+
+    ret->enhances_handle = db_dependency_prepare(db, "enhances", &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        goto error;
+    }
+
+    ret->recommends_handle = db_dependency_prepare(db, "recommends", &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        goto error;
+    }
+
+    ret->supplements_handle = db_dependency_prepare(db, "supplements", &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        goto error;
+    }
+
+    ret->files_handle = db_file_prepare(db, &tmp_err);
+    if (tmp_err) {
+        g_propagate_error(err, tmp_err);
+        goto error;
+    }
+
+    return ret;
+
+error:
+    cr_db_destroy_primary_statements(ret);
+    return NULL;
 }
 
 
@@ -1322,6 +1326,20 @@ cr_db_add_primary_pkg(cr_DbPrimaryStatements stmts,
 // filelists.sqlite interface
 
 
+void
+cr_db_destroy_filelists_statements(cr_DbFilelistsStatements stmts)
+{
+    if (!stmts)
+        return;
+
+    if (stmts->package_id_handle)
+        sqlite3_finalize(stmts->package_id_handle);
+    if (stmts->filelists_handle)
+        sqlite3_finalize(stmts->filelists_handle);
+    free(stmts);
+}
+
+
 cr_DbFilelistsStatements
 cr_db_prepare_filelists_statements(sqlite3 *db, GError **err)
 {
@@ -1337,30 +1355,20 @@ cr_db_prepare_filelists_statements(sqlite3 *db, GError **err)
     ret->package_id_handle = db_package_ids_prepare(db, &tmp_err);
     if (tmp_err) {
         g_propagate_error(err, tmp_err);
-        return ret;
+        goto error;
     }
 
     ret->filelists_handle = db_filelists_prepare(db, &tmp_err);
     if (tmp_err) {
         g_propagate_error(err, tmp_err);
-        return ret;
+        goto error;
     }
 
     return ret;
-}
 
-
-void
-cr_db_destroy_filelists_statements(cr_DbFilelistsStatements stmts)
-{
-    if (!stmts)
-        return;
-
-    if (stmts->package_id_handle)
-        sqlite3_finalize(stmts->package_id_handle);
-    if (stmts->filelists_handle)
-        sqlite3_finalize(stmts->filelists_handle);
-    free(stmts);
+error:
+    cr_db_destroy_filelists_statements(ret);
+    return NULL;
 }
 
 
@@ -1405,6 +1413,20 @@ cr_db_add_filelists_pkg(cr_DbFilelistsStatements stmts,
 // other.sqlite interface
 
 
+void
+cr_db_destroy_other_statements(cr_DbOtherStatements stmts)
+{
+    if (!stmts)
+        return;
+
+    if (stmts->package_id_handle)
+        sqlite3_finalize(stmts->package_id_handle);
+    if (stmts->changelog_handle)
+        sqlite3_finalize(stmts->changelog_handle);
+    free(stmts);
+}
+
+
 cr_DbOtherStatements
 cr_db_prepare_other_statements(sqlite3 *db, GError **err)
 {
@@ -1420,30 +1442,20 @@ cr_db_prepare_other_statements(sqlite3 *db, GError **err)
     ret->package_id_handle = db_package_ids_prepare(db, &tmp_err);
     if (tmp_err) {
         g_propagate_error(err, tmp_err);
-        return ret;
+        goto error;
     }
 
     ret->changelog_handle = db_changelog_prepare(db, &tmp_err);
     if (tmp_err) {
         g_propagate_error(err, tmp_err);
-        return ret;
+        goto error;
     }
 
     return ret;
-}
 
-
-void
-cr_db_destroy_other_statements(cr_DbOtherStatements stmts)
-{
-    if (!stmts)
-        return;
-
-    if (stmts->package_id_handle)
-        sqlite3_finalize(stmts->package_id_handle);
-    if (stmts->changelog_handle)
-        sqlite3_finalize(stmts->changelog_handle);
-    free(stmts);
+error:
+    cr_db_destroy_other_statements(ret);
+    return NULL;
 }
 
 
@@ -1581,7 +1593,7 @@ cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
             return NULL;
     }
 
-    if (tmp_err) {
+    if (!statements) {
             g_propagate_error(err, tmp_err);
             sqlite3_close(db);
             return NULL;

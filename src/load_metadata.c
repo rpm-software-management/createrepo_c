@@ -542,7 +542,7 @@ cr_metadata_locate_and_load_xml(cr_Metadata *md,
     assert(repopath);
 
     ml = cr_locate_metadata(repopath, 1, &tmp_err);
-    if (tmp_err) {
+    if (!ml) {
         int code = tmp_err->code;
         g_propagate_error(err, tmp_err);
         return code;

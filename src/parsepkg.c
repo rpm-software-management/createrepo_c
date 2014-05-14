@@ -173,7 +173,7 @@ cr_package_from_rpm(const char *filename,
     // Compute checksum
 
     char *checksum = cr_checksum_file(filename, checksum_type, &tmp_err);
-    if (tmp_err) {
+    if (!checksum) {
         g_propagate_prefixed_error(err, tmp_err,
                                    "Error while checksum calculation: ");
         headerFree(hdr);
@@ -188,6 +188,7 @@ cr_package_from_rpm(const char *filename,
     if (tmp_err) {
         g_propagate_prefixed_error(err, tmp_err,
                                    "Error while determinig header range: ");
+        free(checksum);
         return NULL;
     }
 
@@ -268,7 +269,7 @@ cr_xml_from_rpm(const char *filename,
     // Compute checksum
 
     char *checksum = cr_checksum_file(filename, checksum_type, &tmp_err);
-    if (tmp_err) {
+    if (!checksum) {
         g_propagate_prefixed_error(err, tmp_err,
                                    "Error while checksum calculation: ");
         headerFree(hdr);
@@ -283,6 +284,7 @@ cr_xml_from_rpm(const char *filename,
     if (tmp_err) {
         g_propagate_prefixed_error(err, tmp_err,
                                    "Error while determinig header range: ");
+        free(checksum);
         return result;
     }
 

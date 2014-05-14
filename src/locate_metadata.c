@@ -354,6 +354,7 @@ cr_locate_metadata(const char *in_repopath, int ignore_sqlite, GError **err)
     if (!ret) {
         g_set_error(err, CR_LOCATE_METADATA_ERROR, CRE_NODIR,
                     "Cannot locate metadata");
+        return NULL;
     }
 
     return ret;

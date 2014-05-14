@@ -21,7 +21,9 @@
 #include <glib/gstdio.h>
 #include <errno.h>
 #include <string.h>
+#include <time.h>
 #include <assert.h>
+#include "helpers.h"
 #include "error.h"
 #include "misc.h"
 #include "checksum.h"
@@ -250,6 +252,69 @@ cr_repodata_blacklist(const char *repodata_path,
     return TRUE;
 }
 
+static gboolean
+cr_repodata_blacklist_by_age(const char *repodata_path,
+                             gint64 md_max_age,
+                             GSList **blacklist,
+                             GError **err)
+{
+    GDir *dirp = NULL;
+    const gchar *filename;
+    time_t current_time;
+    GError *tmp_err = NULL;
+
+    assert(blacklist);
+    assert(!err || *err == NULL);
+
+    *blacklist = NULL;
+
+    if (md_max_age < 0) {
+        // A negative value means retain all - nothing to be blacklisted
+        return TRUE;
+    }
+
+    // Open the repodata/ directory
+    dirp = g_dir_open (repodata_path, 0, &tmp_err);
+    if (!dirp) {
+        g_warning("Cannot open directory: %s: %s", repodata_path, tmp_err->message);
+        g_set_error(err, CR_HELPER_ERROR, CRE_IO,
+                    "Cannot open directory: %s: %s",
+                    repodata_path, tmp_err->message);
+        g_error_free(tmp_err);
+        return FALSE;
+    }
+
+    current_time = time(NULL);
+
+    // Create sorted (by mtime) lists of old metadata files
+    // More recent files are first
+    while ((filename = g_dir_read_name (dirp))) {
+        struct stat buf;
+        gchar *fullpath = g_strconcat(repodata_path, filename, NULL);
+        if (stat(fullpath, &buf) == -1) {
+            g_warning("Cannot stat %s", fullpath);
+            g_free(fullpath);
+            continue;
+        }
+        g_free(fullpath);
+
+        // Check file age (current_time - mtime)
+        gint64 age = difftime(current_time, buf.st_mtime);
+        if (age <= md_max_age)
+            continue;  // The file is young
+
+        // Debug
+        g_debug("File is too old (%"G_GINT64_FORMAT" > %"G_GINT64_FORMAT") %s",
+                age, md_max_age, filename);
+
+        // Add the file to the blacklist
+        *blacklist = g_slist_prepend(*blacklist, g_strdup(filename));
+    }
+
+    g_dir_close(dirp);
+    return TRUE;
+}
+
 int
 cr_remove_metadata_classic(const char *repopath, int retain, GError **err)
 {
@@ -317,8 +382,8 @@ cleanup:
 gboolean
 cr_old_metadata_retention(const char *old_repo,
                           const char *new_repo,
-                          int retain_old,
-                          int compatibility,
+                          cr_RetentionType type,
+                          gint64 val,
                           GError **err)
 {
     gboolean ret = TRUE;
@@ -335,10 +400,14 @@ cr_old_metadata_retention(const char *old_repo,
     g_debug("Copying files from old repository to the new one");
 
     // Get list of file that should be skiped during copying
-    if (compatibility)
-        ret = cr_repodata_blacklist_classic(old_repo, retain_old, &blacklist, err);
-    else
-        ret = cr_repodata_blacklist(old_repo, retain_old, &blacklist, err);
+    g_debug("Retention type: %d (%"G_GINT64_FORMAT")", type, val);
+    if (type == CR_RETENTION_BYAGE)
+        ret = cr_repodata_blacklist_by_age(old_repo, val, &blacklist, err);
+    else if (type == CR_RETENTION_COMPATIBILITY)
+        ret = cr_repodata_blacklist_classic(old_repo, (int) val, &blacklist, err);
+    else // CR_RETENTION_DEFAULT
+        ret = cr_repodata_blacklist(old_repo, (int) val, &blacklist, err);
+
     if (!ret)
         return FALSE;
 

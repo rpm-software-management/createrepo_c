@@ -1521,11 +1521,21 @@ main(int argc, char **argv)
     // Final move
 
     // Copy selected metadata from the old repository
+    cr_RetentionType retentiontype = CR_RETENTION_DEFAULT;
+    gint64 retentionval = (gint64) cmd_options->retain_old;
     gboolean ret;
+
+    if (cmd_options->retain_old_md_by_age) {
+        retentiontype = CR_RETENTION_BYAGE;
+        retentionval = cmd_options->md_max_age;
+    } else if (cmd_options->compatibility) {
+        retentiontype = CR_RETENTION_COMPATIBILITY;
+    }
+
     ret = cr_old_metadata_retention(out_repo,
                                     tmp_out_repo,
-                                    cmd_options->retain_old,
-                                    cmd_options->compatibility,
+                                    retentiontype,
+                                    retentionval,
                                     &tmp_err);
     if (!ret) {
         g_critical("%s", tmp_err->message);

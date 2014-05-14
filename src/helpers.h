@@ -36,11 +36,17 @@ extern "C" {
  *  @{
  */
 
+typedef enum {
+    CR_RETENTION_DEFAULT,
+    CR_RETENTION_COMPATIBILITY,
+    CR_RETENTION_BYAGE,
+} cr_RetentionType;
+
 gboolean
 cr_old_metadata_retention(const char *old_repo,
                           const char *new_repo,
-                          int retain_old,
-                          int compatibility,
+                          cr_RetentionType type,
+                          gint64 val,
                           GError **err);
 
 /** Remove files related to repodata from the specified path.

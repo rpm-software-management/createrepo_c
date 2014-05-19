@@ -346,7 +346,9 @@ check_arguments(struct CmdOptions *options,
     // Process pkglist file
     if (options->pkglist) {
         if (!g_file_test(options->pkglist, G_FILE_TEST_IS_REGULAR)) {
-            g_warning("pkglist file \"%s\" doesn't exists", options->pkglist);
+            g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+                        "pkglist file \"%s\" doesn't exists", options->pkglist);
+            return FALSE;
         } else {
             char *content = NULL;
             GError *tmp_err = NULL;

@@ -56,13 +56,22 @@ class TestCaseCreaterepoComparative_emptyrepo(BaseTestCase):
         """--simple-md-filenames"""
         self.assert_same_results(self.indir, "--simple-md-filenames")
 
+    def test_13_createrepo_revision(self):
+        """--revision"""
+        self.assert_same_results(self.indir, "--revision XYZ")
+
+    def test_14_createrepo_skipsymlinks(self):
+        """--skip-symlinks"""
+        self.assert_same_results(self.indir, "--skip-symlinks")
+
+
 class TestCaseCreaterepoComparative_regularrepo(BaseTestCase):
     """Repo with 3 packages"""
 
     def setup(self):
-        self.copy_pkg(PACKAGES[0], self.indir)
-        self.copy_pkg(PACKAGES[1], self.indir)
-        self.copy_pkg(PACKAGES[2], self.indir)
+        self.indir_addpkg(PACKAGES[0])
+        self.indir_addpkg(PACKAGES[1])
+        self.indir_addpkg(PACKAGES[2])
 
     def test_01_createrepo(self):
         """Regular createrepo"""
@@ -74,4 +83,90 @@ class TestCaseCreaterepoComparative_regularrepo(BaseTestCase):
 
     def test_03_createrepo_excludes(self):
         """--excludes * param"""
-        self.assert_same_results(self.indir, "--excludes *")
+        self.assert_same_results(self.indir, "--excludes '*'")
+
+    def test_04_createrepo_excludes(self):
+        """--excludes"""
+        self.assert_same_results(self.indir, "--excludes 'Archer-3.4.5-6.x86_64.rpm'")
+
+    def test_05_createrepo_excludes(self):
+        """--excludes"""
+        self.assert_same_results(self.indir, "--excludes 'Archer-*.rpm'")
+
+    def test_06_createrepo_skipsymlinks(self):
+        """--skip-symlinks"""
+        self.assert_same_results(self.indir, "--skip-symlinks")
+
+    def test_07_createrepo_pkglist(self):
+        """--pkglist"""
+        fn_pkglist = self.indir_mkfile("pkglist", "%s\n" % PACKAGES[0])
+        self.assert_same_results(self.indir, "--pkglist %s" % fn_pkglist)
+
+    def test_08_createrepo_pkglist(self):
+        """--pkglist"""
+        fn_pkglist = self.indir_mkfile("pkglist", "%s\n%s\n" % (PACKAGES[0], PACKAGES[1]))
+        self.assert_same_results(self.indir, "--pkglist %s" % fn_pkglist)
+
+    def test_09_createrepo_pkglist(self):
+        """--pkglist"""
+        fn_pkglist = self.indir_mkfile("pkglist", "%s\n\n%s\n\nfoobar.rpm\n\n" % (PACKAGES[0], PACKAGES[1]))
+        self.assert_same_results(self.indir, "--pkglist %s" % fn_pkglist)
+
+class TestCaseCreaterepoComparative_regularrepowithsubdirs(BaseTestCase):
+    """Repo with 3 packages, each in its own subdir"""
+
+    def setup(self):
+        subdir_a = self.indir_makedirs("a")
+        self.copy_pkg(PACKAGES[0], subdir_a)
+        subdir_b = self.indir_makedirs("b")
+        self.copy_pkg(PACKAGES[1], subdir_b)
+        subdir_c = self.indir_makedirs("c")
+        self.copy_pkg(PACKAGES[2], subdir_c)
+
+    def test_01_createrepo(self):
+        """Regular createrepo"""
+        self.assert_same_results(self.indir)
+
+    def test_02_createrepo_skipsymlinks(self):
+        """--skip-symlinks"""
+        self.assert_same_results(self.indir, "--skip-symlinks")
+
+    def test_03_createrepo_excludes(self):
+        """--excludes"""
+        self.assert_same_results(self.indir, "--excludes 'Archer-3.4.5-6.x86_64.rpm'")
+
+    def test_04_createrepo_excludes(self):
+        """--excludes"""
+        self.assert_same_results(self.indir, "--excludes 'Archer-*.rpm'")
+
+
+class TestCaseCreaterepoComparative_repowithsymlinks(BaseTestCase):
+    """Repo with 2 packages and 1 symlink to a package"""
+
+    def setup(self):
+        self.indir_addpkg(PACKAGES[0])
+        self.indir_addpkg(PACKAGES[1])
+        pkg_in_tdir = self.copy_pkg(PACKAGES[2], self.tdir)
+        os.symlink(pkg_in_tdir, os.path.join(self.indir, os.path.basename(pkg_in_tdir)))
+
+    def test_01_createrepo(self):
+        """Regular createrepo"""
+        self.assert_same_results(self.indir)
+
+    def test_02_createrepo_skipsymlinks(self):
+        """--skip-symlinks"""
+        self.assert_same_results(self.indir, "--skip-symlinks")
+
+
+class TestCaseCreaterepoComparative_repowithbadpackages(BaseTestCase):
+    """Repo with 1 regular package and few broken packages"""
+
+    def setup(self):
+        self.indir_addpkg(PACKAGES[0])
+        self.indir_makedirs("adirthatlookslike.rpm")
+        self.indir_mkfile("emptyfilethatlookslike.rpm")
+        self.indir_mkfile("afilethatlookslike.rpm", content="foobar")
+
+    def test_01_createrepo(self):
+        """Regular createrepo"""
+        self.assert_same_results(self.indir)

@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import shutil
 import os.path
@@ -165,6 +166,23 @@ class BaseTestCase(unittest.TestCase):
     def copy_pkg(self, name, dst):
         src = os.path.join(PACKAGESDIR, name)
         shutil.copy(src, dst)
+        return os.path.join(dst, name)
+
+    def indir_addpkg(self, name):
+        src = os.path.join(PACKAGESDIR, name)
+        return self.copy_pkg(src, self.indir)
+
+    def indir_makedirs(self, path):
+        path = path.lstrip('/')
+        final_path = os.path.join(self.indir, path)
+        os.makedirs(final_path)
+        return final_path
+
+    def indir_mkfile(self, name, content=""):
+        fn = os.path.join(self.indir, name)
+        with open(fn, "w") as f:
+            f.write(content)
+        return fn
 
     def run_cr(self, dir, args=None, c=False, outdir=None):
         res = CrResult()
@@ -210,12 +228,29 @@ class BaseTestCase(unittest.TestCase):
     def assert_same_results(self, indir, args=None):
         crres = self.run_cr(indir, args)
         crcres = self.run_cr(indir, args, c=True)
-        self.assertFalse(crres.rc)
-        self.assertFalse(crcres.rc)
+        self.assertFalse(crres.rc)   # Error while running createrepo
+        self.assertFalse(crcres.rc)  # Error while running createrepo_c
         cmpres = self.compare_repos(crres.outdir, crcres.outdir)
-        self.assertFalse(cmpres.rc)
+        self.assertFalse(cmpres.rc)  # Repos are not same
+        return (cmpres, crres, crcres)
 
     def assert_repo_sanity(self, repo):
         res = self.check_repo_sanity(repo)
         self.assertFalse(res.rc)
         return res
+
+    def assert_repo_files(self, repo, file_patterns, additional_files_allowed=True):
+        compiled_patterns = map(re.compile, file_patterns)
+        fns = os.listdir(os.path.join(repo, "repodata/"))
+        used_patterns = []
+        for pattern in compiled_patterns:
+            for fn in fns[:]:
+                if pattern.match(fn):
+                    fns.remove(fn)
+                    used_patterns.append(pattern)
+
+        if not additional_files_allowed:
+            self.assertEqual(fns, [])  # Unexpected additional files
+
+        unused_paterns = [x.pattern for x in (set(compiled_patterns) - set(used_patterns))]
+        self.assertEqual(unused_paterns, [])  # Some patterns weren't used

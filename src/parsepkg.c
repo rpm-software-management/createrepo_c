@@ -221,9 +221,8 @@ cr_xml_from_rpm(const char *filename,
                 struct stat *stat_buf,
                 GError **err)
 {
-    const char *checksum_type_str;
+    cr_Package *pkg;
     struct cr_XmlStruct result;
-    GError *tmp_err = NULL;
 
     assert(filename);
     assert(!err || *err == NULL);
@@ -232,76 +231,17 @@ cr_xml_from_rpm(const char *filename,
     result.filelists = NULL;
     result.other     = NULL;
 
-    checksum_type_str = cr_checksum_name_str(checksum_type);
-
-
-    // Read header
-
-    Header hdr;
-    read_header(filename, &hdr, &tmp_err);
-    if (tmp_err) {
-        g_propagate_error(err, tmp_err);
+    pkg = cr_package_from_rpm(filename,
+                              checksum_type,
+                              location_href,
+                              location_base,
+                              changelog_limit,
+                              stat_buf,
+                              err);
+    if (!pkg)
         return result;
-    }
 
-
-    // Get file stat
-
-    gint64 mtime;
-    gint64 size;
-
-    if (!stat_buf) {
-        struct stat stat_buf_own;
-        if (stat(filename, &stat_buf_own) == -1) {
-            g_warning("%s: stat() error (%s)", __func__, strerror(errno));
-            g_set_error(err,  CR_PARSEPKG_ERROR, CRE_IO, "stat() failed");
-            headerFree(hdr);
-            return result;
-        }
-        mtime  = stat_buf_own.st_mtime;
-        size   = stat_buf_own.st_size;
-    } else {
-        mtime  = stat_buf->st_mtime;
-        size   = stat_buf->st_size;
-    }
-
-
-    // Compute checksum
-
-    char *checksum = cr_checksum_file(filename, checksum_type, &tmp_err);
-    if (!checksum) {
-        g_propagate_prefixed_error(err, tmp_err,
-                                   "Error while checksum calculation: ");
-        headerFree(hdr);
-        return result;
-    }
-
-
-    // Get header range
-
-    struct cr_HeaderRangeStruct hdr_r = cr_get_header_byte_range(filename,
-                                                                 &tmp_err);
-    if (tmp_err) {
-        g_propagate_prefixed_error(err, tmp_err,
-                                   "Error while determinig header range: ");
-        free(checksum);
-        return result;
-    }
-
-
-    // Gen XML
-
-    result = cr_xml_from_header(hdr, mtime, size, checksum, checksum_type_str,
-                                location_href, location_base, changelog_limit,
-                                hdr_r.start, hdr_r.end, &tmp_err);
-    free(checksum);
-    headerFree(hdr);
-
-    if (tmp_err) {
-        g_propagate_prefixed_error(err, tmp_err,
-                                   "Error while checksum calculation:");
-        return result;
-    }
-
+    result = cr_xml_dump(pkg, err);
+    cr_package_free(pkg);
     return result;
 }

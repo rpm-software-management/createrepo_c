@@ -195,13 +195,24 @@ cr_package_from_rpm(const char *filename,
 
     // Get package object
 
-    pkg = cr_package_from_header(hdr, mtime, size, checksum, checksum_type_str,
-                             location_href, location_base, changelog_limit,
-                             hdr_r.start, hdr_r.end, &tmp_err);
+    pkg = cr_package_from_header(hdr, changelog_limit, &tmp_err);
+
+
+    // Fill missing values
+
+    pkg->pkgId = cr_safe_string_chunk_insert(pkg->chunk, checksum);
+    pkg->checksum_type = cr_safe_string_chunk_insert(pkg->chunk, checksum_type_str);
+    pkg->time_file = mtime;
+    pkg->size_package = size;
+    pkg->location_href = cr_safe_string_chunk_insert(pkg->chunk, location_href);
+    pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, location_base);
+    pkg->rpm_header_start = hdr_r.start;
+    pkg->rpm_header_end = hdr_r.end;
+
     free(checksum);
     headerFree(hdr);
 
-    if (tmp_err) {
+    if (!pkg) {
         g_propagate_prefixed_error(err, tmp_err,
                                    "Error while checksum calculation:");
         return NULL;

@@ -138,11 +138,7 @@ cr_compare_dependency(const char *dep1, const char *dep2)
 
 
 cr_Package *
-cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
-                       const char *checksum, const char *checksum_type,
-                       const char *location_href, const char *location_base,
-                       int changelog_limit, gint64 hdr_start, gint64 hdr_end,
-                       GError **err)
+cr_package_from_header(Header hdr, int changelog_limit, GError **err)
 {
     cr_Package *pkg;
 
@@ -168,7 +164,6 @@ cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
 
     // Fill package structure
 
-    pkg->pkgId = cr_safe_string_chunk_insert(pkg->chunk, checksum);
     pkg->name = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_NAME));
 
     gint64 is_src = headerGetNumber(hdr, RPMTAG_SOURCEPACKAGE);
@@ -191,7 +186,6 @@ cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
     pkg->summary = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_SUMMARY));
     pkg->description = cr_safe_string_chunk_insert_null(pkg->chunk, headerGetString(hdr, RPMTAG_DESCRIPTION));
     pkg->url = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_URL));
-    pkg->time_file = mtime;
     if (headerGet(hdr, RPMTAG_BUILDTIME, td, flags)) {
         pkg->time_build = rpmtdGetNumber(td);
     }
@@ -200,19 +194,13 @@ cr_package_from_header(Header hdr, gint64 mtime, gint64 size,
     pkg->rpm_group = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_GROUP));
     pkg->rpm_buildhost = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_BUILDHOST));
     pkg->rpm_sourcerpm = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_SOURCERPM));
-    pkg->rpm_header_start = hdr_start;
-    pkg->rpm_header_end = hdr_end;
     pkg->rpm_packager = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_PACKAGER));
-    pkg->size_package = size;
     if (headerGet(hdr, RPMTAG_SIZE, td, flags)) {
         pkg->size_installed = rpmtdGetNumber(td);
     }
     if (headerGet(hdr, RPMTAG_ARCHIVESIZE, td, flags)) {
         pkg->size_archive = rpmtdGetNumber(td);
     }
-    pkg->location_href = cr_safe_string_chunk_insert(pkg->chunk, location_href);
-    pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, location_base);
-    pkg->checksum_type = cr_safe_string_chunk_insert(pkg->chunk, checksum_type);
 
     rpmtdFreeData(td);
     rpmtdFree(td);

@@ -519,7 +519,7 @@ cr_metadata_load_xml(cr_Metadata *md,
 
     // How much items we really use
     g_debug("%s: Really usable items: %d", __func__,
-            g_hash_table_size(intern_hashtable));
+            g_hash_table_size(md->ht));
 
     // Cleanup
 

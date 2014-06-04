@@ -148,36 +148,39 @@ cr_package_from_rpm(const char *filename,
                     struct stat *stat_buf,
                     GError **err)
 {
-    Header hdr;
     cr_Package *pkg = NULL;
-    const char *checksum_type_str;
     GError *tmp_err = NULL;
 
     assert(filename);
     assert(!err || *err == NULL);
 
-    checksum_type_str = cr_checksum_name_str(checksum_type);
+    // Get a package object
+    pkg = cr_package_from_rpm_base(filename, changelog_limit, err);
+    if (!pkg)
+        goto errexit;
 
-    if (!read_header(filename, &hdr, err))
-        return NULL;
+    pkg->location_href = cr_safe_string_chunk_insert(pkg->chunk, location_href);
+    pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, location_base);
+
+    // Get checksum type string
+    pkg->checksum_type = cr_safe_string_chunk_insert(pkg->chunk,
+                                        cr_checksum_name_str(checksum_type));
 
     // Get file stat
-    gint64 mtime;
-    gint64 size;
-
     if (!stat_buf) {
         struct stat stat_buf_own;
         if (stat(filename, &stat_buf_own) == -1) {
-            g_warning("%s: stat() error (%s)", __func__, strerror(errno));
-            g_set_error(err,  CR_PARSEPKG_ERROR, CRE_IO, "stat() failed");
-            headerFree(hdr);
-            return NULL;
+            g_warning("%s: stat(%s) error (%s)", __func__,
+                      filename, strerror(errno));
+            g_set_error(err,  CR_PARSEPKG_ERROR, CRE_IO, "stat(%s) failed: %s",
+                        filename, strerror(errno));
+            goto errexit;
         }
-        mtime  = stat_buf_own.st_mtime;
-        size   = stat_buf_own.st_size;
+        pkg->time_file    = stat_buf_own.st_mtime;
+        pkg->size_package = stat_buf_own.st_size;
     } else {
-        mtime  = stat_buf->st_mtime;
-        size   = stat_buf->st_size;
+        pkg->time_file    = stat_buf->st_mtime;
+        pkg->size_package = stat_buf->st_size;
     }
 
     // Compute checksum
@@ -185,9 +188,10 @@ cr_package_from_rpm(const char *filename,
     if (!checksum) {
         g_propagate_prefixed_error(err, tmp_err,
                                    "Error while checksum calculation: ");
-        headerFree(hdr);
-        return NULL;
+        goto errexit;
     }
+    pkg->pkgId = cr_safe_string_chunk_insert(pkg->chunk, checksum);
+    free(checksum);
 
     // Get header range
     struct cr_HeaderRangeStruct hdr_r = cr_get_header_byte_range(filename,
@@ -195,31 +199,17 @@ cr_package_from_rpm(const char *filename,
     if (tmp_err) {
         g_propagate_prefixed_error(err, tmp_err,
                                    "Error while determinig header range: ");
-        free(checksum);
-        return NULL;
+        goto errexit;
     }
 
-    // Get a package object
-    pkg = cr_package_from_header(hdr, changelog_limit, err);
-    headerFree(hdr);
-    if (!pkg) {
-        free(checksum);
-        return NULL;
-    }
-
-    // Fill missing values
-    pkg->pkgId = cr_safe_string_chunk_insert(pkg->chunk, checksum);
-    pkg->checksum_type = cr_safe_string_chunk_insert(pkg->chunk, checksum_type_str);
-    pkg->time_file = mtime;
-    pkg->size_package = size;
-    pkg->location_href = cr_safe_string_chunk_insert(pkg->chunk, location_href);
-    pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, location_base);
     pkg->rpm_header_start = hdr_r.start;
     pkg->rpm_header_end = hdr_r.end;
 
-    free(checksum);
-
     return pkg;
+
+errexit:
+    cr_package_free(pkg);
+    return NULL;
 }
 
 

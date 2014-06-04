@@ -43,7 +43,21 @@ void cr_package_parser_init();
  */
 void cr_package_parser_cleanup();
 
-/** Generate package object from package file.
+/** Generate a package object from a package file.
+ * Some attributes like pkgId (checksum), checksum_type, time_file,
+ * location_href, location_base, rpm_header_start, rpm_header_end
+ * are not filled.
+ * @param filename              filename
+ * @param changelog_limit       number of changelogs that will be loaded
+ * @param err                   GError **
+ * @return                      cr_Package or NULL on error
+ */
+cr_Package *
+cr_package_from_rpm_base(const char *filename,
+                         int changelog_limit,
+                         GError **err);
+
+/** Generate a package object from a package file.
  * @param filename              filename
  * @param checksum_type         type of checksum to be used
  * @param location_href         package location inside repository
@@ -52,7 +66,7 @@ void cr_package_parser_cleanup();
  * @param stat_buf              struct stat of the filename
  *                              (optional - could be NULL)
  * @param err                   GError **
- * @return                      cr_Package
+ * @return                      cr_Package or NULL on error
  */
 cr_Package *cr_package_from_rpm(const char *filename,
                                 cr_ChecksumType checksum_type,

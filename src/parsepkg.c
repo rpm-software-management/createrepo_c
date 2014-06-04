@@ -80,7 +80,7 @@ cr_package_parser_cleanup()
     g_once(&package_parser_cleanup_once, cr_package_parser_cleanup_once_cb, NULL);
 }
 
-static int
+static gboolean
 read_header(const char *filename, Header *hdr, GError **err)
 {
     assert(filename);
@@ -92,7 +92,7 @@ read_header(const char *filename, Header *hdr, GError **err)
                   __func__, filename, strerror(errno));
         g_set_error(err, CR_PARSEPKG_ERROR, CRE_IO,
                     "Fopen failed: %s", strerror(errno));
-        return CRE_IO;
+        return FALSE;
     }
 
     int rc = rpmReadPackageFile(cr_ts, fd, NULL, hdr);
@@ -112,12 +112,31 @@ read_header(const char *filename, Header *hdr, GError **err)
                 g_set_error(err, CR_PARSEPKG_ERROR, CRE_IO,
                             "rpmReadPackageFile() error");
                 Fclose(fd);
-                return CRE_IO;
+                return FALSE;
         }
     }
 
     Fclose(fd);
-    return CRE_OK;
+    return TRUE;
+}
+
+cr_Package *
+cr_package_from_rpm_base(const char *filename,
+                         int changelog_limit,
+                         GError **err)
+{
+    Header hdr;
+    cr_Package *pkg;
+
+    assert(filename);
+    assert(!err || *err == NULL);
+
+    if (!read_header(filename, &hdr, err))
+        return NULL;
+
+    pkg = cr_package_from_header(hdr, changelog_limit, err);
+    headerFree(hdr);
+    return pkg;
 }
 
 cr_Package *
@@ -129,6 +148,7 @@ cr_package_from_rpm(const char *filename,
                     struct stat *stat_buf,
                     GError **err)
 {
+    Header hdr;
     cr_Package *pkg = NULL;
     const char *checksum_type_str;
     GError *tmp_err = NULL;
@@ -138,19 +158,10 @@ cr_package_from_rpm(const char *filename,
 
     checksum_type_str = cr_checksum_name_str(checksum_type);
 
-
-    // Read header
-
-    Header hdr;
-    read_header(filename, &hdr, &tmp_err);
-    if (tmp_err) {
-        g_propagate_error(err, tmp_err);
+    if (!read_header(filename, &hdr, err))
         return NULL;
-    }
-
 
     // Get file stat
-
     gint64 mtime;
     gint64 size;
 
@@ -169,9 +180,7 @@ cr_package_from_rpm(const char *filename,
         size   = stat_buf->st_size;
     }
 
-
     // Compute checksum
-
     char *checksum = cr_checksum_file(filename, checksum_type, &tmp_err);
     if (!checksum) {
         g_propagate_prefixed_error(err, tmp_err,
@@ -180,9 +189,7 @@ cr_package_from_rpm(const char *filename,
         return NULL;
     }
 
-
     // Get header range
-
     struct cr_HeaderRangeStruct hdr_r = cr_get_header_byte_range(filename,
                                                                  &tmp_err);
     if (tmp_err) {
@@ -192,14 +199,15 @@ cr_package_from_rpm(const char *filename,
         return NULL;
     }
 
-
-    // Get package object
-
-    pkg = cr_package_from_header(hdr, changelog_limit, &tmp_err);
-
+    // Get a package object
+    pkg = cr_package_from_header(hdr, changelog_limit, err);
+    headerFree(hdr);
+    if (!pkg) {
+        free(checksum);
+        return NULL;
+    }
 
     // Fill missing values
-
     pkg->pkgId = cr_safe_string_chunk_insert(pkg->chunk, checksum);
     pkg->checksum_type = cr_safe_string_chunk_insert(pkg->chunk, checksum_type_str);
     pkg->time_file = mtime;
@@ -210,13 +218,6 @@ cr_package_from_rpm(const char *filename,
     pkg->rpm_header_end = hdr_r.end;
 
     free(checksum);
-    headerFree(hdr);
-
-    if (!pkg) {
-        g_propagate_prefixed_error(err, tmp_err,
-                                   "Error while checksum calculation:");
-        return NULL;
-    }
 
     return pkg;
 }

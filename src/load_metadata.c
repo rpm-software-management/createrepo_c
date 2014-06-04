@@ -200,14 +200,18 @@ primary_pkgcb(cr_Package *pkg, void *cbdata, GError **err)
     assert(pkg);
     assert(pkg->pkgId);
 
-    if (cb_data->pkglist_ht && basename) {
-        store_pkg = g_hash_table_lookup_extended(cb_data->pkglist_ht,
-                                                 basename, NULL, NULL);
-    }
-
     if (cb_data->chunk) {
+        // Set pkg internal chunk to NULL,
+        // if global chunk for all packages is used
         assert(pkg->chunk == cb_data->chunk);
         pkg->chunk = NULL;
+    }
+
+    if (cb_data->pkglist_ht && basename) {
+        // If a pkglist was specified,
+        // check if the package should be loaded or not
+        store_pkg = g_hash_table_lookup_extended(cb_data->pkglist_ht,
+                                                 basename, NULL, NULL);
     }
 
     if (store_pkg) {
@@ -245,6 +249,10 @@ primary_pkgcb(cr_Package *pkg, void *cbdata, GError **err)
             // The existing package is different. We have two different
             // packages with the same checksum -> drop both of them
             // and append this checksum to the ignored_pkgIds
+            // XXX: Note that this constrain works only for single repo!
+            //      If the same cr_Metadata are loaded from several different
+            //      repos, than inter-repo packages with matching checksum
+            //      are not checked.
             g_debug("Multiple different packages (basename, mtime or size "
                     "doesn't match) with the same checksum: %s. "
                     "Ignoring all packages with the checksum.", pkg->pkgId);
@@ -493,14 +501,29 @@ cr_metadata_load_xml(cr_Metadata *md,
                 g_debug("%s: Key \"%s\" already exists in hashtable - Keeping the first occurrence",
                         __func__, (char *) new_key);
             } else {
-                // We know that the packages with the same key have a different
-                // checksum, because cr_load_xml_files() load packages which
-                // have same checksums, basenames, mtime, sizes only once.
-                // So there is guaranted that each loaded package has different
-                // checksum then another one.
-                g_debug("%s: Key \"%s\" is present multiple times. Ignoring "
-                        "all occurrences.", __func__, (gchar *) new_key);
-                g_hash_table_insert(ignored_keys, g_strdup((gchar *) new_key), NULL);
+                if (pkg->time_file != epkg->time_file
+                    || pkg->size_package != epkg->size_package
+                    || g_strcmp0(pkg->pkgId, epkg->pkgId)
+                    || g_strcmp0(cr_get_filename(pkg->location_href),
+                                 cr_get_filename(epkg->location_href))
+                    )
+                {
+                    // We got a key (checksum, filename, pkg name, ..)
+                    // which has a multiple occurences which are different.
+                    // Ignore such key
+                    g_debug("%s: Key \"%s\" is present multiple times and with "
+                            "different values. Ignoring all occurrences. "
+                            "[size_package: %"G_GINT64_FORMAT"|%"G_GINT64_FORMAT
+                            "; time_file: %"G_GINT64_FORMAT"|%"G_GINT64_FORMAT
+                            "; pkgId: %s|%s; basename: %s|%s]",
+                            __func__, (gchar *) new_key,
+                            pkg->size_package, epkg->size_package,
+                            pkg->time_file, epkg->time_file,
+                            pkg->pkgId, epkg->pkgId,
+                            cr_get_filename(pkg->location_href),
+                            cr_get_filename(epkg->location_href));
+                    g_hash_table_insert(ignored_keys, g_strdup((gchar *) new_key), NULL);
+                }
             }
             // Remove the package from the iterator anyway
             g_hash_table_iter_remove(&iter);

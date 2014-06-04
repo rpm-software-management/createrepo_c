@@ -70,6 +70,7 @@ class BaseTestCase(unittest.TestCase):
         # Prevent use of a first line from test docstring as its name in output
         self.shortDescription_orig = self.shortDescription
         self.shortDescription = self._shortDescription
+        self.main_cwd = os.getcwd()
 
     def _shortDescription(self):
         return ".".join(self.id().split('.')[-2:])
@@ -80,6 +81,7 @@ class BaseTestCase(unittest.TestCase):
         unittest.TestCase.run(self, result)
 
     def setUp(self):
+        os.chdir(self.main_cwd) # In case of TimedOutException in Nose test... the tearDown is not called :-/
         caller = self.id().split(".", 3)[-1]
         self.tdir = os.path.abspath(os.path.join(self.tcdir, caller))
         os.mkdir(self.tdir)
@@ -90,7 +92,6 @@ class BaseTestCase(unittest.TestCase):
             fn = os.path.join(self.tdir, "description")
             open(fn, "w").write(description+'\n')
         #self.log = # TODO
-        self.main_cwd = os.getcwd()
         os.chdir(self.tdir)
         self.setup()
 
@@ -110,12 +111,20 @@ class BaseTestCase(unittest.TestCase):
     def runcmd(self, cmd, logfile=None, workdir=None, stdin_data=None):
         """Stolen from the kobo library.
          Author of the original function is dmach@redhat.com"""
+
+        # TODO: Add time how long the command takes
+
         if type(cmd) in (list, tuple):
             import pipes
             cmd = " ".join(pipes.quote(i) for i in cmd)
 
         if logfile is not None:
+            already_exists = False
+            if os.path.exists(logfile):
+                already_exists = True
             logfile = open(logfile, "a")
+            if already_exists:
+                logfile.write("\n{0}\n Another run\n{0}\n".format('='*79))
             logfile.write("cd %s\n" % os.getcwd())
             for var in ("PATH", "PYTHONPATH", "LD_LIBRARY_PATH"):
                 logfile.write('export %s="%s"\n' % (var, os.environ.get(var,"")))
@@ -192,7 +201,8 @@ class BaseTestCase(unittest.TestCase):
             res.outdir = os.path.join(self.tdir, res.prog)
         else:
             res.outdir = os.path.join(self.tdir, outdir)
-        os.mkdir(res.outdir)
+        if not os.path.exists(res.outdir):
+            os.mkdir(res.outdir)
         res.logfile =  os.path.join(self.tdir, "out_%s" % res.prog)
         res.cmd = "%(prog)s --verbose -o %(outdir)s %(args)s %(dir)s" % {
             "prog": res.prog,

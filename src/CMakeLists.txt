@@ -1,6 +1,7 @@
 SET (createrepo_c_SRCS
      checksum.c
      compression_wrapper.c
+     dumper_thread.c
      error.c
      helpers.c
      load_metadata.c

@@ -59,6 +59,7 @@ struct UserData {
                                     //       This part     |<----->|
     const char *checksum_type_str;  // Name of selected checksum
     cr_ChecksumType checksum_type;  // Constant representing selected checksum
+    const char *checksum_cachedir;  // Dir with cached checksums
     gboolean skip_symlinks;         // Skip symlinks
     long package_count;             // Total number of packages to process
 

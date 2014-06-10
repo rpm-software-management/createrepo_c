@@ -83,6 +83,7 @@ struct CmdOptions {
                                      "5d" (5 days), ..
                                      Available units: (m - minutes, h - hours,
                                      d - days) */
+    char *cachedir;             /*!< Cache dir for checksums */
 
     /* Items filled by check_arguments() */
 
@@ -102,6 +103,7 @@ struct CmdOptions {
                                      during --update.
                                      Filled if --retain-old-md-by-age
                                      is used */
+    char *checksum_cachedir;    /*!< Path to cachedir */
 };
 
 /**

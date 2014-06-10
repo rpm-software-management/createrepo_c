@@ -850,6 +850,7 @@ main(int argc, char **argv)
     user_data.location_base     = cmd_options->location_base;
     user_data.checksum_type_str = cr_checksum_name_str(cmd_options->checksum_type);
     user_data.checksum_type     = cmd_options->checksum_type;
+    user_data.checksum_cachedir = cmd_options->checksum_cachedir;
     user_data.skip_symlinks     = cmd_options->skip_symlinks;
     user_data.skip_stat         = cmd_options->skip_stat;
     user_data.old_metadata      = old_metadata;

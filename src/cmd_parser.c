@@ -17,8 +17,11 @@
  * USA.
  */
 
+#include <glib.h>
+#include <glib/gstdio.h>
 #include <string.h>
 #include <assert.h>
+#include <errno.h>
 #include "cmd_parser.h"
 #include "error.h"
 #include "compression_wrapper.h"
@@ -41,6 +44,8 @@ struct CmdOptions _cmd_options = {
         .compression_type     = CR_CW_UNKNOWN_COMPRESSION,
         .ignore_lock          = DEFAULT_IGNORE_LOCK,
         .md_max_age           = 0,
+        .cachedir             = NULL,
+        .checksum_cachedir    = NULL,
     };
 
 
@@ -131,6 +136,8 @@ static GOptionEntry cmd_entries[] =
       "During --update, remove all files in repodata/ which are older "
       "then the specified period of time. (e.g. '2h', '30d', ...). "
       "Available units (m - minutes, h - hours, d - days)", "AGE" },
+    { "cachedir", 'c', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.cachedir),
+      "Set path to cache dir", "CACHEDIR." },
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL },
 };
 
@@ -436,6 +443,38 @@ check_arguments(struct CmdOptions *options,
             return FALSE;
     }
 
+    // Check cachedir
+    if (options->cachedir) {
+        if (g_str_has_prefix(options->cachedir, "/")) {
+            // Absolute local path
+            options->checksum_cachedir = g_strdup(options->cachedir);
+        } else {
+            // Relative path (from intput_dir)
+            options->checksum_cachedir = g_strconcat(input_dir,
+                                                     options->cachedir,
+                                                     NULL);
+        }
+
+        // Create the cache directory
+        if (g_mkdir(options->checksum_cachedir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
+            if (errno == EEXIST) {
+                if (!g_file_test(options->checksum_cachedir, G_FILE_TEST_IS_DIR)) {
+                    g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+                                "The %s already exists and it is not a directory!",
+                                options->checksum_cachedir);
+                    return FALSE;
+                }
+            } else {
+                g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+                            "cannot use cachedir %s: %s",
+                            options->checksum_cachedir, strerror(errno));
+                return FALSE;
+            }
+        }
+
+        g_debug("Cachedir for checksums is %s", options->checksum_cachedir);
+    }
+
     return TRUE;
 }
 
@@ -453,6 +492,9 @@ free_options(struct CmdOptions *options)
     g_free(options->groupfile);
     g_free(options->groupfile_fullpath);
     g_free(options->revision);
+    g_free(options->retain_old_md_by_age);
+    g_free(options->cachedir);
+    g_free(options->checksum_cachedir);
 
     g_strfreev(options->excludes);
     g_strfreev(options->includepkg);

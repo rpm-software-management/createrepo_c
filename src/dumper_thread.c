@@ -143,6 +143,7 @@ write_pkg(long id,
 static char *
 get_checksum(const char *filename,
              cr_ChecksumType type,
+             const char *cachedir,
              GError **err)
 {
     GError *tmp_err = NULL;
@@ -159,6 +160,7 @@ get_checksum(const char *filename,
 static cr_Package *
 load_rpm(const char *filename,
          cr_ChecksumType checksum_type,
+         const char *checksum_cachedir,
          const char *location_href,
          const char *location_base,
          int changelog_limit,
@@ -201,7 +203,8 @@ load_rpm(const char *filename,
     }
 
     // Compute checksum
-    char *checksum = get_checksum(filename, checksum_type, &tmp_err);
+    char *checksum = get_checksum(filename, checksum_type,
+                                  checksum_cachedir, &tmp_err);
     if (!checksum)
         goto errexit;
     pkg->pkgId = cr_safe_string_chunk_insert(pkg->chunk, checksum);
@@ -289,8 +292,9 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     if (!old_used) {
         // Load package from file
         pkg = load_rpm(task->full_path, udata->checksum_type,
-                       location_href, udata->location_base,
-                       udata->changelog_limit, NULL, &tmp_err);
+                       udata->checksum_cachedir, location_href,
+                       udata->location_base, udata->changelog_limit,
+                       NULL, &tmp_err);
         assert(pkg || tmp_err);
 
         if (!pkg) {

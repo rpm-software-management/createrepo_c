@@ -20,17 +20,18 @@
 #define _XOPEN_SOURCE 500
 
 #include <glib.h>
-#include <assert.h>
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
 #include <arpa/inet.h>
-#include <unistd.h>
-#include <ftw.h>
-#include <time.h>
+#include <assert.h>
 #include <curl/curl.h>
+#include <errno.h>
+#include <ftw.h>
 #include <rpm/rpmlib.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/time.h>
+#include <time.h>
+#include <unistd.h>
 #include "error.h"
 #include "misc.h"
 
@@ -1236,16 +1237,19 @@ cr_rm(const char *path,
 gchar *
 cr_append_pid_and_datetime(const char *str, const char *suffix)
 {
-    GDateTime *cur_datetime = g_date_time_new_now_local();
-    gchar *datetime = g_date_time_format(cur_datetime, "%Y%m%d%H%M%S");
-    gchar *result = g_strdup_printf("%s%jd.%s.%d%s",
+    struct tm * timeinfo;
+    struct timeval tv;
+    char datetime[80];
+
+    gettimeofday(&tv, NULL);
+    timeinfo = localtime (&(tv.tv_sec));
+    strftime(datetime, 80, "%Y%m%d%H%M%S", timeinfo);
+    gchar *result = g_strdup_printf("%s%jd.%s.%ld%s",
                                     str ? str : "",
                                     (intmax_t) getpid(),
                                     datetime,
-                                    g_date_time_get_microsecond(cur_datetime),
+                                    tv.tv_usec,
                                     suffix ? suffix : "");
-    g_free(datetime);
-    g_date_time_unref(cur_datetime);
     return result;
 }
 

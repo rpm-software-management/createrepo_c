@@ -26,14 +26,15 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "checksum.h"
 #include "dumper_thread.h"
 #include "error.h"
 #include "misc.h"
 #include "parsepkg.h"
 #include "xml_dump.h"
 
-#define MAX_TASK_BUFFER_LEN 20
-
+#define MAX_TASK_BUFFER_LEN         20
+#define CACHEDCHKSUM_BUFFER_LEN     2048
 
 struct BufferedTask {
     long id;                        // ID of the task
@@ -143,17 +144,79 @@ write_pkg(long id,
 static char *
 get_checksum(const char *filename,
              cr_ChecksumType type,
+             cr_Package *pkg,
              const char *cachedir,
              GError **err)
 {
     GError *tmp_err = NULL;
     char *checksum = NULL;
+    char *cachefn = NULL;
 
+    if (cachedir) {
+        // Prepare cache fn
+        char *key, *cachefilename;
+        cr_ChecksumCtx *ctx = cr_checksum_new(type, err);
+        if (!ctx) return NULL;
+
+        if (pkg->siggpg)
+            cr_checksum_update(ctx, pkg->siggpg->data, pkg->siggpg->size, NULL);
+        if (pkg->sigpgp)
+            cr_checksum_update(ctx, pkg->sigpgp->data, pkg->sigpgp->size, NULL);
+        if (pkg->hdrid)
+            cr_checksum_update(ctx, pkg->hdrid, strlen(pkg->hdrid), NULL);
+
+        key = cr_checksum_final(ctx, err);
+        if (!key) return NULL;
+
+        cachefn = g_strdup_printf("%s%s-%s-%"G_GINT64_FORMAT"-%"G_GINT64_FORMAT,
+                                  cachedir,
+                                  cr_get_filename(pkg->location_href),
+                                  key, pkg->size_installed, pkg->time_file);
+        free(key);
+
+        // Try to load checksum
+        FILE *f = fopen(cachefn, "r");
+        if (f) {
+            char buf[CACHEDCHKSUM_BUFFER_LEN];
+            size_t readed = fread(buf, 1, CACHEDCHKSUM_BUFFER_LEN, f);
+            if (!ferror(f) && readed > 0) {
+                checksum = g_strndup(buf, readed);
+            }
+            fclose(f);
+        }
+
+        if (checksum) {
+            g_debug("Cached checksum used: %s: \"%s\"", cachefn, checksum);
+            goto exit;
+        }
+    }
+
+    // Calculate checksum
     checksum = cr_checksum_file(filename, type, &tmp_err);
     if (!checksum) {
         g_propagate_prefixed_error(err, tmp_err,
                                    "Error while checksum calculation: ");
+        goto exit;
     }
+
+    // Cache the checksum value
+    if (cachefn && !g_file_test(cachefn, G_FILE_TEST_EXISTS)) {
+        gchar *template = g_strconcat(cachefn, "-XXXXXX", NULL);
+        gint fd = g_mkstemp(template);
+        if (fd < 0) {
+            g_free(template);
+            goto exit;
+        }
+        write(fd, checksum, strlen(checksum));
+        close(fd);
+        if (g_rename(template, cachefn) == -1)
+            g_remove(template);
+        g_free(template);
+    }
+
+exit:
+    g_free(cachefn);
+
     return checksum;
 }
 
@@ -165,6 +228,7 @@ load_rpm(const char *filename,
          const char *location_base,
          int changelog_limit,
          struct stat *stat_buf,
+         cr_HeaderReadingFlags hdrrflags,
          GError **err)
 {
     cr_Package *pkg = NULL;
@@ -174,7 +238,7 @@ load_rpm(const char *filename,
     assert(!err || *err == NULL);
 
     // Get a package object
-    pkg = cr_package_from_rpm_base(filename, changelog_limit, err);
+    pkg = cr_package_from_rpm_base(filename, changelog_limit, hdrrflags, err);
     if (!pkg)
         goto errexit;
 
@@ -203,7 +267,7 @@ load_rpm(const char *filename,
     }
 
     // Compute checksum
-    char *checksum = get_checksum(filename, checksum_type,
+    char *checksum = get_checksum(filename, checksum_type, pkg,
                                   checksum_cachedir, &tmp_err);
     if (!checksum)
         goto errexit;
@@ -239,6 +303,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     cr_Package *pkg = NULL;     // Package from file
     struct stat stat_buf;       // Struct with info from stat() on file
     struct cr_XmlStruct res;    // Structure for generated XML
+    cr_HeaderReadingFlags hdrrflags = CR_HDRR_NONE;
 
     struct UserData *udata = (struct UserData *) user_data;
     struct PoolTask *task  = (struct PoolTask *) data;
@@ -247,6 +312,10 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     // including '/' char
     const char *location_href = task->full_path + udata->repodir_name_len;
     const char *location_base = udata->location_base;
+
+    // If --cachedir is used, load signatures and hdrid from packages too
+    if (udata->checksum_cachedir)
+        hdrrflags = CR_HDRR_LOADHDRID | CR_HDRR_LOADSIGNATURES;
 
     // Get stat info about file
     if (udata->old_metadata && !(udata->skip_stat)) {
@@ -294,7 +363,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         pkg = load_rpm(task->full_path, udata->checksum_type,
                        udata->checksum_cachedir, location_href,
                        udata->location_base, udata->changelog_limit,
-                       NULL, &tmp_err);
+                       NULL, hdrrflags, &tmp_err);
         assert(pkg || tmp_err);
 
         if (!pkg) {

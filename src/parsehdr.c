@@ -138,7 +138,10 @@ cr_compare_dependency(const char *dep1, const char *dep2)
 
 
 cr_Package *
-cr_package_from_header(Header hdr, int changelog_limit, GError **err)
+cr_package_from_header(Header hdr,
+                       int changelog_limit,
+                       cr_HeaderReadingFlags hdrrflags,
+                       GError **err)
 {
     cr_Package *pkg;
 
@@ -555,30 +558,37 @@ cr_package_from_header(Header hdr, int changelog_limit, GError **err)
     // Keys and hdrid (data used for caching when the --cachedir is specified)
     //
 
-    pkg->hdrid = cr_safe_string_chunk_insert(pkg->chunk,
-                                             headerGetString(hdr, RPMTAG_HDRID));
+    if (hdrrflags & CR_HDRR_LOADHDRID)
+        pkg->hdrid = cr_safe_string_chunk_insert(pkg->chunk,
+                                                 headerGetString(hdr, RPMTAG_HDRID));
 
-    rpmtd gpgtd = rpmtdNew();
-    rpmtd pgptd = rpmtdNew();
+    if (hdrrflags & CR_HDRR_LOADSIGNATURES) {
+        rpmtd gpgtd = rpmtdNew();
+        rpmtd pgptd = rpmtdNew();
 
-    if (headerGet(hdr, RPMTAG_SIGGPG, gpgtd, flags)) {
-        pkg->siggpg = cr_binary_data_new();
-        pkg->siggpg->size = gpgtd->count;
-        pkg->siggpg->data = g_string_chunk_insert_len(pkg->chunk,
-                                                      gpgtd->data,
-                                                      gpgtd->count);
+        if (headerGet(hdr, RPMTAG_SIGGPG, gpgtd, hdrrflags)
+            && gpgtd->count > 0)
+        {
+            pkg->siggpg = cr_binary_data_new();
+            pkg->siggpg->size = gpgtd->count;
+            pkg->siggpg->data = g_string_chunk_insert_len(pkg->chunk,
+                                                          gpgtd->data,
+                                                          gpgtd->count);
+        }
+
+        if (headerGet(hdr, RPMTAG_SIGPGP, pgptd, hdrrflags)
+            && pgptd->count > 0)
+        {
+            pkg->sigpgp = cr_binary_data_new();
+            pkg->sigpgp->size = pgptd->count;
+            pkg->sigpgp->data = g_string_chunk_insert_len(pkg->chunk,
+                                                          pgptd->data,
+                                                          pgptd->count);
+        }
+
+        rpmtdFree(gpgtd);
+        rpmtdFree(pgptd);
     }
-
-    if (headerGet(hdr, RPMTAG_SIGPGP, pgptd, flags)) {
-        pkg->sigpgp = cr_binary_data_new();
-        pkg->sigpgp->size = pgptd->count;
-        pkg->sigpgp->data = g_string_chunk_insert_len(pkg->chunk,
-                                                      pgptd->data,
-                                                      pgptd->count);
-    }
-
-    rpmtdFree(gpgtd);
-    rpmtdFree(pgptd);
 
     return pkg;
 }

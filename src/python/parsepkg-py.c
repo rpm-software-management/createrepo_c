@@ -38,6 +38,7 @@ py_package_from_rpm(PyObject *self, PyObject *args)
     int checksum_type, changelog_limit;
     char *filename, *location_href, *location_base;
     GError *tmp_err = NULL;
+    cr_HeaderReadingFlags flags = CR_HDRR_NONE; // TODO - support for flags
 
     if (!PyArg_ParseTuple(args, "sizzi:py_package_from_rpm",
                                          &filename,
@@ -49,7 +50,8 @@ py_package_from_rpm(PyObject *self, PyObject *args)
     }
 
     pkg = cr_package_from_rpm(filename, checksum_type, location_href,
-                              location_base, changelog_limit, NULL, &tmp_err);
+                              location_base, changelog_limit, NULL,
+                              flags, &tmp_err);
     if (tmp_err) {
         nice_exception(&tmp_err, "Cannot load %s: ", filename);
         return NULL;

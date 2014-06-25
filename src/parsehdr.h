@@ -34,15 +34,25 @@ extern "C" {
  *  @{
  */
 
+/** Flags
+ */
+typedef enum {
+    CR_HDRR_NONE            = (1 << 0),
+    CR_HDRR_LOADHDRID       = (1 << 1), /*!< Load hdrid */
+    CR_HDRR_LOADSIGNATURES  = (1 << 2), /*!< Load siggpg and siggpg */
+} cr_HeaderReadingFlags;
+
 /** Read data from header and return filled cr_Package structure.
  * All const char * params could be NULL.
  * @param hdr                   Header
  * @param changelog_limit       number of changelog entries
+ * @param flags                 Flags for header reading
  * @param err                   GError **
  * @return                      Newly allocated cr_Package or NULL on error
  */
 cr_Package *cr_package_from_header(Header hdr,
                                    int changelog_limit,
+                                   cr_HeaderReadingFlags flags,
                                    GError **err);
 
 /** @} */

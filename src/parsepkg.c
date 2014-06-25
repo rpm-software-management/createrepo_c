@@ -123,6 +123,7 @@ read_header(const char *filename, Header *hdr, GError **err)
 cr_Package *
 cr_package_from_rpm_base(const char *filename,
                          int changelog_limit,
+                         cr_HeaderReadingFlags flags,
                          GError **err)
 {
     Header hdr;
@@ -134,7 +135,7 @@ cr_package_from_rpm_base(const char *filename,
     if (!read_header(filename, &hdr, err))
         return NULL;
 
-    pkg = cr_package_from_header(hdr, changelog_limit, err);
+    pkg = cr_package_from_header(hdr, changelog_limit, flags, err);
     headerFree(hdr);
     return pkg;
 }
@@ -146,6 +147,7 @@ cr_package_from_rpm(const char *filename,
                     const char *location_base,
                     int changelog_limit,
                     struct stat *stat_buf,
+                    cr_HeaderReadingFlags flags,
                     GError **err)
 {
     cr_Package *pkg = NULL;
@@ -155,7 +157,7 @@ cr_package_from_rpm(const char *filename,
     assert(!err || *err == NULL);
 
     // Get a package object
-    pkg = cr_package_from_rpm_base(filename, changelog_limit, err);
+    pkg = cr_package_from_rpm_base(filename, changelog_limit, flags, err);
     if (!pkg)
         goto errexit;
 
@@ -239,6 +241,7 @@ cr_xml_from_rpm(const char *filename,
                               location_base,
                               changelog_limit,
                               stat_buf,
+                              CR_HDRR_NONE,
                               err);
     if (!pkg)
         return result;

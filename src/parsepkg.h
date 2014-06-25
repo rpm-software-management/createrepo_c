@@ -26,6 +26,7 @@ extern "C" {
 
 #include <glib.h>
 #include "checksum.h"
+#include "parsehdr.h"
 #include "package.h"
 
 /** \defgroup   parsepkg    Package parser API.
@@ -49,12 +50,14 @@ void cr_package_parser_cleanup();
  * are not filled.
  * @param filename              filename
  * @param changelog_limit       number of changelogs that will be loaded
+ * @param flags                 Flags for header reading
  * @param err                   GError **
  * @return                      cr_Package or NULL on error
  */
 cr_Package *
 cr_package_from_rpm_base(const char *filename,
                          int changelog_limit,
+                         cr_HeaderReadingFlags flags,
                          GError **err);
 
 /** Generate a package object from a package file.
@@ -65,6 +68,7 @@ cr_package_from_rpm_base(const char *filename,
  * @param changelog_limit       number of changelog entries
  * @param stat_buf              struct stat of the filename
  *                              (optional - could be NULL)
+ * @param flags                 Flags for header reading
  * @param err                   GError **
  * @return                      cr_Package or NULL on error
  */
@@ -74,6 +78,7 @@ cr_Package *cr_package_from_rpm(const char *filename,
                                 const char *location_base,
                                 int changelog_limit,
                                 struct stat *stat_buf,
+                                cr_HeaderReadingFlags flags,
                                 GError **err);
 
 /** Generate XML for the specified package.

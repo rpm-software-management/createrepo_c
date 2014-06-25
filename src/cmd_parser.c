@@ -447,12 +447,12 @@ check_arguments(struct CmdOptions *options,
     if (options->cachedir) {
         if (g_str_has_prefix(options->cachedir, "/")) {
             // Absolute local path
-            options->checksum_cachedir = g_strdup(options->cachedir);
+            options->checksum_cachedir = cr_normalize_dir_path(options->cachedir);
         } else {
             // Relative path (from intput_dir)
-            options->checksum_cachedir = g_strconcat(input_dir,
-                                                     options->cachedir,
-                                                     NULL);
+            gchar *tmp = g_strconcat(input_dir, options->cachedir, NULL);
+            options->checksum_cachedir = cr_normalize_dir_path(tmp);
+            g_free(tmp);
         }
 
         // Create the cache directory

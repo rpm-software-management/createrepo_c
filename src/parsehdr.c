@@ -550,5 +550,35 @@ cr_package_from_header(Header hdr, int changelog_limit, GError **err)
     rpmtdFree(changelognames);
     rpmtdFree(changelogtexts);
 
+
+    //
+    // Keys and hdrid (data used for caching when the --cachedir is specified)
+    //
+
+    pkg->hdrid = cr_safe_string_chunk_insert(pkg->chunk,
+                                             headerGetString(hdr, RPMTAG_HDRID));
+
+    rpmtd gpgtd = rpmtdNew();
+    rpmtd pgptd = rpmtdNew();
+
+    if (headerGet(hdr, RPMTAG_SIGGPG, gpgtd, flags)) {
+        pkg->siggpg = cr_binary_data_new();
+        pkg->siggpg->size = gpgtd->count;
+        pkg->siggpg->data = g_string_chunk_insert_len(pkg->chunk,
+                                                      gpgtd->data,
+                                                      gpgtd->count);
+    }
+
+    if (headerGet(hdr, RPMTAG_SIGPGP, pgptd, flags)) {
+        pkg->sigpgp = cr_binary_data_new();
+        pkg->sigpgp->size = pgptd->count;
+        pkg->sigpgp->data = g_string_chunk_insert_len(pkg->chunk,
+                                                      pgptd->data,
+                                                      pgptd->count);
+    }
+
+    rpmtdFree(gpgtd);
+    rpmtdFree(pgptd);
+
     return pkg;
 }

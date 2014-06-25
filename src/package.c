@@ -54,6 +54,12 @@ cr_changelog_entry_new(void)
     return entry;
 }
 
+cr_BinaryData *
+cr_binary_data_new(void)
+{
+    return (cr_BinaryData *) g_new0(cr_BinaryData, 1);
+}
+
 cr_Package *
 cr_package_new(void)
 {
@@ -134,6 +140,9 @@ cr_package_free(cr_Package *package)
         g_slist_foreach (package->changelogs, (GFunc) g_free, NULL);
         g_slist_free (package->changelogs);
     }
+
+    g_free(package->siggpg);
+    g_free(package->sigpgp);
 
     g_free (package);
 }

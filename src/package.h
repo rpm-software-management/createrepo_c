@@ -70,6 +70,13 @@ typedef struct {
     char *changelog;            /*!< text of changelog */
 } cr_ChangelogEntry;
 
+/** Binary data.
+ */
+typedef struct {
+    void *data;
+    gsize size;
+} cr_BinaryData;
+
 /** Package
  */
 typedef struct {
@@ -118,6 +125,10 @@ typedef struct {
     GSList *changelogs;         /*!< changelogs (list of cr_ChangelogEntry
                                      structs) */
 
+    char *hdrid;
+    cr_BinaryData *siggpg;
+    cr_BinaryData *sigpgp;
+
     GStringChunk *chunk;        /*!< string chunk for store all package strings
                                      on the single place */
 
@@ -139,6 +150,11 @@ cr_PackageFile *cr_package_file_new(void);
  * @return              new empty cr_ChangelogEntry
  */
 cr_ChangelogEntry *cr_changelog_entry_new(void);
+
+/** Create new (empty) structure for binary data
+ * @return              new mepty cr_BinaryData
+ */
+cr_BinaryData *cr_binary_data_new(void);
 
 /** Create new (empty) package structure.
  * @return              new empty cr_Package

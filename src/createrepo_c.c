@@ -262,6 +262,50 @@ fill_pool(GThreadPool *pool,
     return package_count;
 }
 
+
+gboolean
+prepare_cache_dir(struct CmdOptions *cmd_options,
+                  const gchar *out_dir,
+                  GError **err)
+{
+    if (!cmd_options->cachedir)
+        return TRUE;
+
+    if (g_str_has_prefix(cmd_options->cachedir, "/")) {
+        // Absolute local path
+        cmd_options->checksum_cachedir = cr_normalize_dir_path(
+                                                    cmd_options->cachedir);
+    } else {
+        // Relative path (from intput_dir)
+        gchar *tmp = g_strconcat(out_dir, cmd_options->cachedir, NULL);
+        cmd_options->checksum_cachedir = cr_normalize_dir_path(tmp);
+        g_free(tmp);
+    }
+
+    // Create the cache directory
+    if (g_mkdir(cmd_options->checksum_cachedir, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH)) {
+        if (errno == EEXIST) {
+            if (!g_file_test(cmd_options->checksum_cachedir,
+                             G_FILE_TEST_IS_DIR))
+            {
+                g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+                            "The %s already exists and it is not a directory!",
+                            cmd_options->checksum_cachedir);
+                return FALSE;
+            }
+        } else {
+            g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+                        "cannot use cachedir %s: %s",
+                        cmd_options->checksum_cachedir, strerror(errno));
+            return FALSE;
+        }
+    }
+
+    g_debug("Cachedir for checksums is %s", cmd_options->checksum_cachedir);
+    return TRUE;
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -376,6 +420,21 @@ main(int argc, char **argv)
     }
     lock_dir = g_strconcat(out_dir, ".repodata/", NULL);
     tmp_out_repo = g_strconcat(out_dir, ".repodata/", NULL);
+
+
+    // Prepare cachedir for checksum if --cachedir is used
+
+    if (!prepare_cache_dir(cmd_options, out_dir, &tmp_err)) {
+        fprintf(stderr, "%s\n", tmp_err->message);
+        g_error_free(tmp_err);
+        g_free(in_dir);
+        g_free(in_repo);
+        g_free(out_dir);
+        g_free(out_repo);
+        free_options(cmd_options);
+        exit(EXIT_FAILURE);
+    }
+
 
 
     // Block signals that terminates the process

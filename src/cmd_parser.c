@@ -443,38 +443,6 @@ check_arguments(struct CmdOptions *options,
             return FALSE;
     }
 
-    // Check cachedir
-    if (options->cachedir) {
-        if (g_str_has_prefix(options->cachedir, "/")) {
-            // Absolute local path
-            options->checksum_cachedir = cr_normalize_dir_path(options->cachedir);
-        } else {
-            // Relative path (from intput_dir)
-            gchar *tmp = g_strconcat(input_dir, options->cachedir, NULL);
-            options->checksum_cachedir = cr_normalize_dir_path(tmp);
-            g_free(tmp);
-        }
-
-        // Create the cache directory
-        if (g_mkdir(options->checksum_cachedir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
-            if (errno == EEXIST) {
-                if (!g_file_test(options->checksum_cachedir, G_FILE_TEST_IS_DIR)) {
-                    g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
-                                "The %s already exists and it is not a directory!",
-                                options->checksum_cachedir);
-                    return FALSE;
-                }
-            } else {
-                g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
-                            "cannot use cachedir %s: %s",
-                            options->checksum_cachedir, strerror(errno));
-                return FALSE;
-            }
-        }
-
-        g_debug("Cachedir for checksums is %s", options->checksum_cachedir);
-    }
-
     return TRUE;
 }
 

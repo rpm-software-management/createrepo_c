@@ -170,3 +170,41 @@ class TestCaseCreaterepoComparative_repowithbadpackages(BaseTestCase):
     def test_01_createrepo(self):
         """Regular createrepo"""
         self.assert_same_results(self.indir)
+
+
+class TestCaseCreaterepoComparative_cachedir(BaseTestCase):
+    """Repo with 3 packages and cachedir used"""
+
+    def setup(self):
+        self.indir_addpkg(PACKAGES[0])
+        self.indir_addpkg(PACKAGES[1])
+        self.indir_addpkg(PACKAGES[2])
+
+    def test_01_createrepo_owncachedir(self):
+        """Each createrepo has its own cachedir"""
+        # Gen cache
+        self.assert_same_results(self.indir, "--cachedir cache")
+        # Run again and use the cache
+        _, crres, crcres = self.assert_same_results(self.indir, "--cachedir cache")
+
+        # Compare files in the cache files (they should be identical)
+        cr_cache = os.path.join(crres.outdir, "cache")
+        crc_cache = os.path.join(crcres.outdir, "cache")
+        self.assert_same_dir_content(cr_cache, crc_cache)
+
+    def test_02_createrepo_sharedcachedir(self):
+        """Use cache mutually"""
+        cache_cr = os.path.abspath(os.path.join(self.indir, "cache_cr"))
+        cache_crc = os.path.abspath(os.path.join(self.indir, "cache_crc"))
+
+        # Gen cache by the cr then use it by cr_c
+        self.assert_run_cr(self.indir, "--cachedir %s" % cache_cr)
+        self.assert_run_cr(self.indir, "--cachedir %s" % cache_cr, c=True)
+
+        # Gen cache by the cr then use it by cr_c
+        self.assert_run_cr(self.indir, "--cachedir %s" % cache_crc, c=True)
+        self.assert_run_cr(self.indir, "--cachedir %s" % cache_crc)
+
+        # Compare files in the cache files (they should be identical)
+        self.assert_same_dir_content(cache_cr, cache_crc)
+

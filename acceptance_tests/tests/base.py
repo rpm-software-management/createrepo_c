@@ -2,6 +2,7 @@ import os
 import re
 import time
 import shutil
+import filecmp
 import os.path
 import tempfile
 import unittest
@@ -264,3 +265,25 @@ class BaseTestCase(unittest.TestCase):
 
         unused_paterns = [x.pattern for x in (set(compiled_patterns) - set(used_patterns))]
         self.assertEqual(unused_paterns, [])  # Some patterns weren't used
+
+    def assert_same_dir_content(self, a, b):
+        """Not recursive yet"""
+        # TODO: Recursive
+        self.assertTrue(os.path.isdir(a))
+        self.assertTrue(os.path.isdir(b))
+
+        _, logfn = tempfile.mkstemp(prefix="out_dircmp_%s_" % long(time.time()), dir=self.tdir)
+        logfile = open(logfn, "w")
+        logfile.write("A: %s\n" % a)
+        logfile.write("B: %s\n" % b)
+        logfile.write("\n")
+
+        dircmpobj = filecmp.dircmp(a, b)
+        if dircmpobj.left_only or dircmpobj.right_only or dircmpobj.diff_files:
+            logfile.write("A only:\n%s\n\n" % dircmpobj.left_only)
+            logfile.write("B only:\n%s\n\n" % dircmpobj.right_only)
+            logfile.write("Diff files:\n%s\n\n" % dircmpobj.diff_files)
+            logfile.close()
+            self.assertTrue(False)
+        logfile.write("OK\n")
+        logfile.close()

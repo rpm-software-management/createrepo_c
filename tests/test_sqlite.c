@@ -321,7 +321,8 @@ test_all(TestData *testdata, gconstpointer test_data)
     // Load package
 
     cr_package_parser_init();
-    pkg = cr_package_from_rpm(EMPTY_PKG, CR_CHECKSUM_SHA256, EMPTY_PKG, NULL, 5, NULL, NULL);
+    pkg = cr_package_from_rpm(EMPTY_PKG, CR_CHECKSUM_SHA256, EMPTY_PKG, NULL,
+                              5, NULL, CR_HDRR_NONE, NULL);
     g_assert(pkg);
     cr_package_parser_cleanup();
 

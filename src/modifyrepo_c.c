@@ -279,6 +279,8 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+    g_thread_init(NULL); // Initialize threading
+
     // Prepare list of tasks to do
 
     gchar *repodatadir = NULL;

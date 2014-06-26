@@ -1555,6 +1555,7 @@ main(int argc, char **argv)
         return 1;
     }
 
+    g_thread_init(NULL); // Initialize threading
 
     // Prepare out_repo
 

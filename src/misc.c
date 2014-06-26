@@ -954,7 +954,7 @@ cr_log_fn(const gchar *log_domain,
             timeinfo = localtime ( &rawtime );
             strftime (buffer, 80, "%H:%M:%S", timeinfo);
 
-            if (log_domain) fprintf(stderr, "%s: ", log_domain);
+            //if (log_domain) fprintf(stderr, "%s: ", log_domain);
             fprintf(stderr, "%s: %s\n", buffer, message);
             break;
         }

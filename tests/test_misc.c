@@ -983,7 +983,7 @@ test_cr_split_rpm_filename(void)
     res = cr_split_rpm_filename(NULL);
     g_assert(!res);
 
-    res = cr_split_rpm_filename("foo-1.0-1.i386.rpm");
+    res = cr_split_rpm_filename("foo-1.0-1.i386");
     g_assert(res);
     g_assert_cmpstr(res->name, ==, "foo");
     g_assert_cmpstr(res->version, ==, "1.0");
@@ -1018,6 +1018,49 @@ test_cr_split_rpm_filename(void)
     g_assert(!res->epoch);
     g_assert(!res->arch);
     cr_nvrea_free(res);
+}
+
+
+static void
+test_cr_str_to_nevr(void)
+{
+    cr_NEVR *res;
+
+    res = cr_str_to_nevr(NULL);
+    g_assert(!res);
+
+    res = cr_str_to_nevr("createrepo-0.9.9-22.fc20");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "createrepo");
+    g_assert_cmpstr(res->version, ==, "0.9.9");
+    g_assert_cmpstr(res->release, ==, "22.fc20");
+    g_assert(!res->epoch);
+    cr_nevr_free(res);
+
+    res = cr_str_to_nevr("bar:4-9-123a");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "bar");
+    g_assert_cmpstr(res->version, ==, "9");
+    g_assert_cmpstr(res->release, ==, "123a");
+    g_assert_cmpstr(res->epoch, ==, "4");
+    cr_nevr_free(res);
+
+    res = cr_str_to_nevr("a--.");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "a");
+    g_assert_cmpstr(res->version, ==, "");
+    g_assert_cmpstr(res->release, ==, ".");
+    g_assert(!res->epoch);
+    cr_nevr_free(res);
+
+    res = cr_str_to_nevr("b");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "b");
+    g_assert(!res->version);
+    g_assert(!res->release);
+    g_assert(!res->epoch);
+    cr_nevr_free(res);
+
 }
 
 
@@ -1124,6 +1167,8 @@ main(int argc, char *argv[])
             test_cr_cmp_version_str);
     g_test_add_func("/misc/test_cr_split_rpm_filename",
             test_cr_split_rpm_filename);
+    g_test_add_func("/misc/test_cr_str_to_nevr",
+            test_cr_str_to_nevr);
     g_test_add_func("/misc/test_cr_cmp_evr",
             test_cr_cmp_evr);
 

@@ -1055,6 +1055,67 @@ cr_nvrea_free(struct cr_NVREA *nvrea)
 }
 
 
+cr_NEVR *
+cr_str_to_nevr(const char *instr)
+{
+    cr_NEVR *nevr = NULL;
+    gchar *str, *copy;
+    size_t len;
+    int i;
+
+    if (!instr)
+        return NULL;
+
+    nevr = g_new0(cr_NEVR, 1);
+    copy = str = g_strdup(instr);
+    len = strlen(str);
+
+    // Get release
+    for (i = len-1; i >= 0; i--)
+        if (str[i] == '-') {
+            nevr->release = g_strdup(str+i+1);
+            str[i] = '\0';
+            len = i;
+            break;
+        }
+
+    // Get version
+    for (i = len-1; i >= 0; i--)
+        if (str[i] == '-') {
+            nevr->version = g_strdup(str+i+1);
+            str[i] = '\0';
+            len = i;
+            break;
+        }
+
+    // Get epoch
+    for (i = len-1; i >= 0; i--)
+        if (str[i] == ':') {
+            nevr->epoch = g_strdup(str+i+1);
+            str[i] = '\0';
+            break;
+        }
+
+    // Get name
+    nevr->name = g_strdup(str);
+    g_free(copy);
+
+    return nevr;
+}
+
+
+void
+cr_nevr_free(cr_NEVR *nevr)
+{
+    if (!nevr)
+        return;
+    g_free(nevr->name);
+    g_free(nevr->epoch);
+    g_free(nevr->version);
+    g_free(nevr->release);
+    g_free(nevr);
+}
+
 int
 cr_compare_values(const char *str1, const char *str2)
 {

@@ -71,6 +71,13 @@ struct cr_NVREA {
     char *arch;         /*!< arch */
 };
 
+typedef struct {
+    char *name;
+    char *epoch;
+    char *version;
+    char *release;
+} cr_NEVR;
+
 /** Version representation
  * e.g. for openssl-devel-1.0.0i = version: 1, release: 0, patch: 0, suffix: i
  */

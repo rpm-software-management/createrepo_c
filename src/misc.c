@@ -1055,6 +1055,130 @@ cr_nvrea_free(struct cr_NVREA *nvrea)
 }
 
 
+cr_NEVR *
+cr_str_to_nevr(const char *instr)
+{
+    cr_NEVR *nevr = NULL;
+    gchar *str, *copy;
+    size_t len;
+    int i;
+
+    if (!instr)
+        return NULL;
+
+    nevr = g_new0(cr_NEVR, 1);
+    copy = str = g_strdup(instr);
+    len = strlen(str);
+
+    // Get release
+    for (i = len-1; i >= 0; i--)
+        if (str[i] == '-') {
+            nevr->release = g_strdup(str+i+1);
+            str[i] = '\0';
+            len = i;
+            break;
+        }
+
+    int epoch = 1;
+
+    // Get version
+    for (i = len-1; i >= 0; i--)
+        if (str[i] == ':') {
+            nevr->version = g_strdup(str+i+1);
+            str[i] = '\0';
+            len = i;
+            break;
+        } else if (str[i] == '-') {
+            nevr->version = g_strdup(str+i+1);
+            str[i] = '\0';
+            len = i;
+            epoch = 0;
+            break;
+        }
+
+    // Get epoch
+    if (epoch) {
+        for (i = len-1; i >= 0; i--)
+            if (str[i] == '-') {
+                nevr->epoch = g_strdup(str+i+1);
+                str[i] = '\0';
+                break;
+            }
+    }
+
+    // Get name
+    nevr->name = g_strdup(str);
+    g_free(copy);
+
+    return nevr;
+}
+
+
+void
+cr_nevr_free(cr_NEVR *nevr)
+{
+    if (!nevr)
+        return;
+    g_free(nevr->name);
+    g_free(nevr->epoch);
+    g_free(nevr->version);
+    g_free(nevr->release);
+    g_free(nevr);
+}
+
+
+cr_NEVRA *
+cr_str_to_nevra(const char *instr)
+{
+    cr_NEVR *nevr;
+    cr_NEVRA *nevra = NULL;
+    gchar *str, *copy;
+    size_t len;
+    int i;
+
+    if (!instr)
+        return NULL;
+
+    nevra = g_new0(cr_NEVRA, 1);
+    copy = str = g_strdup(instr);
+    len = strlen(str);
+
+    // Get arch
+    for (i = len-1; i >= 0; i--)
+        if (str[i] == '.') {
+            nevra->arch = g_strdup(str+i+1);
+            str[i] = '\0';
+            len = i;
+            break;
+        }
+
+    nevr = cr_str_to_nevr(str);
+    nevra->name     = nevr->name;
+    nevra->epoch    = nevr->epoch;
+    nevra->version  = nevr->version;
+    nevra->release  = nevr->release;
+    g_free(nevr);
+
+    g_free(copy);
+
+    return nevra;
+}
+
+
+void
+cr_nevra_free(cr_NEVRA *nevra)
+{
+    if (!nevra)
+        return;
+    g_free(nevra->name);
+    g_free(nevra->epoch);
+    g_free(nevra->version);
+    g_free(nevra->release);
+    g_free(nevra->arch);
+    g_free(nevra);
+}
+
+
 int
 cr_compare_values(const char *str1, const char *str2)
 {

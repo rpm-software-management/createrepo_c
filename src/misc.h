@@ -71,6 +71,21 @@ struct cr_NVREA {
     char *arch;         /*!< arch */
 };
 
+typedef struct {
+    char *name;
+    char *epoch;
+    char *version;
+    char *release;
+} cr_NEVR;
+
+typedef struct {
+    char *name;
+    char *epoch;
+    char *version;
+    char *release;
+    char *arch;
+} cr_NEVRA;
+
 /** Version representation
  * e.g. for openssl-devel-1.0.0i = version: 1, release: 0, patch: 0, suffix: i
  */
@@ -460,6 +475,32 @@ cr_append_pid_and_datetime(const char *str, const char *suffix);
  */
 gboolean
 cr_spawn_check_exit_status(gint exit_status, GError **error);
+
+/** Parse NEVR (N-E:V-R) string.
+ * @param str           NEVR string
+ * @returns             Malloced cr_NEVR or NULL on error
+ */
+cr_NEVR *
+cr_str_to_nevr(const char *str);
+
+/** Free cr_NEVR
+ * @param nevr      cr_NEVR structure
+ */
+void
+cr_nevr_free(cr_NEVR *nevr);
+
+/** Parse NEVRA (N-E:V-R.A) string.
+ * @param str           NEVRA string
+ * @returns             Malloced cr_NEVRA or NULL on error
+ */
+cr_NEVRA *
+cr_str_to_nevra(const char *str);
+
+/** Free cr_NEVRA
+ * @param nevra     cr_NEVRA structure
+ */
+void
+cr_nevra_free(cr_NEVRA *nevra);
 
 /** @} */
 

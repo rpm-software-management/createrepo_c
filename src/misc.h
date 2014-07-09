@@ -468,6 +468,18 @@ cr_append_pid_and_datetime(const char *str, const char *suffix);
 gboolean
 cr_spawn_check_exit_status(gint exit_status, GError **error);
 
+/** Parse NEVR string.
+ * @param str           NEVR string
+ * @returns             Malloced cr_NEVR or NULL on error
+ */
+cr_NEVR *
+cr_str_to_nevr(const char *str);
+
+/** Free cr_NEVR
+ */
+void
+cr_nevr_free(cr_NEVR *nevr);
+
 /** @} */
 
 #ifdef __cplusplus

@@ -1,6 +1,7 @@
 SET (createrepo_c_SRCS
      checksum.c
      compression_wrapper.c
+     deltarpms.c
      dumper_thread.c
      error.c
      helpers.c
@@ -31,6 +32,7 @@ SET(headers
     compression_wrapper.h
     constants.h
     createrepo_c.h
+    deltarpms.h
     error.h
     helpers.h
     load_metadata.h
@@ -60,6 +62,7 @@ TARGET_LINK_LIBRARIES(libcreaterepo_c ${OPENSSL_LIBRARIES})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${RPMDB_LIBRARY})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${SQLITE3_LIBRARIES})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${ZLIB_LIBRARY})
+TARGET_LINK_LIBRARIES(libcreaterepo_c ${DRPM_LIBRARY})
 
 
 SET_TARGET_PROPERTIES(libcreaterepo_c PROPERTIES

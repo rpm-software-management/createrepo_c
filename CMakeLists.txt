@@ -69,6 +69,11 @@ ELSE (RPM_PATH)
     message("Using system RPM: ${RPMDB_LIBRARY}")
 ENDIF (RPM_PATH)
 
+# drpm
+if (DRPM_PATH)
+    include_directories (${DRPM_PATH}/)
+    find_library (DRPM_LIBRARY NAMES drpm PATHS ${DRPM_PATH}/ NO_DEFAULT_PATH)
+endif (DRPM_PATH)
 
 # Get package version
 INCLUDE (${CMAKE_SOURCE_DIR}/VERSION.cmake)

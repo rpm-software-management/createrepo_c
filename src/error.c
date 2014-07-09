@@ -83,6 +83,8 @@ cr_strerror(cr_Error rc)
             return "Child process stopped by signal";
         case CRE_SPAWNABNORMAL:
             return "Child process exited abnormally";
+        case CRE_DELTARPM:
+            return "Deltarpm error";
         default:
             return "Unknown error";
     }
@@ -110,6 +112,12 @@ GQuark
 cr_db_error_quark(void)
 {
     return g_quark_from_static_string("cr_db_error");
+}
+
+GQuark
+cr_deltarpms_error_quark(void)
+{
+    return g_quark_from_static_string("cr_deltarpms_error");
 }
 
 GQuark

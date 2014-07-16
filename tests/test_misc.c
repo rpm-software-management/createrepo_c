@@ -982,13 +982,40 @@ test_cr_split_rpm_filename(void)
     g_assert_cmpstr(res->arch, ==, "ia64");
     cr_nevra_free(res);
 
-    res = cr_split_rpm_filename(":a--.");
+    res = cr_split_rpm_filename("bar-2:9-123a.ia64.rpm");
     g_assert(res);
-    g_assert_cmpstr(res->name, ==, "a");
-    g_assert_cmpstr(res->version, ==, "");
-    g_assert_cmpstr(res->release, ==, "");
-    g_assert_cmpstr(res->epoch, ==, "");
-    g_assert_cmpstr(res->arch, ==, "");
+    g_assert_cmpstr(res->name, ==, "bar");
+    g_assert_cmpstr(res->version, ==, "9");
+    g_assert_cmpstr(res->release, ==, "123a");
+    g_assert_cmpstr(res->epoch, ==, "2");
+    g_assert_cmpstr(res->arch, ==, "ia64");
+    cr_nevra_free(res);
+
+    res = cr_split_rpm_filename("bar-9-123a:3.ia64.rpm");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "bar");
+    g_assert_cmpstr(res->version, ==, "9");
+    g_assert_cmpstr(res->release, ==, "123a");
+    g_assert_cmpstr(res->epoch, ==, "3");
+    g_assert_cmpstr(res->arch, ==, "ia64");
+    cr_nevra_free(res);
+
+    res = cr_split_rpm_filename("bar-9-123a.ia64.rpm:4");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "bar");
+    g_assert_cmpstr(res->version, ==, "9");
+    g_assert_cmpstr(res->release, ==, "123a");
+    g_assert_cmpstr(res->epoch, ==, "4");
+    g_assert_cmpstr(res->arch, ==, "ia64");
+    cr_nevra_free(res);
+
+    res = cr_split_rpm_filename("bar-9-123a.ia64:5");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "bar");
+    g_assert_cmpstr(res->version, ==, "9");
+    g_assert_cmpstr(res->release, ==, "123a");
+    g_assert_cmpstr(res->epoch, ==, "5");
+    g_assert_cmpstr(res->arch, ==, "ia64");
     cr_nevra_free(res);
 
     res = cr_split_rpm_filename("b");
@@ -1026,11 +1053,27 @@ test_cr_str_to_nevr(void)
     g_assert_cmpstr(res->epoch, ==, "4");
     cr_nevr_free(res);
 
-    res = cr_str_to_nevr("a--.");
+    res = cr_str_to_nevr("3:foo-2-el.6");
     g_assert(res);
-    g_assert_cmpstr(res->name, ==, "a");
-    g_assert_cmpstr(res->version, ==, "");
-    g_assert_cmpstr(res->release, ==, ".");
+    g_assert_cmpstr(res->name, ==, "foo");
+    g_assert_cmpstr(res->version, ==, "2");
+    g_assert_cmpstr(res->release, ==, "el.6");
+    g_assert_cmpstr(res->epoch, ==, "3");
+    cr_nevr_free(res);
+
+    res = cr_str_to_nevr("foo-2-el.6:3");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "foo");
+    g_assert_cmpstr(res->version, ==, "2");
+    g_assert_cmpstr(res->release, ==, "el.6");
+    g_assert_cmpstr(res->epoch, ==, "3");
+    cr_nevr_free(res);
+
+    res = cr_str_to_nevr("b-1-2");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "b");
+    g_assert_cmpstr(res->version, ==, "1");
+    g_assert_cmpstr(res->release, ==, "2");
     g_assert(!res->epoch);
     cr_nevr_free(res);
 
@@ -1039,14 +1082,6 @@ test_cr_str_to_nevr(void)
     g_assert_cmpstr(res->name, ==, "b");
     g_assert(!res->version);
     g_assert(!res->release);
-    g_assert(!res->epoch);
-    cr_nevr_free(res);
-
-    res = cr_str_to_nevr("b-1-2");
-    g_assert(res);
-    g_assert_cmpstr(res->name, ==, "b");
-    g_assert_cmpstr(res->version, ==, "1");
-    g_assert_cmpstr(res->release, ==, "2");
     g_assert(!res->epoch);
     cr_nevr_free(res);
 }
@@ -1059,15 +1094,6 @@ test_cr_str_to_nevra(void)
     res = cr_str_to_nevra(NULL);
     g_assert(!res);
 
-    res = cr_str_to_nevra("crypto-utils-0:2.4.1-52.fc20.x86_64");
-    g_assert(res);
-    g_assert_cmpstr(res->name, ==, "crypto-utils");
-    g_assert_cmpstr(res->version, ==, "2.4.1");
-    g_assert_cmpstr(res->release, ==, "52.fc20");
-    g_assert_cmpstr(res->epoch, ==, "0");
-    g_assert_cmpstr(res->arch, ==, "x86_64");
-    cr_nevra_free(res);
-
     res = cr_str_to_nevra("crypto-utils-2.4.1-52.fc20.x86_64");
     g_assert(res);
     g_assert_cmpstr(res->name, ==, "crypto-utils");
@@ -1075,6 +1101,51 @@ test_cr_str_to_nevra(void)
     g_assert_cmpstr(res->release, ==, "52.fc20");
     g_assert(!res->epoch);
     g_assert_cmpstr(res->arch, ==, "x86_64");
+    cr_nevra_free(res);
+
+    res = cr_str_to_nevra("crypto-utils-1:2.4.1-52.fc20.x86_64");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "crypto-utils");
+    g_assert_cmpstr(res->version, ==, "2.4.1");
+    g_assert_cmpstr(res->release, ==, "52.fc20");
+    g_assert_cmpstr(res->epoch, ==, "1");
+    g_assert_cmpstr(res->arch, ==, "x86_64");
+    cr_nevra_free(res);
+
+    res = cr_str_to_nevra("2:crypto-utils-2.4.1-52.fc20.x86_64");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "crypto-utils");
+    g_assert_cmpstr(res->version, ==, "2.4.1");
+    g_assert_cmpstr(res->release, ==, "52.fc20");
+    g_assert_cmpstr(res->epoch, ==, "2");
+    g_assert_cmpstr(res->arch, ==, "x86_64");
+    cr_nevra_free(res);
+
+    res = cr_str_to_nevra("crypto-utils-2.4.1-52.fc20:3.x86_64");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "crypto-utils");
+    g_assert_cmpstr(res->version, ==, "2.4.1");
+    g_assert_cmpstr(res->release, ==, "52.fc20");
+    g_assert_cmpstr(res->epoch, ==, "3");
+    g_assert_cmpstr(res->arch, ==, "x86_64");
+    cr_nevra_free(res);
+
+    res = cr_str_to_nevra("crypto-utils-2.4.1-52.fc20.x86_64:4");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "crypto-utils");
+    g_assert_cmpstr(res->version, ==, "2.4.1");
+    g_assert_cmpstr(res->release, ==, "52.fc20");
+    g_assert_cmpstr(res->epoch, ==, "4");
+    g_assert_cmpstr(res->arch, ==, "x86_64");
+    cr_nevra_free(res);
+
+    res = cr_str_to_nevra("a");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "a");
+    g_assert(!res->version);
+    g_assert(!res->release);
+    g_assert(!res->epoch);
+    g_assert(!res->arch);
     cr_nevra_free(res);
 }
 

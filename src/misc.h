@@ -293,6 +293,11 @@ void cr_log_fn(const gchar *log_domain,
 void cr_slist_free_full(GSList *list, GDestroyNotify free_f);
 
 /** Split filename into the NEVRA.
+ * Supported formats:
+ * [path/]N-V-R:E.A[.rpm]
+ * [path/]E:N-V-R.A[.rpm]
+ * [path/]N-E:V-R.A[.rpm]
+ * [path/]N-V-R.A[.rpm]:E
  * @param filename      filename
  * @return              cr_NEVRA
  */
@@ -470,7 +475,7 @@ cr_append_pid_and_datetime(const char *str, const char *suffix);
 gboolean
 cr_spawn_check_exit_status(gint exit_status, GError **error);
 
-/** Parse NEVR (N-E:V-R) string.
+/** Parse E:N-V-R or N-V-R:E or N-E:V-R string
  * @param str           NEVR string
  * @returns             Malloced cr_NEVR or NULL on error
  */
@@ -483,7 +488,7 @@ cr_str_to_nevr(const char *str);
 void
 cr_nevr_free(cr_NEVR *nevr);
 
-/** Parse NEVRA (N-E:V-R.A) string.
+/** Parse E:N-V-R.A, N-V-R:E.A, N-E:V-R.A or N-V-R.A:E string.
  * @param str           NEVRA string
  * @returns             Malloced cr_NEVRA or NULL on error
  */

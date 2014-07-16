@@ -339,10 +339,10 @@ cr_get_header_byte_range(const char *filename, GError **err)
 char *
 cr_get_filename(const char *filepath)
 {
-    char *filename = NULL;
+    char *filename;
 
     if (!filepath)
-        return filename;
+        return NULL;
 
     filename = (char *) filepath;
     size_t x = 0;
@@ -983,21 +983,32 @@ cr_slist_free_full(GSList *list, GDestroyNotify free_f)
     g_slist_free(list);
 }
 
-
 cr_NEVRA *
 cr_split_rpm_filename(const char *filename)
 {
-    cr_NEVRA *res = NULL;
-    gchar *str, *copy;
+    cr_NEVRA *nevra = NULL;
+    gchar *str, *epoch = NULL;
     size_t len;
-    int i;
+
+    filename = cr_get_filename(filename);
 
     if (!filename)
-        return res;
+        return NULL;
 
-    res = g_new0(cr_NEVRA, 1);
     str = g_strdup(filename);
-    copy = str;
+
+    // N-V-R.rpm:E
+    if (strchr(str, ':')) {
+        gchar **filename_epoch = g_strsplit(str, ":", 2);
+        if (g_str_has_suffix(filename_epoch[0], ".rpm")) {
+            g_free(str);
+            str = filename_epoch[0];
+            epoch = filename_epoch[1];
+        } else {
+            g_strfreev(filename_epoch);
+        }
+    }
+
     len = strlen(str);
 
     // Get rid off .rpm suffix
@@ -1006,108 +1017,108 @@ cr_split_rpm_filename(const char *filename)
         str[len] = '\0';
     }
 
-    // Get arch
-    for (i = len-1; i >= 0; i--)
-        if (str[i] == '.') {
-            res->arch = g_strdup(str+i+1);
-            str[i] = '\0';
-            len = i;
-            break;
-        }
+    nevra = cr_str_to_nevra(str);
+    g_free(str);
 
-    // Get release
-    for (i = len-1; i >= 0; i--)
-        if (str[i] == '-') {
-            res->release = g_strdup(str+i+1);
-            str[i] = '\0';
-            len = i;
-            break;
-        }
+    if (epoch) {
+        g_free(nevra->epoch);
+        nevra->epoch = epoch;
+    }
 
-    // Get version
-    for (i = len-1; i >= 0; i--)
-        if (str[i] == '-') {
-            res->version = g_strdup(str+i+1);
-            str[i] = '\0';
-            len = i;
-            break;
-        }
-
-    // Get epoch
-    for (i = 0; i < (int) len; i++)
-        if (str[i] == ':') {
-            str[i] = '\0';
-            res->epoch = g_strdup(str);
-            str += i + 1;
-            break;
-        }
-
-    // Get name
-    res->name = g_strdup(str);
-    g_free(copy);
-
-    return res;
+    return nevra;
 }
 
-
+/** Split N-V-R:E or E:N-V-R or N-E:V-R
+ */
 cr_NEVR *
 cr_str_to_nevr(const char *instr)
 {
+    gchar *nvr = NULL;
+    gchar *epoch = NULL;
+    gchar **nvr_epoch_list = NULL;
     cr_NEVR *nevr = NULL;
-    gchar *str, *copy;
     size_t len;
     int i;
 
     if (!instr)
         return NULL;
 
+    // 1)
+    // Try to split by ':'
+    // If we have N-V-R:E or E:N-V-R then nvr and epoch will be filled
+    // If we have N-E:V-R or N-V-R then only nvr will be filed
+
+    nvr_epoch_list = g_strsplit(instr, ":", 2);
+
+    if (!nvr_epoch_list || !(*nvr_epoch_list)) {
+        g_strfreev(nvr_epoch_list);
+        return NULL;
+    }
+
+    nvr     = nvr_epoch_list[0];
+    epoch   = nvr_epoch_list[1];  // May be NULL
+
+    if (epoch && strchr(epoch, '-')) {
+        if (!strchr(nvr, '-')) {
+            // Switch nvr and epoch
+            char *tmp = nvr;
+            nvr = epoch;
+            epoch = tmp;
+        } else {
+            // Probably the N-E:V-R format, handle it after the split
+            g_free(nvr);
+            g_free(epoch);
+            nvr = g_strdup(instr);
+            epoch = NULL;
+        }
+    }
+
+    g_free(nvr_epoch_list);
+
+    // 2)
+    // Now split the nvr by the '-' into three parts
+
     nevr = g_new0(cr_NEVR, 1);
-    copy = str = g_strdup(instr);
-    len = strlen(str);
+    len = strlen(nvr);
 
     // Get release
     for (i = len-1; i >= 0; i--)
-        if (str[i] == '-') {
-            nevr->release = g_strdup(str+i+1);
-            str[i] = '\0';
+        if (nvr[i] == '-') {
+            nevr->release = g_strdup(nvr+i+1);
+            nvr[i] = '\0';
             len = i;
             break;
         }
-
-    int epoch = 1;
 
     // Get version
     for (i = len-1; i >= 0; i--)
-        if (str[i] == ':') {
-            nevr->version = g_strdup(str+i+1);
-            str[i] = '\0';
+        if (nvr[i] == '-') {
+            nevr->version = g_strdup(nvr+i+1);
+            nvr[i] = '\0';
             len = i;
-            break;
-        } else if (str[i] == '-') {
-            nevr->version = g_strdup(str+i+1);
-            str[i] = '\0';
-            len = i;
-            epoch = 0;
             break;
         }
 
-    // Get epoch
-    if (epoch) {
-        for (i = len-1; i >= 0; i--)
-            if (str[i] == '-') {
-                nevr->epoch = g_strdup(str+i+1);
-                str[i] = '\0';
-                break;
-            }
-    }
-
     // Get name
-    nevr->name = g_strdup(str);
-    g_free(copy);
+    nevr->name = g_strdup(nvr);
+
+    g_free(nvr);
+
+    // 3)
+    // Now split the E:V
+
+    if (epoch == NULL && (nevr->version && strchr(nevr->version, ':'))) {
+        gchar **epoch_version = g_strsplit(nevr->version, ":", 2);
+        g_free(nevr->version);
+        nevr->epoch = epoch_version[0];
+        nevr->version = epoch_version[1];
+        g_free(epoch_version);
+    } else {
+        nevr->epoch = epoch;
+    }
 
     return nevr;
 }
-
 
 void
 cr_nevr_free(cr_NEVR *nevr)
@@ -1127,7 +1138,7 @@ cr_str_to_nevra(const char *instr)
 {
     cr_NEVR *nevr;
     cr_NEVRA *nevra = NULL;
-    gchar *str, *copy;
+    gchar *str, *epoch = NULL;
     size_t len;
     int i;
 
@@ -1135,7 +1146,24 @@ cr_str_to_nevra(const char *instr)
         return NULL;
 
     nevra = g_new0(cr_NEVRA, 1);
-    copy = str = g_strdup(instr);
+    str = g_strdup(instr);
+
+    // N-V-R.A:E
+    if (strchr(str, ':')) {
+        gchar **nvra_epoch = g_strsplit(str, ":", 2);
+        char *epoch_candidate = nvra_epoch[1];
+        if (epoch_candidate
+            && !strchr(epoch_candidate, '-')
+            && !strchr(epoch_candidate, '.'))
+        {
+            // Strip epoch from the very end
+            epoch = epoch_candidate;
+            str = nvra_epoch[0];
+        } else {
+            g_strfreev(nvra_epoch);
+        }
+    }
+
     len = strlen(str);
 
     // Get arch
@@ -1147,6 +1175,13 @@ cr_str_to_nevra(const char *instr)
             break;
         }
 
+    if (nevra->arch && strchr(nevra->arch, '-')) {
+        g_warning("Invalid arch %s", nevra->arch);
+        cr_nevra_free(nevra);
+        g_free(str);
+        return NULL;
+    }
+
     nevr = cr_str_to_nevr(str);
     nevra->name     = nevr->name;
     nevra->epoch    = nevr->epoch;
@@ -1154,7 +1189,12 @@ cr_str_to_nevra(const char *instr)
     nevra->release  = nevr->release;
     g_free(nevr);
 
-    g_free(copy);
+    g_free(str);
+
+    if (epoch) {
+        g_free(nevra->epoch);
+        nevra->epoch = epoch;
+    }
 
     return nevra;
 }

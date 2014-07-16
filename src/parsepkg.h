@@ -28,6 +28,7 @@ extern "C" {
 #include "checksum.h"
 #include "parsehdr.h"
 #include "package.h"
+#include "xml_dump.h"
 
 /** \defgroup   parsepkg    Package parser API.
  *  \addtogroup parsepkg

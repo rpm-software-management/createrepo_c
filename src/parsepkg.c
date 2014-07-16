@@ -31,6 +31,7 @@
 #include <rpm/rpmkeyring.h>
 #include "error.h"
 #include "parsehdr.h"
+#include "parsepkg.h"
 #include "misc.h"
 #include "checksum.h"
 

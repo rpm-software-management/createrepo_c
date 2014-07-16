@@ -27,7 +27,6 @@ extern "C" {
 #include <rpm/rpmlib.h>
 #include <glib.h>
 #include "package.h"
-#include "xml_dump.h"
 
 /** \defgroup   parsehdr         Header parser API.
  *  \addtogroup parsehdr

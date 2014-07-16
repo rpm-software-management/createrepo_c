@@ -588,52 +588,52 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
         g_hash_table_iter_init(&iter, cr_metadata_hashtable(metadata));
         while (g_hash_table_iter_next(&iter, &key, &void_pkg)) {
             cr_Package *pkg = (cr_Package *) void_pkg;
-            struct cr_NVREA *nvrea;
+            cr_NEVRA *nevra;
             gpointer data;
             gboolean blocked = FALSE;
             struct srpm_val *srpm_value_new;
 
-            nvrea = cr_split_rpm_filename(pkg->rpm_sourcerpm);
+            nevra = cr_split_rpm_filename(pkg->rpm_sourcerpm);
 
             if (blocked_srpms) {
                 // Check if srpm is blocked
                 blocked = g_hash_table_lookup_extended(blocked_srpms,
-                                                       nvrea->name,
+                                                       nevra->name,
                                                        NULL,
                                                        NULL);
             }
 
             if (blocked) {
                 g_debug("Srpm is blocked: %s", pkg->rpm_sourcerpm);
-                cr_nvrea_free(nvrea);
+                cr_nevra_free(nevra);
                 continue;
             }
 
-            data = g_hash_table_lookup(include_srpms, nvrea->name);
+            data = g_hash_table_lookup(include_srpms, nevra->name);
             if (data) {
                 // We have already seen build with the same name
 
                 int cmp;
-                struct cr_NVREA *nvrea_existing;
+                cr_NEVRA *nevra_existing;
                 struct srpm_val *srpm_value_existing = data;
 
                 if (srpm_value_existing->repo_id != repoid) {
                     // We found a rpm built from an srpm with the same name in
                     // a previous repo. The previous repo takes precendence,
                     // so ignore the srpm found here.
-                    cr_nvrea_free(nvrea);
+                    cr_nevra_free(nevra);
                     g_debug("Srpm already loaded from previous repo %s",
                             pkg->rpm_sourcerpm);
                     continue;
                 }
 
                 // We're in the same repo, so compare srpm NVRs
-                nvrea_existing = cr_split_rpm_filename(srpm_value_existing->sourcerpm);
-                cmp = cr_cmp_nvrea(nvrea, nvrea_existing);
-                cr_nvrea_free(nvrea_existing);
+                nevra_existing = cr_split_rpm_filename(srpm_value_existing->sourcerpm);
+                cmp = cr_cmp_nevra(nevra, nevra_existing);
+                cr_nevra_free(nevra_existing);
                 if (cmp < 1) {
                     // Existing package is from the newer srpm
-                    cr_nvrea_free(nvrea);
+                    cr_nevra_free(nevra);
                     g_debug("Srpm already exists in newer version %s",
                             pkg->rpm_sourcerpm);
                     continue;
@@ -650,9 +650,9 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
             srpm_value_new->repo_id = repoid;
             srpm_value_new->sourcerpm = g_strdup(pkg->rpm_sourcerpm);
             g_hash_table_replace(include_srpms,
-                                 g_strdup(nvrea->name),
+                                 g_strdup(nevra->name),
                                  srpm_value_new);
-            cr_nvrea_free(nvrea);
+            cr_nevra_free(nevra);
         }
 
         cr_metadata_free(metadata);
@@ -720,14 +720,14 @@ add_package(cr_Package *pkg,
 
     // Koji-mergerepos specific behaviour -----------------------
     if (koji_stuff) {
-        struct cr_NVREA *nvrea;
+        cr_NEVRA *nevra;
         struct srpm_val *value;
         gchar *nvra;
         gboolean seen;
 
-        nvrea = cr_split_rpm_filename(pkg->rpm_sourcerpm);
-        value = g_hash_table_lookup(koji_stuff->include_srpms, nvrea->name);
-        cr_nvrea_free(nvrea);
+        nevra = cr_split_rpm_filename(pkg->rpm_sourcerpm);
+        value = g_hash_table_lookup(koji_stuff->include_srpms, nevra->name);
+        cr_nevra_free(nevra);
         if (!value || g_strcmp0(pkg->rpm_sourcerpm, value->sourcerpm)) {
             // Srpm of the package is not allowed
             g_debug("Package %s has forbidden srpm %s", pkg->name,

@@ -383,10 +383,11 @@ cr_package_from_header(Header hdr,
                 cr_Dependency *dependency = cr_dependency_new();
                 dependency->name = cr_safe_string_chunk_insert(pkg->chunk, filename);
                 dependency->flags = cr_safe_string_chunk_insert(pkg->chunk, flags);
-                struct cr_EVR evr = cr_str_to_evr(full_version, pkg->chunk);
-                dependency->epoch = evr.epoch;
-                dependency->version = evr.version;
-                dependency->release = evr.release;
+                cr_EVR *evr = cr_str_to_evr(full_version, pkg->chunk);
+                dependency->epoch = evr->epoch;
+                dependency->version = evr->version;
+                dependency->release = evr->release;
+                g_free(evr);
 
                 switch (deptype) {
                     case DEP_PROVIDES:

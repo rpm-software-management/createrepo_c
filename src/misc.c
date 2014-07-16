@@ -74,13 +74,13 @@ cr_flag_to_str(gint64 flags)
  * Returned structure had all string inserted in the passed chunk.
  *
  */
-struct cr_EVR
+cr_EVR *
 cr_str_to_evr(const char *string, GStringChunk *chunk)
 {
-    struct cr_EVR evr;
-    evr.epoch = NULL;
-    evr.version = NULL;
-    evr.release = NULL;
+    cr_EVR *evr = g_new0(cr_EVR, 1);
+    evr->epoch = NULL;
+    evr->version = NULL;
+    evr->release = NULL;
 
     if (!string || !(strlen(string))) {
         return evr;
@@ -101,9 +101,9 @@ cr_str_to_evr(const char *string, GStringChunk *chunk)
             size_t len = ptr - string;
             if (len) {
                 if (chunk) {
-                    evr.epoch = g_string_chunk_insert_len(chunk, string, len);
+                    evr->epoch = g_string_chunk_insert_len(chunk, string, len);
                 } else {
-                    evr.epoch = g_strndup(string, len);
+                    evr->epoch = g_strndup(string, len);
                 }
             }
         }
@@ -111,11 +111,11 @@ cr_str_to_evr(const char *string, GStringChunk *chunk)
         ptr = (char*) string-1;
     }
 
-    if (!evr.epoch) {
+    if (!evr->epoch) {
         if (chunk) {
-            evr.epoch = g_string_chunk_insert_const(chunk, "0");
+            evr->epoch = g_string_chunk_insert_const(chunk, "0");
         } else {
-            evr.epoch = g_strdup("0");
+            evr->epoch = g_strdup("0");
         }
     }
 
@@ -127,32 +127,42 @@ cr_str_to_evr(const char *string, GStringChunk *chunk)
         // Version
         size_t version_len = ptr2 - (ptr+1);
         if (chunk) {
-            evr.version = g_string_chunk_insert_len(chunk, ptr+1, version_len);
+            evr->version = g_string_chunk_insert_len(chunk, ptr+1, version_len);
         } else {
-            evr.version = g_strndup(ptr+1, version_len);
+            evr->version = g_strndup(ptr+1, version_len);
         }
 
         // Release
         size_t release_len = strlen(ptr2+1);
         if (release_len) {
             if (chunk) {
-                evr.release = g_string_chunk_insert_len(chunk, ptr2+1,
+                evr->release = g_string_chunk_insert_len(chunk, ptr2+1,
                                                         release_len);
             } else {
-                evr.release = g_strndup(ptr2+1, release_len);
+                evr->release = g_strndup(ptr2+1, release_len);
             }
         }
     } else { // Release is not here, just version
         if (chunk) {
-            evr.version = g_string_chunk_insert_const(chunk, ptr+1);
+            evr->version = g_string_chunk_insert_const(chunk, ptr+1);
         } else {
-            evr.version = g_strdup(ptr+1);
+            evr->version = g_strdup(ptr+1);
         }
     }
 
     return evr;
 }
 
+void
+cr_evr_free(cr_EVR *evr)
+{
+    if (!evr)
+        return;
+    g_free(evr->epoch);
+    g_free(evr->version);
+    g_free(evr->release);
+    g_free(evr);
+}
 
 /*
 inline int

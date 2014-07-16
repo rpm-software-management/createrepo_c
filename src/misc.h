@@ -55,11 +55,11 @@ const char *cr_flag_to_str(gint64 flags);
 
 /** Epoch-Version-Release representation.
  */
-struct cr_EVR {
+typedef struct {
     char *epoch;        /*!< epoch */
     char *version;      /*!< version */
     char *release;      /*!< release */
-};
+} cr_EVR;
 
 /** Name-Version-Release-Epoch-Arch representation.
  */
@@ -105,7 +105,16 @@ struct cr_Version {
  * @param chunk         string chunk for strings (optional - could be NULL)
  * @return              filled NVR
  */
-struct cr_EVR cr_str_to_evr(const char *string, GStringChunk *chunk);
+cr_EVR *cr_str_to_evr(const char *string, GStringChunk *chunk);
+
+/** Free cr_EVR
+ * Warning: Do not use this function when a string chunk was
+ * used in the cr_str_to_evr! In that case use only g_free on
+ * the cr_EVR pointer.
+ * @param evr           cr_EVR structure
+ */
+void
+cr_evr_free(cr_EVR *evr);
 
 /** Check if the filename match pattern for primary files (files listed
  *  in primary.xml).

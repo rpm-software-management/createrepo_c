@@ -959,7 +959,7 @@ test_cr_cmp_version_str(void)
 static void
 test_cr_split_rpm_filename(void)
 {
-    cr_NVREA *res;
+    cr_NEVRA *res;
 
     res = cr_split_rpm_filename(NULL);
     g_assert(!res);
@@ -971,7 +971,7 @@ test_cr_split_rpm_filename(void)
     g_assert_cmpstr(res->release, ==, "1");
     g_assert(!res->epoch);
     g_assert_cmpstr(res->arch, ==, "i386");
-    cr_nvrea_free(res);
+    cr_nevra_free(res);
 
     res = cr_split_rpm_filename("1:bar-9-123a.ia64.rpm");
     g_assert(res);
@@ -980,7 +980,7 @@ test_cr_split_rpm_filename(void)
     g_assert_cmpstr(res->release, ==, "123a");
     g_assert_cmpstr(res->epoch, ==, "1");
     g_assert_cmpstr(res->arch, ==, "ia64");
-    cr_nvrea_free(res);
+    cr_nevra_free(res);
 
     res = cr_split_rpm_filename(":a--.");
     g_assert(res);
@@ -989,7 +989,7 @@ test_cr_split_rpm_filename(void)
     g_assert_cmpstr(res->release, ==, "");
     g_assert_cmpstr(res->epoch, ==, "");
     g_assert_cmpstr(res->arch, ==, "");
-    cr_nvrea_free(res);
+    cr_nevra_free(res);
 
     res = cr_split_rpm_filename("b");
     g_assert(res);
@@ -998,7 +998,7 @@ test_cr_split_rpm_filename(void)
     g_assert(!res->release);
     g_assert(!res->epoch);
     g_assert(!res->arch);
-    cr_nvrea_free(res);
+    cr_nevra_free(res);
 }
 
 

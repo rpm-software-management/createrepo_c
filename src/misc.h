@@ -61,16 +61,6 @@ typedef struct {
     char *release;      /*!< release */
 } cr_EVR;
 
-/** Name-Version-Release-Epoch-Arch representation.
- */
-typedef struct {
-    char *name;         /*!< name */
-    char *version;      /*!< version */
-    char *release;      /*!< release */
-    char *epoch;        /*!< epoch */
-    char *arch;         /*!< arch */
-} cr_NVREA;
-
 typedef struct {
     char *name;
     char *epoch;
@@ -302,23 +292,18 @@ void cr_log_fn(const gchar *log_domain,
  */
 void cr_slist_free_full(GSList *list, GDestroyNotify free_f);
 
-/** Split filename into the NVREA.
+/** Split filename into the NEVRA.
  * @param filename      filename
- * @return              cr_NVREA
+ * @return              cr_NEVRA
  */
-cr_NVREA *cr_split_rpm_filename(const char *filename);
+cr_NEVRA *cr_split_rpm_filename(const char *filename);
 
-/** Free cr_NVREA.
- * @param nvrea         cr_NVREA
- */
-void cr_nvrea_free(cr_NVREA *nvrea);
-
-/** Compare evr of two cr_NVREA. Name and arch are ignored.
- * @param A     pointer to first cr_NVREA
- * @param B     pointer to second cr_NVREA
+/** Compare evr of two cr_NEVRA. Name and arch are ignored.
+ * @param A     pointer to first cr_NEVRA
+ * @param B     pointer to second cr_NEVRA
  * @return      0 = same, 1 = first is newer, -1 = second is newer
  */
-#define cr_cmp_nvrea(A, B) (cr_cmp_evr((A)->epoch, (A)->version, (A)->release,\
+#define cr_cmp_nevra(A, B) (cr_cmp_evr((A)->epoch, (A)->version, (A)->release,\
                                         (B)->epoch, (B)->version, (B)->release))
 
 /** Compare two version strings splited into evr chunks.

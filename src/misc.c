@@ -984,10 +984,10 @@ cr_slist_free_full(GSList *list, GDestroyNotify free_f)
 }
 
 
-cr_NVREA *
+cr_NEVRA *
 cr_split_rpm_filename(const char *filename)
 {
-    cr_NVREA *res = NULL;
+    cr_NEVRA *res = NULL;
     gchar *str, *copy;
     size_t len;
     int i;
@@ -995,7 +995,7 @@ cr_split_rpm_filename(const char *filename)
     if (!filename)
         return res;
 
-    res = g_new0(cr_NVREA, 1);
+    res = g_new0(cr_NEVRA, 1);
     str = g_strdup(filename);
     copy = str;
     len = strlen(str);
@@ -1047,21 +1047,6 @@ cr_split_rpm_filename(const char *filename)
     g_free(copy);
 
     return res;
-}
-
-
-void
-cr_nvrea_free(cr_NVREA *nvrea)
-{
-    if (!nvrea)
-        return;
-
-    g_free(nvrea->name);
-    g_free(nvrea->version);
-    g_free(nvrea->release);
-    g_free(nvrea->epoch);
-    g_free(nvrea->arch);
-    g_free(nvrea);
 }
 
 

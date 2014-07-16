@@ -39,6 +39,7 @@ typedef enum {
     CR_XMLFILE_PRIMARY,     /*!< primary.xml */
     CR_XMLFILE_FILELISTS,   /*!< filelists.xml */
     CR_XMLFILE_OTHER,       /*!< other.xml */
+    CR_XMLFILE_PRESTODELTA, /*!< prestodelta.xml */
     CR_XMLFILE_SENTINEL,    /*!< sentinel of the list */
 } cr_XmlFileType;
 
@@ -113,6 +114,26 @@ typedef struct {
  */
 #define cr_xmlfile_sopen_other(FILENAME, COMTYPE, STAT, ERR) \
             cr_xmlfile_sopen(FILENAME, CR_XMLFILE_OTHER, COMTYPE, STAT, ERR)
+
+/** Open a new prestodelta XML file.
+ * @param FILENAME      Filename.
+ * @param COMTYPE       Type of used compression.
+ * @param ERR           GError **
+ * @return              Opened cr_XmlFile or NULL on error
+ */
+#define cr_xmlfile_open_prestodelta(FILENAME, COMTYPE, ERR) \
+            cr_xmlfile_open(FILENAME, CR_XMLFILE_PRESTODELTA, COMTYPE, ERR)
+
+/** Open a new prestodelta XML file.
+ * @param FILENAME      Filename.
+ * @param COMTYPE       Type of compression.
+ * @param STAT          cr_ContentStat object or NULL.
+ * @param ERR           GError **
+ * @return              Opened cr_XmlFile or NULL on error
+ */
+#define cr_xmlfile_sopen_prestodelta(FILENAME, COMTYPE, STAT, ERR) \
+            cr_xmlfile_sopen(FILENAME, CR_XMLFILE_PRESTODELTA, COMTYPE, STAT, ERR)
+
 
 /** Open a new XML file with stats.
  * Note: Opened file must not exists! This function cannot

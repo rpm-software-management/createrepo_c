@@ -35,10 +35,12 @@
                                 CR_XML_FILELISTS_NS"\" packages=\"%d\">\n"
 #define XML_OTHER_HEADER        XML_HEADER"<otherdata xmlns=\"" \
                                 CR_XML_OTHER_NS"\" packages=\"%d\">\n"
+#define XML_PRESTODELTA_HEADER  XML_HEADER"<prestodelta>\n"
 
 #define XML_PRIMARY_FOOTER      "</metadata>"
 #define XML_FILELISTS_FOOTER    "</filelists>"
 #define XML_OTHER_FOOTER        "</otherdata>"
+#define XML_PRESTODELTA_FOOTER  "</prestodelta>"
 
 cr_XmlFile *
 cr_xmlfile_sopen(const char *filename,
@@ -85,9 +87,19 @@ int
 cr_xmlfile_set_num_of_pkgs(cr_XmlFile *f, long num, GError **err)
 {
     assert(f);
-    assert(f->header == 0);
-    assert(num >= 0);
     assert(!err || *err == NULL);
+
+    if (f->header != 0) {
+        g_set_error(err, CR_XML_FILE_ERROR, CRE_BADARG,
+                    "Header was already written");
+        return CRE_BADARG;
+    }
+
+    if (num < 0) {
+        g_set_error(err, CR_XML_FILE_ERROR, CRE_BADARG,
+                    "The number must be a positive integer number");
+        return CRE_BADARG;
+    }
 
     f->pkgs = num;
     return CRE_OK;
@@ -112,6 +124,9 @@ cr_xmlfile_write_xml_header(cr_XmlFile *f, GError **err)
         break;
     case CR_XMLFILE_OTHER:
         xml_header = XML_OTHER_HEADER;
+        break;
+    case CR_XMLFILE_PRESTODELTA:
+        xml_header = XML_PRESTODELTA_HEADER;
         break;
     default:
         g_critical("%s: Bad file type", __func__);
@@ -150,6 +165,9 @@ cr_xmlfile_write_xml_footer(cr_XmlFile *f, GError **err)
         break;
     case CR_XMLFILE_OTHER:
         xml_footer = XML_OTHER_FOOTER;
+        break;
+    case CR_XMLFILE_PRESTODELTA:
+        xml_footer = XML_PRESTODELTA_FOOTER;
         break;
     default:
         g_critical("%s: Bad file type", __func__);

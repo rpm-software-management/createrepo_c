@@ -984,10 +984,10 @@ cr_slist_free_full(GSList *list, GDestroyNotify free_f)
 }
 
 
-struct cr_NVREA *
+cr_NVREA *
 cr_split_rpm_filename(const char *filename)
 {
-    struct cr_NVREA *res = NULL;
+    cr_NVREA *res = NULL;
     gchar *str, *copy;
     size_t len;
     int i;
@@ -995,7 +995,7 @@ cr_split_rpm_filename(const char *filename)
     if (!filename)
         return res;
 
-    res = g_malloc0(sizeof(struct cr_NVREA));
+    res = g_new0(cr_NVREA, 1);
     str = g_strdup(filename);
     copy = str;
     len = strlen(str);
@@ -1051,7 +1051,7 @@ cr_split_rpm_filename(const char *filename)
 
 
 void
-cr_nvrea_free(struct cr_NVREA *nvrea)
+cr_nvrea_free(cr_NVREA *nvrea)
 {
     if (!nvrea)
         return;

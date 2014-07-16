@@ -43,287 +43,268 @@
 static void
 test_cr_str_to_evr(void)
 {
-    struct cr_EVR evr;
+    cr_EVR *evr;
 
     // V
 
     evr = cr_str_to_evr("5.0.0", NULL);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "5.0.0");
-    g_assert_cmpstr(evr.release, ==, NULL);
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "5.0.0");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    cr_evr_free(evr);
 
     evr = cr_str_to_evr("6.1", NULL);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "6.1");
-    g_assert_cmpstr(evr.release, ==, NULL);
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "6.1");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    cr_evr_free(evr);
 
     evr = cr_str_to_evr("7", NULL);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "7");
-    g_assert_cmpstr(evr.release, ==, NULL);
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "7");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    cr_evr_free(evr);
 
     // VR
 
     evr = cr_str_to_evr("5.0.0-2", NULL);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "5.0.0");
-    g_assert_cmpstr(evr.release, ==, "2");
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "5.0.0");
+    g_assert_cmpstr(evr->release, ==, "2");
+    cr_evr_free(evr);
 
     evr = cr_str_to_evr("6.1-3", NULL);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "6.1");
-    g_assert_cmpstr(evr.release, ==, "3");
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "6.1");
+    g_assert_cmpstr(evr->release, ==, "3");
+    cr_evr_free(evr);
 
     evr = cr_str_to_evr("7-4", NULL);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "7");
-    g_assert_cmpstr(evr.release, ==, "4");
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "7");
+    g_assert_cmpstr(evr->release, ==, "4");
+    cr_evr_free(evr);
 
     // EV
 
     evr = cr_str_to_evr("1:5.0.0", NULL);
-    g_assert_cmpstr(evr.epoch, ==, "1");
-    g_assert_cmpstr(evr.version, ==, "5.0.0");
-    g_assert_cmpstr(evr.release, ==, NULL);
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, "1");
+    g_assert_cmpstr(evr->version, ==, "5.0.0");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    cr_evr_free(evr);
 
     evr = cr_str_to_evr("2:6.1", NULL);
-    g_assert_cmpstr(evr.epoch, ==, "2");
-    g_assert_cmpstr(evr.version, ==, "6.1");
-    g_assert_cmpstr(evr.release, ==, NULL);
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, "2");
+    g_assert_cmpstr(evr->version, ==, "6.1");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    cr_evr_free(evr);
 
     evr = cr_str_to_evr("3:7", NULL);
-    g_assert_cmpstr(evr.epoch, ==, "3");
-    g_assert_cmpstr(evr.version, ==, "7");
-    g_assert_cmpstr(evr.release, ==, NULL);
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, "3");
+    g_assert_cmpstr(evr->version, ==, "7");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    cr_evr_free(evr);
 
     //cr_EVR
 
     evr = cr_str_to_evr("1:5.0.0-11", NULL);
-    g_assert_cmpstr(evr.epoch, ==, "1");
-    g_assert_cmpstr(evr.version, ==, "5.0.0");
-    g_assert_cmpstr(evr.release, ==, "11");
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, "1");
+    g_assert_cmpstr(evr->version, ==, "5.0.0");
+    g_assert_cmpstr(evr->release, ==, "11");
+    cr_evr_free(evr);
 
     evr = cr_str_to_evr("2:6.1-22", NULL);
-    g_assert_cmpstr(evr.epoch, ==, "2");
-    g_assert_cmpstr(evr.version, ==, "6.1");
-    g_assert_cmpstr(evr.release, ==, "22");
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, "2");
+    g_assert_cmpstr(evr->version, ==, "6.1");
+    g_assert_cmpstr(evr->release, ==, "22");
+    cr_evr_free(evr);
 
     evr = cr_str_to_evr("3:7-33", NULL);
-    g_assert_cmpstr(evr.epoch, ==, "3");
-    g_assert_cmpstr(evr.version, ==, "7");
-    g_assert_cmpstr(evr.release, ==, "33");
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, "3");
+    g_assert_cmpstr(evr->version, ==, "7");
+    g_assert_cmpstr(evr->release, ==, "33");
+    cr_evr_free(evr);
 
     // Bad strings
 
     evr = cr_str_to_evr(":", NULL);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "");
-    g_assert_cmpstr(evr.release, ==, NULL);
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    cr_evr_free(evr);
 
     evr = cr_str_to_evr(":-", NULL);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "");
-    g_assert_cmpstr(evr.release, ==, NULL);
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    cr_evr_free(evr);
 
     // Really bad values
 
     evr = cr_str_to_evr(NULL, NULL);
-    g_assert_cmpstr(evr.epoch, ==, NULL);
-    g_assert_cmpstr(evr.version, ==, NULL);
-    g_assert_cmpstr(evr.release, ==, NULL);
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, NULL);
+    g_assert_cmpstr(evr->version, ==, NULL);
+    g_assert_cmpstr(evr->release, ==, NULL);
+    cr_evr_free(evr);
 
     evr = cr_str_to_evr("", NULL);
-    g_assert_cmpstr(evr.epoch, ==, NULL);
-    g_assert_cmpstr(evr.version, ==, NULL);
-    g_assert_cmpstr(evr.release, ==, NULL);
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, NULL);
+    g_assert_cmpstr(evr->version, ==, NULL);
+    g_assert_cmpstr(evr->release, ==, NULL);
+    cr_evr_free(evr);
 
     evr = cr_str_to_evr("-", NULL);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "");
-    g_assert_cmpstr(evr.release, ==, NULL);
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    cr_evr_free(evr);
 
     evr = cr_str_to_evr("-:", NULL);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "");
-    g_assert_cmpstr(evr.release, ==, NULL);
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    cr_evr_free(evr);
 
     evr = cr_str_to_evr("foo:bar", NULL);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "bar");
-    g_assert_cmpstr(evr.release, ==, NULL);
-    free(evr.epoch);
-    free(evr.version);
-    free(evr.release);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "bar");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    cr_evr_free(evr);
 }
 
 
 static void
 test_cr_str_to_evr_with_chunk(void)
 {
-    struct cr_EVR evr;
+    cr_EVR *evr;
     GStringChunk *chunk;
     chunk = g_string_chunk_new(512);
 
     // V
 
     evr = cr_str_to_evr("5.0.0", chunk);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "5.0.0");
-    g_assert_cmpstr(evr.release, ==, NULL);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "5.0.0");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    g_free(evr);
 
     evr = cr_str_to_evr("6.1", chunk);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "6.1");
-    g_assert_cmpstr(evr.release, ==, NULL);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "6.1");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    g_free(evr);
 
     evr = cr_str_to_evr("7", chunk);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "7");
-    g_assert_cmpstr(evr.release, ==, NULL);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "7");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    g_free(evr);
 
     // VR
 
     evr = cr_str_to_evr("5.0.0-2", chunk);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "5.0.0");
-    g_assert_cmpstr(evr.release, ==, "2");
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "5.0.0");
+    g_assert_cmpstr(evr->release, ==, "2");
+    g_free(evr);
 
     evr = cr_str_to_evr("6.1-3", chunk);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "6.1");
-    g_assert_cmpstr(evr.release, ==, "3");
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "6.1");
+    g_assert_cmpstr(evr->release, ==, "3");
+    g_free(evr);
 
     evr = cr_str_to_evr("7-4", chunk);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "7");
-    g_assert_cmpstr(evr.release, ==, "4");
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "7");
+    g_assert_cmpstr(evr->release, ==, "4");
+    g_free(evr);
 
     // EV
 
     evr = cr_str_to_evr("1:5.0.0", chunk);
-    g_assert_cmpstr(evr.epoch, ==, "1");
-    g_assert_cmpstr(evr.version, ==, "5.0.0");
-    g_assert_cmpstr(evr.release, ==, NULL);
+    g_assert_cmpstr(evr->epoch, ==, "1");
+    g_assert_cmpstr(evr->version, ==, "5.0.0");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    g_free(evr);
 
     evr = cr_str_to_evr("2:6.1", chunk);
-    g_assert_cmpstr(evr.epoch, ==, "2");
-    g_assert_cmpstr(evr.version, ==, "6.1");
-    g_assert_cmpstr(evr.release, ==, NULL);
+    g_assert_cmpstr(evr->epoch, ==, "2");
+    g_assert_cmpstr(evr->version, ==, "6.1");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    g_free(evr);
 
     evr = cr_str_to_evr("3:7", chunk);
-    g_assert_cmpstr(evr.epoch, ==, "3");
-    g_assert_cmpstr(evr.version, ==, "7");
-    g_assert_cmpstr(evr.release, ==, NULL);
+    g_assert_cmpstr(evr->epoch, ==, "3");
+    g_assert_cmpstr(evr->version, ==, "7");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    g_free(evr);
 
     //cr_EVR
 
     evr = cr_str_to_evr("1:5.0.0-11", chunk);
-    g_assert_cmpstr(evr.epoch, ==, "1");
-    g_assert_cmpstr(evr.version, ==, "5.0.0");
-    g_assert_cmpstr(evr.release, ==, "11");
+    g_assert_cmpstr(evr->epoch, ==, "1");
+    g_assert_cmpstr(evr->version, ==, "5.0.0");
+    g_assert_cmpstr(evr->release, ==, "11");
+    g_free(evr);
 
     evr = cr_str_to_evr("2:6.1-22", chunk);
-    g_assert_cmpstr(evr.epoch, ==, "2");
-    g_assert_cmpstr(evr.version, ==, "6.1");
-    g_assert_cmpstr(evr.release, ==, "22");
+    g_assert_cmpstr(evr->epoch, ==, "2");
+    g_assert_cmpstr(evr->version, ==, "6.1");
+    g_assert_cmpstr(evr->release, ==, "22");
+    g_free(evr);
 
     evr = cr_str_to_evr("3:7-33", chunk);
-    g_assert_cmpstr(evr.epoch, ==, "3");
-    g_assert_cmpstr(evr.version, ==, "7");
-    g_assert_cmpstr(evr.release, ==, "33");
+    g_assert_cmpstr(evr->epoch, ==, "3");
+    g_assert_cmpstr(evr->version, ==, "7");
+    g_assert_cmpstr(evr->release, ==, "33");
+    g_free(evr);
 
     // Bad strings
 
     evr = cr_str_to_evr(":", chunk);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "");
-    g_assert_cmpstr(evr.release, ==, NULL);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    g_free(evr);
 
     evr = cr_str_to_evr(":-", chunk);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "");
-    g_assert_cmpstr(evr.release, ==, NULL);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    g_free(evr);
 
     // Really bad values
 
     evr = cr_str_to_evr(NULL, chunk);
-    g_assert_cmpstr(evr.epoch, ==, NULL);
-    g_assert_cmpstr(evr.version, ==, NULL);
-    g_assert_cmpstr(evr.release, ==, NULL);
+    g_assert_cmpstr(evr->epoch, ==, NULL);
+    g_assert_cmpstr(evr->version, ==, NULL);
+    g_assert_cmpstr(evr->release, ==, NULL);
+    g_free(evr);
 
     evr = cr_str_to_evr("", chunk);
-    g_assert_cmpstr(evr.epoch, ==, NULL);
-    g_assert_cmpstr(evr.version, ==, NULL);
-    g_assert_cmpstr(evr.release, ==, NULL);
+    g_assert_cmpstr(evr->epoch, ==, NULL);
+    g_assert_cmpstr(evr->version, ==, NULL);
+    g_assert_cmpstr(evr->release, ==, NULL);
+    g_free(evr);
 
     evr = cr_str_to_evr("-", chunk);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "");
-    g_assert_cmpstr(evr.release, ==, NULL);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    g_free(evr);
 
     evr = cr_str_to_evr("-:", chunk);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "");
-    g_assert_cmpstr(evr.release, ==, NULL);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    g_free(evr);
 
     evr = cr_str_to_evr("foo:bar", chunk);
-    g_assert_cmpstr(evr.epoch, ==, "0");
-    g_assert_cmpstr(evr.version, ==, "bar");
-    g_assert_cmpstr(evr.release, ==, NULL);
+    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->version, ==, "bar");
+    g_assert_cmpstr(evr->release, ==, NULL);
+    g_free(evr);
 
     g_string_chunk_free(chunk);
 }
@@ -978,7 +959,7 @@ test_cr_cmp_version_str(void)
 static void
 test_cr_split_rpm_filename(void)
 {
-    struct cr_NVREA *res;
+    cr_NVREA *res;
 
     res = cr_split_rpm_filename(NULL);
     g_assert(!res);
@@ -1037,7 +1018,7 @@ test_cr_str_to_nevr(void)
     g_assert(!res->epoch);
     cr_nevr_free(res);
 
-    res = cr_str_to_nevr("bar:4-9-123a");
+    res = cr_str_to_nevr("bar-4:9-123a");
     g_assert(res);
     g_assert_cmpstr(res->name, ==, "bar");
     g_assert_cmpstr(res->version, ==, "9");
@@ -1061,8 +1042,41 @@ test_cr_str_to_nevr(void)
     g_assert(!res->epoch);
     cr_nevr_free(res);
 
+    res = cr_str_to_nevr("b-1-2");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "b");
+    g_assert_cmpstr(res->version, ==, "1");
+    g_assert_cmpstr(res->release, ==, "2");
+    g_assert(!res->epoch);
+    cr_nevr_free(res);
 }
 
+static void
+test_cr_str_to_nevra(void)
+{
+    cr_NEVRA *res;
+
+    res = cr_str_to_nevra(NULL);
+    g_assert(!res);
+
+    res = cr_str_to_nevra("crypto-utils-0:2.4.1-52.fc20.x86_64");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "crypto-utils");
+    g_assert_cmpstr(res->version, ==, "2.4.1");
+    g_assert_cmpstr(res->release, ==, "52.fc20");
+    g_assert_cmpstr(res->epoch, ==, "0");
+    g_assert_cmpstr(res->arch, ==, "x86_64");
+    cr_nevra_free(res);
+
+    res = cr_str_to_nevra("crypto-utils-2.4.1-52.fc20.x86_64");
+    g_assert(res);
+    g_assert_cmpstr(res->name, ==, "crypto-utils");
+    g_assert_cmpstr(res->version, ==, "2.4.1");
+    g_assert_cmpstr(res->release, ==, "52.fc20");
+    g_assert(!res->epoch);
+    g_assert_cmpstr(res->arch, ==, "x86_64");
+    cr_nevra_free(res);
+}
 
 static void
 test_cr_cmp_evr(void)
@@ -1169,6 +1183,8 @@ main(int argc, char *argv[])
             test_cr_split_rpm_filename);
     g_test_add_func("/misc/test_cr_str_to_nevr",
             test_cr_str_to_nevr);
+    g_test_add_func("/misc/test_cr_str_to_nevra",
+            test_cr_str_to_nevra);
     g_test_add_func("/misc/test_cr_cmp_evr",
             test_cr_cmp_evr);
 

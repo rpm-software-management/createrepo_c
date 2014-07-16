@@ -63,13 +63,13 @@ typedef struct {
 
 /** Name-Version-Release-Epoch-Arch representation.
  */
-struct cr_NVREA {
+typedef struct {
     char *name;         /*!< name */
     char *version;      /*!< version */
     char *release;      /*!< release */
     char *epoch;        /*!< epoch */
     char *arch;         /*!< arch */
-};
+} cr_NVREA;
 
 typedef struct {
     char *name;
@@ -302,16 +302,16 @@ void cr_log_fn(const gchar *log_domain,
  */
 void cr_slist_free_full(GSList *list, GDestroyNotify free_f);
 
-/** Split filename into the NVREA structure.
+/** Split filename into the NVREA.
  * @param filename      filename
- * @return              struct cr_NVREA
+ * @return              cr_NVREA
  */
-struct cr_NVREA *cr_split_rpm_filename(const char *filename);
+cr_NVREA *cr_split_rpm_filename(const char *filename);
 
-/** Free struct cr_NVREA.
- * @param nvrea         struct cr_NVREA
+/** Free cr_NVREA.
+ * @param nvrea         cr_NVREA
  */
-void cr_nvrea_free(struct cr_NVREA *nvrea);
+void cr_nvrea_free(cr_NVREA *nvrea);
 
 /** Compare evr of two cr_NVREA. Name and arch are ignored.
  * @param A     pointer to first cr_NVREA

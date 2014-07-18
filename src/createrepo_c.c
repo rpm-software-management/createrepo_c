@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include "cmd_parser.h"
 #include "compression_wrapper.h"
+#include "deltarpms.h"
 #include "dumper_thread.h"
 #include "checksum.h"
 #include "error.h"
@@ -47,6 +48,7 @@
 #include "xml_dump.h"
 #include "xml_file.h"
 
+#define OUTDELTADIR "drpms/"
 
 // Global variables used by the signal handler failure_exit_cleanup
 char *global_lock_dir     = NULL; // Path to .repodata/ dir that is used as a lock
@@ -750,20 +752,25 @@ main(int argc, char **argv)
     // Setup compression types
 
     const char *sqlite_compression_suffix = NULL;
+    const char *prestodelta_compression_suffix = NULL;
     cr_CompressionType sqlite_compression = CR_CW_BZ2_COMPRESSION;
     cr_CompressionType groupfile_compression = CR_CW_GZ_COMPRESSION;
+    cr_CompressionType prestodelta_compression = CR_CW_GZ_COMPRESSION;
 
     if (cmd_options->compression_type != CR_CW_UNKNOWN_COMPRESSION) {
-        sqlite_compression    = cmd_options->compression_type;
-        groupfile_compression = cmd_options->compression_type;
+        sqlite_compression      = cmd_options->compression_type;
+        groupfile_compression   = cmd_options->compression_type;
+        prestodelta_compression = cmd_options->compression_type;
     }
 
     if (cmd_options->xz_compression) {
-        sqlite_compression    = CR_CW_XZ_COMPRESSION;
-        groupfile_compression = CR_CW_XZ_COMPRESSION;
+        sqlite_compression      = CR_CW_XZ_COMPRESSION;
+        groupfile_compression   = CR_CW_XZ_COMPRESSION;
+        prestodelta_compression = CR_CW_GZ_COMPRESSION;
     }
 
     sqlite_compression_suffix = cr_compression_suffix(sqlite_compression);
+    prestodelta_compression_suffix = cr_compression_suffix(prestodelta_compression);
 
 
     // Create and open new compressed files
@@ -911,12 +918,10 @@ main(int argc, char **argv)
     user_data.checksum_type     = cmd_options->checksum_type;
     user_data.checksum_cachedir = cmd_options->checksum_cachedir;
     user_data.skip_symlinks     = cmd_options->skip_symlinks;
-    user_data.skip_stat         = cmd_options->skip_stat;
-    user_data.old_metadata      = old_metadata;
     user_data.repodir_name_len  = strlen(in_dir);
     user_data.package_count     = package_count;
-    user_data.buffer            = g_queue_new();
-    user_data.mutex_buffer      = g_mutex_new();
+    user_data.skip_stat         = cmd_options->skip_stat;
+    user_data.old_metadata      = old_metadata;
     user_data.mutex_pri         = g_mutex_new();
     user_data.mutex_fil         = g_mutex_new();
     user_data.mutex_oth         = g_mutex_new();
@@ -926,6 +931,12 @@ main(int argc, char **argv)
     user_data.id_pri            = 0;
     user_data.id_fil            = 0;
     user_data.id_oth            = 0;
+    user_data.buffer            = g_queue_new();
+    user_data.mutex_buffer      = g_mutex_new();
+    user_data.deltas            = cmd_options->deltas;
+    user_data.max_delta_rpm_size= cmd_options->max_delta_rpm_size;
+    user_data.mutex_deltatargetpackages = g_mutex_new();
+    user_data.deltatargetpackages = NULL;
 
     g_debug("Thread pool user data ready");
 
@@ -955,6 +966,7 @@ main(int argc, char **argv)
     g_mutex_free(user_data.mutex_pri);
     g_mutex_free(user_data.mutex_fil);
     g_mutex_free(user_data.mutex_oth);
+    g_mutex_free(user_data.mutex_deltatargetpackages);
 
 
     // Create repomd records for each file
@@ -972,6 +984,7 @@ main(int argc, char **argv)
     cr_RepomdRecord *groupfile_rec            = NULL;
     cr_RepomdRecord *compressed_groupfile_rec = NULL;
     cr_RepomdRecord *updateinfo_rec           = NULL;
+    cr_RepomdRecord *prestodelta_rec          = NULL;
 
 
     // XML
@@ -1148,6 +1161,108 @@ main(int argc, char **argv)
         cr_repomdrecordfilltask_free(oth_db_fill_task, NULL);
     }
 
+#ifdef CR_DELTA_RPM_SUPPORT
+    // Delta generation
+    if (cmd_options->deltas) {
+        gboolean ret;
+        gchar *filename, *outdeltadir = NULL;
+        gchar *prestodelta_xml_filename = NULL;
+        GHashTable *ht_oldpackagedirs = NULL;
+        cr_XmlFile *prestodelta_cr_file = NULL;
+        cr_ContentStat *prestodelta_stat = NULL;
+
+        filename = g_strconcat("prestodelta.xml",
+                               prestodelta_compression_suffix,
+                               NULL);
+        outdeltadir = g_build_filename(out_dir, OUTDELTADIR, NULL);
+        prestodelta_xml_filename = g_build_filename(tmp_out_repo,
+                                                    filename,
+                                                    NULL);
+        g_free(filename);
+
+        // 0) Prepare outdeltadir
+        if (g_file_test(outdeltadir, G_FILE_TEST_EXISTS)) {
+            if (!g_file_test(outdeltadir, G_FILE_TEST_IS_DIR)) {
+                g_error("The file %s already exists and it is not a directory",
+                        outdeltadir);
+                goto deltaerror;
+            }
+        } else if (g_mkdir(outdeltadir, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH)) {
+            g_error("Cannot create %s: %s", outdeltadir, strerror(errno));
+            goto deltaerror;
+        }
+
+        // 1) Scan old package directories
+        ht_oldpackagedirs = cr_deltarpms_scan_oldpackagedirs(cmd_options->oldpackagedirs_paths,
+                                                   cmd_options->max_delta_rpm_size,
+                                                   &tmp_err);
+        if (!ht_oldpackagedirs) {
+            g_error("cr_deltarpms_scan_oldpackagedirs failed: %s\n", tmp_err->message);
+            g_clear_error(&tmp_err);
+            goto deltaerror;
+        }
+
+        // 2) Generate drpms in parallel
+        ret = cr_deltarpms_parallel_deltas(user_data.deltatargetpackages,
+                                 ht_oldpackagedirs,
+                                 outdeltadir,
+                                 cmd_options->num_deltas,
+                                 cmd_options->workers,
+                                 cmd_options->max_delta_rpm_size,
+                                 cmd_options->max_delta_rpm_size,
+                                 &tmp_err);
+        if (!ret) {
+            g_error("Parallel generation of drpms failed: %s", tmp_err->message);
+            g_clear_error(&tmp_err);
+            goto deltaerror;
+        }
+
+        // 3) Generate prestodelta.xml file
+        prestodelta_stat = cr_contentstat_new(cmd_options->checksum_type, NULL);
+        prestodelta_cr_file = cr_xmlfile_sopen_prestodelta(prestodelta_xml_filename,
+                                                           prestodelta_compression,
+                                                           prestodelta_stat,
+                                                           &tmp_err);
+        if (!prestodelta_cr_file) {
+            g_error("Cannot open %s: %s", prestodelta_xml_filename, tmp_err->message);
+            g_clear_error(&tmp_err);
+            goto deltaerror;
+        }
+
+        ret = cr_deltarpms_generate_prestodelta_file(
+                        outdeltadir,
+                        prestodelta_cr_file,
+                        //cmd_options->checksum_type,
+                        CR_CHECKSUM_SHA256, // Createrepo always uses SHA256
+                        cmd_options->workers,
+                        out_dir,
+                        &tmp_err);
+        if (!ret) {
+            g_error("Cannot generate %s: %s", prestodelta_xml_filename,
+                    tmp_err->message);
+            g_clear_error(&tmp_err);
+            goto deltaerror;
+        }
+
+        cr_xmlfile_close(prestodelta_cr_file, NULL);
+        prestodelta_cr_file = NULL;
+
+        // 4) Prepare repomd record
+        prestodelta_rec = cr_repomd_record_new("prestodelta", prestodelta_xml_filename);
+        cr_repomd_record_load_contentstat(prestodelta_rec, prestodelta_stat);
+        cr_repomd_record_fill(prestodelta_rec, cmd_options->checksum_type, NULL);
+
+deltaerror:
+        // 5) Cleanup
+        g_hash_table_destroy(ht_oldpackagedirs);
+        g_free(outdeltadir);
+        g_free(prestodelta_xml_filename);
+        cr_xmlfile_close(prestodelta_cr_file, NULL);
+        cr_contentstat_free(prestodelta_stat, NULL);
+        cr_slist_free_full(user_data.deltatargetpackages,
+                       (GDestroyNotify) cr_deltatargetpackage_free);
+    }
+#endif
 
     // Add checksums into files names
 
@@ -1161,6 +1276,7 @@ main(int argc, char **argv)
         cr_repomd_record_rename_file(groupfile_rec, NULL);
         cr_repomd_record_rename_file(compressed_groupfile_rec, NULL);
         cr_repomd_record_rename_file(updateinfo_rec, NULL);
+        cr_repomd_record_rename_file(prestodelta_rec, NULL);
     }
 
 
@@ -1175,6 +1291,7 @@ main(int argc, char **argv)
     cr_repomd_set_record(repomd_obj, groupfile_rec);
     cr_repomd_set_record(repomd_obj, compressed_groupfile_rec);
     cr_repomd_set_record(repomd_obj, updateinfo_rec);
+    cr_repomd_set_record(repomd_obj, prestodelta_rec);
 
     int i = 0;
     while (cmd_options->repo_tags && cmd_options->repo_tags[i])

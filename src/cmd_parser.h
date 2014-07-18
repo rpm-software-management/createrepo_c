@@ -85,6 +85,14 @@ struct CmdOptions {
                                      d - days) */
     char *cachedir;             /*!< Cache dir for checksums */
 
+    gboolean deltas;            /*!< Is delta generation enabled? */
+    char **oldpackagedirs;      /*!< Paths to look for older pks
+                                     to delta agains */
+    gint num_deltas;            /*!< Number of older version to make
+                                     deltas against */
+    gint64 max_delta_rpm_size;  /*!< Max size of an rpm that to run
+                                     deltarpm against */
+
     /* Items filled by check_arguments() */
 
     char *groupfile_fullpath;   /*!< full path to groupfile */
@@ -104,6 +112,7 @@ struct CmdOptions {
                                      Filled if --retain-old-md-by-age
                                      is used */
     char *checksum_cachedir;    /*!< Path to cachedir */
+    GSList *oldpackagedirs_paths; /*!< paths to look for older pkgs to delta against */
 };
 
 /**

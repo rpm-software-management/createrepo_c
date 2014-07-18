@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "checksum.h"
+#include "deltarpms.h"
 #include "dumper_thread.h"
 #include "error.h"
 #include "misc.h"
@@ -391,6 +392,29 @@ cr_dumper_thread(gpointer data, gpointer user_data)
             goto task_cleanup;
         }
     }
+
+#ifdef CR_DELTA_RPM_SUPPORT
+    // Delta candidate
+    if (udata->deltas
+        && !old_used
+        && pkg->size_installed < udata->max_delta_rpm_size)
+    {
+        cr_DeltaTargetPackage *tpkg;
+        tpkg = cr_deltatargetpackage_from_package(pkg,
+                                                  task->full_path,
+                                                  NULL);
+        if (tpkg) {
+            g_mutex_lock(udata->mutex_deltatargetpackages);
+            udata->deltatargetpackages = g_slist_prepend(
+                                                udata->deltatargetpackages,
+                                                tpkg);
+            g_mutex_unlock(udata->mutex_deltatargetpackages);
+        } else {
+            g_warning("Cannot create deltatargetpackage for: %s-%s-%s",
+                      pkg->name, pkg->version, pkg->release);
+        }
+    }
+#endif
 
     // Buffering stuff
     g_mutex_lock(udata->mutex_buffer);

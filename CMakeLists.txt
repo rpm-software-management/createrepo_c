@@ -69,6 +69,18 @@ ELSE (RPM_PATH)
     message("Using system RPM: ${RPMDB_LIBRARY}")
 ENDIF (RPM_PATH)
 
+# drpm
+if (DRPM_PATH)
+    include_directories (${DRPM_PATH}/)
+    find_library (DRPM_LIBRARY NAMES drpm PATHS ${DRPM_PATH}/ NO_DEFAULT_PATH)
+    set(CR_DELTA_RPM_SUPPORT "1")
+    message("Using custom DRPM: ${DRPM_LIBRARY}")
+ELSE (DRPM_PATH)
+    FIND_LIBRARY (DRPM_LIBRARY NAMES drpm)
+    IF (NOT DRPM_LIBRARY)
+        MESSAGE("No DRPM library installed")
+    ENDIF (NOT DRPM_LIBRARY)
+endif (DRPM_PATH)
 
 # Get package version
 INCLUDE (${CMAKE_SOURCE_DIR}/VERSION.cmake)

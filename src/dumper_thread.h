@@ -46,7 +46,6 @@ struct PoolTask {
 };
 
 struct UserData {
-    GThreadPool *pool;              // thread pool
     cr_XmlFile *pri_f;              // Opened compressed primary.xml.*
     cr_XmlFile *fil_f;              // Opened compressed filelists.xml.*
     cr_XmlFile *oth_f;              // Opened compressed other.xml.*
@@ -81,6 +80,13 @@ struct UserData {
     // Buffering
     GQueue *buffer;                 // Buffer for done tasks
     GMutex *mutex_buffer;           // Mutex for accessing the buffer
+
+    // Delta generation
+    gboolean deltas;                // Are deltas enabled?
+    gint64 max_delta_rpm_size;      // Max size of an rpm that to run
+                                    // deltarpm against
+    GMutex *mutex_deltatargetpackages; // Mutex
+    GSList *deltatargetpackages;    // List of cr_DeltaTargetPackages
 };
 
 

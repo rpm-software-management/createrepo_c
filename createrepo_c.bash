@@ -20,7 +20,7 @@ _cr_createrepo()
         -q|--quiet|-v|--verbose|--skip-stat)
             return 0
             ;;
-        --update-md-path|-o|--outputdir)
+        --update-md-path|-o|--outputdir|--oldpackagedirs)
             COMPREPLY=( $( compgen -d -- "$2" ) )
             return 0
             ;;
@@ -44,7 +44,7 @@ _cr_createrepo()
 #            COMPREPLY=( $( compgen -W '0 1 2 3 4 5 6 7 8 9' -- "$2" ) )
 #            return 0
 #            ;;
-#        --num-deltas)
+#        --num-deltas|--max-delta-rpm-size)
 #            COMPREPLY=( $( compgen -W '1 2 3 4 5 6 7 8 9' -- "$2" ) )
 #            return 0
 #            ;;
@@ -68,7 +68,8 @@ _cr_createrepo()
             --skip-symlinks --changelog-limit --unique-md-filenames
             --simple-md-filenames --retain-old-md --distro --content --repo
             --revision --read-pkgs-list --update --workers --xz
-            --compress-type --keep-all-metadata' -- "$2" ) )
+            --compress-type --keep-all-metadata --deltas --oldpackagedirs
+            --num-deltas --max-delta-rpm-size' -- "$2" ) )
     else
         COMPREPLY=( $( compgen -d -- "$2" ) )
     fi

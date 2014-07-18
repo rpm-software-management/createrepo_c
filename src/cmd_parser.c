@@ -23,6 +23,7 @@
 #include <assert.h>
 #include <errno.h>
 #include "cmd_parser.h"
+#include "deltarpms.h"
 #include "error.h"
 #include "compression_wrapper.h"
 #include "misc.h"
@@ -45,6 +46,10 @@ struct CmdOptions _cmd_options = {
         .ignore_lock          = DEFAULT_IGNORE_LOCK,
         .md_max_age           = 0,
         .cachedir             = NULL,
+
+        .num_deltas           = 1,
+        .max_delta_rpm_size   = CR_DEFAULT_MAX_DELTA_RPM_SIZE,
+
         .checksum_cachedir    = NULL,
     };
 
@@ -138,6 +143,15 @@ static GOptionEntry cmd_entries[] =
       "Available units (m - minutes, h - hours, d - days)", "AGE" },
     { "cachedir", 'c', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.cachedir),
       "Set path to cache dir", "CACHEDIR." },
+    { "deltas", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.deltas),
+      "Tells createrepo to generate deltarpms and the delta metadata.", NULL },
+    { "oldpackagedirs", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &(_cmd_options.oldpackagedirs),
+      "Paths to look for older pkgs to delta against. Can be specified "
+      "multiple times.", "PATH" },
+    { "num-deltas", 0, 0, G_OPTION_ARG_INT, &(_cmd_options.num_deltas),
+      "The number of older versions to make deltas against. Defaults to 1.", "INT" },
+    { "max-delta-rpm-size", 0, 0, G_OPTION_ARG_INT64, &(_cmd_options.max_delta_rpm_size),
+      "Max size of an rpm that to run deltarpm against (in bytes).", "MAX_DELTA_RPM_SIZE" },
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL },
 };
 
@@ -443,6 +457,16 @@ check_arguments(struct CmdOptions *options,
             return FALSE;
     }
 
+    // Check oldpackagedirs
+    x = 0;
+    while (options->oldpackagedirs && options->oldpackagedirs[x]) {
+        char *path = options->oldpackagedirs[x];
+        options->oldpackagedirs_paths = g_slist_prepend(
+                                            options->oldpackagedirs_paths,
+                                            (gpointer) path);
+        x++;
+    }
+
     return TRUE;
 }
 
@@ -469,6 +493,7 @@ free_options(struct CmdOptions *options)
     g_strfreev(options->distro_tags);
     g_strfreev(options->content_tags);
     g_strfreev(options->repo_tags);
+    g_strfreev(options->oldpackagedirs);
 
     cr_slist_free_full(options->include_pkgs, g_free);
     cr_slist_free_full(options->exclude_masks,
@@ -476,4 +501,5 @@ free_options(struct CmdOptions *options)
     cr_slist_free_full(options->l_update_md_paths, g_free);
     cr_slist_free_full(options->distro_cpeids, g_free);
     cr_slist_free_full(options->distro_values, g_free);
+    cr_slist_free_full(options->oldpackagedirs_paths, g_free);
 }

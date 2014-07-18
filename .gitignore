@@ -26,6 +26,7 @@ CPackSourceConfig.cmake
 _CPack_Packages/
 src/version.h
 src/createrepo_c.pc
+src/deltarpms.h
 
 # Devel stuff
 notes

@@ -24,6 +24,7 @@
 extern "C" {
 #endif
 
+#include "deltarpms.h"
 #include "package.h"
 #include "repomd.h"
 
@@ -121,6 +122,13 @@ struct cr_XmlStruct cr_xml_dump(cr_Package *package, GError **err);
  * @return              repomd.xml content
  */
 char *cr_xml_dump_repomd(cr_Repomd *repomd, GError **err);
+
+/** Generate xml representation of cr_DeltaPackage
+ * @param dpkg          cr_DeltaPackage
+ * @param err           **GError
+ * @return              xml chunk string or NULL on error
+ */
+char *cr_xml_dump_deltapackage(cr_DeltaPackage *dpkg, GError **err);
 
 /** Prepare string to xml dump.
  * If string is not utf8 it is converted (source encoding is supposed to be

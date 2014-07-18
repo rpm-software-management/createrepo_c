@@ -1,6 +1,7 @@
 SET (createrepo_c_SRCS
      checksum.c
      compression_wrapper.c
+     deltarpms.c
      dumper_thread.c
      error.c
      helpers.c
@@ -15,6 +16,7 @@ SET (createrepo_c_SRCS
      sqlite.c
      threads.c
      xml_dump.c
+     xml_dump_deltapackage.c
      xml_dump_filelists.c
      xml_dump_other.c
      xml_dump_primary.c
@@ -31,6 +33,7 @@ SET(headers
     compression_wrapper.h
     constants.h
     createrepo_c.h
+    deltarpms.h
     error.h
     helpers.h
     load_metadata.h
@@ -60,6 +63,9 @@ TARGET_LINK_LIBRARIES(libcreaterepo_c ${OPENSSL_LIBRARIES})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${RPMDB_LIBRARY})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${SQLITE3_LIBRARIES})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${ZLIB_LIBRARY})
+IF (DRPM_LIBRARY)
+    TARGET_LINK_LIBRARIES(libcreaterepo_c ${DRPM_LIBRARY})
+ENDIF (DRPM_LIBRARY)
 
 
 SET_TARGET_PROPERTIES(libcreaterepo_c PROPERTIES
@@ -88,6 +94,7 @@ TARGET_LINK_LIBRARIES(modifyrepo_c
 
 CONFIGURE_FILE("createrepo_c.pc.cmake" "${CMAKE_SOURCE_DIR}/src/createrepo_c.pc" @ONLY)
 CONFIGURE_FILE("version.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/version.h" @ONLY)
+CONFIGURE_FILE("deltarpms.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/deltarpms.h" @ONLY)
 
 IF (CMAKE_SIZEOF_VOID_P MATCHES "8")
     SET (LIB_SUFFIX "64")

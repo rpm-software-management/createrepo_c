@@ -27,7 +27,7 @@ Package build requires - Pkg name in Fedora/Ubuntu:
 * *Documentation:* sphinx (http://sphinx-doc.org/) - python-sphinx/
 * **Test requires:** check (http://check.sourceforge.net/) - check-devel/check
 * **Test requires:** python-nose (https://nose.readthedocs.org/) - python-nose/python-nose
-
+* **Experimental support:** drpm (https://git.fedorahosted.org/git/drpm.git)
 
 From your checkout dir:
 
@@ -47,7 +47,7 @@ To build the documentation, from the build/ directory:
 
 E.g. when you want to try weak and rich dependencies.
 
-    cmake -D RPM_PATH="/home/tmlcoch/git/rpm" .. && make
+    cmake -DRPM_PATH="/home/tmlcoch/git/rpm" .. && make
 
 **Note:** The RPM must be buit in that directory
 
@@ -56,6 +56,20 @@ Commands I am using for building of RPM:
     cd /home/tmlcoch/git/rpm
     CPPFLAGS='-I/usr/include/nss3/ -I/usr/include/nspr4/' ./autogen.sh --rpmconfigure --with-vendor=redhat --with-external-db --with-lua --with-selinux --with-cap --with-acl --enable-python
     make clean && make
+
+## Building with delta rpm support (drpm)
+
+At first, you have to checkout drpm library from the
+https://git.fedorahosted.org/git/drpm.git and build it.
+
+    git clone ssh://git.fedorahosted.org/git/drpm.git
+    cd drpm/
+    make
+
+Then run ``cmake`` for createrepo_c with param ``-DDRPM_PATH="/home/tmlcoch/git/drpm"``
+where the path is path to your build of drpm library.
+
+    cmake -DDRPM_PATH="/home/tmlcoch/git/drpm" .. && make
 
 ## Build tarball
 

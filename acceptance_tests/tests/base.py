@@ -219,7 +219,7 @@ class BaseTestCase(unittest.TestCase):
         res.repo1 = os.path.join(repo1, "repodata")
         res.repo2 = os.path.join(repo2, "repodata")
         res.logfile = os.path.join(self.tdir, "out_cmp")
-        res.cmd = "repo_diff.py --verbose --compare %s %s" % (res.repo1, res.repo2)
+        res.cmd = "yum-metadata-diff --verbose --compare %s %s" % (res.repo1, res.repo2)
         res.rc, res.out = self.runcmd(res.cmd, logfile=res.logfile)
         return res
 
@@ -227,7 +227,7 @@ class BaseTestCase(unittest.TestCase):
         res = RepoSanityCheckResult()
         res.repo = os.path.join(repo, "repodata")
         res.logfile = os.path.join(self.tdir, "out_sanity")
-        res.cmd = "repo_diff.py --verbose --check %s" % res.repo
+        res.cmd = "yum-metadata-diff --verbose --check %s" % res.repo
         res.rc, res.out = self.runcmd(res.cmd, logfile=res.logfile)
         return res
 

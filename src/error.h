@@ -90,6 +90,8 @@ typedef enum {
         (30) Child process exited abnormally */
     CRE_DELTARPM, /*!<
         (31) Deltarpm related error */
+    CRE_BADXMLUPDATEINFO, /*!<
+        (32) Bad updateinfo.xml file */
 } cr_Error;
 
 /** Converts cr_Error return code to error string.
@@ -123,6 +125,7 @@ const char *cr_strerror(cr_Error rc);
 #define CR_XML_PARSER_OTH_ERROR         cr_xml_parser_oth_error_quark()
 #define CR_XML_PARSER_PRI_ERROR         cr_xml_parser_pri_error_quark()
 #define CR_XML_PARSER_REPOMD_ERROR      cr_xml_parser_repomd_error_quark()
+#define CR_XML_PARSER_UPDATEINFO_ERROR  cr_xml_parser_updateinfo_error_quark()
 
 GQuark cr_checksum_error_quark(void);
 GQuark cr_cmd_error_quark(void);
@@ -148,5 +151,6 @@ GQuark cr_xml_parser_fil_error_quark(void);
 GQuark cr_xml_parser_oth_error_quark(void);
 GQuark cr_xml_parser_pri_error_quark(void);
 GQuark cr_xml_parser_repomd_error_quark(void);
+GQuark cr_xml_parser_updateinfo_error_quark(void);
 
 #endif

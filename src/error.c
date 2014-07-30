@@ -232,3 +232,9 @@ cr_xml_parser_repomd_error_quark(void)
 {
     return g_quark_from_static_string("cr_xml_parser_repomd_error");
 }
+
+GQuark
+cr_xml_parser_updateinfo_error_quark(void)
+{
+    return g_quark_from_static_string("cr_xml_parser_updateinfo_error");
+}

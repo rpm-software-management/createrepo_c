@@ -52,6 +52,7 @@ extern "C" {
 #include "repomd.h"
 #include "sqlite.h"
 #include "threads.h"
+#include "updateinfo.h"
 #include "version.h"
 #include "xml_dump.h"
 #include "xml_file.h"

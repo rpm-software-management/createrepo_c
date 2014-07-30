@@ -15,6 +15,7 @@ SET (createrepo_c_SRCS
      repomd.c
      sqlite.c
      threads.c
+     updateinfo.c
      xml_dump.c
      xml_dump_deltapackage.c
      xml_dump_filelists.c
@@ -46,6 +47,7 @@ SET(headers
     repomd.h
     sqlite.h
     threads.h
+    updateinfo.h
     version.h
     xml_dump.h
     xml_file.h

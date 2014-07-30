@@ -24,6 +24,7 @@
 extern "C" {
 #endif
 
+#include <glib.h>
 #include "package.h"
 #include "repomd.h"
 

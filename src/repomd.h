@@ -24,6 +24,7 @@
 extern "C" {
 #endif
 
+#include <glib.h>
 #include "checksum.h"
 #include "compression_wrapper.h"
 #include "package.h"

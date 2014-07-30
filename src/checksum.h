@@ -20,6 +20,8 @@
 #ifndef __C_CREATEREPOLIB_CHECKSUM_H__
 #define __C_CREATEREPOLIB_CHECKSUM_H__
 
+#include <glib.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif

@@ -24,8 +24,8 @@
 extern "C" {
 #endif
 
-#include <rpm/rpmlib.h>
 #include <glib.h>
+#include <rpm/rpmlib.h>
 #include "load_metadata.h"
 #include "locate_metadata.h"
 #include "misc.h"

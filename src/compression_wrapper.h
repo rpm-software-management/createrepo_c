@@ -24,6 +24,7 @@
 extern "C" {
 #endif
 
+#include <glib.h>
 #include "checksum.h"
 
 /** \defgroup   compression_wrapper     Wrapper for compressed file.

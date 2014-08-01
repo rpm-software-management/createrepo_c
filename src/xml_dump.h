@@ -28,6 +28,7 @@ extern "C" {
 #include "deltarpms.h"
 #include "package.h"
 #include "repomd.h"
+#include "updateinfo.h"
 
 /** \defgroup   xml_dump        XML dump API.
  *
@@ -123,6 +124,13 @@ struct cr_XmlStruct cr_xml_dump(cr_Package *package, GError **err);
  * @return              repomd.xml content
  */
 char *cr_xml_dump_repomd(cr_Repomd *repomd, GError **err);
+
+/** Generate xml representation of cr_UpdateInfo.
+ * @param updateinfo    cr_UpdateInfo
+ * @param err           **GError
+ * @return              repomd.xml content
+ */
+char *cr_xml_dump_updateinfo(cr_UpdateInfo *updateinfo, GError **err);
 
 /** Generate xml representation of cr_DeltaPackage
  * @param dpkg          cr_DeltaPackage

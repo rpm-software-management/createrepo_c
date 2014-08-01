@@ -36,11 +36,13 @@
 #define XML_OTHER_HEADER        XML_HEADER"<otherdata xmlns=\"" \
                                 CR_XML_OTHER_NS"\" packages=\"%d\">\n"
 #define XML_PRESTODELTA_HEADER  XML_HEADER"<prestodelta>\n"
+#define XML_UPDATEINFO_HEADER   XML_HEADER"<updates>\n"
 
 #define XML_PRIMARY_FOOTER      "</metadata>"
 #define XML_FILELISTS_FOOTER    "</filelists>"
 #define XML_OTHER_FOOTER        "</otherdata>"
 #define XML_PRESTODELTA_FOOTER  "</prestodelta>"
+#define XML_UPDATEINFO_FOOTER   "</updates>"
 
 cr_XmlFile *
 cr_xmlfile_sopen(const char *filename,
@@ -128,6 +130,9 @@ cr_xmlfile_write_xml_header(cr_XmlFile *f, GError **err)
     case CR_XMLFILE_PRESTODELTA:
         xml_header = XML_PRESTODELTA_HEADER;
         break;
+    case CR_XMLFILE_UPDATEINFO:
+        xml_header = XML_UPDATEINFO_HEADER;
+        break;
     default:
         g_critical("%s: Bad file type", __func__);
         assert(0);
@@ -168,6 +173,9 @@ cr_xmlfile_write_xml_footer(cr_XmlFile *f, GError **err)
         break;
     case CR_XMLFILE_PRESTODELTA:
         xml_footer = XML_PRESTODELTA_FOOTER;
+        break;
+    case CR_XMLFILE_UPDATEINFO:
+        xml_footer = XML_UPDATEINFO_FOOTER;
         break;
     default:
         g_critical("%s: Bad file type", __func__);

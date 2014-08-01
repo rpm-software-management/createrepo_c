@@ -27,6 +27,7 @@ extern "C" {
 #include <glib.h>
 #include "package.h"
 #include "repomd.h"
+#include "updateinfo.h"
 
 /** \defgroup   xml_parser        XML parser API.
  *  \addtogroup xml_parser
@@ -183,6 +184,21 @@ cr_xml_parse_repomd(const char *path,
                     cr_XmlParserWarningCb warningcb,
                     void *warningcb_data,
                     GError **err);
+
+/** Parse updateinfo.xml. File could be compressed.
+ * @param path           Path to updateinfo.xml
+ * @param updateinfo     cr_UpdateInfo object.
+ * @param warningcb      Callback for warning messages.
+ * @param warningcb_data User data for the warningcb.
+ * @param err            GError **
+ * @return               cr_Error code.
+ */
+int
+cr_xml_parse_updateinfo(const char *path,
+                        cr_UpdateInfo *updateinfo,
+                        cr_XmlParserWarningCb warningcb,
+                        void *warningcb_data,
+                        GError **err);
 
 /** @} */
 

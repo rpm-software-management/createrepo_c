@@ -30,6 +30,7 @@ extern "C" {
 #include "error.h"
 #include "package.h"
 #include "repomd.h"
+#include "updateinfo.h"
 
 #define XML_BUFFER_SIZE         8192
 #define CONTENT_REALLOC_STEP    256
@@ -129,6 +130,17 @@ typedef struct _cr_ParserData {
         Repomd record object for a currently parsed element */
     char *cpeid; /*!<
         cpeid value for the currently parsed distro tag */
+
+    /* Updateinfo related stuff */
+
+    cr_UpdateInfo *updateinfo; /*!<
+        Update info object */
+    cr_UpdateRecord *updaterecord; /*!<
+        Update record object */
+    cr_UpdateCollection *updatecollection; /*!<
+        Update collection object */
+    cr_UpdateCollectionPackage *updatecollectionpackage; /*!<
+        Update collection package object */
 
 } cr_ParserData;
 

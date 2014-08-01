@@ -22,12 +22,14 @@ SET (createrepo_c_SRCS
      xml_dump_other.c
      xml_dump_primary.c
      xml_dump_repomd.c
+     xml_dump_updateinfo.c
      xml_file.c
      xml_parser.c
      xml_parser_filelists.c
      xml_parser_other.c
      xml_parser_primary.c
-     xml_parser_repomd.c)
+     xml_parser_repomd.c
+     xml_parser_updateinfo.c)
 
 SET(headers
     checksum.h

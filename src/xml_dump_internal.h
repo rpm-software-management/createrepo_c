@@ -59,6 +59,19 @@ xmlNodePtr cr_xmlNewTextChild(xmlNodePtr parent,
                               const xmlChar *name,
                               const xmlChar *content);
 
+/** Inserts new node only if its value is not NULL
+ */
+static inline xmlNodePtr
+cr_xmlNewTextChild_c(xmlNodePtr parent,
+                     xmlNsPtr ns,
+                     const xmlChar *name,
+                     const xmlChar *content)
+{
+    if (!content)
+        return NULL;
+    return cr_xmlNewTextChild(parent, ns, name, content);
+}
+
 /** Createrepo_c wrapper over the libxml xmlNewProp.
  * It allows content to be NULL and non UTF-8 (if content is no UTF8
  * then iso-8859-1 is assumed)
@@ -66,6 +79,19 @@ xmlNodePtr cr_xmlNewTextChild(xmlNodePtr parent,
 xmlAttrPtr cr_xmlNewProp(xmlNodePtr node,
                          const xmlChar *name,
                          const xmlChar *value);
+
+/** Inserts new proprety (attribute) only if its value is not NULL
+ */
+static inline xmlAttrPtr
+cr_xmlNewProp_c(xmlNodePtr node,
+                const xmlChar *name,
+                const xmlChar *orig_content)
+{
+    if (!orig_content)
+        return NULL;
+    return cr_xmlNewProp(node, name, orig_content);
+}
+
 
 #ifdef __cplusplus
 }

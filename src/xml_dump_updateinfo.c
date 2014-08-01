@@ -29,6 +29,7 @@
 #include "xml_dump.h"
 #include "xml_dump_internal.h"
 
+#define INDENT  4
 
 void
 cr_xml_dump_updatecollectionpackages(xmlNodePtr collection, GSList *packages)
@@ -99,7 +100,7 @@ cr_xml_dump_updateinforecord_references(xmlNodePtr update, GSList *refs)
 }
 
 void
-cr_xml_dump_updateinforecord(xmlNodePtr root, cr_UpdateRecord *rec)
+cr_xml_dump_updateinforecord_internal(xmlNodePtr root, cr_UpdateRecord *rec)
 {
     xmlNodePtr update, node;
 
@@ -150,7 +151,7 @@ cr_xml_dump_updateinfo_body(xmlNodePtr root, cr_UpdateInfo *ui)
     // Dump updates
     for (element = ui->updates; element; element = g_slist_next(element)) {
         cr_UpdateRecord *rec = element->data;
-        cr_xml_dump_updateinforecord(root, rec);
+        cr_xml_dump_updateinforecord_internal(root, rec);
     }
 }
 
@@ -182,6 +183,47 @@ cr_xml_dump_updateinfo(cr_UpdateInfo *updateinfo, GError **err)
     // Clean up
 
     xmlFreeDoc(doc);
+
+    return result;
+}
+
+char *
+cr_xml_dump_updateinforecord(cr_UpdateRecord *rec, GError **err)
+{
+    xmlNodePtr root;
+    char *result;
+
+    assert(!err || *err == NULL);
+
+    if (!rec)
+        return NULL;
+
+    // Dump IT!
+
+    xmlBufferPtr buf = xmlBufferCreate();
+    if (buf == NULL) {
+        g_critical("%s: Error creating the xml buffer", __func__);
+        g_set_error(err, CR_XML_DUMP_OTHER_ERROR, CRE_MEMORY,
+                    "Cannot create an xml buffer");
+        return NULL;
+    }
+
+    root = xmlNewNode(NULL, BAD_CAST "delta");
+    cr_xml_dump_updateinforecord_internal(root, rec);
+    // xmlNodeDump seems to be a little bit faster than xmlDocDumpFormatMemory
+    xmlNodeDump(buf, NULL, root, 2, FORMAT_XML);
+    assert(buf->content);
+    // First line in the buf is not indented, we must indent it by ourself
+    result = g_malloc(sizeof(char *) * buf->use + INDENT + 1);
+    for (int x = 0; x < INDENT; x++) result[x] = ' ';
+    memcpy((void *) result+INDENT, buf->content, buf->use);
+    result[buf->use + INDENT]   = '\n';
+    result[buf->use + INDENT + 1]   = '\0';
+
+    // Cleanup
+
+    xmlBufferFree(buf);
+    xmlFreeNode(root);
 
     return result;
 }

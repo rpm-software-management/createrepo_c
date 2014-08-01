@@ -132,6 +132,13 @@ char *cr_xml_dump_repomd(cr_Repomd *repomd, GError **err);
  */
 char *cr_xml_dump_updateinfo(cr_UpdateInfo *updateinfo, GError **err);
 
+/** Generate xml representation of cr_UpdateRecord
+ * @param rec           cr_UpdateRecord
+ * @param err           **GError
+ * @return              xml chunk string or NULL on error
+ */
+char *cr_xml_dump_updateinforecord(cr_UpdateRecord *rec, GError **err);
+
 /** Generate xml representation of cr_DeltaPackage
  * @param dpkg          cr_DeltaPackage
  * @param err           **GError

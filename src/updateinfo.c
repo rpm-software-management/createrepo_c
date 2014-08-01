@@ -35,6 +35,7 @@ cr_UpdateCollectionPackage *
 cr_updatecollectionpackage_new(void)
 {
     cr_UpdateCollectionPackage *pkg = g_malloc0(sizeof(*pkg));
+    pkg->chunk = g_string_chunk_new(0);
     return pkg;
 }
 
@@ -56,6 +57,7 @@ cr_UpdateCollection *
 cr_updatecollection_new(void)
 {
     cr_UpdateCollection *collection = g_malloc0(sizeof(*collection));
+    collection->chunk = g_string_chunk_new(0);
     return collection;
 }
 
@@ -87,6 +89,7 @@ cr_UpdateReference *
 cr_updatereference_new(void)
 {
     cr_UpdateReference *ref = g_malloc0(sizeof(*ref));
+    ref->chunk = g_string_chunk_new(0);
     return ref;
 }
 
@@ -108,6 +111,7 @@ cr_UpdateRecord *
 cr_updaterecord_new(void)
 {
     cr_UpdateRecord *rec = g_malloc0(sizeof(*rec));
+    rec->chunk = g_string_chunk_new(0);
     return rec;
 }
 
@@ -135,7 +139,7 @@ cr_updaterecord_append_collection(cr_UpdateRecord *record,
                                   cr_UpdateCollection *collection)
 {
     if (!record || !collection) return;
-    record->collections = g_slist_append(record->collections, record);
+    record->collections = g_slist_append(record->collections, collection);
 }
 
 

@@ -58,8 +58,8 @@ typedef struct {
 } cr_UpdateCollection;
 
 typedef struct {
-    gchar *id;      /*!< id (e.g. 1035288, NULL for errata, ...) */
     gchar *href;    /*!< URL (e.g. to related bugzilla, errata, ...) */
+    gchar *id;      /*!< id (e.g. 1035288, NULL for errata, ...) */
     gchar *type;    /*!< reference type ("self" for errata, "bugzilla", ...) */
     gchar *title;   /*!< Name of errata, name of bug, etc. */
     GStringChunk *chunk;
@@ -67,11 +67,11 @@ typedef struct {
 
 typedef struct {
     gchar *from;        /*!< Source of the update (e.g. security@redhat.com) */
-    gchar *type;        /*!< Update type ("enhancement", "bugfix", ...) */
-    gchar *title;       /*!< Update name */
     gchar *status;      /*!< Update status ("final", ...) */
+    gchar *type;        /*!< Update type ("enhancement", "bugfix", ...) */
     gchar *version;     /*!< Update version (probably always an integer number) */
     gchar *id;          /*!< Update id (short update name, e.g. RHEA-2013:1777) */
+    gchar *title;       /*!< Update name */
     gchar *issued_date; /*!< Date string (e.g. "2013-12-02 00:00:00") */
     gchar *updated_date;/*!< Date string */
     gchar *rights;      /*!< Copyright */
@@ -81,7 +81,6 @@ typedef struct {
     gchar *summary;     /*!< Short summary */
     gchar *description; /*!< Update description */
     gchar *solution;    /*!< Solution */
-    gboolean *reboot_suggested;/*!< Reboot suggested */
 
     GSList *references; /*!< List of cr_UpdateReference */
     GSList *collections;/*!< List of cr_UpdateCollection */

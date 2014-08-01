@@ -31,6 +31,7 @@
 #define TEST_REPO_01                    TEST_DATA_PATH"repo_01/"
 #define TEST_REPO_02                    TEST_DATA_PATH"repo_02/"
 #define TEST_FILES_PATH                 TEST_DATA_PATH"test_files/"
+#define TEST_UPDATEINFO_FILES_PATH      TEST_DATA_PATH"updateinfo_files/"
 
 // Repo files
 
@@ -76,5 +77,11 @@
 // Other
 
 #define NON_EXIST_FILE          "/tmp/foobarfile.which.should.not.exists"
+
+// Updateinfo files
+
+#define TEST_UPDATEINFO_00      TEST_UPDATEINFO_FILES_PATH"updateinfo_00.xml"
+#define TEST_UPDATEINFO_01      TEST_UPDATEINFO_FILES_PATH"updateinfo_01.xml"
+#define TEST_UPDATEINFO_02      TEST_UPDATEINFO_FILES_PATH"updateinfo_02.xml.xz"
 
 #endif

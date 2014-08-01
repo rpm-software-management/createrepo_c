@@ -30,6 +30,10 @@ ADD_EXECUTABLE(test_xml_parser_repomd test_xml_parser_repomd.c)
 TARGET_LINK_LIBRARIES(test_xml_parser_repomd libcreaterepo_c ${GLIB2_LIBRARIES})
 ADD_DEPENDENCIES(tests test_xml_parser_repomd)
 
+ADD_EXECUTABLE(test_xml_parser_updateinfo test_xml_parser_updateinfo.c)
+TARGET_LINK_LIBRARIES(test_xml_parser_updateinfo libcreaterepo_c ${GLIB2_LIBRARIES})
+ADD_DEPENDENCIES(tests test_xml_parser_updateinfo)
+
 CONFIGURE_FILE("run_gtester.sh.in"  "${CMAKE_BINARY_DIR}/tests/run_gtester.sh")
 ADD_TEST(test_main run_gtester.sh)
 

@@ -45,6 +45,9 @@ cr_xml_dump_updatecollectionpackages(xmlNodePtr collection, GSList *packages)
         cr_xmlNewProp_c(package, BAD_CAST "epoch", BAD_CAST pkg->epoch);
         cr_xmlNewProp_c(package, BAD_CAST "arch", BAD_CAST pkg->arch);
         cr_xmlNewProp_c(package, BAD_CAST "src", BAD_CAST pkg->src);
+        cr_xmlNewTextChild_c(package, NULL, BAD_CAST "filename",
+                             BAD_CAST pkg->filename);
+
         if (pkg->sum) {
             xmlNodePtr sum;
             sum = cr_xmlNewTextChild_c(package,
@@ -55,6 +58,7 @@ cr_xml_dump_updatecollectionpackages(xmlNodePtr collection, GSList *packages)
                             BAD_CAST "type",
                             BAD_CAST cr_checksum_name_str(pkg->sum_type));
         }
+
         xmlNewChild(package, NULL, BAD_CAST "reboot_suggested", NULL);
     }
 }

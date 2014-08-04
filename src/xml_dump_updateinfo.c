@@ -192,7 +192,7 @@ cr_xml_dump_updateinfo(cr_UpdateInfo *updateinfo, GError **err)
 }
 
 char *
-cr_xml_dump_updateinforecord(cr_UpdateRecord *rec, GError **err)
+cr_xml_dump_updaterecord(cr_UpdateRecord *rec, GError **err)
 {
     xmlNodePtr root;
     char *result;

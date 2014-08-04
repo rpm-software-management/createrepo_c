@@ -46,4 +46,10 @@ PyDoc_STRVAR(xml_dump__doc__,
 
 PyObject *py_xml_dump(PyObject *self, PyObject *args);
 
+PyDoc_STRVAR(xml_dump_updaterecord__doc__,
+"xml_dump_updaterecord(pkg) -> str\n\n"
+"Generate xml chunk from UpdateRecord");
+
+PyObject *py_xml_dump_updaterecord(PyObject *self, PyObject *args);
+
 #endif

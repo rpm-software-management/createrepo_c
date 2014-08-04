@@ -26,6 +26,7 @@
 #include "typeconversion.h"
 #include "package-py.h"
 #include "exception-py.h"
+#include "updaterecord-py.h"
 
 PyObject *
 py_xml_dump_primary(PyObject *self, PyObject *args)
@@ -131,4 +132,28 @@ py_xml_dump(PyObject *self, PyObject *args)
     free(xml_res.other);
 
     return tuple;
+}
+
+PyObject *
+py_xml_dump_updaterecord(PyObject *self, PyObject *args)
+{
+    PyObject *py_rec, *py_str;
+    char *xml;
+    GError *err = NULL;
+
+    CR_UNUSED(self);
+
+    if (!PyArg_ParseTuple(args, "O!:py_xml_dump_updaterecord",
+                          &UpdateRecord_Type, &py_rec))
+        return NULL;
+
+    xml = cr_xml_dump_updaterecord(UpdateRecord_FromPyObject(py_rec), &err);
+    if (err) {
+        nice_exception(&err, NULL);
+        return NULL;
+    }
+
+    py_str = PyStringOrNone_FromString(xml);
+    free(xml);
+    return py_str;
 }

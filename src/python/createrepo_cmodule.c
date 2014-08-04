@@ -53,6 +53,8 @@ static struct PyMethodDef createrepo_c_methods[] = {
         METH_VARARGS, xml_dump_filelists__doc__},
     {"xml_dump_other",          (PyCFunction)py_xml_dump_other,
         METH_VARARGS, xml_dump_other__doc__},
+    {"xml_dump_updaterecord",    (PyCFunction)py_xml_dump_updaterecord,
+        METH_VARARGS, xml_dump_updaterecord__doc__},
     {"xml_dump",                (PyCFunction)py_xml_dump,
         METH_VARARGS, xml_dump__doc__},
     {"xml_parse_primary",       (PyCFunction)py_xml_parse_primary,

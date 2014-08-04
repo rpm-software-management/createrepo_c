@@ -87,3 +87,41 @@ class TestCaseUpdateRecord(unittest.TestCase):
         self.assertEqual(col.name, "long name")
         self.assertEqual(len(col.packages), 0)
 
+    def test_xml_dump_updaterecord(self):
+        rec = cr.UpdateRecord()
+        rec.fromstr = "from"
+        rec.status = "status"
+        rec.type = "type"
+        rec.version = "version"
+        rec.id = "id"
+        rec.title = "title"
+        rec.issued_date = "issued_date"
+        rec.updated_date = "updated_date"
+        rec.rights = "rights"
+        rec.release = "release"
+        rec.pushcount = "pushcount"
+        rec.severity = "severity"
+        rec.summary = "summary"
+        rec.description = "description"
+        rec.solution = "solution"
+
+        xml = cr.xml_dump_updaterecord(rec)
+        self.assertEqual(xml,
+"""    <delta>
+      <update from="from" status="status" type="type" version="version">
+        <id>id</id>
+        <title>title</title>
+        <issued date="issued_date"/>
+        <updated date="updated_date"/>
+        <rights>rights</rights>
+        <release>release</release>
+        <pushcount>pushcount</pushcount>
+        <severity>severity</severity>
+        <summary>summary</summary>
+        <description>description</description>
+        <solution>solution</solution>
+        <references/>
+        <pkglist/>
+      </update>
+    </delta>
+""")

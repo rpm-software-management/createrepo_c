@@ -99,6 +99,9 @@ typedef struct {
 cr_UpdateCollectionPackage *
 cr_updatecollectionpackage_new(void);
 
+cr_UpdateCollectionPackage *
+cr_updatecollectionpackage_copy(const cr_UpdateCollectionPackage *orig);
+
 void
 cr_updatecollectionpackage_free(cr_UpdateCollectionPackage *pkg);
 
@@ -108,6 +111,9 @@ cr_updatecollectionpackage_free(cr_UpdateCollectionPackage *pkg);
 
 cr_UpdateCollection *
 cr_updatecollection_new(void);
+
+cr_UpdateCollection *
+cr_updatecollection_copy(const cr_UpdateCollection *orig);
 
 void
 cr_updatecollection_free(cr_UpdateCollection *collection);
@@ -123,6 +129,9 @@ cr_updatecollection_append_package(cr_UpdateCollection *collection,
 cr_UpdateReference *
 cr_updatereference_new(void);
 
+cr_UpdateReference *
+cr_updatereference_copy(const cr_UpdateReference *orig);
+
 void
 cr_updatereference_free(cr_UpdateReference *ref);
 
@@ -132,6 +141,9 @@ cr_updatereference_free(cr_UpdateReference *ref);
 
 cr_UpdateRecord *
 cr_updaterecord_new(void);
+
+cr_UpdateRecord *
+cr_updaterecord_copy(const cr_UpdateRecord *orig);
 
 void
 cr_updaterecord_free(cr_UpdateRecord *record);

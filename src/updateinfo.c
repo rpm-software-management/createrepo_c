@@ -39,6 +39,30 @@ cr_updatecollectionpackage_new(void)
     return pkg;
 }
 
+cr_UpdateCollectionPackage *
+cr_updatecollectionpackage_copy(const cr_UpdateCollectionPackage *orig)
+{
+    cr_UpdateCollectionPackage *pkg;
+
+    if (!orig) return NULL;
+
+    pkg = cr_updatecollectionpackage_new();
+
+    pkg->name     = cr_safe_string_chunk_insert(pkg->chunk, orig->name);
+    pkg->version  = cr_safe_string_chunk_insert(pkg->chunk, orig->version);
+    pkg->release  = cr_safe_string_chunk_insert(pkg->chunk, orig->release);
+    pkg->epoch    = cr_safe_string_chunk_insert(pkg->chunk, orig->epoch);
+    pkg->arch     = cr_safe_string_chunk_insert(pkg->chunk, orig->arch);
+    pkg->src      = cr_safe_string_chunk_insert(pkg->chunk, orig->src);
+    pkg->filename = cr_safe_string_chunk_insert(pkg->chunk, orig->filename);
+    pkg->sum      = cr_safe_string_chunk_insert(pkg->chunk, orig->sum);
+
+    pkg->sum_type = orig->sum_type;
+    pkg->reboot_suggested = orig->reboot_suggested;
+
+    return pkg;
+}
+
 void
 cr_updatecollectionpackage_free(cr_UpdateCollectionPackage *pkg)
 {
@@ -59,6 +83,31 @@ cr_updatecollection_new(void)
     cr_UpdateCollection *collection = g_malloc0(sizeof(*collection));
     collection->chunk = g_string_chunk_new(0);
     return collection;
+}
+
+cr_UpdateCollection *
+cr_updatecollection_copy(const cr_UpdateCollection *orig)
+{
+    cr_UpdateCollection *col;
+
+    if (!orig) return NULL;
+
+    col = cr_updatecollection_new();
+
+    col->shortname = cr_safe_string_chunk_insert(col->chunk, orig->shortname);
+    col->name      = cr_safe_string_chunk_insert(col->chunk, orig->name);
+
+    if (orig->packages) {
+        GSList *newlist = NULL;
+        for (GSList *elem = orig->packages; elem; elem = g_slist_next(elem)) {
+            cr_UpdateCollectionPackage *pkg = elem->data;
+            newlist = g_slist_prepend(newlist,
+                                      cr_updatecollectionpackage_copy(pkg));
+        }
+        col->packages = g_slist_reverse(newlist);
+    }
+
+    return col;
 }
 
 void
@@ -93,6 +142,23 @@ cr_updatereference_new(void)
     return ref;
 }
 
+cr_UpdateReference *
+cr_updatereference_copy(const cr_UpdateReference *orig)
+{
+    cr_UpdateReference *ref;
+
+    if (!orig) return NULL;
+
+    ref = cr_updatereference_new();
+
+    ref->href  = cr_safe_string_chunk_insert(ref->chunk, orig->href);
+    ref->id    = cr_safe_string_chunk_insert(ref->chunk, orig->id);
+    ref->type  = cr_safe_string_chunk_insert(ref->chunk, orig->type);
+    ref->title = cr_safe_string_chunk_insert(ref->chunk, orig->title);
+
+    return ref;
+}
+
 void
 cr_updatereference_free(cr_UpdateReference *ref)
 {
@@ -112,6 +178,54 @@ cr_updaterecord_new(void)
 {
     cr_UpdateRecord *rec = g_malloc0(sizeof(*rec));
     rec->chunk = g_string_chunk_new(0);
+    return rec;
+}
+
+cr_UpdateRecord *
+cr_updaterecord_copy(const cr_UpdateRecord *orig)
+{
+    cr_UpdateRecord *rec;
+
+    if (!orig) return NULL;
+
+    rec = cr_updaterecord_new();
+
+    rec->from = cr_safe_string_chunk_insert(rec->chunk, orig->from);
+    rec->status = cr_safe_string_chunk_insert(rec->chunk, orig->status);
+    rec->type = cr_safe_string_chunk_insert(rec->chunk, orig->type);
+    rec->version = cr_safe_string_chunk_insert(rec->chunk, orig->version);
+    rec->id = cr_safe_string_chunk_insert(rec->chunk, orig->id);
+    rec->title = cr_safe_string_chunk_insert(rec->chunk, orig->title);
+    rec->issued_date = cr_safe_string_chunk_insert(rec->chunk, orig->issued_date);
+    rec->updated_date = cr_safe_string_chunk_insert(rec->chunk, orig->updated_date);
+    rec->rights = cr_safe_string_chunk_insert(rec->chunk, orig->rights);
+    rec->release = cr_safe_string_chunk_insert(rec->chunk, orig->release);
+    rec->pushcount = cr_safe_string_chunk_insert(rec->chunk, orig->pushcount);
+    rec->severity = cr_safe_string_chunk_insert(rec->chunk, orig->severity);
+    rec->summary = cr_safe_string_chunk_insert(rec->chunk, orig->summary);
+    rec->description = cr_safe_string_chunk_insert(rec->chunk, orig->description);
+    rec->solution = cr_safe_string_chunk_insert(rec->chunk, orig->solution);
+
+    if (orig->references) {
+        GSList *newlist = NULL;
+        for (GSList *elem = orig->references; elem; elem = g_slist_next(elem)) {
+            cr_UpdateReference *ref = elem->data;
+            newlist = g_slist_prepend(newlist,
+                                      cr_updatereference_copy(ref));
+        }
+        rec->references = g_slist_reverse(newlist);
+    }
+
+    if (orig->collections) {
+        GSList *newlist = NULL;
+        for (GSList *elem = orig->collections; elem; elem = g_slist_next(elem)) {
+            cr_UpdateCollection *col = elem->data;
+            newlist = g_slist_prepend(newlist,
+                                      cr_updatecollection_copy(col));
+        }
+        rec->collections = g_slist_reverse(newlist);
+    }
+
     return rec;
 }
 

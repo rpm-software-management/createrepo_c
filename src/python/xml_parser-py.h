@@ -46,4 +46,10 @@ PyDoc_STRVAR(xml_parse_repomd__doc__,
 
 PyObject *py_xml_parse_repomd(PyObject *self, PyObject *args);
 
+PyDoc_STRVAR(xml_parse_updateinfo__doc__,
+"xml_parse_updateinfo(filename, updateinfo_object, warningcb) -> None\n\n"
+"Parse updateinfo.xml");
+
+PyObject *py_xml_parse_updateinfo(PyObject *self, PyObject *args);
+
 #endif

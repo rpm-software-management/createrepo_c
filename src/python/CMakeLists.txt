@@ -30,6 +30,11 @@ SET (craeterepo_cmodule_SRCS
      repomdrecord-py.c
      sqlite-py.c
      typeconversion.c
+     updatecollection-py.c
+     updatecollectionpackage-py.c
+     updateinfo-py.c
+     updaterecord-py.c
+     updatereference-py.c
      xml_dump-py.c
      xml_file-py.c
      xml_parser-py.c

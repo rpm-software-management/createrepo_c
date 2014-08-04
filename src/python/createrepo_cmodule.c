@@ -33,6 +33,11 @@
 #include "repomd-py.h"
 #include "repomdrecord-py.h"
 #include "sqlite-py.h"
+#include "updatecollection-py.h"
+#include "updatecollectionpackage-py.h"
+#include "updateinfo-py.h"
+#include "updaterecord-py.h"
+#include "updatereference-py.h"
 #include "xml_dump-py.h"
 #include "xml_file-py.h"
 #include "xml_parser-py.h"
@@ -41,7 +46,7 @@ static struct PyMethodDef createrepo_c_methods[] = {
     {"package_from_rpm",        (PyCFunction)py_package_from_rpm,
         METH_VARARGS | METH_KEYWORDS, package_from_rpm__doc__},
     {"xml_from_rpm",            (PyCFunction)py_xml_from_rpm,
-        METH_VARARGS | METH_KEYWORDS, package_from_rpm__doc__},
+        METH_VARARGS | METH_KEYWORDS, xml_from_rpm__doc__},
     {"xml_dump_primary",        (PyCFunction)py_xml_dump_primary,
         METH_VARARGS, xml_dump_primary__doc__},
     {"xml_dump_filelists",      (PyCFunction)py_xml_dump_filelists,
@@ -58,6 +63,8 @@ static struct PyMethodDef createrepo_c_methods[] = {
         METH_VARARGS, xml_parse_other__doc__},
     {"xml_parse_repomd",        (PyCFunction)py_xml_parse_repomd,
         METH_VARARGS, xml_parse_repomd__doc__},
+    {"xml_parse_updateinfo",    (PyCFunction)py_xml_parse_updateinfo,
+        METH_VARARGS, xml_parse_updateinfo__doc__},
     {"checksum_name_str",       (PyCFunction)py_checksum_name_str,
         METH_VARARGS, checksum_name_str__doc__},
     {"checksum_type",           (PyCFunction)py_checksum_type,
@@ -137,6 +144,38 @@ init_createrepo_c(void)
     Py_INCREF(&Sqlite_Type);
     PyModule_AddObject(m, "Sqlite", (PyObject *)&Sqlite_Type);
 
+    /* _createrepo_c.UpdateCollection */
+    if (PyType_Ready(&UpdateCollection_Type) < 0)
+        return;
+    Py_INCREF(&UpdateCollection_Type);
+    PyModule_AddObject(m, "UpdateCollection",
+                       (PyObject *)&UpdateCollection_Type);
+
+    /* _createrepo_c.UpdateCollectionPackage */
+    if (PyType_Ready(&UpdateCollectionPackage_Type) < 0)
+        return;
+    Py_INCREF(&UpdateCollectionPackage_Type);
+    PyModule_AddObject(m, "UpdateCollectionPackage",
+                       (PyObject *)&UpdateCollectionPackage_Type);
+
+    /* _createrepo_c.UpdateInfo */
+    if (PyType_Ready(&UpdateInfo_Type) < 0)
+        return;
+    Py_INCREF(&UpdateInfo_Type);
+    PyModule_AddObject(m, "UpdateInfo", (PyObject *)&UpdateInfo_Type);
+
+    /* _createrepo_c.UpdateRecord */
+    if (PyType_Ready(&UpdateRecord_Type) < 0)
+        return;
+    Py_INCREF(&UpdateRecord_Type);
+    PyModule_AddObject(m, "UpdateRecord", (PyObject *)&UpdateRecord_Type);
+
+    /* _createrepo_c.UpdateReference */
+    if (PyType_Ready(&UpdateReference_Type) < 0)
+        return;
+    Py_INCREF(&UpdateReference_Type);
+    PyModule_AddObject(m, "UpdateReference", (PyObject *)&UpdateReference_Type);
+
     /* _createrepo_c.XmlFile */
     if (PyType_Ready(&XmlFile_Type) < 0)
         return;
@@ -199,6 +238,8 @@ init_createrepo_c(void)
     PyModule_AddIntConstant(m, "XMLFILE_PRIMARY", CR_XMLFILE_PRIMARY);
     PyModule_AddIntConstant(m, "XMLFILE_FILELISTS", CR_XMLFILE_FILELISTS);
     PyModule_AddIntConstant(m, "XMLFILE_OTHER", CR_XMLFILE_OTHER);
+    PyModule_AddIntConstant(m, "XMLFILE_PRESTODELTA", CR_XMLFILE_PRESTODELTA);
+    PyModule_AddIntConstant(m, "XMLFILE_UPDATEINFO", CR_XMLFILE_UPDATEINFO);
 
     /* XmlParser types */
     PyModule_AddIntConstant(m, "XML_WARNING_UNKNOWNTAG", CR_XML_WARNING_UNKNOWNTAG);

@@ -27,6 +27,7 @@
 #include "typeconversion.h"
 #include "package-py.h"
 #include "repomd-py.h"
+#include "updateinfo-py.h"
 #include "exception-py.h"
 
 typedef struct {
@@ -423,6 +424,62 @@ py_xml_parse_repomd(PyObject *self, PyObject *args)
                        &tmp_err);
 
     Py_XDECREF(py_repomd);
+    Py_XDECREF(py_warningcb);
+
+    if (tmp_err) {
+        nice_exception(&tmp_err, NULL);
+        return NULL;
+    }
+
+    Py_RETURN_NONE;
+}
+
+PyObject *
+py_xml_parse_updateinfo(PyObject *self, PyObject *args)
+{
+    CR_UNUSED(self);
+
+    char *filename;
+    PyObject *py_updateinfo, *py_warningcb;
+    CbData cbdata;
+    cr_UpdateInfo *updateinfo;
+    GError *tmp_err = NULL;
+
+    if (!PyArg_ParseTuple(args, "sO!O:py_xml_parse_updateinfo",
+                                         &filename,
+                                         &UpdateInfo_Type,
+                                         &py_updateinfo,
+                                         &py_warningcb)) {
+        return NULL;
+    }
+
+    if (!PyCallable_Check(py_warningcb) && py_warningcb != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "warningcb must be callable or None");
+        return NULL;
+    }
+
+    Py_XINCREF(py_updateinfo);
+    Py_XINCREF(py_warningcb);
+
+    cr_XmlParserWarningCb   ptr_c_warningcb = NULL;
+
+    if (py_warningcb != Py_None)
+        ptr_c_warningcb = c_warningcb;
+
+    cbdata.py_newpkgcb  = NULL;
+    cbdata.py_pkgcb     = NULL;
+    cbdata.py_warningcb = py_warningcb;
+    cbdata.py_pkg       = NULL;
+
+    updateinfo = UpdateInfo_FromPyObject(py_updateinfo);
+
+    cr_xml_parse_updateinfo(filename,
+                            updateinfo,
+                            ptr_c_warningcb,
+                            &cbdata,
+                            &tmp_err);
+
+    Py_XDECREF(py_updateinfo);
     Py_XDECREF(py_warningcb);
 
     if (tmp_err) {

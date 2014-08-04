@@ -63,9 +63,11 @@ DB_PRIMARY      = _createrepo_c.DB_PRIMARY   #: Primary database
 DB_FILELISTS    = _createrepo_c.DB_FILELISTS #: Filelists database
 DB_OTHER        = _createrepo_c.DB_OTHER     #: Other database
 
-XMLFILE_PRIMARY   = _createrepo_c.XMLFILE_PRIMARY    #: Primary xml file
-XMLFILE_FILELISTS = _createrepo_c.XMLFILE_FILELISTS  #: Filelists xml file
-XMLFILE_OTHER     = _createrepo_c.XMLFILE_OTHER      #: Other xml file
+XMLFILE_PRIMARY     = _createrepo_c.XMLFILE_PRIMARY     #: Primary xml file
+XMLFILE_FILELISTS   = _createrepo_c.XMLFILE_FILELISTS   #: Filelists xml file
+XMLFILE_OTHER       = _createrepo_c.XMLFILE_OTHER       #: Other xml file
+XMLFILE_PRESTODELTA = _createrepo_c.XMLFILE_PRESTODELTA #: Prestodelta xml file
+XMLFILE_UPDATEINFO  = _createrepo_c.XMLFILE_UPDATEINFO  #: Updateinfo xml file
 
 #: XML warning - Unknown tag
 XML_WARNING_UNKNOWNTAG  = _createrepo_c.XML_WARNING_UNKNOWNTAG
@@ -179,6 +181,37 @@ class OtherSqlite(Sqlite):
         """:arg path: Path to the other.sqlite database"""
         Sqlite.__init__(self, path, DB_OTHER)
 
+
+# UpdateCollection class
+
+UpdateCollection = _createrepo_c.UpdateCollection
+
+
+# UpdateCollectionPackage class
+
+UpdateCollectionPackage = _createrepo_c.UpdateCollectionPackage
+
+
+# UpdateInfo class
+
+class UpdateInfo(_createrepo_c.UpdateInfo):
+    def __init__(self, path=None):
+        """:arg path: Path to existing updateinfo.xml or None"""
+        _createrepo_c.UpdateInfo.__init__(self)
+        if path:
+            xml_parse_updateinfo(path, self)
+
+
+# UpdateRecord class
+
+UpdateRecord = _createrepo_c.UpdateRecord
+
+
+# UpdateReference class
+
+UpdateReference = _createrepo_c.UpdateReference
+
+
 # XmlFile class
 
 XmlFile = _createrepo_c.XmlFile
@@ -242,6 +275,10 @@ def xml_parse_filelists(path, newpkgcb=None, pkgcb=None, warningcb=None):
 def xml_parse_other(path, newpkgcb=None, pkgcb=None, warningcb=None):
     """Parse other.xml"""
     return _createrepo_c.xml_parse_other(path, newpkgcb, pkgcb, warningcb)
+
+def xml_parse_updateinfo(path, updateinfoobj, warningcb=None):
+    """Parse updateinfo.xml"""
+    return _createrepo_c.xml_parse_updateinfo(path, updateinfoobj, warningcb)
 
 def xml_parse_repomd(path, repomdobj, warningcb=None):
     """Parse repomd.xml"""

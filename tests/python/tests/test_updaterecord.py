@@ -1,0 +1,89 @@
+import unittest
+import shutil
+import tempfile
+import os.path
+import createrepo_c as cr
+
+from fixtures import *
+
+class TestCaseUpdateRecord(unittest.TestCase):
+
+    def test_updaterecord_setters(self):
+        rec = cr.UpdateRecord()
+        self.assertTrue(rec)
+
+        self.assertEqual(rec.fromstr, None)
+        self.assertEqual(rec.status, None)
+        self.assertEqual(rec.type, None)
+        self.assertEqual(rec.version, None)
+        self.assertEqual(rec.id, None)
+        self.assertEqual(rec.title, None)
+        self.assertEqual(rec.issued_date, None)
+        self.assertEqual(rec.updated_date, None)
+        self.assertEqual(rec.rights, None)
+        self.assertEqual(rec.release, None)
+        self.assertEqual(rec.pushcount, None)
+        self.assertEqual(rec.severity, None)
+        self.assertEqual(rec.summary, None)
+        self.assertEqual(rec.description, None)
+        self.assertEqual(rec.solution, None)
+        self.assertEqual(rec.references, [])
+        self.assertEqual(rec.collections, [])
+
+        ref = cr.UpdateReference()
+        ref.href = "href"
+        ref.id = "id"
+        ref.type = "type"
+        ref.title = "title"
+
+        col = cr.UpdateCollection()
+        col.shortname = "short name"
+        col.name = "long name"
+
+        rec.fromstr = "from"
+        rec.status = "status"
+        rec.type = "type"
+        rec.version = "version"
+        rec.id = "id"
+        rec.title = "title"
+        rec.issued_date = "issued_date"
+        rec.updated_date = "updated_date"
+        rec.rights = "rights"
+        rec.release = "release"
+        rec.pushcount = "pushcount"
+        rec.severity = "severity"
+        rec.summary = "summary"
+        rec.description = "description"
+        rec.solution = "solution"
+        rec.append_reference(ref)
+        rec.append_collection(col)
+
+        self.assertEqual(rec.fromstr, "from")
+        self.assertEqual(rec.status, "status")
+        self.assertEqual(rec.type, "type")
+        self.assertEqual(rec.version, "version")
+        self.assertEqual(rec.id, "id")
+        self.assertEqual(rec.title, "title")
+        self.assertEqual(rec.issued_date, "issued_date")
+        self.assertEqual(rec.updated_date, "updated_date")
+        self.assertEqual(rec.rights, "rights")
+        self.assertEqual(rec.release, "release")
+        self.assertEqual(rec.pushcount, "pushcount")
+        self.assertEqual(rec.severity, "severity")
+        self.assertEqual(rec.summary, "summary")
+        self.assertEqual(rec.description, "description")
+        self.assertEqual(rec.solution, "solution")
+        self.assertEqual(len(rec.references), 1)
+        self.assertEqual(len(rec.collections), 1)
+
+        ref = rec.references[0]
+        self.assertEqual(ref.href, "href")
+        self.assertEqual(ref.id, "id")
+        self.assertEqual(ref.type, "type")
+        self.assertEqual(ref.title, "title")
+
+        col = rec.collections[0]
+        self.assertEqual(col.shortname, "short name")
+        self.assertEqual(col.name, "long name")
+        self.assertEqual(len(col.packages), 0)
+

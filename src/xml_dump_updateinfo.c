@@ -59,7 +59,8 @@ cr_xml_dump_updatecollectionpackages(xmlNodePtr collection, GSList *packages)
                             BAD_CAST cr_checksum_name_str(pkg->sum_type));
         }
 
-        xmlNewChild(package, NULL, BAD_CAST "reboot_suggested", NULL);
+        if (pkg->reboot_suggested)
+            xmlNewChild(package, NULL, BAD_CAST "reboot_suggested", NULL);
     }
 }
 

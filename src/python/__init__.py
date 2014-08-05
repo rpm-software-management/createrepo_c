@@ -243,6 +243,15 @@ class OtherXmlFile(XmlFile):
         XmlFile.__init__(self, path, XMLFILE_OTHER,
                          compressiontype, contentstat)
 
+class UpdateInfoXmlFile(XmlFile):
+    def __init__(self, path, compressiontype=GZ_COMPRESSION,
+                 contentstat=None):
+        """:arg path: Path to the updateinfo xml file
+        :arg compressiontype: Compression type
+        :arg contentstat: ContentStat object"""
+        XmlFile.__init__(self, path, XMLFILE_UPDATEINFO,
+                         compressiontype, contentstat)
+
 # Functions
 
 def package_from_rpm(filename, checksum_type=SHA256, location_href=None,

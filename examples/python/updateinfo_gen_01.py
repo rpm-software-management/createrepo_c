@@ -1,0 +1,51 @@
+#!/usr/bin/python
+
+import createrepo_c as cr
+
+
+def generate():
+    pkg = cr.UpdateCollectionPackage()
+    pkg.name = "Foo"
+    pkg.version = "1.2.3"
+    pkg.release = "1"
+    pkg.epoch = "0"
+    pkg.arch = "noarch"
+    pkg.src = "foo.src.rpm"
+    pkg.filename = "foo-1.2.3-1.rpm"
+    pkg.sum = "123456789"
+    pkg.sum_type = cr.MD5
+    pkg.reboot_suggested = False
+
+    col = cr.UpdateCollection()
+    col.shortname = "Bar-product"
+    col.name = "Bar Product"
+    col.append(pkg)
+
+    ref = cr.UpdateReference()
+    ref.href = "http://foo.bar/foobar"
+    ref.id = "123"
+    ref.type = "self"
+    ref.title = "Foo Update"
+
+    rec = cr.UpdateRecord()
+    rec.fromstr = "security@foo.bar"
+    rec.status = "final"
+    rec.type = "enhancement"
+    rec.version = "1"
+    rec.id = "UPDATE-1"
+    rec.title = "Bar Product Update"
+    rec.issued_date = "2014-08-14 00:00:00"
+    rec.updated_date = "2014-08-14 00:00:00"
+    rec.rights = "Copyright 2014 Bar Inc"
+    rec.summary = "An update for Bar"
+    rec.description = "Fixes a bug"
+    rec.append_collection(col)
+    rec.append_reference(ref)
+
+    ui = cr.UpdateInfo()
+    ui.append(rec)
+
+    print ui.xml_dump(),
+
+if __name__ == "__main__":
+    generate()

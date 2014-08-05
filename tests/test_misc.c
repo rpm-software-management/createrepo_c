@@ -574,7 +574,6 @@ decompressfile_with_stat_test_text_file(Copyfiletest *copyfiletest,
 {
     CR_UNUSED(test_data);
     int ret;
-    char *checksum;
     cr_ContentStat *stat;
     GError *tmp_err = NULL;
 

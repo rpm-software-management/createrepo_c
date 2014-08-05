@@ -155,7 +155,7 @@ get_checksum(const char *filename,
 
     if (cachedir) {
         // Prepare cache fn
-        char *key, *cachefilename;
+        char *key;
         cr_ChecksumCtx *ctx = cr_checksum_new(type, err);
         if (!ctx) return NULL;
 

@@ -29,7 +29,7 @@
 #include "xml_dump.h"
 #include "xml_dump_internal.h"
 
-#define INDENT  4
+#define INDENT  2
 
 void
 cr_xml_dump_updatecollectionpackages(xmlNodePtr collection, GSList *packages)
@@ -104,16 +104,20 @@ cr_xml_dump_updateinforecord_references(xmlNodePtr update, GSList *refs)
     }
 }
 
-void
+xmlNodePtr
 cr_xml_dump_updateinforecord_internal(xmlNodePtr root, cr_UpdateRecord *rec)
 {
     xmlNodePtr update, node;
 
     if (!rec)
-        return;
+        return NULL;
 
     // Update element
-    update = xmlNewChild(root, NULL, BAD_CAST "update", NULL);
+    if (!root)
+        update = xmlNewNode(NULL, BAD_CAST "update");
+    else
+        update = xmlNewChild(root, NULL, BAD_CAST "update", NULL);
+
     cr_xmlNewProp_c(update, BAD_CAST "from", BAD_CAST rec->from);
     cr_xmlNewProp_c(update, BAD_CAST "status", BAD_CAST rec->status);
     cr_xmlNewProp_c(update, BAD_CAST "type", BAD_CAST rec->type);
@@ -145,6 +149,8 @@ cr_xml_dump_updateinforecord_internal(xmlNodePtr root, cr_UpdateRecord *rec)
 
     // Pkglist
     cr_xml_dump_updateinforecord_pkglist(update, rec->collections);
+
+    return update;
 }
 
 
@@ -213,10 +219,9 @@ cr_xml_dump_updaterecord(cr_UpdateRecord *rec, GError **err)
         return NULL;
     }
 
-    root = xmlNewNode(NULL, BAD_CAST "delta");
-    cr_xml_dump_updateinforecord_internal(root, rec);
+    root = cr_xml_dump_updateinforecord_internal(NULL, rec);
     // xmlNodeDump seems to be a little bit faster than xmlDocDumpFormatMemory
-    xmlNodeDump(buf, NULL, root, 2, FORMAT_XML);
+    xmlNodeDump(buf, NULL, root, 1, FORMAT_XML);
     assert(buf->content);
     // First line in the buf is not indented, we must indent it by ourself
     result = g_malloc(sizeof(char *) * buf->use + INDENT + 1);

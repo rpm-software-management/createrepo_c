@@ -107,21 +107,19 @@ class TestCaseUpdateRecord(unittest.TestCase):
 
         xml = cr.xml_dump_updaterecord(rec)
         self.assertEqual(xml,
-"""    <delta>
-      <update from="from" status="status" type="type" version="version">
-        <id>id</id>
-        <title>title</title>
-        <issued date="issued_date"/>
-        <updated date="updated_date"/>
-        <rights>rights</rights>
-        <release>release</release>
-        <pushcount>pushcount</pushcount>
-        <severity>severity</severity>
-        <summary>summary</summary>
-        <description>description</description>
-        <solution>solution</solution>
-        <references/>
-        <pkglist/>
-      </update>
-    </delta>
+"""  <update from="from" status="status" type="type" version="version">
+    <id>id</id>
+    <title>title</title>
+    <issued date="issued_date"/>
+    <updated date="updated_date"/>
+    <rights>rights</rights>
+    <release>release</release>
+    <pushcount>pushcount</pushcount>
+    <severity>severity</severity>
+    <summary>summary</summary>
+    <description>description</description>
+    <solution>solution</solution>
+    <references/>
+    <pkglist/>
+  </update>
 """)

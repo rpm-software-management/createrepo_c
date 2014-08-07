@@ -36,7 +36,7 @@
 typedef enum {
     STATE_START,
     STATE_UPDATES,
-    STATE_UPDATE,       // <update> ----
+    STATE_UPDATE,           // <update> -----------------------------
     STATE_ID,
     STATE_TITLE,
     STATE_ISSUED,
@@ -48,15 +48,18 @@ typedef enum {
     STATE_SUMMARY,
     STATE_DESCRIPTION,
     STATE_SOLUTION,
-    STATE_REFERENCES,   // <references> ----
+    STATE_MESSAGE,          // Not implemented
+    STATE_REFERENCES,       // <references> -------------------------
     STATE_REFERENCE,
-    STATE_PKGLIST,      // <pkglist> ----
+    STATE_PKGLIST,          // <pkglist> ----------------------------
     STATE_COLLECTION,
     STATE_NAME,
     STATE_PACKAGE,
     STATE_FILENAME,
     STATE_SUM,
     STATE_REBOOTSUGGESTED,
+    STATE_RESTARTSUGGESTED, // Not implemented
+    STATE_RELOGINSUGGESTED, // Not implemented
     NUMSTATES,
 } cr_UpdateinfoState;
 
@@ -66,28 +69,31 @@ typedef enum {
  * has a "file" element listed first, because it is more frequent
  * than a "version" element). */
 static cr_StatesSwitch stateswitches[] = {
-    { STATE_START,      "updates",          STATE_UPDATES,          0 },
-    { STATE_UPDATES,    "update",           STATE_UPDATE,           0 },
-    { STATE_UPDATE,     "id",               STATE_ID,               1 },
-    { STATE_UPDATE,     "title",            STATE_TITLE,            1 },
-    { STATE_UPDATE,     "issued",           STATE_ISSUED,           0 },
-    { STATE_UPDATE,     "updated",          STATE_UPDATED,          0 },
-    { STATE_UPDATE,     "rights",           STATE_RIGHTS,           1 },
-    { STATE_UPDATE,     "release",          STATE_RELEASE,          1 },
-    { STATE_UPDATE,     "pushcount",        STATE_PUSHCOUNT,        1 },
-    { STATE_UPDATE,     "severity",         STATE_SEVERITY,         1 },
-    { STATE_UPDATE,     "summary",          STATE_SUMMARY,          1 },
-    { STATE_UPDATE,     "description",      STATE_DESCRIPTION,      1 },
-    { STATE_UPDATE,     "solution",         STATE_SOLUTION,         1 },
-    { STATE_UPDATE,     "references",       STATE_REFERENCES,       0 },
-    { STATE_UPDATE,     "pkglist",          STATE_PKGLIST,          0 },
-    { STATE_REFERENCES, "reference",        STATE_REFERENCE,        0 },
-    { STATE_PKGLIST,    "collection",       STATE_COLLECTION,       0 },
-    { STATE_COLLECTION, "package",          STATE_PACKAGE,          0 },
-    { STATE_COLLECTION, "name",             STATE_NAME,             1 },
-    { STATE_PACKAGE,    "filename",         STATE_FILENAME,         1 },
-    { STATE_PACKAGE,    "sum",              STATE_SUM,              1 },
-    { STATE_PACKAGE,    "reboot_suggested", STATE_REBOOTSUGGESTED,  0 },
+    { STATE_START,      "updates",           STATE_UPDATES,           0 },
+    { STATE_UPDATES,    "update",            STATE_UPDATE,            0 },
+    { STATE_UPDATE,     "id",                STATE_ID,                1 },
+    { STATE_UPDATE,     "title",             STATE_TITLE,             1 },
+    { STATE_UPDATE,     "issued",            STATE_ISSUED,            0 },
+    { STATE_UPDATE,     "updated",           STATE_UPDATED,           0 },
+    { STATE_UPDATE,     "rights",            STATE_RIGHTS,            1 },
+    { STATE_UPDATE,     "release",           STATE_RELEASE,           1 },
+    { STATE_UPDATE,     "pushcount",         STATE_PUSHCOUNT,         1 },
+    { STATE_UPDATE,     "severity",          STATE_SEVERITY,          1 },
+    { STATE_UPDATE,     "summary",           STATE_SUMMARY,           1 },
+    { STATE_UPDATE,     "description",       STATE_DESCRIPTION,       1 },
+    { STATE_UPDATE,     "solution",          STATE_SOLUTION,          1 },
+    { STATE_UPDATE,     "message",           STATE_MESSAGE,           1 }, // NI
+    { STATE_UPDATE,     "references",        STATE_REFERENCES,        0 },
+    { STATE_UPDATE,     "pkglist",           STATE_PKGLIST,           0 },
+    { STATE_REFERENCES, "reference",         STATE_REFERENCE,         0 },
+    { STATE_PKGLIST,    "collection",        STATE_COLLECTION,        0 },
+    { STATE_COLLECTION, "package",           STATE_PACKAGE,           0 },
+    { STATE_COLLECTION, "name",              STATE_NAME,              1 },
+    { STATE_PACKAGE,    "filename",          STATE_FILENAME,          1 },
+    { STATE_PACKAGE,    "sum",               STATE_SUM,               1 },
+    { STATE_PACKAGE,    "reboot_suggested",  STATE_REBOOTSUGGESTED,   0 },
+    { STATE_PACKAGE,    "restart_suggested", STATE_RESTARTSUGGESTED,  0 }, // NI
+    { STATE_PACKAGE,    "relogin_suggested", STATE_RELOGINSUGGESTED,  0 }, // NI
     { NUMSTATES,        NULL, NUMSTATES, 0 }
 };
 

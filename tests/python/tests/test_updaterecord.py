@@ -11,6 +11,9 @@ class TestCaseUpdateRecord(unittest.TestCase):
 
     def test_updaterecord_setters(self):
         now = datetime.now()
+        # Microseconds are always 0 in updateinfo
+        now = datetime(now.year, now.month, now.day, now.hour, now.minute,
+                       now.second, 0)
 
         rec = cr.UpdateRecord()
         self.assertTrue(rec)
@@ -49,8 +52,8 @@ class TestCaseUpdateRecord(unittest.TestCase):
         rec.version = "version"
         rec.id = "id"
         rec.title = "title"
-        rec.issued_date = now.strftime("%Y-%m-%d %H:%M:%S")
-        rec.updated_date = now.strftime("%Y-%m-%d %H:%M:%S")
+        rec.issued_date = now
+        rec.updated_date = now
         rec.rights = "rights"
         rec.release = "release"
         rec.pushcount = "pushcount"
@@ -67,8 +70,8 @@ class TestCaseUpdateRecord(unittest.TestCase):
         self.assertEqual(rec.version, "version")
         self.assertEqual(rec.id, "id")
         self.assertEqual(rec.title, "title")
-        self.assertEqual(rec.issued_date, now.strftime("%Y-%m-%d %H:%M:%S"))
-        self.assertEqual(rec.updated_date, now.strftime("%Y-%m-%d %H:%M:%S"))
+        self.assertEqual(rec.issued_date, now)
+        self.assertEqual(rec.updated_date, now)
         self.assertEqual(rec.rights, "rights")
         self.assertEqual(rec.release, "release")
         self.assertEqual(rec.pushcount, "pushcount")
@@ -92,6 +95,9 @@ class TestCaseUpdateRecord(unittest.TestCase):
 
     def test_xml_dump_updaterecord(self):
         now = datetime.now()
+        # Microseconds are always 0 in updateinfo
+        now = datetime(now.year, now.month, now.day, now.hour, now.minute,
+                       now.second, 0)
 
         rec = cr.UpdateRecord()
         rec.fromstr = "from"
@@ -100,8 +106,8 @@ class TestCaseUpdateRecord(unittest.TestCase):
         rec.version = "version"
         rec.id = "id"
         rec.title = "title"
-        rec.issued_date = now.strftime("%Y-%m-%d %H:%M:%S")
-        rec.updated_date = now.strftime("%Y-%m-%d %H:%M:%S")
+        rec.issued_date = now
+        rec.updated_date = now
         rec.rights = "rights"
         rec.release = "release"
         rec.pushcount = "pushcount"

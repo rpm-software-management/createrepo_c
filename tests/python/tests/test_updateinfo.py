@@ -1,3 +1,4 @@
+from datetime import datetime
 import unittest
 import shutil
 import tempfile
@@ -9,6 +10,8 @@ from fixtures import *
 class TestCaseUpdateInfo(unittest.TestCase):
 
     def test_updateinfo_setters(self):
+        now = datetime.now()
+
         ui = cr.UpdateInfo()
         self.assertTrue(ui)
 
@@ -21,8 +24,8 @@ class TestCaseUpdateInfo(unittest.TestCase):
         rec.version = "version"
         rec.id = "id"
         rec.title = "title"
-        rec.issued_date = "issued_date"
-        rec.updated_date = "updated_date"
+        rec.issued_date = now.strftime("%Y-%m-%d %H:%M:%S")
+        rec.updated_date = now.strftime("%Y-%m-%d %H:%M:%S")
         rec.rights = "rights"
         rec.release = "release"
         rec.pushcount = "pushcount"
@@ -42,8 +45,8 @@ class TestCaseUpdateInfo(unittest.TestCase):
         self.assertEqual(rec.version, "version")
         self.assertEqual(rec.id, "id")
         self.assertEqual(rec.title, "title")
-        self.assertEqual(rec.issued_date, "issued_date")
-        self.assertEqual(rec.updated_date, "updated_date")
+        self.assertEqual(rec.issued_date, now.strftime("%Y-%m-%d %H:%M:%S"))
+        self.assertEqual(rec.updated_date, now.strftime("%Y-%m-%d %H:%M:%S"))
         self.assertEqual(rec.rights, "rights")
         self.assertEqual(rec.release, "release")
         self.assertEqual(rec.pushcount, "pushcount")
@@ -62,6 +65,8 @@ class TestCaseUpdateInfo(unittest.TestCase):
         """<?xml version="1.0" encoding="UTF-8"?>\n<updates/>\n""")
 
     def test_updateinfo_xml_dump_02(self):
+        now = datetime.now()
+
         ui = cr.UpdateInfo()
         xml = ui.xml_dump()
 
@@ -72,8 +77,8 @@ class TestCaseUpdateInfo(unittest.TestCase):
         rec.version = "version"
         rec.id = "id"
         rec.title = "title"
-        rec.issued_date = "issued_date"
-        rec.updated_date = "updated_date"
+        rec.issued_date = now.strftime("%Y-%m-%d %H:%M:%S")
+        rec.updated_date = now.strftime("%Y-%m-%d %H:%M:%S")
         rec.rights = "rights"
         rec.release = "release"
         rec.pushcount = "pushcount"
@@ -91,8 +96,8 @@ class TestCaseUpdateInfo(unittest.TestCase):
   <update from="from" status="status" type="type" version="version">
     <id>id</id>
     <title>title</title>
-    <issued date="issued_date"/>
-    <updated date="updated_date"/>
+    <issued date="%(now)s"/>
+    <updated date="%(now)s"/>
     <rights>rights</rights>
     <release>release</release>
     <pushcount>pushcount</pushcount>
@@ -104,9 +109,10 @@ class TestCaseUpdateInfo(unittest.TestCase):
     <pkglist/>
   </update>
 </updates>
-""")
+""" % {"now": now.strftime("%Y-%m-%d %H:%M:%S")})
 
     def test_updateinfo_xml_dump_03(self):
+        now = datetime.now()
 
         pkg = cr.UpdateCollectionPackage()
         pkg.name = "foo"
@@ -138,8 +144,8 @@ class TestCaseUpdateInfo(unittest.TestCase):
         rec.version = "version"
         rec.id = "id"
         rec.title = "title"
-        rec.issued_date = "issued_date"
-        rec.updated_date = "updated_date"
+        rec.issued_date = now.strftime("%Y-%m-%d %H:%M:%S")
+        rec.updated_date = now.strftime("%Y-%m-%d %H:%M:%S")
         rec.rights = "rights"
         rec.release = "release"
         rec.pushcount = "pushcount"
@@ -160,8 +166,8 @@ class TestCaseUpdateInfo(unittest.TestCase):
   <update from="from" status="status" type="type" version="version">
     <id>id</id>
     <title>title</title>
-    <issued date="issued_date"/>
-    <updated date="updated_date"/>
+    <issued date="%(now)s"/>
+    <updated date="%(now)s"/>
     <rights>rights</rights>
     <release>release</release>
     <pushcount>pushcount</pushcount>
@@ -184,4 +190,4 @@ class TestCaseUpdateInfo(unittest.TestCase):
     </pkglist>
   </update>
 </updates>
-""")
+""" % {"now": now.strftime("%Y-%m-%d %H:%M:%S")})

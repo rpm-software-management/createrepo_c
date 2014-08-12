@@ -18,7 +18,7 @@
  */
 
 #include <Python.h>
-#include <python2.7/datetime.h>
+#include <datetime.h> // from python
 #include <assert.h>
 #include <stddef.h>
 #include <time.h>
@@ -79,9 +79,6 @@ check_UpdateRecordStatus(const _UpdateRecordObject *self)
 static PyObject *
 updaterecord_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-    /* Python macro to use datetime objects */
-    PyDateTime_IMPORT;
-
     CR_UNUSED(args);
     CR_UNUSED(kwds);
     _UpdateRecordObject *self = (_UpdateRecordObject *)type->tp_alloc(type, 0);

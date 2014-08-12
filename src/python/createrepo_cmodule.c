@@ -18,6 +18,7 @@
  */
 
 #include <Python.h>
+#include <datetime.h> // from python
 
 #include "src/createrepo_c.h"
 
@@ -191,6 +192,10 @@ init_createrepo_c(void)
 
     Py_AtExit(cr_xml_dump_cleanup);
     Py_AtExit(cr_package_parser_cleanup);
+
+    /* Python macro to use datetime objects */
+
+    PyDateTime_IMPORT;
 
     /* Module constants */
 

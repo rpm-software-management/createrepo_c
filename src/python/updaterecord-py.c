@@ -18,8 +18,10 @@
  */
 
 #include <Python.h>
+#include <python2.7/datetime.h>
 #include <assert.h>
 #include <stddef.h>
+#include <time.h>
 
 #include "updaterecord-py.h"
 #include "updatereference-py.h"
@@ -77,6 +79,9 @@ check_UpdateRecordStatus(const _UpdateRecordObject *self)
 static PyObject *
 updaterecord_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
+    /* Python macro to use datetime objects */
+    PyDateTime_IMPORT;
+
     CR_UNUSED(args);
     CR_UNUSED(kwds);
     _UpdateRecordObject *self = (_UpdateRecordObject *)type->tp_alloc(type, 0);
@@ -262,6 +267,25 @@ get_str(_UpdateRecordObject *self, void *member_offset)
 }
 
 static PyObject *
+get_datetime(_UpdateRecordObject *self, void *member_offset)
+{
+    if (check_UpdateRecordStatus(self))
+        return NULL;
+    cr_UpdateRecord *rec = self->record;
+    char *str = *((char **) ((size_t) rec + (size_t) member_offset));
+    if (str == NULL)
+        Py_RETURN_NONE;
+
+    struct tm *dt = malloc(sizeof(struct tm));
+    char *res = strptime(str, "%Y-%m-%d %H:%M:%S", dt);
+    if (res == NULL)
+        PyErr_SetString(CrErr_Exception, "Invalid date");
+
+    return PyDateTime_FromDateAndTime(dt->tm_year + 1900, dt->tm_mon + 1, dt->tm_mday,
+                                      dt->tm_hour, dt->tm_min, dt->tm_sec, 0);
+}
+
+static PyObject *
 get_list(_UpdateRecordObject *self, void *conv)
 {
     ListConvertor *convertor = conv;
@@ -301,6 +325,30 @@ set_str(_UpdateRecordObject *self, PyObject *value, void *member_offset)
     return 0;
 }
 
+static int
+set_datetime(_UpdateRecordObject *self, PyObject *value, void *member_offset)
+{
+    if (check_UpdateRecordStatus(self))
+        return -1;
+    if (!PyDateTime_Check(value) && value != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "DateTime or None expected!");
+        return -1;
+    }
+    cr_UpdateRecord *rec = self->record;
+
+    /* Length is 20: yyyy-mm-dd HH:MM:SS */
+    char *date = malloc(20 * sizeof(char));
+    snprintf(date, 20, "%04d-%02d-%02d %02d:%02d:%02d",
+             PyDateTime_GET_YEAR(value), PyDateTime_GET_MONTH(value),
+             PyDateTime_GET_DAY(value), PyDateTime_DATE_GET_HOUR(value),
+             PyDateTime_DATE_GET_MINUTE(value), PyDateTime_DATE_GET_SECOND(value));
+
+    char *str = cr_safe_string_chunk_insert(rec->chunk, date);
+    free(date);
+    *((char **) ((size_t) rec + (size_t) member_offset)) = str;
+    return 0;
+}
+
 static PyGetSetDef updaterecord_getsetters[] = {
     {"fromstr",                     (getter)get_str, (setter)set_str,
         "Who issued this update",   OFFSET(from)},
@@ -314,9 +362,9 @@ static PyGetSetDef updaterecord_getsetters[] = {
         "Update id",                OFFSET(id)},
     {"title",                       (getter)get_str, (setter)set_str,
         "Update title",             OFFSET(title)},
-    {"issued_date",                 (getter)get_str, (setter)set_str,
+    {"issued_date",                 (getter)get_datetime, (setter)set_datetime,
         "Date when the update was issued", OFFSET(issued_date)},
-    {"updated_date",                (getter)get_str, (setter)set_str,
+    {"updated_date",                (getter)get_datetime, (setter)set_datetime,
         "Date when the update was updated", OFFSET(updated_date)},
     {"rights",                      (getter)get_str, (setter)set_str,
         "Copyrights",               OFFSET(rights)},

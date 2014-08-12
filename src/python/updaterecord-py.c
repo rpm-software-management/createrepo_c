@@ -266,6 +266,8 @@ get_str(_UpdateRecordObject *self, void *member_offset)
 static PyObject *
 get_datetime(_UpdateRecordObject *self, void *member_offset)
 {
+    PyDateTime_IMPORT;
+
     if (check_UpdateRecordStatus(self))
         return NULL;
     cr_UpdateRecord *rec = self->record;
@@ -325,6 +327,8 @@ set_str(_UpdateRecordObject *self, PyObject *value, void *member_offset)
 static int
 set_datetime(_UpdateRecordObject *self, PyObject *value, void *member_offset)
 {
+    PyDateTime_IMPORT;
+
     if (check_UpdateRecordStatus(self))
         return -1;
     if (!PyDateTime_Check(value) && value != Py_None) {

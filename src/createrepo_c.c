@@ -134,7 +134,9 @@ fill_pool(GThreadPool *pool,
     struct PoolTask *task;
     long package_count = 0;
 
-    if (!(cmd_options->include_pkgs)) {
+    if (cmd_options->pkglist && !cmd_options->include_pkgs) {
+        g_warning("Used pkglist doesn't contain any useful items");
+    } else if (!(cmd_options->include_pkgs)) {
         // --pkglist (or --includepkg) is not supplied -> do dir walk
 
         g_message("Directory walk started");

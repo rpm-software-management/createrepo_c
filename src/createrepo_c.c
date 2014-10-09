@@ -635,10 +635,11 @@ main(int argc, char **argv)
             assert(ret == CRE_OK || tmp_err);
 
             if (ret == CRE_OK) {
-                g_debug("Old metadata from: %s - loaded", out_dir);
+                g_debug("Old metadata from: %s - loaded",
+                        old_metadata_location->original_url);
             } else {
                 g_debug("Old metadata from %s - loading failed: %s",
-                        out_dir, tmp_err->message);
+                        old_metadata_location->original_url, tmp_err->message);
                 g_clear_error(&tmp_err);
             }
         }

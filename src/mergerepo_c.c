@@ -127,6 +127,7 @@ struct CmdOptions {
     char *noarch_repo_url;
     gboolean unique_md_filenames;
     gboolean simple_md_filenames;
+    gboolean omit_baseurl;
 
     // Koji mergerepos specific options
     gboolean koji;
@@ -191,6 +192,8 @@ static GOptionEntry cmd_entries[] =
       NULL },
     { "simple-md-filenames", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.simple_md_filenames),
       "Do not include the file's checksum in the metadata filename.", NULL },
+    { "omit-baseurl", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.omit_baseurl),
+      "Don't add a baseurl to packages that don't have one before." },
 
     // -- Options related to Koji-mergerepos behaviour
     { "koji", 'k', 0, G_OPTION_ARG_NONE, &(_cmd_options.koji),
@@ -696,10 +699,14 @@ add_package(cr_Package *pkg,
             GSList *arch_list,
             MergeMethod merge_method,
             gboolean include_all,
-            struct KojiMergedReposStuff *koji_stuff)
+            struct KojiMergedReposStuff *koji_stuff,
+            gboolean omit_baseurl)
 {
     GSList *list, *element;
 
+
+    if (omit_baseurl)
+        repopath = NULL;
 
     // Check if the package meet the command line architecture constraints
 
@@ -762,7 +769,7 @@ add_package(cr_Package *pkg,
     if (!list) {
         list = g_slist_prepend(list, pkg);
         if (!pkg->location_base) {
-            pkg->location_base = g_string_chunk_insert(pkg->chunk, repopath);
+            pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, repopath);
         }
         g_hash_table_insert (merged, (gpointer) pkg->name, (gpointer) list);
         return 1;
@@ -795,7 +802,7 @@ add_package(cr_Package *pkg,
                         cr_package_free(c_pkg);
                         // Replace package in element
                         if (!pkg->location_base)
-                            pkg->location_base = g_string_chunk_insert(pkg->chunk,
+                            pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk,
                                                                        repopath);
                         element->data = pkg;
                         return 2;
@@ -816,7 +823,7 @@ add_package(cr_Package *pkg,
                         cr_package_free(c_pkg);
                         // Replace package in element
                         if (!pkg->location_base)
-                            pkg->location_base = g_string_chunk_insert(pkg->chunk, repopath);
+                            pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, repopath);
                         element->data = pkg;
                         return 2;
                     } else {
@@ -847,9 +854,8 @@ add_package(cr_Package *pkg,
 
 
     // Add package
-
     if (!pkg->location_base) {
-        pkg->location_base = g_string_chunk_insert(pkg->chunk, repopath);
+        pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, repopath);
     }
 
     // XXX: The first list element (pointed from hashtable) must stay first!
@@ -869,7 +875,8 @@ merge_repos(GHashTable *merged,
             MergeMethod merge_method,
             gboolean include_all,
             GHashTable *noarch_hashtable,
-            struct KojiMergedReposStuff *koji_stuff)
+            struct KojiMergedReposStuff *koji_stuff,
+            gboolean omit_baseurl)
 {
     long loaded_packages = 0;
     GSList *used_noarch_keys = NULL;
@@ -933,7 +940,8 @@ merge_repos(GHashTable *merged,
                               arch_list,
                               merge_method,
                               include_all,
-                              koji_stuff);
+                              koji_stuff,
+                              omit_baseurl);
 
             if (ret > 0) {
                 if (!noarch_pkg_used) {
@@ -1705,7 +1713,8 @@ main(int argc, char **argv)
                                   noarch_metadata ?
                                         cr_metadata_hashtable(noarch_metadata)
                                       : NULL,
-                                  koji_stuff);
+                                  koji_stuff,
+                                  cmd_options->omit_baseurl);
 
     // Destroy koji stuff - we have to close pkgorigins file before dump
 

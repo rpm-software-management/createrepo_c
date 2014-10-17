@@ -379,6 +379,7 @@ cr_delta_thread(gpointer data, gpointer udata)
     user_data->active_tasks--;
     g_cond_signal(user_data->cond_task_finished);
     g_mutex_unlock(user_data->mutex);
+    g_free(task);
 }
 
 
@@ -496,6 +497,8 @@ cr_deltarpms_parallel_deltas(GSList *targetpackages,
 
     g_thread_pool_free(pool, FALSE, TRUE);
     g_list_free(targets);
+    g_mutex_free(user_data.mutex);
+    g_cond_free(user_data.cond_task_finished);
 }
 
 
@@ -704,6 +707,7 @@ walk_drpmsdir(const gchar *drpmsdir, GSList **inlist, GError **err)
             candidates = g_slist_prepend(candidates, task);
         }
         g_free(dirname);
+        g_dir_close(dirp);
     }
 
     *inlist = candidates;
@@ -880,7 +884,8 @@ cr_deltarpms_generate_prestodelta_file(const gchar *drpmsdir,
     if (tmp_err) {
         g_propagate_prefixed_error(err, tmp_err,
                 "Cannot create pool for prestodelta file generation: ");
-        return FALSE;
+        ret = FALSE;
+        goto exit;
     }
 
     // Push tasks to the pool
@@ -903,10 +908,13 @@ cr_deltarpms_generate_prestodelta_file(const gchar *drpmsdir,
 
         chunk = gen_newpackage_xml_chunk(nevra, (GSList *) value, NULL);
         cr_xmlfile_add_chunk(f, chunk, NULL);
+        g_free(chunk);
     }
 
 exit:
     g_slist_free_full(candidates, (GDestroyNotify) cr_prestodeltatask_free);
+    g_mutex_free(user_data.mutex);
+    g_hash_table_destroy(ht);
 
     return ret;
 }

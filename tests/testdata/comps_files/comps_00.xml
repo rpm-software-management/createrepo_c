@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE comps PUBLIC "-//Red Hat, Inc.//DTD Comps info//EN" "comps.dtd">
+<comps>
+  <group>
+    <id>test-group</id>
+    <_name>Test Group</_name>
+    <_description/>
+    <default>false</default>
+    <uservisible>True</uservisible>
+    <packagelist>
+      <packagereq type="default">Archer</packagereq>
+    </packagelist>
+  </group>
+  <category>
+    <id>test category</id>
+    <_name>Test Category</_name>
+    <_description>Description of test category.</_description>
+    <display_order>99</display_order>
+    <grouplist>
+      <groupid>test-group</groupid>
+    </grouplist>
+  </category>
+</comps>

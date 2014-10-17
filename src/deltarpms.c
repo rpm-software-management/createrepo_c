@@ -130,6 +130,7 @@ cr_deltapackage_from_drpm_base(const char *filename,
     struct drpm *delta = NULL;
     cr_DeltaPackage *deltapackage = NULL;
     char *str;
+    int ret;
 
     assert(!err || *err == NULL);
 
@@ -143,24 +144,29 @@ cr_deltapackage_from_drpm_base(const char *filename,
     if (!deltapackage->package)
         goto errexit;
 
-    if (drpm_read(filename, &delta) != EOK) {
+    ret = drpm_read(&delta, filename);
+    if (ret != DRPM_ERR_OK) {
         g_set_error(err, CR_DELTARPMS_ERROR, CRE_DELTARPM,
-                    "Deltarpm cannot read %s", filename);
+                    "Deltarpm cannot read %s (%d)", filename, ret);
         goto errexit;
     }
 
-    if (drpm_get_string(delta, DRPM_SOURCE_NEVR, &str) != EOK) {
+    ret = drpm_get_string(delta, DRPM_TAG_SRCNEVR, &str);
+    if (ret != DRPM_ERR_OK) {
         g_set_error(err, CR_DELTARPMS_ERROR, CRE_DELTARPM,
-                    "Deltarpm cannot read source NEVR from %s", filename);
+                    "Deltarpm cannot read source NEVR from %s (%d)",
+                    filename, ret);
         goto errexit;
     }
 
     deltapackage->nevr = cr_safe_string_chunk_insert_null(
                                     deltapackage->chunk, str);
 
-    if (drpm_get_string(delta, DRPM_SEQUENCE, &str) != EOK) {
+    ret = drpm_get_string(delta, DRPM_TAG_SEQUENCE, &str);
+    if (ret != DRPM_ERR_OK) {
         g_set_error(err, CR_DELTARPMS_ERROR, CRE_DELTARPM,
-                    "Deltarpm cannot read delta sequence from %s", filename);
+                    "Deltarpm cannot read delta sequence from %s (%d)",
+                    filename, ret);
         goto errexit;
     }
 
@@ -173,7 +179,8 @@ cr_deltapackage_from_drpm_base(const char *filename,
 
 errexit:
 
-    drpm_destroy(&delta);
+    if (delta)
+        drpm_destroy(&delta);
     cr_deltapackage_free(deltapackage);
 
     return NULL;

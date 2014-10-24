@@ -861,7 +861,9 @@ add_package(cr_Package *pkg,
     // XXX: The first list element (pointed from hashtable) must stay first!
     // g_slist_append() is suitable but non effective, insert a new element
     // right after first element is optimal (at least for now)
-    assert(g_slist_insert(list, pkg, 1) == list);
+    if (g_slist_insert(list, pkg, 1) != list) {
+        assert(0);
+    }
 
     return 1;
 }

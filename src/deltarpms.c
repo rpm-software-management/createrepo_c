@@ -624,7 +624,7 @@ cr_deltarpms_scan_targetdir(const char *path,
         g_dir_close(dirp);
     }
 
-    g_queue_free_full(sub_dirs, g_free);
+    cr_queue_free_full(sub_dirs, g_free);
     g_string_chunk_free(sub_dirs_chunk);
 
     return targets;
@@ -715,7 +715,7 @@ walk_drpmsdir(const gchar *drpmsdir, GSList **inlist, GError **err)
 
 exit:
     g_slist_free_full(candidates, (GDestroyNotify) cr_prestodeltatask_free);
-    g_queue_free_full(sub_dirs, g_free);
+    cr_queue_free_full(sub_dirs, g_free);
     g_string_chunk_free(sub_dirs_chunk);
 
     return ret;

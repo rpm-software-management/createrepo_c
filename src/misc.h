@@ -292,6 +292,15 @@ void cr_log_fn(const gchar *log_domain,
  */
 void cr_slist_free_full(GSList *list, GDestroyNotify free_f);
 
+/** Convenience method, which frees all the memory used by a GQueue,
+ * and calls the specified destroy function on every element's data.
+ * This is the same function as g_queue_free_full(). The original function
+ * is implemented in glib since 2.32 but we need to support the older glib too.
+ * @param queue         a pointer to a GQueue
+ * @param the function to be called to free each element's data
+ */
+void cr_queue_free_full(GQueue *queue, GDestroyNotify free_f);
+
 /** Split filename into the NEVRA.
  * Supported formats:
  * [path/]N-V-R:E.A[.rpm]

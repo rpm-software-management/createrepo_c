@@ -861,7 +861,9 @@ add_package(cr_Package *pkg,
     // XXX: The first list element (pointed from hashtable) must stay first!
     // g_slist_append() is suitable but non effective, insert a new element
     // right after first element is optimal (at least for now)
-    assert(g_slist_insert(list, pkg, 1) == list);
+    if (g_slist_insert(list, pkg, 1) != list) {
+        assert(0);
+    }
 
     return 1;
 }
@@ -932,6 +934,9 @@ merge_repos(GHashTable *merged,
                     noarch_pkg_used = TRUE;
                 }
             }
+
+            g_debug("Reading metadata for %s (%s-%s.%s)",
+                    pkg->name, pkg->version, pkg->release, pkg->arch);
 
             // Add package
             ret = add_package(pkg,
@@ -1141,6 +1146,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
             pkg = (cr_Package *) element->data;
             res = cr_xml_dump(pkg, NULL);
+
+            g_debug("Writing metadata for %s (%s-%s.%s)",
+                    pkg->name, pkg->version, pkg->release, pkg->arch);
 
             cr_xmlfile_add_chunk(pri_f, (const char *) res.primary, NULL);
             cr_xmlfile_add_chunk(fil_f, (const char *) res.filelists, NULL);

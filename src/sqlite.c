@@ -26,6 +26,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <libxml/encoding.h>
 #include "misc.h"
 #include "sqlite.h"
@@ -1524,6 +1525,19 @@ cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
     }
 
     exists = g_file_test(path, G_FILE_TEST_IS_REGULAR);
+    if (exists) {
+        struct stat stat_buf;
+        if (stat(path, &stat_buf) == -1) {
+            g_set_error(err, CR_DB_ERROR, CRE_IO,
+                        "Cannot stat %s: %s", path, strerror(errno));
+            return NULL;
+        }
+
+        if (stat_buf.st_size == 0)
+            // File exists, but is just a placeholder created by g_mkstemp()
+            // because --local-sqlite option was used
+            exists = FALSE;
+    }
 
     sqlite3_enable_shared_cache(1);
 

@@ -873,14 +873,45 @@ main(int argc, char **argv)
     cr_SqliteDb *oth_db = NULL;
 
     if (!cmd_options->no_database) {
+        int pri_db_fd = -1;
+        int fil_db_fd = -1;
+        int oth_db_fd = -1;
+
         g_message("Preparing sqlite DBs");
-        g_debug("Creating databases");
-        pri_db_filename = g_strconcat(tmp_out_repo, "/primary.sqlite", NULL);
-        fil_db_filename = g_strconcat(tmp_out_repo, "/filelists.sqlite", NULL);
-        oth_db_filename = g_strconcat(tmp_out_repo, "/other.sqlite", NULL);
+        if (!cmd_options->local_sqlite) {
+            g_debug("Creating databases");
+            pri_db_filename = g_strconcat(tmp_out_repo, "/primary.sqlite", NULL);
+            fil_db_filename = g_strconcat(tmp_out_repo, "/filelists.sqlite", NULL);
+            oth_db_filename = g_strconcat(tmp_out_repo, "/other.sqlite", NULL);
+        } else {
+            g_debug("Creating databases localy");
+            pri_db_filename = g_strdup("/tmp/primary.XXXXXX.sqlite");
+            fil_db_filename = g_strdup("/tmp/filelists.XXXXXX.sqlite");
+            oth_db_filename = g_strdup("/tmp/other.XXXXXXX.sqlite");
+            pri_db_fd = g_mkstemp(pri_db_filename);
+            g_debug("%s", pri_db_filename);
+            if (pri_db_fd == -1) {
+                g_critical("Cannot open %s: %s", pri_db_filename, strerror(errno));
+                exit(EXIT_FAILURE);
+            }
+            fil_db_fd = g_mkstemp(fil_db_filename);
+            g_debug("%s", fil_db_filename);
+            if (fil_db_fd == -1) {
+                g_critical("Cannot open %s: %s", fil_db_filename, strerror(errno));
+                exit(EXIT_FAILURE);
+            }
+            oth_db_fd = g_mkstemp(oth_db_filename);
+            g_debug("%s", oth_db_filename);
+            if (oth_db_fd == -1) {
+                g_critical("Cannot open %s: %s", oth_db_filename, strerror(errno));
+                exit(EXIT_FAILURE);
+            }
+        }
 
         pri_db = cr_db_open_primary(pri_db_filename, &tmp_err);
         assert(pri_db || tmp_err);
+        if (pri_db_fd > -1)
+            close(pri_db_fd);
         if (!pri_db) {
             g_critical("Cannot open %s: %s",
                        pri_db_filename, tmp_err->message);
@@ -890,6 +921,8 @@ main(int argc, char **argv)
 
         fil_db = cr_db_open_filelists(fil_db_filename, &tmp_err);
         assert(fil_db || tmp_err);
+        if (fil_db_fd > -1)
+            close(fil_db_fd);
         if (!fil_db) {
             g_critical("Cannot open %s: %s",
                        fil_db_filename, tmp_err->message);
@@ -899,6 +932,8 @@ main(int argc, char **argv)
 
         oth_db = cr_db_open_other(oth_db_filename, &tmp_err);
         assert(oth_db || tmp_err);
+        if (oth_db_fd > -1)
+            close(oth_db_fd);
         if (!oth_db) {
             g_critical("Cannot open %s: %s",
                        oth_db_filename, tmp_err->message);
@@ -1069,11 +1104,11 @@ main(int argc, char **argv)
 
     if (!cmd_options->no_database) {
 
-        gchar *pri_db_name = g_strconcat(pri_db_filename,
+        gchar *pri_db_name = g_strconcat(tmp_out_repo, "/primary.sqlite",
                                          sqlite_compression_suffix, NULL);
-        gchar *fil_db_name = g_strconcat(fil_db_filename,
+        gchar *fil_db_name = g_strconcat(tmp_out_repo, "/filelists.sqlite",
                                          sqlite_compression_suffix, NULL);
-        gchar *oth_db_name = g_strconcat(oth_db_filename,
+        gchar *oth_db_name = g_strconcat(tmp_out_repo, "/other.sqlite",
                                          sqlite_compression_suffix, NULL);
 
         cr_db_dbinfo_update(pri_db, pri_xml_rec->checksum, NULL);
@@ -1116,6 +1151,12 @@ main(int argc, char **argv)
         g_thread_pool_push(compress_pool, oth_db_task, NULL);
 
         g_thread_pool_free(compress_pool, FALSE, TRUE);
+
+        if (!cmd_options->local_sqlite) {
+            cr_rm(pri_db_filename, CR_RM_FORCE, NULL, NULL);
+            cr_rm(fil_db_filename, CR_RM_FORCE, NULL, NULL);
+            cr_rm(oth_db_filename, CR_RM_FORCE, NULL, NULL);
+        }
 
         // Prepare repomd records
 

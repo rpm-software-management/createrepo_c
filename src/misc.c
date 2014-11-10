@@ -944,16 +944,16 @@ cr_log_fn(const gchar *log_domain,
 
     switch(log_level) {
         case G_LOG_LEVEL_ERROR:
-            if (log_domain) fprintf(stderr, "%s: ", log_domain);
-            fprintf(stderr, "Error: %s\n", message);
+            if (log_domain) g_printerr("%s: ", log_domain);
+            g_printerr("Error: %s\n", message);
             break;
         case G_LOG_LEVEL_CRITICAL:
-            if (log_domain) fprintf(stderr, "%s: ", log_domain);
-            fprintf(stderr, "Critical: %s\n", message);
+            if (log_domain) g_printerr("%s: ", log_domain);
+            g_printerr("Critical: %s\n", message);
             break;
         case G_LOG_LEVEL_WARNING:
-            if (log_domain) fprintf(stderr, "%s: ", log_domain);
-            fprintf(stderr, "Warning: %s\n", message);
+            if (log_domain) g_printerr("%s: ", log_domain);
+            g_printerr("Warning: %s\n", message);
             break;
         case G_LOG_LEVEL_DEBUG: {
             time_t rawtime;
@@ -964,8 +964,8 @@ cr_log_fn(const gchar *log_domain,
             timeinfo = localtime ( &rawtime );
             strftime (buffer, 80, "%H:%M:%S", timeinfo);
 
-            //if (log_domain) fprintf(stderr, "%s: ", log_domain);
-            fprintf(stderr, "%s: %s\n", buffer, message);
+            //if (log_domain) g_printerr("%s: ", log_domain);
+            g_printerr("%s: %s\n", buffer, message);
             break;
         }
         default:

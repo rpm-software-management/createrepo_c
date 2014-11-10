@@ -1564,10 +1564,10 @@ main(int argc, char **argv)
 
     if (g_slist_length(cmd_options->repo_list) < 2) {
         free_options(cmd_options);
-        fprintf(stderr, "Usage: %s [OPTION...] --repo=url --repo=url\n\n"
-                        "%s: take 2 or more repositories and merge their "
-                        "metadata into a new repo\n\n",
-                        cr_get_filename(argv[0]), cr_get_filename(argv[0]));
+        g_printerr("Usage: %s [OPTION...] --repo=url --repo=url\n\n"
+                   "%s: take 2 or more repositories and merge their "
+                   "metadata into a new repo\n\n",
+                   cr_get_filename(argv[0]), cr_get_filename(argv[0]));
         return 1;
     }
 

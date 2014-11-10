@@ -321,7 +321,7 @@ main(int argc, char **argv)
 
     cmd_options = parse_arguments(&argc, &argv, &tmp_err);
     if (!cmd_options) {
-        fprintf(stderr, "Argument parsing failed: %s\n", tmp_err->message);
+        g_printerr("Argument parsing failed: %s\n", tmp_err->message);
         g_error_free(tmp_err);
         exit(EXIT_FAILURE);
     }
@@ -340,8 +340,8 @@ main(int argc, char **argv)
 
     if (argc != 2) {
         // No mandatory arguments
-        fprintf(stderr, "Must specify exactly one directory to index.\n");
-        fprintf(stderr, "Usage: %s [options] <directory_to_index>\n\n",
+        g_printerr("Must specify exactly one directory to index.\n");
+        g_printerr("Usage: %s [options] <directory_to_index>\n\n",
                          cr_get_filename(argv[0]));
         free_options(cmd_options);
         exit(EXIT_FAILURE);
@@ -369,7 +369,7 @@ main(int argc, char **argv)
     // Check if inputdir exists
 
     if (!g_file_test(in_dir, G_FILE_TEST_IS_DIR)) {
-        fprintf(stderr, "Directory %s must exist\n", in_dir);
+        g_printerr("Directory %s must exist\n", in_dir);
         g_free(in_dir);
         free_options(cmd_options);
         exit(EXIT_FAILURE);
@@ -379,7 +379,7 @@ main(int argc, char **argv)
     // Check parsed arguments
 
     if (!check_arguments(cmd_options, in_dir, &tmp_err)) {
-        fprintf(stderr, "%s\n", tmp_err->message);
+        g_printerr("%s\n", tmp_err->message);
         g_error_free(tmp_err);
         g_free(in_dir);
         free_options(cmd_options);
@@ -429,7 +429,7 @@ main(int argc, char **argv)
     // Prepare cachedir for checksum if --cachedir is used
 
     if (!prepare_cache_dir(cmd_options, out_dir, &tmp_err)) {
-        fprintf(stderr, "%s\n", tmp_err->message);
+        g_printerr("%s\n", tmp_err->message);
         g_error_free(tmp_err);
         g_free(in_dir);
         g_free(in_repo);

@@ -1227,12 +1227,12 @@ main(int argc, char **argv)
         // 0) Prepare outdeltadir
         if (g_file_test(outdeltadir, G_FILE_TEST_EXISTS)) {
             if (!g_file_test(outdeltadir, G_FILE_TEST_IS_DIR)) {
-                g_error("The file %s already exists and it is not a directory",
+                g_critical("The file %s already exists and it is not a directory",
                         outdeltadir);
                 goto deltaerror;
             }
         } else if (g_mkdir(outdeltadir, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH)) {
-            g_error("Cannot create %s: %s", outdeltadir, strerror(errno));
+            g_critical("Cannot create %s: %s", outdeltadir, strerror(errno));
             goto deltaerror;
         }
 
@@ -1241,7 +1241,7 @@ main(int argc, char **argv)
                                                    cmd_options->max_delta_rpm_size,
                                                    &tmp_err);
         if (!ht_oldpackagedirs) {
-            g_error("cr_deltarpms_scan_oldpackagedirs failed: %s\n", tmp_err->message);
+            g_critical("cr_deltarpms_scan_oldpackagedirs failed: %s\n", tmp_err->message);
             g_clear_error(&tmp_err);
             goto deltaerror;
         }
@@ -1256,7 +1256,7 @@ main(int argc, char **argv)
                                  cmd_options->max_delta_rpm_size,
                                  &tmp_err);
         if (!ret) {
-            g_error("Parallel generation of drpms failed: %s", tmp_err->message);
+            g_critical("Parallel generation of drpms failed: %s", tmp_err->message);
             g_clear_error(&tmp_err);
             goto deltaerror;
         }
@@ -1268,7 +1268,7 @@ main(int argc, char **argv)
                                                            prestodelta_stat,
                                                            &tmp_err);
         if (!prestodelta_cr_file) {
-            g_error("Cannot open %s: %s", prestodelta_xml_filename, tmp_err->message);
+            g_critical("Cannot open %s: %s", prestodelta_xml_filename, tmp_err->message);
             g_clear_error(&tmp_err);
             goto deltaerror;
         }
@@ -1282,7 +1282,7 @@ main(int argc, char **argv)
                         out_dir,
                         &tmp_err);
         if (!ret) {
-            g_error("Cannot generate %s: %s", prestodelta_xml_filename,
+            g_critical("Cannot generate %s: %s", prestodelta_xml_filename,
                     tmp_err->message);
             g_clear_error(&tmp_err);
             goto deltaerror;

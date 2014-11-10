@@ -77,7 +77,7 @@ cr_parse_repomd(const char *repomd_path,
     cr_xml_parse_repomd(repomd_path, repomd, cr_warning_cb,
                         "Repomd xml parser", &tmp_err);
     if (tmp_err) {
-        g_error("%s: %s", __func__, tmp_err->message);
+        g_critical("%s: %s", __func__, tmp_err->message);
         g_error_free(tmp_err);
         return NULL;
     }

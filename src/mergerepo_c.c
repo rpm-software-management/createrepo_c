@@ -1659,7 +1659,7 @@ main(int argc, char **argv)
 
         noarch_ml = cr_locate_metadata(cmd_options->noarch_repo_url, 1, NULL);
         if (!noarch_ml) {
-            g_error("Cannot locate noarch repo: %s", cmd_options->noarch_repo_url);
+            g_critical("Cannot locate noarch repo: %s", cmd_options->noarch_repo_url);
             return 1;
         }
 
@@ -1674,7 +1674,7 @@ main(int argc, char **argv)
         g_debug("Loading noarch_repo: %s", noarch_repopath);
 
         if (cr_metadata_load_xml(noarch_metadata, noarch_ml, NULL) != CRE_OK) {
-            g_error("Cannot load noarch repo: \"%s\"", noarch_ml->repomd);
+            g_critical("Cannot load noarch repo: \"%s\"", noarch_ml->repomd);
             cr_metadata_free(noarch_metadata);
             // TODO cleanup
             cr_metadatalocation_free(noarch_ml);

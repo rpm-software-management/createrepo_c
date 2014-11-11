@@ -238,6 +238,17 @@ cr_get_remote_metadata(const char *repopath, int ignore_sqlite)
         goto get_remote_metadata_cleanup;
     }
 
+    // Follow redirs
+    if (curl_easy_setopt(handle, CURLOPT_FOLLOWLOCATION, 1) != CURLE_OK) {
+        g_critical("%s: curl_easy_setopt(CURLOPT_FOLLOWLOCATION) error", __func__);
+        goto get_remote_metadata_cleanup;
+    }
+
+    if (curl_easy_setopt(handle, CURLOPT_MAXREDIRS, 6) != CURLE_OK) {
+        g_critical("%s: curl_easy_setopt(CURLOPT_MAXREDIRS) error", __func__);
+        goto get_remote_metadata_cleanup;
+    }
+
 
     // Perform a file transfer of repomd.xml
 

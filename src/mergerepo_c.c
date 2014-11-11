@@ -596,6 +596,12 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
             gboolean blocked = FALSE;
             struct srpm_val *srpm_value_new;
 
+            if (!pkg->rpm_sourcerpm) {
+                g_warning("Package '%s' from '%s' doesn't have specified source srpm",
+                          pkg->location_href, ml->original_url);
+                continue;
+            }
+
             nevra = cr_split_rpm_filename(pkg->rpm_sourcerpm);
 
             if (blocked_srpms) {
@@ -727,22 +733,30 @@ add_package(cr_Package *pkg,
 
     // Koji-mergerepos specific behaviour -----------------------
     if (koji_stuff) {
-        cr_NEVRA *nevra;
-        struct srpm_val *value;
         gchar *nvra;
         gboolean seen;
 
-        nevra = cr_split_rpm_filename(pkg->rpm_sourcerpm);
-        value = g_hash_table_lookup(koji_stuff->include_srpms, nevra->name);
-        cr_nevra_free(nevra);
-        if (!value || g_strcmp0(pkg->rpm_sourcerpm, value->sourcerpm)) {
-            // Srpm of the package is not allowed
-            g_debug("Package %s has forbidden srpm %s", pkg->name,
-                                                        pkg->rpm_sourcerpm);
-            return 0;
+        if (pkg->rpm_sourcerpm) {
+            // Sometimes, there are metadata that don't contain sourcerpm
+            // items for their packages.
+            // I don't know if better is to include or exclude such packages.
+            // Original mergerepos script doesn't expect such situation.
+            // So for now, include them. But it can be changed anytime
+            // in future.
+            struct srpm_val *value;
+            cr_NEVRA *nevra = cr_split_rpm_filename(pkg->rpm_sourcerpm);
+            value = g_hash_table_lookup(koji_stuff->include_srpms, nevra->name);
+            cr_nevra_free(nevra);
+            if (!value || g_strcmp0(pkg->rpm_sourcerpm, value->sourcerpm)) {
+                // Srpm of the package is not allowed
+                g_debug("Package %s has forbidden srpm %s", pkg->name,
+                                                            pkg->rpm_sourcerpm);
+                return 0;
+            }
         }
 
-        nvra = cr_package_nvra(pkg);;
+        // Check if we have already seen this package before
+        nvra = cr_package_nvra(pkg);
         seen = g_hash_table_lookup_extended(koji_stuff->seen_rpms,
                                             nvra,
                                             NULL,
@@ -755,6 +769,7 @@ add_package(cr_Package *pkg,
             return 0;
         }
 
+        // Make a note that we have seen this package
         g_hash_table_replace(koji_stuff->seen_rpms, nvra, NULL);
     }
     // Koji-mergerepos specific behaviour end --------------------

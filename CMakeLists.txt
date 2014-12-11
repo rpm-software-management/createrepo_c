@@ -79,6 +79,8 @@ ELSE (DRPM_PATH)
     FIND_LIBRARY (DRPM_LIBRARY NAMES drpm)
     IF (NOT DRPM_LIBRARY)
         MESSAGE("No DRPM library installed")
+    ELSE (NOT DRPM_LIBRARY)
+        MESSAGE("Using DRPM library: ${DRPM_LIBRARY}")
     ENDIF (NOT DRPM_LIBRARY)
 endif (DRPM_PATH)
 

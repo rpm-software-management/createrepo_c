@@ -49,6 +49,8 @@ struct CmdOptions _cmd_options = {
         .cachedir             = NULL,
         .local_sqlite         = DEFAULT_LOCAL_SQLITE,
 
+        .deltas               = FALSE,
+        .oldpackagedirs       = NULL,
         .num_deltas           = 1,
         .max_delta_rpm_size   = CR_DEFAULT_MAX_DELTA_RPM_SIZE,
 
@@ -145,6 +147,7 @@ static GOptionEntry cmd_entries[] =
       "Available units (m - minutes, h - hours, d - days)", "AGE" },
     { "cachedir", 'c', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.cachedir),
       "Set path to cache dir", "CACHEDIR." },
+#ifdef CR_DELTA_RPM_SUPPORT
     { "deltas", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.deltas),
       "Tells createrepo to generate deltarpms and the delta metadata.", NULL },
     { "oldpackagedirs", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &(_cmd_options.oldpackagedirs),
@@ -154,6 +157,7 @@ static GOptionEntry cmd_entries[] =
       "The number of older versions to make deltas against. Defaults to 1.", "INT" },
     { "max-delta-rpm-size", 0, 0, G_OPTION_ARG_INT64, &(_cmd_options.max_delta_rpm_size),
       "Max size of an rpm that to run deltarpm against (in bytes).", "MAX_DELTA_RPM_SIZE" },
+#endif
     { "local-sqlite", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.local_sqlite),
       "Gen sqlite DBs locally (into /tmp). Sometimes, sqlite has a trouble "
       "to gen DBs on a NFS mount, use this option in such cases. "

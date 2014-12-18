@@ -162,7 +162,7 @@ static GOptionEntry cmd_entries[] =
       "Gen sqlite DBs locally (into /tmp). Sometimes, sqlite has a trouble "
       "to gen DBs on a NFS mount, use this option in such cases. "
       "Use of this option could lead to a higher memory consumption (/tmp is "
-      "often a ramdisk)." },
+      "often a ramdisk).", NULL },
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL },
 };
 

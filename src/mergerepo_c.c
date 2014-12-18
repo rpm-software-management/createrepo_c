@@ -193,7 +193,7 @@ static GOptionEntry cmd_entries[] =
     { "simple-md-filenames", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.simple_md_filenames),
       "Do not include the file's checksum in the metadata filename.", NULL },
     { "omit-baseurl", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.omit_baseurl),
-      "Don't add a baseurl to packages that don't have one before." },
+      "Don't add a baseurl to packages that don't have one before." , NULL},
 
     // -- Options related to Koji-mergerepos behaviour
     { "koji", 'k', 0, G_OPTION_ARG_NONE, &(_cmd_options.koji),
@@ -202,8 +202,7 @@ static GOptionEntry cmd_entries[] =
       "Path to groupfile to include in metadata.", "GROUPFILE" },
     { "blocked", 'b', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.blocked),
       "A file containing a list of srpm names to exclude from the merged repo. "
-      "Only works with combination with --koji/-k.",
-      "FILE" },
+      "Only works with combination with --koji/-k.", "FILE" },
     // -- Options related to Koji-mergerepos behaviour - end
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
 };

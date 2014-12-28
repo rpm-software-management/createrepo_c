@@ -146,3 +146,5 @@ class TestCaseRepomd(unittest.TestCase):
         self.assertEqual(rec.type, "primary")
 
         self.assertRaises(KeyError, repomd.__getitem__, "foobar")
+
+        self.assertTrue("primary" in repomd)

@@ -158,6 +158,12 @@ class Repomd(_createrepo_c.Repomd):
     def __missing__(self, key):
         raise KeyError("Record with type '%s' doesn't exist" % key)
 
+    def __contains__(self, key):
+        for rec in self.records:
+            if rec.type == key:
+                return True
+        return False
+
 # RepomdRecord class
 
 class RepomdRecord(_createrepo_c.RepomdRecord):

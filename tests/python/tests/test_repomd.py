@@ -134,3 +134,15 @@ class TestCaseRepomd(unittest.TestCase):
         self.assertEqual(repomd.content_tags, [])
         self.assertEqual(len(repomd.records), 3)
 
+    def test_repomd_indexing_and_iteration_repo01(self):
+        repomd = cr.Repomd(REPO_01_REPOMD)
+
+        types = []
+        for rec in repomd:
+            types.append(rec.type)
+        self.assertEqual(types, ['filelists', 'other', 'primary'])
+
+        rec = repomd["primary"]
+        self.assertEqual(rec.type, "primary")
+
+        self.assertRaises(KeyError, repomd.__getitem__, "foobar")

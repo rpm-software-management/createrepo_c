@@ -144,6 +144,20 @@ class Repomd(_createrepo_c.Repomd):
         if path:
             xml_parse_repomd(path, self)
 
+    def __iter__(self):
+        for rec in self.records:
+            yield rec
+        return
+
+    def __getitem__(self, key):
+        for rec in self.records:
+            if rec.type == key:
+                return rec
+        self.__missing__(key)
+
+    def __missing__(self, key):
+        raise KeyError("Record with type '%s' doesn't exist" % key)
+
 # RepomdRecord class
 
 class RepomdRecord(_createrepo_c.RepomdRecord):

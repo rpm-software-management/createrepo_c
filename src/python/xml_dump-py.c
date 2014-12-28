@@ -138,7 +138,7 @@ PyObject *
 py_xml_dump_updaterecord(PyObject *self, PyObject *args)
 {
     PyObject *py_rec, *py_str;
-    char *xml;
+    char *xml = NULL;
     GError *err = NULL;
 
     CR_UNUSED(self);
@@ -150,6 +150,7 @@ py_xml_dump_updaterecord(PyObject *self, PyObject *args)
     xml = cr_xml_dump_updaterecord(UpdateRecord_FromPyObject(py_rec), &err);
     if (err) {
         nice_exception(&err, NULL);
+        free(xml);
         return NULL;
     }
 

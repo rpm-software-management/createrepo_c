@@ -82,6 +82,18 @@ typedef struct _cr_ParserData {
     cr_StatesSwitch **swtab;    /*!< Pointers to statesswitches table */
     unsigned int    *sbtab;     /*!< stab[to_state] = from_state */
 
+    /* Common stuf */
+
+    gboolean main_tag_found;    /*!<
+        Was the main tag present? E.g.:
+        For primary.xml <metadata>
+        For filelists.xml <filelists>
+        For other.xml <otherdata>
+        For repomd.xml <repomd>
+        For updateinfo.xml <updates>
+        If the main tag is missing the most likely the input file
+        was a different then expected type */
+
     /* Package stuff */
 
     void                    *newpkgcb_data;     /*!<

@@ -102,7 +102,10 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
 
     switch(pd->state) {
     case STATE_START:
+        break;
+
     case STATE_FILELISTS:
+        pd->main_tag_found = TRUE;
         break;
 
     case STATE_PACKAGE: {
@@ -328,6 +331,14 @@ cr_xml_parse_filelists(const char *path,
     ret = cr_xml_parser_generic(parser, pd, path, &tmp_err);
     if (tmp_err)
         g_propagate_error(err, tmp_err);
+
+    // Warning if file was probably a different type than expected
+
+    if (!pd->main_tag_found && ret == CRE_OK)
+        cr_xml_parser_warning(pd, CR_XML_WARNING_BADMDTYPE,
+                          "The file don't contain the expected element "
+                          "\"<filelists>\" - The file probably isn't "
+                          "a valid filelists.xml");
 
     // Clean up
 

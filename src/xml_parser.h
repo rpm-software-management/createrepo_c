@@ -45,6 +45,7 @@ typedef enum {
     CR_XML_WARNING_UNKNOWNVAL,  /*!< Unknown tag or attribute value */
     CR_XML_WARNING_BADATTRVAL,  /*!< Bad attribute value */
     CR_XML_WARNING_MISSINGVAL,  /*!< Missing tag value */
+    CR_XML_WARNING_BADMDTYPE,   /*!< Bad metadata type (expected mandatory tag was not found) */
     CR_XML_WARNING_SENTINEL,
 } cr_XmlParserWarningType;
 

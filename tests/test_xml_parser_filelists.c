@@ -316,6 +316,26 @@ test_cr_xml_parse_filelists_bad_file_type_01(void)
     g_free(warnmsgs);
 }
 
+static void
+test_cr_xml_parse_different_md_type(void)
+{
+    char *warnmsgs;
+    int parsed = 0;
+    GString *warn_strings = g_string_new(0);
+    GError *tmp_err = NULL;
+    int ret = cr_xml_parse_filelists(TEST_REPO_01_OTHER, NULL, NULL,
+                                     pkgcb, &parsed, warningcb,
+                                     warn_strings, &tmp_err);
+    g_assert(tmp_err == NULL);
+    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert_cmpint(parsed, ==, 0);
+    warnmsgs = g_string_free(warn_strings, FALSE);
+    g_assert_cmpstr(warnmsgs, ==, "Unknown element \"otherdata\";"
+            "The file don't contain the expected element \"<filelists>\" - "
+            "The file probably isn't a valid filelists.xml;");
+    g_free(warnmsgs);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -349,6 +369,8 @@ main(int argc, char *argv[])
                     test_cr_xml_parse_filelists_bad_file_type_00);
     g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_filelists_bad_file_type_01",
                     test_cr_xml_parse_filelists_bad_file_type_01);
+    g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_different_md_type",
+                    test_cr_xml_parse_different_md_type);
 
     return g_test_run();
 }

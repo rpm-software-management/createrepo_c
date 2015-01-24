@@ -92,8 +92,17 @@ message("Package version: ${VERSION}")
 
 # Other files
 
-INSTALL(FILES createrepo_c.bash
-        DESTINATION "/etc/bash_completion.d")
+pkg_check_modules(BASHCOMP bash-completion)
+if (BASHCOMP_FOUND)
+    execute_process(COMMAND ${PKG_CONFIG_EXECUTABLE} --variable=completionsdir bash-completion OUTPUT_VARIABLE BASHCOMP_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+    INSTALL(FILES createrepo_c.bash DESTINATION ${BASHCOMP_DIR} RENAME createrepo_c)
+    INSTALL(CODE "
+        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink createrepo_c \$ENV{DESTDIR}${BASHCOMP_DIR}/mergerepo_c)
+        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink createrepo_c \$ENV{DESTDIR}${BASHCOMP_DIR}/modifyrepo_c)
+        ")
+ELSE (BASHCOMP_FOUND)
+    INSTALL(FILES createrepo_c.bash DESTINATION "/etc/bash_completion.d")
+endif (BASHCOMP_FOUND)
 
 
 # Gen manpage

@@ -92,9 +92,10 @@ struct CmdOptions {
                                      deltas against */
     gint64 max_delta_rpm_size;  /*!< Max size of an rpm that to run
                                      deltarpm against */
-    gboolean local_sqlite;      /*!< Gen sqlite locally (into /tmp).
-                                     Sometimes, sqlite has a trouble to
-                                     gen DBs on NFS mounts. */
+    gboolean local_sqlite;      /*!< Gen sqlite locally into a directory for
+                                     temporary files.
+                                     For situations when sqlite has a trouble
+                                     to gen DBs on NFS mounts. */
 
     /* Items filled by check_arguments() */
 

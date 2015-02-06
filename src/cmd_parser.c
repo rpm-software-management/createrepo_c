@@ -159,10 +159,12 @@ static GOptionEntry cmd_entries[] =
       "Max size of an rpm that to run deltarpm against (in bytes).", "MAX_DELTA_RPM_SIZE" },
 #endif
     { "local-sqlite", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.local_sqlite),
-      "Gen sqlite DBs locally (into /tmp). Sometimes, sqlite has a trouble "
-      "to gen DBs on a NFS mount, use this option in such cases. "
-      "Use of this option could lead to a higher memory consumption (/tmp is "
-      "often a ramdisk).", NULL },
+      "Gen sqlite DBs locally (into a directory for temporary files). "
+      "Sometimes, sqlite has a trouble to gen DBs on a NFS mount, "
+      "use this option in such cases. "
+      "This option could lead to a higher memory consumption "
+      "if TMPDIR is set to /tmp or not set at all, because then the /tmp is "
+      "used and /tmp dir is often a ramdisk.", NULL },
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL },
 };
 

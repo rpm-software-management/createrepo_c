@@ -41,9 +41,8 @@
 void
 cr_metadatalocation_free(struct cr_MetadataLocation *ml)
 {
-    if (!ml) {
+    if (!ml)
         return;
-    }
 
     if (ml->tmp && ml->local_path) {
         g_debug("%s: Removing %s", __func__,  ml->local_path);
@@ -80,6 +79,7 @@ cr_parse_repomd(const char *repomd_path,
     if (tmp_err) {
         g_critical("%s: %s", __func__, tmp_err->message);
         g_error_free(tmp_err);
+        cr_repomd_free(repomd);
         return NULL;
     }
 
@@ -91,9 +91,10 @@ cr_parse_repomd(const char *repomd_path,
     for (GSList *elem = repomd->records; elem; elem = g_slist_next(elem)) {
         cr_RepomdRecord *record = elem->data;
 
-        gchar *full_location_href = g_strconcat(repopath,
-                                                (char *) record->location_href,
-                                                NULL);
+        gchar *full_location_href = g_build_filename(
+                                        repopath,
+                                        (char *) record->location_href,
+                                        NULL);
 
         if (!g_strcmp0(record->type, "primary"))
             mdloc->pri_xml_href = full_location_href;
@@ -123,41 +124,27 @@ cr_parse_repomd(const char *repomd_path,
 }
 
 static struct cr_MetadataLocation *
-cr_get_local_metadata(const char *in_repopath, int ignore_sqlite)
+cr_get_local_metadata(const char *repopath, int ignore_sqlite)
 {
+    _cleanup_free_ gchar *repomd = NULL;
     struct cr_MetadataLocation *ret = NULL;
 
-    if (!in_repopath) {
+    if (!repopath)
+        return ret;
+
+    if (!g_file_test(repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
+        g_warning("%s: %s is not a directory", __func__, repopath);
         return ret;
     }
-
-    if (!g_file_test(in_repopath, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
-        g_warning("%s: %s is not a directory", __func__, in_repopath);
-        return ret;
-    }
-
 
     // Create path to repomd.xml and check if it exists
-
-    gchar *repomd;
-    gchar *repopath;
-    if (!g_str_has_suffix(in_repopath, "/"))
-        repopath = g_strconcat(in_repopath, "/", NULL);
-    else
-        repopath = g_strdup(in_repopath);
-    repomd = g_strconcat(repopath, "repodata/repomd.xml", NULL);
-
+    repomd = g_build_filename(repopath, "repodata", "repomd.xml", NULL);
     if (!g_file_test(repomd, G_FILE_TEST_EXISTS)) {
         g_debug("%s: %s doesn't exists", __func__, repomd);
-        g_free(repomd);
-        g_free(repopath);
         return ret;
     }
 
     ret = cr_parse_repomd(repomd, repopath, ignore_sqlite);
-
-    g_free(repomd);
-    g_free(repopath);
 
     return ret;
 }
@@ -166,73 +153,46 @@ cr_get_local_metadata(const char *in_repopath, int ignore_sqlite)
 static struct cr_MetadataLocation *
 cr_get_remote_metadata(const char *repopath, int ignore_sqlite)
 {
-    gchar *url = NULL;
-    gchar *tmp_repomd = NULL;
-    gchar *tmp_repodata = NULL;
-    FILE *f_repomd = NULL;
     CURL *handle = NULL;
-    CURLcode rcode;
-    char errorbuf[CURL_ERROR_SIZE];
     _cleanup_free_ gchar *tmp_dir = NULL;
+    _cleanup_free_ gchar *tmp_repodata = NULL;
+    _cleanup_free_ gchar *tmp_repomd = NULL;
+    _cleanup_free_ gchar *url = NULL;
     struct cr_MetadataLocation *r_location = NULL;
     struct cr_MetadataLocation *ret = NULL;
+    _cleanup_error_free_ GError *tmp_err = NULL;
 
-    if (!repopath) {
+    if (!repopath)
         return ret;
-    }
-
-    tmp_dir = g_build_filename(g_get_tmp_dir(), TMPDIR_PATTERN, NULL);
 
     // Create temporary repo in /tmp
-
+    tmp_dir = g_build_filename(g_get_tmp_dir(), TMPDIR_PATTERN, NULL);
     if(!mkdtemp(tmp_dir)) {
         g_critical("%s: Cannot create a temporary directory: %s",
                    __func__, strerror(errno));
         return ret;
     }
 
-    tmp_repodata = g_strconcat(tmp_dir, "/repodata/", NULL);
+    g_debug("%s: Using tmp dir: %s", __func__, tmp_dir);
 
+    // Create repodata subdir in tmp dir
+    tmp_repodata = g_build_filename(tmp_dir, "repodata", NULL);
     if (g_mkdir (tmp_repodata, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
         g_critical("%s: Cannot create a temporary directory", __func__);
         return ret;
     }
 
+    // Prepare temporary repomd.xml filename
+    tmp_repomd = g_build_filename(tmp_repodata, "repomd.xml", NULL);
 
-    // Prepare temporary repomd.xml
+    // Prepare repomd.xml URL
+    if (g_str_has_suffix(repopath, "/"))
+        url = g_strconcat(repopath, "repodata/repomd.xml", NULL);
+    else
+        url = g_strconcat(repopath, "/repodata/repomd.xml", NULL);
 
-    tmp_repomd = g_strconcat(tmp_repodata, "repomd.xml", NULL);
-    f_repomd = fopen(tmp_repomd, "w");
-    if (!f_repomd) {
-        g_critical("%s: Cannot open %s", __func__, tmp_repomd);
-        goto get_remote_metadata_cleanup;
-    }
-
-    g_debug("%s: Using tmp dir: %s", __func__, tmp_dir);
-
-
-    // Download repo files
-
-    url = g_strconcat(repopath, "repodata/repomd.xml", NULL);
+    // Create and setup CURL handle
     handle = curl_easy_init();
-
-    // Set error buffer
-    if (curl_easy_setopt(handle, CURLOPT_ERRORBUFFER, errorbuf) != CURLE_OK) {
-        g_critical("%s: curl_easy_setopt(CURLOPT_ERRORBUFFER) error", __func__);
-        goto get_remote_metadata_cleanup;
-    }
-
-    // Set URL
-    if (curl_easy_setopt(handle, CURLOPT_URL, url) != CURLE_OK) {
-        g_critical("%s: curl_easy_setopt(CURLOPT_URL) error", __func__);
-        goto get_remote_metadata_cleanup;
-    }
-
-    // Set output file descriptor
-    if (curl_easy_setopt(handle, CURLOPT_WRITEDATA, f_repomd) != CURLE_OK) {
-        g_critical("%s: curl_easy_setopt(CURLOPT_WRITEDATA) error", __func__);
-        goto get_remote_metadata_cleanup;
-    }
 
     // Fail on HTTP error (return code >= 400)
     if (curl_easy_setopt(handle, CURLOPT_FAILONERROR, 1) != CURLE_OK) {
@@ -246,36 +206,27 @@ cr_get_remote_metadata(const char *repopath, int ignore_sqlite)
         goto get_remote_metadata_cleanup;
     }
 
+    // Maximal number of redirects
     if (curl_easy_setopt(handle, CURLOPT_MAXREDIRS, 6) != CURLE_OK) {
         g_critical("%s: curl_easy_setopt(CURLOPT_MAXREDIRS) error", __func__);
         goto get_remote_metadata_cleanup;
     }
 
-
-    // Perform a file transfer of repomd.xml
-
-    rcode = curl_easy_perform(handle);
-    if (rcode != 0) {
-        g_critical("%s: curl_easy_perform() error: %s", __func__, errorbuf);
+    // Download repomd.xml
+    cr_download(handle, url, tmp_repomd, &tmp_err);
+    if (tmp_err) {
+        g_critical("%s: %s", __func__, tmp_err->message);
         goto get_remote_metadata_cleanup;
     }
 
-    fclose(f_repomd);
-    f_repomd = NULL;
-
-
     // Parse downloaded repomd.xml
-
     r_location = cr_parse_repomd(tmp_repomd, repopath, ignore_sqlite);
     if (!r_location) {
         g_critical("%s: repomd.xml parser failed on %s", __func__, tmp_repomd);
         goto get_remote_metadata_cleanup;
     }
 
-
     // Download all other repofiles
-    GError *tmp_err = NULL;
-
     if (r_location->pri_xml_href)
         cr_download(handle, r_location->pri_xml_href, tmp_repodata, &tmp_err);
     if (!tmp_err && r_location->fil_xml_href)
@@ -295,73 +246,55 @@ cr_get_remote_metadata(const char *repopath, int ignore_sqlite)
     if (!tmp_err && r_location->updateinfo_href)
         cr_download(handle, r_location->updateinfo_href, tmp_repodata, &tmp_err);
 
+    cr_metadatalocation_free(r_location);
+
     if (tmp_err) {
         g_critical("%s: Error while downloadig files: %s",
                    __func__, tmp_err->message);
-        g_error_free(tmp_err);
         goto get_remote_metadata_cleanup;
     }
 
     g_debug("%s: Remote metadata was successfully downloaded", __func__);
 
-
     // Parse downloaded data
-
     ret = cr_get_local_metadata(tmp_dir, ignore_sqlite);
-    if (ret) ret->tmp = 1;
-
+    if (ret)
+        ret->tmp = 1;
 
 get_remote_metadata_cleanup:
 
-    if (f_repomd) fclose(f_repomd);
-    g_free(tmp_repomd);
-    g_free(tmp_repodata);
-    g_free(url);
-    curl_easy_cleanup(handle);
+    if (handle)
+        curl_easy_cleanup(handle);
     if (!ret) cr_remove_dir(tmp_dir, NULL);
-    if (r_location) cr_metadatalocation_free(r_location);
 
     return ret;
 }
 
 
+// XXX: err is not really used in this function yet
 struct cr_MetadataLocation *
-cr_locate_metadata(const char *in_repopath, int ignore_sqlite, GError **err)
+cr_locate_metadata(const char *repopath, int ignore_sqlite, GError **err)
 {
-    gchar *repopath;
     struct cr_MetadataLocation *ret = NULL;
 
-    assert(in_repopath);
+    assert(repopath);
     assert(!err || *err == NULL);
-
-    // XXX: err is not really used in this function yet
-
-
-    // repopath must ends with slash
-
-    if (g_str_has_suffix(in_repopath, "/"))
-        repopath = g_strdup(in_repopath);
-    else
-        repopath = g_strconcat(in_repopath, "/", NULL);
 
     if (g_str_has_prefix(repopath, "ftp://") ||
         g_str_has_prefix(repopath, "http://") ||
         g_str_has_prefix(repopath, "https://"))
     {
-        // Download data via curl
+        // Remote metadata - Download them via curl
         ret = cr_get_remote_metadata(repopath, ignore_sqlite);
     } else {
-        const char *path = repopath;
-        if (g_str_has_prefix(repopath, "file://")) {
-            path = repopath+7;
-        }
-        ret = cr_get_local_metadata(path, ignore_sqlite);
+        // Local metadata
+        if (g_str_has_prefix(repopath, "file://"))
+            repopath += 7;
+        ret = cr_get_local_metadata(repopath, ignore_sqlite);
     }
 
     if (ret)
-        ret->original_url = g_strdup(in_repopath);
-
-    g_free(repopath);
+        ret->original_url = g_strdup(repopath);
 
     // XXX
     if (!ret) {

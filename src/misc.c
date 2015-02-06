@@ -32,6 +32,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
+#include "cleanup.h"
 #include "error.h"
 #include "misc.h"
 
@@ -638,19 +639,21 @@ compress_file_cleanup:
 
 
 int
-cr_download(CURL *handle,
+cr_download(CURL *in_handle,
             const char *url,
             const char *in_dst,
             GError **err)
 {
+    CURL *handle = NULL;
     CURLcode rcode;
-    FILE *file = NULL;
+    char errorbuf[CURL_ERROR_SIZE];
+    _cleanup_free_ gchar *dst = NULL;
+    _cleanup_file_fclose_ FILE *file = NULL;
 
+    assert(in_handle);
     assert(!err || *err == NULL);
 
     // If destination is dir use filename from src
-
-    gchar *dst = NULL;
     if (g_str_has_suffix(in_dst, "/"))
         dst = g_strconcat(in_dst, cr_get_filename(url), NULL);
     else if (g_file_test(in_dst, G_FILE_TEST_IS_DIR))
@@ -658,55 +661,59 @@ cr_download(CURL *handle,
     else
         dst = g_strdup(in_dst);
 
+    // Open dst file
     file = fopen(dst, "wb");
     if (!file) {
         g_set_error(err, CR_MISC_ERROR, CRE_IO,
                     "Cannot open %s: %s", dst, strerror(errno));
         remove(dst);
-        g_free(dst);
         return CRE_IO;
     }
 
+    // Dup the input handle
+    handle = curl_easy_duphandle(in_handle);
+
+    // Set error buffer
+    errorbuf[0] = '\0';
+    rcode = curl_easy_setopt(handle, CURLOPT_ERRORBUFFER, errorbuf);
+    if (rcode != CURLE_OK) {
+        g_set_error(err, CR_MISC_ERROR, CRE_CURL,
+                    "curl_easy_setopt failed(CURLOPT_ERRORBUFFER): %s",
+                    curl_easy_strerror(rcode));
+        return CRE_CURL;
+    }
 
     // Set URL
-
     rcode = curl_easy_setopt(handle, CURLOPT_URL, url);
     if (rcode != CURLE_OK) {
         g_set_error(err, CR_MISC_ERROR, CRE_CURL,
-                    "curl_easy_setopt failed: %s", curl_easy_strerror(rcode));
-        fclose(file);
+                    "curl_easy_setopt failed(CURLOPT_URL): %s",
+                    curl_easy_strerror(rcode));
         remove(dst);
-        g_free(dst);
         return CRE_CURL;
     }
 
-
     // Set output file descriptor
-
     rcode = curl_easy_setopt(handle, CURLOPT_WRITEDATA, file);
     if (rcode != CURLE_OK) {
         g_set_error(err, CR_MISC_ERROR, CRE_CURL,
-                    "curl_easy_setopt failed: %s", curl_easy_strerror(rcode));
-        fclose(file);
+                    "curl_easy_setopt(CURLOPT_WRITEDATA) failed: %s",
+                    curl_easy_strerror(rcode));
         remove(dst);
-        g_free(dst);
         return CRE_CURL;
     }
 
+    // Download the file
     rcode = curl_easy_perform(handle);
     if (rcode != CURLE_OK) {
         g_set_error(err, CR_MISC_ERROR, CRE_CURL,
-                    "curl_easy_perform failed: %s", curl_easy_strerror(rcode));
-        fclose(file);
+                    "curl_easy_perform failed: %s: %s",
+                    curl_easy_strerror(rcode), errorbuf);
         remove(dst);
-        g_free(dst);
         return CRE_CURL;
     }
 
     g_debug("%s: Successfully downloaded: %s", __func__, dst);
-
-    fclose(file);
-    g_free(dst);
 
     return CRE_OK;
 }

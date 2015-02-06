@@ -29,8 +29,9 @@
 #include "locate_metadata.h"
 #include "repomd.h"
 #include "xml_parser.h"
+#include "cleanup.h"
 
-#define TMPDIR_PATTERN  "/tmp/createrepo_c_tmp_repo_XXXXXX"
+#define TMPDIR_PATTERN  "createrepo_c_tmp_repo_XXXXXX"
 
 #define FORMAT_XML      1
 #define FORMAT_LEVEL    0
@@ -172,7 +173,7 @@ cr_get_remote_metadata(const char *repopath, int ignore_sqlite)
     CURL *handle = NULL;
     CURLcode rcode;
     char errorbuf[CURL_ERROR_SIZE];
-    gchar tmp_dir[] = TMPDIR_PATTERN;
+    _cleanup_free_ gchar *tmp_dir = NULL;
     struct cr_MetadataLocation *r_location = NULL;
     struct cr_MetadataLocation *ret = NULL;
 
@@ -180,6 +181,7 @@ cr_get_remote_metadata(const char *repopath, int ignore_sqlite)
         return ret;
     }
 
+    tmp_dir = g_build_filename(g_get_tmp_dir(), TMPDIR_PATTERN, NULL);
 
     // Create temporary repo in /tmp
 

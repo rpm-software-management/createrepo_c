@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import datetime
 import createrepo_c as cr
 
 
@@ -34,8 +35,8 @@ def generate():
     rec.version = "1"
     rec.id = "UPDATE-1"
     rec.title = "Bar Product Update"
-    rec.issued_date = "2014-08-14 00:00:00"
-    rec.updated_date = "2014-08-14 00:00:00"
+    rec.issued_date = datetime.datetime(2014, 8, 14)
+    rec.updated_date = datetime.datetime(2014, 8, 14)
     rec.rights = "Copyright 2014 Bar Inc"
     rec.summary = "An update for Bar"
     rec.description = "Fixes a bug"

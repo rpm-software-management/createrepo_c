@@ -885,9 +885,10 @@ main(int argc, char **argv)
             oth_db_filename = g_strconcat(tmp_out_repo, "/other.sqlite", NULL);
         } else {
             g_debug("Creating databases localy");
-            pri_db_filename = g_strdup("/tmp/primary.XXXXXX.sqlite");
-            fil_db_filename = g_strdup("/tmp/filelists.XXXXXX.sqlite");
-            oth_db_filename = g_strdup("/tmp/other.XXXXXXX.sqlite");
+            const gchar *tmpdir = g_get_tmp_dir();
+            pri_db_filename = g_build_filename(tmpdir, "primary.XXXXXX.sqlite", NULL);
+            fil_db_filename = g_build_filename(tmpdir, "filelists.XXXXXX.sqlite", NULL);
+            oth_db_filename = g_build_filename(tmpdir, "other.XXXXXXX.sqlite", NULL);
             pri_db_fd = g_mkstemp(pri_db_filename);
             g_debug("%s", pri_db_filename);
             if (pri_db_fd == -1) {

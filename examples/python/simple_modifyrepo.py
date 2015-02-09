@@ -9,21 +9,18 @@ import createrepo_c as cr
 
 REPO_PATH = "repo/"
 
-
 def modifyrepo(filename, repodata):
     repodata = os.path.join(repodata, 'repodata')
-    uinfo_xml = os.path.join(repodata, 'updateinfo.xml')
+    uinfo_xml = os.path.join(repodata, os.path.basename(filename))
     shutil.copyfile(filename, uinfo_xml)
 
     uinfo_rec = cr.RepomdRecord('updateinfo', uinfo_xml)
-    uinfo_rec_comp = uinfo_rec.compress_and_fill(cr.SHA256, cr.XZ)
-    uinfo_rec_comp.rename_file()
-    uinfo_rec_comp.type = 'updateinfo'
-    os.unlink(uinfo_xml)
+    uinfo_rec.fill(cr.SHA256)
+    uinfo_rec.rename_file()
 
     repomd_xml = os.path.join(repodata, 'repomd.xml')
     repomd = cr.Repomd(repomd_xml)
-    repomd.set_record(uinfo_rec_comp)
+    repomd.set_record(uinfo_rec)
     with file(repomd_xml, 'w') as repomd_file:
         repomd_file.write(repomd.xml_dump())
 

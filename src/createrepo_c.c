@@ -55,6 +55,14 @@ char *global_lock_dir     = NULL; // Path to .repodata/ dir that is used as a lo
 char *global_tmp_out_repo = NULL; // Path to tmpreodata directory, if NULL
                                   // than it is same as the global_lock_dir
 
+/** Clean up function called on normal program termination.
+ * It removes temporary .repodata/ directory that servers as a lock
+ * for other createrepo[_c] processes.
+ * This functions acts only if exit status isn't EXIST_SUCCESS.
+ *
+ * @param exit_status       Status
+ * @param data              User data (unused)
+ */
 void
 failure_exit_cleanup(int exit_status, void *data)
 {
@@ -73,7 +81,9 @@ failure_exit_cleanup(int exit_status, void *data)
 }
 
 
-// Signal handler
+/** Signal handler
+ * @param sig       Signal number
+ */
 void
 sigint_catcher(int sig)
 {
@@ -83,6 +93,12 @@ sigint_catcher(int sig)
 }
 
 
+// TODO: Pass only exlude_masks list here
+/** Check if the filename is excluded by any exlude mask.
+ * @param filename      Filename (basename).
+ * @param options       Command line options.
+ * @return              TRUE if file should be included, FALSE otherwise
+ */
 int
 allowed_file(const gchar *filename, struct CmdOptions *options)
 {
@@ -108,8 +124,13 @@ allowed_file(const gchar *filename, struct CmdOptions *options)
 
 
 
-// Function used to sort pool tasks - this function is responsible for
-// order of packages in metadata
+/** Function used to sort pool tasks.
+ * This function is responsible for order of packages in metadata.
+ *
+ * @param a_p           Pointer to first struct PoolTask
+ * @param b_p           Pointer to second struct PoolTask
+ * @param user_data     Unused (user data)
+ */
 int
 task_cmp(gconstpointer a_p, gconstpointer b_p, gpointer user_data)
 {
@@ -123,6 +144,23 @@ task_cmp(gconstpointer a_p, gconstpointer b_p, gpointer user_data)
 }
 
 
+/** Recursively walkt throught the input directory and add push the found
+ * rpms to the thread pool (create a PoolTask and push it to the pool).
+ * If the filelists is supplied then no recursive walk is done and only
+ * files from filelists are pushed into the pool.
+ * This function also filters out files that shoudn't be processed
+ * (e.g. directories with .rpm suffix, files that match one of
+ * the exclude masks, etc.).
+ *
+ * @param pool              GThreadPool pool
+ * @param in_dir            Directory to scan
+ * @param cmd_options       Options specified on command line
+ * @param current_pkglist   Pointer to a list where basenames of files that
+ *                          will be processed will be appended to.
+ * @param output_pkg_list   File where relative paths of processed packages
+ *                          will be writen to.
+ * @return                  Number of packages that are going to be processed
+ */
 long
 fill_pool(GThreadPool *pool,
           gchar *in_dir,
@@ -267,6 +305,16 @@ fill_pool(GThreadPool *pool,
 }
 
 
+/** Prepare cache dir for checksums.
+ * Called only if --cachedir options is used.
+ * It tries to create cache directory if it doesn't exist yet.
+ * It also fill checksum_cachedir option in cmd_options structure.
+ *
+ * @param cmd_options       Commandline options
+ * @param out_dir           Repo output directory
+ * @param err               GError **
+ * @return                  FALSE if err is set, TRUE otherwise
+ */
 gboolean
 prepare_cache_dir(struct CmdOptions *cmd_options,
                   const gchar *out_dir,

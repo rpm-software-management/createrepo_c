@@ -63,7 +63,7 @@ char *global_tmp_out_repo = NULL; // Path to tmpreodata directory, if NULL
  * @param exit_status       Status
  * @param data              User data (unused)
  */
-void
+static void
 failure_exit_cleanup(int exit_status, void *data)
 {
     CR_UNUSED(data);
@@ -84,7 +84,7 @@ failure_exit_cleanup(int exit_status, void *data)
 /** Signal handler
  * @param sig       Signal number
  */
-void
+static void
 sigint_catcher(int sig)
 {
     CR_UNUSED(sig);
@@ -99,15 +99,15 @@ sigint_catcher(int sig)
  * @param options       Command line options.
  * @return              TRUE if file should be included, FALSE otherwise
  */
-int
-allowed_file(const gchar *filename, struct CmdOptions *options)
+static gboolean
+allowed_file(const gchar *filename, GSList *exclude_masks)
 {
     // Check file against exclude glob masks
-    if (options->exclude_masks) {
+    if (exclude_masks) {
         int str_len = strlen(filename);
         gchar *reversed_filename = g_utf8_strreverse(filename, str_len);
 
-        GSList *element = options->exclude_masks;
+        GSList *element = exclude_masks;
         for (; element; element=g_slist_next(element)) {
             if (g_pattern_match((GPatternSpec *) element->data,
                                 str_len, filename, reversed_filename))
@@ -131,7 +131,7 @@ allowed_file(const gchar *filename, struct CmdOptions *options)
  * @param b_p           Pointer to second struct PoolTask
  * @param user_data     Unused (user data)
  */
-int
+static int
 task_cmp(gconstpointer a_p, gconstpointer b_p, gpointer user_data)
 {
     int ret;
@@ -161,7 +161,7 @@ task_cmp(gconstpointer a_p, gconstpointer b_p, gpointer user_data)
  *                          will be writen to.
  * @return                  Number of packages that are going to be processed
  */
-long
+static long
 fill_pool(GThreadPool *pool,
           gchar *in_dir,
           struct CmdOptions *cmd_options,
@@ -233,7 +233,7 @@ fill_pool(GThreadPool *pool,
                     // This probably should be always true
                     repo_relative_path = full_path + in_dir_len;
 
-                if (allowed_file(repo_relative_path, cmd_options)) {
+                if (allowed_file(repo_relative_path, cmd_options->exclude_masks)) {
                     // FINALLY! Add file into pool
                     g_debug("Adding pkg: %s", full_path);
                     task = g_malloc(sizeof(struct PoolTask));
@@ -277,7 +277,7 @@ fill_pool(GThreadPool *pool,
             else    // Use only a last part of the path
                 filename = relative_path + x + 1;
 
-            if (allowed_file(filename, cmd_options)) {
+            if (allowed_file(filename, cmd_options->exclude_masks)) {
                 // Check filename against exclude glob masks
                 gchar *full_path = g_strconcat(in_dir, relative_path, NULL);
                 //     ^^^ /path/to/in_repo/packages/i386/foobar.rpm
@@ -315,7 +315,7 @@ fill_pool(GThreadPool *pool,
  * @param err               GError **
  * @return                  FALSE if err is set, TRUE otherwise
  */
-gboolean
+static gboolean
 prepare_cache_dir(struct CmdOptions *cmd_options,
                   const gchar *out_dir,
                   GError **err)

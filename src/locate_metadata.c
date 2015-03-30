@@ -31,7 +31,7 @@
 #include "xml_parser.h"
 #include "cleanup.h"
 
-#define ERR_DOMAIN      CR_LOCATE_METADATA_ERROR
+#define ERR_DOMAIN      CREATEREPO_C_ERROR
 
 #define TMPDIR_PATTERN  "createrepo_c_tmp_repo_XXXXXX"
 

@@ -37,7 +37,7 @@
 #include "xml_file.h"
 #include "modifyrepo_shared.h"
 
-#define ERR_DOMAIN      CR_MODIFYREPO_ERROR
+#define ERR_DOMAIN      CREATEREPO_C_ERROR
 
 typedef struct {
 

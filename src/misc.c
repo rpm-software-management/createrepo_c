@@ -36,7 +36,7 @@
 #include "error.h"
 #include "misc.h"
 
-#define ERR_DOMAIN      CR_MISC_ERROR
+#define ERR_DOMAIN      CREATEREPO_C_ERROR
 #define BUFFER_SIZE     4096
 
 

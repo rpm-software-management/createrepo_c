@@ -30,7 +30,7 @@
 #include "package.h"
 #include "misc.h"
 
-#define ERR_DOMAIN      CR_XML_PARSER_OTH_ERROR
+#define ERR_DOMAIN      CREATEREPO_C_ERROR
 #define ERR_CODE_XML    CRE_BADXMLOTHER
 
 typedef enum {

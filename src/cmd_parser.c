@@ -29,7 +29,7 @@
 #include "misc.h"
 
 
-#define ERR_DOMAIN                      CR_CMD_ERROR
+#define ERR_DOMAIN                      CREATEREPO_C_ERROR
 #define DEFAULT_CHANGELOG_LIMIT         10
 #define DEFAULT_CHECKSUM                "sha256"
 #define DEFAULT_WORKERS                 5

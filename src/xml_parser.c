@@ -26,7 +26,7 @@
 #include "xml_parser_internal.h"
 #include "misc.h"
 
-#define ERR_DOMAIN      CR_XML_PARSER_ERROR
+#define ERR_DOMAIN      CREATEREPO_C_ERROR
 
 
 cr_ParserData *

@@ -22,7 +22,7 @@
 #include "error.h"
 #include "misc.h"
 
-#define ERR_DOMAIN      CR_THREADS_ERROR
+#define ERR_DOMAIN      CREATEREPO_C_ERROR
 
 
 /** Parallel Compression */

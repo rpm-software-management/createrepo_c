@@ -33,7 +33,7 @@
 #include "error.h"
 #include "xml_dump.h"
 
-#define ERR_DOMAIN                  CR_DB_ERROR
+#define ERR_DOMAIN                  CREATEREPO_C_ERROR
 #define ENCODED_PACKAGE_FILE_FILES  2048
 #define ENCODED_PACKAGE_FILE_TYPES  60
 

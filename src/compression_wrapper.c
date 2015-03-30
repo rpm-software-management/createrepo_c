@@ -33,15 +33,15 @@
 #include "compression_wrapper.h"
 
 
-#define ERR_DOMAIN      CR_COMPRESSION_WRAPPER_ERROR
+#define ERR_DOMAIN                      CREATEREPO_C_ERROR
 
 /*
-#define Z_CR_CW_NO_COMPRESSION         0
-#define Z_BEST_SPEED             1
-#define Z_BEST_COMPRESSION       9
-#define Z_DEFAULT_COMPRESSION  (-1)
+#define Z_CR_CW_NO_COMPRESSION          0
+#define Z_BEST_SPEED                    1
+#define Z_BEST_COMPRESSION              9
+#define Z_DEFAULT_COMPRESSION           (-1)
 */
-#define CR_CW_GZ_COMPRESSION_LEVEL    Z_DEFAULT_COMPRESSION
+#define CR_CW_GZ_COMPRESSION_LEVEL      Z_DEFAULT_COMPRESSION
 
 /*
 #define Z_FILTERED            1

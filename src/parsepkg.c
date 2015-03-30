@@ -35,7 +35,7 @@
 #include "misc.h"
 #include "checksum.h"
 
-#define ERR_DOMAIN      CR_PARSEPKG_ERROR
+#define ERR_DOMAIN      CREATEREPO_C_ERROR
 
 
 rpmts cr_ts = NULL;

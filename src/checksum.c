@@ -27,7 +27,7 @@
 #include "error.h"
 #include "checksum.h"
 
-#define ERR_DOMAIN              CR_CHECKSUM_ERROR
+#define ERR_DOMAIN              CREATEREPO_C_ERROR
 #define MAX_CHECKSUM_NAME_LEN   7
 #define BUFFER_SIZE             2048
 

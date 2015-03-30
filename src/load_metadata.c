@@ -30,7 +30,7 @@
 #include "locate_metadata.h"
 #include "xml_parser.h"
 
-#define ERR_DOMAIN              CR_LOAD_METADATA_ERROR
+#define ERR_DOMAIN              CREATEREPO_C_ERROR
 #define STRINGCHUNK_SIZE        16384
 
 /** Structure for loaded metadata

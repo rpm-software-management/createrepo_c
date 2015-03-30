@@ -29,7 +29,7 @@
 #include "threads.h"
 #include "xml_dump.h"
 
-#define ERR_DOMAIN              CR_MODIFYREPO_ERROR
+#define ERR_DOMAIN              CREATEREPO_C_ERROR
 #define DEFAULT_COMPRESSION     CR_CW_GZ_COMPRESSION
 #define DEFAULT_CHECKSUM        CR_CHECKSUM_SHA256
 

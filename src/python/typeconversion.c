@@ -23,7 +23,7 @@
 #include "src/createrepo_c.h"
 #include "src/repomd_internal.h"
 
-#define ERR_DOMAIN              CR_XML_PARSER_ERROR
+#define ERR_DOMAIN              CREATEREPO_C_ERROR
 
 
 void

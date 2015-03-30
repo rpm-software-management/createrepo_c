@@ -25,7 +25,7 @@
 #include "compression_wrapper.h"
 #include "xml_dump_internal.h"
 
-#define ERR_DOMAIN              CR_XML_FILE_ERROR
+#define ERR_DOMAIN              CREATEREPO_C_ERROR
 
 #define XML_HEADER              "<?xml version=\""XML_DOC_VERSION \
                                 "\" encoding=\""XML_ENCODING"\"?>\n"

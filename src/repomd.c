@@ -33,7 +33,7 @@
 #include "repomd_internal.h"
 #include "compression_wrapper.h"
 
-#define ERR_DOMAIN                  CR_REPOMD_RECORD_ERROR
+#define ERR_DOMAIN                  CREATEREPO_C_ERROR
 #define LOCATION_HREF_PREFIX        "repodata/"
 #define DEFAULT_DATABASE_VERSION    10
 #define BUFFER_SIZE                 8192

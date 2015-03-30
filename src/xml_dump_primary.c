@@ -28,7 +28,7 @@
 #include "xml_dump.h"
 #include "xml_dump_internal.h"
 
-#define ERR_DOMAIN      CR_XML_DUMP_PRIMARY_ERROR
+#define ERR_DOMAIN      CREATEREPO_C_ERROR
 
 
 typedef enum {

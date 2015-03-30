@@ -33,7 +33,7 @@
 #include "xml_dump.h"
 #include "locate_metadata.h"
 
-#define ERR_DOMAIN      CR_HELPER_ERROR
+#define ERR_DOMAIN      CREATEREPO_C_ERROR
 
 typedef struct _old_file {
     time_t mtime;

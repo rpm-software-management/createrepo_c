@@ -36,7 +36,7 @@
 #include "error.h"
 
 
-#define ERR_DOMAIN      CR_DELTARPMS_ERROR
+#define ERR_DOMAIN      CREATEREPO_C_ERROR
 #define MAKEDELTARPM    "/usr/bin/makedeltarpm"
 
 

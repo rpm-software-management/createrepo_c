@@ -33,6 +33,8 @@
 #include "xml_dump.h"
 #include "locate_metadata.h"
 
+#define ERR_DOMAIN      CR_HELPER_ERROR
+
 typedef struct _old_file {
     time_t mtime;
     gchar  *path;
@@ -122,7 +124,7 @@ cr_repodata_blacklist_classic(const char *repodata_path,
         return TRUE;
     } else if (retain < 0) {
         // other negative values are error
-        g_set_error(err, CR_HELPER_ERROR, CRE_BADARG,
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "Number of retained old metadatas "
                     "must be integer number >= -1");
         return FALSE;
@@ -132,7 +134,7 @@ cr_repodata_blacklist_classic(const char *repodata_path,
     dirp = g_dir_open (repodata_path, 0, &tmp_err);
     if (!dirp) {
         g_warning("Cannot open directory: %s: %s", repodata_path, tmp_err->message);
-        g_set_error(err, CR_HELPER_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Cannot open directory: %s: %s",
                     repodata_path, tmp_err->message);
         g_error_free(tmp_err);
@@ -208,7 +210,7 @@ cr_repodata_blacklist(const char *repodata_path,
         return TRUE;
     } else if (retain < 0) {
         // other negative values are error
-        g_set_error(err, CR_HELPER_ERROR, CRE_BADARG,
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "Number of retained old metadatas "
                     "must be integer number >= -1");
         return FALSE;
@@ -277,7 +279,7 @@ cr_repodata_blacklist_by_age(const char *repodata_path,
     dirp = g_dir_open (repodata_path, 0, &tmp_err);
     if (!dirp) {
         g_warning("Cannot open directory: %s: %s", repodata_path, tmp_err->message);
-        g_set_error(err, CR_HELPER_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Cannot open directory: %s: %s",
                     repodata_path, tmp_err->message);
         g_error_free(tmp_err);
@@ -418,7 +420,7 @@ cr_old_metadata_retention(const char *old_repo,
     dirp = g_dir_open (old_repo, 0, &tmp_err);
     if (!dirp) {
         g_warning("Cannot open directory: %s: %s", old_repo, tmp_err->message);
-        g_set_error(err, CR_HELPER_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Cannot open directory: %s: %s",
                     old_repo, tmp_err->message);
         g_error_free(tmp_err);

@@ -35,6 +35,8 @@
 #include "misc.h"
 #include "error.h"
 
+
+#define ERR_DOMAIN      CR_DELTARPMS_ERROR
 #define MAKEDELTARPM    "/usr/bin/makedeltarpm"
 
 
@@ -146,14 +148,14 @@ cr_deltapackage_from_drpm_base(const char *filename,
 
     ret = drpm_read(&delta, filename);
     if (ret != DRPM_ERR_OK) {
-        g_set_error(err, CR_DELTARPMS_ERROR, CRE_DELTARPM,
+        g_set_error(err, ERR_DOMAIN, CRE_DELTARPM,
                     "Deltarpm cannot read %s (%d)", filename, ret);
         goto errexit;
     }
 
     ret = drpm_get_string(delta, DRPM_TAG_SRCNEVR, &str);
     if (ret != DRPM_ERR_OK) {
-        g_set_error(err, CR_DELTARPMS_ERROR, CRE_DELTARPM,
+        g_set_error(err, ERR_DOMAIN, CRE_DELTARPM,
                     "Deltarpm cannot read source NEVR from %s (%d)",
                     filename, ret);
         goto errexit;
@@ -164,7 +166,7 @@ cr_deltapackage_from_drpm_base(const char *filename,
 
     ret = drpm_get_string(delta, DRPM_TAG_SEQUENCE, &str);
     if (ret != DRPM_ERR_OK) {
-        g_set_error(err, CR_DELTARPMS_ERROR, CRE_DELTARPM,
+        g_set_error(err, ERR_DOMAIN, CRE_DELTARPM,
                     "Deltarpm cannot read delta sequence from %s (%d)",
                     filename, ret);
         goto errexit;
@@ -419,7 +421,7 @@ cr_deltarpms_parallel_deltas(GSList *targetpackages,
         return TRUE;
 
     if (workers < 1) {
-        g_set_error(err, CR_DELTARPMS_ERROR, CRE_DELTARPM,
+        g_set_error(err, ERR_DOMAIN, CRE_DELTARPM,
                     "Number of delta workers must be a positive integer number");
         return FALSE;
     }
@@ -677,7 +679,7 @@ walk_drpmsdir(const gchar *drpmsdir, GSList **inlist, GError **err)
         // Open the directory
         GDir *dirp = g_dir_open(drpmsdir, 0, NULL);
         if (!dirp) {
-            g_set_error(err, CR_DELTARPMS_ERROR, CRE_IO,
+            g_set_error(err, ERR_DOMAIN, CRE_IO,
                         "Cannot open directory %s", drpmsdir);
             goto exit;
         }

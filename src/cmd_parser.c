@@ -29,6 +29,7 @@
 #include "misc.h"
 
 
+#define ERR_DOMAIN                      CR_CMD_ERROR
 #define DEFAULT_CHANGELOG_LIMIT         10
 #define DEFAULT_CHECKSUM                "sha256"
 #define DEFAULT_WORKERS                 5
@@ -233,19 +234,19 @@ parse_period_of_time(const gchar *timeperiod, gint64 *time, GError **err)
 
     // Check the state of the conversion
     if (val == 0 && endptr == timeperiod) {
-        g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "Bad time period \"%s\"", timeperiod);
         return FALSE;
     }
 
     if (val == G_MAXINT64) {
-        g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "Time period \"%s\" is too high", timeperiod);
         return FALSE;
     }
 
     if (val == G_MININT64) {
-        g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "Time period \"%s\" is too low", timeperiod);
         return FALSE;
     }
@@ -259,7 +260,7 @@ parse_period_of_time(const gchar *timeperiod, gint64 *time, GError **err)
     else if (!strcmp(endptr, "d"))    // Days
         *time = val*24*60*60;
     else {
-        g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "Bad time unit \"%s\"", endptr);
         return FALSE;
     }
@@ -276,7 +277,7 @@ check_arguments(struct CmdOptions *options,
 
     // Check outputdir
     if (options->outputdir && !g_file_test(options->outputdir, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
-        g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "Specified outputdir \"%s\" doesn't exists",
                     options->outputdir);
         return FALSE;
@@ -304,7 +305,7 @@ check_arguments(struct CmdOptions *options,
         cr_ChecksumType type;
         type = cr_checksum_type(options->checksum);
         if (type == CR_CHECKSUM_UNKNOWN) {
-            g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+            g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                         "Unknown/Unsupported checksum type \"%s\"",
                         options->checksum);
             return FALSE;
@@ -323,7 +324,7 @@ check_arguments(struct CmdOptions *options,
             options->compression_type = CR_CW_XZ_COMPRESSION;
         } else {
             g_string_free(compress_str, TRUE);
-            g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+            g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                         "Unknown/Unsupported compression type \"%s\"",
                         options->compress_type);
             return FALSE;
@@ -370,7 +371,7 @@ check_arguments(struct CmdOptions *options,
         }
 
         if (!remote && !g_file_test(options->groupfile_fullpath, G_FILE_TEST_IS_REGULAR)) {
-            g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+            g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                         "groupfile %s doesn't exists",
                         options->groupfile_fullpath);
             return FALSE;
@@ -380,7 +381,7 @@ check_arguments(struct CmdOptions *options,
     // Process pkglist file
     if (options->pkglist) {
         if (!g_file_test(options->pkglist, G_FILE_TEST_IS_REGULAR)) {
-            g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+            g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                         "pkglist file \"%s\" doesn't exists", options->pkglist);
             return FALSE;
         } else {
@@ -457,7 +458,7 @@ check_arguments(struct CmdOptions *options,
     // Check retain-old-md-by-age
     if (options->retain_old_md_by_age) {
         if (options->retain_old) {
-            g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+            g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                         "--retain-old-md-by-age cannot be combined "
                         "with --retain-old-md");
             return FALSE;

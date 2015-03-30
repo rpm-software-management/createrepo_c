@@ -31,7 +31,8 @@
 #include "xml_dump.h"
 #include "xml_dump_internal.h"
 
-#define INDENT  4
+#define ERR_DOMAIN      CR_XML_DUMP_DELTAPACKAGE_ERROR
+#define INDENT          4
 
 void
 cr_xml_dump_delta(xmlNodePtr root, cr_DeltaPackage *package)
@@ -117,7 +118,7 @@ cr_xml_dump_deltapackage(cr_DeltaPackage *package, GError **err)
     xmlBufferPtr buf = xmlBufferCreate();
     if (buf == NULL) {
         g_critical("%s: Error creating the xml buffer", __func__);
-        g_set_error(err, CR_XML_DUMP_OTHER_ERROR, CRE_MEMORY,
+        g_set_error(err, ERR_DOMAIN, CRE_MEMORY,
                     "Cannot create an xml buffer");
         return NULL;
     }

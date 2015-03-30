@@ -32,6 +32,9 @@
 #include "error.h"
 #include "compression_wrapper.h"
 
+
+#define ERR_DOMAIN      CR_COMPRESSION_WRAPPER_ERROR
+
 /*
 #define Z_CR_CW_NO_COMPRESSION         0
 #define Z_BEST_SPEED             1
@@ -126,7 +129,7 @@ cr_detect_compression(const char *filename, GError **err)
     if (!g_file_test(filename, G_FILE_TEST_IS_REGULAR)) {
         g_debug("%s: File %s doesn't exists or not a regular file",
                 __func__, filename);
-        g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_NOFILE,
+        g_set_error(err, ERR_DOMAIN, CRE_NOFILE,
                     "File %s doesn't exists or not a regular file", filename);
         return CR_CW_UNKNOWN_COMPRESSION;
     }
@@ -155,13 +158,13 @@ cr_detect_compression(const char *filename, GError **err)
 
     magic_t myt = magic_open(MAGIC_MIME);
     if (myt == NULL) {
-        g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_MAGIC,
+        g_set_error(err, ERR_DOMAIN, CRE_MAGIC,
                     "magic_open() failed: Cannot allocate the magic cookie");
         return CR_CW_UNKNOWN_COMPRESSION;
     }
 
     if (magic_load(myt, NULL) == -1) {
-        g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_MAGIC,
+        g_set_error(err, ERR_DOMAIN, CRE_MAGIC,
                     "magic_load() failed: %s", magic_error(myt));
         return CR_CW_UNKNOWN_COMPRESSION;
     }
@@ -210,7 +213,7 @@ cr_detect_compression(const char *filename, GError **err)
     } else {
         g_debug("%s: Mime type not detected! (%s): %s", __func__, filename,
                 magic_error(myt));
-        g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_MAGIC,
+        g_set_error(err, ERR_DOMAIN, CRE_MAGIC,
                     "mime_type() detection failed: %s", magic_error(myt));
         magic_close(myt);
         return CR_CW_UNKNOWN_COMPRESSION;
@@ -300,7 +303,7 @@ cr_sopen(const char *filename,
             g_debug("%s: CR_CW_AUTO_DETECT_COMPRESSION cannot be used if "
                     "mode is CR_CW_MODE_WRITE", __func__);
             assert(0);
-            g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_ASSERT,
+            g_set_error(err, ERR_DOMAIN, CRE_ASSERT,
                         "CR_CW_AUTO_DETECT_COMPRESSION cannot be used if "
                         "mode is CR_CW_MODE_WRITE");
             return NULL;
@@ -310,7 +313,7 @@ cr_sopen(const char *filename,
             g_debug("%s: CR_CW_UNKNOWN_COMPRESSION cannot be used if mode"
                     " is CR_CW_MODE_WRITE", __func__);
             assert(0);
-            g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_ASSERT,
+            g_set_error(err, ERR_DOMAIN, CRE_ASSERT,
                         "CR_CW_UNKNOWN_COMPRESSION cannot be used if mode "
                         "is CR_CW_MODE_WRITE");
             return NULL;
@@ -331,7 +334,7 @@ cr_sopen(const char *filename,
     if (type == CR_CW_UNKNOWN_COMPRESSION) {
         // Detection without error but compression type is unknown
         g_debug("%s: Cannot detect compression type", __func__);
-        g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_UNKNOWNCOMPRESSION,
+        g_set_error(err, ERR_DOMAIN, CRE_UNKNOWNCOMPRESSION,
                     "Cannot detect compression type");
         return NULL;
     }
@@ -351,14 +354,14 @@ cr_sopen(const char *filename,
             mode_str = (mode == CR_CW_MODE_WRITE) ? "w" : "r";
             file->FILE = (void *) fopen(filename, mode_str);
             if (!file->FILE)
-                g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_IO,
+                g_set_error(err, ERR_DOMAIN, CRE_IO,
                             "fopen(): %s", strerror(errno));
             break;
 
         case (CR_CW_GZ_COMPRESSION): // ---------------------------------------
             file->FILE = (void *) gzopen(filename, mode_str);
             if (!file->FILE) {
-                g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_GZ,
+                g_set_error(err, ERR_DOMAIN, CRE_GZ,
                             "gzopen(): %s", strerror(errno));
                 break;
             }
@@ -370,7 +373,7 @@ cr_sopen(const char *filename,
 
             if (gzbuffer((gzFile) file->FILE, GZ_BUFFER_SIZE) == -1) {
                 g_debug("%s: gzbuffer() call failed", __func__);
-                g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_GZ,
+                g_set_error(err, ERR_DOMAIN, CRE_GZ,
                             "gzbuffer() call failed");
             }
             break;
@@ -380,7 +383,7 @@ cr_sopen(const char *filename,
             int bzerror;
 
             if (!f) {
-                g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_IO,
+                g_set_error(err, ERR_DOMAIN, CRE_IO,
                             "fopen(): %s", strerror(errno));
                 break;
             }
@@ -419,7 +422,7 @@ cr_sopen(const char *filename,
                         err_msg = "other error";
                 }
 
-                g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_BZ2,
+                g_set_error(err, ERR_DOMAIN, CRE_BZ2,
                             "Bz2 error: %s", err_msg);
             }
 
@@ -471,7 +474,7 @@ cr_sopen(const char *filename,
                         err_msg = "Unknown error";
                 }
 
-                g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_XZ,
+                g_set_error(err, ERR_DOMAIN, CRE_XZ,
                             "XZ error (%d): %s", ret, err_msg);
                 g_free((void *) xz_file);
                 break;
@@ -481,7 +484,7 @@ cr_sopen(const char *filename,
 
             FILE *f = fopen(filename, mode_str);
             if (!f) {
-                g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_XZ,
+                g_set_error(err, ERR_DOMAIN, CRE_XZ,
                             "fopen(): %s", strerror(errno));
                 lzma_end(&(xz_file->stream));
                 g_free((void *) xz_file);
@@ -500,7 +503,7 @@ cr_sopen(const char *filename,
     if (!file->FILE) {
         // File is not open -> cleanup
         if (err && *err == NULL)
-            g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_XZ,
+            g_set_error(err, ERR_DOMAIN, CRE_XZ,
                         "Unknown error while opening: %s", filename);
         g_free(file);
         return NULL;
@@ -547,7 +550,7 @@ cr_close(CR_FILE *cr_file, GError **err)
                 ret = CRE_OK;
             } else {
                 ret = CRE_IO;
-                g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_IO,
+                g_set_error(err, ERR_DOMAIN, CRE_IO,
                             "fclose(): %s", strerror(errno));
             }
             break;
@@ -576,7 +579,7 @@ cr_close(CR_FILE *cr_file, GError **err)
                 }
 
                 ret = CRE_GZ;
-                g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_GZ,
+                g_set_error(err, ERR_DOMAIN, CRE_GZ,
                     "gzclose(): %s", err_msg);
             }
             break;
@@ -606,7 +609,7 @@ cr_close(CR_FILE *cr_file, GError **err)
                 }
 
                 ret = CRE_BZ2;
-                g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_BZ2,
+                g_set_error(err, ERR_DOMAIN, CRE_BZ2,
                             "Bz2 error: %s", err_msg);
             }
             break;
@@ -653,7 +656,7 @@ cr_close(CR_FILE *cr_file, GError **err)
                         }
 
                         ret = CRE_XZ;
-                        g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_XZ,
+                        g_set_error(err, ERR_DOMAIN, CRE_XZ,
                                     "XZ: lzma_code() error (%d): %s",
                                     rc, err_msg);
                         break;
@@ -663,7 +666,7 @@ cr_close(CR_FILE *cr_file, GError **err)
                     if (fwrite(xz_file->buffer, 1, olen, xz_file->file) != olen) {
                         // Error while writing
                         ret = CRE_XZ;
-                        g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_XZ,
+                        g_set_error(err, ERR_DOMAIN, CRE_XZ,
                                     "XZ: fwrite() error: %s", strerror(errno));
                         break;
                     }
@@ -686,7 +689,7 @@ cr_close(CR_FILE *cr_file, GError **err)
 
         default: // -----------------------------------------------------------
             ret = CRE_BADARG;
-            g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_BADARG,
+            g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                         "Bad compressed file type");
             break;
     }
@@ -721,7 +724,7 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
     assert(!err || *err == NULL);
 
     if (cr_file->mode != CR_CW_MODE_READ) {
-        g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_BADARG,
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "File is not opened in read mode");
         return CR_CW_ERR;
     }
@@ -732,7 +735,7 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
             ret = fread(buffer, 1, len, (FILE *) cr_file->FILE);
             if ((ret != (int) len) && !feof((FILE *) cr_file->FILE)) {
                 ret = CR_CW_ERR;
-                g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_IO,
+                g_set_error(err, ERR_DOMAIN, CRE_IO,
                             "fread(): %s", strerror(errno));
             }
             break;
@@ -741,7 +744,7 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
             ret = gzread((gzFile) cr_file->FILE, buffer, len);
             if (ret == -1) {
                 ret = CR_CW_ERR;
-                g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_GZ,
+                g_set_error(err, ERR_DOMAIN, CRE_GZ,
                     "fread(): %s", cr_gz_strerror((gzFile) cr_file->FILE));
             }
             break;
@@ -788,7 +791,7 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
                         err_msg = "other error";
                 }
 
-                g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_BZ2,
+                g_set_error(err, ERR_DOMAIN, CRE_BZ2,
                             "Bz2 error: %s", err_msg);
             }
             break;
@@ -807,7 +810,7 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
                 if (stream->avail_in == 0) {
                     if ((lret = fread(xz_file->buffer, 1, XZ_BUFFER_SIZE, xz_file->file)) < 0) {
                         g_debug("%s: XZ: Error while fread", __func__);
-                        g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_XZ,
+                        g_set_error(err, ERR_DOMAIN, CRE_XZ,
                                     "XZ: fread(): %s", strerror(errno));
                         return CR_CW_ERR;   // Error while reading input file
                     } else if (lret == 0) {
@@ -870,7 +873,7 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
 
                     g_debug("%s: XZ: Error while decoding (%d): %s",
                             __func__, lret, err_msg);
-                    g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_XZ,
+                    g_set_error(err, ERR_DOMAIN, CRE_XZ,
                                 "XZ: Error while decoding (%d): %s",
                                 lret, err_msg);
                     return CR_CW_ERR;  // Error while decoding
@@ -886,7 +889,7 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
 
         default: // -----------------------------------------------------------
             ret = CR_CW_ERR;
-            g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_BADARG,
+            g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                         "Bad compressed file type");
             break;
     }
@@ -922,7 +925,7 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
     assert(!err || *err == NULL);
 
     if (cr_file->mode != CR_CW_MODE_WRITE) {
-        g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_BADARG,
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "File is not opened in read mode");
         return ret;
     }
@@ -944,7 +947,7 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
         case (CR_CW_NO_COMPRESSION): // ---------------------------------------
             if ((ret = (int) fwrite(buffer, 1, len, (FILE *) cr_file->FILE)) != (int) len) {
                 ret = CR_CW_ERR;
-                g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_IO,
+                g_set_error(err, ERR_DOMAIN, CRE_IO,
                             "fwrite(): %s", strerror(errno));
             }
             break;
@@ -957,7 +960,7 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
 
             if ((ret = gzwrite((gzFile) cr_file->FILE, buffer, len)) == 0) {
                 ret = CR_CW_ERR;
-                g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_GZ,
+                g_set_error(err, ERR_DOMAIN, CRE_GZ,
                     "gzwrite(): %s", cr_gz_strerror((gzFile) cr_file->FILE));
             }
             break;
@@ -986,7 +989,7 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
                         err_msg = "other error";
                 }
 
-                g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_BZ2,
+                g_set_error(err, ERR_DOMAIN, CRE_BZ2,
                             "Bz2 error: %s", err_msg);
             }
             break;
@@ -1033,7 +1036,7 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
                             break;
                     }
 
-                    g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_XZ,
+                    g_set_error(err, ERR_DOMAIN, CRE_XZ,
                                 "XZ: lzma_code() error (%d): %s",
                                 lret, err_msg);
                     break;   // Error while coding
@@ -1042,7 +1045,7 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
                 size_t out_len = XZ_BUFFER_SIZE - stream->avail_out;
                 if ((fwrite(xz_file->buffer, 1, out_len, xz_file->file)) != out_len) {
                     ret = CR_CW_ERR;
-                    g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_XZ,
+                    g_set_error(err, ERR_DOMAIN, CRE_XZ,
                                 "XZ: fwrite(): %s", strerror(errno));
                     break;   // Error while writing
                 }
@@ -1052,7 +1055,7 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
         }
 
         default: // -----------------------------------------------------------
-            g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_BADARG,
+            g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                         "Bad compressed file type");
             break;
     }
@@ -1078,7 +1081,7 @@ cr_puts(CR_FILE *cr_file, const char *str, GError **err)
         return 0;
 
     if (cr_file->mode != CR_CW_MODE_WRITE) {
-        g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_BADARG,
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "File is not opened in write mode");
         return CR_CW_ERR;
     }
@@ -1096,7 +1099,7 @@ cr_puts(CR_FILE *cr_file, const char *str, GError **err)
             break;
 
         default: // -----------------------------------------------------------
-            g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_BADARG,
+            g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                         "Bad compressed file type");
             break;
     }
@@ -1123,7 +1126,7 @@ cr_printf(GError **err, CR_FILE *cr_file, const char *format, ...)
         return 0;
 
     if (cr_file->mode != CR_CW_MODE_WRITE) {
-        g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_BADARG,
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "File is not opened in write mode");
         return CR_CW_ERR;
     }
@@ -1135,7 +1138,7 @@ cr_printf(GError **err, CR_FILE *cr_file, const char *format, ...)
 
     if (ret < 0) {
         g_debug("%s: vasprintf() call failed", __func__);
-        g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_MEMORY,
+        g_set_error(err, ERR_DOMAIN, CRE_MEMORY,
                     "vasprintf() call failed");
         return CR_CW_ERR;
     }
@@ -1157,7 +1160,7 @@ cr_printf(GError **err, CR_FILE *cr_file, const char *format, ...)
 
         default: // -----------------------------------------------------------
             ret = CR_CW_ERR;
-            g_set_error(err, CR_COMPRESSION_WRAPPER_ERROR, CRE_BADARG,
+            g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                         "Bad compressed file type");
             break;
     }

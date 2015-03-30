@@ -22,6 +22,9 @@
 #include "error.h"
 #include "misc.h"
 
+#define ERR_DOMAIN      CR_THREADS_ERROR
+
+
 /** Parallel Compression */
 
 cr_CompressionTask *
@@ -46,7 +49,7 @@ cr_compressiontask_new(const char *src,
 
     task = g_malloc0(sizeof(cr_CompressionTask));
     if (!task) {
-        g_set_error(err, CR_THREADS_ERROR, CRE_MEMORY,
+        g_set_error(err, ERR_DOMAIN, CRE_MEMORY,
                    "Cannot allocate memory");
         return NULL;
     }

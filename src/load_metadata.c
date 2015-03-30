@@ -30,6 +30,7 @@
 #include "locate_metadata.h"
 #include "xml_parser.h"
 
+#define ERR_DOMAIN              CR_LOAD_METADATA_ERROR
 #define STRINGCHUNK_SIZE        16384
 
 /** Structure for loaded metadata
@@ -434,7 +435,7 @@ cr_metadata_load_xml(cr_Metadata *md,
     assert(!err || *err == NULL);
 
     if (!ml->pri_xml_href) {
-        g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_BADARG,
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "primary.xml file is missing");
         return CRE_BADARG;
     }
@@ -489,7 +490,7 @@ cr_metadata_load_xml(cr_Metadata *md,
                 // and it SHOULD set only valid key values)
                 g_critical("%s: Unknown hash table key selected", __func__);
                 assert(0);
-                g_set_error(err, CR_LOAD_METADATA_ERROR, CRE_ASSERT,
+                g_set_error(err, ERR_DOMAIN, CRE_ASSERT,
                             "Bad db type");
                 return CRE_ASSERT;
         }

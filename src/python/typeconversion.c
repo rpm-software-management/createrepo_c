@@ -23,6 +23,9 @@
 #include "src/createrepo_c.h"
 #include "src/repomd_internal.h"
 
+#define ERR_DOMAIN              CR_XML_PARSER_ERROR
+
+
 void
 PyErr_ToGError(GError **err)
 {
@@ -43,10 +46,10 @@ PyErr_ToGError(GError **err)
 
     if (!pystr) {
         PyErr_Clear();
-        g_set_error(err, CR_XML_PARSER_ERROR, CRE_XMLPARSER,
+        g_set_error(err, ERR_DOMAIN, CRE_XMLPARSER,
                     "Error while error handling");
     } else {
-        g_set_error(err, CR_XML_PARSER_ERROR, CRE_XMLPARSER,
+        g_set_error(err, ERR_DOMAIN, CRE_XMLPARSER,
                     "%s", PyString_AsString(pystr));
     }
 

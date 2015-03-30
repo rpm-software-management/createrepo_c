@@ -31,6 +31,8 @@
 #include "xml_parser.h"
 #include "cleanup.h"
 
+#define ERR_DOMAIN      CR_LOCATE_METADATA_ERROR
+
 #define TMPDIR_PATTERN  "createrepo_c_tmp_repo_XXXXXX"
 
 #define FORMAT_XML      1
@@ -298,7 +300,7 @@ cr_locate_metadata(const char *repopath, int ignore_sqlite, GError **err)
 
     // XXX
     if (!ret) {
-        g_set_error(err, CR_LOCATE_METADATA_ERROR, CRE_NODIR,
+        g_set_error(err, ERR_DOMAIN, CRE_NODIR,
                     "Cannot locate metadata");
         return NULL;
     }

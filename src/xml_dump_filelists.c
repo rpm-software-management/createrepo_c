@@ -28,6 +28,8 @@
 #include "xml_dump.h"
 #include "xml_dump_internal.h"
 
+#define ERR_DOMAIN      CR_XML_DUMP_FILELISTS_ERROR
+
 
 void
 cr_xml_dump_filelists_items(xmlNodePtr root, cr_Package *package)
@@ -88,7 +90,7 @@ cr_xml_dump_filelists(cr_Package *package, GError **err)
     xmlBufferPtr buf = xmlBufferCreate();
     if (buf == NULL) {
         g_critical("%s: Error creating the xml buffer", __func__);
-        g_set_error(err, CR_XML_DUMP_FILELISTS_ERROR, CRE_MEMORY,
+        g_set_error(err, ERR_DOMAIN, CRE_MEMORY,
                     "Cannot create an xml buffer");
         return NULL;
     }

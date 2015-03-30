@@ -29,6 +29,7 @@
 #include "threads.h"
 #include "xml_dump.h"
 
+#define ERR_DOMAIN              CR_MODIFYREPO_ERROR
 #define DEFAULT_COMPRESSION     CR_CW_GZ_COMPRESSION
 #define DEFAULT_CHECKSUM        CR_CHECKSUM_SHA256
 
@@ -62,7 +63,7 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
 
     gchar *repomd_path = g_build_filename(repopath, "repomd.xml", NULL);
     if (!g_file_test(repomd_path, G_FILE_TEST_IS_REGULAR)) {
-        g_set_error(err, CR_MODIFYREPO_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Regular file \"%s\" doesn't exists", repomd_path);
         g_free(repomd_path);
         return FALSE;

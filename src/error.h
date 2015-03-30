@@ -121,10 +121,12 @@ const char *cr_strerror(cr_Error rc);
 #define CR_REPOMD_RECORD_ERROR          cr_repomd_record_error_quark()
 #define CR_SQLITEREPO_ERROR             cr_sqliterepo_error_quark()
 #define CR_THREADS_ERROR                cr_threads_error_quark()
+#define CR_XML_DUMP_DELTAPACKAGE_ERROR  cr_xml_dump_deltapackage_error_quark()
 #define CR_XML_DUMP_FILELISTS_ERROR     cr_xml_dump_filelists_error_quark()
 #define CR_XML_DUMP_OTHER_ERROR         cr_xml_dump_other_error_quark()
 #define CR_XML_DUMP_PRIMARY_ERROR       cr_xml_dump_primary_error_quark()
 #define CR_XML_DUMP_REPOMD_ERROR        cr_xml_dump_repomd_error_quark()
+#define CR_XML_DUMP_UPDATEINFO_ERROR    cr_xml_dump_updateinfo_error_quark()
 #define CR_XML_FILE_ERROR               cr_xml_file_error_quark()
 #define CR_XML_PARSER_ERROR             cr_xml_parser_error_quark()
 #define CR_XML_PARSER_FIL_ERROR         cr_xml_parser_fil_error_quark()
@@ -149,10 +151,12 @@ GQuark cr_repomd_error_quark(void);
 GQuark cr_repomd_record_error_quark(void);
 GQuark cr_sqliterepo_error_quark(void);
 GQuark cr_threads_error_quark(void);
+GQuark cr_xml_dump_deltapackage_error_quark(void);
 GQuark cr_xml_dump_filelists_error_quark(void);
 GQuark cr_xml_dump_other_error_quark(void);
 GQuark cr_xml_dump_primary_error_quark(void);
 GQuark cr_xml_dump_repomd_error_quark(void);
+GQuark cr_xml_dump_updateinfo_error_quark(void);
 GQuark cr_xml_file_error_quark(void);
 GQuark cr_xml_parser_error_quark(void);
 GQuark cr_xml_parser_fil_error_quark(void);

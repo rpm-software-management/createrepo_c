@@ -35,6 +35,9 @@
 #include "misc.h"
 #include "checksum.h"
 
+#define ERR_DOMAIN      CR_PARSEPKG_ERROR
+
+
 rpmts cr_ts = NULL;
 
 
@@ -91,7 +94,7 @@ read_header(const char *filename, Header *hdr, GError **err)
     if (!fd) {
         g_warning("%s: Fopen of %s failed %s",
                   __func__, filename, strerror(errno));
-        g_set_error(err, CR_PARSEPKG_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Fopen failed: %s", strerror(errno));
         return FALSE;
     }
@@ -110,7 +113,7 @@ read_header(const char *filename, Header *hdr, GError **err)
             default:
                 g_warning("%s: rpmReadPackageFile() error",
                           __func__);
-                g_set_error(err, CR_PARSEPKG_ERROR, CRE_IO,
+                g_set_error(err, ERR_DOMAIN, CRE_IO,
                             "rpmReadPackageFile() error");
                 Fclose(fd);
                 return FALSE;
@@ -175,7 +178,7 @@ cr_package_from_rpm(const char *filename,
         if (stat(filename, &stat_buf_own) == -1) {
             g_warning("%s: stat(%s) error (%s)", __func__,
                       filename, strerror(errno));
-            g_set_error(err,  CR_PARSEPKG_ERROR, CRE_IO, "stat(%s) failed: %s",
+            g_set_error(err,  ERR_DOMAIN, CRE_IO, "stat(%s) failed: %s",
                         filename, strerror(errno));
             goto errexit;
         }

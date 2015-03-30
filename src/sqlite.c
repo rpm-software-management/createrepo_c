@@ -33,8 +33,9 @@
 #include "error.h"
 #include "xml_dump.h"
 
-#define ENCODED_PACKAGE_FILE_FILES 2048
-#define ENCODED_PACKAGE_FILE_TYPES 60
+#define ERR_DOMAIN                  CR_DB_ERROR
+#define ENCODED_PACKAGE_FILE_FILES  2048
+#define ENCODED_PACKAGE_FILE_TYPES  60
 
 struct _DbPrimaryStatements {
     sqlite3 *db;
@@ -111,7 +112,7 @@ open_sqlite_db(const char *path, GError **err)
 
     rc = sqlite3_open(path, &db);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                     "Can not open SQL database: %s", sqlite3_errmsg(db));
         sqlite3_close(db);
         db = NULL;
@@ -132,7 +133,7 @@ db_create_dbinfo_table(sqlite3 *db, GError **err)
     sql = "CREATE TABLE db_info (dbversion INTEGER, checksum TEXT)";
     rc = sqlite3_exec(db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                     "Can not create db_info table: %s",
                      sqlite3_errmsg (db));
     }
@@ -178,7 +179,7 @@ db_create_primary_tables(sqlite3 *db, GError **err)
 
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not create packages table: %s",
                      sqlite3_errmsg (db));
         return;
@@ -191,7 +192,7 @@ db_create_primary_tables(sqlite3 *db, GError **err)
         "  pkgKey INTEGER)";
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not create files table: %s",
                      sqlite3_errmsg (db));
         return;
@@ -225,7 +226,7 @@ db_create_primary_tables(sqlite3 *db, GError **err)
         g_free (query);
 
         if (rc != SQLITE_OK) {
-            g_set_error(err, CR_DB_ERROR, CRE_DB,
+            g_set_error(err, ERR_DOMAIN, CRE_DB,
                          "Can not create %s table: %s",
                          deps[i], sqlite3_errmsg (db));
             return;
@@ -248,7 +249,7 @@ db_create_primary_tables(sqlite3 *db, GError **err)
 
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not create removals trigger: %s",
                      sqlite3_errmsg (db));
         return;
@@ -270,7 +271,7 @@ db_create_filelists_tables(sqlite3 *db, GError **err)
         "  pkgId TEXT)";
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not create packages table: %s",
                      sqlite3_errmsg (db));
         return;
@@ -284,7 +285,7 @@ db_create_filelists_tables(sqlite3 *db, GError **err)
         "  filetypes TEXT)";
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not create filelist table: %s",
                      sqlite3_errmsg (db));
         return;
@@ -298,7 +299,7 @@ db_create_filelists_tables(sqlite3 *db, GError **err)
 
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not create remove_filelist trigger: %s",
                      sqlite3_errmsg (db));
         return;
@@ -320,7 +321,7 @@ db_create_other_tables (sqlite3 *db, GError **err)
         "  pkgId TEXT)";
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not create packages table: %s",
                      sqlite3_errmsg (db));
         return;
@@ -334,7 +335,7 @@ db_create_other_tables (sqlite3 *db, GError **err)
         "  changelog TEXT)";
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not create changelog table: %s",
                      sqlite3_errmsg (db));
         return;
@@ -348,7 +349,7 @@ db_create_other_tables (sqlite3 *db, GError **err)
 
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not create remove_changelogs trigger: %s",
                      sqlite3_errmsg (db));
         return;
@@ -385,7 +386,7 @@ db_index_primary_tables (sqlite3 *db, GError **err)
     sql = "CREATE INDEX IF NOT EXISTS packagename ON packages (name)";
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not create packagename index: %s",
                      sqlite3_errmsg (db));
         return;
@@ -394,7 +395,7 @@ db_index_primary_tables (sqlite3 *db, GError **err)
     sql = "CREATE INDEX IF NOT EXISTS packageId ON packages (pkgId)";
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not create packageId index: %s",
                      sqlite3_errmsg (db));
         return;
@@ -403,7 +404,7 @@ db_index_primary_tables (sqlite3 *db, GError **err)
     sql = "CREATE INDEX IF NOT EXISTS filenames ON files (name)";
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not create filenames index: %s",
                      sqlite3_errmsg (db));
         return;
@@ -412,7 +413,7 @@ db_index_primary_tables (sqlite3 *db, GError **err)
     sql = "CREATE INDEX IF NOT EXISTS pkgfiles ON files (pkgKey)";
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not create index on files table: %s",
                      sqlite3_errmsg (db));
         return;
@@ -441,7 +442,7 @@ db_index_primary_tables (sqlite3 *db, GError **err)
         g_free (query);
 
         if (rc != SQLITE_OK) {
-            g_set_error(err, CR_DB_ERROR, CRE_DB,
+            g_set_error(err, ERR_DOMAIN, CRE_DB,
                          "Can not create index on %s table: %s",
                          deps[i], sqlite3_errmsg (db));
             return;
@@ -452,7 +453,7 @@ db_index_primary_tables (sqlite3 *db, GError **err)
             rc = sqlite3_exec (db, query, NULL, NULL, NULL);
             g_free(query);
             if (rc != SQLITE_OK) {
-                g_set_error(err, CR_DB_ERROR, CRE_DB,
+                g_set_error(err, ERR_DOMAIN, CRE_DB,
                              "Can not create %sname index: %s",
                              deps[i], sqlite3_errmsg (db));
                 return;
@@ -473,7 +474,7 @@ db_index_filelists_tables (sqlite3 *db, GError **err)
     sql = "CREATE INDEX IF NOT EXISTS keyfile ON filelist (pkgKey)";
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not create keyfile index: %s",
                      sqlite3_errmsg (db));
         return;
@@ -482,7 +483,7 @@ db_index_filelists_tables (sqlite3 *db, GError **err)
     sql = "CREATE INDEX IF NOT EXISTS pkgId ON packages (pkgId)";
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not create pkgId index: %s",
                      sqlite3_errmsg (db));
         return;
@@ -491,7 +492,7 @@ db_index_filelists_tables (sqlite3 *db, GError **err)
     sql = "CREATE INDEX IF NOT EXISTS dirnames ON filelist (dirname)";
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not create dirnames index: %s",
                      sqlite3_errmsg (db));
         return;
@@ -510,7 +511,7 @@ db_index_other_tables (sqlite3 *db, GError **err)
     sql = "CREATE INDEX IF NOT EXISTS keychange ON changelog (pkgKey)";
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not create keychange index: %s",
                      sqlite3_errmsg (db));
         return;
@@ -519,7 +520,7 @@ db_index_other_tables (sqlite3 *db, GError **err)
     sql = "CREATE INDEX IF NOT EXISTS pkgId ON packages (pkgId)";
     rc = sqlite3_exec (db, sql, NULL, NULL, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not create pkgId index: %s",
                      sqlite3_errmsg (db));
         return;
@@ -545,7 +546,7 @@ cr_db_dbinfo_update(cr_SqliteDb *sqlitedb, const char *checksum, GError **err)
     /* Prepare insert statement */
     rc = sqlite3_prepare_v2(sqlitedb->db, query, -1, &handle, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                     "Cannot prepare db_info update: %s",
                     sqlite3_errmsg(sqlitedb->db));
         g_critical("%s: Cannot prepare db_info update statement: %s",
@@ -563,7 +564,7 @@ cr_db_dbinfo_update(cr_SqliteDb *sqlitedb, const char *checksum, GError **err)
 
     rc = sqlite3_step(handle);
     if (rc != SQLITE_DONE) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                       "Cannot update dbinfo table: %s",
                        sqlite3_errmsg (sqlitedb->db));
         g_critical("%s: Cannot update dbinfo table: %s",
@@ -573,7 +574,7 @@ cr_db_dbinfo_update(cr_SqliteDb *sqlitedb, const char *checksum, GError **err)
 
     rc = sqlite3_finalize(handle);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                       "Cannot update dbinfo table: %s",
                        sqlite3_errmsg (sqlitedb->db));
         g_critical("%s: Cannot update dbinfo table: %s",
@@ -611,7 +612,7 @@ db_package_prepare (sqlite3 *db, GError **err)
 
     rc = sqlite3_prepare_v2 (db, query, -1, &handle, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Cannot prepare packages insertion: %s",
                      sqlite3_errmsg (db));
         sqlite3_finalize (handle);
@@ -684,7 +685,7 @@ db_package_write (sqlite3 *db,
     } else {
         g_critical ("Error adding package to db: %s",
                     sqlite3_errmsg(db));
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                     "Error adding package to db: %s",
                     sqlite3_errmsg(db));
     }
@@ -716,7 +717,7 @@ db_dependency_prepare (sqlite3 *db, const char *table, GError **err)
     g_free (query);
 
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Cannot prepare dependency insertion: %s",
                      sqlite3_errmsg (db));
         sqlite3_finalize (handle);
@@ -758,7 +759,7 @@ db_dependency_write (sqlite3 *db,
     if (rc != SQLITE_DONE) {
         g_critical ("Error adding package dependency to db: %s",
                     sqlite3_errmsg (db));
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                     "Error adding package dependency to db: %s",
                     sqlite3_errmsg(db));
     }
@@ -777,7 +778,7 @@ db_file_prepare (sqlite3 *db, GError **err)
 
     rc = sqlite3_prepare_v2 (db, query, -1, &handle, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not prepare file insertion: %s",
                      sqlite3_errmsg (db));
         sqlite3_finalize (handle);
@@ -824,7 +825,7 @@ db_file_write (sqlite3 *db,
     if (rc != SQLITE_DONE) {
         g_critical ("Error adding package file to db: %s",
                     sqlite3_errmsg (db));
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                     "Error adding package file to db: %s",
                     sqlite3_errmsg(db));
     }
@@ -851,7 +852,7 @@ db_filelists_prepare (sqlite3 *db, GError **err)
 
     rc = sqlite3_prepare_v2 (db, query, -1, &handle, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not prepare filelist insertion: %s",
                      sqlite3_errmsg (db));
         sqlite3_finalize (handle);
@@ -980,7 +981,7 @@ cr_db_write_file (sqlite3 *db,
     if (rc != SQLITE_DONE) {
         g_critical ("Error adding file records to db: %s",
                     sqlite3_errmsg (db));
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                     "Error adding file records to db : %s",
                      sqlite3_errmsg(db));
     }
@@ -1007,7 +1008,7 @@ db_changelog_prepare (sqlite3 *db, GError **err)
 
     rc = sqlite3_prepare_v2 (db, query, -1, &handle, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not prepare changelog insertion: %s",
                      sqlite3_errmsg (db));
         sqlite3_finalize (handle);
@@ -1033,7 +1034,7 @@ db_package_ids_prepare(sqlite3 *db, GError **err)
     query = "INSERT INTO packages (pkgId) VALUES (?)";
     rc = sqlite3_prepare_v2 (db, query, -1, &handle, NULL);
     if (rc != SQLITE_OK) {
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                      "Can not prepare package ids insertion: %s",
                       sqlite3_errmsg (db));
         sqlite3_finalize (handle);
@@ -1062,7 +1063,7 @@ db_package_ids_write(sqlite3 *db,
     } else {
         g_critical("Error adding package to db: %s",
                    sqlite3_errmsg(db));
-        g_set_error(err, CR_DB_ERROR, CRE_DB,
+        g_set_error(err, ERR_DOMAIN, CRE_DB,
                     "Error adding package to db: %s",
                     sqlite3_errmsg(db));
     }
@@ -1494,7 +1495,7 @@ cr_db_add_other_pkg(cr_DbOtherStatements stmts, cr_Package *pkg, GError **err)
         if (rc != SQLITE_DONE) {
             g_critical ("Error adding changelog to db: %s",
                         sqlite3_errmsg (stmts->db));
-            g_set_error(err, CR_DB_ERROR, CRE_DB,
+            g_set_error(err, ERR_DOMAIN, CRE_DB,
                         "Error adding changelog to db : %s",
                         sqlite3_errmsg(stmts->db));
             return;
@@ -1520,7 +1521,7 @@ cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
     assert(!err || *err == NULL);
 
     if (path[0] == '\0') {
-        g_set_error(err, CR_DB_ERROR, CRE_BADARG, "Bad path: \"%s\"", path);
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG, "Bad path: \"%s\"", path);
         return NULL;
     }
 
@@ -1528,7 +1529,7 @@ cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
     if (exists) {
         struct stat stat_buf;
         if (stat(path, &stat_buf) == -1) {
-            g_set_error(err, CR_DB_ERROR, CRE_IO,
+            g_set_error(err, ERR_DOMAIN, CRE_IO,
                         "Cannot stat %s: %s", path, strerror(errno));
             return NULL;
         }
@@ -1578,7 +1579,7 @@ cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
             default:
                 g_critical("%s: Bad db_type", __func__);
                 assert(0);
-                g_set_error(err, CR_DB_ERROR, CRE_ASSERT, "Bad db type");
+                g_set_error(err, ERR_DOMAIN, CRE_ASSERT, "Bad db type");
                 return NULL;
         }
 
@@ -1603,7 +1604,7 @@ cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
         default:
             g_critical("%s: Bad db_type", __func__);
             assert(0);
-            g_set_error(err, CR_DB_ERROR, CRE_ASSERT, "Bad db type");
+            g_set_error(err, ERR_DOMAIN, CRE_ASSERT, "Bad db type");
             return NULL;
     }
 
@@ -1630,7 +1631,7 @@ cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
         default:
             g_critical("%s: Bad db_type", __func__);
             assert(0);
-            g_set_error(err, CR_DB_ERROR, CRE_ASSERT, "Bad db type");
+            g_set_error(err, ERR_DOMAIN, CRE_ASSERT, "Bad db type");
             return NULL;
     }
 
@@ -1664,7 +1665,7 @@ cr_db_close(cr_SqliteDb *sqlitedb, GError **err)
         default:
             g_critical("%s: Bad db type", __func__);
             assert(0);
-            g_set_error(err, CR_DB_ERROR, CRE_ASSERT, "Bad db type");
+            g_set_error(err, ERR_DOMAIN, CRE_ASSERT, "Bad db type");
             return CRE_ASSERT;
     }
 
@@ -1708,7 +1709,7 @@ cr_db_add_pkg(cr_SqliteDb *sqlitedb, cr_Package *pkg, GError **err)
     default:
         g_critical("%s: Bad db type", __func__);
         assert(0);
-        g_set_error(err, CR_DB_ERROR, CRE_ASSERT, "Bad db type");
+        g_set_error(err, ERR_DOMAIN, CRE_ASSERT, "Bad db type");
         return CRE_ASSERT;
     }
 

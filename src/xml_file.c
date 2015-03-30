@@ -25,6 +25,8 @@
 #include "compression_wrapper.h"
 #include "xml_dump_internal.h"
 
+#define ERR_DOMAIN              CR_XML_FILE_ERROR
+
 #define XML_HEADER              "<?xml version=\""XML_DOC_VERSION \
                                 "\" encoding=\""XML_ENCODING"\"?>\n"
 
@@ -60,7 +62,7 @@ cr_xmlfile_sopen(const char *filename,
     assert(!err || *err == NULL);
 
     if (g_file_test(filename, G_FILE_TEST_EXISTS)) {
-        g_set_error(err, CR_XML_FILE_ERROR, CRE_EXISTS,
+        g_set_error(err, ERR_DOMAIN, CRE_EXISTS,
                     "File already exists");
         return NULL;
     }
@@ -92,13 +94,13 @@ cr_xmlfile_set_num_of_pkgs(cr_XmlFile *f, long num, GError **err)
     assert(!err || *err == NULL);
 
     if (f->header != 0) {
-        g_set_error(err, CR_XML_FILE_ERROR, CRE_BADARG,
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "Header was already written");
         return CRE_BADARG;
     }
 
     if (num < 0) {
-        g_set_error(err, CR_XML_FILE_ERROR, CRE_BADARG,
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "The number must be a positive integer number");
         return CRE_BADARG;
     }
@@ -136,7 +138,7 @@ cr_xmlfile_write_xml_header(cr_XmlFile *f, GError **err)
     default:
         g_critical("%s: Bad file type", __func__);
         assert(0);
-        g_set_error(err, CR_XML_FILE_ERROR, CRE_ASSERT, "Bad file type");
+        g_set_error(err, ERR_DOMAIN, CRE_ASSERT, "Bad file type");
         return CRE_ASSERT;
     }
 
@@ -180,7 +182,7 @@ cr_xmlfile_write_xml_footer(cr_XmlFile *f, GError **err)
     default:
         g_critical("%s: Bad file type", __func__);
         assert(0);
-        g_set_error(err, CR_XML_FILE_ERROR, CRE_ASSERT, "Bad file type");
+        g_set_error(err, ERR_DOMAIN, CRE_ASSERT, "Bad file type");
         return CRE_ASSERT;
     }
 
@@ -220,7 +222,7 @@ cr_xmlfile_add_pkg(cr_XmlFile *f, cr_Package *pkg, GError **err)
     default:
         g_critical("%s: Bad file type", __func__);
         assert(0);
-        g_set_error(err, CR_XML_FILE_ERROR, CRE_ASSERT, "Bad file type");
+        g_set_error(err, ERR_DOMAIN, CRE_ASSERT, "Bad file type");
         return CRE_ASSERT;
     }
 

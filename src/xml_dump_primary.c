@@ -28,6 +28,9 @@
 #include "xml_dump.h"
 #include "xml_dump_internal.h"
 
+#define ERR_DOMAIN      CR_XML_DUMP_PRIMARY_ERROR
+
+
 typedef enum {
     PCO_TYPE_PROVIDES,
     PCO_TYPE_CONFLICTS,
@@ -389,7 +392,7 @@ cr_xml_dump_primary(cr_Package *package, GError **err)
     xmlBufferPtr buf = xmlBufferCreate();
     if (buf == NULL) {
         g_critical("%s: Error creating the xml buffer", __func__);
-        g_set_error(err, CR_XML_DUMP_PRIMARY_ERROR, CRE_MEMORY,
+        g_set_error(err, ERR_DOMAIN, CRE_MEMORY,
                     "Cannot create an xml buffer");
         return NULL;
     }

@@ -33,6 +33,7 @@
 #include "repomd_internal.h"
 #include "compression_wrapper.h"
 
+#define ERR_DOMAIN                  CR_REPOMD_RECORD_ERROR
 #define LOCATION_HREF_PREFIX        "repodata/"
 #define DEFAULT_DATABASE_VERSION    10
 #define BUFFER_SIZE                 8192
@@ -118,7 +119,7 @@ cr_get_compressed_content_stat(const char *filename,
     assert(!err || *err == NULL);
 
     if (!g_file_test(filename, G_FILE_TEST_IS_REGULAR)) {
-        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_NOFILE,
+        g_set_error(err, ERR_DOMAIN, CRE_NOFILE,
                     "File %s doesn't exists or not a regular file", filename);
         return NULL;
     }
@@ -175,7 +176,7 @@ cr_get_compressed_content_stat(const char *filename,
         result->checksum = cr_checksum_final(checksum, NULL);
         result->size = size;
     } else {
-        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_MEMORY,
+        g_set_error(err, ERR_DOMAIN, CRE_MEMORY,
                     "Cannot allocate memory");
     }
 
@@ -198,7 +199,7 @@ cr_repomd_record_fill(cr_RepomdRecord *md,
     assert(!err || *err == NULL);
 
     if (!(md->location_real) || !strlen(md->location_real)) {
-        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_BADARG,
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "Empty locations in repomd record object.");
         return CRE_BADARG;
     }
@@ -211,7 +212,7 @@ cr_repomd_record_fill(cr_RepomdRecord *md,
     if (!g_file_test(path, G_FILE_TEST_IS_REGULAR)) {
         // File doesn't exists
         g_warning("%s: File %s doesn't exists", __func__, path);
-        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_NOFILE,
+        g_set_error(err, ERR_DOMAIN, CRE_NOFILE,
                     "File %s doesn't exists or not a regular file", path);
         return CRE_NOFILE;
     }
@@ -294,7 +295,7 @@ cr_repomd_record_fill(cr_RepomdRecord *md,
             }
         } else {
             g_warning("%s: Stat on file \"%s\" failed", __func__, path);
-            g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_STAT,
+            g_set_error(err, ERR_DOMAIN, CRE_STAT,
                         "Stat() on %s failed: %s", path, strerror(errno));
             return CRE_STAT;
         }
@@ -337,7 +338,7 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
     assert(!err || *err == NULL);
 
     if (!(record->location_real) || !strlen(record->location_real)) {
-        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_BADARG,
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "Empty locations in repomd record object");
         return CRE_BADARG;
     }
@@ -345,7 +346,7 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
     if (!g_file_test(record->location_real, G_FILE_TEST_IS_REGULAR)) {
         // File doesn't exists
         g_warning("%s: File %s doesn't exists", __func__, record->location_real);
-        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_NOFILE,
+        g_set_error(err, ERR_DOMAIN, CRE_NOFILE,
                     "File %s doesn't exists or not a regular file",
                     record->location_real);
         return CRE_NOFILE;;
@@ -439,7 +440,7 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
 
     if (stat(path, &gf_stat)) {
         g_debug("%s: Error while stat() on %s", __func__, path);
-        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Cannot stat %s", path);
         ret = CRE_IO;
         goto end;
@@ -450,7 +451,7 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
 
     if (stat(cpath, &cgf_stat)) {
         g_debug("%s: Error while stat() on %s", __func__, cpath);
-        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Cannot stat %s", cpath);
         ret = CRE_IO;
         goto end;
@@ -501,14 +502,14 @@ cr_repomd_record_rename_file(cr_RepomdRecord *md, GError **err)
 
     if (!(md->location_real) || !strlen(md->location_real)) {
         g_debug("Empty locations in repomd record object");
-        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_BADARG,
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "Empty locations in repomd record object");
         return CRE_BADARG;
     }
 
     if (!md->checksum) {
         g_debug("Record doesn't contain checksum");
-        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_BADARG,
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "Record doesn't contain checksum");
         return CRE_BADARG;
     }
@@ -569,7 +570,7 @@ cr_repomd_record_rename_file(cr_RepomdRecord *md, GError **err)
             g_critical("%s: Cannot delete old %s",
                        __func__,
                        new_location_real);
-            g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
+            g_set_error(err, ERR_DOMAIN, CRE_IO,
                         "File with name %s already exists and cannot be deleted",
                         new_location_real);
             g_free(new_location_real);
@@ -581,7 +582,7 @@ cr_repomd_record_rename_file(cr_RepomdRecord *md, GError **err)
                    __func__,
                    md->location_real,
                    new_location_real);
-        g_set_error(err, CR_REPOMD_RECORD_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Cannot rename %s to %s", md->location_real,
                     new_location_real);
         g_free(new_location_real);

@@ -189,6 +189,12 @@ cr_threads_error_quark(void)
 }
 
 GQuark
+cr_xml_dump_deltapackage_error_quark(void)
+{
+    return g_quark_from_static_string("cr_xml_dump_deltapackage_error");
+}
+
+GQuark
 cr_xml_dump_filelists_error_quark(void)
 {
     return g_quark_from_static_string("cr_xml_dump_filelists_error");
@@ -210,6 +216,12 @@ GQuark
 cr_xml_dump_repomd_error_quark(void)
 {
     return g_quark_from_static_string("cr_xml_dump_repomd_error");
+}
+
+GQuark
+cr_xml_dump_updateinfo_error_quark(void)
+{
+    return g_quark_from_static_string("cr_xml_dump_updateinfo_error");
 }
 
 GQuark

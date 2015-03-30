@@ -26,6 +26,9 @@
 #include "xml_parser_internal.h"
 #include "misc.h"
 
+#define ERR_DOMAIN      CR_XML_PARSER_ERROR
+
+
 cr_ParserData *
 cr_xml_parser_data(unsigned int numstates)
 {
@@ -102,7 +105,7 @@ cr_xml_parser_warning(cr_ParserData *pd,
             g_propagate_prefixed_error(&pd->err, tmp_err,
                                        "Parsing interrupted: ");
         else
-            g_set_error(&pd->err, CR_XML_PARSER_ERROR, CRE_CBINTERRUPTED,
+            g_set_error(&pd->err, ERR_DOMAIN, CRE_CBINTERRUPTED,
                         "Parsing interrupted");
     }
 
@@ -188,7 +191,7 @@ cr_xml_parser_generic(XML_Parser parser,
         void *buf = XML_GetBuffer(parser, XML_BUFFER_SIZE);
         if (!buf) {
             ret = CRE_MEMORY;
-            g_set_error(err, CR_XML_PARSER_ERROR, CRE_MEMORY,
+            g_set_error(err, ERR_DOMAIN, CRE_MEMORY,
                         "Out of memory: Cannot allocate buffer for xml parser '%s'",
                         path);
             break;
@@ -209,7 +212,7 @@ cr_xml_parser_generic(XML_Parser parser,
                        __func__,
                        path,
                        XML_ErrorString(XML_GetErrorCode(parser)));
-            g_set_error(err, CR_XML_PARSER_ERROR, CRE_XMLPARSER,
+            g_set_error(err, ERR_DOMAIN, CRE_XMLPARSER,
                         "Parse error '%s' at line: %d (%s)",
                         path,
                         (int) XML_GetCurrentLineNumber(parser),

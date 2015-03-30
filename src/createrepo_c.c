@@ -341,13 +341,13 @@ prepare_cache_dir(struct CmdOptions *cmd_options,
             if (!g_file_test(cmd_options->checksum_cachedir,
                              G_FILE_TEST_IS_DIR))
             {
-                g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+                g_set_error(err, CREATEREPO_C_ERROR, CRE_BADARG,
                             "The %s already exists and it is not a directory!",
                             cmd_options->checksum_cachedir);
                 return FALSE;
             }
         } else {
-            g_set_error(err, CR_CMD_ERROR, CRE_BADARG,
+            g_set_error(err, CREATEREPO_C_ERROR, CRE_BADARG,
                         "cannot use cachedir %s: %s",
                         cmd_options->checksum_cachedir, strerror(errno));
             return FALSE;

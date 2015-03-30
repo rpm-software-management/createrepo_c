@@ -27,6 +27,7 @@
 #include "error.h"
 #include "checksum.h"
 
+#define ERR_DOMAIN              CR_CHECKSUM_ERROR
 #define MAX_CHECKSUM_NAME_LEN   7
 #define BUFFER_SIZE             2048
 
@@ -131,14 +132,14 @@ cr_checksum_file(const char *filename,
         case CR_CHECKSUM_SHA512: ctx_type = EVP_sha512(); break;
         case CR_CHECKSUM_UNKNOWN:
         default:
-            g_set_error(err, CR_CHECKSUM_ERROR, CRE_UNKNOWNCHECKSUMTYPE,
+            g_set_error(err, ERR_DOMAIN, CRE_UNKNOWNCHECKSUMTYPE,
                         "Unknown checksum type");
             return NULL;
     }
 
     f = fopen(filename, "rb");
     if (!f) {
-        g_set_error(err, CR_CHECKSUM_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Cannot open a file: %s", strerror(errno));
         return NULL;
     }
@@ -146,7 +147,7 @@ cr_checksum_file(const char *filename,
     ctx = EVP_MD_CTX_create();
     rc = EVP_DigestInit_ex(ctx, ctx_type, NULL);
     if (!rc) {
-        g_set_error(err, CR_CHECKSUM_ERROR, CRE_OPENSSL,
+        g_set_error(err, ERR_DOMAIN, CRE_OPENSSL,
                     "EVP_DigestInit_ex() failed");
         EVP_MD_CTX_destroy(ctx);
         fclose(f);
@@ -159,7 +160,7 @@ cr_checksum_file(const char *filename,
     if (feof(f)) {
         EVP_DigestUpdate(ctx, buf, readed);
     } else {
-        g_set_error(err, CR_CHECKSUM_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Error while reading a file: %s", strerror(errno));
         EVP_MD_CTX_destroy(ctx);
         fclose(f);
@@ -197,20 +198,20 @@ cr_checksum_new(cr_ChecksumType type, GError **err)
         case CR_CHECKSUM_SHA512: ctx_type = EVP_sha512(); break;
         case CR_CHECKSUM_UNKNOWN:
         default:
-            g_set_error(err, CR_CHECKSUM_ERROR, CRE_UNKNOWNCHECKSUMTYPE,
+            g_set_error(err, ERR_DOMAIN, CRE_UNKNOWNCHECKSUMTYPE,
                         "Unknown checksum type");
             return NULL;
     }
 
     ctx = EVP_MD_CTX_create();
     if (!ctx) {
-        g_set_error(err, CR_CHECKSUM_ERROR, CRE_OPENSSL,
+        g_set_error(err, ERR_DOMAIN, CRE_OPENSSL,
                     "EVP_MD_CTX_create() failed");
         return NULL;
     }
 
     if (!EVP_DigestInit_ex(ctx, ctx_type, NULL)) {
-        g_set_error(err, CR_CHECKSUM_ERROR, CRE_OPENSSL,
+        g_set_error(err, ERR_DOMAIN, CRE_OPENSSL,
                     "EVP_DigestInit_ex() failed");
         EVP_MD_CTX_destroy(ctx);
         return NULL;
@@ -236,7 +237,7 @@ cr_checksum_update(cr_ChecksumCtx *ctx,
         return CRE_OK;
 
     if (!EVP_DigestUpdate(ctx->ctx, buf, len)) {
-        g_set_error(err, CR_CHECKSUM_ERROR, CRE_OPENSSL,
+        g_set_error(err, ERR_DOMAIN, CRE_OPENSSL,
                     "EVP_DigestUpdate() failed");
         return CRE_OPENSSL;
     }
@@ -255,7 +256,7 @@ cr_checksum_final(cr_ChecksumCtx *ctx, GError **err)
     assert(!err || *err == NULL);
 
     if (!EVP_DigestFinal_ex(ctx->ctx, raw_checksum, &len)) {
-        g_set_error(err, CR_CHECKSUM_ERROR, CRE_OPENSSL,
+        g_set_error(err, ERR_DOMAIN, CRE_OPENSSL,
                     "EVP_DigestFinal_ex() failed");
         EVP_MD_CTX_destroy(ctx->ctx);
         g_free(ctx);

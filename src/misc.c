@@ -36,6 +36,7 @@
 #include "error.h"
 #include "misc.h"
 
+#define ERR_DOMAIN      CR_MISC_ERROR
 #define BUFFER_SIZE     4096
 
 
@@ -252,7 +253,7 @@ cr_get_header_byte_range(const char *filename, GError **err)
     if (!fp) {
         g_debug("%s: Cannot open file %s (%s)", __func__, filename,
                 strerror(errno));
-        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Cannot open %s: %s", filename, strerror(errno));
         return results;
     }
@@ -263,7 +264,7 @@ cr_get_header_byte_range(const char *filename, GError **err)
     if (fseek(fp, 104, SEEK_SET) != 0) {
         g_debug("%s: fseek fail on %s (%s)", __func__, filename,
                 strerror(errno));
-        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Cannot seek over %s: %s", filename, strerror(errno));
         fclose(fp);
         return results;
@@ -272,14 +273,14 @@ cr_get_header_byte_range(const char *filename, GError **err)
     unsigned int sigindex = 0;
     unsigned int sigdata  = 0;
     if (fread(&sigindex, VAL_LEN, 1, fp) != 1) {
-        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "fread() error on %s: %s", filename, strerror(errno));
         fclose(fp);
         return results;
     }
     sigindex = htonl(sigindex);
     if (fread(&sigdata, VAL_LEN, 1, fp) != 1) {
-        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "fread() error on %s: %s", filename, strerror(errno));
         fclose(fp);
         return results;
@@ -300,14 +301,14 @@ cr_get_header_byte_range(const char *filename, GError **err)
     unsigned int hdrindex = 0;
     unsigned int hdrdata  = 0;
     if (fread(&hdrindex, VAL_LEN, 1, fp) != 1) {
-        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "fread() error on %s: %s", filename, strerror(errno));
         fclose(fp);
         return results;
     }
     hdrindex = htonl(hdrindex);
     if (fread(&hdrdata, VAL_LEN, 1, fp) != 1) {
-        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "fread() error on %s: %s", filename, strerror(errno));
         fclose(fp);
         return results;
@@ -325,7 +326,7 @@ cr_get_header_byte_range(const char *filename, GError **err)
     if (hdrend < hdrstart) {
         g_debug("%s: sanity check fail on %s (%d > %d))", __func__,
                 filename, hdrstart, hdrend);
-        g_set_error(err, CR_MISC_ERROR, CRE_ERROR,
+        g_set_error(err, ERR_DOMAIN, CRE_ERROR,
                     "sanity check error on %s (hdrstart: %d > hdrend: %d)",
                     filename, hdrstart, hdrend);
         return results;
@@ -383,7 +384,7 @@ cr_copy_file(const char *src, const char *in_dst, GError **err)
     if ((orig = fopen(src, "rb")) == NULL) {
         g_debug("%s: Cannot open source file %s (%s)", __func__, src,
                 strerror(errno));
-        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Cannot open file %s: %s", src, strerror(errno));
         return FALSE;
     }
@@ -392,7 +393,7 @@ cr_copy_file(const char *src, const char *in_dst, GError **err)
     if ((new = fopen(dst, "wb")) == NULL) {
         g_debug("%s: Cannot open destination file %s (%s)", __func__, dst,
                 strerror(errno));
-        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Cannot open file %s: %s", dst, strerror(errno));
         return FALSE;
     }
@@ -400,7 +401,7 @@ cr_copy_file(const char *src, const char *in_dst, GError **err)
     // Copy content from src -> dst
     while ((readed = fread(buf, 1, BUFFER_SIZE, orig)) > 0) {
         if (readed != BUFFER_SIZE && ferror(orig)) {
-            g_set_error(err, CR_MISC_ERROR, CRE_IO,
+            g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Error while read %s: %s", src, strerror(errno));
             return FALSE;
         }
@@ -408,7 +409,7 @@ cr_copy_file(const char *src, const char *in_dst, GError **err)
         if (fwrite(buf, 1, readed, new) != readed) {
             g_debug("%s: Error while copy %s -> %s (%s)", __func__, src,
                     dst, strerror(errno));
-            g_set_error(err, CR_MISC_ERROR, CRE_IO,
+            g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Error while write %s: %s", dst, strerror(errno));
             return FALSE;
         }
@@ -440,7 +441,7 @@ cr_compress_file_with_stat(const char *src,
     // Src must be a file NOT a directory
     if (!g_file_test(src, G_FILE_TEST_IS_REGULAR)) {
         g_debug("%s: Source (%s) must be a regular file!", __func__, src);
-        g_set_error(err, CR_MISC_ERROR, CRE_NOFILE,
+        g_set_error(err, ERR_DOMAIN, CRE_NOFILE,
                     "Not a regular file: %s", src);
         return CRE_NOFILE;
     }
@@ -462,7 +463,7 @@ cr_compress_file_with_stat(const char *src,
     if (orig == NULL) {
         g_debug("%s: Cannot open source file %s (%s)", __func__, src,
                 strerror(errno));
-        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Cannot open %s: %s", src, strerror(errno));
         ret = CRE_IO;
         goto compress_file_cleanup;
@@ -480,7 +481,7 @@ cr_compress_file_with_stat(const char *src,
         if (readed != BUFFER_SIZE && ferror(orig)) {
             g_debug("%s: Error while copy %s -> %s (%s)", __func__, src,
                     dst, strerror(errno));
-            g_set_error(err, CR_MISC_ERROR, CRE_IO,
+            g_set_error(err, ERR_DOMAIN, CRE_IO,
                         "Error while read %s: %s", src, strerror(errno));
             ret = CRE_IO;
             goto compress_file_cleanup;
@@ -532,7 +533,7 @@ cr_decompress_file_with_stat(const char *src,
     // Src must be a file NOT a directory
     if (!g_file_test(src, G_FILE_TEST_IS_REGULAR)) {
         g_debug("%s: Source (%s) must be a regular file!", __func__, src);
-        g_set_error(err, CR_MISC_ERROR, CRE_NOFILE,
+        g_set_error(err, ERR_DOMAIN, CRE_NOFILE,
                     "Not a regular file: %s", src);
         return CRE_NOFILE;
     }
@@ -544,7 +545,7 @@ cr_decompress_file_with_stat(const char *src,
     }
 
     if (compression == CR_CW_UNKNOWN_COMPRESSION) {
-        g_set_error(err, CR_MISC_ERROR, CRE_UNKNOWNCOMPRESSION,
+        g_set_error(err, ERR_DOMAIN, CRE_UNKNOWNCOMPRESSION,
                     "Cannot detect compression type");
         return CRE_UNKNOWNCOMPRESSION;
     }
@@ -585,7 +586,7 @@ cr_decompress_file_with_stat(const char *src,
     if (!new) {
         g_debug("%s: Cannot open destination file %s (%s)",
                 __func__, dst, strerror(errno));
-        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Cannot open %s: %s", src, strerror(errno));
         ret = CRE_IO;
         goto compress_file_cleanup;
@@ -604,7 +605,7 @@ cr_decompress_file_with_stat(const char *src,
         if (fwrite(buf, 1, readed, new) != (size_t) readed) {
             g_debug("%s: Error while copy %s -> %s (%s)",
                     __func__, src, dst, strerror(errno));
-            g_set_error(err, CR_MISC_ERROR, CRE_IO,
+            g_set_error(err, ERR_DOMAIN, CRE_IO,
                         "Error while write %s: %s", dst, strerror(errno));
             ret = CRE_IO;
             goto compress_file_cleanup;
@@ -653,7 +654,7 @@ cr_download(CURL *in_handle,
     // Open dst file
     file = fopen(dst, "wb");
     if (!file) {
-        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Cannot open %s: %s", dst, strerror(errno));
         remove(dst);
         return CRE_IO;
@@ -666,7 +667,7 @@ cr_download(CURL *in_handle,
     errorbuf[0] = '\0';
     rcode = curl_easy_setopt(handle, CURLOPT_ERRORBUFFER, errorbuf);
     if (rcode != CURLE_OK) {
-        g_set_error(err, CR_MISC_ERROR, CRE_CURL,
+        g_set_error(err, ERR_DOMAIN, CRE_CURL,
                     "curl_easy_setopt failed(CURLOPT_ERRORBUFFER): %s",
                     curl_easy_strerror(rcode));
         return CRE_CURL;
@@ -675,7 +676,7 @@ cr_download(CURL *in_handle,
     // Set URL
     rcode = curl_easy_setopt(handle, CURLOPT_URL, url);
     if (rcode != CURLE_OK) {
-        g_set_error(err, CR_MISC_ERROR, CRE_CURL,
+        g_set_error(err, ERR_DOMAIN, CRE_CURL,
                     "curl_easy_setopt failed(CURLOPT_URL): %s",
                     curl_easy_strerror(rcode));
         remove(dst);
@@ -685,7 +686,7 @@ cr_download(CURL *in_handle,
     // Set output file descriptor
     rcode = curl_easy_setopt(handle, CURLOPT_WRITEDATA, file);
     if (rcode != CURLE_OK) {
-        g_set_error(err, CR_MISC_ERROR, CRE_CURL,
+        g_set_error(err, ERR_DOMAIN, CRE_CURL,
                     "curl_easy_setopt(CURLOPT_WRITEDATA) failed: %s",
                     curl_easy_strerror(rcode));
         remove(dst);
@@ -695,7 +696,7 @@ cr_download(CURL *in_handle,
     // Download the file
     rcode = curl_easy_perform(handle);
     if (rcode != CURLE_OK) {
-        g_set_error(err, CR_MISC_ERROR, CRE_CURL,
+        g_set_error(err, ERR_DOMAIN, CRE_CURL,
                     "curl_easy_perform failed: %s: %s",
                     curl_easy_strerror(rcode), errorbuf);
         remove(dst);
@@ -760,7 +761,7 @@ cr_remove_dir(const char *path, GError **err)
 
     ret = nftw(path, cr_remove_dir_cb, 64, FTW_DEPTH | FTW_PHYS);
     if (ret != 0) {
-        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Cannot remove dir %s: %s", path, strerror(errno));
         return CRE_IO;
     }
@@ -1273,7 +1274,7 @@ cr_write_to_file(GError **err, gchar *filename, const char *format, ...)
 
     FILE *f = fopen(filename, "w");
     if (!f) {
-        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Cannot open %s: %s", filename, strerror(errno));
         return FALSE;
     }
@@ -1286,7 +1287,7 @@ cr_write_to_file(GError **err, gchar *filename, const char *format, ...)
     gboolean ret = TRUE;
 
     if (ferror(f)) {
-        g_set_error(err, CR_MISC_ERROR, CRE_IO,
+        g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Cannot write content to %s: %s",
                     filename, strerror(errno));
         ret = FALSE;
@@ -1426,20 +1427,20 @@ cr_spawn_check_exit_status(gint exit_status, GError **err)
             // Exit code == 0 means success
             return TRUE;
         } else {
-            g_set_error (err, CR_MISC_ERROR, CRE_SPAWNERRCODE,
+            g_set_error (err, ERR_DOMAIN, CRE_SPAWNERRCODE,
                         "Child process exited with code %ld",
                         (long) WEXITSTATUS(exit_status));
         }
     } else if (WIFSIGNALED(exit_status)) {
-        g_set_error (err, CR_MISC_ERROR, CRE_SPAWNKILLED,
+        g_set_error (err, ERR_DOMAIN, CRE_SPAWNKILLED,
                      "Child process killed by signal %ld",
                      (long) WTERMSIG(exit_status));
     } else if (WIFSTOPPED(exit_status)) {
-        g_set_error (err, CR_MISC_ERROR, CRE_SPAWNSTOPED,
+        g_set_error (err, ERR_DOMAIN, CRE_SPAWNSTOPED,
                      "Child process stopped by signal %ld",
                      (long) WSTOPSIG(exit_status));
     } else {
-        g_set_error (err, CR_MISC_ERROR, CRE_SPAWNABNORMAL,
+        g_set_error (err, ERR_DOMAIN, CRE_SPAWNABNORMAL,
                      "Child process exited abnormally");
     }
 

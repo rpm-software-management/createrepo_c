@@ -256,7 +256,7 @@ load_rpm(const char *filename,
         if (stat(filename, &stat_buf_own) == -1) {
             g_warning("%s: stat(%s) error (%s)", __func__,
                       filename, strerror(errno));
-            g_set_error(err,  CR_PARSEPKG_ERROR, CRE_IO, "stat(%s) failed: %s",
+            g_set_error(err,  CREATEREPO_C_ERROR, CRE_IO, "stat(%s) failed: %s",
                         filename, strerror(errno));
             goto errexit;
         }

@@ -29,7 +29,8 @@
 #include "xml_dump.h"
 #include "xml_dump_internal.h"
 
-#define INDENT  2
+#define ERR_DOMAIN      CR_XML_DUMP_UPDATEINFO_ERROR
+#define INDENT          2
 
 void
 cr_xml_dump_updatecollectionpackages(xmlNodePtr collection, GSList *packages)
@@ -214,7 +215,7 @@ cr_xml_dump_updaterecord(cr_UpdateRecord *rec, GError **err)
     xmlBufferPtr buf = xmlBufferCreate();
     if (buf == NULL) {
         g_critical("%s: Error creating the xml buffer", __func__);
-        g_set_error(err, CR_XML_DUMP_OTHER_ERROR, CRE_MEMORY,
+        g_set_error(err, ERR_DOMAIN, CRE_MEMORY,
                     "Cannot create an xml buffer");
         return NULL;
     }

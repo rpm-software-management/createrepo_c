@@ -37,6 +37,8 @@
 #include "xml_file.h"
 #include "modifyrepo_shared.h"
 
+#define ERR_DOMAIN      CR_MODIFYREPO_ERROR
+
 typedef struct {
 
     gboolean version;
@@ -135,7 +137,7 @@ check_arguments(RawCmdOptions *options, GError **err)
         && cr_compression_type(options->compress_type) == \
            CR_CW_UNKNOWN_COMPRESSION)
     {
-        g_set_error(err, CR_MODIFYREPO_ERROR, CRE_ERROR,
+        g_set_error(err, ERR_DOMAIN, CRE_ERROR,
                     "Unknown compression type \"%s\"", options->compress_type);
         return FALSE;
     }
@@ -144,7 +146,7 @@ check_arguments(RawCmdOptions *options, GError **err)
     if (options->checksum
         && cr_checksum_type(options->checksum) == CR_CHECKSUM_UNKNOWN)
     {
-        g_set_error(err, CR_MODIFYREPO_ERROR, CRE_ERROR,
+        g_set_error(err, ERR_DOMAIN, CRE_ERROR,
                     "Unknown checksum type \"%s\"", options->checksum);
         return FALSE;
     }
@@ -157,7 +159,7 @@ check_arguments(RawCmdOptions *options, GError **err)
     // -f/--batchfile
     if (options->batchfile
         && !g_file_test(options->batchfile, G_FILE_TEST_IS_REGULAR)) {
-        g_set_error(err, CR_MODIFYREPO_ERROR, CRE_ERROR,
+        g_set_error(err, ERR_DOMAIN, CRE_ERROR,
                     "File \"%s\" doesn't exist", options->batchfile);
         return FALSE;
     }
@@ -195,7 +197,7 @@ cmd_options_to_task(GSList **modifyrepotasks,
         g_debug("Preparing task for: %s", metadatapath);
 
     if (metadatapath && !g_file_test(metadatapath, G_FILE_TEST_IS_REGULAR)) {
-        g_set_error(err, CR_MODIFYREPO_ERROR, CRE_ERROR,
+        g_set_error(err, ERR_DOMAIN, CRE_ERROR,
                     "File \"%s\" is not regular file or doesn't exists",
                     metadatapath);
         return FALSE;

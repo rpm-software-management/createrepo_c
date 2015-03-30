@@ -32,6 +32,7 @@
 #include <unistd.h>
 #include "cmd_parser.h"
 #include "compression_wrapper.h"
+#include "createrepo_shared.h"
 #include "deltarpms.h"
 #include "dumper_thread.h"
 #include "checksum.h"
@@ -362,6 +363,7 @@ int
 main(int argc, char **argv)
 {
     struct CmdOptions *cmd_options;
+    gboolean ret;
     GError *tmp_err = NULL;
 
 
@@ -470,8 +472,6 @@ main(int argc, char **argv)
         out_dir  = g_strdup(in_dir);
         out_repo = g_strdup(in_repo);
     }
-    lock_dir = g_strconcat(out_dir, ".repodata/", NULL);
-    tmp_out_repo = g_strconcat(out_dir, ".repodata/", NULL);
 
 
     // Prepare cachedir for checksum if --cachedir is used
@@ -487,83 +487,27 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-
-
     // Block signals that terminates the process
 
-    sigset_t intmask;
-    sigemptyset(&intmask);
-    sigaddset(&intmask, SIGHUP);
-    sigaddset(&intmask, SIGINT);
-    sigaddset(&intmask, SIGPIPE);
-    sigaddset(&intmask, SIGALRM);
-    sigaddset(&intmask, SIGTERM);
-    sigaddset(&intmask, SIGUSR1);
-    sigaddset(&intmask, SIGUSR2);
-    sigaddset(&intmask, SIGPOLL);
-    sigaddset(&intmask, SIGPROF);
-    sigaddset(&intmask, SIGVTALRM);
-    sigprocmask(SIG_BLOCK, &intmask, NULL);
+    if (!cr_block_terminating_signals(&tmp_err)) {
+        g_printerr("%s\n", tmp_err->message);
+        exit(EXIT_FAILURE);
+    }
 
     // Check if lock exists & Create lock dir
 
-    if (g_mkdir(lock_dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
-        if (errno != EEXIST) {
-            g_critical("Error while creating temporary repodata directory %s: %s",
-                       lock_dir, strerror(errno));
-            exit(EXIT_FAILURE);
-        }
+    ret = cr_lock_repo(out_dir, cmd_options->ignore_lock, &lock_dir, &tmp_out_repo, &tmp_err);
+    global_lock_dir = lock_dir;
+    if (!ret) {
+        g_printerr("%s\n", tmp_err->message);
+        exit(EXIT_FAILURE);
+    }
 
-        g_critical("Temporary repodata directory: %s already exists! "
-                   "(Another createrepo process is running?)", lock_dir);
-
-        if (cmd_options->ignore_lock == FALSE)
-            exit(EXIT_FAILURE);
-
-        // The next section takes place only if the --ignore-lock is used
-        // Ugly, but user wants it -> it's his fault
-
-        // Remove existing .repodata/
-        g_debug("(--ignore-lock enabled) Let's remove the old .repodata/");
-        if (cr_rm(lock_dir, CR_RM_RECURSIVE, NULL, &tmp_err)) {
-            g_debug("(--ignore-lock enabled) Removed: %s", lock_dir);
-        } else {
-            g_critical("(--ignore-lock enabled) Cannot remove %s: %s",
-                       lock_dir, tmp_err->message);
-            exit(EXIT_FAILURE);
-        }
-
-        // Try to create own - just as a lock
-        if (g_mkdir(lock_dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
-            g_critical("(--ignore-lock enabled) Cannot create %s: %s",
-                       lock_dir, strerror(errno));
-            exit(EXIT_FAILURE);
-        } else {
-            g_debug("(--ignore-lock enabled) Own and empty %s created "
-                    "(serves as a lock)", lock_dir);
-        }
-
-        global_lock_dir = lock_dir;
-
-        // To data generation use a different one
-        tmp_out_repo[strlen(tmp_out_repo)-1] = '.'; // Replace the last '/' with '.'
-        gchar * new_tmp_out_repo = cr_append_pid_and_datetime(tmp_out_repo, "/");
-        g_free(tmp_out_repo);
-        tmp_out_repo = new_tmp_out_repo;
-        if (g_mkdir(tmp_out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
-            g_critical("(--ignore-lock enabled) Cannot create %s: %s",
-                       tmp_out_repo, strerror(errno));
-            exit(EXIT_FAILURE);
-        } else {
-            g_debug("(--ignore-lock enabled) For data generation is used: %s",
-                    tmp_out_repo);
-        }
-
+    if (g_strcmp0(lock_dir, tmp_out_repo)) {
         global_tmp_out_repo = tmp_out_repo;
         lock_dir_is_tmp_out_repo = 0;
     }
 
-    global_lock_dir = lock_dir;
 
     // Register cleanup function
     if (on_exit(failure_exit_cleanup, NULL))
@@ -596,18 +540,10 @@ main(int argc, char **argv)
 
     // Unblock the blocked signals
 
-    sigemptyset(&intmask);
-    sigaddset(&intmask, SIGHUP);
-    sigaddset(&intmask, SIGINT);
-    sigaddset(&intmask, SIGPIPE);
-    sigaddset(&intmask, SIGALRM);
-    sigaddset(&intmask, SIGTERM);
-    sigaddset(&intmask, SIGUSR1);
-    sigaddset(&intmask, SIGUSR2);
-    sigaddset(&intmask, SIGPOLL);
-    sigaddset(&intmask, SIGPROF);
-    sigaddset(&intmask, SIGVTALRM);
-    sigprocmask(SIG_UNBLOCK, &intmask, NULL);
+    if (!cr_unblock_terminating_signals(&tmp_err)) {
+        g_printerr("%s\n", tmp_err->message);
+        exit(EXIT_FAILURE);
+    }
 
 
     // Open package list
@@ -733,13 +669,10 @@ main(int argc, char **argv)
         g_debug("Copy groupfile %s -> %s",
                 cmd_options->groupfile_fullpath, groupfile);
 
-        int ret;
         ret = cr_better_copy_file(cmd_options->groupfile_fullpath,
                                   groupfile,
                                   &tmp_err);
-        assert(ret == CRE_OK || tmp_err);
-
-        if (ret != CRE_OK) {
+        if (!ret) {
             g_critical("Error while copy %s -> %s: %s",
                        cmd_options->groupfile_fullpath,
                        groupfile,
@@ -760,10 +693,7 @@ main(int argc, char **argv)
 
         g_debug("Copy groupfile %s -> %s", src_groupfile, groupfile);
 
-        int ret = cr_better_copy_file(src_groupfile, groupfile, &tmp_err);
-        assert(ret == CRE_OK || tmp_err);
-
-        if (ret != CRE_OK) {
+        if (!cr_better_copy_file(src_groupfile, groupfile, &tmp_err)){
             g_critical("Error while copy %s -> %s: %s",
                        src_groupfile, groupfile, tmp_err->message);
             g_clear_error(&tmp_err);
@@ -778,7 +708,6 @@ main(int argc, char **argv)
     if (cmd_options->update && cmd_options->keep_all_metadata &&
         old_metadata_location && old_metadata_location->updateinfo_href)
     {
-        int ret;
         gchar *src_updateinfo = old_metadata_location->updateinfo_href;
         updateinfo = g_strconcat(tmp_out_repo,
                                  cr_get_filename(src_updateinfo),
@@ -786,10 +715,7 @@ main(int argc, char **argv)
 
         g_debug("Copy updateinfo %s -> %s", src_updateinfo, updateinfo);
 
-        ret = cr_better_copy_file(src_updateinfo, updateinfo, &tmp_err);
-        assert(ret == CRE_OK || tmp_err);
-
-        if (ret != CRE_OK) {
+        if (!cr_better_copy_file(src_updateinfo, updateinfo, &tmp_err)) {
             g_critical("Error while copy %s -> %s: %s",
                        src_updateinfo, updateinfo, tmp_err->message);
             g_clear_error(&tmp_err);
@@ -1257,7 +1183,6 @@ main(int argc, char **argv)
 #ifdef CR_DELTA_RPM_SUPPORT
     // Delta generation
     if (cmd_options->deltas) {
-        gboolean ret;
         gchar *filename, *outdeltadir = NULL;
         gchar *prestodelta_xml_filename = NULL;
         GHashTable *ht_oldpackagedirs = NULL;
@@ -1438,7 +1363,6 @@ deltaerror:
     // Copy selected metadata from the old repository
     cr_RetentionType retentiontype = CR_RETENTION_DEFAULT;
     gint64 retentionval = (gint64) cmd_options->retain_old;
-    gboolean ret;
 
     if (cmd_options->retain_old_md_by_age) {
         retentiontype = CR_RETENTION_BYAGE;

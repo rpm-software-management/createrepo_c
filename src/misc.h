@@ -160,11 +160,11 @@ int cr_download(CURL *handle,
  * @param src           source filename
  * @param dst           destination (if dst is dir, filename of src is used)
  * @param err           GError **
- * @return              cr_Error return code
+ * @return              TRUE on success, FALSE if an error occured
  */
-int cr_copy_file(const char *src,
-                 const char *dst,
-                 GError **err);
+gboolean cr_copy_file(const char *src,
+                      const char *dst,
+                      GError **err);
 
 /** Compress file.
  * @param SRC           source filename
@@ -228,11 +228,11 @@ int cr_decompress_file_with_stat(const char *src,
  * @param src           source filename
  * @param dst           destination (if dst is dir, filename of src is used)
  * @param err           GError **
- * @return              cr_Error return code
+ * @return              TRUE on success, FALSE if an error occured
  */
-int cr_better_copy_file(const char *src,
-                        const char *dst,
-                        GError **err);
+gboolean cr_better_copy_file(const char *src,
+                             const char *dst,
+                             GError **err);
 
 /** Recursively remove directory.
  * @param path          filepath

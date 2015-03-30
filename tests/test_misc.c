@@ -422,14 +422,14 @@ static void
 copyfiletest_test_empty_file(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
-    int ret;
+    gboolean ret;
     char *checksum;
     GError *tmp_err = NULL;
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
     ret = cr_copy_file(TEST_EMPTY_FILE, copyfiletest->dst_file, &tmp_err);
+    g_assert(ret);
     g_assert(!tmp_err);
-    g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855");
@@ -441,12 +441,12 @@ static void
 copyfiletest_test_text_file(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
-    int ret;
+    gboolean ret;
     char *checksum;
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
     ret = cr_copy_file(TEST_TEXT_FILE, copyfiletest->dst_file, NULL);
-    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert(ret);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "2f395bdfa2750978965e4781ddf224c89646c7d7a1569b7ebb023b170f7bd8bb");
@@ -458,14 +458,14 @@ static void
 copyfiletest_test_binary_file(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
-    int ret;
+    gboolean ret;
     char *checksum;
     GError *tmp_err = NULL;
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
     ret = cr_copy_file(TEST_BINARY_FILE, copyfiletest->dst_file, &tmp_err);
     g_assert(!tmp_err);
-    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert(ret);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "bf68e32ad78cea8287be0f35b74fa3fecd0eaa91770b48f1a7282b015d6d883e");
@@ -477,13 +477,13 @@ static void
 copyfiletest_test_rewrite(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
-    int ret;
+    gboolean ret;
     char *checksum;
     GError *tmp_err = NULL;
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
     ret = cr_copy_file(TEST_BINARY_FILE, copyfiletest->dst_file, NULL);
-    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert(ret);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "bf68e32ad78cea8287be0f35b74fa3fecd0eaa91770b48f1a7282b015d6d883e");
@@ -491,7 +491,7 @@ copyfiletest_test_rewrite(Copyfiletest *copyfiletest, gconstpointer test_data)
 
     ret = cr_copy_file(TEST_TEXT_FILE, copyfiletest->dst_file, &tmp_err);
     g_assert(!tmp_err);
-    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert(ret);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "2f395bdfa2750978965e4781ddf224c89646c7d7a1569b7ebb023b170f7bd8bb");
@@ -503,21 +503,21 @@ static void
 copyfiletest_test_corner_cases(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
     CR_UNUSED(test_data);
-    int ret;
+    gboolean ret;
     GError *tmp_err = NULL;
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
 
-    // Withou GError
+    // Without GError
     ret = cr_copy_file(NON_EXIST_FILE, copyfiletest->dst_file, NULL);
-    g_assert_cmpint(ret, !=, CRE_OK);
+    g_assert(!ret);
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
 
     // With GError
     ret = cr_copy_file(NON_EXIST_FILE, copyfiletest->dst_file, &tmp_err);
     g_assert(tmp_err);
     g_error_free(tmp_err);
-    g_assert_cmpint(ret, !=, CRE_OK);
+    g_assert(!ret);
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
 }
 
@@ -648,7 +648,7 @@ test_cr_download_invalid_url(Copyfiletest *copyfiletest, gconstpointer test_data
 static void
 test_cr_better_copy_file_local(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
-    int ret;
+    gboolean ret;
     char *checksum;
     GError *tmp_err = NULL;
 
@@ -657,7 +657,7 @@ test_cr_better_copy_file_local(Copyfiletest *copyfiletest, gconstpointer test_da
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
     ret = cr_better_copy_file(TEST_BINARY_FILE, copyfiletest->dst_file, &tmp_err);
     g_assert(!tmp_err);
-    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert(ret);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "bf68e32ad78cea8287be0f35b74fa3fecd0eaa91770b48f1a7282b015d6d883e");
@@ -669,7 +669,7 @@ test_cr_better_copy_file_local(Copyfiletest *copyfiletest, gconstpointer test_da
 static void
 test_cr_better_copy_file_url(Copyfiletest *copyfiletest, gconstpointer test_data)
 {
-    int ret;
+    gboolean ret;
     GError *tmp_err = NULL;
 
     CR_UNUSED(test_data);
@@ -677,7 +677,7 @@ test_cr_better_copy_file_url(Copyfiletest *copyfiletest, gconstpointer test_data
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
     ret = cr_better_copy_file(VALID_URL_01, copyfiletest->dst_file, &tmp_err);
     g_assert(!tmp_err);
-    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert(ret);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
 }
 

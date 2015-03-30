@@ -359,16 +359,15 @@ cr_get_filename(const char *filepath)
 }
 
 
-int
+gboolean
 cr_copy_file(const char *src, const char *in_dst, GError **err)
 {
-    int ret = CRE_OK;
+    gboolean ret = TRUE;
     size_t readed;
     char buf[BUFFER_SIZE];
-    gchar *dst = (gchar *) in_dst;
-
-    FILE *orig = NULL;
-    FILE *new  = NULL;
+    _cleanup_free_ gchar *dst = NULL;
+    _cleanup_file_fclose_ FILE *orig = NULL;
+    _cleanup_file_fclose_ FILE *new  = NULL;
 
     assert(src);
     assert(in_dst);
@@ -377,31 +376,33 @@ cr_copy_file(const char *src, const char *in_dst, GError **err)
     // If destination is dir use filename from src
     if (g_str_has_suffix(in_dst, "/"))
         dst = g_strconcat(in_dst, cr_get_filename(src), NULL);
+    else
+        dst = g_strdup(in_dst);
 
+    // Open src file
     if ((orig = fopen(src, "rb")) == NULL) {
         g_debug("%s: Cannot open source file %s (%s)", __func__, src,
                 strerror(errno));
         g_set_error(err, CR_MISC_ERROR, CRE_IO,
                     "Cannot open file %s: %s", src, strerror(errno));
-        ret = CRE_IO;
-        goto copy_file_cleanup;
+        return FALSE;
     }
 
+    // Open dst file
     if ((new = fopen(dst, "wb")) == NULL) {
         g_debug("%s: Cannot open destination file %s (%s)", __func__, dst,
                 strerror(errno));
         g_set_error(err, CR_MISC_ERROR, CRE_IO,
                     "Cannot open file %s: %s", dst, strerror(errno));
-        ret = CRE_IO;
-        goto copy_file_cleanup;
+        return FALSE;
     }
 
+    // Copy content from src -> dst
     while ((readed = fread(buf, 1, BUFFER_SIZE, orig)) > 0) {
         if (readed != BUFFER_SIZE && ferror(orig)) {
             g_set_error(err, CR_MISC_ERROR, CRE_IO,
                     "Error while read %s: %s", src, strerror(errno));
-            ret = CRE_IO;
-            goto copy_file_cleanup;
+            return FALSE;
         }
 
         if (fwrite(buf, 1, readed, new) != readed) {
@@ -409,23 +410,11 @@ cr_copy_file(const char *src, const char *in_dst, GError **err)
                     dst, strerror(errno));
             g_set_error(err, CR_MISC_ERROR, CRE_IO,
                     "Error while write %s: %s", dst, strerror(errno));
-            ret = CRE_IO;
-            goto copy_file_cleanup;
+            return FALSE;
         }
     }
 
-copy_file_cleanup:
-
-    if (dst != in_dst)
-        g_free(dst);
-
-    if (new)
-        fclose(new);
-
-    if (orig)
-        fclose(orig);
-
-    return ret;
+    return TRUE;
 }
 
 
@@ -720,7 +709,7 @@ cr_download(CURL *in_handle,
 
 
 
-int
+gboolean
 cr_better_copy_file(const char *src, const char *in_dst, GError **err)
 {
     GError *tmp_err = NULL;
@@ -738,10 +727,10 @@ cr_better_copy_file(const char *src, const char *in_dst, GError **err)
                 tmp_err->message);
         g_propagate_prefixed_error(err, tmp_err,
                                    "Error while downloading %s: ", src);
-        return CRE_CURL;
+        return FALSE;
     }
 
-    return CRE_OK;
+    return TRUE;
 }
 
 

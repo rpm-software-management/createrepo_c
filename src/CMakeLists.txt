@@ -1,6 +1,7 @@
 SET (createrepo_c_SRCS
      checksum.c
      compression_wrapper.c
+     createrepo_shared.c
      deltarpms.c
      dumper_thread.c
      error.c
@@ -96,6 +97,12 @@ TARGET_LINK_LIBRARIES(modifyrepo_c
                         ${GLIB2_LIBRARIES}
                         ${GTHREAD2_LIBRARIES})
 
+ADD_EXECUTABLE(sqliterepo_c sqliterepo_c.c)
+TARGET_LINK_LIBRARIES(sqliterepo_c
+                        libcreaterepo_c
+                        ${GLIB2_LIBRARIES}
+                        ${GTHREAD2_LIBRARIES})
+
 CONFIGURE_FILE("createrepo_c.pc.cmake" "${CMAKE_SOURCE_DIR}/src/createrepo_c.pc" @ONLY)
 CONFIGURE_FILE("version.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/version.h" @ONLY)
 CONFIGURE_FILE("deltarpms.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/deltarpms.h" @ONLY)
@@ -111,5 +118,6 @@ INSTALL(TARGETS libcreaterepo_c LIBRARY DESTINATION ${LIB_INSTALL_DIR})
 INSTALL(TARGETS createrepo_c DESTINATION bin/)
 INSTALL(TARGETS mergerepo_c DESTINATION bin/)
 INSTALL(TARGETS modifyrepo_c DESTINATION bin/)
+INSTALL(TARGETS sqliterepo_c DESTINATION bin/)
 
 ADD_SUBDIRECTORY(python)

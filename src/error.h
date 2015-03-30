@@ -92,6 +92,10 @@ typedef enum {
         (31) Deltarpm related error */
     CRE_BADXMLUPDATEINFO, /*!<
         (32) Bad updateinfo.xml file */
+    CRE_SIGPROCMASK, /*!<
+        (33) Cannot change blocked signals */
+    CRE_SENTINEL, /*!<
+        (XX) Sentinel */
 } cr_Error;
 
 /** Converts cr_Error return code to error string.
@@ -101,6 +105,7 @@ typedef enum {
 const char *cr_strerror(cr_Error rc);
 
 /* Error domains */
+#define CR_CREATEREPO_C_ERROR           cr_createrepo_c_error_quark()
 #define CR_CHECKSUM_ERROR               cr_checksum_error_quark()
 #define CR_CMD_ERROR                    cr_cmd_error_quark()
 #define CR_COMPRESSION_WRAPPER_ERROR    cr_compression_wrapper_error_quark()
@@ -114,6 +119,7 @@ const char *cr_strerror(cr_Error rc);
 #define CR_PARSEPKG_ERROR               cr_parsepkg_error_quark()
 #define CR_REPOMD_ERROR                 cr_repomd_error_quark()
 #define CR_REPOMD_RECORD_ERROR          cr_repomd_record_error_quark()
+#define CR_SQLITEREPO_ERROR             cr_sqliterepo_error_quark()
 #define CR_THREADS_ERROR                cr_threads_error_quark()
 #define CR_XML_DUMP_FILELISTS_ERROR     cr_xml_dump_filelists_error_quark()
 #define CR_XML_DUMP_OTHER_ERROR         cr_xml_dump_other_error_quark()
@@ -127,6 +133,7 @@ const char *cr_strerror(cr_Error rc);
 #define CR_XML_PARSER_REPOMD_ERROR      cr_xml_parser_repomd_error_quark()
 #define CR_XML_PARSER_UPDATEINFO_ERROR  cr_xml_parser_updateinfo_error_quark()
 
+GQuark cr_createrepo_c_error_quark(void);
 GQuark cr_checksum_error_quark(void);
 GQuark cr_cmd_error_quark(void);
 GQuark cr_compression_wrapper_error_quark(void);
@@ -140,6 +147,7 @@ GQuark cr_modifyrepo_error_quark(void);
 GQuark cr_parsepkg_error_quark(void);
 GQuark cr_repomd_error_quark(void);
 GQuark cr_repomd_record_error_quark(void);
+GQuark cr_sqliterepo_error_quark(void);
 GQuark cr_threads_error_quark(void);
 GQuark cr_xml_dump_filelists_error_quark(void);
 GQuark cr_xml_dump_other_error_quark(void);

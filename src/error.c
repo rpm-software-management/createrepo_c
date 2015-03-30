@@ -91,6 +91,12 @@ cr_strerror(cr_Error rc)
 }
 
 GQuark
+cr_createrepo_c_error_quark(void)
+{
+    return g_quark_from_static_string("cr_createrepo_c_error");
+}
+
+GQuark
 cr_cmd_error_quark(void)
 {
     return g_quark_from_static_string("cr_cmd_error");
@@ -165,6 +171,12 @@ GQuark
 cr_repomd_record_error_quark(void)
 {
     return g_quark_from_static_string("cr_repomd_record_error");
+}
+
+GQuark
+cr_sqliterepo_error_quark(void)
+{
+    return g_quark_from_static_string("cr_sqliterepo_error");
 }
 
 GQuark

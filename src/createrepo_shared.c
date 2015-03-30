@@ -46,7 +46,7 @@ cr_block_terminating_signals(GError **err)
     sigaddset(&intmask, SIGVTALRM);
 
     if (sigprocmask(SIG_BLOCK, &intmask, NULL)) {
-        g_set_error(err, CR_CREATEREPO_C_ERROR, CRE_SIGPROCMASK,
+        g_set_error(err, CREATEREPO_C_ERROR, CRE_SIGPROCMASK,
                     "Cannot block terminating signals: %s", strerror(errno));
         return FALSE;
     }
@@ -74,7 +74,7 @@ cr_unblock_terminating_signals(GError **err)
     sigaddset(&intmask, SIGVTALRM);
 
     if (sigprocmask(SIG_UNBLOCK, &intmask, NULL)) {
-        g_set_error(err, CR_CREATEREPO_C_ERROR, CRE_SIGPROCMASK,
+        g_set_error(err, CREATEREPO_C_ERROR, CRE_SIGPROCMASK,
                     "Cannot unblock terminating signals: %s", strerror(errno));
         return FALSE;
     }
@@ -100,7 +100,7 @@ cr_lock_repo(const gchar *repo_dir,
 
     if (g_mkdir(lock_dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
         if (errno != EEXIST) {
-            g_set_error(err, CR_CREATEREPO_C_ERROR, CRE_IO,
+            g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
                         "Error while creating temporary repodata "
                         "directory: %s: %s", lock_dir, strerror(errno));
             return FALSE;
@@ -110,7 +110,7 @@ cr_lock_repo(const gchar *repo_dir,
                 "(Another createrepo process is running?)", lock_dir);
 
         if (ignore_lock == FALSE) {
-            g_set_error(err, CR_CREATEREPO_C_ERROR, CRE_IO,
+            g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
                         "Temporary repodata directory %s already exists! "
                         "(Another createrepo process is running?)", lock_dir);
             return FALSE;
@@ -126,7 +126,7 @@ cr_lock_repo(const gchar *repo_dir,
         } else {
             g_critical("(--ignore-lock enabled) Cannot remove %s: %s",
                        lock_dir, tmp_err->message);
-            g_set_error(err, CR_CREATEREPO_C_ERROR, CRE_IO,
+            g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
                         "Cannot remove %s (--ignore-lock enabled) :%s",
                         lock_dir, tmp_err->message);
             return FALSE;
@@ -136,7 +136,7 @@ cr_lock_repo(const gchar *repo_dir,
         if (g_mkdir(lock_dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
             g_critical("(--ignore-lock enabled) Cannot create %s: %s",
                        lock_dir, strerror(errno));
-            g_set_error(err, CR_CREATEREPO_C_ERROR, CRE_IO,
+            g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
                         "Cannot create: %s (--ignore-lock enabled): %s",
                         lock_dir, strerror(errno));
             return FALSE;
@@ -154,7 +154,7 @@ cr_lock_repo(const gchar *repo_dir,
         if (g_mkdir(tmp_repodata_dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
             g_critical("(--ignore-lock enabled) Cannot create %s: %s",
                        tmp_repodata_dir, strerror(errno));
-            g_set_error(err, CR_CREATEREPO_C_ERROR, CRE_IO,
+            g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
                         "Cannot create: %s (--ignore-lock enabled): %s",
                         tmp_repodata_dir, strerror(errno));
             return FALSE;

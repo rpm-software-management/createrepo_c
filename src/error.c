@@ -91,9 +91,12 @@ cr_strerror(cr_Error rc)
 }
 
 GQuark
-cr_createrepo_c_error_quark(void)
+createrepo_c_error_quark(void)
 {
-    return g_quark_from_static_string("cr_createrepo_c_error");
+    static GQuark quark = 0;
+    if (!quark)
+            quark = g_quark_from_static_string ("createrepo_c_error");
+    return quark;
 }
 
 GQuark

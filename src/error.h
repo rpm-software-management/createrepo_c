@@ -105,7 +105,7 @@ typedef enum {
 const char *cr_strerror(cr_Error rc);
 
 /* Error domains */
-#define CR_CREATEREPO_C_ERROR           cr_createrepo_c_error_quark()
+#define CREATEREPO_C_ERROR              createrepo_c_error_quark()
 #define CR_CHECKSUM_ERROR               cr_checksum_error_quark()
 #define CR_CMD_ERROR                    cr_cmd_error_quark()
 #define CR_COMPRESSION_WRAPPER_ERROR    cr_compression_wrapper_error_quark()
@@ -133,7 +133,7 @@ const char *cr_strerror(cr_Error rc);
 #define CR_XML_PARSER_REPOMD_ERROR      cr_xml_parser_repomd_error_quark()
 #define CR_XML_PARSER_UPDATEINFO_ERROR  cr_xml_parser_updateinfo_error_quark()
 
-GQuark cr_createrepo_c_error_quark(void);
+GQuark createrepo_c_error_quark(void);
 GQuark cr_checksum_error_quark(void);
 GQuark cr_cmd_error_quark(void);
 GQuark cr_compression_wrapper_error_quark(void);

@@ -106,63 +106,7 @@ const char *cr_strerror(cr_Error rc);
 
 /* Error domains */
 #define CREATEREPO_C_ERROR              createrepo_c_error_quark()
-#define CR_CHECKSUM_ERROR               cr_checksum_error_quark()
-#define CR_CMD_ERROR                    cr_cmd_error_quark()
-#define CR_COMPRESSION_WRAPPER_ERROR    cr_compression_wrapper_error_quark()
-#define CR_DB_ERROR                     cr_db_error_quark()
-#define CR_DELTARPMS_ERROR              cr_deltarpms_error_quark()
-#define CR_HELPER_ERROR                 cr_helper_error_quark()
-#define CR_LOAD_METADATA_ERROR          cr_load_metadata_error_quark()
-#define CR_LOCATE_METADATA_ERROR        cr_locate_metadata_error_quark()
-#define CR_MISC_ERROR                   cr_misc_error_quark()
-#define CR_MODIFYREPO_ERROR             cr_modifyrepo_error_quark()
-#define CR_PARSEPKG_ERROR               cr_parsepkg_error_quark()
-#define CR_REPOMD_ERROR                 cr_repomd_error_quark()
-#define CR_REPOMD_RECORD_ERROR          cr_repomd_record_error_quark()
-#define CR_SQLITEREPO_ERROR             cr_sqliterepo_error_quark()
-#define CR_THREADS_ERROR                cr_threads_error_quark()
-#define CR_XML_DUMP_DELTAPACKAGE_ERROR  cr_xml_dump_deltapackage_error_quark()
-#define CR_XML_DUMP_FILELISTS_ERROR     cr_xml_dump_filelists_error_quark()
-#define CR_XML_DUMP_OTHER_ERROR         cr_xml_dump_other_error_quark()
-#define CR_XML_DUMP_PRIMARY_ERROR       cr_xml_dump_primary_error_quark()
-#define CR_XML_DUMP_REPOMD_ERROR        cr_xml_dump_repomd_error_quark()
-#define CR_XML_DUMP_UPDATEINFO_ERROR    cr_xml_dump_updateinfo_error_quark()
-#define CR_XML_FILE_ERROR               cr_xml_file_error_quark()
-#define CR_XML_PARSER_ERROR             cr_xml_parser_error_quark()
-#define CR_XML_PARSER_FIL_ERROR         cr_xml_parser_fil_error_quark()
-#define CR_XML_PARSER_OTH_ERROR         cr_xml_parser_oth_error_quark()
-#define CR_XML_PARSER_PRI_ERROR         cr_xml_parser_pri_error_quark()
-#define CR_XML_PARSER_REPOMD_ERROR      cr_xml_parser_repomd_error_quark()
-#define CR_XML_PARSER_UPDATEINFO_ERROR  cr_xml_parser_updateinfo_error_quark()
 
 GQuark createrepo_c_error_quark(void);
-GQuark cr_checksum_error_quark(void);
-GQuark cr_cmd_error_quark(void);
-GQuark cr_compression_wrapper_error_quark(void);
-GQuark cr_db_error_quark(void);
-GQuark cr_deltarpms_error_quark(void);
-GQuark cr_helper_error_quark(void);
-GQuark cr_load_metadata_error_quark(void);
-GQuark cr_locate_metadata_error_quark(void);
-GQuark cr_misc_error_quark(void);
-GQuark cr_modifyrepo_error_quark(void);
-GQuark cr_parsepkg_error_quark(void);
-GQuark cr_repomd_error_quark(void);
-GQuark cr_repomd_record_error_quark(void);
-GQuark cr_sqliterepo_error_quark(void);
-GQuark cr_threads_error_quark(void);
-GQuark cr_xml_dump_deltapackage_error_quark(void);
-GQuark cr_xml_dump_filelists_error_quark(void);
-GQuark cr_xml_dump_other_error_quark(void);
-GQuark cr_xml_dump_primary_error_quark(void);
-GQuark cr_xml_dump_repomd_error_quark(void);
-GQuark cr_xml_dump_updateinfo_error_quark(void);
-GQuark cr_xml_file_error_quark(void);
-GQuark cr_xml_parser_error_quark(void);
-GQuark cr_xml_parser_fil_error_quark(void);
-GQuark cr_xml_parser_oth_error_quark(void);
-GQuark cr_xml_parser_pri_error_quark(void);
-GQuark cr_xml_parser_repomd_error_quark(void);
-GQuark cr_xml_parser_updateinfo_error_quark(void);
 
 #endif

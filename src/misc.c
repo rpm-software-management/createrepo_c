@@ -363,7 +363,6 @@ cr_get_filename(const char *filepath)
 gboolean
 cr_copy_file(const char *src, const char *in_dst, GError **err)
 {
-    gboolean ret = TRUE;
     size_t readed;
     char buf[BUFFER_SIZE];
     _cleanup_free_ gchar *dst = NULL;

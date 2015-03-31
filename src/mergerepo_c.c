@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <string.h>
 #include "error.h"
+#include "createrepo_shared.h"
 #include "version.h"
 #include "helpers.h"
 #include "compression_wrapper.h"
@@ -1546,19 +1547,7 @@ main(int argc, char **argv)
 
     // Set logging
 
-    g_log_set_default_handler (cr_log_fn, NULL);
-
-    if (cmd_options->verbose) {
-        // Verbose mode
-        GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
-        g_log_set_handler(NULL, levels, cr_log_fn, NULL);
-        g_log_set_handler("C_CREATEREPOLIB", levels, cr_log_fn, NULL);
-    } else {
-        // Standard mode
-        GLogLevelFlags levels = G_LOG_LEVEL_DEBUG;
-        g_log_set_handler(NULL, levels, cr_null_log_fn, NULL);
-        g_log_set_handler("C_CREATEREPOLIB", levels, cr_null_log_fn, NULL);
-    }
+    cr_setup_logging(FALSE, cmd_options->verbose);
 
 
     // Check arguments

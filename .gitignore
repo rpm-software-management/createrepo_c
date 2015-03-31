@@ -9,6 +9,7 @@ snippets/
 mergerepo_c
 createrepo_c
 modifyrepo_c
+sqliterepo_c
 
 # Packages and tarball
 createrepo*.rpm

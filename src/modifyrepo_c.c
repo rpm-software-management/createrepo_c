@@ -28,6 +28,7 @@
 #include "error.h"
 #include "version.h"
 #include "compression_wrapper.h"
+#include "createrepo_shared.h"
 #include "misc.h"
 #include "locate_metadata.h"
 #include "load_metadata.h"
@@ -249,18 +250,8 @@ main(int argc, char **argv)
 
     // Set logging
 
-    g_log_set_default_handler(cr_log_fn, NULL);
-    if (options.verbose) {
-        // Verbose mode
-        GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO | G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
-        g_log_set_handler(NULL, levels, cr_log_fn, NULL);
-        g_log_set_handler("C_CREATEREPOLIB", levels, cr_log_fn, NULL);
-    } else {
-        // Standard mode
-        GLogLevelFlags levels = G_LOG_LEVEL_DEBUG;
-        g_log_set_handler(NULL, levels, cr_null_log_fn, NULL);
-        g_log_set_handler("C_CREATEREPOLIB", levels, cr_null_log_fn, NULL);
-    }
+    cr_setup_logging(FALSE, options.verbose);
+
 
     // Print version if required
 

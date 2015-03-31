@@ -324,7 +324,6 @@ main(int argc, char **argv)
 
 
     // Arguments parsing
-
     cmd_options = parse_arguments(&argc, &argv, &tmp_err);
     if (!cmd_options) {
         g_printerr("Argument parsing failed: %s\n", tmp_err->message);
@@ -332,9 +331,7 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-
     // Arguments pre-check
-
     if (cmd_options->version) {
         // Just print version
         printf("Version: %d.%d.%d\n", CR_VERSION_MAJOR,
@@ -353,9 +350,7 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-
     // Dirs
-
     gchar *in_dir       = NULL;  // path/to/repo/
     gchar *in_repo      = NULL;  // path/to/repo/repodata/
     gchar *out_dir      = NULL;  // path/to/out_repo/
@@ -372,7 +367,6 @@ main(int argc, char **argv)
     }
 
     // Check if inputdir exists
-
     if (!g_file_test(in_dir, G_FILE_TEST_IS_DIR)) {
         g_printerr("Directory %s must exist\n", in_dir);
         g_free(in_dir);
@@ -382,7 +376,6 @@ main(int argc, char **argv)
 
 
     // Check parsed arguments
-
     if (!check_arguments(cmd_options, in_dir, &tmp_err)) {
         g_printerr("%s\n", tmp_err->message);
         g_error_free(tmp_err);
@@ -391,33 +384,10 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-
     // Set logging stuff
-
-    g_log_set_default_handler (cr_log_fn, NULL);
-
-    if (cmd_options->quiet) {
-        // Quiet mode
-        GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO |
-                                G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
-        g_log_set_handler(NULL, levels, cr_null_log_fn, NULL);
-        g_log_set_handler("C_CREATEREPOLIB", levels, cr_null_log_fn, NULL);
-    } else if (cmd_options->verbose) {
-        // Verbose mode
-        GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO |
-                                G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
-        g_log_set_handler(NULL, levels, cr_log_fn, NULL);
-        g_log_set_handler("C_CREATEREPOLIB", levels, cr_log_fn, NULL);
-    } else {
-        // Standard mode
-        GLogLevelFlags levels = G_LOG_LEVEL_DEBUG;
-        g_log_set_handler(NULL, levels, cr_null_log_fn, NULL);
-        g_log_set_handler("C_CREATEREPOLIB", levels, cr_null_log_fn, NULL);
-    }
-
+    cr_setup_logging(cmd_options->quiet, cmd_options->verbose);
 
     // Set paths of input and output repos
-
     in_repo = g_strconcat(in_dir, "repodata/", NULL);
 
     if (cmd_options->outputdir) {
@@ -427,7 +397,6 @@ main(int argc, char **argv)
         out_dir  = g_strdup(in_dir);
         out_repo = g_strdup(in_repo);
     }
-
 
     // Prepare cachedir for checksum if --cachedir is used
     if (!prepare_cache_dir(cmd_options, out_dir, &tmp_err)) {
@@ -479,13 +448,10 @@ main(int argc, char **argv)
 
 
     // Init package parser
-
     cr_package_parser_init();
     cr_xml_dump_init();
 
-
     // Thread pool - Creation
-
     struct UserData user_data;
     g_thread_init(NULL);
     GThreadPool *pool = g_thread_pool_new(cr_dumper_thread,
@@ -501,7 +467,6 @@ main(int argc, char **argv)
 
 
     // Thread pool - Fill with tasks
-
     package_count = fill_pool(pool,
                               in_dir,
                               cmd_options,
@@ -516,7 +481,6 @@ main(int argc, char **argv)
 
 
     // Load old metadata if --update
-
     cr_Metadata *old_metadata = NULL;
     struct cr_MetadataLocation *old_metadata_location = NULL;
 
@@ -576,7 +540,6 @@ main(int argc, char **argv)
 
 
     // Copy groupfile
-
     gchar *groupfile = NULL;
 
     if (cmd_options->groupfile_fullpath) {
@@ -621,7 +584,6 @@ main(int argc, char **argv)
 
 
     // Copy update info
-
     char *updateinfo = NULL;
 
     if (cmd_options->update && cmd_options->keep_all_metadata &&
@@ -646,7 +608,6 @@ main(int argc, char **argv)
 
 
     // Setup compression types
-
     const char *sqlite_compression_suffix = NULL;
     const char *prestodelta_compression_suffix = NULL;
     cr_CompressionType sqlite_compression = CR_CW_BZ2_COMPRESSION;
@@ -670,7 +631,6 @@ main(int argc, char **argv)
 
 
     // Create and open new compressed files
-
     cr_XmlFile *pri_cr_file;
     cr_XmlFile *fil_cr_file;
     cr_XmlFile *oth_cr_file;
@@ -747,17 +707,13 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-
     // Set number of packages
-
     g_debug("Setting number of packages");
     cr_xmlfile_set_num_of_pkgs(pri_cr_file, package_count, NULL);
     cr_xmlfile_set_num_of_pkgs(fil_cr_file, package_count, NULL);
     cr_xmlfile_set_num_of_pkgs(oth_cr_file, package_count, NULL);
 
-
     // Open sqlite databases
-
     gchar *pri_db_filename = NULL;
     gchar *fil_db_filename = NULL;
     gchar *oth_db_filename = NULL;
@@ -837,7 +793,6 @@ main(int argc, char **argv)
     }
 
     // Thread pool - User data initialization
-
     user_data.pri_f             = pri_cr_file;
     user_data.fil_f             = fil_cr_file;
     user_data.oth_f             = oth_cr_file;
@@ -872,15 +827,11 @@ main(int argc, char **argv)
 
     g_debug("Thread pool user data ready");
 
-
     // Start pool
-
     g_thread_pool_set_max_threads(pool, cmd_options->workers, NULL);
     g_message("Pool started (with %d workers)", cmd_options->workers);
 
-
     // Wait until pool is finished
-
     g_thread_pool_free(pool, FALSE, TRUE);
     g_message("Pool finished");
 
@@ -900,9 +851,7 @@ main(int argc, char **argv)
     g_mutex_free(user_data.mutex_oth);
     g_mutex_free(user_data.mutex_deltatargetpackages);
 
-
     // Create repomd records for each file
-
     g_debug("Generating repomd.xml");
 
     cr_Repomd *repomd_obj = cr_repomd_new();
@@ -918,9 +867,7 @@ main(int argc, char **argv)
     cr_RepomdRecord *updateinfo_rec           = NULL;
     cr_RepomdRecord *prestodelta_rec          = NULL;
 
-
     // XML
-
     cr_repomd_record_load_contentstat(pri_xml_rec, pri_stat);
     cr_repomd_record_load_contentstat(fil_xml_rec, fil_stat);
     cr_repomd_record_load_contentstat(oth_xml_rec, oth_stat);
@@ -952,7 +899,6 @@ main(int argc, char **argv)
     g_thread_pool_push(fill_pool, oth_fill_task, NULL);
 
     // Groupfile
-
     if (groupfile) {
         groupfile_rec = cr_repomd_record_new("group", groupfile);
         compressed_groupfile_rec = cr_repomd_record_new("group_gz", groupfile);
@@ -971,7 +917,6 @@ main(int argc, char **argv)
 
 
     // Updateinfo
-
     if (updateinfo) {
         updateinfo_rec = cr_repomd_record_new("updateinfo", updateinfo);
         cr_repomd_record_fill(updateinfo_rec,
@@ -985,9 +930,7 @@ main(int argc, char **argv)
         }
     }
 
-
     // Wait till repomd record fill task of xml files ends.
-
     g_thread_pool_free(fill_pool, FALSE, TRUE);
 
     cr_repomdrecordfilltask_free(pri_fill_task, NULL);
@@ -995,7 +938,6 @@ main(int argc, char **argv)
     cr_repomdrecordfilltask_free(oth_fill_task, NULL);
 
     // Sqlite db
-
     if (!cmd_options->no_database) {
 
         gchar *pri_db_name = g_strconcat(tmp_out_repo, "/primary.sqlite",
@@ -1015,7 +957,6 @@ main(int argc, char **argv)
 
 
         // Compress dbs
-
         GThreadPool *compress_pool =  g_thread_pool_new(cr_compressing_thread,
                                                         NULL, 3, FALSE, NULL);
 
@@ -1053,7 +994,6 @@ main(int argc, char **argv)
         }
 
         // Prepare repomd records
-
         pri_db_rec = cr_repomd_record_new("primary_db", pri_db_name);
         fil_db_rec = cr_repomd_record_new("filelists_db", fil_db_name);
         oth_db_rec = cr_repomd_record_new("other_db", oth_db_name);
@@ -1202,7 +1142,6 @@ deltaerror:
 #endif
 
     // Add checksums into files names
-
     if (cmd_options->unique_md_filenames) {
         cr_repomd_record_rename_file(pri_xml_rec, NULL);
         cr_repomd_record_rename_file(fil_xml_rec, NULL);
@@ -1216,9 +1155,7 @@ deltaerror:
         cr_repomd_record_rename_file(prestodelta_rec, NULL);
     }
 
-
     // Gen xml
-
     cr_repomd_set_record(repomd_obj, pri_xml_rec);
     cr_repomd_set_record(repomd_obj, fil_xml_rec);
     cr_repomd_set_record(repomd_obj, oth_xml_rec);
@@ -1264,7 +1201,6 @@ deltaerror:
     }
 
     // Write repomd.xml
-
     gchar *repomd_path = g_strconcat(tmp_out_repo, "repomd.xml", NULL);
     FILE *frepomd = fopen(repomd_path, "w");
     if (!frepomd) {
@@ -1278,7 +1214,6 @@ deltaerror:
 
 
     // Final move
-
     // Copy selected metadata from the old repository
     cr_RetentionType retentiontype = CR_RETENTION_DEFAULT;
     gint64 retentionval = (gint64) cmd_options->retain_old;
@@ -1359,7 +1294,6 @@ deltaerror:
 
 
     // Clean up
-
     g_debug("Memory cleanup");
 
     if (old_metadata)

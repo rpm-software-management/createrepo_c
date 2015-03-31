@@ -270,3 +270,27 @@ cr_lock_repo(const gchar *repo_dir,
     return TRUE;
 }
 
+void
+cr_setup_logging(gboolean quiet, gboolean verbose)
+{
+    g_log_set_default_handler (cr_log_fn, NULL);
+
+    if (quiet) {
+        // Quiet mode
+        GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO |
+                                G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
+        g_log_set_handler(NULL, levels, cr_null_log_fn, NULL);
+        g_log_set_handler("C_CREATEREPOLIB", levels, cr_null_log_fn, NULL);
+    } else if (verbose) {
+        // Verbose mode
+        GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE | G_LOG_LEVEL_INFO |
+                                G_LOG_LEVEL_DEBUG | G_LOG_LEVEL_WARNING;
+        g_log_set_handler(NULL, levels, cr_log_fn, NULL);
+        g_log_set_handler("C_CREATEREPOLIB", levels, cr_log_fn, NULL);
+    } else {
+        // Standard mode
+        GLogLevelFlags levels = G_LOG_LEVEL_DEBUG;
+        g_log_set_handler(NULL, levels, cr_null_log_fn, NULL);
+        g_log_set_handler("C_CREATEREPOLIB", levels, cr_null_log_fn, NULL);
+    }
+}

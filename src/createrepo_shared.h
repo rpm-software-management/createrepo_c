@@ -115,6 +115,12 @@ cr_lock_repo(const gchar *repo_dir,
 gboolean
 cr_unset_cleanup_handler(GError **err);
 
+/**
+ * Setup logging for the application.
+ */
+void
+cr_setup_logging(gboolean quiet, gboolean verbose);
+
 /** @} */
 
 #ifdef __cplusplus

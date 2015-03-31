@@ -36,3 +36,8 @@ tags
 
 # Deltarepo acceptance tests
 deltarepo/acceptance_tests/repos/repo*/repodata
+
+# Bug fixing and feature request temp directories
+BUG*/
+JIRA*/
+ISSUE*/

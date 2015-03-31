@@ -37,6 +37,28 @@ extern "C" {
  *  @{
  */
 
+
+/**
+ * This function does:
+ * 1) Sets on_exit cleanup function that removes temporary directories
+ * 2) Sets a signal handler for signals that lead to process temination.
+ *    (List obtained from the "man 7 signal")
+ *    Signals that are ignored (SIGCHILD) or lead just to stop (SIGSTOP, ...)
+ *    don't get this handler - these signals do not terminate the process!
+ *    This handler assures that the cleanup function that is hooked on exit
+ *    gets called.
+ *
+ * @param lock_dir      Dir that serves as lock (".repodata/")
+ * @param tmp_out_repo  Dir that is really used for repodata generation
+ *                      (usually exactly the same as lock dir if not
+ *                      --ignore-lock is specified). Could be NULL.
+ * @return              TRUE on success, FALSE if err is set.
+ */
+gboolean
+cr_set_cleanup_handler(const char *lock_dir,
+                       const char *tmp_out_repo,
+                       GError **err);
+
 /**
  * Block process terminating signals.
  * (Useful for creating pseudo-atomic sections in code)
@@ -76,7 +98,7 @@ cr_unblock_terminating_signals(GError **err);
  *                          If FALSE is returned, the content of this variable
  *                          is undefined.
  * @param err               GError **
- * @return                  FALSE if err is set, TRUE otherwise.
+ * @return                  TRUE on success, FALSE if err is set.
  */
 gboolean
 cr_lock_repo(const gchar *repo_dir,
@@ -84,7 +106,14 @@ cr_lock_repo(const gchar *repo_dir,
              gchar **lock_dir,
              gchar **tmp_repodata_dir,
              GError **err);
-// TODO XXX
+
+/**
+ * Unset cleanup handler.
+ * @param err               GError **
+ * @return                  TRUE on success, FALSE if err is set.
+ */
+gboolean
+cr_unset_cleanup_handler(GError **err);
 
 /** @} */
 

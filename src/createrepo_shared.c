@@ -19,12 +19,110 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
 #include "error.h"
 #include "misc.h"
 #include "cleanup.h"
+
+
+char *global_lock_dir     = NULL;  // Path to .repodata/ dir that is used as a lock
+char *global_tmp_out_repo = NULL;  // Path to temporary repodata directory,
+                                   // if NULL that it's same as
+                                   // the global_lock_dir
+
+/**
+ * Clean up function called on normal program termination.
+ * It removes temporary .repodata/ directory that servers as a lock
+ * for other createrepo[_c] processes.
+ * This functions acts only if exit status != EXIST_SUCCESS.
+ *
+ * @param exit_status       Status
+ * @param data              User data (unused)
+ */
+static void
+failure_exit_cleanup(int exit_status, void *data)
+{
+    CR_UNUSED(data);
+    if (exit_status != EXIT_SUCCESS) {
+        if (global_lock_dir) {
+            g_debug("Removing %s", global_lock_dir);
+            cr_remove_dir(global_lock_dir, NULL);
+        }
+
+        if (global_tmp_out_repo) {
+            g_debug("Removing %s", global_tmp_out_repo);
+            cr_remove_dir(global_tmp_out_repo, NULL);
+        }
+    }
+}
+
+/** Signal handler
+ * @param sig       Signal number
+ */
+static void
+sigint_catcher(int sig)
+{
+    g_message("%s catched: Terminating...", strsignal(sig));
+    exit(1);
+}
+
+gboolean
+cr_set_cleanup_handler(const char *lock_dir,
+                       const char *tmp_out_repo,
+                       GError **err)
+{
+    CR_UNUSED(err);
+
+    assert(!err || *err == NULL);
+
+    // Set global variables
+    global_lock_dir     = g_strdup(lock_dir);
+    global_tmp_out_repo = g_strdup(tmp_out_repo);
+
+    // Register on exit cleanup function
+    if (on_exit(failure_exit_cleanup, NULL))
+        g_warning("Cannot set exit cleanup function by atexit()");
+
+    // Prepare signal handler configuration
+    g_debug("Signal handler setup");
+    struct sigaction sigact;
+    sigact.sa_handler = sigint_catcher;
+    sigemptyset(&sigact.sa_mask);
+    sigact.sa_flags = 0;
+
+    // Handle signals that terminate (from the POSIX.1-1990)
+    sigaction(SIGHUP, &sigact, NULL);
+    sigaction(SIGINT, &sigact, NULL);
+    sigaction(SIGPIPE, &sigact, NULL);
+    sigaction(SIGALRM, &sigact, NULL);
+    sigaction(SIGTERM, &sigact, NULL);
+    sigaction(SIGUSR1, &sigact, NULL);
+    sigaction(SIGUSR2, &sigact, NULL);
+
+    // Handle signals that terminate (from the POSIX.1-2001)
+    sigaction(SIGPOLL, &sigact, NULL);
+    sigaction(SIGPROF, &sigact, NULL);
+    sigaction(SIGVTALRM, &sigact, NULL);
+
+    return TRUE;
+}
+
+gboolean
+cr_unset_cleanup_handler(GError **err)
+{
+    CR_UNUSED(err);
+
+    g_free(global_lock_dir);
+    global_lock_dir = NULL;
+    g_free(global_tmp_out_repo);
+    global_tmp_out_repo = NULL;
+
+    return TRUE;
+}
 
 gboolean
 cr_block_terminating_signals(GError **err)
@@ -171,3 +269,4 @@ cr_lock_repo(const gchar *repo_dir,
 
     return TRUE;
 }
+

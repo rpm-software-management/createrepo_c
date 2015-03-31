@@ -51,49 +51,6 @@
 
 #define OUTDELTADIR "drpms/"
 
-// Global variables used by the signal handler failure_exit_cleanup
-char *global_lock_dir     = NULL; // Path to .repodata/ dir that is used as a lock
-char *global_tmp_out_repo = NULL; // Path to tmpreodata directory, if NULL
-                                  // than it is same as the global_lock_dir
-
-/** Clean up function called on normal program termination.
- * It removes temporary .repodata/ directory that servers as a lock
- * for other createrepo[_c] processes.
- * This functions acts only if exit status isn't EXIST_SUCCESS.
- *
- * @param exit_status       Status
- * @param data              User data (unused)
- */
-static void
-failure_exit_cleanup(int exit_status, void *data)
-{
-    CR_UNUSED(data);
-    if (exit_status != EXIT_SUCCESS) {
-        if (global_lock_dir) {
-            g_debug("Removing %s", global_lock_dir);
-            cr_remove_dir(global_lock_dir, NULL);
-        }
-
-        if (global_tmp_out_repo) {
-            g_debug("Removing %s", global_tmp_out_repo);
-            cr_remove_dir(global_tmp_out_repo, NULL);
-        }
-    }
-}
-
-
-/** Signal handler
- * @param sig       Signal number
- */
-static void
-sigint_catcher(int sig)
-{
-    CR_UNUSED(sig);
-    g_message("SIGINT catched: Terminating...");
-    exit(1);
-}
-
-
 // TODO: Pass only exlude_masks list here
 /** Check if the filename is excluded by any exlude mask.
  * @param filename      Filename (basename).
@@ -122,7 +79,6 @@ allowed_file(const gchar *filename, GSList *exclude_masks)
     }
     return TRUE;
 }
-
 
 
 /** Function used to sort pool tasks.
@@ -406,7 +362,6 @@ main(int argc, char **argv)
     gchar *out_repo     = NULL;  // path/to/out_repo/repodata/
     gchar *tmp_out_repo = NULL;  // usually path/to/out_repo/.repodata/
     gchar *lock_dir     = NULL;  // path/to/out_repo/.repodata/
-    int lock_dir_is_tmp_out_repo = 1;
 
     if (cmd_options->basedir && !g_str_has_prefix(argv[1], "/")) {
         gchar *tmp = cr_normalize_dir_path(argv[1]);
@@ -475,7 +430,6 @@ main(int argc, char **argv)
 
 
     // Prepare cachedir for checksum if --cachedir is used
-
     if (!prepare_cache_dir(cmd_options, out_dir, &tmp_err)) {
         g_printerr("%s\n", tmp_err->message);
         g_error_free(tmp_err);
@@ -488,66 +442,31 @@ main(int argc, char **argv)
     }
 
     // Block signals that terminates the process
-
     if (!cr_block_terminating_signals(&tmp_err)) {
         g_printerr("%s\n", tmp_err->message);
         exit(EXIT_FAILURE);
     }
 
     // Check if lock exists & Create lock dir
-
     ret = cr_lock_repo(out_dir, cmd_options->ignore_lock, &lock_dir, &tmp_out_repo, &tmp_err);
-    global_lock_dir = lock_dir;
     if (!ret) {
         g_printerr("%s\n", tmp_err->message);
         exit(EXIT_FAILURE);
     }
 
-    if (g_strcmp0(lock_dir, tmp_out_repo)) {
-        global_tmp_out_repo = tmp_out_repo;
-        lock_dir_is_tmp_out_repo = 0;
+    // Setup cleanup handlers
+    if (!cr_set_cleanup_handler(lock_dir, tmp_out_repo, &tmp_err)) {
+        g_printerr("%s\n", tmp_err->message);
+        exit(EXIT_FAILURE);
     }
 
-
-    // Register cleanup function
-    if (on_exit(failure_exit_cleanup, NULL))
-        g_warning("Cannot set exit cleanup function by atexit()");
-
-    // Set handler that call exit(EXIT_FAILURE) for signals that leads to
-    // process termination (list obtained from the "man 7 signal")
-    // Signals that are ignored (SIGCHILD) or lead just to stop (SIGSTOP, ..)
-    // SHOULDN'T GET THIS HANDLER - these signals do not terminate the process!
-
-    g_debug("Signal handler setup");
-    struct sigaction sigact;
-    sigact.sa_handler = sigint_catcher;
-    sigemptyset(&sigact.sa_mask);
-    sigact.sa_flags = 0;
-
-    // Signals that terminate (from the POSIX.1-1990)
-    sigaction(SIGHUP, &sigact, NULL);
-    sigaction(SIGINT, &sigact, NULL);
-    sigaction(SIGPIPE, &sigact, NULL);
-    sigaction(SIGALRM, &sigact, NULL);
-    sigaction(SIGTERM, &sigact, NULL);
-    sigaction(SIGUSR1, &sigact, NULL);
-    sigaction(SIGUSR2, &sigact, NULL);
-    // Signals that terminate (from the POSIX.1-2001)
-    sigaction(SIGPOLL, &sigact, NULL);
-    sigaction(SIGPROF, &sigact, NULL);
-    sigaction(SIGVTALRM, &sigact, NULL);
-
-
     // Unblock the blocked signals
-
     if (!cr_unblock_terminating_signals(&tmp_err)) {
         g_printerr("%s\n", tmp_err->message);
         exit(EXIT_FAILURE);
     }
 
-
     // Open package list
-
     FILE *output_pkg_list = NULL;
     if (cmd_options->read_pkgs_list) {
         output_pkg_list = fopen(cmd_options->read_pkgs_list, "w");
@@ -1417,12 +1336,12 @@ deltaerror:
     }
 
     // Remove lock
-    if (!lock_dir_is_tmp_out_repo)
+    if (g_strcmp0(lock_dir, tmp_out_repo))
+        // If lock_dir is not same as temporary repo dir then remove it
         cr_remove_dir(lock_dir, NULL);
 
     // Disable path stored for exit handler
-    global_lock_dir = NULL;
-    global_tmp_out_repo = NULL;
+    cr_unset_cleanup_handler(NULL);
 
     sigprocmask(SIG_SETMASK, &old_mask, NULL);
 

@@ -36,6 +36,7 @@
 #include "deltarpms.h"
 #include "dumper_thread.h"
 #include "checksum.h"
+#include "cleanup.h"
 #include "error.h"
 #include "helpers.h"
 #include "load_metadata.h"
@@ -721,9 +722,9 @@ main(int argc, char **argv)
     cr_SqliteDb *oth_db = NULL;
 
     if (!cmd_options->no_database) {
-        int pri_db_fd = -1;
-        int fil_db_fd = -1;
-        int oth_db_fd = -1;
+        _cleanup_file_close_ int pri_db_fd = -1;
+        _cleanup_file_close_ int fil_db_fd = -1;
+        _cleanup_file_close_ int oth_db_fd = -1;
 
         g_message("Preparing sqlite DBs");
         if (!cmd_options->local_sqlite) {
@@ -759,8 +760,6 @@ main(int argc, char **argv)
 
         pri_db = cr_db_open_primary(pri_db_filename, &tmp_err);
         assert(pri_db || tmp_err);
-        if (pri_db_fd > -1)
-            close(pri_db_fd);
         if (!pri_db) {
             g_critical("Cannot open %s: %s",
                        pri_db_filename, tmp_err->message);
@@ -770,8 +769,6 @@ main(int argc, char **argv)
 
         fil_db = cr_db_open_filelists(fil_db_filename, &tmp_err);
         assert(fil_db || tmp_err);
-        if (fil_db_fd > -1)
-            close(fil_db_fd);
         if (!fil_db) {
             g_critical("Cannot open %s: %s",
                        fil_db_filename, tmp_err->message);
@@ -781,8 +778,6 @@ main(int argc, char **argv)
 
         oth_db = cr_db_open_other(oth_db_filename, &tmp_err);
         assert(oth_db || tmp_err);
-        if (oth_db_fd > -1)
-            close(oth_db_fd);
         if (!oth_db) {
             g_critical("Cannot open %s: %s",
                        oth_db_filename, tmp_err->message);

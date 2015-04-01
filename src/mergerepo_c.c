@@ -1602,7 +1602,7 @@ main(int argc, char **argv)
     gboolean cr_download_failed = FALSE;
 
     for (element = cmd_options->repo_list; element; element = g_slist_next(element)) {
-        struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) element->data, 1, NULL);
+        struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) element->data, TRUE, NULL);
         if (!loc) {
             g_warning("Downloading of repodata failed: %s", (gchar *) element->data);
             cr_download_failed = TRUE;
@@ -1660,7 +1660,7 @@ main(int argc, char **argv)
     if (cmd_options->noarch_repo_url) {
         struct cr_MetadataLocation *noarch_ml;
 
-        noarch_ml = cr_locate_metadata(cmd_options->noarch_repo_url, 1, NULL);
+        noarch_ml = cr_locate_metadata(cmd_options->noarch_repo_url, TRUE, NULL);
         if (!noarch_ml) {
             g_critical("Cannot locate noarch repo: %s", cmd_options->noarch_repo_url);
             return 1;

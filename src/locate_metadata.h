@@ -62,7 +62,7 @@ struct cr_MetadataLocation {
  * @return              filled cr_MetadataLocation structure or NULL
  */
 struct cr_MetadataLocation *cr_locate_metadata(const char *repopath,
-                                               int ignore_sqlite,
+                                               gboolean ignore_sqlite,
                                                GError **err);
 
 /** Free cr_MetadataLocation. If repodata were downloaded remove

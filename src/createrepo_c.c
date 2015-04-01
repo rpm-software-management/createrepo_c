@@ -417,8 +417,7 @@ main(int argc, char **argv)
     }
 
     // Check if lock exists & Create lock dir
-    ret = cr_lock_repo(out_dir, cmd_options->ignore_lock, &lock_dir, &tmp_out_repo, &tmp_err);
-    if (!ret) {
+    if (!cr_lock_repo(out_dir, cmd_options->ignore_lock, &lock_dir, &tmp_out_repo, &tmp_err)) {
         g_printerr("%s\n", tmp_err->message);
         exit(EXIT_FAILURE);
     }
@@ -493,9 +492,9 @@ main(int argc, char **argv)
         cr_metadata_set_dupaction(old_metadata, CR_HT_DUPACT_REMOVEALL);
 
         if (cmd_options->outputdir)
-            old_metadata_location = cr_locate_metadata(out_dir, 1, NULL);
+            old_metadata_location = cr_locate_metadata(out_dir, TRUE, NULL);
         else
-            old_metadata_location = cr_locate_metadata(in_dir, 1, NULL);
+            old_metadata_location = cr_locate_metadata(in_dir, TRUE, NULL);
 
         if (old_metadata_location) {
             ret = cr_metadata_load_xml(old_metadata,

@@ -126,7 +126,7 @@ cr_parse_repomd(const char *repomd_path,
 }
 
 static struct cr_MetadataLocation *
-cr_get_local_metadata(const char *repopath, int ignore_sqlite)
+cr_get_local_metadata(const char *repopath, gboolean ignore_sqlite)
 {
     _cleanup_free_ gchar *repomd = NULL;
     struct cr_MetadataLocation *ret = NULL;
@@ -153,7 +153,7 @@ cr_get_local_metadata(const char *repopath, int ignore_sqlite)
 
 
 static struct cr_MetadataLocation *
-cr_get_remote_metadata(const char *repopath, int ignore_sqlite)
+cr_get_remote_metadata(const char *repopath, gboolean ignore_sqlite)
 {
     CURL *handle = NULL;
     _cleanup_free_ gchar *tmp_dir = NULL;
@@ -275,7 +275,7 @@ get_remote_metadata_cleanup:
 
 // XXX: err is not really used in this function yet
 struct cr_MetadataLocation *
-cr_locate_metadata(const char *repopath, int ignore_sqlite, GError **err)
+cr_locate_metadata(const char *repopath, gboolean ignore_sqlite, GError **err)
 {
     struct cr_MetadataLocation *ret = NULL;
 

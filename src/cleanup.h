@@ -30,6 +30,14 @@
 
 G_BEGIN_DECLS
 
+static void
+my_close(int fildes)
+{
+    if (fildes < 0)
+        return;
+    close(fildes);
+}
+
 #define CR_DEFINE_CLEANUP_FUNCTION(Type, name, func) \
   static inline void name (void *v) \
   { \
@@ -62,13 +70,13 @@ CR_DEFINE_CLEANUP_FUNCTION0(GKeyFile*, cr_local_keyfile_unref, g_key_file_unref)
 #endif
 CR_DEFINE_CLEANUP_FUNCTION0(GPtrArray*, cr_local_ptrarray_unref, g_ptr_array_unref)
 CR_DEFINE_CLEANUP_FUNCTION0(GTimer*, cr_local_destroy_timer, g_timer_destroy)
-CR_DEFINE_CLEANUP_FUNCTION0(int, cr_local_file_close, close)
 
 CR_DEFINE_CLEANUP_FUNCTIONt(GString*, cr_local_free_string, g_string_free)
 
 CR_DEFINE_CLEANUP_FUNCTION(char**, cr_local_strfreev, g_strfreev)
 CR_DEFINE_CLEANUP_FUNCTION(GList*, cr_local_free_list, g_list_free)
 CR_DEFINE_CLEANUP_FUNCTION(void*, cr_local_free, g_free)
+CR_DEFINE_CLEANUP_FUNCTION(int, cr_local_file_close, my_close)
 
 #define _cleanup_array_unref_ __attribute__ ((cleanup(cr_local_array_unref)))
 #define _cleanup_checksum_free_ __attribute__ ((cleanup(cr_local_checksum_free)))

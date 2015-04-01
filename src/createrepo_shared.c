@@ -81,7 +81,10 @@ cr_set_cleanup_handler(const char *lock_dir,
 
     // Set global variables
     global_lock_dir     = g_strdup(lock_dir);
-    global_tmp_out_repo = g_strdup(tmp_out_repo);
+    if (g_strcmp0(lock_dir, tmp_out_repo))
+        global_tmp_out_repo = g_strdup(tmp_out_repo);
+    else
+        global_tmp_out_repo = NULL;
 
     // Register on exit cleanup function
     if (on_exit(failure_exit_cleanup, NULL))

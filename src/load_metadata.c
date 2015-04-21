@@ -159,6 +159,7 @@ typedef struct {
         we want the pkgId to be unique.
         Key is pkgId and value is NULL. */
     cr_ParsingState state;
+    gint64          pkgKey; /*!< basically order of the package */
 } cr_CbData;
 
 static int
@@ -266,6 +267,9 @@ primary_pkgcb(cr_Package *pkg, void *cbdata, GError **err)
         return CR_CB_RET_OK;
     }
 
+    ++cb_data->pkgKey;
+    pkg->pkgKey = cb_data->pkgKey;
+
     return CR_CB_RET_OK;
 }
 
@@ -358,6 +362,7 @@ cr_load_xml_files(GHashTable *hashtable,
     cb_data.pkglist_ht      = pkglist_ht;
     cb_data.ignored_pkgIds  = g_hash_table_new_full(g_str_hash, g_str_equal,
                                                     g_free, NULL);
+    cb_data.pkgKey          = G_GINT64_CONSTANT(0);
 
     cr_xml_parse_primary(primary_xml_path,
                          primary_newpkgcb,

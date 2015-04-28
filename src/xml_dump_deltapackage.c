@@ -109,8 +109,11 @@ cr_xml_dump_deltapackage(cr_DeltaPackage *package, GError **err)
 
     assert(!err || *err == NULL);
 
-    if (!package)
+    if (!package) {
+        g_set_error(err, CREATEREPO_C_ERROR, CRE_BADARG,
+                    "No package object to dump specified");
         return NULL;
+    }
 
 
     // Dump IT!

@@ -215,8 +215,11 @@ cr_xml_dump_repomd(cr_Repomd *repomd, GError **err)
 
     assert(!err || *err == NULL);
 
-    if (!repomd)
+    if (!repomd) {
+        g_set_error(err, CREATEREPO_C_ERROR, CRE_BADARG,
+                    "No repomd object to dump specified");
         return NULL;
+    }
 
 
     // Dump IT!

@@ -207,8 +207,11 @@ cr_xml_dump_updaterecord(cr_UpdateRecord *rec, GError **err)
 
     assert(!err || *err == NULL);
 
-    if (!rec)
+    if (!rec) {
+        g_set_error(err, CREATEREPO_C_ERROR, CRE_BADARG,
+                    "No updateinfo object to dump specified");
         return NULL;
+    }
 
     // Dump IT!
 

@@ -41,6 +41,10 @@
 #include "threads.h"
 #include "xml_dump.h"
 
+/** TODO:
+ * --force: Remove old DB files
+ */
+
 /**
  * Command line options
  */
@@ -391,11 +395,10 @@ compress_sqlite_dbs(const gchar *tmp_out_repo,
     // Wait till all tasks are complete and free the thread pool
     g_thread_pool_free(compress_pool, FALSE, TRUE);
 
-    // if (!cmd_options->local_sqlite) { // XXX Why?
-        cr_rm(pri_db_filename, CR_RM_FORCE, NULL, NULL);
-        cr_rm(fil_db_filename, CR_RM_FORCE, NULL, NULL);
-        cr_rm(oth_db_filename, CR_RM_FORCE, NULL, NULL);
-    //}
+    // Remove uncompressed DBs
+    cr_rm(pri_db_filename, CR_RM_FORCE, NULL, NULL);
+    cr_rm(fil_db_filename, CR_RM_FORCE, NULL, NULL);
+    cr_rm(oth_db_filename, CR_RM_FORCE, NULL, NULL);
 
     // Prepare repomd records
     pri_db_rec = cr_repomd_record_new("primary_db", pri_db_name);
@@ -498,17 +501,21 @@ uses_simple_md_filename(cr_Repomd *repomd,
  */
 static gboolean
 gen_new_repomd(const gchar *tmp_out_repo,
-               cr_Repomd *repomd,
+               cr_Repomd *in_repomd,
                cr_RepomdRecord *pri_db_rec,
                cr_RepomdRecord *fil_db_rec,
                cr_RepomdRecord *oth_db_rec,
                GError **err)
 {
+    cr_Repomd *repomd = NULL;
     gboolean simple_md_filename = FALSE;
 
     // Check if a unique md filename should be used or not
-    if (!uses_simple_md_filename(repomd, &simple_md_filename, err))
+    if (!uses_simple_md_filename(in_repomd, &simple_md_filename, err))
         return FALSE;
+
+    // Create copy of the repomd object
+    repomd = cr_repomd_copy(in_repomd);
 
     // Prepend checksum if unique md filename should be used
     if (!simple_md_filename) {
@@ -517,10 +524,18 @@ gen_new_repomd(const gchar *tmp_out_repo,
         cr_repomd_record_rename_file(oth_db_rec, NULL);
     }
 
+    // Remove existing DBs
+    cr_repomd_remove_record(repomd, "primary_db");
+    cr_repomd_remove_record(repomd, "filelists_db");
+    cr_repomd_remove_record(repomd, "other_db");
+
     // Add records to repomd.xml
     cr_repomd_set_record(repomd, pri_db_rec);
     cr_repomd_set_record(repomd, fil_db_rec);
     cr_repomd_set_record(repomd, oth_db_rec);
+
+    // Sort the records
+    cr_repomd_sort_records(repomd);
 
     // Dump the repomd.xml content
     _cleanup_free_ gchar *repomd_content = NULL;
@@ -546,7 +561,9 @@ gen_new_repomd(const gchar *tmp_out_repo,
 }
 
 
-/* TODO: Move repomd.xml in the last step */
+/** Intelligently move content of tmp_out_repo to in_repo
+ * (the repomd.xml is moved as a last file)
+ */
 static gboolean
 move_results(const gchar *tmp_out_repo,
              const gchar *in_repo,
@@ -570,6 +587,10 @@ move_results(const gchar *tmp_out_repo,
         _cleanup_free_ gchar *src_path = NULL;
         _cleanup_free_ gchar *dst_path = NULL;
 
+        // Skip repomd.xml
+        if (!g_strcmp0(filename, "repomd.xml"))
+            continue;
+
         // Get full src path
         src_path = g_build_filename(tmp_out_repo, filename, NULL);
 
@@ -577,6 +598,20 @@ move_results(const gchar *tmp_out_repo,
         dst_path = g_build_filename(in_repo, filename, NULL);
 
         // Move the file
+        if (g_rename(src_path, dst_path) == -1) {
+            g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
+                        "Cannot move: %s to: %s: %s",
+                        src_path, dst_path, g_strerror(errno));
+            return FALSE;
+        }
+    }
+
+    // The last step - move of the repomd.xml
+    {
+        _cleanup_free_ gchar *src_path = NULL;
+        _cleanup_free_ gchar *dst_path = NULL;
+        src_path = g_build_filename(tmp_out_repo, "repomd.xml", NULL);
+        dst_path = g_build_filename(in_repo, "repomd.xml", NULL);
         if (g_rename(src_path, dst_path) == -1) {
             g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
                         "Cannot move: %s to: %s: %s",
@@ -597,6 +632,7 @@ generate_sqlite_from_xml(const gchar *path,
                          cr_CompressionType compression_type,
                          cr_ChecksumType checksum_type,
                          gboolean local_sqlite,
+                         gboolean force,
                          GError **err)
 {
     _cleanup_free_ gchar *in_dir       = NULL;  // path/to/repo/
@@ -670,7 +706,30 @@ generate_sqlite_from_xml(const gchar *path,
         oth_xml_path = g_build_filename(in_dir, md_loc->oth_xml_href, NULL);
     cr_metadatalocation_free(md_loc);
 
-    // Open XML files
+    // Parse repomd.xml
+    int rc;
+    cr_Repomd *repomd = cr_repomd_new();
+
+    rc = cr_xml_parse_repomd(repomd_path,
+                             repomd,
+                             warningcb,
+                             (void *) repomd_path,
+                             err);
+    if (rc != CRE_OK)
+        return FALSE;
+
+    // Check if DBs already exist or not
+    if (!force) {
+        if (cr_repomd_get_record(repomd, "primary_db")
+            || cr_repomd_get_record(repomd, "filename_db")
+            || cr_repomd_get_record(repomd, "other_db"))
+        {
+            g_set_error(err, CREATEREPO_C_ERROR, CRE_ERROR,
+                        "Repository already has sqlitedb present "
+                        "in repomd.xml (You may use --force)");
+            return FALSE;
+        }
+    }
 
     // Open sqlite databases
     _cleanup_free_ gchar *pri_db_filename = NULL;
@@ -753,19 +812,6 @@ generate_sqlite_from_xml(const gchar *path,
                         err);
     if (!ret)
         return FALSE;
-
-    // Parse repomd.xml
-    int rc;
-    cr_Repomd *repomd = cr_repomd_new();
-
-    rc = cr_xml_parse_repomd(repomd_path,
-                             repomd,
-                             warningcb,
-                             (void *) repomd_path,
-                             err);
-    if (rc != CRE_OK)
-        return FALSE;
-
 
     // Put checksums of XML files into Sqlite
     ret = sqlite_dbinfo_update(repomd,
@@ -866,12 +912,13 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    g_thread_init(NULL); // Initialize threading (we don't use threading yet)
+    g_thread_init(NULL); // Initialize threading
 
     ret = generate_sqlite_from_xml(argv[1],
                                    options->compression_type,
                                    options->checksum_type,
                                    options->local_sqlite,
+                                   options->force,
                                    &tmp_err);
     if (!ret) {
         g_printerr("%s\n", tmp_err->message);

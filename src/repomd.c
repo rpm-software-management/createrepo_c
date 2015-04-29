@@ -626,6 +626,45 @@ cr_repomd_new()
    return repomd;
 }
 
+cr_Repomd *
+cr_repomd_copy(cr_Repomd *orig)
+{
+    cr_Repomd *new = cr_repomd_new();
+
+    cr_safe_string_chunk_insert(new->chunk, orig->revision);
+    cr_safe_string_chunk_insert(new->chunk, orig->repoid);
+    cr_safe_string_chunk_insert(new->chunk, orig->repoid_type);
+    cr_safe_string_chunk_insert(new->chunk, orig->contenthash);
+    cr_safe_string_chunk_insert(new->chunk, orig->contenthash_type);
+
+    for (GSList *elem = orig->repo_tags; elem; elem = g_slist_next(elem)) {
+        gchar *str = elem->data;
+        cr_repomd_add_repo_tag(new, str);
+    }
+    new->repo_tags = g_slist_reverse(new->repo_tags);
+
+    for (GSList *elem = orig->content_tags; elem; elem = g_slist_next(elem)) {
+        gchar *str = elem->data;
+        cr_repomd_add_content_tag(new, str);
+    }
+    new->content_tags = g_slist_reverse(new->content_tags);
+
+    for (GSList *elem = orig->distro_tags; elem; elem = g_slist_next(elem)) {
+        cr_DistroTag *tag = elem->data;
+        cr_repomd_add_distro_tag(new, tag->cpeid, tag->val);
+    }
+    new->distro_tags = g_slist_reverse(new->distro_tags);
+
+    for (GSList *elem = orig->records; elem; elem = g_slist_next(elem)) {
+        cr_RepomdRecord *rec = elem->data;
+        rec = cr_repomd_record_copy(rec);
+        cr_repomd_set_record(new, rec);
+    }
+    new->records = g_slist_reverse(new->records);
+
+    return new;
+}
+
 void
 cr_repomd_free(cr_Repomd *repomd)
 {

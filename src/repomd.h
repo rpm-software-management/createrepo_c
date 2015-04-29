@@ -184,6 +184,12 @@ void cr_repomd_record_load_contentstat(cr_RepomdRecord *record,
  */
 cr_Repomd *cr_repomd_new();
 
+/** Create copy of cr_Repomd
+ * @param repomd                cr_Repomd object
+ * @return                      Copy of the input cr_Repomd object
+ */
+cr_Repomd *cr_repomd_copy(cr_Repomd *repomd);
+
 /** Set cr_Repomd record into cr_Repomd object.
  * @param repomd                cr_Repomd object
  * @param record                cr_RepomdRecord object

@@ -706,6 +706,15 @@ cr_repomd_detach_record(cr_Repomd *repomd, cr_RepomdRecord *rec)
     repomd->records = g_slist_remove(repomd->records, rec);
 }
 
+void
+cr_repomd_remove_record(cr_Repomd *repomd, const char *type)
+{
+    cr_RepomdRecord *rec = cr_repomd_get_record(repomd, type);
+    if (!rec) return;
+    cr_repomd_detach_record(repomd, rec);
+    cr_repomd_record_free(rec);
+}
+
 cr_RepomdRecord *
 cr_repomd_get_record(cr_Repomd *repomd, const char *type)
 {

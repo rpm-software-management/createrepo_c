@@ -56,6 +56,7 @@ typedef struct {
     gboolean quiet;             /*!< quiet mode */
     gboolean verbose;           /*!< verbose mode */
     gboolean force;             /*!< overwrite existing DBs */
+    gboolean keep_old;          /*!< keep old DBs around */
     gboolean xz_compression;    /*!< use xz for DBs compression */
     gchar *compress_type;       /*!< which compression type to use */
     gboolean local_sqlite;      /*!< gen sqlite locally into a directory
@@ -81,6 +82,7 @@ sqliterepocmdoptions_new(void)
     options->quiet = FALSE;
     options->verbose = FALSE;
     options->force = FALSE;
+    options->keep_old = FALSE;
     options->xz_compression = FALSE;
     options->compress_type = NULL;
     options->chcksum_type = NULL;
@@ -120,6 +122,8 @@ parse_sqliterepo_arguments(int *argc,
           "Run verbosely.", NULL },
         { "force", 'f', 0, G_OPTION_ARG_NONE, &(options->force),
           "Overwirte existing DBs.", NULL },
+        { "keep-old", '\0', 0, G_OPTION_ARG_NONE, &(options->keep_old),
+          "Do not remove old DBs. Use only with combination with --force.", NULL },
         { "xz", '\0', 0, G_OPTION_ARG_NONE, &(options->xz_compression),
           "Use xz for repodata compression.", NULL },
         { "compress-type", '\0', 0, G_OPTION_ARG_STRING, &(options->compress_type),
@@ -502,20 +506,26 @@ uses_simple_md_filename(cr_Repomd *repomd,
 static gboolean
 gen_new_repomd(const gchar *tmp_out_repo,
                cr_Repomd *in_repomd,
-               cr_RepomdRecord *pri_db_rec,
-               cr_RepomdRecord *fil_db_rec,
-               cr_RepomdRecord *oth_db_rec,
+               cr_RepomdRecord *in_pri_db_rec,
+               cr_RepomdRecord *in_fil_db_rec,
+               cr_RepomdRecord *in_oth_db_rec,
                GError **err)
 {
     cr_Repomd *repomd = NULL;
+    cr_RepomdRecord *pri_db_rec = NULL;
+    cr_RepomdRecord *fil_db_rec = NULL;
+    cr_RepomdRecord *oth_db_rec = NULL;
     gboolean simple_md_filename = FALSE;
 
     // Check if a unique md filename should be used or not
     if (!uses_simple_md_filename(in_repomd, &simple_md_filename, err))
         return FALSE;
 
-    // Create copy of the repomd object
+    // Create copy of the repomd object and the records
     repomd = cr_repomd_copy(in_repomd);
+    pri_db_rec = cr_repomd_record_copy(in_pri_db_rec);
+    fil_db_rec = cr_repomd_record_copy(in_fil_db_rec);
+    oth_db_rec = cr_repomd_record_copy(in_oth_db_rec);
 
     // Prepend checksum if unique md filename should be used
     if (!simple_md_filename) {
@@ -623,6 +633,67 @@ move_results(const gchar *tmp_out_repo,
     return TRUE;
 }
 
+static gboolean
+remove_old_if_different(const gchar *repo_path,
+                        cr_RepomdRecord *old_rec,
+                        cr_RepomdRecord *new_rec,
+                        GError **err)
+{
+    int rc;
+    GStatBuf old_buf, new_buf;
+    _cleanup_free_ gchar *old_fn = NULL;
+    _cleanup_free_ gchar *new_fn = NULL;
+
+    // Input check
+    if (!old_rec)
+        return TRUE;
+
+    // Build filenames
+    old_fn = g_build_filename(repo_path, old_rec->location_href, NULL);
+    new_fn = g_build_filename(repo_path, new_rec->location_href, NULL);
+
+    // Stat old file
+    rc = g_stat(old_fn, &old_buf);
+    if (rc == -1) {
+        if (errno == ENOENT) {
+            // The old file doesn't exist - nothing to do
+            g_debug("Old DB file %s doesn't exist", old_fn);
+            return TRUE;
+        }
+
+        // Different error
+        g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
+                    "Cannot stat %s: %s", old_fn, g_strerror(errno));
+        return FALSE;
+    }
+
+    // Stat new file
+    rc = g_stat(new_fn, &new_buf);
+    if (rc == -1) {
+        g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
+                    "Cannot stat %s: %s", new_fn, g_strerror(errno));
+        return FALSE;
+    }
+
+    // Check if underlaying files are different
+    if (old_buf.st_ino == new_buf.st_ino) {
+        // Both repomd records points to the same file
+        g_debug("Old DB file %s has been overwritten by the new one.", new_fn);
+        return TRUE;
+    }
+
+    // Remove file referenced by the old record
+    g_debug("Removing old DB file %s", old_fn);
+    rc = g_remove(old_fn);
+    if (rc == -1) {
+        g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
+                    "Cannot remove %s: %s", old_fn, g_strerror(errno));
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 //
 // TODO: exit() calls to return and g_set_error()
 //
@@ -633,6 +704,7 @@ generate_sqlite_from_xml(const gchar *path,
                          cr_ChecksumType checksum_type,
                          gboolean local_sqlite,
                          gboolean force,
+                         gboolean keep_old,
                          GError **err)
 {
     _cleanup_free_ gchar *in_dir       = NULL;  // path/to/repo/
@@ -719,16 +791,20 @@ generate_sqlite_from_xml(const gchar *path,
         return FALSE;
 
     // Check if DBs already exist or not
-    if (!force) {
-        if (cr_repomd_get_record(repomd, "primary_db")
-            || cr_repomd_get_record(repomd, "filename_db")
-            || cr_repomd_get_record(repomd, "other_db"))
-        {
-            g_set_error(err, CREATEREPO_C_ERROR, CRE_ERROR,
-                        "Repository already has sqlitedb present "
-                        "in repomd.xml (You may use --force)");
-            return FALSE;
-        }
+    gboolean dbs_already_exist = FALSE;
+
+    if (cr_repomd_get_record(repomd, "primary_db")
+        || cr_repomd_get_record(repomd, "filename_db")
+        || cr_repomd_get_record(repomd, "other_db"))
+    {
+        dbs_already_exist = TRUE;
+    }
+
+    if (dbs_already_exist && !force) {
+        g_set_error(err, CREATEREPO_C_ERROR, CRE_ERROR,
+                    "Repository already has sqlitedb present "
+                    "in repomd.xml (You may use --force)");
+        return FALSE;
     }
 
     // Open sqlite databases
@@ -856,8 +932,6 @@ generate_sqlite_from_xml(const gchar *path,
     if (!ret)
         return FALSE;
 
-    cr_repomd_free(repomd);
-
     // Move the results (compressed DBs and repomd.xml) into in_repo
     ret = move_results(tmp_out_repo,
                        in_repo,
@@ -865,8 +939,33 @@ generate_sqlite_from_xml(const gchar *path,
     if (!ret)
         return FALSE;
 
+    // Remove old DBs
+    if (dbs_already_exist && force && !keep_old) {
+        ret = remove_old_if_different(in_dir,
+                                      cr_repomd_get_record(repomd, "primary_db"),
+                                      pri_db_rec, err);
+        if (!ret)
+            return FALSE;
+        ret = remove_old_if_different(in_dir,
+                                      cr_repomd_get_record(repomd, "filelists_db"),
+                                      fil_db_rec, err);
+        if (!ret)
+            return FALSE;
+        ret = remove_old_if_different(in_dir,
+                                      cr_repomd_get_record(repomd, "other_db"),
+                                      oth_db_rec, err);
+        if (!ret)
+            return FALSE;
+    }
+
     // Remove tmp_out_repo
     g_rmdir(tmp_out_repo);
+
+    // Clean up
+    cr_repomd_free(repomd);
+    cr_repomd_record_free(pri_db_rec);
+    cr_repomd_record_free(fil_db_rec);
+    cr_repomd_record_free(oth_db_rec);
 
     return TRUE;
 }
@@ -919,6 +1018,7 @@ main(int argc, char **argv)
                                    options->checksum_type,
                                    options->local_sqlite,
                                    options->force,
+                                   options->keep_old,
                                    &tmp_err);
     if (!ret) {
         g_printerr("%s\n", tmp_err->message);

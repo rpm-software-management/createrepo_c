@@ -209,6 +209,13 @@ class BaseTestCase(unittest.TestCase):
             f.write(content)
         return fn
 
+    def tdir_makedirs(self, path):
+        """Make a directory in test dir of the current test"""
+        path = path.lstrip('/')
+        final_path = os.path.join(self.tdir, path)
+        os.makedirs(final_path)
+        return final_path
+
     def run_prog(self, prog, dir, args=None, outdir=None):
         res = CrResult()
         res.dir = dir
@@ -245,7 +252,7 @@ class BaseTestCase(unittest.TestCase):
 
     def run_sqlr(self, dir, args=None):
         """"""
-        res = self.run_prog("sqliterepo", dir, args)
+        res = self.run_prog("sqliterepo_c", dir, args)
         return res
 
     def compare_repos(self, repo1, repo2):
@@ -285,6 +292,16 @@ class BaseTestCase(unittest.TestCase):
         self.assertFalse(res.rc)
         return res
 
+    def assert_run_sqlr(self, *args, **kwargs):
+        """Run sqliterepo and assert that it finished with return code 0
+
+        :returns: Result of the sqliterepo run
+        :rtype: CrResult
+        """
+        res = self.run_sqlr(*args, **kwargs)
+        self.assertFalse(res.rc)
+        return res
+
     def assert_same_results(self, indir, args=None):
         """Run both createrepo and createrepo_c and assert that results are same
 
@@ -310,7 +327,7 @@ class BaseTestCase(unittest.TestCase):
         return res
 
     def assert_repo_files(self, repo, file_patterns, additional_files_allowed=True):
-        """Assert that files (defined by wildcard patterns) are in the repo
+        """Assert that files (defined by re) are in the repo
         """
         compiled_patterns = map(re.compile, file_patterns)
         fns = os.listdir(os.path.join(repo, "repodata/"))

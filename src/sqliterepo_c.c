@@ -765,14 +765,14 @@ generate_sqlite_from_xml(const gchar *path,
         return FALSE;
     }
 
-    repomd_path = g_build_filename(in_dir, md_loc->repomd, NULL);
+    repomd_path = g_build_filename(md_loc->repomd, NULL);
 
     if (md_loc->pri_xml_href)
-        pri_xml_path = g_build_filename(in_dir, md_loc->pri_xml_href, NULL);
+        pri_xml_path = g_build_filename(md_loc->pri_xml_href, NULL);
     if (md_loc->fil_xml_href)
-        fil_xml_path = g_build_filename(in_dir, md_loc->fil_xml_href, NULL);
+        fil_xml_path = g_build_filename(md_loc->fil_xml_href, NULL);
     if (md_loc->oth_xml_href)
-        oth_xml_path = g_build_filename(in_dir, md_loc->oth_xml_href, NULL);
+        oth_xml_path = g_build_filename(md_loc->oth_xml_href, NULL);
     cr_metadatalocation_free(md_loc);
 
     // Parse repomd.xml

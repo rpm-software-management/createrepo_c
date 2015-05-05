@@ -41,9 +41,6 @@
 #include "threads.h"
 #include "xml_dump.h"
 
-/** TODO:
- * --force: Remove old DB files
- */
 
 /**
  * Command line options

@@ -164,6 +164,19 @@ check_arguments(SqliterepoCmdOptions *options, GError **err)
         }
     }
 
+    // --checksum
+    if (options->chcksum_type) {
+        cr_ChecksumType type;
+        type = cr_checksum_type(options->chcksum_type);
+        if (type == CR_CHECKSUM_UNKNOWN) {
+            g_set_error(err, CREATEREPO_C_ERROR, CRE_BADARG,
+                        "Unknown/Unsupported checksum type \"%s\"",
+                        options->chcksum_type);
+            return FALSE;
+        }
+        options->checksum_type = type;
+    }
+
     // --xz
     if (options->xz_compression)
         options->compression_type = CR_CW_XZ_COMPRESSION;
@@ -419,6 +432,12 @@ compress_sqlite_dbs(const gchar *tmp_out_repo,
     cr_repomd_record_load_contentstat(pri_db_rec, pri_db_task->stat);
     cr_repomd_record_load_contentstat(fil_db_rec, fil_db_task->stat);
     cr_repomd_record_load_contentstat(oth_db_rec, oth_db_task->stat);
+
+    printf("%s\n", pri_db_task->stat->checksum);
+    printf("%s\n", pri_db_rec->checksum ? pri_db_rec->checksum : "");
+    printf("%s\n", pri_db_rec->checksum_type ? pri_db_rec->checksum_type : "");
+    printf("%s\n", pri_db_rec->checksum_open ? pri_db_rec->checksum_open : "");
+    printf("%s\n", pri_db_rec->checksum_open_type ? pri_db_rec->checksum_open_type : "");
 
     // Free the compression tasks
     cr_compressiontask_free(pri_db_task, NULL);

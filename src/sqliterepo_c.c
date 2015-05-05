@@ -725,10 +725,6 @@ remove_old_if_different(const gchar *repo_path,
     return TRUE;
 }
 
-//
-// TODO: exit() calls to return and g_set_error()
-//
-
 static gboolean
 generate_sqlite_from_xml(const gchar *path,
                          cr_CompressionType compression_type,
@@ -750,8 +746,9 @@ generate_sqlite_from_xml(const gchar *path,
     // Check if input dir exists
     in_dir = cr_normalize_dir_path(path);
     if (!g_file_test(in_dir, G_FILE_TEST_IS_DIR)) {
-        g_printerr("Directory %s must exists\n", in_dir);
-        exit(EXIT_FAILURE);
+        g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
+                    "Directory %s must exist\n", in_dir);
+        return FALSE;
     }
 
     // Set other paths
@@ -762,28 +759,20 @@ generate_sqlite_from_xml(const gchar *path,
     tmp_out_repo    = g_build_filename(out_dir, ".repodata/", NULL);
 
     // Block signals that terminates the process
-    if (!cr_block_terminating_signals(&tmp_err)) {
-        g_printerr("%s\n", tmp_err->message);
-        exit(EXIT_FAILURE);
-    }
+    if (!cr_block_terminating_signals(err))
+        return FALSE;
 
     // Check if lock exists & Create lock dir
-    if (!cr_lock_repo(out_dir, FALSE, &lock_dir, &tmp_out_repo, &tmp_err)) {
-        g_printerr("%s\n", tmp_err->message);
-        exit(EXIT_FAILURE);
-    }
+    if (!cr_lock_repo(out_dir, FALSE, &lock_dir, &tmp_out_repo, err))
+        return FALSE;
 
     // Setup cleanup handlers
-    if (!cr_set_cleanup_handler(lock_dir, tmp_out_repo, &tmp_err)) {
-        g_printerr("%s\n", tmp_err->message);
-        exit(EXIT_FAILURE);
-    }
+    if (!cr_set_cleanup_handler(lock_dir, tmp_out_repo, err))
+        return FALSE;
 
     // Unblock the blocked signals
-    if (!cr_unblock_terminating_signals(&tmp_err)) {
-        g_printerr("%s\n", tmp_err->message);
-        exit(EXIT_FAILURE);
-    }
+    if (!cr_unblock_terminating_signals(err))
+        return FALSE;
 
     // Locate repodata
     struct cr_MetadataLocation *md_loc = NULL;
@@ -865,49 +854,39 @@ generate_sqlite_from_xml(const gchar *path,
         pri_db_fd = g_mkstemp(pri_db_filename);
         g_debug("%s", pri_db_filename);
         if (pri_db_fd == -1) {
-            g_critical("Cannot open %s: %s", pri_db_filename, g_strerror(errno));
-            exit(EXIT_FAILURE);
+            g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
+                        "Cannot open %s: %s", pri_db_filename, g_strerror(errno));
+            return FALSE;
         }
         fil_db_fd = g_mkstemp(fil_db_filename);
         g_debug("%s", fil_db_filename);
         if (fil_db_fd == -1) {
-            g_critical("Cannot open %s: %s", fil_db_filename, g_strerror(errno));
-            exit(EXIT_FAILURE);
+            g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
+                        "Cannot open %s: %s", fil_db_filename, g_strerror(errno));
+            return FALSE;
         }
         oth_db_fd = g_mkstemp(oth_db_filename);
         g_debug("%s", oth_db_filename);
         if (oth_db_fd == -1) {
-            g_critical("Cannot open %s: %s", oth_db_filename, g_strerror(errno));
-            exit(EXIT_FAILURE);
+            g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
+                        "Cannot open %s: %s", oth_db_filename, g_strerror(errno));
+            return FALSE;
         }
     }
 
-    pri_db = cr_db_open_primary(pri_db_filename, &tmp_err);
-    assert(pri_db || tmp_err);
-    if (!pri_db) {
-        g_critical("Cannot open %s: %s",
-                   pri_db_filename, tmp_err->message);
-        g_clear_error(&tmp_err);
-        exit(EXIT_FAILURE);
-    }
+    pri_db = cr_db_open_primary(pri_db_filename, err);
+    if (!pri_db)
+        return FALSE;
 
-    fil_db = cr_db_open_filelists(fil_db_filename, &tmp_err);
+    fil_db = cr_db_open_filelists(fil_db_filename, err);
     assert(fil_db || tmp_err);
-    if (!fil_db) {
-        g_critical("Cannot open %s: %s",
-                   fil_db_filename, tmp_err->message);
-        g_clear_error(&tmp_err);
-        exit(EXIT_FAILURE);
-    }
+    if (!fil_db)
+        return FALSE;
 
-    oth_db = cr_db_open_other(oth_db_filename, &tmp_err);
+    oth_db = cr_db_open_other(oth_db_filename, err);
     assert(oth_db || tmp_err);
-    if (!oth_db) {
-        g_critical("Cannot open %s: %s",
-                   oth_db_filename, tmp_err->message);
-        g_clear_error(&tmp_err);
-        exit(EXIT_FAILURE);
-    }
+    if (!oth_db)
+        return FALSE;
 
     // XML to Sqlite
     ret = xml_to_sqlite(pri_xml_path,
@@ -1019,9 +998,7 @@ main(int argc, char **argv)
     }
 
     // Set logging
-
     cr_setup_logging(FALSE, options->verbose);
-
 
     // Print version if required
     if (options->version) {
@@ -1044,6 +1021,7 @@ main(int argc, char **argv)
 
     g_thread_init(NULL); // Initialize threading
 
+    // Gen the databases
     ret = generate_sqlite_from_xml(argv[1],
                                    options->compression_type,
                                    options->checksum_type,

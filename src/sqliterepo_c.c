@@ -514,27 +514,38 @@ gen_new_repomd(const gchar *tmp_out_repo,
     cr_RepomdRecord *oth_db_rec = NULL;
     gboolean simple_md_filename = FALSE;
 
+    // Create copy of repomd
+    repomd = cr_repomd_copy(in_repomd);
+
     // Check if a unique md filename should be used or not
     if (!uses_simple_md_filename(in_repomd, &simple_md_filename, err))
         return FALSE;
 
-    // Create copy of the repomd object and the records
-    repomd = cr_repomd_copy(in_repomd);
-    pri_db_rec = cr_repomd_record_copy(in_pri_db_rec);
-    fil_db_rec = cr_repomd_record_copy(in_fil_db_rec);
-    oth_db_rec = cr_repomd_record_copy(in_oth_db_rec);
-
     // Prepend checksum if unique md filename should be used
     if (!simple_md_filename) {
-        cr_repomd_record_rename_file(pri_db_rec, NULL);
-        cr_repomd_record_rename_file(fil_db_rec, NULL);
-        cr_repomd_record_rename_file(oth_db_rec, NULL);
+        g_debug("Renaming generated DBs to unique filenames..");
+        cr_repomd_record_rename_file(in_pri_db_rec, NULL);
+        cr_repomd_record_rename_file(in_fil_db_rec, NULL);
+        cr_repomd_record_rename_file(in_oth_db_rec, NULL);
     }
 
     // Remove existing DBs
     cr_repomd_remove_record(repomd, "primary_db");
     cr_repomd_remove_record(repomd, "filelists_db");
     cr_repomd_remove_record(repomd, "other_db");
+
+    // Create copy of the records
+    //
+    // Note: We do this copy, because once we set a record into
+    // a repomd, the repomd overtake the ownership of the record,
+    // but we don't want to lose ownership in this case.
+    //
+    // Note: We do this copy intentionaly after the rename,
+    // because we want to have the rename propagated into
+    // original records (the ones referenced in caller function).
+    pri_db_rec = cr_repomd_record_copy(in_pri_db_rec);
+    fil_db_rec = cr_repomd_record_copy(in_fil_db_rec);
+    oth_db_rec = cr_repomd_record_copy(in_oth_db_rec);
 
     // Add records to repomd.xml
     cr_repomd_set_record(repomd, pri_db_rec);
@@ -562,7 +573,11 @@ gen_new_repomd(const gchar *tmp_out_repo,
         return FALSE;
     }
 
+    // Write the content
     fputs(repomd_content, f_repomd);
+
+    // Cleanup
+    cr_repomd_free(repomd);
 
     return TRUE;
 }
@@ -660,7 +675,7 @@ remove_old_if_different(const gchar *repo_path,
 
         // Different error
         g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
-                    "Cannot stat %s: %s", old_fn, g_strerror(errno));
+                    "Cannot stat %s (old): %s", old_fn, g_strerror(errno));
         return FALSE;
     }
 
@@ -668,7 +683,7 @@ remove_old_if_different(const gchar *repo_path,
     rc = g_stat(new_fn, &new_buf);
     if (rc == -1) {
         g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
-                    "Cannot stat %s: %s", new_fn, g_strerror(errno));
+                    "Cannot stat %s (new): %s", new_fn, g_strerror(errno));
         return FALSE;
     }
 

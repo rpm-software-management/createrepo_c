@@ -42,6 +42,8 @@
 #include "xml_dump.h"
 
 
+#define DEFAULT_CHECKSUM    CR_CHECKSUM_SHA256
+
 /**
  * Command line options
  */
@@ -85,7 +87,7 @@ sqliterepocmdoptions_new(void)
     options->chcksum_type = NULL;
     options->local_sqlite = FALSE;
     options->compression_type = CR_CW_BZ2_COMPRESSION;
-    options->checksum_type = CR_CHECKSUM_SHA256;
+    options->checksum_type = CR_CHECKSUM_UNKNOWN;
 
     return options;
 }
@@ -432,12 +434,6 @@ compress_sqlite_dbs(const gchar *tmp_out_repo,
     cr_repomd_record_load_contentstat(pri_db_rec, pri_db_task->stat);
     cr_repomd_record_load_contentstat(fil_db_rec, fil_db_task->stat);
     cr_repomd_record_load_contentstat(oth_db_rec, oth_db_task->stat);
-
-    printf("%s\n", pri_db_task->stat->checksum);
-    printf("%s\n", pri_db_rec->checksum ? pri_db_rec->checksum : "");
-    printf("%s\n", pri_db_rec->checksum_type ? pri_db_rec->checksum_type : "");
-    printf("%s\n", pri_db_rec->checksum_open ? pri_db_rec->checksum_open : "");
-    printf("%s\n", pri_db_rec->checksum_open_type ? pri_db_rec->checksum_open_type : "");
 
     // Free the compression tasks
     cr_compressiontask_free(pri_db_task, NULL);
@@ -825,6 +821,28 @@ generate_sqlite_from_xml(const gchar *path,
                     "Repository already has sqlitedb present "
                     "in repomd.xml (You may use --force)");
         return FALSE;
+    }
+
+    // Auto-detect used checksum algorithm if not specified explicitly
+    if (checksum_type == CR_CHECKSUM_UNKNOWN) {
+        cr_RepomdRecord *rec = cr_repomd_get_record(repomd, "primary");
+
+        if (!rec) {
+            g_set_error(err, CREATEREPO_C_ERROR, CRE_ERROR,
+                        "repomd.xml is missing primary metadata");
+            return FALSE;
+        }
+
+        if (rec->checksum_type)
+            checksum_type = cr_checksum_type(rec->checksum_type);
+        else if (rec->checksum_open_type)
+            checksum_type = cr_checksum_type(rec->checksum_open_type);
+
+        if (checksum_type == CR_CHECKSUM_UNKNOWN) {
+            g_debug("Cannot auto-detect checksum type, using default %s",
+                    cr_checksum_name_str(DEFAULT_CHECKSUM));
+            checksum_type = DEFAULT_CHECKSUM;
+        }
     }
 
     // Open sqlite databases

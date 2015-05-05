@@ -255,9 +255,9 @@ load_rpm(const char *filename,
         struct stat stat_buf_own;
         if (stat(filename, &stat_buf_own) == -1) {
             g_warning("%s: stat(%s) error (%s)", __func__,
-                      filename, strerror(errno));
+                      filename, g_strerror(errno));
             g_set_error(err,  CREATEREPO_C_ERROR, CRE_IO, "stat(%s) failed: %s",
-                        filename, strerror(errno));
+                        filename, g_strerror(errno));
             goto errexit;
         }
         pkg->time_file    = stat_buf_own.st_mtime;
@@ -321,7 +321,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     // Get stat info about file
     if (udata->old_metadata && !(udata->skip_stat)) {
         if (stat(task->full_path, &stat_buf) == -1) {
-            g_critical("Stat() on %s: %s", task->full_path, strerror(errno));
+            g_critical("Stat() on %s: %s", task->full_path, g_strerror(errno));
             goto task_cleanup;
         }
     }

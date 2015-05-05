@@ -171,7 +171,7 @@ cr_get_remote_metadata(const char *repopath, gboolean ignore_sqlite)
     tmp_dir = g_build_filename(g_get_tmp_dir(), TMPDIR_PATTERN, NULL);
     if(!mkdtemp(tmp_dir)) {
         g_critical("%s: Cannot create a temporary directory: %s",
-                   __func__, strerror(errno));
+                   __func__, g_strerror(errno));
         return ret;
     }
 

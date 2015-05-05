@@ -366,7 +366,7 @@ cr_remove_metadata_classic(const char *repopath, int retain, GError **err)
         if (g_remove(full_path) != -1)
             g_debug("Removed %s", full_path);
         else
-            g_warning("Cannot remove %s: %s", full_path, strerror(errno));
+            g_warning("Cannot remove %s: %s", full_path, g_strerror(errno));
 
         g_free(full_path);
     }

@@ -93,9 +93,9 @@ read_header(const char *filename, Header *hdr, GError **err)
     FD_t fd = Fopen(filename, "r.ufdio");
     if (!fd) {
         g_warning("%s: Fopen of %s failed %s",
-                  __func__, filename, strerror(errno));
+                  __func__, filename, g_strerror(errno));
         g_set_error(err, ERR_DOMAIN, CRE_IO,
-                    "Fopen failed: %s", strerror(errno));
+                    "Fopen failed: %s", g_strerror(errno));
         return FALSE;
     }
 
@@ -177,9 +177,9 @@ cr_package_from_rpm(const char *filename,
         struct stat stat_buf_own;
         if (stat(filename, &stat_buf_own) == -1) {
             g_warning("%s: stat(%s) error (%s)", __func__,
-                      filename, strerror(errno));
+                      filename, g_strerror(errno));
             g_set_error(err,  ERR_DOMAIN, CRE_IO, "stat(%s) failed: %s",
-                        filename, strerror(errno));
+                        filename, g_strerror(errno));
             goto errexit;
         }
         pkg->time_file    = stat_buf_own.st_mtime;

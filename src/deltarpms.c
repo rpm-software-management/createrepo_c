@@ -236,7 +236,7 @@ cr_deltarpms_scan_oldpackagedirs(GSList *oldpackagedirs,
             full_path = g_build_filename(dirname, filename, NULL);
 
             if (stat(full_path, &st) == -1) {
-                g_warning("Cannot stat %s: %s", full_path, strerror(errno));
+                g_warning("Cannot stat %s: %s", full_path, g_strerror(errno));
                 g_free(full_path);
                 continue;
             }
@@ -605,7 +605,7 @@ cr_deltarpms_scan_targetdir(const char *path,
             }
 
             if (stat(full_path, &st) == -1) {
-                g_warning("Cannot stat %s: %s", full_path, strerror(errno));
+                g_warning("Cannot stat %s: %s", full_path, g_strerror(errno));
                 g_free(full_path);
                 continue;
             }
@@ -754,7 +754,7 @@ cr_prestodelta_thread(gpointer data, gpointer udata)
     // Stat the package (to get the size)
     if (stat(task->full_path, &st) == -1) {
         g_warning("%s: stat(%s) error (%s)", __func__,
-                  task->full_path, strerror(errno));
+                  task->full_path, g_strerror(errno));
         goto exit;
     } else {
         dpkg->package->size_package = st.st_size;

@@ -306,7 +306,7 @@ prepare_cache_dir(struct CmdOptions *cmd_options,
         } else {
             g_set_error(err, CREATEREPO_C_ERROR, CRE_BADARG,
                         "cannot use cachedir %s: %s",
-                        cmd_options->checksum_cachedir, strerror(errno));
+                        cmd_options->checksum_cachedir, g_strerror(errno));
             return FALSE;
         }
     }
@@ -441,7 +441,7 @@ main(int argc, char **argv)
         output_pkg_list = fopen(cmd_options->read_pkgs_list, "w");
         if (!output_pkg_list) {
             g_critical("Cannot open \"%s\" for writing: %s",
-                       cmd_options->read_pkgs_list, strerror(errno));
+                       cmd_options->read_pkgs_list, g_strerror(errno));
             exit(EXIT_FAILURE);
         }
     }
@@ -741,19 +741,19 @@ main(int argc, char **argv)
             pri_db_fd = g_mkstemp(pri_db_filename);
             g_debug("%s", pri_db_filename);
             if (pri_db_fd == -1) {
-                g_critical("Cannot open %s: %s", pri_db_filename, strerror(errno));
+                g_critical("Cannot open %s: %s", pri_db_filename, g_strerror(errno));
                 exit(EXIT_FAILURE);
             }
             fil_db_fd = g_mkstemp(fil_db_filename);
             g_debug("%s", fil_db_filename);
             if (fil_db_fd == -1) {
-                g_critical("Cannot open %s: %s", fil_db_filename, strerror(errno));
+                g_critical("Cannot open %s: %s", fil_db_filename, g_strerror(errno));
                 exit(EXIT_FAILURE);
             }
             oth_db_fd = g_mkstemp(oth_db_filename);
             g_debug("%s", oth_db_filename);
             if (oth_db_fd == -1) {
-                g_critical("Cannot open %s: %s", oth_db_filename, strerror(errno));
+                g_critical("Cannot open %s: %s", oth_db_filename, g_strerror(errno));
                 exit(EXIT_FAILURE);
             }
         }
@@ -1059,7 +1059,7 @@ main(int argc, char **argv)
                 goto deltaerror;
             }
         } else if (g_mkdir(outdeltadir, S_IRWXU|S_IRWXG|S_IROTH|S_IXOTH)) {
-            g_critical("Cannot create %s: %s", outdeltadir, strerror(errno));
+            g_critical("Cannot create %s: %s", outdeltadir, g_strerror(errno));
             goto deltaerror;
         }
 
@@ -1198,7 +1198,7 @@ deltaerror:
     gchar *repomd_path = g_strconcat(tmp_out_repo, "repomd.xml", NULL);
     FILE *frepomd = fopen(repomd_path, "w");
     if (!frepomd) {
-        g_critical("Cannot open %s: %s", repomd_path, strerror(errno));
+        g_critical("Cannot open %s: %s", repomd_path, g_strerror(errno));
         exit(EXIT_FAILURE);
     }
     fputs(repomd_xml, frepomd);
@@ -1249,7 +1249,7 @@ deltaerror:
 
     if (g_rename(out_repo, old_repodata_path) == -1) {
         g_debug("Old repodata doesn't exists: Cannot rename %s -> %s: %s",
-                out_repo, old_repodata_path, strerror(errno));
+                out_repo, old_repodata_path, g_strerror(errno));
     } else {
         g_debug("Renamed %s -> %s", out_repo, old_repodata_path);
         old_repodata_renamed = TRUE;
@@ -1258,7 +1258,7 @@ deltaerror:
     // Rename tmp_out_repo to out_repo
     if (g_rename(tmp_out_repo, out_repo) == -1) {
         g_critical("Cannot rename %s -> %s: %s", tmp_out_repo, out_repo,
-                   strerror(errno));
+                   g_strerror(errno));
         exit(EXIT_FAILURE);
     } else {
         g_debug("Renamed %s -> %s", tmp_out_repo, out_repo);

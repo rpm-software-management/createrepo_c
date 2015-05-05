@@ -1530,7 +1530,7 @@ cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
         struct stat stat_buf;
         if (stat(path, &stat_buf) == -1) {
             g_set_error(err, ERR_DOMAIN, CRE_IO,
-                        "Cannot stat %s: %s", path, strerror(errno));
+                        "Cannot stat %s: %s", path, g_strerror(errno));
             return NULL;
         }
 

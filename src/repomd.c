@@ -296,7 +296,7 @@ cr_repomd_record_fill(cr_RepomdRecord *md,
         } else {
             g_warning("%s: Stat on file \"%s\" failed", __func__, path);
             g_set_error(err, ERR_DOMAIN, CRE_STAT,
-                        "Stat() on %s failed: %s", path, strerror(errno));
+                        "Stat() on %s failed: %s", path, g_strerror(errno));
             return CRE_STAT;
         }
     }

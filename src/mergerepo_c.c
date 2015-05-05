@@ -1587,7 +1587,7 @@ main(int argc, char **argv)
 
     if (g_mkdir_with_parents (cmd_options->tmp_out_repo, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
         g_critical("Error while creating temporary repodata directory %s: %s",
-                    cmd_options->tmp_out_repo, strerror(errno));
+                    cmd_options->tmp_out_repo, g_strerror(errno));
 
         free_options(cmd_options);
         return 1;

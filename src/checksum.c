@@ -140,7 +140,7 @@ cr_checksum_file(const char *filename,
     f = fopen(filename, "rb");
     if (!f) {
         g_set_error(err, ERR_DOMAIN, CRE_IO,
-                    "Cannot open a file: %s", strerror(errno));
+                    "Cannot open a file: %s", g_strerror(errno));
         return NULL;
     }
 
@@ -161,7 +161,7 @@ cr_checksum_file(const char *filename,
         EVP_DigestUpdate(ctx, buf, readed);
     } else {
         g_set_error(err, ERR_DOMAIN, CRE_IO,
-                    "Error while reading a file: %s", strerror(errno));
+                    "Error while reading a file: %s", g_strerror(errno));
         EVP_MD_CTX_destroy(ctx);
         fclose(f);
         return NULL;

@@ -865,19 +865,19 @@ generate_sqlite_from_xml(const gchar *path,
         pri_db_fd = g_mkstemp(pri_db_filename);
         g_debug("%s", pri_db_filename);
         if (pri_db_fd == -1) {
-            g_critical("Cannot open %s: %s", pri_db_filename, strerror(errno));
+            g_critical("Cannot open %s: %s", pri_db_filename, g_strerror(errno));
             exit(EXIT_FAILURE);
         }
         fil_db_fd = g_mkstemp(fil_db_filename);
         g_debug("%s", fil_db_filename);
         if (fil_db_fd == -1) {
-            g_critical("Cannot open %s: %s", fil_db_filename, strerror(errno));
+            g_critical("Cannot open %s: %s", fil_db_filename, g_strerror(errno));
             exit(EXIT_FAILURE);
         }
         oth_db_fd = g_mkstemp(oth_db_filename);
         g_debug("%s", oth_db_filename);
         if (oth_db_fd == -1) {
-            g_critical("Cannot open %s: %s", oth_db_filename, strerror(errno));
+            g_critical("Cannot open %s: %s", oth_db_filename, g_strerror(errno));
             exit(EXIT_FAILURE);
         }
     }

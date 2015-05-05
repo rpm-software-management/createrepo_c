@@ -347,7 +347,7 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
         g_debug("%s: Removing \"%s\"", __func__, realpath);
 
         if (remove(realpath) == -1)
-            g_warning("Cannot remove \"%s\": %s", realpath, strerror(errno));
+            g_warning("Cannot remove \"%s\": %s", realpath, g_strerror(errno));
         g_free(realpath);
     }
     cr_slist_free_full(recordstoremove, (GDestroyNotify)cr_repomd_record_free);

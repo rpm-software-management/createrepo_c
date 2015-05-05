@@ -148,7 +148,7 @@ cr_block_terminating_signals(GError **err)
 
     if (sigprocmask(SIG_BLOCK, &intmask, NULL)) {
         g_set_error(err, CREATEREPO_C_ERROR, CRE_SIGPROCMASK,
-                    "Cannot block terminating signals: %s", strerror(errno));
+                    "Cannot block terminating signals: %s", g_strerror(errno));
         return FALSE;
     }
 
@@ -176,7 +176,7 @@ cr_unblock_terminating_signals(GError **err)
 
     if (sigprocmask(SIG_UNBLOCK, &intmask, NULL)) {
         g_set_error(err, CREATEREPO_C_ERROR, CRE_SIGPROCMASK,
-                    "Cannot unblock terminating signals: %s", strerror(errno));
+                    "Cannot unblock terminating signals: %s", g_strerror(errno));
         return FALSE;
     }
 
@@ -203,7 +203,7 @@ cr_lock_repo(const gchar *repo_dir,
         if (errno != EEXIST) {
             g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
                         "Error while creating temporary repodata "
-                        "directory: %s: %s", lock_dir, strerror(errno));
+                        "directory: %s: %s", lock_dir, g_strerror(errno));
             return FALSE;
         }
 
@@ -236,10 +236,10 @@ cr_lock_repo(const gchar *repo_dir,
         // Try to create own - just as a lock
         if (g_mkdir(lock_dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
             g_critical("(--ignore-lock enabled) Cannot create %s: %s",
-                       lock_dir, strerror(errno));
+                       lock_dir, g_strerror(errno));
             g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
                         "Cannot create: %s (--ignore-lock enabled): %s",
-                        lock_dir, strerror(errno));
+                        lock_dir, g_strerror(errno));
             return FALSE;
         } else {
             g_debug("(--ignore-lock enabled) Own and empty %s created "
@@ -254,10 +254,10 @@ cr_lock_repo(const gchar *repo_dir,
 
         if (g_mkdir(tmp_repodata_dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
             g_critical("(--ignore-lock enabled) Cannot create %s: %s",
-                       tmp_repodata_dir, strerror(errno));
+                       tmp_repodata_dir, g_strerror(errno));
             g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
                         "Cannot create: %s (--ignore-lock enabled): %s",
-                        tmp_repodata_dir, strerror(errno));
+                        tmp_repodata_dir, g_strerror(errno));
             return FALSE;
         } else {
             g_debug("(--ignore-lock enabled) For data generation is used: %s",

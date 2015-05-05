@@ -276,7 +276,7 @@ cr_gz_strerror(gzFile f)
     int errnum;
     char *msg = (char *) gzerror(f, &errnum);
     if (errnum == Z_ERRNO)
-        msg = strerror(errno);
+        msg = g_strerror(errno);
     return msg;
 }
 
@@ -355,14 +355,14 @@ cr_sopen(const char *filename,
             file->FILE = (void *) fopen(filename, mode_str);
             if (!file->FILE)
                 g_set_error(err, ERR_DOMAIN, CRE_IO,
-                            "fopen(): %s", strerror(errno));
+                            "fopen(): %s", g_strerror(errno));
             break;
 
         case (CR_CW_GZ_COMPRESSION): // ---------------------------------------
             file->FILE = (void *) gzopen(filename, mode_str);
             if (!file->FILE) {
                 g_set_error(err, ERR_DOMAIN, CRE_GZ,
-                            "gzopen(): %s", strerror(errno));
+                            "gzopen(): %s", g_strerror(errno));
                 break;
             }
 
@@ -384,7 +384,7 @@ cr_sopen(const char *filename,
 
             if (!f) {
                 g_set_error(err, ERR_DOMAIN, CRE_IO,
-                            "fopen(): %s", strerror(errno));
+                            "fopen(): %s", g_strerror(errno));
                 break;
             }
 
@@ -485,7 +485,7 @@ cr_sopen(const char *filename,
             FILE *f = fopen(filename, mode_str);
             if (!f) {
                 g_set_error(err, ERR_DOMAIN, CRE_XZ,
-                            "fopen(): %s", strerror(errno));
+                            "fopen(): %s", g_strerror(errno));
                 lzma_end(&(xz_file->stream));
                 g_free((void *) xz_file);
                 break;
@@ -551,7 +551,7 @@ cr_close(CR_FILE *cr_file, GError **err)
             } else {
                 ret = CRE_IO;
                 g_set_error(err, ERR_DOMAIN, CRE_IO,
-                            "fclose(): %s", strerror(errno));
+                            "fclose(): %s", g_strerror(errno));
             }
             break;
 
@@ -667,7 +667,7 @@ cr_close(CR_FILE *cr_file, GError **err)
                         // Error while writing
                         ret = CRE_XZ;
                         g_set_error(err, ERR_DOMAIN, CRE_XZ,
-                                    "XZ: fwrite() error: %s", strerror(errno));
+                                    "XZ: fwrite() error: %s", g_strerror(errno));
                         break;
                     }
 
@@ -736,7 +736,7 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
             if ((ret != (int) len) && !feof((FILE *) cr_file->FILE)) {
                 ret = CR_CW_ERR;
                 g_set_error(err, ERR_DOMAIN, CRE_IO,
-                            "fread(): %s", strerror(errno));
+                            "fread(): %s", g_strerror(errno));
             }
             break;
 
@@ -811,7 +811,7 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
                     if ((lret = fread(xz_file->buffer, 1, XZ_BUFFER_SIZE, xz_file->file)) < 0) {
                         g_debug("%s: XZ: Error while fread", __func__);
                         g_set_error(err, ERR_DOMAIN, CRE_XZ,
-                                    "XZ: fread(): %s", strerror(errno));
+                                    "XZ: fread(): %s", g_strerror(errno));
                         return CR_CW_ERR;   // Error while reading input file
                     } else if (lret == 0) {
                         g_debug("%s: EOF", __func__);
@@ -948,7 +948,7 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
             if ((ret = (int) fwrite(buffer, 1, len, (FILE *) cr_file->FILE)) != (int) len) {
                 ret = CR_CW_ERR;
                 g_set_error(err, ERR_DOMAIN, CRE_IO,
-                            "fwrite(): %s", strerror(errno));
+                            "fwrite(): %s", g_strerror(errno));
             }
             break;
 
@@ -1046,7 +1046,7 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
                 if ((fwrite(xz_file->buffer, 1, out_len, xz_file->file)) != out_len) {
                     ret = CR_CW_ERR;
                     g_set_error(err, ERR_DOMAIN, CRE_XZ,
-                                "XZ: fwrite(): %s", strerror(errno));
+                                "XZ: fwrite(): %s", g_strerror(errno));
                     break;   // Error while writing
                 }
             }

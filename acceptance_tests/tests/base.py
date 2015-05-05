@@ -2,6 +2,7 @@ import os
 import re
 import time
 import shutil
+import pprint
 import filecmp
 import os.path
 import tempfile
@@ -25,7 +26,13 @@ def get_outputdir():
     OUTPUTDIR_LOCK.release()
     return OUTPUTDIR
 
-class CrResult(object):
+
+class _Result(object):
+    def __str__(self):
+        return pprint.pformat(self.__dict__)
+
+
+class CrResult(_Result):
     def __init__(self):
         self.rc = None       # Return code
         self.out = None      # stdout + stderr
@@ -35,7 +42,8 @@ class CrResult(object):
         self.outdir = None   # Output directory
         self.logfile = None  # Log file where the out was logged
 
-class RepoDiffResult(object):
+
+class RepoDiffResult(_Result):
     def __init__(self):
         self.rc = None
         self.out = None
@@ -44,7 +52,8 @@ class RepoDiffResult(object):
         self.cmd = None      # Complete command
         self.logfile = None  # Log file where the out was logged
 
-class RepoSanityCheckResult(object):
+
+class RepoSanityCheckResult(_Result):
     def __init__(self):
         self.rc = None
         self.out = None
@@ -200,29 +209,43 @@ class BaseTestCase(unittest.TestCase):
             f.write(content)
         return fn
 
+    def run_prog(self, prog, dir, args=None, outdir=None):
+        res = CrResult()
+        res.dir = dir
+        res.prog = prog
+        res.outdir = outdir
+        res.logfile =  os.path.join(self.tdir, "out_%s" % res.prog)
+        res.cmd = "%(prog)s --verbose %(args)s %(dir)s" % {
+            "prog": res.prog,
+            "dir": res.dir,
+            "args": args or "",
+        }
+        res.rc, res.out = self.runcmd(res.cmd, logfile=res.logfile)
+        return res
+
     def run_cr(self, dir, args=None, c=False, outdir=None):
         """Run createrepo and return CrResult object with results
 
         :returns: Result of the createrepo run
         :rtype: CrResult
         """
-        res = CrResult()
-        res.dir = dir
-        res.prog = "createrepo_c" if c else "createrepo"
+        prog = "createrepo_c" if c else "createrepo"
+
         if not outdir:
-            res.outdir = os.path.join(self.tdir, res.prog)
+            outdir = os.path.join(self.tdir, prog)
         else:
-            res.outdir = os.path.join(self.tdir, outdir)
-        if not os.path.exists(res.outdir):
-            os.mkdir(res.outdir)
-        res.logfile =  os.path.join(self.tdir, "out_%s" % res.prog)
-        res.cmd = "%(prog)s --verbose -o %(outdir)s %(args)s %(dir)s" % {
-            "prog": res.prog,
-            "dir": res.dir,
-            "args": args or "",
-            "outdir": res.outdir,
-        }
-        res.rc, res.out = self.runcmd(res.cmd, logfile=res.logfile)
+            outdir = os.path.join(self.tdir, outdir)
+        if not os.path.exists(outdir):
+            os.mkdir(outdir)
+
+        args = " -o %s %s" % (outdir, args if args else "")
+
+        res = self.run_prog(prog, dir, args, outdir)
+        return res
+
+    def run_sqlr(self, dir, args=None):
+        """"""
+        res = self.run_prog("sqliterepo", dir, args)
         return res
 
     def compare_repos(self, repo1, repo2):

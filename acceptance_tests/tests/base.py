@@ -52,6 +52,7 @@ class RepoSanityCheckResult(object):
         self.cmd = None
         self.logfile = None
 
+
 class BaseTestCase(unittest.TestCase):
 
     def __init__(self, *args, **kwargs):
@@ -170,31 +171,41 @@ class BaseTestCase(unittest.TestCase):
         return proc.returncode, output
 
     def set_success(self):
+        """Create a SUCCESS file in directory of the current test"""
         fn = os.path.join(self.tdir, "SUCCESS")
         open(fn, "w")
 
     def copy_pkg(self, name, dst):
+        """Copy package from testdata into specified destination"""
         src = os.path.join(PACKAGESDIR, name)
         shutil.copy(src, dst)
         return os.path.join(dst, name)
 
     def indir_addpkg(self, name):
+        """Add package into input dir for the current test"""
         src = os.path.join(PACKAGESDIR, name)
         return self.copy_pkg(src, self.indir)
 
     def indir_makedirs(self, path):
+        """Make a directory in input dir of the current test"""
         path = path.lstrip('/')
         final_path = os.path.join(self.indir, path)
         os.makedirs(final_path)
         return final_path
 
     def indir_mkfile(self, name, content=""):
+        """Create a file in input dir of the current test"""
         fn = os.path.join(self.indir, name)
         with open(fn, "w") as f:
             f.write(content)
         return fn
 
     def run_cr(self, dir, args=None, c=False, outdir=None):
+        """Run createrepo and return CrResult object with results
+
+        :returns: Result of the createrepo run
+        :rtype: CrResult
+        """
         res = CrResult()
         res.dir = dir
         res.prog = "createrepo_c" if c else "createrepo"
@@ -215,6 +226,11 @@ class BaseTestCase(unittest.TestCase):
         return res
 
     def compare_repos(self, repo1, repo2):
+        """Compare two repos
+
+        :returns: Difference between two repositories
+        :rtype: RepoDiffResult
+        """
         res = RepoDiffResult()
         res.repo1 = os.path.join(repo1, "repodata")
         res.repo2 = os.path.join(repo2, "repodata")
@@ -224,6 +240,11 @@ class BaseTestCase(unittest.TestCase):
         return res
 
     def check_repo_sanity(self, repo):
+        """Check if a repository is sane
+
+        :returns: Result of the sanity check
+        :rtype: RepoSanityCheckResult
+        """
         res = RepoSanityCheckResult()
         res.repo = os.path.join(repo, "repodata")
         res.logfile = os.path.join(self.tdir, "out_sanity")
@@ -232,11 +253,21 @@ class BaseTestCase(unittest.TestCase):
         return res
 
     def assert_run_cr(self, *args, **kwargs):
+        """Run createrepo and assert that it finished with return code 0
+
+        :returns: Result of the createrepo run
+        :rtype: CrResult
+        """
         res = self.run_cr(*args, **kwargs)
         self.assertFalse(res.rc)
         return res
 
     def assert_same_results(self, indir, args=None):
+        """Run both createrepo and createrepo_c and assert that results are same
+
+        :returns: (result of comparison, createrepo result, createrepo_c result)
+        :rtype: (RepoDiffResult, CrResult, CrResult)
+        """
         crres = self.run_cr(indir, args)
         crcres = self.run_cr(indir, args, c=True)
         self.assertFalse(crres.rc)   # Error while running createrepo
@@ -246,11 +277,18 @@ class BaseTestCase(unittest.TestCase):
         return (cmpres, crres, crcres)
 
     def assert_repo_sanity(self, repo):
+        """Run repo sanity check and assert it's sane
+
+        :returns: Result of the sanity check
+        :rtype: RepoSanityCheckResult
+        """
         res = self.check_repo_sanity(repo)
         self.assertFalse(res.rc)
         return res
 
     def assert_repo_files(self, repo, file_patterns, additional_files_allowed=True):
+        """Assert that files (defined by wildcard patterns) are in the repo
+        """
         compiled_patterns = map(re.compile, file_patterns)
         fns = os.listdir(os.path.join(repo, "repodata/"))
         used_patterns = []
@@ -267,7 +305,9 @@ class BaseTestCase(unittest.TestCase):
         self.assertEqual(unused_paterns, [])  # Some patterns weren't used
 
     def assert_same_dir_content(self, a, b):
-        """Not recursive yet"""
+        """Assert identical content of two directories
+        (Not recursive yet)
+        """
         # TODO: Recursive
         self.assertTrue(os.path.isdir(a))
         self.assertTrue(os.path.isdir(b))

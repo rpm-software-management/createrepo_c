@@ -143,17 +143,12 @@ cr_xml_parser_strtoll(cr_ParserData *pd,
 
 int
 cr_newpkgcb(cr_Package **pkg,
-            const char *pkgId,
-            const char *name,
-            const char *arch,
-            void *cbdata,
+            G_GNUC_UNUSED const char *pkgId,
+            G_GNUC_UNUSED const char *name,
+            G_GNUC_UNUSED const char *arch,
+            G_GNUC_UNUSED void *cbdata,
             GError **err)
 {
-    CR_UNUSED(pkgId);
-    CR_UNUSED(name);
-    CR_UNUSED(arch);
-    CR_UNUSED(cbdata);
-
     assert(pkg && *pkg == NULL);
     assert(!err || *err == NULL);
 

@@ -73,10 +73,10 @@ check_UpdateReferenceStatus(const _UpdateReferenceObject *self)
 /* Function on the type */
 
 static PyObject *
-updatereference_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+updatereference_new(PyTypeObject *type,
+                    G_GNUC_UNUSED PyObject *args,
+                    G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
     _UpdateReferenceObject *self = (_UpdateReferenceObject *)type->tp_alloc(type, 0);
     if (self) {
         self->reference = NULL;
@@ -88,11 +88,10 @@ PyDoc_STRVAR(updatereference_init__doc__,
 ".. method:: __init__()\n\n");
 
 static int
-updatereference_init(_UpdateReferenceObject *self, PyObject *args, PyObject *kwds)
+updatereference_init(_UpdateReferenceObject *self,
+                     G_GNUC_UNUSED PyObject *args,
+                     G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
-
     /* Free all previous resources when reinitialization */
     if (self->reference)
         cr_updatereference_free(self->reference);
@@ -116,9 +115,8 @@ updatereference_dealloc(_UpdateReferenceObject *self)
 }
 
 static PyObject *
-updatereference_repr(_UpdateReferenceObject *self)
+updatereference_repr(G_GNUC_UNUSED _UpdateReferenceObject *self)
 {
-    CR_UNUSED(self);
     if (self->reference->type)
         return PyString_FromFormat("<createrepo_c.UpdateReference %s object>",
                                    self->reference->type);
@@ -133,9 +131,8 @@ PyDoc_STRVAR(copy__doc__,
 "Return copy of the UpdateReference object");
 
 static PyObject *
-copy_updatereference(_UpdateReferenceObject *self, void *nothing)
+copy_updatereference(_UpdateReferenceObject *self, G_GNUC_UNUSED void *nothing)
 {
-    CR_UNUSED(nothing);
     if (check_UpdateReferenceStatus(self))
         return NULL;
     return Object_FromUpdateReference(cr_updatereference_copy(self->reference));

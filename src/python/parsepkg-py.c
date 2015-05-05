@@ -29,10 +29,8 @@
 #include "exception-py.h"
 
 PyObject *
-py_package_from_rpm(PyObject *self, PyObject *args)
+py_package_from_rpm(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
-    CR_UNUSED(self);
-
     PyObject *ret;
     cr_Package *pkg;
     int checksum_type, changelog_limit;
@@ -62,10 +60,8 @@ py_package_from_rpm(PyObject *self, PyObject *args)
 }
 
 PyObject *
-py_xml_from_rpm(PyObject *self, PyObject *args)
+py_xml_from_rpm(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
-    CR_UNUSED(self);
-
     PyObject *tuple;
     int checksum_type, changelog_limit;
     char *filename, *location_href, *location_base;

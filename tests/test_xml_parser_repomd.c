@@ -29,15 +29,11 @@
 // Callbacks
 
 static int
-warningcb(cr_XmlParserWarningType type,
-                    char *msg,
-                    void *cbdata,
-                    GError **err)
+warningcb(G_GNUC_UNUSED cr_XmlParserWarningType type,
+          G_GNUC_UNUSED char *msg,
+          void *cbdata,
+          G_GNUC_UNUSED GError **err)
 {
-    CR_UNUSED(type);
-    CR_UNUSED(msg);
-    CR_UNUSED(err);
-
     g_assert(type < CR_XML_WARNING_SENTINEL);
     g_assert(!err || *err == NULL);
 
@@ -48,16 +44,11 @@ warningcb(cr_XmlParserWarningType type,
 }
 
 static int
-warningcb_interrupt(cr_XmlParserWarningType type,
-                    char *msg,
-                    void *cbdata,
-                    GError **err)
+warningcb_interrupt(G_GNUC_UNUSED cr_XmlParserWarningType type,
+                    G_GNUC_UNUSED char *msg,
+                    G_GNUC_UNUSED void *cbdata,
+                    G_GNUC_UNUSED GError **err)
 {
-    CR_UNUSED(type);
-    CR_UNUSED(msg);
-    CR_UNUSED(cbdata);
-    CR_UNUSED(err);
-
     g_assert(type < CR_XML_WARNING_SENTINEL);
     g_assert(!err || *err == NULL);
 

@@ -136,10 +136,8 @@ c_warningcb(cr_XmlParserWarningType type,
 }
 
 PyObject *
-py_xml_parse_primary(PyObject *self, PyObject *args)
+py_xml_parse_primary(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
-    CR_UNUSED(self);
-
     char *filename;
     int do_files;
     PyObject *py_newpkgcb, *py_pkgcb, *py_warningcb;
@@ -219,10 +217,8 @@ py_xml_parse_primary(PyObject *self, PyObject *args)
 }
 
 PyObject *
-py_xml_parse_filelists(PyObject *self, PyObject *args)
+py_xml_parse_filelists(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
-    CR_UNUSED(self);
-
     char *filename;
     PyObject *py_newpkgcb, *py_pkgcb, *py_warningcb;
     CbData cbdata;
@@ -299,10 +295,8 @@ py_xml_parse_filelists(PyObject *self, PyObject *args)
 }
 
 PyObject *
-py_xml_parse_other(PyObject *self, PyObject *args)
+py_xml_parse_other(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
-    CR_UNUSED(self);
-
     char *filename;
     PyObject *py_newpkgcb, *py_pkgcb, *py_warningcb;
     CbData cbdata;
@@ -379,10 +373,8 @@ py_xml_parse_other(PyObject *self, PyObject *args)
 }
 
 PyObject *
-py_xml_parse_repomd(PyObject *self, PyObject *args)
+py_xml_parse_repomd(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
-    CR_UNUSED(self);
-
     char *filename;
     PyObject *py_repomd, *py_warningcb;
     CbData cbdata;
@@ -435,10 +427,8 @@ py_xml_parse_repomd(PyObject *self, PyObject *args)
 }
 
 PyObject *
-py_xml_parse_updateinfo(PyObject *self, PyObject *args)
+py_xml_parse_updateinfo(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
-    CR_UNUSED(self);
-
     char *filename;
     PyObject *py_updateinfo, *py_warningcb;
     CbData cbdata;

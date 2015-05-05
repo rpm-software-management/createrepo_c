@@ -398,9 +398,9 @@ typedef struct {
 
 
 static void
-copyfiletest_setup(Copyfiletest *copyfiletest, gconstpointer test_data)
+copyfiletest_setup(Copyfiletest *copyfiletest,
+                   G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
     copyfiletest->tmp_dir = g_strdup(TMPDIR_TEMPLATE);
     mkdtemp(copyfiletest->tmp_dir);
     copyfiletest->dst_file = g_strconcat(copyfiletest->tmp_dir, "/", DST_FILE, NULL);
@@ -408,9 +408,9 @@ copyfiletest_setup(Copyfiletest *copyfiletest, gconstpointer test_data)
 
 
 static void
-copyfiletest_teardown(Copyfiletest *copyfiletest, gconstpointer test_data)
+copyfiletest_teardown(Copyfiletest *copyfiletest,
+                      G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
     remove(copyfiletest->dst_file);
     rmdir(copyfiletest->tmp_dir);
     g_free(copyfiletest->tmp_dir);
@@ -419,9 +419,9 @@ copyfiletest_teardown(Copyfiletest *copyfiletest, gconstpointer test_data)
 
 
 static void
-copyfiletest_test_empty_file(Copyfiletest *copyfiletest, gconstpointer test_data)
+copyfiletest_test_empty_file(Copyfiletest *copyfiletest,
+                             G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
     gboolean ret;
     char *checksum;
     GError *tmp_err = NULL;
@@ -438,9 +438,9 @@ copyfiletest_test_empty_file(Copyfiletest *copyfiletest, gconstpointer test_data
 
 
 static void
-copyfiletest_test_text_file(Copyfiletest *copyfiletest, gconstpointer test_data)
+copyfiletest_test_text_file(Copyfiletest *copyfiletest,
+                            G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
     gboolean ret;
     char *checksum;
 
@@ -455,9 +455,9 @@ copyfiletest_test_text_file(Copyfiletest *copyfiletest, gconstpointer test_data)
 
 
 static void
-copyfiletest_test_binary_file(Copyfiletest *copyfiletest, gconstpointer test_data)
+copyfiletest_test_binary_file(Copyfiletest *copyfiletest,
+                              G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
     gboolean ret;
     char *checksum;
     GError *tmp_err = NULL;
@@ -474,9 +474,9 @@ copyfiletest_test_binary_file(Copyfiletest *copyfiletest, gconstpointer test_dat
 
 
 static void
-copyfiletest_test_rewrite(Copyfiletest *copyfiletest, gconstpointer test_data)
+copyfiletest_test_rewrite(Copyfiletest *copyfiletest,
+                          G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
     gboolean ret;
     char *checksum;
     GError *tmp_err = NULL;
@@ -500,9 +500,9 @@ copyfiletest_test_rewrite(Copyfiletest *copyfiletest, gconstpointer test_data)
 
 
 static void
-copyfiletest_test_corner_cases(Copyfiletest *copyfiletest, gconstpointer test_data)
+copyfiletest_test_corner_cases(Copyfiletest *copyfiletest,
+                               G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
     gboolean ret;
     GError *tmp_err = NULL;
 
@@ -523,9 +523,9 @@ copyfiletest_test_corner_cases(Copyfiletest *copyfiletest, gconstpointer test_da
 
 
 static void
-compressfile_test_text_file(Copyfiletest *copyfiletest, gconstpointer test_data)
+compressfile_test_text_file(Copyfiletest *copyfiletest,
+                            G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
     int ret;
     char *checksum;
     GError *tmp_err = NULL;
@@ -544,9 +544,8 @@ compressfile_test_text_file(Copyfiletest *copyfiletest, gconstpointer test_data)
 
 static void
 compressfile_with_stat_test_text_file(Copyfiletest *copyfiletest,
-                                      gconstpointer test_data)
+                                      G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
     int ret;
     char *checksum;
     cr_ContentStat *stat;
@@ -570,9 +569,8 @@ compressfile_with_stat_test_text_file(Copyfiletest *copyfiletest,
 
 static void
 decompressfile_with_stat_test_text_file(Copyfiletest *copyfiletest,
-                                        gconstpointer test_data)
+                                        G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
     int ret;
     cr_ContentStat *stat;
     GError *tmp_err = NULL;
@@ -595,10 +593,9 @@ decompressfile_with_stat_test_text_file(Copyfiletest *copyfiletest,
 
 
 static void
-test_cr_download_valid_url_1(Copyfiletest *copyfiletest, gconstpointer test_data)
+test_cr_download_valid_url_1(Copyfiletest *copyfiletest,
+                             G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
-
     CURL *handle = curl_easy_init();
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
@@ -610,10 +607,9 @@ test_cr_download_valid_url_1(Copyfiletest *copyfiletest, gconstpointer test_data
 
 
 static void
-test_cr_download_valid_url_2(Copyfiletest *copyfiletest, gconstpointer test_data)
+test_cr_download_valid_url_2(Copyfiletest *copyfiletest,
+                             G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
-
     CURL *handle = curl_easy_init();
     GError *tmp_err = NULL;
 
@@ -628,10 +624,9 @@ test_cr_download_valid_url_2(Copyfiletest *copyfiletest, gconstpointer test_data
 
 
 static void
-test_cr_download_invalid_url(Copyfiletest *copyfiletest, gconstpointer test_data)
+test_cr_download_invalid_url(Copyfiletest *copyfiletest,
+                             G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
-
     CURL *handle = curl_easy_init();
     GError *tmp_err = NULL;
 
@@ -646,13 +641,12 @@ test_cr_download_invalid_url(Copyfiletest *copyfiletest, gconstpointer test_data
 
 
 static void
-test_cr_better_copy_file_local(Copyfiletest *copyfiletest, gconstpointer test_data)
+test_cr_better_copy_file_local(Copyfiletest *copyfiletest,
+                               G_GNUC_UNUSED gconstpointer test_data)
 {
     gboolean ret;
     char *checksum;
     GError *tmp_err = NULL;
-
-    CR_UNUSED(test_data);
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
     ret = cr_better_copy_file(TEST_BINARY_FILE, copyfiletest->dst_file, &tmp_err);
@@ -667,12 +661,11 @@ test_cr_better_copy_file_local(Copyfiletest *copyfiletest, gconstpointer test_da
 
 
 static void
-test_cr_better_copy_file_url(Copyfiletest *copyfiletest, gconstpointer test_data)
+test_cr_better_copy_file_url(Copyfiletest *copyfiletest,
+                             G_GNUC_UNUSED gconstpointer test_data)
 {
     gboolean ret;
     GError *tmp_err = NULL;
-
-    CR_UNUSED(test_data);
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
     ret = cr_better_copy_file(VALID_URL_01, copyfiletest->dst_file, &tmp_err);

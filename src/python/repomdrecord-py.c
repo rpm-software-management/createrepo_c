@@ -73,10 +73,10 @@ check_RepomdRecordStatus(const _RepomdRecordObject *self)
 /* Function on the type */
 
 static PyObject *
-repomdrecord_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+repomdrecord_new(PyTypeObject *type,
+                 G_GNUC_UNUSED PyObject *args,
+                 G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
     _RepomdRecordObject *self = (_RepomdRecordObject *)type->tp_alloc(type, 0);
     if (self) {
         self->record = NULL;
@@ -90,10 +90,10 @@ PyDoc_STRVAR(repomdrecord_init__doc__,
 "    :arg path: Path to the file\n");
 
 static int
-repomdrecord_init(_RepomdRecordObject *self, PyObject *args, PyObject *kwds)
+repomdrecord_init(_RepomdRecordObject *self,
+                  PyObject *args,
+                  G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(kwds);
-
     char *type = NULL, *path = NULL;
 
     if (!PyArg_ParseTuple(args, "|zz:repomdrecord_init", &type, &path))
@@ -122,9 +122,8 @@ repomdrecord_dealloc(_RepomdRecordObject *self)
 }
 
 static PyObject *
-repomdrecord_repr(_RepomdRecordObject *self)
+repomdrecord_repr(G_GNUC_UNUSED _RepomdRecordObject *self)
 {
-    CR_UNUSED(self);
     if (self->record->type)
         return PyString_FromFormat("<createrepo_c.RepomdRecord %s object>",
                                    self->record->type);
@@ -139,9 +138,8 @@ PyDoc_STRVAR(copy__doc__,
 "Return copy of the RepomdRecord object");
 
 static PyObject *
-copy_repomdrecord(_RepomdRecordObject *self, void *nothing)
+copy_repomdrecord(_RepomdRecordObject *self, G_GNUC_UNUSED void *nothing)
 {
-    CR_UNUSED(nothing);
     if (check_RepomdRecordStatus(self))
         return NULL;
     return Object_FromRepomdRecord(cr_repomd_record_copy(self->record));
@@ -214,11 +212,9 @@ PyDoc_STRVAR(rename_file__doc__,
 "Add (prepend) file checksum to the filename");
 
 static PyObject *
-rename_file(_RepomdRecordObject *self, void *nothing)
+rename_file(_RepomdRecordObject *self, G_GNUC_UNUSED void *nothing)
 {
     GError *err = NULL;
-
-    CR_UNUSED(nothing);
 
     cr_repomd_record_rename_file(self->record, &err);
     if (err) {

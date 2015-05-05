@@ -55,11 +55,10 @@ check_MetadataLocationStatus(const _MetadataLocationObject *self)
 /* Function on the type */
 
 static PyObject *
-metadatalocation_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+metadatalocation_new(PyTypeObject *type,
+                     G_GNUC_UNUSED PyObject *args,
+                     G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
-
     _MetadataLocationObject *self = (_MetadataLocationObject *)type->tp_alloc(type, 0);
     if (self)
         self->ml = NULL;
@@ -74,9 +73,10 @@ PyDoc_STRVAR(metadatalocation_init__doc__,
 "                    databases will not be downloaded)\n");
 
 static int
-metadatalocation_init(_MetadataLocationObject *self, PyObject *args, PyObject *kwds)
+metadatalocation_init(_MetadataLocationObject *self,
+                      PyObject *args,
+                      G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(kwds);
     char *repopath;
     PyObject *py_ignore_db = NULL;
     GError *tmp_err = NULL;
@@ -107,9 +107,8 @@ metadatalocation_dealloc(_MetadataLocationObject *self)
 }
 
 static PyObject *
-metadatalocation_repr(_MetadataLocationObject *self)
+metadatalocation_repr(G_GNUC_UNUSED _MetadataLocationObject *self)
 {
-    CR_UNUSED(self);
     return PyString_FromFormat("<createrepo_c.MetadataLocation object>");
 }
 

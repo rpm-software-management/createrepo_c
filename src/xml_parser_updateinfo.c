@@ -320,12 +320,10 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
 }
 
 static void XMLCALL
-cr_end_handler(void *pdata, const char *element)
+cr_end_handler(void *pdata, G_GNUC_UNUSED const char *element)
 {
     cr_ParserData *pd = pdata;
     unsigned int state = pd->state;
-
-    CR_UNUSED(element);
 
     if (pd->err)
         return; // There was an error -> do nothing

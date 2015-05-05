@@ -73,10 +73,10 @@ check_UpdateCollectionPackageStatus(const _UpdateCollectionPackageObject *self)
 /* Function on the type */
 
 static PyObject *
-updatecollectionpackage_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+updatecollectionpackage_new(PyTypeObject *type,
+                            G_GNUC_UNUSED PyObject *args,
+                            G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
     _UpdateCollectionPackageObject *self = (_UpdateCollectionPackageObject *)type->tp_alloc(type, 0);
     if (self) {
         self->pkg = NULL;
@@ -88,11 +88,10 @@ PyDoc_STRVAR(updatecollectionpackage_init__doc__,
 ".. method:: __init__()\n\n");
 
 static int
-updatecollectionpackage_init(_UpdateCollectionPackageObject *self, PyObject *args, PyObject *kwds)
+updatecollectionpackage_init(_UpdateCollectionPackageObject *self,
+                             G_GNUC_UNUSED PyObject *args,
+                             G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
-
     /* Free all previous resources when reinitialization */
     if (self->pkg)
         cr_updatecollectionpackage_free(self->pkg);
@@ -116,9 +115,8 @@ updatecollectionpackage_dealloc(_UpdateCollectionPackageObject *self)
 }
 
 static PyObject *
-updatecollectionpackage_repr(_UpdateCollectionPackageObject *self)
+updatecollectionpackage_repr(G_GNUC_UNUSED _UpdateCollectionPackageObject *self)
 {
-    CR_UNUSED(self);
     return PyString_FromFormat("<createrepo_c.UpdateCollectionPackage object>");
 }
 
@@ -129,9 +127,9 @@ PyDoc_STRVAR(copy__doc__,
 "Return copy of the UpdateCollectionPackage object");
 
 static PyObject *
-copy_updatecollectionpackage(_UpdateCollectionPackageObject *self, void *nothing)
+copy_updatecollectionpackage(_UpdateCollectionPackageObject *self,
+                             G_GNUC_UNUSED void *nothing)
 {
-    CR_UNUSED(nothing);
     if (check_UpdateCollectionPackageStatus(self))
         return NULL;
     return Object_FromUpdateCollectionPackage(cr_updatecollectionpackage_copy(self->pkg));

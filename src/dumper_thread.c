@@ -50,9 +50,8 @@ struct BufferedTask {
 
 
 static gint
-buf_task_sort_func(gconstpointer a, gconstpointer b, gpointer data)
+buf_task_sort_func(gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpointer data)
 {
-    CR_UNUSED(data);
     const struct BufferedTask *task_a = a;
     const struct BufferedTask *task_b = b;
     if (task_a->id < task_b->id)  return -1;

@@ -141,14 +141,12 @@ cr_Package *
 cr_package_from_header(Header hdr,
                        int changelog_limit,
                        cr_HeaderReadingFlags hdrrflags,
-                       GError **err)
+                       G_GNUC_UNUSED GError **err)
 {
     cr_Package *pkg;
 
     assert(hdr);
     assert(!err || *err == NULL);
-
-    CR_UNUSED(err);  // In fact, GError is not used in this function yet.
 
     // Create new package structure
 

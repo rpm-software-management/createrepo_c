@@ -27,11 +27,9 @@
 #include "exception-py.h"
 
 PyObject *
-py_checksum_name_str(PyObject *self, PyObject *args)
+py_checksum_name_str(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
     int type;
-
-    CR_UNUSED(self);
 
     if (!PyArg_ParseTuple(args, "i:py_checksum_name_Str", &type))
         return NULL;
@@ -40,11 +38,9 @@ py_checksum_name_str(PyObject *self, PyObject *args)
 }
 
 PyObject *
-py_checksum_type(PyObject *self, PyObject *args)
+py_checksum_type(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
     char *type;
-
-    CR_UNUSED(self);
 
     if (!PyArg_ParseTuple(args, "s:py_checksum_type", &type))
         return NULL;

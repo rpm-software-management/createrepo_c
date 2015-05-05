@@ -90,12 +90,11 @@ allowed_file(const gchar *filename, GSList *exclude_masks)
  * @param user_data     Unused (user data)
  */
 static int
-task_cmp(gconstpointer a_p, gconstpointer b_p, gpointer user_data)
+task_cmp(gconstpointer a_p, gconstpointer b_p, G_GNUC_UNUSED gpointer user_data)
 {
     int ret;
     const struct PoolTask *a = a_p;
     const struct PoolTask *b = b_p;
-    CR_UNUSED(user_data);
     ret = g_strcmp0(a->filename, b->filename);
     if (ret) return ret;
     return g_strcmp0(a->path, b->path);

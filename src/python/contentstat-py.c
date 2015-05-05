@@ -55,10 +55,10 @@ check_ContentStatStatus(const _ContentStatObject *self)
 /* Function on the type */
 
 static PyObject *
-contentstat_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+contentstat_new(PyTypeObject *type,
+                G_GNUC_UNUSED PyObject *args,
+                G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
     _ContentStatObject *self = (_ContentStatObject *)type->tp_alloc(type, 0);
     if (self)
         self->stat = NULL;
@@ -71,10 +71,10 @@ PyDoc_STRVAR(contentstat_init__doc__,
 "    :arg checksum_type: Type of checksum that should be used\n");
 
 static int
-contentstat_init(_ContentStatObject *self, PyObject *args, PyObject *kwds)
+contentstat_init(_ContentStatObject *self,
+                 PyObject *args,
+                 G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(kwds);
-
     int type;
     GError *tmp_err = NULL;
 
@@ -104,9 +104,8 @@ contentstat_dealloc(_ContentStatObject *self)
 }
 
 static PyObject *
-contentstat_repr(_ContentStatObject *self)
+contentstat_repr(G_GNUC_UNUSED _ContentStatObject *self)
 {
-    CR_UNUSED(self);
     return PyString_FromFormat("<createrepo_c.ContentStat object>");
 }
 

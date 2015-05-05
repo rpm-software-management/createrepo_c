@@ -29,13 +29,11 @@
 #include "updaterecord-py.h"
 
 PyObject *
-py_xml_dump_primary(PyObject *self, PyObject *args)
+py_xml_dump_primary(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
     PyObject *py_pkg, *py_str;
     char *xml;
     GError *err = NULL;
-
-    CR_UNUSED(self);
 
     if (!PyArg_ParseTuple(args, "O!:py_xml_dump_primary", &Package_Type, &py_pkg))
         return NULL;
@@ -52,13 +50,11 @@ py_xml_dump_primary(PyObject *self, PyObject *args)
 }
 
 PyObject *
-py_xml_dump_filelists(PyObject *self, PyObject *args)
+py_xml_dump_filelists(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
     PyObject *py_pkg, *py_str;
     char *xml;
     GError *err = NULL;
-
-    CR_UNUSED(self);
 
     if (!PyArg_ParseTuple(args, "O!:py_xml_dump_filelists", &Package_Type, &py_pkg))
         return NULL;
@@ -75,13 +71,11 @@ py_xml_dump_filelists(PyObject *self, PyObject *args)
 }
 
 PyObject *
-py_xml_dump_other(PyObject *self, PyObject *args)
+py_xml_dump_other(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
     PyObject *py_pkg, *py_str;
     char *xml;
     GError *err = NULL;
-
-    CR_UNUSED(self);
 
     if (!PyArg_ParseTuple(args, "O!:py_xml_dump_other", &Package_Type, &py_pkg))
         return NULL;
@@ -98,13 +92,11 @@ py_xml_dump_other(PyObject *self, PyObject *args)
 }
 
 PyObject *
-py_xml_dump(PyObject *self, PyObject *args)
+py_xml_dump(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
     PyObject *py_pkg, *tuple;
     struct cr_XmlStruct xml_res;
     GError *err = NULL;
-
-    CR_UNUSED(self);
 
     if (!PyArg_ParseTuple(args, "O!:py_xml_dump", &Package_Type, &py_pkg))
         return NULL;
@@ -135,13 +127,11 @@ py_xml_dump(PyObject *self, PyObject *args)
 }
 
 PyObject *
-py_xml_dump_updaterecord(PyObject *self, PyObject *args)
+py_xml_dump_updaterecord(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
     PyObject *py_rec, *py_str;
     char *xml = NULL;
     GError *err = NULL;
-
-    CR_UNUSED(self);
 
     if (!PyArg_ParseTuple(args, "O!:py_xml_dump_updaterecord",
                           &UpdateRecord_Type, &py_rec))

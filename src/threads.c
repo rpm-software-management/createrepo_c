@@ -80,12 +80,10 @@ cr_compressiontask_free(cr_CompressionTask *task, GError **err)
 }
 
 void
-cr_compressing_thread(gpointer data, gpointer user_data)
+cr_compressing_thread(gpointer data, G_GNUC_UNUSED gpointer user_data)
 {
     cr_CompressionTask *task = data;
     GError *tmp_err = NULL;
-
-    CR_UNUSED(user_data);
 
     assert(task);
 
@@ -141,12 +139,10 @@ cr_repomdrecordfilltask_free(cr_RepomdRecordFillTask *task,
 }
 
 void
-cr_repomd_record_fill_thread(gpointer data, gpointer user_data)
+cr_repomd_record_fill_thread(gpointer data, G_GNUC_UNUSED gpointer user_data)
 {
     cr_RepomdRecordFillTask *task = data;
     GError *tmp_err = NULL;
-
-    CR_UNUSED(user_data);
 
     assert(task);
 

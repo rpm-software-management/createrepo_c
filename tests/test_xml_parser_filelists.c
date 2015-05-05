@@ -50,16 +50,12 @@ pkgcb_interrupt(cr_Package *pkg, void *cbdata, GError **err)
 
 static int
 newpkgcb_skip_fake_bash(cr_Package **pkg,
-                        const char *pkgId,
+                        G_GNUC_UNUSED const char *pkgId,
                         const char *name,
-                        const char *arch,
-                        void *cbdata,
+                        G_GNUC_UNUSED const char *arch,
+                        G_GNUC_UNUSED void *cbdata,
                         GError **err)
 {
-    CR_UNUSED(pkgId);
-    CR_UNUSED(arch);
-    CR_UNUSED(cbdata);
-
     g_assert(pkg != NULL);
     g_assert(*pkg == NULL);
     g_assert(pkgId != NULL);
@@ -74,17 +70,12 @@ newpkgcb_skip_fake_bash(cr_Package **pkg,
 
 static int
 newpkgcb_interrupt(cr_Package **pkg,
-                   const char *pkgId,
-                   const char *name,
-                   const char *arch,
-                   void *cbdata,
+                   G_GNUC_UNUSED const char *pkgId,
+                   G_GNUC_UNUSED const char *name,
+                   G_GNUC_UNUSED const char *arch,
+                   G_GNUC_UNUSED void *cbdata,
                    GError **err)
 {
-    CR_UNUSED(pkgId);
-    CR_UNUSED(name);
-    CR_UNUSED(arch);
-    CR_UNUSED(cbdata);
-
     g_assert(pkg != NULL);
     g_assert(*pkg == NULL);
     g_assert(pkgId != NULL);
@@ -96,15 +87,11 @@ newpkgcb_interrupt(cr_Package **pkg,
 }
 
 static int
-warningcb(cr_XmlParserWarningType type,
-                    char *msg,
-                    void *cbdata,
-                    GError **err)
+warningcb(G_GNUC_UNUSED cr_XmlParserWarningType type,
+          G_GNUC_UNUSED char *msg,
+          void *cbdata,
+          G_GNUC_UNUSED GError **err)
 {
-    CR_UNUSED(type);
-    CR_UNUSED(msg);
-    CR_UNUSED(err);
-
     g_assert(type < CR_XML_WARNING_SENTINEL);
     g_assert(!err || *err == NULL);
 
@@ -115,16 +102,11 @@ warningcb(cr_XmlParserWarningType type,
 }
 
 static int
-warningcb_interrupt(cr_XmlParserWarningType type,
-                    char *msg,
-                    void *cbdata,
-                    GError **err)
+warningcb_interrupt(G_GNUC_UNUSED cr_XmlParserWarningType type,
+                    G_GNUC_UNUSED char *msg,
+                    G_GNUC_UNUSED void *cbdata,
+                    G_GNUC_UNUSED GError **err)
 {
-    CR_UNUSED(type);
-    CR_UNUSED(msg);
-    CR_UNUSED(cbdata);
-    CR_UNUSED(err);
-
     g_assert(type < CR_XML_WARNING_SENTINEL);
     g_assert(!err || *err == NULL);
 

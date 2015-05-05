@@ -56,11 +56,10 @@ check_RepomdStatus(const _RepomdObject *self)
 /* Function on the type */
 
 static PyObject *
-repomd_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+repomd_new(PyTypeObject *type,
+           G_GNUC_UNUSED PyObject *args,
+           G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
-
     _RepomdObject *self = (_RepomdObject *)type->tp_alloc(type, 0);
     if (self) {
         self->repomd = NULL;
@@ -72,11 +71,10 @@ PyDoc_STRVAR(repomd_init__doc__,
 "Repomd object");
 
 static int
-repomd_init(_RepomdObject *self, PyObject *args, PyObject *kwds)
+repomd_init(_RepomdObject *self,
+            G_GNUC_UNUSED PyObject *args,
+            G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
-
     /* Free all previous resources when reinitialization */
     if (self->repomd) {
         cr_repomd_free(self->repomd);
@@ -101,9 +99,8 @@ repomd_dealloc(_RepomdObject *self)
 }
 
 static PyObject *
-repomd_repr(_RepomdObject *self)
+repomd_repr(G_GNUC_UNUSED _RepomdObject *self)
 {
-    CR_UNUSED(self);
     return PyString_FromFormat("<createrepo_c.Repomd object>");
 }
 
@@ -234,9 +231,8 @@ PyDoc_STRVAR(sort_records__doc__,
 "Sort repomd records to the createrepo_c prefered order");
 
 static PyObject *
-sort_records(_RepomdObject *self, void *nothing)
+sort_records(_RepomdObject *self, G_GNUC_UNUSED void *nothing)
 {
-    CR_UNUSED(nothing);
     cr_repomd_sort_records(self->repomd);
     Py_RETURN_NONE;
 }
@@ -246,9 +242,8 @@ PyDoc_STRVAR(xml_dump__doc__,
 "Generate xml representation of the repomd");
 
 static PyObject *
-xml_dump(_RepomdObject *self, void *nothing)
+xml_dump(_RepomdObject *self, G_GNUC_UNUSED void *nothing)
 {
-    CR_UNUSED(nothing);
     PyObject *py_str;
     GError *tmp_err = NULL;
     char *xml = cr_xml_dump_repomd(self->repomd, &tmp_err);

@@ -140,28 +140,27 @@ get_empty_package()
 
 
 static void
-testdata_setup(TestData *testdata, gconstpointer test_data)
+testdata_setup(TestData *testdata,
+               G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
     testdata->tmp_dir = g_strdup(TMP_DIR_PATTERN);
     mkdtemp(testdata->tmp_dir);
 }
 
 
 static void
-testdata_teardown(TestData *testdata, gconstpointer test_data)
+testdata_teardown(TestData *testdata,
+                  G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
     cr_remove_dir(testdata->tmp_dir, NULL);
     g_free(testdata->tmp_dir);
 }
 
 
 static void
-test_cr_open_db(TestData *testdata, gconstpointer test_data)
+test_cr_open_db(TestData *testdata,
+                G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
-
     GError *err = NULL;
     gchar *path = NULL;
     cr_SqliteDb *db;
@@ -198,10 +197,9 @@ test_cr_open_db(TestData *testdata, gconstpointer test_data)
 
 
 static void
-test_cr_db_add_primary_pkg(TestData *testdata, gconstpointer test_data)
+test_cr_db_add_primary_pkg(TestData *testdata,
+                           G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
-
     GError *err = NULL;
     gchar *path;
     cr_SqliteDb *db;
@@ -249,10 +247,9 @@ test_cr_db_add_primary_pkg(TestData *testdata, gconstpointer test_data)
 
 
 static void
-test_cr_db_dbinfo_update(TestData *testdata, gconstpointer test_data)
+test_cr_db_dbinfo_update(TestData *testdata,
+                         G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
-
     GError *err = NULL;
     gchar *path;
     cr_SqliteDb *db;
@@ -296,10 +293,9 @@ test_cr_db_dbinfo_update(TestData *testdata, gconstpointer test_data)
 
 
 static void
-test_all(TestData *testdata, gconstpointer test_data)
+test_all(TestData *testdata,
+         G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
-
     GError *err = NULL;
     gchar *path;
     cr_SqliteDb *db = NULL;

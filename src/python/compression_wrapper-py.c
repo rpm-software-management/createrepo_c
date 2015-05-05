@@ -31,11 +31,9 @@
  */
 
 PyObject *
-py_compression_suffix(PyObject *self, PyObject *args)
+py_compression_suffix(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
     int type;
-
-    CR_UNUSED(self);
 
     if (!PyArg_ParseTuple(args, "i:py_compression_suffix", &type))
         return NULL;
@@ -44,13 +42,11 @@ py_compression_suffix(PyObject *self, PyObject *args)
 }
 
 PyObject *
-py_detect_compression(PyObject *self, PyObject *args)
+py_detect_compression(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
     long type;
     char *filename;
     GError *tmp_err = NULL;
-
-    CR_UNUSED(self);
 
     if (!PyArg_ParseTuple(args, "s:py_detect_compression", &filename))
         return NULL;
@@ -65,11 +61,9 @@ py_detect_compression(PyObject *self, PyObject *args)
 }
 
 PyObject *
-py_compression_type(PyObject *self, PyObject *args)
+py_compression_type(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
     char *name;
-
-    CR_UNUSED(self);
 
     if (!PyArg_ParseTuple(args, "z:py_compression_type", &name))
         return NULL;
@@ -105,10 +99,10 @@ check_CrFileStatus(const _CrFileObject *self)
 /* Function on the type */
 
 static PyObject *
-crfile_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+crfile_new(PyTypeObject *type,
+           G_GNUC_UNUSED PyObject *args,
+           G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
     _CrFileObject *self = (_CrFileObject *)type->tp_alloc(type, 0);
     if (self) {
         self->f = NULL;
@@ -118,15 +112,13 @@ crfile_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 }
 
 static int
-crfile_init(_CrFileObject *self, PyObject *args, PyObject *kwds)
+crfile_init(_CrFileObject *self, PyObject *args, G_GNUC_UNUSED PyObject *kwds)
 {
     char *path;
     int mode, comtype;
     GError *err = NULL;
     PyObject *py_stat, *ret;
     cr_ContentStat *stat;
-
-    CR_UNUSED(kwds);
 
     if (!PyArg_ParseTuple(args, "siiO|:crfile_init",
                           &path, &mode, &comtype, &py_stat))
@@ -236,11 +228,9 @@ PyDoc_STRVAR(close__doc__,
 "Close the file");
 
 static PyObject *
-py_close(_CrFileObject *self, void *nothing)
+py_close(_CrFileObject *self, G_GNUC_UNUSED void *nothing)
 {
     GError *tmp_err = NULL;
-
-    CR_UNUSED(nothing);
 
     if (self->f) {
         cr_close(self->f, &tmp_err);

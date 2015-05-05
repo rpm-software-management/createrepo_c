@@ -51,10 +51,10 @@ check_SqliteStatus(const _SqliteObject *self)
 /* Function on the type */
 
 static PyObject *
-sqlite_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+sqlite_new(PyTypeObject *type,
+           G_GNUC_UNUSED PyObject *args,
+           G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
     _SqliteObject *self = (_SqliteObject *)type->tp_alloc(type, 0);
     if (self)
         self->db = NULL;
@@ -68,14 +68,12 @@ PyDoc_STRVAR(sqlite_init__doc__,
 "    :arg db_type: One from DB_PRIMARY, DB_FILELISTS, DB_OTHER constans\n");
 
 static int
-sqlite_init(_SqliteObject *self, PyObject *args, PyObject *kwds)
+sqlite_init(_SqliteObject *self, PyObject *args, G_GNUC_UNUSED PyObject *kwds)
 {
     char *path;
     int db_type;
     GError *err = NULL;
     PyObject *ret;
-
-    CR_UNUSED(kwds);
 
     if (!PyArg_ParseTuple(args, "si|:sqlite_init", &path, &db_type))
         return -1;
@@ -181,11 +179,9 @@ PyDoc_STRVAR(close__doc__,
 "Close the sqlite database");
 
 static PyObject *
-close_db(_SqliteObject *self, void *nothing)
+close_db(_SqliteObject *self, G_GNUC_UNUSED void *nothing)
 {
     GError *err = NULL;
-
-    CR_UNUSED(nothing);
 
     if (self->db) {
         cr_db_close(self->db, &err);

@@ -29,15 +29,13 @@
 #include "contentstat-py.h"
 
 PyObject *
-py_compress_file_with_stat(PyObject *self, PyObject *args)
+py_compress_file_with_stat(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
     int type;
     char *src, *dst;
     PyObject *py_contentstat = NULL;
     cr_ContentStat *contentstat;
     GError *tmp_err = NULL;
-
-    CR_UNUSED(self);
 
     if (!PyArg_ParseTuple(args, "sziO:py_compress_file", &src, &dst, &type,
                           &py_contentstat))
@@ -61,15 +59,13 @@ py_compress_file_with_stat(PyObject *self, PyObject *args)
 }
 
 PyObject *
-py_decompress_file_with_stat(PyObject *self, PyObject *args)
+py_decompress_file_with_stat(G_GNUC_UNUSED PyObject *self, PyObject *args)
 {
     int type;
     char *src, *dst;
     PyObject *py_contentstat = NULL;
     cr_ContentStat *contentstat;
     GError *tmp_err = NULL;
-
-    CR_UNUSED(self);
 
     if (!PyArg_ParseTuple(args, "sziO:py_decompress_file", &src, &dst, &type,
                           &py_contentstat))

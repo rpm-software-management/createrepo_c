@@ -77,10 +77,10 @@ check_UpdateRecordStatus(const _UpdateRecordObject *self)
 /* Function on the type */
 
 static PyObject *
-updaterecord_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+updaterecord_new(PyTypeObject *type,
+                 G_GNUC_UNUSED PyObject *args,
+                 G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
     _UpdateRecordObject *self = (_UpdateRecordObject *)type->tp_alloc(type, 0);
     if (self) {
         self->record = NULL;
@@ -92,11 +92,10 @@ PyDoc_STRVAR(updaterecord_init__doc__,
 ".. method:: __init__()\n\n");
 
 static int
-updaterecord_init(_UpdateRecordObject *self, PyObject *args, PyObject *kwds)
+updaterecord_init(_UpdateRecordObject *self,
+                  G_GNUC_UNUSED PyObject *args,
+                  G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
-
     /* Free all previous resources when reinitialization */
     if (self->record)
         cr_updaterecord_free(self->record);
@@ -120,9 +119,8 @@ updaterecord_dealloc(_UpdateRecordObject *self)
 }
 
 static PyObject *
-updaterecord_repr(_UpdateRecordObject *self)
+updaterecord_repr(G_GNUC_UNUSED _UpdateRecordObject *self)
 {
-    CR_UNUSED(self);
     return PyString_FromFormat("<createrepo_c.UpdateRecord object>");
 }
 
@@ -178,9 +176,8 @@ PyDoc_STRVAR(copy__doc__,
 "Return copy of the UpdateRecord object");
 
 static PyObject *
-copy_updaterecord(_UpdateRecordObject *self, void *nothing)
+copy_updaterecord(_UpdateRecordObject *self, G_GNUC_UNUSED void *nothing)
 {
-    CR_UNUSED(nothing);
     if (check_UpdateRecordStatus(self))
         return NULL;
     return Object_FromUpdateRecord(cr_updaterecord_copy(self->record));

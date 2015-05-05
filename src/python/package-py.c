@@ -89,10 +89,10 @@ check_PackageStatus(const _PackageObject *self)
 /* Function on the type */
 
 static PyObject *
-package_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+package_new(PyTypeObject *type,
+            G_GNUC_UNUSED PyObject *args,
+            G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
     _PackageObject *self = (_PackageObject *)type->tp_alloc(type, 0);
     if (self) {
         self->package = NULL;
@@ -180,9 +180,8 @@ PyDoc_STRVAR(nvra__doc__,
 "Package NVRA string (Name-Version-Release-Architecture)");
 
 static PyObject *
-nvra(_PackageObject *self, void *nothing)
+nvra(_PackageObject *self, G_GNUC_UNUSED void *nothing)
 {
-    CR_UNUSED(nothing);
     PyObject *pystr;
     if (check_PackageStatus(self))
         return NULL;
@@ -197,9 +196,8 @@ PyDoc_STRVAR(nevra__doc__,
 "Package NEVRA string (Name-Epoch-Version-Release-Architecture)");
 
 static PyObject *
-nevra(_PackageObject *self, void *nothing)
+nevra(_PackageObject *self, G_GNUC_UNUSED void *nothing)
 {
-    CR_UNUSED(nothing);
     PyObject *pystr;
     if (check_PackageStatus(self))
         return NULL;
@@ -214,9 +212,8 @@ PyDoc_STRVAR(copy__doc__,
 "Copy of the package object");
 
 static PyObject *
-copy_pkg(_PackageObject *self, void *nothing)
+copy_pkg(_PackageObject *self, G_GNUC_UNUSED void *nothing)
 {
-    CR_UNUSED(nothing);
     if (check_PackageStatus(self))
         return NULL;
     return Object_FromPackage(cr_package_copy(self->package), 1);

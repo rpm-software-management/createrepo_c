@@ -56,11 +56,10 @@ check_UpdateInfoStatus(const _UpdateInfoObject *self)
 /* Function on the type */
 
 static PyObject *
-updateinfo_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+updateinfo_new(PyTypeObject *type,
+               G_GNUC_UNUSED PyObject *args,
+               G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
-
     _UpdateInfoObject *self = (_UpdateInfoObject *)type->tp_alloc(type, 0);
     if (self) {
         self->updateinfo = NULL;
@@ -72,11 +71,10 @@ PyDoc_STRVAR(updateinfo_init__doc__,
 "UpdateInfo object");
 
 static int
-updateinfo_init(_UpdateInfoObject *self, PyObject *args, PyObject *kwds)
+updateinfo_init(_UpdateInfoObject *self,
+                G_GNUC_UNUSED PyObject *args,
+                G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
-
     /* Free all previous resources when reinitialization */
     if (self->updateinfo) {
         cr_updateinfo_free(self->updateinfo);
@@ -101,9 +99,8 @@ updateinfo_dealloc(_UpdateInfoObject *self)
 }
 
 static PyObject *
-updateinfo_repr(_UpdateInfoObject *self)
+updateinfo_repr(G_GNUC_UNUSED _UpdateInfoObject *self)
 {
-    CR_UNUSED(self);
     return PyString_FromFormat("<createrepo_c.UpdateInfo object>");
 }
 
@@ -135,9 +132,8 @@ PyDoc_STRVAR(xml_dump__doc__,
 "Generate xml representation of the updateinfo");
 
 static PyObject *
-xml_dump(_UpdateInfoObject *self, void *nothing)
+xml_dump(_UpdateInfoObject *self, G_GNUC_UNUSED void *nothing)
 {
-    CR_UNUSED(nothing);
     PyObject *py_str;
     GError *tmp_err = NULL;
     char *xml = cr_xml_dump_updateinfo(self->updateinfo, &tmp_err);

@@ -35,9 +35,9 @@ typedef struct {
 
 
 static void
-fixtures_setup(TestFixtures *fixtures, gconstpointer test_data)
+fixtures_setup(TestFixtures *fixtures,
+               G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
     gchar *template = g_strdup(TMPDIR_TEMPLATE);
     fixtures->tmpdir = mkdtemp(template);
     g_assert(fixtures->tmpdir);
@@ -45,10 +45,9 @@ fixtures_setup(TestFixtures *fixtures, gconstpointer test_data)
 
 
 static void
-fixtures_teardown(TestFixtures *fixtures, gconstpointer test_data)
+fixtures_teardown(TestFixtures *fixtures,
+                  G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
-
     if (!fixtures->tmpdir)
         return;
 
@@ -58,7 +57,8 @@ fixtures_teardown(TestFixtures *fixtures, gconstpointer test_data)
 
 
 static void
-test_no_packages(TestFixtures *fixtures, gconstpointer test_data)
+test_no_packages(TestFixtures *fixtures,
+                 G_GNUC_UNUSED gconstpointer test_data)
 {
     cr_XmlFile *f;
     gchar *path;
@@ -66,7 +66,6 @@ test_no_packages(TestFixtures *fixtures, gconstpointer test_data)
     int ret;
     GError *err = NULL;
 
-    CR_UNUSED(test_data);
     g_assert(g_file_test(fixtures->tmpdir, G_FILE_TEST_IS_DIR));
 
     // Try primary.xml

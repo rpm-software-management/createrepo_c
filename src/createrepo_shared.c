@@ -44,9 +44,8 @@ char *global_tmp_out_repo = NULL;  // Path to temporary repodata directory,
  * @param data              User data (unused)
  */
 static void
-failure_exit_cleanup(int exit_status, void *data)
+failure_exit_cleanup(int exit_status, G_GNUC_UNUSED void *data)
 {
-    CR_UNUSED(data);
     if (exit_status != EXIT_SUCCESS) {
         if (global_lock_dir) {
             g_debug("Removing %s", global_lock_dir);
@@ -73,10 +72,8 @@ sigint_catcher(int sig)
 gboolean
 cr_set_cleanup_handler(const char *lock_dir,
                        const char *tmp_out_repo,
-                       GError **err)
+                       G_GNUC_UNUSED GError **err)
 {
-    CR_UNUSED(err);
-
     assert(!err || *err == NULL);
 
     // Set global variables
@@ -115,10 +112,8 @@ cr_set_cleanup_handler(const char *lock_dir,
 }
 
 gboolean
-cr_unset_cleanup_handler(GError **err)
+cr_unset_cleanup_handler(G_GNUC_UNUSED GError **err)
 {
-    CR_UNUSED(err);
-
     g_free(global_lock_dir);
     global_lock_dir = NULL;
     g_free(global_tmp_out_repo);

@@ -51,10 +51,10 @@ check_XmlFileStatus(const _XmlFileObject *self)
 /* Function on the type */
 
 static PyObject *
-xmlfile_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+xmlfile_new(PyTypeObject *type,
+            G_GNUC_UNUSED PyObject *args,
+            G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
     _XmlFileObject *self = (_XmlFileObject *)type->tp_alloc(type, 0);
     if (self) {
         self->xmlfile = NULL;
@@ -73,15 +73,13 @@ PyDoc_STRVAR(xmlfile_init__doc__,
 "    :arg contentstat: ContentStat object to gather content statistics or None");
 
 static int
-xmlfile_init(_XmlFileObject *self, PyObject *args, PyObject *kwds)
+xmlfile_init(_XmlFileObject *self, PyObject *args, G_GNUC_UNUSED PyObject *kwds)
 {
     char *path;
     int type, comtype;
     GError *err = NULL;
     PyObject *py_stat, *ret;
     cr_ContentStat *stat;
-
-    CR_UNUSED(kwds);
 
     if (!PyArg_ParseTuple(args, "siiO|:xmlfile_init",
                           &path, &type, &comtype, &py_stat))
@@ -242,11 +240,9 @@ PyDoc_STRVAR(close__doc__,
 "Close the XML file");
 
 static PyObject *
-xmlfile_close(_XmlFileObject *self, void *nothing)
+xmlfile_close(_XmlFileObject *self, G_GNUC_UNUSED void *nothing)
 {
     GError *err = NULL;
-
-    CR_UNUSED(nothing);
 
     if (self->xmlfile) {
         cr_xmlfile_close(self->xmlfile, &err);

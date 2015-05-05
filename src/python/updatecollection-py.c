@@ -74,10 +74,10 @@ check_UpdateCollectionStatus(const _UpdateCollectionObject *self)
 /* Function on the type */
 
 static PyObject *
-updatecollection_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+updatecollection_new(PyTypeObject *type,
+                     G_GNUC_UNUSED PyObject *args,
+                     G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
     _UpdateCollectionObject *self = (_UpdateCollectionObject *)type->tp_alloc(type, 0);
     if (self) {
         self->collection = NULL;
@@ -89,11 +89,10 @@ PyDoc_STRVAR(updatecollection_init__doc__,
 ".. method:: __init__()\n\n");
 
 static int
-updatecollection_init(_UpdateCollectionObject *self, PyObject *args, PyObject *kwds)
+updatecollection_init(_UpdateCollectionObject *self,
+                      G_GNUC_UNUSED PyObject *args,
+                      G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
-
     /* Free all previous resources when reinitialization */
     if (self->collection)
         cr_updatecollection_free(self->collection);
@@ -117,9 +116,8 @@ updatecollection_dealloc(_UpdateCollectionObject *self)
 }
 
 static PyObject *
-updatecollection_repr(_UpdateCollectionObject *self)
+updatecollection_repr(G_GNUC_UNUSED _UpdateCollectionObject *self)
 {
-    CR_UNUSED(self);
     return PyString_FromFormat("<createrepo_c.UpdateCollection object>");
 }
 
@@ -153,9 +151,9 @@ PyDoc_STRVAR(copy__doc__,
 "Return copy of the UpdateCollection object");
 
 static PyObject *
-copy_updatecollection(_UpdateCollectionObject *self, void *nothing)
+copy_updatecollection(_UpdateCollectionObject *self,
+                      G_GNUC_UNUSED void *nothing)
 {
-    CR_UNUSED(nothing);
     if (check_UpdateCollectionStatus(self))
         return NULL;
     return Object_FromUpdateCollection(cr_updatecollection_copy(self->collection));

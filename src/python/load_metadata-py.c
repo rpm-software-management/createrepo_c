@@ -51,11 +51,10 @@ check_MetadataStatus(const _MetadataObject *self)
 /* Function on the type */
 
 static PyObject *
-metadata_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
+metadata_new(PyTypeObject *type,
+             G_GNUC_UNUSED PyObject *args,
+             G_GNUC_UNUSED PyObject *kwds)
 {
-    CR_UNUSED(args);
-    CR_UNUSED(kwds);
-
     _MetadataObject *self = (_MetadataObject *)type->tp_alloc(type, 0);
     if (self)
         self->md = NULL;
@@ -110,18 +109,16 @@ metadata_dealloc(_MetadataObject *self)
 }
 
 static PyObject *
-metadata_repr(_MetadataObject *self)
+metadata_repr(G_GNUC_UNUSED _MetadataObject *self)
 {
-    CR_UNUSED(self);
     return PyString_FromFormat("<createrepo_c.Metadata object>");
 }
 
 /* Getters */
 
 static PyObject *
-get_key(_MetadataObject *self, void *nothing)
+get_key(_MetadataObject *self, G_GNUC_UNUSED void *nothing)
 {
-    CR_UNUSED(nothing);
     if (check_MetadataStatus(self))
         return NULL;
     cr_HashTableKey val = cr_metadata_key(self->md);
@@ -191,9 +188,8 @@ PyDoc_STRVAR(len__doc__,
 "Number of packages");
 
 static PyObject *
-ht_len(_MetadataObject *self, PyObject *noarg)
+ht_len(_MetadataObject *self, G_GNUC_UNUSED PyObject *noarg)
 {
-    CR_UNUSED(noarg);
     unsigned long len = 0;
     if (check_MetadataStatus(self))
         return NULL;
@@ -251,10 +247,8 @@ PyDoc_STRVAR(keys__doc__,
 "List of all keys");
 
 static PyObject *
-ht_keys(_MetadataObject *self, PyObject *args)
+ht_keys(_MetadataObject *self, G_GNUC_UNUSED PyObject *args)
 {
-    CR_UNUSED(args);
-
     if (check_MetadataStatus(self))
         return NULL;
 

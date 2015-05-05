@@ -164,18 +164,13 @@ typedef struct {
 
 static int
 primary_newpkgcb(cr_Package **pkg,
-         const char *pkgId,
-         const char *name,
-         const char *arch,
-         void *cbdata,
-         GError **err)
+                 G_GNUC_UNUSED const char *pkgId,
+                 G_GNUC_UNUSED const char *name,
+                 G_GNUC_UNUSED const char *arch,
+                 void *cbdata,
+                 G_GNUC_UNUSED GError **err)
 {
     cr_CbData *cb_data = cbdata;
-
-    CR_UNUSED(pkgId);
-    CR_UNUSED(name);
-    CR_UNUSED(arch);
-    CR_UNUSED(err);
 
     assert(*pkg == NULL);
 
@@ -190,14 +185,12 @@ primary_newpkgcb(cr_Package **pkg,
 }
 
 static int
-primary_pkgcb(cr_Package *pkg, void *cbdata, GError **err)
+primary_pkgcb(cr_Package *pkg, void *cbdata, G_GNUC_UNUSED GError **err)
 {
     gboolean store_pkg = TRUE;
     cr_CbData *cb_data = cbdata;
     cr_Package *epkg;
     char *basename = cr_get_filename(pkg->location_href);
-
-    CR_UNUSED(err);
 
     assert(pkg);
     assert(pkg->pkgId);
@@ -276,16 +269,12 @@ primary_pkgcb(cr_Package *pkg, void *cbdata, GError **err)
 static int
 newpkgcb(cr_Package **pkg,
          const char *pkgId,
-         const char *name,
-         const char *arch,
+         G_GNUC_UNUSED const char *name,
+         G_GNUC_UNUSED const char *arch,
          void *cbdata,
-         GError **err)
+         G_GNUC_UNUSED GError **err)
 {
     cr_CbData *cb_data = cbdata;
-
-    CR_UNUSED(name);
-    CR_UNUSED(arch);
-    CR_UNUSED(err);
 
     assert(*pkg == NULL);
     assert(pkgId);
@@ -327,11 +316,9 @@ newpkgcb(cr_Package **pkg,
 }
 
 static int
-pkgcb(cr_Package *pkg, void *cbdata, GError **err)
+pkgcb(cr_Package *pkg, void *cbdata, G_GNUC_UNUSED GError **err)
 {
     cr_CbData *cb_data = cbdata;
-
-    CR_UNUSED(err);
 
     if (cb_data->chunk) {
         assert(pkg->chunk == cb_data->chunk);

@@ -736,13 +736,10 @@ cr_better_copy_file(const char *src, const char *in_dst, GError **err)
 
 int
 cr_remove_dir_cb(const char *fpath,
-                 const struct stat *sb,
-                 int typeflag,
-                 struct FTW *ftwbuf)
+                 G_GNUC_UNUSED const struct stat *sb,
+                 G_GNUC_UNUSED int typeflag,
+                 G_GNUC_UNUSED struct FTW *ftwbuf)
 {
-    CR_UNUSED(sb);
-    CR_UNUSED(typeflag);
-    CR_UNUSED(ftwbuf);
     int rv = remove(fpath);
     if (rv)
         g_warning("%s: Cannot remove: %s: %s", __func__, fpath, g_strerror(errno));
@@ -916,15 +913,11 @@ cr_cmp_version_str(const char* str1, const char *str2)
 
 
 void
-cr_null_log_fn(const gchar *log_domain,
-               GLogLevelFlags log_level,
-               const gchar *message,
-               gpointer user_data)
+cr_null_log_fn(G_GNUC_UNUSED const gchar *log_domain,
+               G_GNUC_UNUSED GLogLevelFlags log_level,
+               G_GNUC_UNUSED const gchar *message,
+               G_GNUC_UNUSED gpointer user_data)
 {
-    CR_UNUSED(log_domain);
-    CR_UNUSED(log_level);
-    CR_UNUSED(message);
-    CR_UNUSED(user_data);
     return;
 }
 
@@ -933,11 +926,8 @@ void
 cr_log_fn(const gchar *log_domain,
           GLogLevelFlags log_level,
           const gchar *message,
-          gpointer user_data)
+          G_GNUC_UNUSED gpointer user_data)
 {
-    CR_UNUSED(user_data);
-
-
     switch(log_level) {
         case G_LOG_LEVEL_ERROR:
             if (log_domain) g_printerr("%s: ", log_domain);
@@ -1249,14 +1239,11 @@ cr_cmp_evr(const char *e1, const char *v1, const char *r1,
 }
 
 int
-cr_warning_cb(cr_XmlParserWarningType type,
-           char *msg,
-           void *cbdata,
-           GError **err)
+cr_warning_cb(G_GNUC_UNUSED cr_XmlParserWarningType type,
+              char *msg,
+              void *cbdata,
+              G_GNUC_UNUSED GError **err)
 {
-    CR_UNUSED(type);
-    CR_UNUSED(err);
-
     g_warning("%s: %s", (char *) cbdata, msg);
 
     return CR_CB_RET_OK;

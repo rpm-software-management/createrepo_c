@@ -289,9 +289,8 @@ typedef struct {
 
 
 static void
-outputtest_setup(Outputtest *outputtest, gconstpointer test_data)
+outputtest_setup(Outputtest *outputtest, G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
     int fd;
 
     fd = g_file_open_tmp(TMP_FILE_PATTERN, &(outputtest->tmp_filename), NULL);
@@ -300,10 +299,8 @@ outputtest_setup(Outputtest *outputtest, gconstpointer test_data)
 
 
 static void
-outputtest_teardown(Outputtest *outputtest, gconstpointer test_data)
+outputtest_teardown(Outputtest *outputtest, G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
-
     if (outputtest->tmp_filename) {
         remove(outputtest->tmp_filename);
         g_free(outputtest->tmp_filename);
@@ -363,10 +360,9 @@ test_helper_cw_output(int type,
 
 
 static void
-outputtest_cw_output(Outputtest *outputtest, gconstpointer test_data)
+outputtest_cw_output(Outputtest *outputtest,
+                     G_GNUC_UNUSED gconstpointer test_data)
 {
-    CR_UNUSED(test_data);
-
     // Plain
 
     test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename,
@@ -557,14 +553,13 @@ test_cr_error_handling(void)
 
 
 static void
-test_contentstating_singlewrite(Outputtest *outputtest, gconstpointer test_data)
+test_contentstating_singlewrite(Outputtest *outputtest,
+                                G_GNUC_UNUSED gconstpointer test_data)
 {
     CR_FILE *f;
     int ret;
     cr_ContentStat *stat;
     GError *tmp_err = NULL;
-
-    CR_UNUSED(test_data);
 
     const char *content = "sdlkjowykjnhsadyhfsoaf\nasoiuyseahlndsf\n";
     const int content_len = 39;
@@ -677,14 +672,13 @@ test_contentstating_singlewrite(Outputtest *outputtest, gconstpointer test_data)
 }
 
 static void
-test_contentstating_multiwrite(Outputtest *outputtest, gconstpointer test_data)
+test_contentstating_multiwrite(Outputtest *outputtest,
+                               G_GNUC_UNUSED gconstpointer test_data)
 {
     CR_FILE *f;
     int ret;
     cr_ContentStat *stat;
     GError *tmp_err = NULL;
-
-    CR_UNUSED(test_data);
 
     const char *content = "sdlkjowykjnhsadyhfsoaf\nasoiuyseahlndsf\n";
     const int content_len = 39;

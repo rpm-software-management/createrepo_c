@@ -35,10 +35,6 @@ extern "C" {
  *  @{
  */
 
-/** Macro for supress compiler warning about unused param.
- */
-#define CR_UNUSED(x) (void)(x)
-
 /** Lenght of static string (including last '\0' byte)
  */
 #define CR_STATICSTRLEN(s) (sizeof(s)/sizeof(s[0]))

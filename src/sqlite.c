@@ -358,10 +358,8 @@ db_create_other_tables (sqlite3 *db, GError **err)
 
 
 static void
-db_tweak(sqlite3 *db, GError **err)
+db_tweak(sqlite3 *db, G_GNUC_UNUSED GError **err)
 {
-    CR_UNUSED(err);
-
     assert(!err || *err == NULL);
 
     // Do not wait for disk writes to be fully

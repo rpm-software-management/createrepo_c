@@ -6,7 +6,7 @@ from base import BaseTestCase
 
 
 class TestCaseCreaterepo_badparams(BaseTestCase):
-    """Repo with 1 package"""
+    """Use case with bad commandline arguments"""
 
     def setup(self):
         self.indir_addpkg(PACKAGES[0])

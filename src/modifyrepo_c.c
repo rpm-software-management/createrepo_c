@@ -76,7 +76,7 @@ parse_arguments(int *argc, char ***argv, RawCmdOptions *options, GError **err)
           "Do not compress the new repodata before adding it to the repo.",
           NULL },
         { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(options->compress_type),
-          "Compression format to use.", NULL },
+          "Compression format to use.", "COMPRESS_TYPE" },
         { "checksum", 's', 0, G_OPTION_ARG_STRING, &(options->checksum),
           "Specify the checksum type to use. (default: sha256)", "SUMTYPE" },
         { "unique-md-filenames", 0, 0, G_OPTION_ARG_NONE,

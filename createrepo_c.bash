@@ -15,9 +15,7 @@ _cr_createrepo()
     COMPREPLY=()
 
     case $3 in
-        -V|--version|-h|--help|-u|--baseurl|--content|--repo|\
-        -x|--excludes|--changelog-limit|\
-        -q|--quiet|-v|--verbose|--skip-stat)
+        -V|--version|-h|--help)
             return 0
             ;;
         --update-md-path|-o|--outputdir|--oldpackagedirs)
@@ -67,8 +65,10 @@ _cr_createrepo()
             --skip-stat --pkglist --includepkg --outputdir
             --skip-symlinks --changelog-limit --unique-md-filenames
             --simple-md-filenames --retain-old-md --distro --content --repo
-            --revision --read-pkgs-list --update --workers --xz
-            --compress-type --keep-all-metadata --deltas --oldpackagedirs
+            --revision --read-pkgs-list --workers --xz
+            --compress-type --keep-all-metadata --compatibility
+            --retain-old-md-by-age --cachedir --local-sqlite
+            --deltas --oldpackagedirs
             --num-deltas --max-delta-rpm-size' -- "$2" ) )
     else
         COMPREPLY=( $( compgen -d -- "$2" ) )
@@ -81,7 +81,7 @@ _cr_mergerepo()
     COMPREPLY=()
 
     case $3 in
-        --version|-h|--help|-a|--archlist)
+        --version|-h|--help)
             return 0
             ;;
         -g|--groupfile|--blocked)
@@ -106,7 +106,7 @@ _cr_mergerepo()
         COMPREPLY=( $( compgen -W '--version --help --repo --archlist --database
             --no-database --verbose --outputdir --nogroups --noupdateinfo
             --compress-type --method --all --noarch-repo --unique-md-filenames
-            --simple-md-filenames --koji --groupfile
+            --simple-md-filenames --omit-baseurl --koji --groupfile
             --blocked' -- "$2" ) )
     else
         COMPREPLY=( $( compgen -d -- "$2" ) )
@@ -119,7 +119,7 @@ _cr_modifyrepo()
     COMPREPLY=()
 
     case $3 in
-        --version|-h|--help|-a|--archlist|--unique-md-filenames|--simple-md-filenames|--verbose)
+        --version|-h|--help)
             return 0
             ;;
         -f|--batchfile)
@@ -146,6 +146,34 @@ _cr_modifyrepo()
     fi
 } &&
 complete -F _cr_modifyrepo -o filenames modifyrepo_c
+
+_cr_sqliterepo()
+{
+    COMPREPLY=()
+
+    case $3 in
+        -h|--help|-V|--version)
+            return 0
+            ;;
+        --compress-type)
+            _cr_compress_type "" "$2"
+            return 0
+            ;;
+        -s|--checksum)
+            _cr_checksum_type "$1" "$2"
+            return 0
+            ;;
+    esac
+
+    if [[ $2 == -* ]] ; then
+        COMPREPLY=( $( compgen -W '--help --version --quiet --verbose
+            --force --keep-old --xz --compress-type --checksum
+            --local-sqlite ' -- "$2" ) )
+    else
+        COMPREPLY=( $( compgen -f -- "$2" ) )
+    fi
+} &&
+complete -F _cr_sqliterepo -o filenames sqliterepo_c
 
 # Local variables:
 # mode: shell-script

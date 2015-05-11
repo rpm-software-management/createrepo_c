@@ -25,6 +25,7 @@
 #ifndef __CR_CLEANUP_H__
 #define __CR_CLEANUP_H__
 
+#include <stdio.h>
 #include <glib.h>
 #include <unistd.h>
 

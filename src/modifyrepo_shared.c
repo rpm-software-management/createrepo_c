@@ -210,21 +210,31 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
         dst_fn = g_build_filename(repopath, filename, NULL);
         task->dst_fn = g_string_chunk_insert(task->chunk, dst_fn);
 
-        // Check if the file already exist
-        if (g_file_test(dst_fn, G_FILE_TEST_EXISTS)) {
-            g_warning("Destination file \"%s\" already exists and will be "
-                      "overwritten", dst_fn);
-        }
-
-        // Do the copy
-        g_debug("%s: Copy & compress operation %s -> %s",
-                 __func__, src_fn, dst_fn);
-
-        if (cr_compress_file(src_fn, dst_fn, compress_type, err) != CRE_OK) {
-            g_debug("%s: Copy & compress operation failed", __func__);
-            cr_repomd_free(repomd);
-            g_free(repomd_path);
+        // Check if the src and dst is the same file
+        gboolean identical = FALSE;
+        if (!cr_identical_files(src_fn, dst_fn, &identical, err))
             return FALSE;
+
+        if (identical) {
+            // Source and destination file is the same file
+            g_debug("Using already existing file: %s", dst_fn);
+        } else {
+            // Check if the file already exist
+            if (g_file_test(dst_fn, G_FILE_TEST_EXISTS)) {
+                g_warning("Destination file \"%s\" already exists and will be "
+                          "overwritten", dst_fn);
+            }
+
+            // Do the copy
+            g_debug("%s: Copy & compress operation %s -> %s",
+                     __func__, src_fn, dst_fn);
+
+            if (cr_compress_file(src_fn, dst_fn, compress_type, err) != CRE_OK) {
+                g_debug("%s: Copy & compress operation failed", __func__);
+                cr_repomd_free(repomd);
+                g_free(repomd_path);
+                return FALSE;
+            }
         }
 
         task->repopath = cr_safe_string_chunk_insert_null(task->chunk, dst_fn);

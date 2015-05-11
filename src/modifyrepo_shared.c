@@ -363,7 +363,7 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
         }
 
         if (!remove_this)
-            break;
+            continue;
 
         g_debug("%s: Removing \"%s\"", __func__, realpath);
 

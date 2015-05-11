@@ -667,7 +667,6 @@ remove_old_if_different(const gchar *repo_path,
                         GError **err)
 {
     int rc;
-    GStatBuf old_buf, new_buf;
     _cleanup_free_ gchar *old_fn = NULL;
     _cleanup_free_ gchar *new_fn = NULL;
 
@@ -679,32 +678,12 @@ remove_old_if_different(const gchar *repo_path,
     old_fn = g_build_filename(repo_path, old_rec->location_href, NULL);
     new_fn = g_build_filename(repo_path, new_rec->location_href, NULL);
 
-    // Stat old file
-    rc = g_stat(old_fn, &old_buf);
-    if (rc == -1) {
-        if (errno == ENOENT) {
-            // The old file doesn't exist - nothing to do
-            g_debug("Old DB file %s doesn't exist", old_fn);
-            return TRUE;
-        }
-
-        // Different error
-        g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
-                    "Cannot stat %s (old): %s", old_fn, g_strerror(errno));
+    // Check if the files are the same
+    gboolean identical = FALSE;
+    if (!cr_identical_files(old_fn, new_fn, &identical, err))
         return FALSE;
-    }
 
-    // Stat new file
-    rc = g_stat(new_fn, &new_buf);
-    if (rc == -1) {
-        g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
-                    "Cannot stat %s (new): %s", new_fn, g_strerror(errno));
-        return FALSE;
-    }
-
-    // Check if underlaying files are different
-    if (old_buf.st_ino == new_buf.st_ino) {
-        // Both repomd records points to the same file
+    if (identical) {
         g_debug("Old DB file %s has been overwritten by the new one.", new_fn);
         return TRUE;
     }

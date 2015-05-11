@@ -19,6 +19,7 @@
 
 #define _XOPEN_SOURCE 500
 
+#include <glib/gstdio.h>
 #include <glib.h>
 #include <arpa/inet.h>
 #include <assert.h>
@@ -1432,3 +1433,44 @@ cr_spawn_check_exit_status(gint exit_status, GError **err)
 
     return FALSE;
 }
+
+gboolean
+cr_identical_files(const gchar *fn1,
+                   const gchar *fn2,
+                   gboolean *identical,
+                   GError **err)
+{
+    int rc;
+    GStatBuf buf1, buf2;
+
+    *identical = FALSE;
+
+    // Stat old file
+    rc = g_stat(fn1, &buf1);
+    if (rc == -1) {
+        if (errno == ENOENT) // The first file doesn't exist
+            return TRUE;
+
+        g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
+                    "Cannot stat %s: %s", fn1, g_strerror(errno));
+        return FALSE;
+    }
+
+    // Stat new file
+    rc = g_stat(fn2, &buf2);
+    if (rc == -1) {
+        if (errno == ENOENT) // The second file doesn't exist
+            return TRUE;
+
+        g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
+                    "Cannot stat %s: %s", fn2, g_strerror(errno));
+        return FALSE;
+    }
+
+    // Check if both paths point to the same file
+    if (buf1.st_ino == buf2.st_ino)
+        *identical = TRUE;
+
+    return TRUE;
+}
+

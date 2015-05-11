@@ -506,6 +506,23 @@ cr_str_to_nevra(const char *str);
 void
 cr_nevra_free(cr_NEVRA *nevra);
 
+/** Are the files identical?
+ * Different paths could point to the same file.
+ * This functions checks if both paths point to the same file or not.
+ * If one of the files doesn't exists, the funcion doesn't fail
+ * and just put FALSE into "indentical" value and returns.
+ * @param fn1           First path
+ * @param fn2           Second path
+ * @param identical     Are the files same or not
+ * @param err           GError **
+ * @return              FALSE if an error was encountered, TRUE otherwise
+ */
+gboolean
+cr_identical_files(const gchar *fn1,
+                   const gchar *fn2,
+                   gboolean *identical,
+                   GError **err);
+
 /** @} */
 
 #ifdef __cplusplus

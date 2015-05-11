@@ -50,6 +50,7 @@ typedef struct {
 
     // Internal use
     gchar *repopath;
+    gchar *dst_fn;
     GStringChunk *chunk;
 
 } cr_ModifyRepoTask;

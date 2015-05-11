@@ -21,6 +21,7 @@
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
+#include "cleanup.h"
 #include "error.h"
 #include "misc.h"
 #include "checksum.h"
@@ -181,8 +182,8 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
             // Skip removing task
             continue;
 
-        gchar *src_fn = task->path;
-        gchar *dst_fn = NULL;
+        gchar *src_fn = task->path;  // Shortcut
+        _cleanup_free_ gchar *dst_fn = NULL;
         const gchar *suffix = NULL;
         cr_CompressionType compress_type = CR_CW_NO_COMPRESSION;
 
@@ -191,22 +192,25 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
             suffix = cr_compression_suffix(compress_type);
         }
 
-        // Prepare dst filename
-        gchar *filename = NULL;
+        // Prepare dst filename - Get basename
+        _cleanup_free_ gchar *filename = NULL;
         if (task->new_name)
             filename = g_path_get_basename(task->new_name);
         else
             filename = g_path_get_basename(src_fn);
 
+        // Prepare dst filename - Add suffix
         if (suffix) {
             gchar *tmp_fn = g_strconcat(filename, suffix, NULL);
             g_free(filename);
             filename = tmp_fn;
         }
 
+        // Prepare dst filename - Full path
         dst_fn = g_build_filename(repopath, filename, NULL);
-        g_free(filename);
+        task->dst_fn = g_string_chunk_insert(task->chunk, dst_fn);
 
+        // Check if the file already exist
         if (g_file_test(dst_fn, G_FILE_TEST_EXISTS)) {
             g_warning("Destination file \"%s\" already exists and will be "
                       "overwritten", dst_fn);
@@ -220,12 +224,10 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
             g_debug("%s: Copy & compress operation failed", __func__);
             cr_repomd_free(repomd);
             g_free(repomd_path);
-            g_free(dst_fn);
             return FALSE;
         }
 
         task->repopath = cr_safe_string_chunk_insert_null(task->chunk, dst_fn);
-        g_free(dst_fn);
     }
 
     // Prepare new repomd records
@@ -293,6 +295,7 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
     // Add records into repomd
     for (GSList *elem = repomdrecords; elem; elem = g_slist_next(elem)) {
         cr_RepomdRecord *rec = elem->data;
+        g_debug("Adding record \"%s\"", rec->type);
         cr_repomd_set_record(repomd, rec);
     }
     g_slist_free(repomdrecords);
@@ -322,15 +325,38 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
             // Do not even try to remove records with base location
             continue;
 
+        // Construct filename
+        _cleanup_free_ gchar *realpath = g_build_filename(repopath,
+                                         "../",
+                                         rec->location_href,
+                                         NULL);
+
         // Firstly check if the file that should be deleted isn't
         // really used by other record anymore.
         // It could happend if user add a file, that already exists,
         // in repodata. Then we don't want to remove this file.
         gboolean remove_this = TRUE;
+
+        // Check if a file that is referenced by a record that should
+        // be removed belongs to any other record (a record that
+        // shouldn't be removed).
         for (GSList *e = repomd->records; e; e = g_slist_next(e)) {
             cr_RepomdRecord *lrec = e->data;
+            _cleanup_free_ gchar *lrealpath = NULL;
 
-            if (!g_strcmp0(rec->location_href, lrec->location_href)) {
+            // Construct filename
+            lrealpath = g_build_filename(repopath,
+                                         "../",
+                                         lrec->location_href,
+                                         NULL);
+
+            // Check if files are identical
+            gboolean identical = FALSE;
+            if (!cr_identical_files(realpath, lrealpath, &identical, err))
+                return FALSE;
+
+            // If yes, do not remove it
+            if (identical) {
                 remove_this = FALSE;
                 break;
             }
@@ -339,16 +365,10 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
         if (!remove_this)
             break;
 
-        gchar *realpath = g_build_filename(repopath,
-                                           "../",
-                                           rec->location_href,
-                                           NULL);
-
         g_debug("%s: Removing \"%s\"", __func__, realpath);
 
         if (remove(realpath) == -1)
             g_warning("Cannot remove \"%s\": %s", realpath, g_strerror(errno));
-        g_free(realpath);
     }
     cr_slist_free_full(recordstoremove, (GDestroyNotify)cr_repomd_record_free);
 

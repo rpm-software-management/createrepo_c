@@ -274,6 +274,12 @@ main(int argc, char **argv)
 
     g_thread_init(NULL); // Initialize threading
 
+    // Emit debug message with version
+
+    g_debug("Version: %d.%d.%d\n", CR_VERSION_MAJOR,
+                                   CR_VERSION_MINOR,
+                                   CR_VERSION_PATCH);
+
     // Prepare list of tasks to do
 
     gchar *repodatadir = NULL;

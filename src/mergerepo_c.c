@@ -1574,6 +1574,10 @@ main(int argc, char **argv)
         return 1;
     }
 
+    g_debug("Version: %d.%d.%d\n", CR_VERSION_MAJOR,
+                                   CR_VERSION_MINOR,
+                                   CR_VERSION_PATCH);
+
     g_thread_init(NULL); // Initialize threading
 
     // Prepare out_repo

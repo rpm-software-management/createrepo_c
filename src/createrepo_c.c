@@ -387,6 +387,11 @@ main(int argc, char **argv)
     // Set logging stuff
     cr_setup_logging(cmd_options->quiet, cmd_options->verbose);
 
+    // Emit debug message with version
+    g_debug("Version: %d.%d.%d\n", CR_VERSION_MAJOR,
+                                   CR_VERSION_MINOR,
+                                   CR_VERSION_PATCH);
+
     // Set paths of input and output repos
     in_repo = g_strconcat(in_dir, "repodata/", NULL);
 

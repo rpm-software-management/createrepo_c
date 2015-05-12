@@ -1016,6 +1016,11 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+    // Emit debug message with version
+    g_debug("Version: %d.%d.%d\n", CR_VERSION_MAJOR,
+                                   CR_VERSION_MINOR,
+                                   CR_VERSION_PATCH);
+
     g_thread_init(NULL); // Initialize threading
 
     // Gen the databases

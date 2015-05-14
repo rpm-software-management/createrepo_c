@@ -210,7 +210,7 @@ static GOptionEntry cmd_entries[] =
 
 
 GSList *
-append_arch(GSList *list, gchar *arch, gboolean koji)
+append_arch(GSList *list, gchar *arch, gboolean expand)
 {
     // Try to find arch in the list
     for (GSList *elem = list; elem; elem = g_slist_next(elem)) {
@@ -220,29 +220,29 @@ append_arch(GSList *list, gchar *arch, gboolean koji)
 
     list = g_slist_prepend(list, g_strdup(arch));
 
-    if (koji) {
+    if (expand) {
         // expand arch
-        if (!strcmp(arch, "i386")) {
+        if (!g_strcmp0(arch, "i386")) {
             list = append_arch(list, "i486", FALSE);
             list = append_arch(list, "i586", FALSE);
             list = append_arch(list, "geode", FALSE);
             list = append_arch(list, "i686", FALSE);
             list = append_arch(list, "athlon", FALSE);
-        } else if (!strcmp(arch, "x86_64")) {
+        } else if (!g_strcmp0(arch, "x86_64")) {
             list = append_arch(list, "ia32e", FALSE);
             list = append_arch(list, "amd64", FALSE);
-        } else if (!strcmp(arch, "ppc64")) {
+        } else if (!g_strcmp0(arch, "ppc64")) {
             list = append_arch(list, "ppc64pseries", FALSE);
             list = append_arch(list, "ppc64iseries", FALSE);
-        } else if (!strcmp(arch, "sparc64")) {
+        } else if (!g_strcmp0(arch, "sparc64")) {
             list = append_arch(list, "sparc64v", FALSE);
             list = append_arch(list, "sparc64v2", FALSE);
-        } else if (!strcmp(arch, "sparc")) {
+        } else if (!g_strcmp0(arch, "sparc")) {
             list = append_arch(list, "sparcv8", FALSE);
             list = append_arch(list, "sparcv9", FALSE);
             list = append_arch(list, "sparcv9v", FALSE);
             list = append_arch(list, "sparcv9v2", FALSE);
-        } else if (!strcmp(arch, "alpha")) {
+        } else if (!g_strcmp0(arch, "alpha")) {
             list = append_arch(list, "alphaev4", FALSE);
             list = append_arch(list, "alphaev45", FALSE);
             list = append_arch(list, "alphaev5", FALSE);
@@ -252,15 +252,15 @@ append_arch(GSList *list, gchar *arch, gboolean koji)
             list = append_arch(list, "alphaev67", FALSE);
             list = append_arch(list, "alphaev68", FALSE);
             list = append_arch(list, "alphaev7", FALSE);
-        } else if (!strcmp(arch, "armhfp")) {
+        } else if (!g_strcmp0(arch, "armhfp")) {
             list = append_arch(list, "armv7hl", FALSE);
             list = append_arch(list, "armv7hnl", FALSE);
-        } else if (!strcmp(arch, "arm")) {
+        } else if (!g_strcmp0(arch, "arm")) {
             list = append_arch(list, "rmv5tel", FALSE);
             list = append_arch(list, "armv5tejl", FALSE);
             list = append_arch(list, "armv6l", FALSE);
             list = append_arch(list, "armv7l", FALSE);
-        } else if (!strcmp(arch, "sh4")) {
+        } else if (!g_strcmp0(arch, "sh4")) {
             list = append_arch(list, "sh4a", FALSE);
         }
     }

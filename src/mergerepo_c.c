@@ -212,11 +212,9 @@ static GOptionEntry cmd_entries[] =
 GSList *
 append_arch(GSList *list, gchar *arch, gboolean koji)
 {
-    GSList *elem;
-
     // Try to find arch in the list
-    for (elem = list; elem; elem = g_slist_next(elem)) {
-        if (!strcmp(elem->data, arch))
+    for (GSList *elem = list; elem; elem = g_slist_next(elem)) {
+        if (!g_strcmp0(elem->data, arch))
             return list;  // Arch already exists
     }
 

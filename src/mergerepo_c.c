@@ -714,7 +714,7 @@ koji_stuff_destroy(struct KojiMergedReposStuff **koji_stuff_ptr)
 //  0 = Package was not added
 //  1 = Package was added
 //  2 = Package replaced old package
-int
+static int
 add_package(cr_Package *pkg,
             gchar *repopath,
             GHashTable *merged,
@@ -722,7 +722,8 @@ add_package(cr_Package *pkg,
             MergeMethod merge_method,
             gboolean include_all,
             struct KojiMergedReposStuff *koji_stuff,
-            gboolean omit_baseurl)
+            gboolean omit_baseurl,
+            int repoid)
 {
     GSList *list, *element;
 
@@ -784,6 +785,10 @@ add_package(cr_Package *pkg,
             g_free(nvra);
             return 0;
         }
+
+        // For first repo (with --koji) ignore baseURL (RhBug: 1220082)
+        if (repoid == 0)
+            repopath = NULL;
 
         // Make a note that we have seen this package
         g_hash_table_replace(koji_stuff->seen_rpms, nvra, NULL);
@@ -916,8 +921,9 @@ merge_repos(GHashTable *merged,
 
     // Load all repos
 
+    int repoid = 0;
     GSList *element = NULL;
-    for (element = repo_list; element; element = g_slist_next(element)) {
+    for (element = repo_list; element; element = g_slist_next(element), repoid++) {
         gchar *repopath;                    // base url of current repodata
         cr_Metadata *metadata;              // current repodata
         struct cr_MetadataLocation *ml;     // location of current repodata
@@ -977,7 +983,8 @@ merge_repos(GHashTable *merged,
                               merge_method,
                               include_all,
                               koji_stuff,
-                              omit_baseurl);
+                              omit_baseurl,
+                              repoid);
 
             if (ret > 0) {
                 if (!noarch_pkg_used) {

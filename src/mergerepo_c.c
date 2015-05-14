@@ -39,6 +39,7 @@
 #include "sqlite.h"
 #include "threads.h"
 #include "xml_file.h"
+#include "cleanup.h"
 
 
 // TODO:
@@ -804,8 +805,10 @@ add_package(cr_Package *pkg,
 
     if (!list) {
         list = g_slist_prepend(list, pkg);
-        if (!pkg->location_base) {
-            pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, repopath);
+        if ((!pkg->location_base || *pkg->location_base == '\0') && repopath) {
+            _cleanup_free_ gchar *repopath_with_protocol = NULL;
+            repopath_with_protocol = g_strconcat("file://", repopath, NULL);
+            pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, repopath_with_protocol);
         }
         g_hash_table_insert (merged, (gpointer) pkg->name, (gpointer) list);
         return 1;

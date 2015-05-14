@@ -334,6 +334,9 @@ check_arguments(struct CmdOptions *options)
             x++;
         }
         g_strfreev(arch_set);
+    } else if (options->koji) {
+        // Work only with noarch packages if --koji and no archlist specified
+        options->arch_list = append_arch(options->arch_list, "noarch", TRUE);
     }
 
     // Compress type

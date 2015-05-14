@@ -272,6 +272,19 @@ append_arch(GSList *list, gchar *arch, gboolean koji)
 }
 
 
+GSList *
+append_multilib_arch(GSList *list, gchar *arch)
+{
+    if (!g_strcmp0(arch, "x86_64"))
+        list = append_arch(list, "i386", TRUE);
+    else if (!g_strcmp0(arch, "ppc64"))
+        list = append_arch(list, "ppc", TRUE);
+    else if (!g_strcmp0(arch, "s390x"))
+        list = append_arch(list, "s390", TRUE);
+
+    return list;
+}
+
 gboolean
 check_arguments(struct CmdOptions *options)
 {
@@ -308,9 +321,14 @@ check_arguments(struct CmdOptions *options)
         while (arch_set && arch_set[x] != NULL) {
             gchar *arch = arch_set[x];
             if (arch[0] != '\0') {
+                // Append (and expand) the arch
                 options->arch_list = append_arch(options->arch_list,
                                                  arch,
                                                  options->koji);
+                // Support multilib repos
+                if (options->koji)
+                    options->arch_list = append_multilib_arch(options->arch_list,
+                                                              arch);
             }
             x++;
         }

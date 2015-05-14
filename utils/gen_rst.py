@@ -99,7 +99,7 @@ def parse_arguments_from_c_file(filename):
         arg_description = entry_match.group("arg_description").strip()
 
         # Normalize short name
-        if short_name and (short_name == "NULL" or short_name == "0"):
+        if short_name in ("NULL", "0", "\\0"):
             short_name = None
 
         # Normalize description
@@ -143,6 +143,7 @@ if __name__ == "__main__":
     parser = OptionParser('usage: %prog [options] <filename> [--mergerepo|--modifyrepo]')
     parser.add_option('-m', '--mergerepo', action="store_true", help="Gen rst for mergerepo")
     parser.add_option('-r', '--modifyrepo', action="store_true", help="Gen rst for modifyrepo")
+    parser.add_option('-s', '--sqliterepo', action="store_true", help="Gen rst for sqliterepo")
     options, args = parser.parse_args()
 
     if len(args) < 1:
@@ -154,21 +155,27 @@ if __name__ == "__main__":
     if options.mergerepo:
         NAME = "mergerepo_c"
         info = Info(NAME,
-                summary="Merge multiple repositories together",
-                synopsis=["%s --repo repo1 --repo repo2" % (NAME,)],
+                summary="Merge multiple rpm-md format repositories together",
+                synopsis=["%s [options] --repo repo1 --repo repo2" % (NAME,)],
                 options=args)
     elif options.modifyrepo:
         NAME = "modifyrepo_c"
         info = Info(NAME,
-                summary="Modify a repomd (xml-rpm-metadata) repository",
+                summary="Modify a repomd.xml of rpm-md format repository",
                 synopsis=["%s [options] <input metadata> <output repodata>" % (NAME,),
                           "%s --remove <metadata type> <output repodata>" % (NAME,),
                           "%s [options] --batchfile <batch file> <output repodata>" % (NAME,) ],
                 options=args)
+    elif options.sqliterepo:
+        NAME = "sqliterepo_c"
+        info = Info(NAME,
+                summary="Generate sqlite db files for a repository in rpm-md format",
+                synopsis=["%s [options] <repo_directory>" % (NAME,) ],
+                options=args)
     else:
         NAME = "createrepo_c"
         info = Info(NAME,
-                summary="Create repomd (xml-rpm-metadata) repository",
+                summary="Create rpm-md format (xml-rpm-metadata) repository",
                 synopsis=["%s [options] <directory>" % (NAME,)],
                 options=args)
 

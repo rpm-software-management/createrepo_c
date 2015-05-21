@@ -1683,8 +1683,10 @@ main(int argc, char **argv)
                                     cr_get_filename(cmd_options->groupfile),
                                     NULL);
             g_debug("Using user specified groupfile: %s", groupfile);
-        } else
-            g_warning("Cannot copy groupfile %s", cmd_options->groupfile);
+        } else {
+            g_critical("Cannot copy groupfile %s", cmd_options->groupfile);
+            return 1;
+        }
     }
 
     // Load noarch repo

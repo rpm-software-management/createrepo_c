@@ -1669,12 +1669,16 @@ main(int argc, char **argv)
             struct cr_MetadataLocation *loc;
             loc = (struct cr_MetadataLocation  *) element->data;
             if (!groupfile && loc->groupfile_href) {
-                if (cr_copy_file(loc->groupfile_href, cmd_options->tmp_out_repo, NULL)) {
+                if (cr_copy_file(loc->groupfile_href, cmd_options->tmp_out_repo, &tmp_err)) {
                     groupfile = g_strconcat(cmd_options->tmp_out_repo,
                                             cr_get_filename(loc->groupfile_href),
                                             NULL);
                     g_debug("Using groupfile: %s", groupfile);
                     break;
+                } else {
+                    g_warning("Groupfile %s from repo: %s cannot be used: %s\n",
+                              loc->groupfile_href, loc->original_url, tmp_err->message);
+                    g_clear_error(&tmp_err);
                 }
             }
         }

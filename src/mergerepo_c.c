@@ -1569,6 +1569,8 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 int
 main(int argc, char **argv)
 {
+    _cleanup_error_free_ GError *tmp_err = NULL;
+
     // Parse arguments
 
     struct CmdOptions *cmd_options;
@@ -1667,7 +1669,7 @@ main(int argc, char **argv)
             struct cr_MetadataLocation *loc;
             loc = (struct cr_MetadataLocation  *) element->data;
             if (!groupfile && loc->groupfile_href) {
-                if (cr_copy_file(loc->groupfile_href, cmd_options->tmp_out_repo, NULL) == CRE_OK) {
+                if (cr_copy_file(loc->groupfile_href, cmd_options->tmp_out_repo, NULL)) {
                     groupfile = g_strconcat(cmd_options->tmp_out_repo,
                                             cr_get_filename(loc->groupfile_href),
                                             NULL);
@@ -1678,13 +1680,14 @@ main(int argc, char **argv)
         }
     } else {
         // Use groupfile specified by user
-        if (cr_copy_file(cmd_options->groupfile, cmd_options->tmp_out_repo, NULL) == CRE_OK) {
+        if (cr_copy_file(cmd_options->groupfile, cmd_options->tmp_out_repo, &tmp_err)) {
             groupfile = g_strconcat(cmd_options->tmp_out_repo,
                                     cr_get_filename(cmd_options->groupfile),
                                     NULL);
             g_debug("Using user specified groupfile: %s", groupfile);
         } else {
-            g_critical("Cannot copy groupfile %s", cmd_options->groupfile);
+            g_critical("Cannot copy groupfile %s: %s",
+                       cmd_options->groupfile, tmp_err->message);
             return 1;
         }
     }

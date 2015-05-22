@@ -863,6 +863,17 @@ cr_str_to_version(const char *str)
     return ver;
 }
 
+static int
+cr_compare_values(const char *str1, const char *str2)
+{
+    if (!str1 && !str2)
+        return 0;
+    else if (str1 && !str2)
+        return 1;
+    else if (!str1 && str2)
+        return -1;
+    return rpmvercmp(str1, str2);
+}
 
 // Return values:
 // 0 - versions are same
@@ -874,37 +885,9 @@ cr_str_to_version(const char *str)
 int
 cr_cmp_version_str(const char* str1, const char *str2)
 {
-    struct cr_Version ver1, ver2;
-    int strcmp_res = 0;
-
-    if (!str1 && !str2)
-        return 0;
-
-    // Get version
-    ver1 = cr_str_to_version(str1);
-    ver2 = cr_str_to_version(str2);
-    strcmp_res = g_strcmp0(ver1.suffix, ver2.suffix);
-    g_free(ver1.suffix);
-    g_free(ver2.suffix);
-
-    if (ver1.major > ver2.major)
-        return 1;
-    if (ver1.major < ver2.major)
-        return 2;
-    if (ver1.minor > ver2.minor)
-        return 1;
-    if (ver1.minor < ver2.minor)
-        return 2;
-    if (ver1.patch > ver2.patch)
-        return 1;
-    if (ver1.patch < ver2.patch)
-        return 2;
-    if (strcmp_res > 0)
-        return 1;
-    if (strcmp_res < 0)
-        return 2;
-
-    return 0;
+    int rc = cr_compare_values(str1 ? str1 : "", str2 ? str2 : "");
+    if (rc == -1) rc = 2;
+    return rc;
 }
 
 
@@ -1202,20 +1185,6 @@ cr_nevra_free(cr_NEVRA *nevra)
     g_free(nevra->arch);
     g_free(nevra);
 }
-
-
-int
-cr_compare_values(const char *str1, const char *str2)
-{
-    if (!str1 && !str2)
-        return 0;
-    else if (str1 && !str2)
-        return 1;
-    else if (!str1 && str2)
-        return -1;
-    return rpmvercmp(str1, str2);
-}
-
 
 int
 cr_cmp_evr(const char *e1, const char *v1, const char *r1,

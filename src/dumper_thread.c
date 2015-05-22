@@ -221,7 +221,7 @@ exit:
 }
 
 static cr_Package *
-load_rpm(const char *filename,
+load_rpm(const char *fullpath,
          cr_ChecksumType checksum_type,
          const char *checksum_cachedir,
          const char *location_href,
@@ -234,11 +234,11 @@ load_rpm(const char *filename,
     cr_Package *pkg = NULL;
     GError *tmp_err = NULL;
 
-    assert(filename);
+    assert(fullpath);
     assert(!err || *err == NULL);
 
     // Get a package object
-    pkg = cr_package_from_rpm_base(filename, changelog_limit, hdrrflags, err);
+    pkg = cr_package_from_rpm_base(fullpath, changelog_limit, hdrrflags, err);
     if (!pkg)
         goto errexit;
 
@@ -252,11 +252,11 @@ load_rpm(const char *filename,
     // Get file stat
     if (!stat_buf) {
         struct stat stat_buf_own;
-        if (stat(filename, &stat_buf_own) == -1) {
+        if (stat(fullpath, &stat_buf_own) == -1) {
             g_warning("%s: stat(%s) error (%s)", __func__,
-                      filename, g_strerror(errno));
+                      fullpath, g_strerror(errno));
             g_set_error(err,  CREATEREPO_C_ERROR, CRE_IO, "stat(%s) failed: %s",
-                        filename, g_strerror(errno));
+                        fullpath, g_strerror(errno));
             goto errexit;
         }
         pkg->time_file    = stat_buf_own.st_mtime;
@@ -267,7 +267,7 @@ load_rpm(const char *filename,
     }
 
     // Compute checksum
-    char *checksum = get_checksum(filename, checksum_type, pkg,
+    char *checksum = get_checksum(fullpath, checksum_type, pkg,
                                   checksum_cachedir, &tmp_err);
     if (!checksum)
         goto errexit;
@@ -275,7 +275,7 @@ load_rpm(const char *filename,
     free(checksum);
 
     // Get header range
-    struct cr_HeaderRangeStruct hdr_r = cr_get_header_byte_range(filename,
+    struct cr_HeaderRangeStruct hdr_r = cr_get_header_byte_range(fullpath,
                                                                  &tmp_err);
     if (tmp_err) {
         g_propagate_prefixed_error(err, tmp_err,
@@ -292,7 +292,6 @@ errexit:
     cr_package_free(pkg);
     return NULL;
 }
-
 
 void
 cr_dumper_thread(gpointer data, gpointer user_data)

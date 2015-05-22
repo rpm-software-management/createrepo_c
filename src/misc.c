@@ -800,19 +800,19 @@ cr_str_to_version(const char *str)
     char *endptr;
     const char *ptr = str;
     struct cr_Version ver;
-    ver.version = 0;
-    ver.release = 0;
-    ver.patch   = 0;
-    ver.suffix  = NULL;
+    ver.major  = 0;
+    ver.minor  = 0;
+    ver.patch  = 0;
+    ver.suffix = NULL;
 
     if (!str || str[0] == '\0') {
         return ver;
     }
 
 
-    // Version chunk
+    // Major chunk
 
-    ver.version = strtol(ptr, &endptr, 10);
+    ver.major = strtol(ptr, &endptr, 10);
     if (!endptr || endptr[0] == '\0') {
         // Whole string has been converted successfully
         return ver;
@@ -827,9 +827,9 @@ cr_str_to_version(const char *str)
     }
 
 
-    // Release chunk
+    // Minor chunk
 
-    ver.release = strtol(ptr, &endptr, 10);
+    ver.minor = strtol(ptr, &endptr, 10);
     if (!endptr || endptr[0] == '\0') {
         // Whole string has been converted successfully
         return ver;
@@ -875,39 +875,34 @@ int
 cr_cmp_version_str(const char* str1, const char *str2)
 {
     struct cr_Version ver1, ver2;
+    int strcmp_res = 0;
 
-    if (!str1 && !str2) {
+    if (!str1 && !str2)
         return 0;
-    }
 
     // Get version
     ver1 = cr_str_to_version(str1);
     ver2 = cr_str_to_version(str2);
-
-    if (ver1.version > ver2.version) {
-        return 1;
-    } else if (ver1.version < ver2.version) {
-        return 2;
-    } else if (ver1.release > ver2.release) {
-        return 1;
-    } else if (ver1.release < ver2.release) {
-        return 2;
-    } else if (ver1.patch > ver2. patch) {
-        return 1;
-    } else if (ver1.patch < ver2.patch) {
-        return 2;
-    }
-
-    int strcmp_res = g_strcmp0(ver1.suffix, ver2.suffix);
-
+    strcmp_res = g_strcmp0(ver1.suffix, ver2.suffix);
     g_free(ver1.suffix);
     g_free(ver2.suffix);
 
-    if (strcmp_res > 0) {
+    if (ver1.major > ver2.major)
         return 1;
-    } else if (strcmp_res < 0) {
+    if (ver1.major < ver2.major)
         return 2;
-    }
+    if (ver1.minor > ver2.minor)
+        return 1;
+    if (ver1.minor < ver2.minor)
+        return 2;
+    if (ver1.patch > ver2.patch)
+        return 1;
+    if (ver1.patch < ver2.patch)
+        return 2;
+    if (strcmp_res > 0)
+        return 1;
+    if (strcmp_res < 0)
+        return 2;
 
     return 0;
 }

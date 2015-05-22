@@ -76,8 +76,8 @@ typedef struct {
  * e.g. for openssl-devel-1.0.0i = version: 1, release: 0, patch: 0, suffix: i
  */
 struct cr_Version {
-    long version;       /*!< version */
-    long release;       /*!< release */
+    long major;         /*!< version */
+    long minor;         /*!< release */
     long patch;         /*!< patch */
     char *suffix;       /*!< rest of version string after conversion */
 };

@@ -785,106 +785,106 @@ test_cr_str_to_version(void)
     struct cr_Version ver;
 
     ver = cr_str_to_version(NULL);
-    g_assert_cmpint(ver.version, ==, 0);
-    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.major, ==, 0);
+    g_assert_cmpint(ver.minor, ==, 0);
     g_assert_cmpint(ver.patch, ==, 0);
     g_assert_cmpstr(ver.suffix, ==, NULL);
 
     ver = cr_str_to_version("");
-    g_assert_cmpint(ver.version, ==, 0);
-    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.major, ==, 0);
+    g_assert_cmpint(ver.minor, ==, 0);
     g_assert_cmpint(ver.patch, ==, 0);
     g_assert_cmpstr(ver.suffix, ==, NULL);
 
     ver = cr_str_to_version("abcd");
-    g_assert_cmpint(ver.version, ==, 0);
-    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.major, ==, 0);
+    g_assert_cmpint(ver.minor, ==, 0);
     g_assert_cmpint(ver.patch, ==, 0);
     g_assert_cmpstr(ver.suffix, ==, "abcd");
     g_free(ver.suffix);
 
     ver = cr_str_to_version("0.0.0");
-    g_assert_cmpint(ver.version, ==, 0);
-    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.major, ==, 0);
+    g_assert_cmpint(ver.minor, ==, 0);
     g_assert_cmpint(ver.patch, ==, 0);
     g_assert_cmpstr(ver.suffix, ==, NULL);
 
     ver = cr_str_to_version("9");
-    g_assert_cmpint(ver.version, ==, 9);
-    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.major, ==, 9);
+    g_assert_cmpint(ver.minor, ==, 0);
     g_assert_cmpint(ver.patch, ==, 0);
     g_assert_cmpstr(ver.suffix, ==, NULL);
 
     ver = cr_str_to_version("3beta");
-    g_assert_cmpint(ver.version, ==, 3);
-    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.major, ==, 3);
+    g_assert_cmpint(ver.minor, ==, 0);
     g_assert_cmpint(ver.patch, ==, 0);
     g_assert_cmpstr(ver.suffix, ==, "beta");
     g_free(ver.suffix);
 
     ver = cr_str_to_version("5.2gamma");
-    g_assert_cmpint(ver.version, ==, 5);
-    g_assert_cmpint(ver.release, ==, 2);
+    g_assert_cmpint(ver.major, ==, 5);
+    g_assert_cmpint(ver.minor, ==, 2);
     g_assert_cmpint(ver.patch, ==, 0);
     g_assert_cmpstr(ver.suffix, ==, "gamma");
     g_free(ver.suffix);
 
     ver = cr_str_to_version("0.0.0b");
-    g_assert_cmpint(ver.version, ==, 0);
-    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.major, ==, 0);
+    g_assert_cmpint(ver.minor, ==, 0);
     g_assert_cmpint(ver.patch, ==, 0);
     g_assert_cmpstr(ver.suffix, ==, "b");
     g_free(ver.suffix);
 
     ver = cr_str_to_version("2.3.4");
-    g_assert_cmpint(ver.version, ==, 2);
-    g_assert_cmpint(ver.release, ==, 3);
+    g_assert_cmpint(ver.major, ==, 2);
+    g_assert_cmpint(ver.minor, ==, 3);
     g_assert_cmpint(ver.patch, ==, 4);
     g_assert_cmpstr(ver.suffix, ==, NULL);
 
     ver = cr_str_to_version("11.33.123");
-    g_assert_cmpint(ver.version, ==, 11);
-    g_assert_cmpint(ver.release, ==, 33);
+    g_assert_cmpint(ver.major, ==, 11);
+    g_assert_cmpint(ver.minor, ==, 33);
     g_assert_cmpint(ver.patch, ==, 123);
     g_assert_cmpstr(ver.suffix, ==, NULL);
 
     ver = cr_str_to_version("1234567.0987654.45678");
-    g_assert_cmpint(ver.version, ==, 1234567);
-    g_assert_cmpint(ver.release, ==, 987654);
+    g_assert_cmpint(ver.major, ==, 1234567);
+    g_assert_cmpint(ver.minor, ==, 987654);
     g_assert_cmpint(ver.patch, ==, 45678);
     g_assert_cmpstr(ver.suffix, ==, NULL);
 
     ver = cr_str_to_version("1.0.2i");
-    g_assert_cmpint(ver.version, ==, 1);
-    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.major, ==, 1);
+    g_assert_cmpint(ver.minor, ==, 0);
     g_assert_cmpint(ver.patch, ==, 2);
     g_assert_cmpstr(ver.suffix, ==, "i");
     g_free(ver.suffix);
 
     ver = cr_str_to_version("1..3");
-    g_assert_cmpint(ver.version, ==, 1);
-    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.major, ==, 1);
+    g_assert_cmpint(ver.minor, ==, 0);
     g_assert_cmpint(ver.patch, ==, 3);
     g_assert_cmpstr(ver.suffix, ==, NULL);
     g_free(ver.suffix);
 
     ver = cr_str_to_version("..alpha");
-    g_assert_cmpint(ver.version, ==, 0);
-    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.major, ==, 0);
+    g_assert_cmpint(ver.minor, ==, 0);
     g_assert_cmpint(ver.patch, ==, 0);
     g_assert_cmpstr(ver.suffix, ==, "alpha");
     g_free(ver.suffix);
 
     ver = cr_str_to_version("alpha");
-    g_assert_cmpint(ver.version, ==, 0);
-    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.major, ==, 0);
+    g_assert_cmpint(ver.minor, ==, 0);
     g_assert_cmpint(ver.patch, ==, 0);
     g_assert_cmpstr(ver.suffix, ==, "alpha");
     g_free(ver.suffix);
 
     ver = cr_str_to_version("1-2-3");
-    g_assert_cmpint(ver.version, ==, 1);
-    g_assert_cmpint(ver.release, ==, 0);
+    g_assert_cmpint(ver.major, ==, 1);
+    g_assert_cmpint(ver.minor, ==, 0);
     g_assert_cmpint(ver.patch, ==, 0);
     g_assert_cmpstr(ver.suffix, ==, "-2-3");
     g_free(ver.suffix);

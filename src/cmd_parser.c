@@ -49,6 +49,8 @@ struct CmdOptions _cmd_options = {
         .md_max_age           = 0,
         .cachedir             = NULL,
         .local_sqlite         = DEFAULT_LOCAL_SQLITE,
+        .cut_dirs             = 0,
+        .location_prefix      = NULL,
 
         .deltas               = FALSE,
         .oldpackagedirs       = NULL,
@@ -166,6 +168,11 @@ static GOptionEntry cmd_entries[] =
       "This option could lead to a higher memory consumption "
       "if TMPDIR is set to /tmp or not set at all, because then the /tmp is "
       "used and /tmp dir is often a ramdisk.", NULL },
+    { "cut-dirs", 0, 0, G_OPTION_ARG_INT, &(_cmd_options.cut_dirs),
+      "Ignore NUM of directory components in location_href during repodata "
+      "generation", "NUM" },
+    { "location-prefix", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.location_prefix),
+      "Append this prefix before location_href in output repodata", "PREFIX" },
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL },
 };
 
@@ -479,6 +486,13 @@ check_arguments(struct CmdOptions *options,
                                             options->oldpackagedirs_paths,
                                             (gpointer) path);
         x++;
+    }
+
+    // Check cut_dirs
+    if (options->cut_dirs < 0) {
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
+                    "--cur-dirs value must be possitive integer");
+        return FALSE;
     }
 
     return TRUE;

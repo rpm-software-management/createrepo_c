@@ -27,6 +27,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include "checksum.h"
+#include "cleanup.h"
 #include "deltarpms.h"
 #include "dumper_thread.h"
 #include "error.h"
@@ -309,8 +310,22 @@ cr_dumper_thread(gpointer data, gpointer user_data)
 
     // get location_href without leading part of path (path to repo)
     // including '/' char
-    const char *location_href = task->full_path + udata->repodir_name_len;
-    const char *location_base = udata->location_base;
+    const gchar *location_base = udata->location_base;
+    _cleanup_free_ gchar *location_href = NULL;
+    location_href = g_strdup(task->full_path + udata->repodir_name_len);
+
+    // User requested modification of the location href
+    if (udata->cut_dirs) {
+        gchar *tmp = location_href;
+        location_href = g_strdup(cr_cut_dirs(location_href, udata->cut_dirs));
+        g_free(tmp);
+    }
+
+    if (udata->location_prefix) {
+        gchar *tmp = location_href;
+        location_href = g_build_filename(udata->location_prefix, tmp, NULL);
+        g_free(tmp);
+    }
 
     // If --cachedir is used, load signatures and hdrid from packages too
     if (udata->checksum_cachedir)
@@ -350,8 +365,8 @@ cr_dumper_thread(gpointer data, gpointer user_data)
                 // We have usable old data, but we have to set proper locations
                 // WARNING! This two lines destructively modifies content of
                 // packages in old metadata.
-                md->location_href = (char *) location_href;
-                md->location_base = (char *) location_base;
+                md->location_href = location_href;
+                md->location_base = location_base;
             }
         }
     }

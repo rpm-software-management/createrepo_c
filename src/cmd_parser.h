@@ -96,6 +96,11 @@ struct CmdOptions {
                                      temporary files.
                                      For situations when sqlite has a trouble
                                      to gen DBs on NFS mounts. */
+    gint cut_dirs;              /*!< Ignore *num* of directory components
+                                     during repodata generation in location
+                                     href value. */
+    gchar *location_prefix;     /*!< Append this prefix into location_href
+                                     during repodata generation. */
 
     /* Items filled by check_arguments() */
 

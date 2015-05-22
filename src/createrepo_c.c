@@ -822,6 +822,8 @@ main(int argc, char **argv)
     user_data.max_delta_rpm_size= cmd_options->max_delta_rpm_size;
     user_data.mutex_deltatargetpackages = g_mutex_new();
     user_data.deltatargetpackages = NULL;
+    user_data.cut_dirs          = cmd_options->cut_dirs;
+    user_data.location_prefix   = cmd_options->location_prefix;
 
     g_debug("Thread pool user data ready");
 

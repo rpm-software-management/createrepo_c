@@ -87,6 +87,12 @@ struct UserData {
                                     // deltarpm against
     GMutex *mutex_deltatargetpackages; // Mutex
     GSList *deltatargetpackages;    // List of cr_DeltaTargetPackages
+
+    // Location href modifiers
+    gint cut_dirs;                  // Ignore *num* of directory components
+                                    // in location href path
+    gchar *location_prefix;         // Append this prefix into location_href
+                                    // during repodata generation
 };
 
 

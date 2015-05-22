@@ -860,11 +860,11 @@ add_package(cr_Package *pkg,
 
                 // NVR merge method
                 } else if (merge_method == MM_NVR) {
-                    int cmp_res = cr_cmp_version_str(pkg->version, c_pkg->version);
-                    long pkg_release   = (pkg->release)   ? strtol(pkg->release, NULL, 10)   : 0;
-                    long c_pkg_release = (c_pkg->release) ? strtol(c_pkg->release, NULL, 10) : 0;
 
-                    if (cmp_res == 1 || (cmp_res == 0 && pkg_release > c_pkg_release)) {
+                    if ((cr_cmp_version_str(pkg->epoch, c_pkg->epoch) == 1)
+                            || (cr_cmp_version_str(pkg->version, c_pkg->version) == 1)
+                            || (cr_cmp_version_str(pkg->release, c_pkg->release) == 1))
+                    {
                         // Remove older package
                         cr_package_free(c_pkg);
                         // Replace package in element
@@ -873,32 +873,32 @@ add_package(cr_Package *pkg,
                         element->data = pkg;
                         return 2;
                     } else {
-                        g_debug("Newer version of package %s (%s) already exists",
-                                pkg->name, pkg->arch);
+                        g_debug("Same version of package %s.%s "
+                                "(epoch: %s) (ver: %s) (rel: %s) already exists",
+                                pkg->name, pkg->arch,
+                                pkg->epoch   ? pkg->epoch   : "0",
+                                pkg->version ? pkg->version : "N/A",
+                                pkg->release ? pkg->release : "N/A");
                         return 0;
                     }
                 }
-
             } else {
                 // Two packages has same name and arch but all param is used
 
                 // We want to check if two packages are the same.
                 // We already know that name and arch matches.
-                // We need to check version and release, but we
-                // don't need any sophisticated methods, we can
-                // use plain string comparison.
-                if (!g_strcmp0(pkg->version ? pkg->version : "",
-                               c_pkg->version ? c_pkg->version : "")
-                    && !g_strcmp0(pkg->release ? pkg->release : "",
-                                  c_pkg->release ? c_pkg->release: ""))
+                // We need to check version and release
+                if ((cr_cmp_version_str(pkg->epoch, c_pkg->epoch) == 0)
+                        || (cr_cmp_version_str(pkg->version, c_pkg->version) == 0)
+                        || (cr_cmp_version_str(pkg->release, c_pkg->release) == 0))
                 {
-                    // Both packages are the same (at least by NVRA values)
-                    g_debug("Same version of package %s (ver: %s) (rel: %s) "
-                            "(arch: %s) already exists",
-                            pkg->name,
+                    // Both packages are the same (at least by NEVRA values)
+                    g_debug("Same version of package %s.%s "
+                            "(epoch: %s) (ver: %s) (rel: %s) already exists",
+                            pkg->name, pkg->arch,
+                            pkg->epoch   ? pkg->epoch   : "0",
                             pkg->version ? pkg->version : "N/A",
-                            pkg->release ? pkg->release : "N/A",
-                            pkg->arch);
+                            pkg->release ? pkg->release : "N/A");
                     return 0;
                 }
             }

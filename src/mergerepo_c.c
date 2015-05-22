@@ -880,18 +880,25 @@ add_package(cr_Package *pkg,
                 }
 
             } else {
-
                 // Two packages has same name and arch but all param is used
 
-                int cmp_res = cr_cmp_version_str(pkg->version, c_pkg->version);
-                long pkg_release   = (pkg->release)   ? strtol(pkg->release, NULL, 10)   : 0;
-                long c_pkg_release = (c_pkg->release) ? strtol(c_pkg->release, NULL, 10) : 0;
-
-                if (cmp_res == 0 && pkg_release == c_pkg_release) {
-                    // Package with same name, arch, version and release
-                    // is already listed
-                    g_debug("Same version of package %s (%s) already exists",
-                            pkg->name, pkg->arch);
+                // We want to check if two packages are the same.
+                // We already know that name and arch matches.
+                // We need to check version and release, but we
+                // don't need any sophisticated methods, we can
+                // use plain string comparison.
+                if (!g_strcmp0(pkg->version ? pkg->version : "",
+                               c_pkg->version ? c_pkg->version : "")
+                    && !g_strcmp0(pkg->release ? pkg->release : "",
+                                  c_pkg->release ? c_pkg->release: ""))
+                {
+                    // Both packages are the same (at least by NVRA values)
+                    g_debug("Same version of package %s (ver: %s) (rel: %s) "
+                            "(arch: %s) already exists",
+                            pkg->name,
+                            pkg->version ? pkg->version : "N/A",
+                            pkg->release ? pkg->release : "N/A",
+                            pkg->arch);
                     return 0;
                 }
             }

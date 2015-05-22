@@ -1179,6 +1179,56 @@ test_cr_cmp_evr(void)
     g_assert_cmpint(res, ==, 1);
 }
 
+static void
+test_cr_cut_dirs(void)
+{
+    char *res;
+
+    res = cr_cut_dirs(NULL, 1);
+    g_assert_cmpstr(res, ==, NULL);
+
+    res = cr_cut_dirs("", 1);
+    g_assert_cmpstr(res, ==, "");
+
+    res = cr_cut_dirs("foo.rpm", 1);
+    g_assert_cmpstr(res, ==, "foo.rpm");
+
+    res = cr_cut_dirs("/foo.rpm", 1);
+    g_assert_cmpstr(res, ==, "foo.rpm");
+
+    res = cr_cut_dirs("//foo.rpm", 1);
+    g_assert_cmpstr(res, ==, "foo.rpm");
+
+    res = cr_cut_dirs("///foo.rpm", 1);
+    g_assert_cmpstr(res, ==, "foo.rpm");
+
+    res = cr_cut_dirs("bar/foo.rpm", 1);
+    g_assert_cmpstr(res, ==, "foo.rpm");
+
+    res = cr_cut_dirs("/bar/foo.rpm", 1);
+    g_assert_cmpstr(res, ==, "foo.rpm");
+
+    res = cr_cut_dirs("bar//foo.rpm", 1);
+    g_assert_cmpstr(res, ==, "foo.rpm");
+
+    res = cr_cut_dirs("//bar//foo.rpm", 1);
+    g_assert_cmpstr(res, ==, "foo.rpm");
+
+    res = cr_cut_dirs("///a///b/foo.rpm", 1);
+    g_assert_cmpstr(res, ==, "b/foo.rpm");
+
+    res = cr_cut_dirs("a/b/c/foo.rpm", 1);
+    g_assert_cmpstr(res, ==, "b/c/foo.rpm");
+
+    res = cr_cut_dirs("a/b/c/foo.rpm", 2);
+    g_assert_cmpstr(res, ==, "c/foo.rpm");
+
+    res = cr_cut_dirs("a/b/c/foo.rpm", 3);
+    g_assert_cmpstr(res, ==, "foo.rpm");
+
+    res = cr_cut_dirs("a///b///c///foo.rpm", 3);
+    g_assert_cmpstr(res, ==, "foo.rpm");
+}
 
 int
 main(int argc, char *argv[])
@@ -1250,6 +1300,8 @@ main(int argc, char *argv[])
             test_cr_str_to_nevra);
     g_test_add_func("/misc/test_cr_cmp_evr",
             test_cr_cmp_evr);
+    g_test_add_func("/misc/test_cr_cut_dirs",
+            test_cr_cut_dirs);
 
     return g_test_run();
 }

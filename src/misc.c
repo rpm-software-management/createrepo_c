@@ -1438,3 +1438,45 @@ cr_identical_files(const gchar *fn1,
     return TRUE;
 }
 
+gchar *
+cr_cut_dirs(gchar *path, gint cut_dirs)
+{
+    if (!path)
+        return NULL;
+
+    if (cut_dirs < 1)
+        return path;
+
+    gchar *last_component = NULL;
+    for (gchar *p = path; *p; p++) {
+        if (*p == '/')
+            last_component = p;
+    }
+
+    if (last_component == NULL)
+        return path;
+
+    gchar *cut = path;
+    gint n = 0;
+    gint state = 0;
+
+    for (gchar *p = path; p <= last_component; p++) {
+        if (state == 0) {
+            if (*p == '/') {
+                cut = p;
+            } else {
+                state = 1;
+                if (n == cut_dirs)
+                    break;
+            }
+        } else if (state == 1) {
+            if (*p == '/') {
+                cut = p;
+                state = 0;
+                n++;
+            }
+        }
+    }
+
+    return cut+1;
+}

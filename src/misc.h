@@ -523,6 +523,12 @@ cr_identical_files(const gchar *fn1,
                    gboolean *identical,
                    GError **err);
 
+/** Cut first N components of path.
+ * Note: Basename is never cut out.
+ */
+gchar *
+cr_cut_dirs(gchar *path, gint cut_dirs);
+
 /** @} */
 
 #ifdef __cplusplus

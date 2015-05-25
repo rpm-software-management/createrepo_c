@@ -861,10 +861,21 @@ add_package(cr_Package *pkg,
                 // NVR merge method
                 } else if (merge_method == MM_NVR) {
 
-                    if ((cr_cmp_version_str(pkg->epoch, c_pkg->epoch) == 1)
-                            || (cr_cmp_version_str(pkg->version, c_pkg->version) == 1)
-                            || (cr_cmp_version_str(pkg->release, c_pkg->release) == 1))
-                    {
+                    gboolean pkg_is_newer = FALSE;
+
+                    int epoch_cmp   = cr_cmp_version_str(pkg->epoch, c_pkg->epoch);
+                    int version_cmp = cr_cmp_version_str(pkg->version, c_pkg->version);
+                    int release_cmp = cr_cmp_version_str(pkg->release, c_pkg->release);
+
+
+                    if (epoch_cmp == 1)
+                        pkg_is_newer = TRUE;
+                    else if (epoch_cmp == 0 && version_cmp == 1)
+                        pkg_is_newer = TRUE;
+                    else if (epoch_cmp == 0 && version_cmp == 0 && release_cmp == 1)
+                        pkg_is_newer = TRUE;
+
+                    if (pkg_is_newer) {
                         // Remove older package
                         cr_package_free(c_pkg);
                         // Replace package in element
@@ -873,7 +884,7 @@ add_package(cr_Package *pkg,
                         element->data = pkg;
                         return 2;
                     } else {
-                        g_debug("Same version of package %s.%s "
+                        g_debug("Newer version of package %s.%s "
                                 "(epoch: %s) (ver: %s) (rel: %s) already exists",
                                 pkg->name, pkg->arch,
                                 pkg->epoch   ? pkg->epoch   : "0",

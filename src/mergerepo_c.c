@@ -889,8 +889,8 @@ add_package(cr_Package *pkg,
                 // We already know that name and arch matches.
                 // We need to check version and release
                 if ((cr_cmp_version_str(pkg->epoch, c_pkg->epoch) == 0)
-                        || (cr_cmp_version_str(pkg->version, c_pkg->version) == 0)
-                        || (cr_cmp_version_str(pkg->release, c_pkg->release) == 0))
+                        && (cr_cmp_version_str(pkg->version, c_pkg->version) == 0)
+                        && (cr_cmp_version_str(pkg->release, c_pkg->release) == 0))
                 {
                     // Both packages are the same (at least by NEVRA values)
                     g_debug("Same version of package %s.%s "

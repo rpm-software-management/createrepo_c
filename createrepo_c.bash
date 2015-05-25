@@ -68,6 +68,7 @@ _cr_createrepo()
             --revision --read-pkgs-list --workers --xz
             --compress-type --keep-all-metadata --compatibility
             --retain-old-md-by-age --cachedir --local-sqlite
+            --cut-dirs --location-prefix
             --deltas --oldpackagedirs
             --num-deltas --max-delta-rpm-size' -- "$2" ) )
     else

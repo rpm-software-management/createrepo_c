@@ -490,7 +490,7 @@ cr_package_from_header(Header hdr,
         headerGet(hdr, RPMTAG_CHANGELOGNAME, changelognames, flags) &&
         headerGet(hdr, RPMTAG_CHANGELOGTEXT, changelogtexts, flags))
     {
-        gint64 last_time = 0;
+        gint64 last_time = G_GINT64_CONSTANT(0);
         rpmtdInit(changelogtimes);
         rpmtdInit(changelognames);
         rpmtdInit(changelogtexts);

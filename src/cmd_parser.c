@@ -46,7 +46,7 @@ struct CmdOptions _cmd_options = {
         .retain_old           = 0,
         .compression_type     = CR_CW_UNKNOWN_COMPRESSION,
         .ignore_lock          = DEFAULT_IGNORE_LOCK,
-        .md_max_age           = 0,
+        .md_max_age           = G_GINT64_CONSTANT(0),
         .cachedir             = NULL,
         .local_sqlite         = DEFAULT_LOCAL_SQLITE,
         .cut_dirs             = 0,
@@ -237,7 +237,7 @@ parse_period_of_time(const gchar *timeperiod, gint64 *time, GError **err)
     gchar *endptr = NULL;
     gint64 val = g_ascii_strtoll(timeperiod, &endptr, 0);
 
-    *time = 0;
+    *time = G_GINT64_CONSTANT(0);
 
     // Check the state of the conversion
     if (val == 0 && endptr == timeperiod) {
@@ -259,13 +259,13 @@ parse_period_of_time(const gchar *timeperiod, gint64 *time, GError **err)
     }
 
     if (!endptr || endptr[0] == '\0') // Secs
-        *time = val;
+        *time = (gint64) val;
     else if (!strcmp(endptr, "m"))    // Minutes
-        *time = val*60;
+        *time = (gint64) val*60;
     else if (!strcmp(endptr, "h"))    // Hours
-        *time = val*60*60;
+        *time = (gint64) val*60*60;
     else if (!strcmp(endptr, "d"))    // Days
-        *time = val*24*60*60;
+        *time = (gint64) val*24*60*60;
     else {
         g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "Bad time unit \"%s\"", endptr);

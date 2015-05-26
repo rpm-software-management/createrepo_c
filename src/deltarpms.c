@@ -431,7 +431,7 @@ cr_deltarpms_parallel_deltas(GSList *targetpackages,
     user_data.num_deltas            = num_deltas;
     user_data.oldpackages           = oldpackages;
     user_data.mutex                 = g_mutex_new();
-    user_data.active_work_size      = 0;
+    user_data.active_work_size      = G_GINT64_CONSTANT(0);
     user_data.active_tasks          = 0;
     user_data.cond_task_finished    = g_cond_new();
 

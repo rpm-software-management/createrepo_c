@@ -55,7 +55,7 @@ cr_repomd_record_new(const char *type, const char *path)
     cr_RepomdRecord *md = g_malloc0(sizeof(*md));
     md->chunk = g_string_chunk_new(128);
     md->type  = cr_safe_string_chunk_insert(md->chunk, type);
-    md->size_open = -1;
+    md->size_open = G_GINT64_CONSTANT(-1);
 
     if (path) {
         gchar *filename = cr_get_filename(path);
@@ -148,7 +148,7 @@ cr_get_compressed_content_stat(const char *filename,
         return NULL;
     }
 
-    gint64 size = 0;
+    gint64 size = G_GINT64_CONSTANT(0);
     long readed;
     unsigned char buffer[BUFFER_SIZE];
 
@@ -239,7 +239,7 @@ cr_repomd_record_fill(cr_RepomdRecord *md,
 
     // Compute checksum of non compressed content and its size
 
-    if (!md->checksum_open_type || !md->checksum_open || md->size_open == -1) {
+    if (!md->checksum_open_type || !md->checksum_open || md->size_open == G_GINT64_CONSTANT(-1)) {
         cr_CompressionType com_type = cr_detect_compression(path, &tmp_err);
         if (tmp_err) {
             int code = tmp_err->code;
@@ -265,7 +265,7 @@ cr_repomd_record_fill(cr_RepomdRecord *md,
 
             md->checksum_open_type = g_string_chunk_insert(md->chunk, checksum_str);
             md->checksum_open = g_string_chunk_insert(md->chunk, open_stat->checksum);
-            if (md->size_open == -1)
+            if (md->size_open == G_GINT64_CONSTANT(-1))
                 md->size_open = open_stat->size;
             g_free(open_stat->checksum);
             g_free(open_stat);
@@ -277,7 +277,7 @@ cr_repomd_record_fill(cr_RepomdRecord *md,
             }
             md->checksum_open_type = NULL;
             md->checksum_open = NULL;
-            md->size_open = -1;
+            md->size_open = G_GINT64_CONSTANT(-1);
         }
     }
 
@@ -327,8 +327,8 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
     char buf[BUFFER_SIZE];
     CR_FILE *cw_plain;
     CR_FILE *cw_compressed;
-    gint64 gf_size = -1, cgf_size = -1;
-    gint64 gf_time = -1, cgf_time = -1;
+    gint64 gf_size = G_GINT64_CONSTANT(-1), cgf_size = G_GINT64_CONSTANT(-1);
+    gint64 gf_time = G_GINT64_CONSTANT(-1), cgf_time = G_GINT64_CONSTANT(-1);
     struct stat gf_stat, cgf_stat;
     const char *checksum_str = cr_checksum_name_str(checksum_type);
     GError *tmp_err = NULL;
@@ -469,7 +469,7 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
     record->checksum_open_type = NULL;
     record->timestamp = gf_time;
     record->size = gf_size;
-    record->size_open = -1;
+    record->size_open = G_GINT64_CONSTANT(-1);
 
     crecord->checksum = g_string_chunk_insert(crecord->chunk, cchecksum);
     crecord->checksum_type = g_string_chunk_insert(crecord->chunk, checksum_str);

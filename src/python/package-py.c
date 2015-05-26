@@ -248,7 +248,7 @@ get_num(_PackageObject *self, void *member_offset)
     if (check_PackageStatus(self))
         return NULL;
     cr_Package *pkg = self->package;
-    gint64 val = *((gint64 *) ((size_t)pkg + (size_t) member_offset));
+    gint64 val = (gint64) *((gint64 *) ((size_t)pkg + (size_t) member_offset));
     return PyLong_FromLongLong((long long) val);
 }
 

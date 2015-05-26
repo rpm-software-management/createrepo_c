@@ -273,7 +273,7 @@ get_num(_RepomdRecordObject *self, void *member_offset)
     if (check_RepomdRecordStatus(self))
         return NULL;
     cr_RepomdRecord *rec = self->record;
-    gint64 val = *((gint64 *) ((size_t)rec + (size_t) member_offset));
+    gint64 val = (gint64) *((gint64 *) ((size_t)rec + (size_t) member_offset));
     return PyLong_FromLongLong((long long) val);
 }
 
@@ -283,7 +283,7 @@ get_int(_RepomdRecordObject *self, void *member_offset)
     if (check_RepomdRecordStatus(self))
         return NULL;
     cr_RepomdRecord *rec = self->record;
-    gint64 val = *((int *) ((size_t)rec + (size_t) member_offset));
+    gint64 val = (gint64) *((int *) ((size_t)rec + (size_t) member_offset));
     return PyLong_FromLongLong((long long) val);
 }
 

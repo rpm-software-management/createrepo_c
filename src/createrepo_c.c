@@ -654,7 +654,7 @@ main(int argc, char **argv)
     fil_xml_filename = g_strconcat(tmp_out_repo, "/filelists.xml.gz", NULL);
     oth_xml_filename = g_strconcat(tmp_out_repo, "/other.xml.gz", NULL);
 
-    pri_stat = cr_contentstat_new(cmd_options->checksum_type, NULL);
+    pri_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
     pri_cr_file = cr_xmlfile_sopen_primary(pri_xml_filename,
                                            CR_CW_GZ_COMPRESSION,
                                            pri_stat,
@@ -671,7 +671,7 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    fil_stat = cr_contentstat_new(cmd_options->checksum_type, NULL);
+    fil_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
     fil_cr_file = cr_xmlfile_sopen_filelists(fil_xml_filename,
                                             CR_CW_GZ_COMPRESSION,
                                             fil_stat,
@@ -690,7 +690,7 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    oth_stat = cr_contentstat_new(cmd_options->checksum_type, NULL);
+    oth_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
     oth_cr_file = cr_xmlfile_sopen_other(oth_xml_filename,
                                         CR_CW_GZ_COMPRESSION,
                                         oth_stat,
@@ -884,17 +884,17 @@ main(int argc, char **argv)
     cr_RepomdRecordFillTask *oth_fill_task;
 
     pri_fill_task = cr_repomdrecordfilltask_new(pri_xml_rec,
-                                                cmd_options->checksum_type,
+                                                cmd_options->repomd_checksum_type,
                                                 NULL);
     g_thread_pool_push(fill_pool, pri_fill_task, NULL);
 
     fil_fill_task = cr_repomdrecordfilltask_new(fil_xml_rec,
-                                                cmd_options->checksum_type,
+                                                cmd_options->repomd_checksum_type,
                                                 NULL);
     g_thread_pool_push(fill_pool, fil_fill_task, NULL);
 
     oth_fill_task = cr_repomdrecordfilltask_new(oth_xml_rec,
-                                                cmd_options->checksum_type,
+                                                cmd_options->repomd_checksum_type,
                                                 NULL);
     g_thread_pool_push(fill_pool, oth_fill_task, NULL);
 
@@ -904,7 +904,7 @@ main(int argc, char **argv)
         compressed_groupfile_rec = cr_repomd_record_new("group_gz", groupfile);
         cr_repomd_record_compress_and_fill(groupfile_rec,
                                           compressed_groupfile_rec,
-                                          cmd_options->checksum_type,
+                                          cmd_options->repomd_checksum_type,
                                           groupfile_compression,
                                           &tmp_err);
         if (tmp_err) {
@@ -920,7 +920,7 @@ main(int argc, char **argv)
     if (updateinfo) {
         updateinfo_rec = cr_repomd_record_new("updateinfo", updateinfo);
         cr_repomd_record_fill(updateinfo_rec,
-                              cmd_options->checksum_type,
+                              cmd_options->repomd_checksum_type,
                               &tmp_err);
         if (tmp_err) {
             g_critical("Cannot process updateinfo %s: %s",
@@ -967,21 +967,21 @@ main(int argc, char **argv)
         pri_db_task = cr_compressiontask_new(pri_db_filename,
                                              pri_db_name,
                                              sqlite_compression,
-                                             cmd_options->checksum_type,
+                                             cmd_options->repomd_checksum_type,
                                              1, NULL);
         g_thread_pool_push(compress_pool, pri_db_task, NULL);
 
         fil_db_task = cr_compressiontask_new(fil_db_filename,
                                              fil_db_name,
                                              sqlite_compression,
-                                             cmd_options->checksum_type,
+                                             cmd_options->repomd_checksum_type,
                                              1, NULL);
         g_thread_pool_push(compress_pool, fil_db_task, NULL);
 
         oth_db_task = cr_compressiontask_new(oth_db_filename,
                                              oth_db_name,
                                              sqlite_compression,
-                                             cmd_options->checksum_type,
+                                             cmd_options->repomd_checksum_type,
                                              1, NULL);
         g_thread_pool_push(compress_pool, oth_db_task, NULL);
 
@@ -1018,17 +1018,17 @@ main(int argc, char **argv)
         cr_RepomdRecordFillTask *oth_db_fill_task;
 
         pri_db_fill_task = cr_repomdrecordfilltask_new(pri_db_rec,
-                                                       cmd_options->checksum_type,
+                                                       cmd_options->repomd_checksum_type,
                                                        NULL);
         g_thread_pool_push(fill_pool, pri_db_fill_task, NULL);
 
         fil_db_fill_task = cr_repomdrecordfilltask_new(fil_db_rec,
-                                                       cmd_options->checksum_type,
+                                                       cmd_options->repomd_checksum_type,
                                                        NULL);
         g_thread_pool_push(fill_pool, fil_db_fill_task, NULL);
 
         oth_db_fill_task = cr_repomdrecordfilltask_new(oth_db_rec,
-                                                       cmd_options->checksum_type,
+                                                       cmd_options->repomd_checksum_type,
                                                        NULL);
         g_thread_pool_push(fill_pool, oth_db_fill_task, NULL);
 
@@ -1095,7 +1095,7 @@ main(int argc, char **argv)
         }
 
         // 3) Generate prestodelta.xml file
-        prestodelta_stat = cr_contentstat_new(cmd_options->checksum_type, NULL);
+        prestodelta_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
         prestodelta_cr_file = cr_xmlfile_sopen_prestodelta(prestodelta_xml_filename,
                                                            prestodelta_compression,
                                                            prestodelta_stat,
@@ -1127,7 +1127,7 @@ main(int argc, char **argv)
         // 4) Prepare repomd record
         prestodelta_rec = cr_repomd_record_new("prestodelta", prestodelta_xml_filename);
         cr_repomd_record_load_contentstat(prestodelta_rec, prestodelta_stat);
-        cr_repomd_record_fill(prestodelta_rec, cmd_options->checksum_type, NULL);
+        cr_repomd_record_fill(prestodelta_rec, cmd_options->repomd_checksum_type, NULL);
 
 deltaerror:
         // 5) Cleanup

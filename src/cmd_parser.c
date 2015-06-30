@@ -51,6 +51,7 @@ struct CmdOptions _cmd_options = {
         .local_sqlite         = DEFAULT_LOCAL_SQLITE,
         .cut_dirs             = 0,
         .location_prefix      = NULL,
+        .repomd_checksum      = NULL,
 
         .deltas               = FALSE,
         .oldpackagedirs       = NULL,
@@ -58,6 +59,7 @@ struct CmdOptions _cmd_options = {
         .max_delta_rpm_size   = CR_DEFAULT_MAX_DELTA_RPM_SIZE,
 
         .checksum_cachedir    = NULL,
+        .repomd_checksum_type = CR_CHECKSUM_SHA256,
     };
 
 
@@ -73,17 +75,17 @@ static GOptionEntry cmd_entries[] =
     { "verbose", 'v', 0, G_OPTION_ARG_NONE, &(_cmd_options.verbose),
       "Run verbosely.", NULL },
     { "excludes", 'x', 0, G_OPTION_ARG_FILENAME_ARRAY, &(_cmd_options.excludes),
-      "File globs to exclude, can be specified multiple times.", "<packages>" },
+      "File globs to exclude, can be specified multiple times.", "PACKAGE_NAME_GLOB" },
     { "basedir", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.basedir),
-      "Basedir for path to directories.", "<basedir>" },
+      "Basedir for path to directories.", "BASEDIR" },
     { "baseurl", 'u', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.location_base),
-      "Optional base URL location for all files.", "<URL>" },
+      "Optional base URL location for all files.", "URL" },
     { "groupfile", 'g', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.groupfile),
       "Path to groupfile to include in metadata.",
       "GROUPFILE" },
     { "checksum", 's', 0, G_OPTION_ARG_STRING, &(_cmd_options.checksum),
       "Choose the checksum type used in repomd.xml and for packages in the "
-      "metadata. The default is now \"sha256\".", "<checksum_type>" },
+      "metadata. The default is now \"sha256\".", "CHECKSUM_TYPE" },
     { "pretty", 'p', 0, G_OPTION_ARG_NONE, &(_cmd_options.pretty),
       "Make sure all xml generated is formatted (default)", NULL },
     { "database", 'd', 0, G_OPTION_ARG_NONE, &(_cmd_options.database),
@@ -105,24 +107,24 @@ static GOptionEntry cmd_entries[] =
     { "pkglist", 'i', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.pkglist),
       "Specify a text file which contains the complete list of files to "
       "include in the repository from the set found in the directory. File "
-      "format is one package per line, no wildcards or globs.", "<filename>" },
+      "format is one package per line, no wildcards or globs.", "FILENAME" },
     { "includepkg", 'n', 0, G_OPTION_ARG_FILENAME_ARRAY, &(_cmd_options.includepkg),
       "Specify pkgs to include on the command line. Takes urls as well as local paths.",
-      "<packages>" },
+      "PACKAGE" },
     { "outputdir", 'o', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.outputdir),
-      "Optional output directory.", "<URL>" },
+      "Optional output directory.", "URL" },
     { "skip-symlinks", 'S', 0, G_OPTION_ARG_NONE, &(_cmd_options.skip_symlinks),
       "Ignore symlinks of packages.", NULL},
     { "changelog-limit", 0, 0, G_OPTION_ARG_INT, &(_cmd_options.changelog_limit),
       "Only import the last N changelog entries, from each rpm, into the metadata.",
-      "<number>" },
+      "NUM" },
     { "unique-md-filenames", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.unique_md_filenames),
       "Include the file's checksum in the metadata filename, helps HTTP caching (default).",
       NULL },
     { "simple-md-filenames", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.simple_md_filenames),
       "Do not include the file's checksum in the metadata filename.", NULL },
     { "retain-old-md", 0, 0, G_OPTION_ARG_INT, &(_cmd_options.retain_old),
-      "Keep around the latest (by timestamp) N copies of the old repodata.", "<N>" },
+      "Keep around the latest (by timestamp) N copies of the old repodata.", "NUM" },
     { "distro", 0, 0, G_OPTION_ARG_STRING_ARRAY, &(_cmd_options.distro_tags),
       "Distro tag and optional cpeid: --distro'cpeid,textname'.", "DISTRO" },
     { "content", 0, 0, G_OPTION_ARG_STRING_ARRAY, &(_cmd_options.content_tags),
@@ -139,7 +141,7 @@ static GOptionEntry cmd_entries[] =
     { "xz", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.xz_compression),
       "Use xz for repodata compression.", NULL },
     { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type),
-      "Which compression type to use.", "<compress_type>" },
+      "Which compression type to use.", "COMPRESSION_TYPE" },
     { "keep-all-metadata", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.keep_all_metadata),
       "Keep groupfile and updateinfo from source repo during update.", NULL },
     { "compatibility", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.compatibility),
@@ -173,6 +175,8 @@ static GOptionEntry cmd_entries[] =
       "generation", "NUM" },
     { "location-prefix", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.location_prefix),
       "Append this prefix before location_href in output repodata", "PREFIX" },
+    { "repomd-checksum", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.repomd_checksum),
+      "Checksum type to be used in repomd.xml", "CHECKSUM_TYPE"},
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL },
 };
 
@@ -318,6 +322,21 @@ check_arguments(struct CmdOptions *options,
             return FALSE;
         }
         options->checksum_type = type;
+    }
+
+    // Check and set checksum type for repomd
+    if (options->repomd_checksum) {
+        cr_ChecksumType type;
+        type = cr_checksum_type(options->repomd_checksum);
+        if (type == CR_CHECKSUM_UNKNOWN) {
+            g_set_error(err, ERR_DOMAIN, CRE_BADARG,
+                        "Unknown/Unsupported checksum type \"%s\"",
+                        options->repomd_checksum);
+            return FALSE;
+        }
+        options->repomd_checksum_type = type;
+    } else {
+        options->repomd_checksum_type = options->checksum_type;
     }
 
     // Check and set compression type

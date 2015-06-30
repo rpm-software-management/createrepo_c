@@ -101,6 +101,7 @@ struct CmdOptions {
                                      href value. */
     gchar *location_prefix;     /*!< Append this prefix into location_href
                                      during repodata generation. */
+    gchar *repomd_checksum;     /*!< Checksum type for entries in repomd.xml */
 
     /* Items filled by check_arguments() */
 
@@ -114,6 +115,7 @@ struct CmdOptions {
     GSList *distro_cpeids;      /*!< CPEIDs from --distro params */
     GSList *distro_values;      /*!< values from --distro params */
     cr_ChecksumType checksum_type;          /*!< checksum type */
+    cr_ChecksumType repomd_checksum_type;   /*!< checksum type */
     cr_CompressionType compression_type;    /*!< compression type */
     gint64 md_max_age;          /*!< Max age of files in repodata/.
                                      Older files will be removed
@@ -122,6 +124,7 @@ struct CmdOptions {
                                      is used */
     char *checksum_cachedir;    /*!< Path to cachedir */
     GSList *oldpackagedirs_paths; /*!< paths to look for older pkgs to delta against */
+
 };
 
 /**

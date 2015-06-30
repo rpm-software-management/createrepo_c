@@ -227,3 +227,45 @@ class TestCaseCreaterepo_emptyrepo(BaseTestCase):
                                 "[a-z0-9]{64}-other.sqlite.xz$",
                                 ],
                                additional_files_allowed=False)
+
+    def test_11_createrepo_repomd_checksum(self):
+        """--checksum sha and --groupfile"""
+        res = self.assert_run_cr(self.indir,
+                                 "--repomd-checksum %(checksum)s --groupfile %(groupfile)s" % {
+                                    'checksum': "sha1",
+                                    'groupfile': self.fn_comps },
+                                 c=True)
+        self.assert_repo_sanity(res.outdir)
+        self.assert_repo_files(res.outdir,
+                               ["repomd.xml$",
+                                "[a-z0-9]{40}-primary.xml.gz$",
+                                "[a-z0-9]{40}-filelists.xml.gz$",
+                                "[a-z0-9]{40}-other.xml.gz$",
+                                "[a-z0-9]{40}-primary.sqlite.bz2$",
+                                "[a-z0-9]{40}-filelists.sqlite.bz2$",
+                                "[a-z0-9]{40}-other.sqlite.bz2$",
+                                "[a-z0-9]{40}-comps.xml$",
+                                "[a-z0-9]{40}-comps.xml.gz$",
+                                ],
+                               additional_files_allowed=False)
+
+    def test_12_createrepo_repomd_checksum(self):
+        """--checksum sha and --groupfile"""
+        res = self.assert_run_cr(self.indir,
+                                 "--checksum md5 --repomd-checksum %(checksum)s --groupfile %(groupfile)s" % {
+                                    'checksum': "sha1",
+                                    'groupfile': self.fn_comps },
+                                 c=True)
+        self.assert_repo_sanity(res.outdir)
+        self.assert_repo_files(res.outdir,
+                               ["repomd.xml$",
+                                "[a-z0-9]{40}-primary.xml.gz$",
+                                "[a-z0-9]{40}-filelists.xml.gz$",
+                                "[a-z0-9]{40}-other.xml.gz$",
+                                "[a-z0-9]{40}-primary.sqlite.bz2$",
+                                "[a-z0-9]{40}-filelists.sqlite.bz2$",
+                                "[a-z0-9]{40}-other.sqlite.bz2$",
+                                "[a-z0-9]{40}-comps.xml$",
+                                "[a-z0-9]{40}-comps.xml.gz$",
+                                ],
+                               additional_files_allowed=False)

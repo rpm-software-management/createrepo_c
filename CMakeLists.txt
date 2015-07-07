@@ -1,4 +1,4 @@
-PROJECT (createrepo_c)
+PROJECT (createrepo_c C)
 CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
 
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")

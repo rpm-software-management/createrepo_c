@@ -190,7 +190,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
     <pkglist>
       <collection short="short name">
         <name>long name</name>
-        <package name="foo" version="1.2" relase="3" epoch="0" arch="x86" src="foo.src.rpm">
+        <package name="foo" version="1.2" release="3" epoch="0" arch="x86" src="foo.src.rpm">
           <filename>foo.rpm</filename>
           <sum type="sha1">abcdef</sum>
           <reboot_suggested/>

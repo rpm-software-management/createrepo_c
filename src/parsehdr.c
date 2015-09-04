@@ -24,6 +24,7 @@
 #include "parsehdr.h"
 #include "xml_dump.h"
 #include "misc.h"
+#include "cleanup.h"
 
 #if defined(RPMTAG_SUGGESTS) && defined(RPMTAG_ENHANCES) \
     && defined(RPMTAG_RECOMMENDS) && defined(RPMTAG_SUPPLEMENTS)
@@ -377,11 +378,22 @@ cr_package_from_header(Header hdr,
                     }
                 }
 
+                // Parse dep string
+                cr_EVR *evr = cr_str_to_evr(full_version, pkg->chunk);
+                if ((full_version && *full_version) && !evr->epoch) {
+                    // NULL in epoch mean that the epoch was bad (non-numerical)
+                    _cleanup_free_ gchar *pkg_nevra = cr_package_nevra(pkg);
+                    g_warning("Bad epoch in version string \"%s\" for dependency \"%s\" in package \"%s\"",
+                              full_version, filename, pkg_nevra);
+                    g_warning("Skipping this dependency");
+                    g_free(evr);
+                    continue;
+                }
+
                 // Create dynamic dependency object
                 cr_Dependency *dependency = cr_dependency_new();
                 dependency->name = cr_safe_string_chunk_insert(pkg->chunk, filename);
                 dependency->flags = cr_safe_string_chunk_insert(pkg->chunk, flags);
-                cr_EVR *evr = cr_str_to_evr(full_version, pkg->chunk);
                 dependency->epoch = evr->epoch;
                 dependency->version = evr->version;
                 dependency->release = evr->release;

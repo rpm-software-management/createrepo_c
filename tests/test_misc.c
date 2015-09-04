@@ -160,13 +160,13 @@ test_cr_str_to_evr(void)
     cr_evr_free(evr);
 
     evr = cr_str_to_evr("-:", NULL);
-    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->epoch, ==, NULL);
     g_assert_cmpstr(evr->version, ==, "");
     g_assert_cmpstr(evr->release, ==, NULL);
     cr_evr_free(evr);
 
     evr = cr_str_to_evr("foo:bar", NULL);
-    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->epoch, ==, NULL);
     g_assert_cmpstr(evr->version, ==, "bar");
     g_assert_cmpstr(evr->release, ==, NULL);
     cr_evr_free(evr);
@@ -295,13 +295,13 @@ test_cr_str_to_evr_with_chunk(void)
     g_free(evr);
 
     evr = cr_str_to_evr("-:", chunk);
-    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->epoch, ==, NULL);
     g_assert_cmpstr(evr->version, ==, "");
     g_assert_cmpstr(evr->release, ==, NULL);
     g_free(evr);
 
     evr = cr_str_to_evr("foo:bar", chunk);
-    g_assert_cmpstr(evr->epoch, ==, "0");
+    g_assert_cmpstr(evr->epoch, ==, NULL);
     g_assert_cmpstr(evr->version, ==, "bar");
     g_assert_cmpstr(evr->release, ==, NULL);
     g_free(evr);

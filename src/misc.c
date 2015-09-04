@@ -94,6 +94,7 @@ cr_str_to_evr(const char *string, GStringChunk *chunk)
 
 
     // Epoch
+    gboolean bad_epoch = FALSE;
 
     ptr = strstr(string, ":");
     if (ptr) {
@@ -109,12 +110,14 @@ cr_str_to_evr(const char *string, GStringChunk *chunk)
                     evr->epoch = g_strndup(string, len);
                 }
             }
+        } else { // Bad (non-numerical) epoch
+            bad_epoch = TRUE;
         }
     } else { // There is no epoch
         ptr = (char*) string-1;
     }
 
-    if (!evr->epoch) {
+    if (!evr->epoch && !bad_epoch) {
         if (chunk) {
             evr->epoch = g_string_chunk_insert_const(chunk, "0");
         } else {

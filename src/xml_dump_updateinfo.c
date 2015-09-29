@@ -42,7 +42,7 @@ cr_xml_dump_updatecollectionpackages(xmlNodePtr collection, GSList *packages)
         package = xmlNewChild(collection, NULL, BAD_CAST "package", NULL);
         cr_xmlNewProp_c(package, BAD_CAST "name", BAD_CAST pkg->name);
         cr_xmlNewProp_c(package, BAD_CAST "version", BAD_CAST pkg->version);
-        cr_xmlNewProp_c(package, BAD_CAST "relase", BAD_CAST pkg->release);
+        cr_xmlNewProp_c(package, BAD_CAST "release", BAD_CAST pkg->release);
         cr_xmlNewProp_c(package, BAD_CAST "epoch", BAD_CAST pkg->epoch);
         cr_xmlNewProp_c(package, BAD_CAST "arch", BAD_CAST pkg->arch);
         cr_xmlNewProp_c(package, BAD_CAST "src", BAD_CAST pkg->src);

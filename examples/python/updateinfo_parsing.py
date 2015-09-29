@@ -40,7 +40,7 @@ def parse_updateinfo(path):
             for pkg in col.packages:
                 print "    Name:     %s" % pkg.name
                 print "    Version:  %s" % pkg.version
-                print "    Relase:   %s" % pkg.release
+                print "    Release:  %s" % pkg.release
                 print "    Epoch:    %s" % pkg.epoch
                 print "    Arch:     %s" % pkg.arch
                 print "    Src:      %s" % pkg.src

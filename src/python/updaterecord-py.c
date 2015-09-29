@@ -373,7 +373,7 @@ static PyGetSetDef updaterecord_getsetters[] = {
     {"rights",                      (getter)get_str, (setter)set_str,
         "Copyrights",               OFFSET(rights)},
     {"release",                     (getter)get_str, (setter)set_str,
-        "Update relase",            OFFSET(release)},
+        "Update release",           OFFSET(release)},
     {"pushcount",                   (getter)get_str, (setter)set_str,
         "Pushcount",                OFFSET(pushcount)},
     {"severity",                    (getter)get_str, (setter)set_str,

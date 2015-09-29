@@ -81,6 +81,7 @@ ELSE (DRPM_PATH)
         MESSAGE("No DRPM library installed")
     ELSE (NOT DRPM_LIBRARY)
         MESSAGE("Using DRPM library: ${DRPM_LIBRARY}")
+        set(CR_DELTA_RPM_SUPPORT "1")
     ENDIF (NOT DRPM_LIBRARY)
 endif (DRPM_PATH)
 

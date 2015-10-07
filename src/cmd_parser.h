@@ -51,6 +51,8 @@ struct CmdOptions {
     gboolean no_database;       /*!< do not create database */
     char *checksum;             /*!< type of checksum */
     char *compress_type;        /*!< which compression type to use */
+    char *general_compress_type;/*!< which compression type to use (even for
+                                     primary, filelists and other xml) */
     gboolean skip_symlinks;     /*!< ignore symlinks of packages */
     gint changelog_limit;       /*!< number of changelog messages in
                                      other.(xml|sqlite) */
@@ -117,6 +119,7 @@ struct CmdOptions {
     cr_ChecksumType checksum_type;          /*!< checksum type */
     cr_ChecksumType repomd_checksum_type;   /*!< checksum type */
     cr_CompressionType compression_type;    /*!< compression type */
+    cr_CompressionType general_compression_type; /*!< compression type */
     gint64 md_max_age;          /*!< Max age of files in repodata/.
                                      Older files will be removed
                                      during --update.

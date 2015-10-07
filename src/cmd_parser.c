@@ -27,6 +27,7 @@
 #include "error.h"
 #include "compression_wrapper.h"
 #include "misc.h"
+#include "cleanup.h"
 
 
 #define ERR_DOMAIN                      CREATEREPO_C_ERROR
@@ -38,28 +39,29 @@
 #define DEFAULT_LOCAL_SQLITE            FALSE
 
 struct CmdOptions _cmd_options = {
-        .changelog_limit      = DEFAULT_CHANGELOG_LIMIT,
-        .checksum             = NULL,
-        .workers              = DEFAULT_WORKERS,
-        .unique_md_filenames  = DEFAULT_UNIQUE_MD_FILENAMES,
-        .checksum_type        = CR_CHECKSUM_SHA256,
-        .retain_old           = 0,
-        .compression_type     = CR_CW_UNKNOWN_COMPRESSION,
-        .ignore_lock          = DEFAULT_IGNORE_LOCK,
-        .md_max_age           = G_GINT64_CONSTANT(0),
-        .cachedir             = NULL,
-        .local_sqlite         = DEFAULT_LOCAL_SQLITE,
-        .cut_dirs             = 0,
-        .location_prefix      = NULL,
-        .repomd_checksum      = NULL,
+        .changelog_limit            = DEFAULT_CHANGELOG_LIMIT,
+        .checksum                   = NULL,
+        .workers                    = DEFAULT_WORKERS,
+        .unique_md_filenames        = DEFAULT_UNIQUE_MD_FILENAMES,
+        .checksum_type              = CR_CHECKSUM_SHA256,
+        .retain_old                 = 0,
+        .compression_type           = CR_CW_UNKNOWN_COMPRESSION,
+        .general_compression_type   = CR_CW_UNKNOWN_COMPRESSION,
+        .ignore_lock                = DEFAULT_IGNORE_LOCK,
+        .md_max_age                 = G_GINT64_CONSTANT(0),
+        .cachedir                   = NULL,
+        .local_sqlite               = DEFAULT_LOCAL_SQLITE,
+        .cut_dirs                   = 0,
+        .location_prefix            = NULL,
+        .repomd_checksum            = NULL,
 
-        .deltas               = FALSE,
-        .oldpackagedirs       = NULL,
-        .num_deltas           = 1,
-        .max_delta_rpm_size   = CR_DEFAULT_MAX_DELTA_RPM_SIZE,
+        .deltas                     = FALSE,
+        .oldpackagedirs             = NULL,
+        .num_deltas                 = 1,
+        .max_delta_rpm_size         = CR_DEFAULT_MAX_DELTA_RPM_SIZE,
 
-        .checksum_cachedir    = NULL,
-        .repomd_checksum_type = CR_CHECKSUM_SHA256,
+        .checksum_cachedir          = NULL,
+        .repomd_checksum_type       = CR_CHECKSUM_SHA256,
     };
 
 
@@ -142,6 +144,9 @@ static GOptionEntry cmd_entries[] =
       "Use xz for repodata compression.", NULL },
     { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type),
       "Which compression type to use.", "COMPRESSION_TYPE" },
+    { "general-compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.general_compress_type),
+      "Which compression type to use (even for primary, filelists and other xml).",
+      "COMPRESSION_TYPE" },
     { "keep-all-metadata", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.keep_all_metadata),
       "Keep groupfile and updateinfo from source repo during update.", NULL },
     { "compatibility", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.compatibility),
@@ -225,6 +230,36 @@ struct CmdOptions *parse_arguments(int *argc, char ***argv, GError **err)
         return NULL;
 
     return &(_cmd_options);
+}
+
+/** Convert string to compression type set an error if failed.
+ * @param type_str      String with compression type (e.g. "gz")
+ * @param type          Pointer to cr_CompressionType variable
+ * @param err           Err that will be set in case of error
+ */
+static gboolean
+check_and_set_compression_type(const char *type_str,
+                               cr_CompressionType *type,
+                               GError **err)
+{
+    assert(!err || *err == NULL);
+
+    _cleanup_string_free_ GString *compress_str = NULL;
+    compress_str = g_string_ascii_down(g_string_new(type_str));
+
+    if (!strcmp(compress_str->str, "gz")) {
+        *type = CR_CW_GZ_COMPRESSION;
+    } else if (!strcmp(compress_str->str, "bz2")) {
+        *type = CR_CW_BZ2_COMPRESSION;
+    } else if (!strcmp(compress_str->str, "xz")) {
+        *type = CR_CW_XZ_COMPRESSION;
+    } else {
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
+                    "Unknown/Unsupported compression type \"%s\"", type_str);
+        return FALSE;
+    }
+
+    return TRUE;
 }
 
 /** Convert a time period to seconds (gint64 value)
@@ -341,21 +376,20 @@ check_arguments(struct CmdOptions *options,
 
     // Check and set compression type
     if (options->compress_type) {
-        GString *compress_str = g_string_ascii_down(g_string_new(options->compress_type));
-        if (!strcmp(compress_str->str, "gz")) {
-            options->compression_type = CR_CW_GZ_COMPRESSION;
-        } else if (!strcmp(compress_str->str, "bz2")) {
-            options->compression_type = CR_CW_BZ2_COMPRESSION;
-        } else if (!strcmp(compress_str->str, "xz")) {
-            options->compression_type = CR_CW_XZ_COMPRESSION;
-        } else {
-            g_string_free(compress_str, TRUE);
-            g_set_error(err, ERR_DOMAIN, CRE_BADARG,
-                        "Unknown/Unsupported compression type \"%s\"",
-                        options->compress_type);
+        if (!check_and_set_compression_type(options->compress_type,
+                                            &(options->compression_type),
+                                            err)) {
             return FALSE;
         }
-        g_string_free(compress_str, TRUE);
+    }
+
+    // Check and set general compression type
+    if (options->general_compress_type) {
+        if (!check_and_set_compression_type(options->general_compress_type,
+                                            &(options->general_compression_type),
+                                            err)) {
+            return FALSE;
+        }
     }
 
     int x;

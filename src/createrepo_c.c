@@ -612,8 +612,10 @@ main(int argc, char **argv)
 
 
     // Setup compression types
+    const char *xml_compression_suffix = NULL;
     const char *sqlite_compression_suffix = NULL;
     const char *prestodelta_compression_suffix = NULL;
+    cr_CompressionType xml_compression = CR_CW_GZ_COMPRESSION;
     cr_CompressionType sqlite_compression = CR_CW_BZ2_COMPRESSION;
     cr_CompressionType groupfile_compression = CR_CW_GZ_COMPRESSION;
     cr_CompressionType prestodelta_compression = CR_CW_GZ_COMPRESSION;
@@ -630,6 +632,14 @@ main(int argc, char **argv)
         prestodelta_compression = CR_CW_GZ_COMPRESSION;
     }
 
+    if (cmd_options->general_compression_type) {
+        xml_compression         = cmd_options->general_compression_type;
+        sqlite_compression      = cmd_options->general_compression_type;
+        groupfile_compression   = cmd_options->general_compression_type;
+        prestodelta_compression = cmd_options->general_compression_type;
+    }
+
+    xml_compression_suffix = cr_compression_suffix(xml_compression);
     sqlite_compression_suffix = cr_compression_suffix(sqlite_compression);
     prestodelta_compression_suffix = cr_compression_suffix(prestodelta_compression);
 
@@ -650,13 +660,13 @@ main(int argc, char **argv)
     g_message("Temporary output repo path: %s", tmp_out_repo);
     g_debug("Creating .xml.gz files");
 
-    pri_xml_filename = g_strconcat(tmp_out_repo, "/primary.xml.gz", NULL);
-    fil_xml_filename = g_strconcat(tmp_out_repo, "/filelists.xml.gz", NULL);
-    oth_xml_filename = g_strconcat(tmp_out_repo, "/other.xml.gz", NULL);
+    pri_xml_filename = g_strconcat(tmp_out_repo, "/primary.xml", xml_compression_suffix, NULL);
+    fil_xml_filename = g_strconcat(tmp_out_repo, "/filelists.xml", xml_compression_suffix, NULL);
+    oth_xml_filename = g_strconcat(tmp_out_repo, "/other.xml", xml_compression_suffix, NULL);
 
     pri_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
     pri_cr_file = cr_xmlfile_sopen_primary(pri_xml_filename,
-                                           CR_CW_GZ_COMPRESSION,
+                                           xml_compression,
                                            pri_stat,
                                            &tmp_err);
     assert(pri_cr_file || tmp_err);
@@ -673,7 +683,7 @@ main(int argc, char **argv)
 
     fil_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
     fil_cr_file = cr_xmlfile_sopen_filelists(fil_xml_filename,
-                                            CR_CW_GZ_COMPRESSION,
+                                            xml_compression,
                                             fil_stat,
                                             &tmp_err);
     assert(fil_cr_file || tmp_err);
@@ -692,7 +702,7 @@ main(int argc, char **argv)
 
     oth_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
     oth_cr_file = cr_xmlfile_sopen_other(oth_xml_filename,
-                                        CR_CW_GZ_COMPRESSION,
+                                        xml_compression,
                                         oth_stat,
                                         &tmp_err);
     assert(oth_cr_file || tmp_err);

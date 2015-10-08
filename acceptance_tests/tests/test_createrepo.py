@@ -269,3 +269,24 @@ class TestCaseCreaterepo_emptyrepo(BaseTestCase):
                                 "[a-z0-9]{40}-comps.xml.gz$",
                                 ],
                                additional_files_allowed=False)
+
+    def test_13_createrepo_general_compress_type(self):
+        """--checksum sha and --groupfile"""
+        res = self.assert_run_cr(self.indir,
+                                 "--general-compress-type %(compress_type)s --groupfile %(groupfile)s" % {
+                                    'compress_type': "xz",
+                                    'groupfile': self.fn_comps },
+                                 c=True)
+        self.assert_repo_sanity(res.outdir)
+        self.assert_repo_files(res.outdir,
+                               ["repomd.xml$",
+                                "[a-z0-9]+-primary.xml.xz$",
+                                "[a-z0-9]+-filelists.xml.xz$",
+                                "[a-z0-9]+-other.xml.xz$",
+                                "[a-z0-9]+-primary.sqlite.xz$",
+                                "[a-z0-9]+-filelists.sqlite.xz$",
+                                "[a-z0-9]+-other.sqlite.xz$",
+                                "[a-z0-9]+-comps.xml$",
+                                "[a-z0-9]+-comps.xml.xz$",
+                                ],
+                               additional_files_allowed=False)

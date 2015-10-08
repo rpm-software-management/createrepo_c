@@ -34,12 +34,13 @@ extern "C" {
  */
 
 typedef enum {
-    CR_PACKAGE_FROM_HEADER = (1<<1),    /*!< Metadata parsed from header */
-    CR_PACKAGE_FROM_XML    = (1<<2),    /*!< Metadata parsed xml */
+    CR_PACKAGE_FROM_HEADER  = (1<<1),   /*!< Metadata parsed from header */
+    CR_PACKAGE_FROM_XML     = (1<<2),   /*!< Metadata parsed xml */
     /* Some values are reserved (for sqlite, solv, etc..) */
-    CR_PACKAGE_LOADED_PRI  = (1<<10),   /*!< Primary metadata was loaded */
-    CR_PACKAGE_LOADED_FIL  = (1<<11),   /*!< Filelists metadata was loaded */
-    CR_PACKAGE_LOADED_OTH  = (1<<12),   /*!< Other metadata was loaded */
+    CR_PACKAGE_LOADED_PRI   = (1<<10),  /*!< Primary metadata was loaded */
+    CR_PACKAGE_LOADED_FIL   = (1<<11),  /*!< Filelists metadata was loaded */
+    CR_PACKAGE_LOADED_OTH   = (1<<12),  /*!< Other metadata was loaded */
+    CR_PACKAGE_SINGLE_CHUNK = (1<<13),  /*!< Package uses single chunk */
 } cr_PackageLoadingFlags;
 
 /** Dependency (Provides, Conflicts, Obsoletes, Requires).

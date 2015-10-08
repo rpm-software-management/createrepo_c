@@ -83,7 +83,7 @@ cr_package_free(cr_Package *package)
     if (!package)
         return;
 
-    if (package->chunk)
+    if (package->chunk && !(package->loadingflags & CR_PACKAGE_SINGLE_CHUNK))
         g_string_chunk_free (package->chunk);
 
 /* Note: Since glib 2.28

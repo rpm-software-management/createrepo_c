@@ -177,6 +177,7 @@ primary_newpkgcb(cr_Package **pkg,
     if (cb_data->chunk) {
         *pkg = cr_package_new_without_chunk();
         (*pkg)->chunk = cb_data->chunk;
+        (*pkg)->loadingflags |= CR_PACKAGE_SINGLE_CHUNK;
     } else {
         *pkg = cr_package_new();
     }

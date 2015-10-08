@@ -366,7 +366,10 @@ cr_dumper_thread(gpointer data, gpointer user_data)
                 // WARNING! This two lines destructively modifies content of
                 // packages in old metadata.
                 md->location_href = location_href;
-                md->location_base = location_base;
+                md->location_base = (gchar *) location_base;
+                // ^^^ The location_base is not properly saved into pkg chunk
+                // this is intentional as after the metadata are written
+                // (dumped) none should use them again.
             }
         }
     }

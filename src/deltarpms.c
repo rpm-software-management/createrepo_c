@@ -501,6 +501,8 @@ cr_deltarpms_parallel_deltas(GSList *targetpackages,
     g_list_free(targets);
     g_mutex_free(user_data.mutex);
     g_cond_free(user_data.cond_task_finished);
+
+    return TRUE;
 }
 
 
@@ -563,7 +565,6 @@ cr_deltarpms_scan_targetdir(const char *path,
                             GError **err)
 {
     GSList *targets = NULL;
-    GDir *dirp;
     GQueue *sub_dirs = g_queue_new();
     GStringChunk *sub_dirs_chunk = g_string_chunk_new(1024);
 
@@ -645,7 +646,7 @@ typedef struct {
     GMutex *mutex;
     GHashTable *ht;
     cr_ChecksumType checksum_type;
-    gchar *prefix_to_strip;
+    const gchar *prefix_to_strip;
     size_t prefix_len;
 } cr_PrestoDeltaUserData;
 
@@ -733,7 +734,6 @@ cr_prestodelta_thread(gpointer data, gpointer udata)
     cr_DeltaPackage *dpkg = NULL;
     struct stat st;
     gchar *xml_chunk = NULL, *key = NULL, *checksum = NULL;
-    gpointer val;
     GError *tmp_err = NULL;
 
     printf("%s\n", task->full_path);
@@ -787,11 +787,19 @@ cr_prestodelta_thread(gpointer data, gpointer udata)
     }
 
     // Put the XML into the shared hash table
+    gpointer pkey = NULL;
+    gpointer pval = NULL;
     key = cr_package_nevra(dpkg->package);
     g_mutex_lock(user_data->mutex);
-    if (g_hash_table_lookup_extended(user_data->ht, key, NULL, &val)) {
+    if (g_hash_table_lookup_extended(user_data->ht, key, &pkey, &pval)) {
         // Key exists in the table
-        g_slist_append( ((GSList *) val), xml_chunk);
+        // 1. Remove the key and value from the table without freeing them
+        g_hash_table_steal(user_data->ht, key);
+        // 2. Append to the list (the value from the hash table)
+        GSList *list = (GSList *) pval;
+        list = g_slist_append(pval, xml_chunk);
+        // 3. Insert the modified list again
+        g_hash_table_insert(user_data->ht, pkey, list);
     } else {
         // Key doesn't exist yet
         GSList *list = g_slist_prepend(NULL, xml_chunk);
@@ -807,8 +815,7 @@ exit:
 
 static gchar *
 gen_newpackage_xml_chunk(const char *strnevra,
-                         GSList *delta_chunks,
-                         GError **err)
+                         GSList *delta_chunks)
 {
     cr_NEVRA *nevra;
     GString *chunk;
@@ -908,7 +915,7 @@ cr_deltarpms_generate_prestodelta_file(const gchar *drpmsdir,
         gchar *chunk = NULL;
         gchar *nevra = key;
 
-        chunk = gen_newpackage_xml_chunk(nevra, (GSList *) value, NULL);
+        chunk = gen_newpackage_xml_chunk(nevra, (GSList *) value);
         cr_xmlfile_add_chunk(f, chunk, NULL);
         g_free(chunk);
     }

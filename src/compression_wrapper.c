@@ -270,11 +270,11 @@ cr_compression_suffix(cr_CompressionType comtype)
 }
 
 
-static char *
+static const char *
 cr_gz_strerror(gzFile f)
 {
     int errnum;
-    char *msg = (char *) gzerror(f, &errnum);
+    const char *msg = gzerror(f, &errnum);
     if (errnum == Z_ERRNO)
         msg = g_strerror(errno);
     return msg;

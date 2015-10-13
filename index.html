@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Createrepo_c by rpm-software-management</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Createrepo_c</h1>
+      <h2 class="project-tagline">C implementation of the createrepo</h2>
+      <a href="https://github.com/rpm-software-management/createrepo_c" class="btn">View on GitHub</a>
+      <a href="https://github.com/rpm-software-management/createrepo_c/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/rpm-software-management/createrepo_c/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="createrepo_c" class="anchor" href="#createrepo_c" aria-hidden="true"><span class="octicon octicon-link"></span></a>createrepo_c</h1>
+
+<p>C implementation of createrepo</p>
+
+<p>Run <code>createrepo -h</code> for usage syntax.</p>
+
+<h1>
+<a id="devel-tips" class="anchor" href="#devel-tips" aria-hidden="true"><span class="octicon octicon-link"></span></a>Devel tips</h1>
+
+<h2>
+<a id="building" class="anchor" href="#building" aria-hidden="true"><span class="octicon octicon-link"></span></a>Building</h2>
+
+<p>Package build requires - Pkg name in Fedora/Ubuntu:</p>
+
+<ul>
+<li>bzip2 (<a href="http://bzip.org/">http://bzip.org/</a>) - bzip2-devel/libbz2-dev</li>
+<li>cmake (<a href="http://www.cmake.org/">http://www.cmake.org/</a>) - cmake/cmake</li>
+<li>expat (<a href="http://expat.sourceforge.net/">http://expat.sourceforge.net/</a>) - expat-devel/libexpat1-dev</li>
+<li>file (<a href="http://www.darwinsys.com/file/">http://www.darwinsys.com/file/</a>) - file-devel/libmagic-dev</li>
+<li>glib2 (<a href="http://developer.gnome.org/glib/">http://developer.gnome.org/glib/</a>) - glib2-devel/libglib2.0-dev</li>
+<li>libcurl (<a href="http://curl.haxx.se/libcurl/">http://curl.haxx.se/libcurl/</a>) - libcurl-devel/libcurl4-openssl-dev</li>
+<li>libxml2 (<a href="http://xmlsoft.org/">http://xmlsoft.org/</a>) - libxml2-devel/libxml2-dev</li>
+<li>python (<a href="http://python.org/">http://python.org/</a>) - python2-devel/libpython2.7-dev</li>
+<li>rpm (<a href="http://www.rpm.org/">http://www.rpm.org/</a>) - rpm-devel/librpm-dev</li>
+<li>openssl (<a href="http://www.openssl.org/">http://www.openssl.org/</a>) - openssl-devel/libssl-dev</li>
+<li>sqlite3 (<a href="https://sqlite.org/">https://sqlite.org/</a>) - sqlite-devel/libsqlite3-dev</li>
+<li>xz (<a href="http://tukaani.org/xz/">http://tukaani.org/xz/</a>) - xz-devel/liblzma-dev</li>
+<li>zlib (<a href="http://www.zlib.net/">http://www.zlib.net/</a>) - zlib-devel/zlib1g-dev</li>
+<li>
+<em>Documentation:</em> doxygen (<a href="http://doxygen.org/">http://doxygen.org/</a>) - doxygen/doxygen</li>
+<li>
+<em>Documentation:</em> sphinx (<a href="http://sphinx-doc.org/">http://sphinx-doc.org/</a>) - python-sphinx/</li>
+<li>
+<strong>Test requires:</strong> check (<a href="http://check.sourceforge.net/">http://check.sourceforge.net/</a>) - check-devel/check</li>
+<li>
+<strong>Test requires:</strong> python-nose (<a href="https://nose.readthedocs.org/">https://nose.readthedocs.org/</a>) - python-nose/python-nose</li>
+<li>
+<strong>Experimental support:</strong> drpm (<a href="https://git.fedorahosted.org/git/drpm.git">https://git.fedorahosted.org/git/drpm.git</a>)</li>
+</ul>
+
+<p>From your checkout dir:</p>
+
+<pre><code>mkdir build
+cd build/
+cmake ..
+make
+</code></pre>
+
+<p>To build the documentation, from the build/ directory:
+    make doc</p>
+
+<p><strong>Note:</strong> For build with debugging symbols you could use (from the build/ directory):</p>
+
+<pre><code>cmake -DCMAKE_BUILD_TYPE:STRING=DEBUG .. &amp;&amp; make
+</code></pre>
+
+<h2>
+<a id="building-from-an-rpm-checkout" class="anchor" href="#building-from-an-rpm-checkout" aria-hidden="true"><span class="octicon octicon-link"></span></a>Building from an rpm checkout</h2>
+
+<p>E.g. when you want to try weak and rich dependencies.</p>
+
+<pre><code>cmake -DRPM_PATH="/home/tmlcoch/git/rpm" .. &amp;&amp; make
+</code></pre>
+
+<p><strong>Note:</strong> The RPM must be buit in that directory</p>
+
+<p>Commands I am using for building of RPM:</p>
+
+<pre><code>cd /home/tmlcoch/git/rpm
+CPPFLAGS='-I/usr/include/nss3/ -I/usr/include/nspr4/' ./autogen.sh --rpmconfigure --with-vendor=redhat --with-external-db --with-lua --with-selinux --with-cap --with-acl --enable-python
+make clean &amp;&amp; make
+</code></pre>
+
+<h2>
+<a id="building-with-delta-rpm-support-drpm" class="anchor" href="#building-with-delta-rpm-support-drpm" aria-hidden="true"><span class="octicon octicon-link"></span></a>Building with delta rpm support (drpm)</h2>
+
+<p>At first, you have to checkout drpm library from the
+<a href="https://git.fedorahosted.org/git/drpm.git">https://git.fedorahosted.org/git/drpm.git</a> and build it.</p>
+
+<pre><code>git clone ssh://git.fedorahosted.org/git/drpm.git
+cd drpm/
+make
+</code></pre>
+
+<p>Then run <code>cmake</code> for createrepo_c with param <code>-DDRPM_PATH="/home/tmlcoch/git/drpm"</code>
+where the path is path to your build of drpm library.</p>
+
+<pre><code>cmake -DDRPM_PATH="/home/tmlcoch/git/drpm" .. &amp;&amp; make
+</code></pre>
+
+<h2>
+<a id="build-tarball" class="anchor" href="#build-tarball" aria-hidden="true"><span class="octicon octicon-link"></span></a>Build tarball</h2>
+
+<pre><code>utils/make_tarball.sh [git revision]
+</code></pre>
+
+<p>Without git revision specified HEAD is used.</p>
+
+<h2>
+<a id="build-rpm-package" class="anchor" href="#build-rpm-package" aria-hidden="true"><span class="octicon octicon-link"></span></a>Build RPM package</h2>
+
+<p>Modify createrepo_c.spec and run:</p>
+
+<pre><code>utils/make_rpm.sh
+</code></pre>
+
+<p>Note: <a href="http://pkgs.fedoraproject.org/cgit/createrepo_c.git/plain/createrepo_c.spec">Current .spec for Fedora rawhide</a></p>
+
+<h2>
+<a id="testing" class="anchor" href="#testing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Testing</h2>
+
+<p>All unit tests run from librepo checkout dir</p>
+
+<h3>
+<a id="build-c-tests--run-c-and-python-tests" class="anchor" href="#build-c-tests--run-c-and-python-tests" aria-hidden="true"><span class="octicon octicon-link"></span></a>Build C tests &amp;&amp; run c and python tests</h3>
+
+<pre><code>make tests &amp;&amp; make test
+</code></pre>
+
+<p>Note: For a verbose output of testing use: <code>make ARGS="-V" test</code></p>
+
+<h3>
+<a id="run-only-c-unittests-from-your-checkout-dir" class="anchor" href="#run-only-c-unittests-from-your-checkout-dir" aria-hidden="true"><span class="octicon octicon-link"></span></a>Run only C unittests (from your checkout dir):</h3>
+
+<pre><code>build/tests/run_gtester.sh
+</code></pre>
+
+<p>Note: The C tests have to be builded by <code>make tests</code>)!</p>
+
+<h3>
+<a id="run-only-python-unittests-from-your-checkout-dir" class="anchor" href="#run-only-python-unittests-from-your-checkout-dir" aria-hidden="true"><span class="octicon octicon-link"></span></a>Run only Python unittests (from your checkout dir):</h3>
+
+<pre><code>PYTHONPATH=`readlink -f ./build/src/python/` nosetests -s tests/python/tests/
+</code></pre>
+
+<h3>
+<a id="links" class="anchor" href="#links" aria-hidden="true"><span class="octicon octicon-link"></span></a>Links</h3>
+
+<p><a href="https://bugzilla.redhat.com/buglist.cgi?bug_status=NEW&amp;bug_status=ASSIGNED&amp;bug_status=MODIFIED&amp;bug_status=VERIFIED&amp;component=createrepo_c&amp;query_format=advanced">Bugzilla</a></p>
+
+<h3>
+<a id="important-notes" class="anchor" href="#important-notes" aria-hidden="true"><span class="octicon octicon-link"></span></a>Important notes</h3>
+
+<p>In original createrepo <code>sha</code> is a nickname for the <code>sha1</code> checksum.
+Createrepo_c mimics this behaviour.</p>
+
+<hr>
+
+<h1>
+<a id="differences-in-behavior-between-createrepo_c-and-createrepo" class="anchor" href="#differences-in-behavior-between-createrepo_c-and-createrepo" aria-hidden="true"><span class="octicon octicon-link"></span></a>Differences in behavior between createrepo_c and createrepo</h1>
+
+<h2>
+<a id="checksums-after-update" class="anchor" href="#checksums-after-update" aria-hidden="true"><span class="octicon octicon-link"></span></a>Checksums after update</h2>
+
+<h3>
+<a id="use-case" class="anchor" href="#use-case" aria-hidden="true"><span class="octicon octicon-link"></span></a>Use case:</h3>
+
+<ul>
+<li>Repodata in repo/ are has checksum xxx</li>
+<li>Params: --update --checksum=yyy repo/</li>
+</ul>
+
+<h3>
+<a id="createrepo_c-result" class="anchor" href="#createrepo_c-result" aria-hidden="true"><span class="octicon octicon-link"></span></a>createrepo_c result:</h3>
+
+<ul>
+<li>All package checksums are recalculated into yyy</li>
+</ul>
+
+<h3>
+<a id="original-createrepo-result" class="anchor" href="#original-createrepo-result" aria-hidden="true"><span class="octicon octicon-link"></span></a>original createrepo result:</h3>
+
+<ul>
+<li>Only new and changed packages has yyy checksums
+other packages has still xxx checksums</li>
+</ul>
+
+<h2>
+<a id="skip-symlinks-param" class="anchor" href="#skip-symlinks-param" aria-hidden="true"><span class="octicon octicon-link"></span></a>Skip symlinks param</h2>
+
+<h3>
+<a id="use-case-1" class="anchor" href="#use-case-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>Use case:</h3>
+
+<ul>
+<li>Some packages in repo/ are symlinks</li>
+<li>Params: --skip-symlinks repo/</li>
+</ul>
+
+<h3>
+<a id="createrepo_c-result-1" class="anchor" href="#createrepo_c-result-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>createrepo_c result:</h3>
+
+<ul>
+<li>Symlinked packages are ignored</li>
+</ul>
+
+<h3>
+<a id="original-createrepo-result-1" class="anchor" href="#original-createrepo-result-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>original createrepo result:</h3>
+
+<ul>
+<li>Symlinked packages are processed
+(<a href="https://bugzilla.redhat.com/show_bug.cgi?id=828848">https://bugzilla.redhat.com/show_bug.cgi?id=828848</a>)</li>
+</ul>
+
+<h2>
+<a id="base-path-from-update-md-path-repo" class="anchor" href="#base-path-from-update-md-path-repo" aria-hidden="true"><span class="octicon octicon-link"></span></a>Base path from update-md-path repo</h2>
+
+<h3>
+<a id="use-case-2" class="anchor" href="#use-case-2" aria-hidden="true"><span class="octicon octicon-link"></span></a>Use case:</h3>
+
+<ul>
+<li>A somebody else's repo is somewhere</li>
+<li>The repo items have set a base path to <a href="http://foo.com/">http://foo.com/</a>
+</li>
+<li>We want to create metadata for our repo</li>
+<li>Some packages in our repo are same as packages in somebody else's repo</li>
+<li>We want to speed up creation of our repodata with
+combo --update and --update-md-path=somebody_else's_repo</li>
+<li>Params: --update --update-md-path=ftp://somebody.else/repo our_repo/</li>
+</ul>
+
+<h3>
+<a id="createrepo_c-results" class="anchor" href="#createrepo_c-results" aria-hidden="true"><span class="octicon octicon-link"></span></a>createrepo_c results:</h3>
+
+<ul>
+<li>All our packages have no base path set (if we don't set --baseurl explicitly)</li>
+</ul>
+
+<h3>
+<a id="original-createrepo-result-2" class="anchor" href="#original-createrepo-result-2" aria-hidden="true"><span class="octicon octicon-link"></span></a>original createrepo result:</h3>
+
+<ul>
+<li>Some packages in metadata (which was same in our repo and in somebody
+else's repo) have base path set to <a href="http://foo.com/">http://foo.com/</a>
+</li>
+<li>(<a href="https://bugzilla.redhat.com/show_bug.cgi?id=875029">https://bugzilla.redhat.com/show_bug.cgi?id=875029</a>)</li>
+</ul>
+
+<h2>
+<a id="crippled-paths-in-filelistsxml-after-update" class="anchor" href="#crippled-paths-in-filelistsxml-after-update" aria-hidden="true"><span class="octicon octicon-link"></span></a>Crippled paths in filelists.xml after update</h2>
+
+<h3>
+<a id="use-case-3" class="anchor" href="#use-case-3" aria-hidden="true"><span class="octicon octicon-link"></span></a>Use case:</h3>
+
+<ul>
+<li>A repo with old metadata exists</li>
+<li>We want to update metadata</li>
+<li>Params: --update repo/</li>
+</ul>
+
+<h3>
+<a id="createrepo_c-results-1" class="anchor" href="#createrepo_c-results-1" aria-hidden="true"><span class="octicon octicon-link"></span></a>createrepo_c results:</h3>
+
+<ul>
+<li>All is fine</li>
+</ul>
+
+<h3>
+<a id="original-createrepo-result-3" class="anchor" href="#original-createrepo-result-3" aria-hidden="true"><span class="octicon octicon-link"></span></a>original createrepo result:</h3>
+
+<ul>
+<li>Some paths in filelists.xml are crippled
+(<a href="https://bugzilla.redhat.com/show_bug.cgi?id=835565">https://bugzilla.redhat.com/show_bug.cgi?id=835565</a>)</li>
+</ul>
+
+<h2>
+<a id="--update-leaves-behind-some-old-repodata-files" class="anchor" href="#--update-leaves-behind-some-old-repodata-files" aria-hidden="true"><span class="octicon octicon-link"></span></a>--update leaves behind some old repodata files</h2>
+
+<h3>
+<a id="use-case-4" class="anchor" href="#use-case-4" aria-hidden="true"><span class="octicon octicon-link"></span></a>Use case:</h3>
+
+<ul>
+<li>A repo with repodata created with --simple-md-filenames exists</li>
+<li>We want to update repodata to have checksums in filenames</li>
+<li>Params: --update repo/</li>
+</ul>
+
+<h3>
+<a id="createrepo_c-results-2" class="anchor" href="#createrepo_c-results-2" aria-hidden="true"><span class="octicon octicon-link"></span></a>createrepo_c results:</h3>
+
+<ul>
+<li>All repodata contains checksum in the name</li>
+</ul>
+
+<h3>
+<a id="original-createrepo-result-4" class="anchor" href="#original-createrepo-result-4" aria-hidden="true"><span class="octicon octicon-link"></span></a>original createrepo result:</h3>
+
+<ul>
+<li>All repodata contains checksum in the name</li>
+<li>There are old metadata without checksum in the name too</li>
+<li>(<a href="https://bugzilla.redhat.com/show_bug.cgi?id=836917">https://bugzilla.redhat.com/show_bug.cgi?id=836917</a>)</li>
+</ul>
+
+<h2>
+<a id="modifyrepo_c" class="anchor" href="#modifyrepo_c" aria-hidden="true"><span class="octicon octicon-link"></span></a>Modifyrepo_c</h2>
+
+<p>Modifyrepo_c is compatible with classical Modifyrepo except some misbehaviour:</p>
+
+<ul>
+<li>TODO: Report bugs and add reference here</li>
+</ul>
+
+<h3>
+<a id="batch-file" class="anchor" href="#batch-file" aria-hidden="true"><span class="octicon octicon-link"></span></a>Batch file</h3>
+
+<p>When there is need to do several modification to repository (<code>repomd.xml</code>)
+a batch file could be used.</p>
+
+<blockquote>
+<p>Batch file is Modifyrepo_c specific. It is not supported by the classical
+Modifyrepo - at least not yet.</p>
+</blockquote>
+
+<h4>
+<a id="example" class="anchor" href="#example" aria-hidden="true"><span class="octicon octicon-link"></span></a>Example</h4>
+
+<pre><code># Add:
+#   [&lt;path/to/file&gt;]
+#   &lt;options&gt;
+
+# Metadata that use a bunch of config options
+[some/path/comps.xml]
+type=group
+compress=true
+compress-type=gz
+unique-md-filenames=true
+checksum=sha256
+new-name=group.xml
+
+# Metadata that use default settings
+[some/path/bar.xml]
+
+# Remove:
+#   [&lt;metadata name&gt;]
+#   remove=true
+
+[updateinfo]
+remove=true
+</code></pre>
+
+<h4>
+<a id="supported-options" class="anchor" href="#supported-options" aria-hidden="true"><span class="octicon octicon-link"></span></a>Supported options</h4>
+
+<table>
+<thead>
+<tr>
+<th>Option name</th>
+<th>Description</th>
+<th>Supported value(s)</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>path</td>
+<td>Path to the file. When specified it override the path specified in group name (name between [] parenthesis)</td>
+<td>Any string</td>
+<td>group name (string between '[' ']')</td>
+</tr>
+<tr>
+<td>type</td>
+<td>Type of the metadata</td>
+<td>Any string</td>
+<td>Based on filename</td>
+</tr>
+<tr>
+<td>remove</td>
+<td>Remove specified file/type from repodata</td>
+<td>
+<code>true</code> or <code>false</code>
+</td>
+<td><code>false</code></td>
+</tr>
+<tr>
+<td>compress</td>
+<td>Compress the new metadata before adding it to repo</td>
+<td>
+<code>true</code> or <code>false</code>
+</td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td>compress-type</td>
+<td>Compression format to use</td>
+<td>
+<code>gz</code>, <code>bz2</code>, <code>xz</code>
+</td>
+<td><code>gz</code></td>
+</tr>
+<tr>
+<td>checksum</td>
+<td>Checksum type to use</td>
+<td>
+<code>md5</code>, <code>sha</code>, <code>sha1</code>, <code>sha224</code>, <code>sha256</code>, <code>sha384</code>, <code>sha512</code>
+</td>
+<td><code>sha256</code></td>
+</tr>
+<tr>
+<td>unique-md-filenames</td>
+<td>Include the file's checksum in the filename</td>
+<td>
+<code>true</code> or <code>false</code>
+</td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td>new-name</td>
+<td>New name for the file. If <code>compress</code> is <code>true</code>, then compression suffix will be appended. If <code>unique-md-filenames</code> is <code>true</code>, then checksum will be prepended.</td>
+<td>Any string</td>
+<td>Original source filename</td>
+</tr>
+</tbody>
+</table>
+
+<h4>
+<a id="notes" class="anchor" href="#notes" aria-hidden="true"><span class="octicon octicon-link"></span></a>Notes</h4>
+
+<ul>
+<li>Lines beginning with a '#' and blank lines are considered comments.</li>
+<li>If <code>remove=true</code> is used, no other config options should be used</li>
+</ul>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/rpm-software-management/createrepo_c">Createrepo_c</a> is maintained by <a href="https://github.com/rpm-software-management">rpm-software-management</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>

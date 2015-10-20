@@ -165,7 +165,7 @@ void cr_latin1_to_utf8(const unsigned char *in,
  * @return              TRUE if at leas one char with value <32 (except the
  *                      9, 10, 13) is present in the string.
  */
-gboolean hascontrollchars(const unsigned char *str);
+gboolean cr_hascontrollchars(const unsigned char *str);
 
 /** @} */
 

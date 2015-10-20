@@ -74,7 +74,7 @@ static inline int cr_sqlite3_bind_text(sqlite3_stmt *stmt, int i,
     if (!orig_content) {
         content = (unsigned char *) orig_content;
     } else if (xmlCheckUTF8((const unsigned char *) orig_content)
-               && !hascontrollchars((const unsigned char *) orig_content)) {
+               && !cr_hascontrollchars((const unsigned char *) orig_content)) {
         content = (unsigned char *) orig_content;
     } else {
         desctructor = SQLITE_TRANSIENT;

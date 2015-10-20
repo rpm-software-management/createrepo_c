@@ -42,7 +42,7 @@ cr_xml_dump_cleanup()
     xmlCleanupParser();
 }
 
-gboolean hascontrollchars(const unsigned char *str)
+gboolean cr_hascontrollchars(const unsigned char *str)
 {
     while (*str) {
         if (*str < 32 && (*str != 9 && *str != 10 && *str != 13))
@@ -91,7 +91,7 @@ cr_xmlNewTextChild(xmlNodePtr parent,
 
     if (!orig_content) {
         content = BAD_CAST "";
-    } else if (xmlCheckUTF8(orig_content) && !hascontrollchars(orig_content)) {
+    } else if (xmlCheckUTF8(orig_content) && !cr_hascontrollchars(orig_content)) {
         content = (xmlChar *) orig_content;
     } else {
         size_t len = strlen((const char *) orig_content);

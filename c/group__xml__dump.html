@@ -32,7 +32,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">createrepo_c library
-   &#160;<span id="projectnumber">0.9.0</span>
+   &#160;<span id="projectnumber">0.9.1</span>
    </div>
    <div id="projectbrief">C library for metadata manipulation</div>
   </td>
@@ -150,8 +150,8 @@ Functions</h2></td></tr>
 <tr class="separator:ga4f816f25b5b6209387aee477f65a49d8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga9db432fcdb74990292513f94d93c5c74"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__xml__dump.html#ga9db432fcdb74990292513f94d93c5c74">cr_latin1_to_utf8</a> (const unsigned char *in, unsigned char *out) __attribute__((hot))</td></tr>
 <tr class="separator:ga9db432fcdb74990292513f94d93c5c74"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga105d0a6b042073ababa067cc99e7c361"><td class="memItemLeft" align="right" valign="top">gboolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__xml__dump.html#ga105d0a6b042073ababa067cc99e7c361">hascontrollchars</a> (const unsigned char *str)</td></tr>
-<tr class="separator:ga105d0a6b042073ababa067cc99e7c361"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac92dfc2ee37d585143f9f9977e62277b"><td class="memItemLeft" align="right" valign="top">gboolean&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="group__xml__dump.html#gac92dfc2ee37d585143f9f9977e62277b">cr_hascontrollchars</a> (const unsigned char *str)</td></tr>
+<tr class="separator:gac92dfc2ee37d585143f9f9977e62277b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <p>Example: </p><div class="fragment"><div class="line"><a class="code" href="structcr___package.html">cr_Package</a> *pkg;</div>
@@ -253,6 +253,30 @@ Functions</h2></td></tr>
 </div>
 </div>
 <h2 class="groupheader">Function Documentation</h2>
+<a class="anchor" id="gac92dfc2ee37d585143f9f9977e62277b"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">gboolean cr_hascontrollchars </td>
+          <td>(</td>
+          <td class="paramtype">const unsigned char *&#160;</td>
+          <td class="paramname"><em>str</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<p>Check if string contains chars with value &lt;32 (except 9, 10 and 13).</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">str</td><td>String (NOT NULL!!!!) </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>TRUE if at leas one char with value &lt;32 (except the 9, 10, 13) is present in the string. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="ga9db432fcdb74990292513f94d93c5c74"></a>
 <div class="memitem">
 <div class="memproto">
@@ -591,36 +615,12 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a class="anchor" id="ga105d0a6b042073ababa067cc99e7c361"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">gboolean hascontrollchars </td>
-          <td>(</td>
-          <td class="paramtype">const unsigned char *&#160;</td>
-          <td class="paramname"><em>str</em></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<p>Check if string contains chars with value &lt;32 (except 9, 10 and 13).</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">str</td><td>String (NOT NULL!!!!) </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>TRUE if at leas one char with value &lt;32 (except the 9, 10, 13) is present in the string. </dd></dl>
-
-</div>
-</div>
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="footer">Generated on Tue Oct 20 2015 09:44:34 for createrepo_c library by
+    <li class="footer">Generated on Tue Oct 20 2015 14:32:34 for createrepo_c library by
     <a href="http://www.doxygen.org/index.html">
     <img class="footer" src="doxygen.png" alt="doxygen"/></a> 1.8.9.1 </li>
   </ul>

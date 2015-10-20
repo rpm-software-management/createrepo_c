@@ -37,6 +37,7 @@ var searchData=
   ['cr_5fflag_5fto_5fstr',['cr_flag_to_str',['../group__misc.html#gafd45498cded762b53ecbb3f6d628ca28',1,'misc.h']]],
   ['cr_5fget_5ffilename',['cr_get_filename',['../group__misc.html#ga535a6c25ef8e2501090d913b258f6858',1,'misc.h']]],
   ['cr_5fget_5fheader_5fbyte_5frange',['cr_get_header_byte_range',['../group__misc.html#gae9f4093c18110c3bbbe725ea9b6b8d74',1,'misc.h']]],
+  ['cr_5fhascontrollchars',['cr_hascontrollchars',['../group__xml__dump.html#gac92dfc2ee37d585143f9f9977e62277b',1,'xml_dump.h']]],
   ['cr_5fidentical_5ffiles',['cr_identical_files',['../group__misc.html#gae4c4e7bd959cd07d1d96a14b8d8ec171',1,'misc.h']]],
   ['cr_5flatin1_5fto_5futf8',['cr_latin1_to_utf8',['../group__xml__dump.html#ga9db432fcdb74990292513f94d93c5c74',1,'xml_dump.h']]],
   ['cr_5flocate_5fmetadata',['cr_locate_metadata',['../group__locate__metadata.html#gab18a670a09618cdd3b098d7d6e288372',1,'locate_metadata.h']]],

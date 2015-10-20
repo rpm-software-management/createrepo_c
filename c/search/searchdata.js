@@ -2,7 +2,7 @@ var indexSectionsWithContent =
 {
   0: "acdefghilmnoprstuvwx",
   1: "cpu",
-  2: "ch",
+  2: "c",
   3: "acdefghilmnoprstuv",
   4: "c",
   5: "c",

@@ -1,0 +1,1942 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>The Createrepo_c Library &mdash; createrepo_c 0.9.0-1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.9.0-1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="createrepo_c 0.9.0-1 documentation" href="index.html" />
+    <link rel="prev" title="createrepo_c" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="createrepo_c"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">createrepo_c 0.9.0-1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="the-createrepo-c-library">
+<span id="lib"></span><h1>The Createrepo_c Library<a class="headerlink" href="#the-createrepo-c-library" title="Permalink to this headline">¶</a></h1>
+<p>Createrepo_c includes several classes.</p>
+<span class="target" id="module-createrepo_c"></span><dl class="data">
+<dt id="createrepo_c.VERSION_MAJOR">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">VERSION_MAJOR</tt><em class="property"> = 0</em><a class="headerlink" href="#createrepo_c.VERSION_MAJOR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Major version</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.VERSION_MINOR">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">VERSION_MINOR</tt><em class="property"> = 9</em><a class="headerlink" href="#createrepo_c.VERSION_MINOR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Minor version</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.VERSION_PATCH">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">VERSION_PATCH</tt><em class="property"> = 0</em><a class="headerlink" href="#createrepo_c.VERSION_PATCH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Patch version</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.VERSION">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">VERSION</tt><em class="property"> = u'0.9.0'</em><a class="headerlink" href="#createrepo_c.VERSION" title="Permalink to this definition">¶</a></dt>
+<dd><p>Version string</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.UNKNOWN_CHECKSUM">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">UNKNOWN_CHECKSUM</tt><em class="property"> = 0</em><a class="headerlink" href="#createrepo_c.UNKNOWN_CHECKSUM" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checksum unknown</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.CHECKSUM_UNKNOWN">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">CHECKSUM_UNKNOWN</tt><em class="property"> = 0</em><a class="headerlink" href="#createrepo_c.CHECKSUM_UNKNOWN" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checksum unknown</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.MD5">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">MD5</tt><em class="property"> = 1</em><a class="headerlink" href="#createrepo_c.MD5" title="Permalink to this definition">¶</a></dt>
+<dd><p>MD5 checksum</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.SHA">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">SHA</tt><em class="property"> = 2</em><a class="headerlink" href="#createrepo_c.SHA" title="Permalink to this definition">¶</a></dt>
+<dd><p>SHA1 checksum alias</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.SHA1">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">SHA1</tt><em class="property"> = 3</em><a class="headerlink" href="#createrepo_c.SHA1" title="Permalink to this definition">¶</a></dt>
+<dd><p>SHA1 checksum</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.SHA224">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">SHA224</tt><em class="property"> = 4</em><a class="headerlink" href="#createrepo_c.SHA224" title="Permalink to this definition">¶</a></dt>
+<dd><p>SHA224 checksum</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.SHA256">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">SHA256</tt><em class="property"> = 5</em><a class="headerlink" href="#createrepo_c.SHA256" title="Permalink to this definition">¶</a></dt>
+<dd><p>SHA256 checksum</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.SHA384">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">SHA384</tt><em class="property"> = 6</em><a class="headerlink" href="#createrepo_c.SHA384" title="Permalink to this definition">¶</a></dt>
+<dd><p>SHA384 checksum</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.SHA512">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">SHA512</tt><em class="property"> = 7</em><a class="headerlink" href="#createrepo_c.SHA512" title="Permalink to this definition">¶</a></dt>
+<dd><p>SHA512 checksum</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.MODE_READ">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">MODE_READ</tt><em class="property"> = 0</em><a class="headerlink" href="#createrepo_c.MODE_READ" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read open mode</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.MODE_WRITE">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">MODE_WRITE</tt><em class="property"> = 1</em><a class="headerlink" href="#createrepo_c.MODE_WRITE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write open mode</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.AUTO_DETECT_COMPRESSION">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">AUTO_DETECT_COMPRESSION</tt><em class="property"> = 0</em><a class="headerlink" href="#createrepo_c.AUTO_DETECT_COMPRESSION" title="Permalink to this definition">¶</a></dt>
+<dd><p>Use compression autodetection</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.UNKNOWN_COMPRESSION">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">UNKNOWN_COMPRESSION</tt><em class="property"> = 1</em><a class="headerlink" href="#createrepo_c.UNKNOWN_COMPRESSION" title="Permalink to this definition">¶</a></dt>
+<dd><p>Unknown compression</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.NO_COMPRESSION">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">NO_COMPRESSION</tt><em class="property"> = 2</em><a class="headerlink" href="#createrepo_c.NO_COMPRESSION" title="Permalink to this definition">¶</a></dt>
+<dd><p>No compression</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.GZ_COMPRESSION">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">GZ_COMPRESSION</tt><em class="property"> = 3</em><a class="headerlink" href="#createrepo_c.GZ_COMPRESSION" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gzip compression</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.BZ2_COMPRESSION">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">BZ2_COMPRESSION</tt><em class="property"> = 4</em><a class="headerlink" href="#createrepo_c.BZ2_COMPRESSION" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bzip2 compression</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.XZ_COMPRESSION">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">XZ_COMPRESSION</tt><em class="property"> = 5</em><a class="headerlink" href="#createrepo_c.XZ_COMPRESSION" title="Permalink to this definition">¶</a></dt>
+<dd><p>XZ compression</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.GZ">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">GZ</tt><em class="property"> = 3</em><a class="headerlink" href="#createrepo_c.GZ" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gzip compression alias</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.BZ2">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">BZ2</tt><em class="property"> = 4</em><a class="headerlink" href="#createrepo_c.BZ2" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bzip2 compression alias</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.XZ">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">XZ</tt><em class="property"> = 5</em><a class="headerlink" href="#createrepo_c.XZ" title="Permalink to this definition">¶</a></dt>
+<dd><p>XZ compression alias</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.HT_KEY_DEFAULT">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">HT_KEY_DEFAULT</tt><em class="property"> = 0</em><a class="headerlink" href="#createrepo_c.HT_KEY_DEFAULT" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default key (hash)</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.HT_KEY_HASH">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">HT_KEY_HASH</tt><em class="property"> = 0</em><a class="headerlink" href="#createrepo_c.HT_KEY_HASH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Package hash as a key</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.HT_KEY_NAME">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">HT_KEY_NAME</tt><em class="property"> = 1</em><a class="headerlink" href="#createrepo_c.HT_KEY_NAME" title="Permalink to this definition">¶</a></dt>
+<dd><p>Package name as a key</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.HT_KEY_FILENAME">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">HT_KEY_FILENAME</tt><em class="property"> = 2</em><a class="headerlink" href="#createrepo_c.HT_KEY_FILENAME" title="Permalink to this definition">¶</a></dt>
+<dd><p>Package filename as a key</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.HT_DUPACT_KEEPFIRST">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">HT_DUPACT_KEEPFIRST</tt><em class="property"> = 0</em><a class="headerlink" href="#createrepo_c.HT_DUPACT_KEEPFIRST" title="Permalink to this definition">¶</a></dt>
+<dd><p>If an key is duplicated, keep only the first occurrence</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.HT_DUPACT_REMOVEALL">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">HT_DUPACT_REMOVEALL</tt><em class="property"> = 1</em><a class="headerlink" href="#createrepo_c.HT_DUPACT_REMOVEALL" title="Permalink to this definition">¶</a></dt>
+<dd><p>If an key is duplicated, discard all occurrences</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.DB_PRIMARY">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">DB_PRIMARY</tt><em class="property"> = 0</em><a class="headerlink" href="#createrepo_c.DB_PRIMARY" title="Permalink to this definition">¶</a></dt>
+<dd><p>Primary database</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.DB_FILELISTS">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">DB_FILELISTS</tt><em class="property"> = 1</em><a class="headerlink" href="#createrepo_c.DB_FILELISTS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filelists database</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.DB_OTHER">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">DB_OTHER</tt><em class="property"> = 2</em><a class="headerlink" href="#createrepo_c.DB_OTHER" title="Permalink to this definition">¶</a></dt>
+<dd><p>Other database</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.XMLFILE_PRIMARY">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">XMLFILE_PRIMARY</tt><em class="property"> = 0</em><a class="headerlink" href="#createrepo_c.XMLFILE_PRIMARY" title="Permalink to this definition">¶</a></dt>
+<dd><p>Primary xml file</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.XMLFILE_FILELISTS">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">XMLFILE_FILELISTS</tt><em class="property"> = 1</em><a class="headerlink" href="#createrepo_c.XMLFILE_FILELISTS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filelists xml file</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.XMLFILE_OTHER">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">XMLFILE_OTHER</tt><em class="property"> = 2</em><a class="headerlink" href="#createrepo_c.XMLFILE_OTHER" title="Permalink to this definition">¶</a></dt>
+<dd><p>Other xml file</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.XMLFILE_PRESTODELTA">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">XMLFILE_PRESTODELTA</tt><em class="property"> = 3</em><a class="headerlink" href="#createrepo_c.XMLFILE_PRESTODELTA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prestodelta xml file</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.XMLFILE_UPDATEINFO">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">XMLFILE_UPDATEINFO</tt><em class="property"> = 4</em><a class="headerlink" href="#createrepo_c.XMLFILE_UPDATEINFO" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updateinfo xml file</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.XML_WARNING_UNKNOWNTAG">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">XML_WARNING_UNKNOWNTAG</tt><em class="property"> = 0</em><a class="headerlink" href="#createrepo_c.XML_WARNING_UNKNOWNTAG" title="Permalink to this definition">¶</a></dt>
+<dd><p>XML warning - Unknown tag</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.XML_WARNING_MISSINGATTR">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">XML_WARNING_MISSINGATTR</tt><em class="property"> = 1</em><a class="headerlink" href="#createrepo_c.XML_WARNING_MISSINGATTR" title="Permalink to this definition">¶</a></dt>
+<dd><p>XML warning - Missing attribute</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.XML_WARNING_UNKNOWNVAL">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">XML_WARNING_UNKNOWNVAL</tt><em class="property"> = 2</em><a class="headerlink" href="#createrepo_c.XML_WARNING_UNKNOWNVAL" title="Permalink to this definition">¶</a></dt>
+<dd><p>XML warning - Unknown value</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.XML_WARNING_BADATTRVAL">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">XML_WARNING_BADATTRVAL</tt><em class="property"> = 3</em><a class="headerlink" href="#createrepo_c.XML_WARNING_BADATTRVAL" title="Permalink to this definition">¶</a></dt>
+<dd><p>XML warning - Bad attribute value</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.PCOR_ENTRY_NAME">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">PCOR_ENTRY_NAME</tt><em class="property"> = 0</em><a class="headerlink" href="#createrepo_c.PCOR_ENTRY_NAME" title="Permalink to this definition">¶</a></dt>
+<dd><p>PCOR entry tuple index - name</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.PCOR_ENTRY_FLAGS">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">PCOR_ENTRY_FLAGS</tt><em class="property"> = 1</em><a class="headerlink" href="#createrepo_c.PCOR_ENTRY_FLAGS" title="Permalink to this definition">¶</a></dt>
+<dd><p>PCOR entry tuple index - flags</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.PCOR_ENTRY_EPOCH">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">PCOR_ENTRY_EPOCH</tt><em class="property"> = 2</em><a class="headerlink" href="#createrepo_c.PCOR_ENTRY_EPOCH" title="Permalink to this definition">¶</a></dt>
+<dd><p>PCOR entry tuple index - epoch</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.PCOR_ENTRY_VERSION">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">PCOR_ENTRY_VERSION</tt><em class="property"> = 3</em><a class="headerlink" href="#createrepo_c.PCOR_ENTRY_VERSION" title="Permalink to this definition">¶</a></dt>
+<dd><p>PCOR entry tuple index - version</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.PCOR_ENTRY_RELEASE">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">PCOR_ENTRY_RELEASE</tt><em class="property"> = 4</em><a class="headerlink" href="#createrepo_c.PCOR_ENTRY_RELEASE" title="Permalink to this definition">¶</a></dt>
+<dd><p>PCOR entry tuple index - release</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.PCOR_ENTRY_PRE">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">PCOR_ENTRY_PRE</tt><em class="property"> = 5</em><a class="headerlink" href="#createrepo_c.PCOR_ENTRY_PRE" title="Permalink to this definition">¶</a></dt>
+<dd><p>PCOR entry tuple index - pre</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.FILE_ENTRY_TYPE">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">FILE_ENTRY_TYPE</tt><em class="property"> = 0</em><a class="headerlink" href="#createrepo_c.FILE_ENTRY_TYPE" title="Permalink to this definition">¶</a></dt>
+<dd><p>File entry tuple index - file type</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.FILE_ENTRY_PATH">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">FILE_ENTRY_PATH</tt><em class="property"> = 1</em><a class="headerlink" href="#createrepo_c.FILE_ENTRY_PATH" title="Permalink to this definition">¶</a></dt>
+<dd><p>File entry tuple index - path</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.FILE_ENTRY_NAME">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">FILE_ENTRY_NAME</tt><em class="property"> = 2</em><a class="headerlink" href="#createrepo_c.FILE_ENTRY_NAME" title="Permalink to this definition">¶</a></dt>
+<dd><p>File entry tuple index - file name</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.CHANGELOG_ENTRY_AUTHOR">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">CHANGELOG_ENTRY_AUTHOR</tt><em class="property"> = 0</em><a class="headerlink" href="#createrepo_c.CHANGELOG_ENTRY_AUTHOR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Changelog entry tuple index - Author</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.CHANGELOG_ENTRY_DATE">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">CHANGELOG_ENTRY_DATE</tt><em class="property"> = 1</em><a class="headerlink" href="#createrepo_c.CHANGELOG_ENTRY_DATE" title="Permalink to this definition">¶</a></dt>
+<dd><p>Changelog entry tuple index - Date</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="createrepo_c.CHANGELOG_ENTRY_CHANGELOG">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">CHANGELOG_ENTRY_CHANGELOG</tt><em class="property"> = 2</em><a class="headerlink" href="#createrepo_c.CHANGELOG_ENTRY_CHANGELOG" title="Permalink to this definition">¶</a></dt>
+<dd><p>Changelog entry tuple index - Changelog</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="createrepo_c.CreaterepoCError">
+<em class="property">exception </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">CreaterepoCError</tt><a class="headerlink" href="#createrepo_c.CreaterepoCError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Createrepo_c library exception</p>
+<dl class="attribute">
+<dt id="createrepo_c.CreaterepoCError.args">
+<tt class="descname">args</tt><a class="headerlink" href="#createrepo_c.CreaterepoCError.args" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.CreaterepoCError.message">
+<tt class="descname">message</tt><a class="headerlink" href="#createrepo_c.CreaterepoCError.message" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.ContentStat">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">ContentStat</tt><a class="headerlink" href="#createrepo_c.ContentStat" title="Permalink to this definition">¶</a></dt>
+<dd><p>ContentStat object representing statistical information about content</p>
+<dl class="method">
+<dt id="createrepo_c.ContentStat.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>checksum_type</em><big>)</big><a class="headerlink" href="#createrepo_c.ContentStat.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>checksum_type</strong> &#8211; Type of checksum that should be used</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.ContentStat.checksum">
+<tt class="descname">checksum</tt><a class="headerlink" href="#createrepo_c.ContentStat.checksum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculated checksum</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.ContentStat.checksum_type">
+<tt class="descname">checksum_type</tt><a class="headerlink" href="#createrepo_c.ContentStat.checksum_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Type of used checksum</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.ContentStat.size">
+<tt class="descname">size</tt><a class="headerlink" href="#createrepo_c.ContentStat.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of uncompressed bytes written</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.CrFile">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">CrFile</tt><big>(</big><em>filename</em>, <em>mode=0</em>, <em>comtype=2</em>, <em>stat=None</em><big>)</big><a class="headerlink" href="#createrepo_c.CrFile" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="createrepo_c.CrFile.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>filename</em>, <em>mode=0</em>, <em>comtype=2</em>, <em>stat=None</em><big>)</big><a class="headerlink" href="#createrepo_c.CrFile.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>filename</strong> &#8211; Filename</li>
+<li><strong>mode</strong> &#8211; MODE_READ or MODE_WRITE</li>
+<li><strong>comtype</strong> &#8211; Compression type (GZ, BZ, XZ or NO_COMPRESSION)</li>
+<li><strong>stat</strong> &#8211; ContentStat object or None</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.CrFile.close">
+<tt class="descname">close</tt><big>(</big><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.CrFile.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.CrFile.write">
+<tt class="descname">write</tt><big>(</big><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.CrFile.write" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write a data to the file</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.Metadata">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">Metadata</tt><a class="headerlink" href="#createrepo_c.Metadata" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="createrepo_c.Metadata.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>key=HT_KEY_DEFAULT</em>, <em>use_single_chunk=False</em>, <em>pkglist=[]</em><big>)</big><a class="headerlink" href="#createrepo_c.Metadata.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>key</strong> &#8211; Which value shoud be used as a key. One of HT_KEY_* constants.</li>
+<li><strong>use_single_chunk</strong> &#8211; Specify if all package strings should be stored
+in metadata object instead of package iself. This save some
+space if you need to have a all packages loaded into a memory.</li>
+<li><strong>pkglist</strong> &#8211; Package list that specify which packages shloud be
+loaded. Use its base filename (e.g.
+&#8220;GConf2-3.2.6-6.fc19.i686.rpm&#8221;).</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="createrepo_c.Metadata.dupaction">
+<tt class="descname">dupaction</tt><big>(</big><big>)</big><a class="headerlink" href="#createrepo_c.Metadata.dupaction" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt>
+<tt class="descname">dupaction</tt><big>(</big><em>dupaction</em><big>)</big></dt>
+<dd></dd></dl>
+
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>dupation</strong> &#8211; What to do when we encounter already existing key.
+use constants prefixed with <a href="#id1"><span class="problematic" id="id2">HT_DUPACT_</span></a>. I.e. 
+HT_DUPACT_KEEPFIRST, HT_DUPACT_REMOVEALL.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Metadata.get">
+<tt class="descname">get</tt><big>(</big><em>key</em><big>)</big> &rarr; Package<a class="headerlink" href="#createrepo_c.Metadata.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get Package which has a key key</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Metadata.has_key">
+<tt class="descname">has_key</tt><big>(</big><em>key</em><big>)</big> &rarr; bool<a class="headerlink" href="#createrepo_c.Metadata.has_key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test if metadata contains the key</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Metadata.key">
+<tt class="descname">key</tt><a class="headerlink" href="#createrepo_c.Metadata.key" title="Permalink to this definition">¶</a></dt>
+<dd><p>Type of used key</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Metadata.keys">
+<tt class="descname">keys</tt><big>(</big><big>)</big> &rarr; list<a class="headerlink" href="#createrepo_c.Metadata.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of all keys</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Metadata.len">
+<tt class="descname">len</tt><big>(</big><big>)</big> &rarr; long<a class="headerlink" href="#createrepo_c.Metadata.len" title="Permalink to this definition">¶</a></dt>
+<dd><p>Number of packages</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Metadata.load_xml">
+<tt class="descname">load_xml</tt><big>(</big><em>metadata_location_object</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.Metadata.load_xml" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load XML specified by MetadataLocation Object</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Metadata.locate_and_load_xml">
+<tt class="descname">locate_and_load_xml</tt><big>(</big><em>path</em><big>)</big> &rarr; NoneLoad XML specified by path<a class="headerlink" href="#createrepo_c.Metadata.locate_and_load_xml" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Metadata.remove">
+<tt class="descname">remove</tt><big>(</big><em>key</em><big>)</big> &rarr; bool<a class="headerlink" href="#createrepo_c.Metadata.remove" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove package which has a key key from the metadata</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.MetadataLocation">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">MetadataLocation</tt><a class="headerlink" href="#createrepo_c.MetadataLocation" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class representing location of metadata</p>
+<dl class="method">
+<dt id="createrepo_c.MetadataLocation.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>path</em>, <em>ignore_db</em><big>)</big><a class="headerlink" href="#createrepo_c.MetadataLocation.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path</strong> &#8211; String with url/path to the repository</li>
+<li><strong>ignore_db</strong> &#8211; Boolean. If False then in case of remote repository
+databases will not be downloaded)</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.Package">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">Package</tt><a class="headerlink" href="#createrepo_c.Package" title="Permalink to this definition">¶</a></dt>
+<dd><p>Package object</p>
+<dl class="method">
+<dt id="createrepo_c.Package.__init__">
+<tt class="descname">__init__</tt><big>(</big><big>)</big><a class="headerlink" href="#createrepo_c.Package.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default constructor</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.arch">
+<tt class="descname">arch</tt><a class="headerlink" href="#createrepo_c.Package.arch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Architecture for which the package was built</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.changelogs">
+<tt class="descname">changelogs</tt><a class="headerlink" href="#createrepo_c.Package.changelogs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Changelogs that package contains</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.checksum_type">
+<tt class="descname">checksum_type</tt><a class="headerlink" href="#createrepo_c.Package.checksum_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Type of checksum</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.conflicts">
+<tt class="descname">conflicts</tt><a class="headerlink" href="#createrepo_c.Package.conflicts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Capabilities the package conflicts with</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Package.copy">
+<tt class="descname">copy</tt><big>(</big><big>)</big> &rarr; Package<a class="headerlink" href="#createrepo_c.Package.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copy of the package object</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.description">
+<tt class="descname">description</tt><a class="headerlink" href="#createrepo_c.Package.description" title="Permalink to this definition">¶</a></dt>
+<dd><p>In-depth description of the packaged software</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.enhances">
+<tt class="descname">enhances</tt><a class="headerlink" href="#createrepo_c.Package.enhances" title="Permalink to this definition">¶</a></dt>
+<dd><p>Capabilities the package enhances</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.epoch">
+<tt class="descname">epoch</tt><a class="headerlink" href="#createrepo_c.Package.epoch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Epoch</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.files">
+<tt class="descname">files</tt><a class="headerlink" href="#createrepo_c.Package.files" title="Permalink to this definition">¶</a></dt>
+<dd><p>Files that package contains</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.location_base">
+<tt class="descname">location_base</tt><a class="headerlink" href="#createrepo_c.Package.location_base" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base location of this package</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.location_href">
+<tt class="descname">location_href</tt><a class="headerlink" href="#createrepo_c.Package.location_href" title="Permalink to this definition">¶</a></dt>
+<dd><p>Relative location of package to the repodata</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.name">
+<tt class="descname">name</tt><a class="headerlink" href="#createrepo_c.Package.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the package</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Package.nevra">
+<tt class="descname">nevra</tt><big>(</big><big>)</big> &rarr; str<a class="headerlink" href="#createrepo_c.Package.nevra" title="Permalink to this definition">¶</a></dt>
+<dd><p>Package NEVRA string (Name-Epoch-Version-Release-Architecture)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Package.nvra">
+<tt class="descname">nvra</tt><big>(</big><big>)</big> &rarr; str<a class="headerlink" href="#createrepo_c.Package.nvra" title="Permalink to this definition">¶</a></dt>
+<dd><p>Package NVRA string (Name-Version-Release-Architecture)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.obsoletes">
+<tt class="descname">obsoletes</tt><a class="headerlink" href="#createrepo_c.Package.obsoletes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Capabilities the package obsoletes</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.pkgId">
+<tt class="descname">pkgId</tt><a class="headerlink" href="#createrepo_c.Package.pkgId" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checksum of the package file</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.provides">
+<tt class="descname">provides</tt><a class="headerlink" href="#createrepo_c.Package.provides" title="Permalink to this definition">¶</a></dt>
+<dd><p>Capabilities the package provides</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.recommends">
+<tt class="descname">recommends</tt><a class="headerlink" href="#createrepo_c.Package.recommends" title="Permalink to this definition">¶</a></dt>
+<dd><p>Capabilities the package recommends</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.release">
+<tt class="descname">release</tt><a class="headerlink" href="#createrepo_c.Package.release" title="Permalink to this definition">¶</a></dt>
+<dd><p>Release number of the package</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.requires">
+<tt class="descname">requires</tt><a class="headerlink" href="#createrepo_c.Package.requires" title="Permalink to this definition">¶</a></dt>
+<dd><p>Capabilities the package requires</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.rpm_buildhost">
+<tt class="descname">rpm_buildhost</tt><a class="headerlink" href="#createrepo_c.Package.rpm_buildhost" title="Permalink to this definition">¶</a></dt>
+<dd><p>Hostname of the system that built the package</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.rpm_group">
+<tt class="descname">rpm_group</tt><a class="headerlink" href="#createrepo_c.Package.rpm_group" title="Permalink to this definition">¶</a></dt>
+<dd><p>RPM group (See: <a class="reference external" href="http://fedoraproject.org/wiki/RPMGroups">http://fedoraproject.org/wiki/RPMGroups</a>)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.rpm_header_end">
+<tt class="descname">rpm_header_end</tt><a class="headerlink" href="#createrepo_c.Package.rpm_header_end" title="Permalink to this definition">¶</a></dt>
+<dd><p>Last byte of the header</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.rpm_header_start">
+<tt class="descname">rpm_header_start</tt><a class="headerlink" href="#createrepo_c.Package.rpm_header_start" title="Permalink to this definition">¶</a></dt>
+<dd><p>First byte of the header</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.rpm_license">
+<tt class="descname">rpm_license</tt><a class="headerlink" href="#createrepo_c.Package.rpm_license" title="Permalink to this definition">¶</a></dt>
+<dd><p>License term applicable to the package software (GPLv2, etc.)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.rpm_packager">
+<tt class="descname">rpm_packager</tt><a class="headerlink" href="#createrepo_c.Package.rpm_packager" title="Permalink to this definition">¶</a></dt>
+<dd><p>Person or persons responsible for creating the package</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.rpm_sourcerpm">
+<tt class="descname">rpm_sourcerpm</tt><a class="headerlink" href="#createrepo_c.Package.rpm_sourcerpm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the source package from which this binary package was built</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.rpm_vendor">
+<tt class="descname">rpm_vendor</tt><a class="headerlink" href="#createrepo_c.Package.rpm_vendor" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the organization producing the package</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.size_archive">
+<tt class="descname">size_archive</tt><a class="headerlink" href="#createrepo_c.Package.size_archive" title="Permalink to this definition">¶</a></dt>
+<dd><p>Size, in bytes, of the archive portion of the original package file</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.size_installed">
+<tt class="descname">size_installed</tt><a class="headerlink" href="#createrepo_c.Package.size_installed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Total size, in bytes, of every file installed by this package</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.size_package">
+<tt class="descname">size_package</tt><a class="headerlink" href="#createrepo_c.Package.size_package" title="Permalink to this definition">¶</a></dt>
+<dd><p>Size, in bytes, of the package</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.suggests">
+<tt class="descname">suggests</tt><a class="headerlink" href="#createrepo_c.Package.suggests" title="Permalink to this definition">¶</a></dt>
+<dd><p>Capabilities the package suggests</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.summary">
+<tt class="descname">summary</tt><a class="headerlink" href="#createrepo_c.Package.summary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Short description of the packaged software</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.supplements">
+<tt class="descname">supplements</tt><a class="headerlink" href="#createrepo_c.Package.supplements" title="Permalink to this definition">¶</a></dt>
+<dd><p>Capabilities the package supplements</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.time_build">
+<tt class="descname">time_build</tt><a class="headerlink" href="#createrepo_c.Package.time_build" title="Permalink to this definition">¶</a></dt>
+<dd><p>Time when package was builded</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.time_file">
+<tt class="descname">time_file</tt><a class="headerlink" href="#createrepo_c.Package.time_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>mtime of the package file</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.url">
+<tt class="descname">url</tt><a class="headerlink" href="#createrepo_c.Package.url" title="Permalink to this definition">¶</a></dt>
+<dd><p>URL with more information about packaged software</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Package.version">
+<tt class="descname">version</tt><a class="headerlink" href="#createrepo_c.Package.version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Version of the packaged software</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.Repomd">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">Repomd</tt><big>(</big><em>path=None</em><big>)</big><a class="headerlink" href="#createrepo_c.Repomd" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="createrepo_c.Repomd.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>path=None</em><big>)</big><a class="headerlink" href="#createrepo_c.Repomd.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> &#8211; Path to existing repomd.xml or None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Repomd.add_content_tag">
+<tt class="descname">add_content_tag</tt><big>(</big><em>tag</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.Repomd.add_content_tag" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add content tag</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Repomd.add_distro_tag">
+<tt class="descname">add_distro_tag</tt><big>(</big><em>tag</em><span class="optional">[</span>, <em>cpeid=None</em><span class="optional">]</span><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.Repomd.add_distro_tag" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add distro tag</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Repomd.add_repo_tag">
+<tt class="descname">add_repo_tag</tt><big>(</big><em>tag</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.Repomd.add_repo_tag" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add repo tag</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Repomd.content_tags">
+<tt class="descname">content_tags</tt><a class="headerlink" href="#createrepo_c.Repomd.content_tags" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of content tags</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Repomd.contenthash">
+<tt class="descname">contenthash</tt><a class="headerlink" href="#createrepo_c.Repomd.contenthash" title="Permalink to this definition">¶</a></dt>
+<dd><p>Contenthash value</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Repomd.contenthash_type">
+<tt class="descname">contenthash_type</tt><a class="headerlink" href="#createrepo_c.Repomd.contenthash_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>contenthash type value</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Repomd.distro_tags">
+<tt class="descname">distro_tags</tt><a class="headerlink" href="#createrepo_c.Repomd.distro_tags" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of distro tags</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Repomd.records">
+<tt class="descname">records</tt><a class="headerlink" href="#createrepo_c.Repomd.records" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of RepomdRecords</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Repomd.repo_tags">
+<tt class="descname">repo_tags</tt><a class="headerlink" href="#createrepo_c.Repomd.repo_tags" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of repo tags</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Repomd.repoid">
+<tt class="descname">repoid</tt><a class="headerlink" href="#createrepo_c.Repomd.repoid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Repoid value</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Repomd.repoid_type">
+<tt class="descname">repoid_type</tt><a class="headerlink" href="#createrepo_c.Repomd.repoid_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Repoid type value</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.Repomd.revision">
+<tt class="descname">revision</tt><a class="headerlink" href="#createrepo_c.Repomd.revision" title="Permalink to this definition">¶</a></dt>
+<dd><p>Revision value</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Repomd.set_contenthash">
+<tt class="descname">set_contenthash</tt><big>(</big><em>contenthash</em>, <em>contenthash_type</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.Repomd.set_contenthash" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set contenthash value and contenthash_type</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Repomd.set_record">
+<tt class="descname">set_record</tt><big>(</big><em>repomdrecord</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.Repomd.set_record" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add RepomdRecord</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Repomd.set_repoid">
+<tt class="descname">set_repoid</tt><big>(</big><em>repoid</em>, <em>repoid_type</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.Repomd.set_repoid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set repoid value and repoid_type</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Repomd.set_revision">
+<tt class="descname">set_revision</tt><big>(</big><em>revision</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.Repomd.set_revision" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set revision string</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Repomd.sort_records">
+<tt class="descname">sort_records</tt><big>(</big><big>)</big> &rarr; str<a class="headerlink" href="#createrepo_c.Repomd.sort_records" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sort repomd records to the createrepo_c prefered order</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Repomd.xml_dump">
+<tt class="descname">xml_dump</tt><big>(</big><big>)</big> &rarr; str<a class="headerlink" href="#createrepo_c.Repomd.xml_dump" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate xml representation of the repomd</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.RepomdRecord">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">RepomdRecord</tt><big>(</big><em>type=None</em>, <em>path=None</em><big>)</big><a class="headerlink" href="#createrepo_c.RepomdRecord" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="createrepo_c.RepomdRecord.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>type=None</em>, <em>path=None</em><big>)</big><a class="headerlink" href="#createrepo_c.RepomdRecord.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>type</strong> &#8211; String with type of the file (e.g. other, other_db etc.)</li>
+<li><strong>path</strong> &#8211; Path to the file</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.RepomdRecord.compress_and_fill">
+<tt class="descname">compress_and_fill</tt><big>(</big><em>hashtype</em>, <em>compresstype</em><big>)</big><a class="headerlink" href="#createrepo_c.RepomdRecord.compress_and_fill" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.RepomdRecord.checksum">
+<tt class="descname">checksum</tt><a class="headerlink" href="#createrepo_c.RepomdRecord.checksum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checksum of the file</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.RepomdRecord.checksum_open">
+<tt class="descname">checksum_open</tt><a class="headerlink" href="#createrepo_c.RepomdRecord.checksum_open" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checksum of the archive content</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.RepomdRecord.checksum_open_type">
+<tt class="descname">checksum_open_type</tt><a class="headerlink" href="#createrepo_c.RepomdRecord.checksum_open_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Type of the archive content checksum</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.RepomdRecord.checksum_type">
+<tt class="descname">checksum_type</tt><a class="headerlink" href="#createrepo_c.RepomdRecord.checksum_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Type of the file checksum</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.RepomdRecord.copy">
+<tt class="descname">copy</tt><big>(</big><big>)</big> &rarr; RepomdRecord<a class="headerlink" href="#createrepo_c.RepomdRecord.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return copy of the RepomdRecord object</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.RepomdRecord.db_ver">
+<tt class="descname">db_ver</tt><a class="headerlink" href="#createrepo_c.RepomdRecord.db_ver" title="Permalink to this definition">¶</a></dt>
+<dd><p>Database version (used only for sqlite databases like primary.sqlite etc.)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.RepomdRecord.fill">
+<tt class="descname">fill</tt><big>(</big><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.RepomdRecord.fill" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fill unfilled items in the RepomdRecord (sizes and checksums)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.RepomdRecord.load_contentstat">
+<tt class="descname">load_contentstat</tt><big>(</big><em>contentstat</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.RepomdRecord.load_contentstat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load some content statistics from the ContentStat object. The statistics loaded from ContentStat doesn&#8217;t have to be calculated during a fill() method call and thus speed up the method.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.RepomdRecord.location_base">
+<tt class="descname">location_base</tt><a class="headerlink" href="#createrepo_c.RepomdRecord.location_base" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base location of the file</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.RepomdRecord.location_href">
+<tt class="descname">location_href</tt><a class="headerlink" href="#createrepo_c.RepomdRecord.location_href" title="Permalink to this definition">¶</a></dt>
+<dd><p>Relative location of the file in a repository</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.RepomdRecord.location_real">
+<tt class="descname">location_real</tt><a class="headerlink" href="#createrepo_c.RepomdRecord.location_real" title="Permalink to this definition">¶</a></dt>
+<dd><p>Currentlocation of the file in the system</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.RepomdRecord.rename_file">
+<tt class="descname">rename_file</tt><big>(</big><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.RepomdRecord.rename_file" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add (prepend) file checksum to the filename</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.RepomdRecord.size">
+<tt class="descname">size</tt><a class="headerlink" href="#createrepo_c.RepomdRecord.size" title="Permalink to this definition">¶</a></dt>
+<dd><p>Size of the file</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.RepomdRecord.size_open">
+<tt class="descname">size_open</tt><a class="headerlink" href="#createrepo_c.RepomdRecord.size_open" title="Permalink to this definition">¶</a></dt>
+<dd><p>Size of the archive content</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.RepomdRecord.timestamp">
+<tt class="descname">timestamp</tt><a class="headerlink" href="#createrepo_c.RepomdRecord.timestamp" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mtime of the file</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.RepomdRecord.type">
+<tt class="descname">type</tt><a class="headerlink" href="#createrepo_c.RepomdRecord.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record type</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.Sqlite">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">Sqlite</tt><a class="headerlink" href="#createrepo_c.Sqlite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sqlite object</p>
+<dl class="method">
+<dt id="createrepo_c.Sqlite.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>path</em>, <em>db_type</em><big>)</big><a class="headerlink" href="#createrepo_c.Sqlite.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path</strong> &#8211; Path to the database</li>
+<li><strong>db_type</strong> &#8211; One from DB_PRIMARY, DB_FILELISTS, DB_OTHER constans</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Sqlite.add_pkg">
+<tt class="descname">add_pkg</tt><big>(</big><em>Package</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.Sqlite.add_pkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add Package to the database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Sqlite.close">
+<tt class="descname">close</tt><big>(</big><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.Sqlite.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the sqlite database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.Sqlite.dbinfo_update">
+<tt class="descname">dbinfo_update</tt><big>(</big><em>checksum</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.Sqlite.dbinfo_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set checksum of the xml file representing same data</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.PrimarySqlite">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">PrimarySqlite</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#createrepo_c.PrimarySqlite" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="createrepo_c.PrimarySqlite.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#createrepo_c.PrimarySqlite.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> &#8211; path to the primary.sqlite database</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.PrimarySqlite.add_pkg">
+<tt class="descname">add_pkg</tt><big>(</big><em>Package</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.PrimarySqlite.add_pkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add Package to the database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.PrimarySqlite.close">
+<tt class="descname">close</tt><big>(</big><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.PrimarySqlite.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the sqlite database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.PrimarySqlite.dbinfo_update">
+<tt class="descname">dbinfo_update</tt><big>(</big><em>checksum</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.PrimarySqlite.dbinfo_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set checksum of the xml file representing same data</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.FilelistsSqlite">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">FilelistsSqlite</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#createrepo_c.FilelistsSqlite" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="createrepo_c.FilelistsSqlite.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#createrepo_c.FilelistsSqlite.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> &#8211; Path to the filelists.sqlite database</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.FilelistsSqlite.add_pkg">
+<tt class="descname">add_pkg</tt><big>(</big><em>Package</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.FilelistsSqlite.add_pkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add Package to the database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.FilelistsSqlite.close">
+<tt class="descname">close</tt><big>(</big><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.FilelistsSqlite.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the sqlite database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.FilelistsSqlite.dbinfo_update">
+<tt class="descname">dbinfo_update</tt><big>(</big><em>checksum</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.FilelistsSqlite.dbinfo_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set checksum of the xml file representing same data</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.OtherSqlite">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">OtherSqlite</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#createrepo_c.OtherSqlite" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="createrepo_c.OtherSqlite.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>path</em><big>)</big><a class="headerlink" href="#createrepo_c.OtherSqlite.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> &#8211; Path to the other.sqlite database</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.OtherSqlite.add_pkg">
+<tt class="descname">add_pkg</tt><big>(</big><em>Package</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.OtherSqlite.add_pkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add Package to the database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.OtherSqlite.close">
+<tt class="descname">close</tt><big>(</big><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.OtherSqlite.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the sqlite database</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.OtherSqlite.dbinfo_update">
+<tt class="descname">dbinfo_update</tt><big>(</big><em>checksum</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.OtherSqlite.dbinfo_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set checksum of the xml file representing same data</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.UpdateCollection">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">UpdateCollection</tt><a class="headerlink" href="#createrepo_c.UpdateCollection" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="createrepo_c.UpdateCollection.__init__">
+<tt class="descname">__init__</tt><big>(</big><big>)</big><a class="headerlink" href="#createrepo_c.UpdateCollection.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.UpdateCollection.append">
+<tt class="descname">append</tt><big>(</big><em>updatecollectionpackage</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.UpdateCollection.append" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add UpdateCollectionPackage</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.UpdateCollection.copy">
+<tt class="descname">copy</tt><big>(</big><big>)</big> &rarr; UpdateCollection<a class="headerlink" href="#createrepo_c.UpdateCollection.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return copy of the UpdateCollection object</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateCollection.name">
+<tt class="descname">name</tt><a class="headerlink" href="#createrepo_c.UpdateCollection.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name of the collection</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateCollection.packages">
+<tt class="descname">packages</tt><a class="headerlink" href="#createrepo_c.UpdateCollection.packages" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of packages</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateCollection.shortname">
+<tt class="descname">shortname</tt><a class="headerlink" href="#createrepo_c.UpdateCollection.shortname" title="Permalink to this definition">¶</a></dt>
+<dd><p>Short name</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.UpdateCollectionPackage">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">UpdateCollectionPackage</tt><a class="headerlink" href="#createrepo_c.UpdateCollectionPackage" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="createrepo_c.UpdateCollectionPackage.__init__">
+<tt class="descname">__init__</tt><big>(</big><big>)</big><a class="headerlink" href="#createrepo_c.UpdateCollectionPackage.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateCollectionPackage.arch">
+<tt class="descname">arch</tt><a class="headerlink" href="#createrepo_c.UpdateCollectionPackage.arch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Architecture</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.UpdateCollectionPackage.copy">
+<tt class="descname">copy</tt><big>(</big><big>)</big> &rarr; UpdateCollectionPackage<a class="headerlink" href="#createrepo_c.UpdateCollectionPackage.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return copy of the UpdateCollectionPackage object</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateCollectionPackage.epoch">
+<tt class="descname">epoch</tt><a class="headerlink" href="#createrepo_c.UpdateCollectionPackage.epoch" title="Permalink to this definition">¶</a></dt>
+<dd><p>Epoch</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateCollectionPackage.filename">
+<tt class="descname">filename</tt><a class="headerlink" href="#createrepo_c.UpdateCollectionPackage.filename" title="Permalink to this definition">¶</a></dt>
+<dd><p>Filename</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateCollectionPackage.name">
+<tt class="descname">name</tt><a class="headerlink" href="#createrepo_c.UpdateCollectionPackage.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Name</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateCollectionPackage.reboot_suggested">
+<tt class="descname">reboot_suggested</tt><a class="headerlink" href="#createrepo_c.UpdateCollectionPackage.reboot_suggested" title="Permalink to this definition">¶</a></dt>
+<dd><p>Size of the file</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateCollectionPackage.release">
+<tt class="descname">release</tt><a class="headerlink" href="#createrepo_c.UpdateCollectionPackage.release" title="Permalink to this definition">¶</a></dt>
+<dd><p>Release</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateCollectionPackage.src">
+<tt class="descname">src</tt><a class="headerlink" href="#createrepo_c.UpdateCollectionPackage.src" title="Permalink to this definition">¶</a></dt>
+<dd><p>Source filename</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateCollectionPackage.sum">
+<tt class="descname">sum</tt><a class="headerlink" href="#createrepo_c.UpdateCollectionPackage.sum" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checksum</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateCollectionPackage.sum_type">
+<tt class="descname">sum_type</tt><a class="headerlink" href="#createrepo_c.UpdateCollectionPackage.sum_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Type of checksum</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateCollectionPackage.version">
+<tt class="descname">version</tt><a class="headerlink" href="#createrepo_c.UpdateCollectionPackage.version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Version</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.UpdateInfo">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">UpdateInfo</tt><big>(</big><em>path=None</em><big>)</big><a class="headerlink" href="#createrepo_c.UpdateInfo" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="createrepo_c.UpdateInfo.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>path=None</em><big>)</big><a class="headerlink" href="#createrepo_c.UpdateInfo.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>path</strong> &#8211; Path to existing updateinfo.xml or None</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.UpdateInfo.append">
+<tt class="descname">append</tt><big>(</big><em>updaterecord</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.UpdateInfo.append" title="Permalink to this definition">¶</a></dt>
+<dd><p>Append UpdateRecord</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateInfo.updates">
+<tt class="descname">updates</tt><a class="headerlink" href="#createrepo_c.UpdateInfo.updates" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of UpdateRecords</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.UpdateInfo.xml_dump">
+<tt class="descname">xml_dump</tt><big>(</big><big>)</big> &rarr; str<a class="headerlink" href="#createrepo_c.UpdateInfo.xml_dump" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate xml representation of the updateinfo</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.UpdateRecord">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">UpdateRecord</tt><a class="headerlink" href="#createrepo_c.UpdateRecord" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="createrepo_c.UpdateRecord.__init__">
+<tt class="descname">__init__</tt><big>(</big><big>)</big><a class="headerlink" href="#createrepo_c.UpdateRecord.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.UpdateRecord.append_collection">
+<tt class="descname">append_collection</tt><big>(</big><em>collection</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.UpdateRecord.append_collection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Append UpdateCollection</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.UpdateRecord.append_reference">
+<tt class="descname">append_reference</tt><big>(</big><em>reference</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.UpdateRecord.append_reference" title="Permalink to this definition">¶</a></dt>
+<dd><p>Append UpdateReference</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateRecord.collections">
+<tt class="descname">collections</tt><a class="headerlink" href="#createrepo_c.UpdateRecord.collections" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of UpdateCollections</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.UpdateRecord.copy">
+<tt class="descname">copy</tt><big>(</big><big>)</big> &rarr; UpdateRecord<a class="headerlink" href="#createrepo_c.UpdateRecord.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return copy of the UpdateRecord object</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateRecord.description">
+<tt class="descname">description</tt><a class="headerlink" href="#createrepo_c.UpdateRecord.description" title="Permalink to this definition">¶</a></dt>
+<dd><p>Description</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateRecord.fromstr">
+<tt class="descname">fromstr</tt><a class="headerlink" href="#createrepo_c.UpdateRecord.fromstr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Who issued this update</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateRecord.id">
+<tt class="descname">id</tt><a class="headerlink" href="#createrepo_c.UpdateRecord.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update id</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateRecord.issued_date">
+<tt class="descname">issued_date</tt><a class="headerlink" href="#createrepo_c.UpdateRecord.issued_date" title="Permalink to this definition">¶</a></dt>
+<dd><p>Date when the update was issued</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateRecord.pushcount">
+<tt class="descname">pushcount</tt><a class="headerlink" href="#createrepo_c.UpdateRecord.pushcount" title="Permalink to this definition">¶</a></dt>
+<dd><p>Pushcount</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateRecord.references">
+<tt class="descname">references</tt><a class="headerlink" href="#createrepo_c.UpdateRecord.references" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of UpdateReferences</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateRecord.release">
+<tt class="descname">release</tt><a class="headerlink" href="#createrepo_c.UpdateRecord.release" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update release</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateRecord.rights">
+<tt class="descname">rights</tt><a class="headerlink" href="#createrepo_c.UpdateRecord.rights" title="Permalink to this definition">¶</a></dt>
+<dd><p>Copyrights</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateRecord.severity">
+<tt class="descname">severity</tt><a class="headerlink" href="#createrepo_c.UpdateRecord.severity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Severity</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateRecord.solution">
+<tt class="descname">solution</tt><a class="headerlink" href="#createrepo_c.UpdateRecord.solution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Solution</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateRecord.status">
+<tt class="descname">status</tt><a class="headerlink" href="#createrepo_c.UpdateRecord.status" title="Permalink to this definition">¶</a></dt>
+<dd><p>Status of the update</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateRecord.summary">
+<tt class="descname">summary</tt><a class="headerlink" href="#createrepo_c.UpdateRecord.summary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Short summary</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateRecord.title">
+<tt class="descname">title</tt><a class="headerlink" href="#createrepo_c.UpdateRecord.title" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update title</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateRecord.type">
+<tt class="descname">type</tt><a class="headerlink" href="#createrepo_c.UpdateRecord.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update type</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateRecord.updated_date">
+<tt class="descname">updated_date</tt><a class="headerlink" href="#createrepo_c.UpdateRecord.updated_date" title="Permalink to this definition">¶</a></dt>
+<dd><p>Date when the update was updated</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateRecord.version">
+<tt class="descname">version</tt><a class="headerlink" href="#createrepo_c.UpdateRecord.version" title="Permalink to this definition">¶</a></dt>
+<dd><p>Version of update</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.UpdateReference">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">UpdateReference</tt><a class="headerlink" href="#createrepo_c.UpdateReference" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="createrepo_c.UpdateReference.__init__">
+<tt class="descname">__init__</tt><big>(</big><big>)</big><a class="headerlink" href="#createrepo_c.UpdateReference.__init__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.UpdateReference.copy">
+<tt class="descname">copy</tt><big>(</big><big>)</big> &rarr; UpdateReference<a class="headerlink" href="#createrepo_c.UpdateReference.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return copy of the UpdateReference object</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateReference.href">
+<tt class="descname">href</tt><a class="headerlink" href="#createrepo_c.UpdateReference.href" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reference URL</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateReference.id">
+<tt class="descname">id</tt><a class="headerlink" href="#createrepo_c.UpdateReference.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>ID</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateReference.title">
+<tt class="descname">title</tt><a class="headerlink" href="#createrepo_c.UpdateReference.title" title="Permalink to this definition">¶</a></dt>
+<dd><p>Title</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="createrepo_c.UpdateReference.type">
+<tt class="descname">type</tt><a class="headerlink" href="#createrepo_c.UpdateReference.type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Type</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.XmlFile">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">XmlFile</tt><a class="headerlink" href="#createrepo_c.XmlFile" title="Permalink to this definition">¶</a></dt>
+<dd><p>XmlFile object represents a single XML file (primary, filelists or other).</p>
+<dl class="method">
+<dt id="createrepo_c.XmlFile.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>path</em>, <em>type</em>, <em>compression_type</em>, <em>contentstat</em><big>)</big><a class="headerlink" href="#createrepo_c.XmlFile.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path</strong> &#8211; Path to the xml file</li>
+<li><strong>type</strong> &#8211; Type of the XML file. One from XMLFILE_PRIMARY,
+XMLFILE_FILELISTS, XMLFILE_OTHER constants</li>
+<li><strong>compression_type</strong> &#8211; Compression type specified by constant</li>
+<li><strong>contentstat</strong> &#8211; ContentStat object to gather content statistics or None</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.XmlFile.add_chunk">
+<tt class="descname">add_chunk</tt><big>(</big><em>chunk</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.XmlFile.add_chunk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a string chunk to the xml</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.XmlFile.add_pkg">
+<tt class="descname">add_pkg</tt><big>(</big><em>Package</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.XmlFile.add_pkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add Package to the xml</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.XmlFile.close">
+<tt class="descname">close</tt><big>(</big><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.XmlFile.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the XML file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.XmlFile.set_num_of_pkgs">
+<tt class="descname">set_num_of_pkgs</tt><big>(</big><em>number_of_packages</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.XmlFile.set_num_of_pkgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set number of all packages</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.PrimaryXmlFile">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">PrimaryXmlFile</tt><big>(</big><em>path</em>, <em>compressiontype=3</em>, <em>contentstat=None</em><big>)</big><a class="headerlink" href="#createrepo_c.PrimaryXmlFile" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="createrepo_c.PrimaryXmlFile.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>path</em>, <em>compressiontype=3</em>, <em>contentstat=None</em><big>)</big><a class="headerlink" href="#createrepo_c.PrimaryXmlFile.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path</strong> &#8211; Path to the primary xml file</li>
+<li><strong>compressiontype</strong> &#8211; Compression type</li>
+<li><strong>contentstat</strong> &#8211; ContentStat object</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.PrimaryXmlFile.add_chunk">
+<tt class="descname">add_chunk</tt><big>(</big><em>chunk</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.PrimaryXmlFile.add_chunk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a string chunk to the xml</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.PrimaryXmlFile.add_pkg">
+<tt class="descname">add_pkg</tt><big>(</big><em>Package</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.PrimaryXmlFile.add_pkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add Package to the xml</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.PrimaryXmlFile.close">
+<tt class="descname">close</tt><big>(</big><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.PrimaryXmlFile.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the XML file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.PrimaryXmlFile.set_num_of_pkgs">
+<tt class="descname">set_num_of_pkgs</tt><big>(</big><em>number_of_packages</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.PrimaryXmlFile.set_num_of_pkgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set number of all packages</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.FilelistsXmlFile">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">FilelistsXmlFile</tt><big>(</big><em>path</em>, <em>compressiontype=3</em>, <em>contentstat=None</em><big>)</big><a class="headerlink" href="#createrepo_c.FilelistsXmlFile" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="createrepo_c.FilelistsXmlFile.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>path</em>, <em>compressiontype=3</em>, <em>contentstat=None</em><big>)</big><a class="headerlink" href="#createrepo_c.FilelistsXmlFile.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path</strong> &#8211; Path to the filelists xml file</li>
+<li><strong>compressiontype</strong> &#8211; Compression type</li>
+<li><strong>contentstat</strong> &#8211; ContentStat object</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.FilelistsXmlFile.add_chunk">
+<tt class="descname">add_chunk</tt><big>(</big><em>chunk</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.FilelistsXmlFile.add_chunk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a string chunk to the xml</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.FilelistsXmlFile.add_pkg">
+<tt class="descname">add_pkg</tt><big>(</big><em>Package</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.FilelistsXmlFile.add_pkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add Package to the xml</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.FilelistsXmlFile.close">
+<tt class="descname">close</tt><big>(</big><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.FilelistsXmlFile.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the XML file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.FilelistsXmlFile.set_num_of_pkgs">
+<tt class="descname">set_num_of_pkgs</tt><big>(</big><em>number_of_packages</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.FilelistsXmlFile.set_num_of_pkgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set number of all packages</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.OtherXmlFile">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">OtherXmlFile</tt><big>(</big><em>path</em>, <em>compressiontype=3</em>, <em>contentstat=None</em><big>)</big><a class="headerlink" href="#createrepo_c.OtherXmlFile" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="createrepo_c.OtherXmlFile.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>path</em>, <em>compressiontype=3</em>, <em>contentstat=None</em><big>)</big><a class="headerlink" href="#createrepo_c.OtherXmlFile.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path</strong> &#8211; Path to the other xml file</li>
+<li><strong>compressiontype</strong> &#8211; Compression type</li>
+<li><strong>contentstat</strong> &#8211; ContentStat object</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.OtherXmlFile.add_chunk">
+<tt class="descname">add_chunk</tt><big>(</big><em>chunk</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.OtherXmlFile.add_chunk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a string chunk to the xml</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.OtherXmlFile.add_pkg">
+<tt class="descname">add_pkg</tt><big>(</big><em>Package</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.OtherXmlFile.add_pkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add Package to the xml</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.OtherXmlFile.close">
+<tt class="descname">close</tt><big>(</big><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.OtherXmlFile.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the XML file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.OtherXmlFile.set_num_of_pkgs">
+<tt class="descname">set_num_of_pkgs</tt><big>(</big><em>number_of_packages</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.OtherXmlFile.set_num_of_pkgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set number of all packages</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="createrepo_c.UpdateInfoXmlFile">
+<em class="property">class </em><tt class="descclassname">createrepo_c.</tt><tt class="descname">UpdateInfoXmlFile</tt><big>(</big><em>path</em>, <em>compressiontype=3</em>, <em>contentstat=None</em><big>)</big><a class="headerlink" href="#createrepo_c.UpdateInfoXmlFile" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="createrepo_c.UpdateInfoXmlFile.__init__">
+<tt class="descname">__init__</tt><big>(</big><em>path</em>, <em>compressiontype=3</em>, <em>contentstat=None</em><big>)</big><a class="headerlink" href="#createrepo_c.UpdateInfoXmlFile.__init__" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>path</strong> &#8211; Path to the updateinfo xml file</li>
+<li><strong>compressiontype</strong> &#8211; Compression type</li>
+<li><strong>contentstat</strong> &#8211; ContentStat object</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.UpdateInfoXmlFile.add_chunk">
+<tt class="descname">add_chunk</tt><big>(</big><em>chunk</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.UpdateInfoXmlFile.add_chunk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a string chunk to the xml</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.UpdateInfoXmlFile.add_pkg">
+<tt class="descname">add_pkg</tt><big>(</big><em>Package</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.UpdateInfoXmlFile.add_pkg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add Package to the xml</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.UpdateInfoXmlFile.close">
+<tt class="descname">close</tt><big>(</big><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.UpdateInfoXmlFile.close" title="Permalink to this definition">¶</a></dt>
+<dd><p>Close the XML file</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="createrepo_c.UpdateInfoXmlFile.set_num_of_pkgs">
+<tt class="descname">set_num_of_pkgs</tt><big>(</big><em>number_of_packages</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.UpdateInfoXmlFile.set_num_of_pkgs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set number of all packages</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="createrepo_c.package_from_rpm">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">package_from_rpm</tt><big>(</big><em>filename</em>, <em>checksum_type=5</em>, <em>location_href=None</em>, <em>location_base=None</em>, <em>changelog_limit=10</em><big>)</big><a class="headerlink" href="#createrepo_c.package_from_rpm" title="Permalink to this definition">¶</a></dt>
+<dd><p><a class="reference internal" href="#createrepo_c.Package" title="createrepo_c.Package"><tt class="xref py py-class docutils literal"><span class="pre">Package</span></tt></a> object from the rpm package</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="createrepo_c.xml_from_rpm">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">xml_from_rpm</tt><big>(</big><em>filename</em>, <em>checksum_type=5</em>, <em>location_href=None</em>, <em>location_base=None</em>, <em>changelog_limit=10</em><big>)</big><a class="headerlink" href="#createrepo_c.xml_from_rpm" title="Permalink to this definition">¶</a></dt>
+<dd><p>XML for the rpm package</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="createrepo_c.xml_parse_primary">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">xml_parse_primary</tt><big>(</big><em>path</em>, <em>newpkgcb=None</em>, <em>pkgcb=None</em>, <em>warningcb=None</em>, <em>do_files=1</em><big>)</big><a class="headerlink" href="#createrepo_c.xml_parse_primary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse primary.xml</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="createrepo_c.xml_parse_filelists">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">xml_parse_filelists</tt><big>(</big><em>path</em>, <em>newpkgcb=None</em>, <em>pkgcb=None</em>, <em>warningcb=None</em><big>)</big><a class="headerlink" href="#createrepo_c.xml_parse_filelists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse filelists.xml</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="createrepo_c.xml_parse_other">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">xml_parse_other</tt><big>(</big><em>path</em>, <em>newpkgcb=None</em>, <em>pkgcb=None</em>, <em>warningcb=None</em><big>)</big><a class="headerlink" href="#createrepo_c.xml_parse_other" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse other.xml</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="createrepo_c.xml_parse_updateinfo">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">xml_parse_updateinfo</tt><big>(</big><em>path</em>, <em>updateinfoobj</em>, <em>warningcb=None</em><big>)</big><a class="headerlink" href="#createrepo_c.xml_parse_updateinfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse updateinfo.xml</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="createrepo_c.xml_parse_repomd">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">xml_parse_repomd</tt><big>(</big><em>path</em>, <em>repomdobj</em>, <em>warningcb=None</em><big>)</big><a class="headerlink" href="#createrepo_c.xml_parse_repomd" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse repomd.xml</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="createrepo_c.compress_file">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">compress_file</tt><big>(</big><em>src</em>, <em>dst</em>, <em>comtype</em>, <em>stat=None</em><big>)</big><a class="headerlink" href="#createrepo_c.compress_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="createrepo_c.decompress_file">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">decompress_file</tt><big>(</big><em>src</em>, <em>dst</em>, <em>comtype</em>, <em>stat=None</em><big>)</big><a class="headerlink" href="#createrepo_c.decompress_file" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="function">
+<dt id="createrepo_c.xml_dump_primary">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">xml_dump_primary</tt><big>(</big><em>pkg</em><big>)</big> &rarr; str<a class="headerlink" href="#createrepo_c.xml_dump_primary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate primary xml chunk from the package</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="createrepo_c.xml_dump_filelists">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">xml_dump_filelists</tt><big>(</big><em>pkg</em><big>)</big> &rarr; str<a class="headerlink" href="#createrepo_c.xml_dump_filelists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate filelists xml chunk from the package</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="createrepo_c.xml_dump_other">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">xml_dump_other</tt><big>(</big><em>pkg</em><big>)</big> &rarr; str<a class="headerlink" href="#createrepo_c.xml_dump_other" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate other xml chunk from the package</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="createrepo_c.xml_dump">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">xml_dump</tt><big>(</big><em>pkg) -&gt; (str</em>, <em>str</em>, <em>str</em><big>)</big><a class="headerlink" href="#createrepo_c.xml_dump" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate primary, filelists and other xml chunks from the package</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="createrepo_c.checksum_name_str">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">checksum_name_str</tt><big>(</big><em>checksum_type</em><big>)</big> &rarr; str<a class="headerlink" href="#createrepo_c.checksum_name_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checksum name from checksum type constant</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="createrepo_c.checksum_type">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">checksum_type</tt><big>(</big><em>checksum_name</em><big>)</big> &rarr; long<a class="headerlink" href="#createrepo_c.checksum_type" title="Permalink to this definition">¶</a></dt>
+<dd><p>Checksum type from checksum name</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="createrepo_c.compress_file_with_stat">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">compress_file_with_stat</tt><big>(</big><em>source</em>, <em>destination</em>, <em>compression_type</em>, <em>contentstat_object</em><big>)</big> &rarr; None<a class="headerlink" href="#createrepo_c.compress_file_with_stat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compress file. destination and contentstat_object could be None</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="createrepo_c.compression_suffix">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">compression_suffix</tt><big>(</big><em>compression_type</em><big>)</big> &rarr; str or None<a class="headerlink" href="#createrepo_c.compression_suffix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compression suffix for the compression type</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="createrepo_c.detect_compression">
+<tt class="descclassname">createrepo_c.</tt><tt class="descname">detect_compression</tt><big>(</big><em>path</em><big>)</big> &rarr; long<a class="headerlink" href="#createrepo_c.detect_compression" title="Permalink to this definition">¶</a></dt>
+<dd><p>Detect compression type used on the file</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">createrepo_c</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/lib.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="createrepo_c"
+             >previous</a> |</li>
+        <li><a href="index.html">createrepo_c 0.9.0-1 documentation</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, Red Hat.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

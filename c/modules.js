@@ -1,0 +1,27 @@
+var modules =
+[
+    [ "Complete API of createrepo_c library", "group__main.html", null ],
+    [ "Library version information.", "group__version.html", "group__version" ],
+    [ "API for checksum calculation.", "group__checksum.html", "group__checksum" ],
+    [ "Wrapper for compressed file.", "group__compression__wrapper.html", "group__compression__wrapper" ],
+    [ "Global constants and enums.", "group__contants.html", null ],
+    [ "Constants", "group__constants.html", null ],
+    [ "Createrepo API.", "group__createrepo__shared.html", "group__createrepo__shared" ],
+    [ "Support for deltarpms", "group__deltarpms.html", "group__deltarpms" ],
+    [ "Implementation of concurent dumping used in createrepo_c", "group__dumperthread.html", "group__dumperthread" ],
+    [ "Helpers for createrepo_c, modifyrepo_c, mergerepo_c", "group__helpers.html", "group__helpers" ],
+    [ "Load metadata API.", "group__load__metadata.html", "group__load__metadata" ],
+    [ "Locate metadata API.", "group__locate__metadata.html", "group__locate__metadata" ],
+    [ "Miscellaneous useful functions and macros.", "group__misc.html", "group__misc" ],
+    [ "Modifyrepo API.", "group__modifyrepo__shared.html", "group__modifyrepo__shared" ],
+    [ "Package representation.", "group__package.html", "group__package" ],
+    [ "Header parser API.", "group__parsehdr.html", "group__parsehdr" ],
+    [ "Package parser API.", "group__parsepkg.html", "group__parsepkg" ],
+    [ "Repomd API.", "group__repomd.html", "group__repomd" ],
+    [ "SQLite metadata API.", "group__sqlite.html", "group__sqlite" ],
+    [ "Useful thread function to use in GThreadPool.", "group__threads.html", "group__threads" ],
+    [ "Updateinfo API.", "group__updateinfo.html", "group__updateinfo" ],
+    [ "XML dump API.", "group__xml__dump.html", "group__xml__dump" ],
+    [ "XML file API.", "group__xml__file.html", "group__xml__file" ],
+    [ "XML parser API.", "group__xml__parser.html", "group__xml__parser" ]
+];

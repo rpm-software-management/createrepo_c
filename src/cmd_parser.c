@@ -268,7 +268,7 @@ check_and_set_compression_type(const char *type_str,
  * @param timeperiod    Time period
  * @param time          Time period converted to gint64 will be stored here
  */
-gboolean
+static gboolean
 parse_period_of_time(const gchar *timeperiod, gint64 *time, GError **err)
 {
     assert(!err || *err == NULL);

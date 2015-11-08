@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# /usr/share/man/man8/createrepo_c.8.gz
+# /usr/share/man/man8/createrepo_c.8
 
 EXPECTED_ARGS=5
 if [ $# -ne $EXPECTED_ARGS ]
@@ -14,7 +14,7 @@ fi
 MY_DIR=`dirname $0`
 MY_DIR="$MY_DIR/"
 
-python $MY_DIR/gen_rst.py $1 | rst2man | gzip > $5/createrepo_c.8.gz
-python $MY_DIR/gen_rst.py $2 --mergerepo | rst2man | gzip > $5/mergerepo_c.8.gz
-python $MY_DIR/gen_rst.py $3 --modifyrepo | rst2man | gzip > $5/modifyrepo_c.8.gz
-python $MY_DIR/gen_rst.py $4 --sqliterepo | rst2man | gzip > $5/sqliterepo_c.8.gz
+python $MY_DIR/gen_rst.py $1 | rst2man > $5/createrepo_c.8
+python $MY_DIR/gen_rst.py $2 --mergerepo | rst2man > $5/mergerepo_c.8
+python $MY_DIR/gen_rst.py $3 --modifyrepo | rst2man > $5/modifyrepo_c.8
+python $MY_DIR/gen_rst.py $4 --sqliterepo | rst2man > $5/sqliterepo_c.8

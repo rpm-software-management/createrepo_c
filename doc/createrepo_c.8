@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH CREATEREPO_C  "2015-05-25" "" ""
+.TH CREATEREPO_C  "2015-10-20" "" ""
 .SH NAME
 createrepo_c \- Create rpm-md format (xml-rpm-metadata) repository
 .
@@ -126,6 +126,9 @@ Use xz for repodata compression.
 .SS \-\-compress\-type <compress_type>
 .sp
 Which compression type to use.
+.SS \-\-general\-compress\-type <compress_type>
+.sp
+Which compression type to use (even for primary, filelists and other xml).
 .SS \-\-keep\-all\-metadata
 .sp
 Keep groupfile and updateinfo from source repo during update.
@@ -159,6 +162,9 @@ Ignore NUM of directory components in location_href during repodata generation
 .SS \-\-location\-prefix PREFIX
 .sp
 Append this prefix before location_href in output repodata
+.SS \-\-repomd\-checksum <checksum_type>
+.sp
+Checksum type to be used in repomd.xml
 .SS \-\-ignore\-lock
 .sp
 Expert (risky) option: Ignore an existing .repodata/. (Remove the existing .repodata/ and create an empty new one to serve as a lock for other createrepo intances. For the repodata generation, a different temporary dir with the name in format .repodata.time.microseconds.pid/ will be used). NOTE: Use this option on your own risk! If two createrepos run simultaneously, then the state of the generated metadata is not guaranted \- it can be inconsistent and wrong.

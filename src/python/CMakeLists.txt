@@ -40,15 +40,15 @@ SET (createrepo_cmodule_SRCS
      xml_parser-py.c
     )
 
-ADD_LIBRARY(_createrepo_cmodule SHARED ${createrepo_cmodule_SRCS})
-SET_TARGET_PROPERTIES(_createrepo_cmodule PROPERTIES PREFIX "")
-SET_TARGET_PROPERTIES(_createrepo_cmodule PROPERTIES LIBRARY_OUTPUT_DIRECTORY "./createrepo_c")
-TARGET_LINK_LIBRARIES(_createrepo_cmodule libcreaterepo_c)
-TARGET_LINK_LIBRARIES(_createrepo_cmodule
+ADD_LIBRARY(_createrepo_c SHARED ${createrepo_cmodule_SRCS})
+SET_TARGET_PROPERTIES(_createrepo_c PROPERTIES PREFIX "")
+SET_TARGET_PROPERTIES(_createrepo_c PROPERTIES LIBRARY_OUTPUT_DIRECTORY "./createrepo_c")
+TARGET_LINK_LIBRARIES(_createrepo_c libcreaterepo_c)
+TARGET_LINK_LIBRARIES(_createrepo_c
                         ${EXPAT_LIBRARIES}
                         ${CURL_LIBRARY}
                         ${PYTHON_LIBRARY}
                      )
 
 INSTALL(FILES __init__.py DESTINATION ${PYTHON_INSTALL_DIR}/createrepo_c)
-INSTALL(TARGETS _createrepo_cmodule LIBRARY DESTINATION ${PYTHON_INSTALL_DIR}/createrepo_c)
+INSTALL(TARGETS _createrepo_c LIBRARY DESTINATION ${PYTHON_INSTALL_DIR}/createrepo_c)

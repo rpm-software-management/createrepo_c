@@ -15,7 +15,7 @@ ELSE()
     FILE(COPY __init__.py DESTINATION ./createrepo_c/)
 ENDIF()
 
-SET (craeterepo_cmodule_SRCS
+SET (createrepo_cmodule_SRCS
      checksum-py.c
      compression_wrapper-py.c
      contentstat-py.c
@@ -40,7 +40,7 @@ SET (craeterepo_cmodule_SRCS
      xml_parser-py.c
     )
 
-ADD_LIBRARY(_createrepo_cmodule SHARED ${craeterepo_cmodule_SRCS})
+ADD_LIBRARY(_createrepo_cmodule SHARED ${createrepo_cmodule_SRCS})
 SET_TARGET_PROPERTIES(_createrepo_cmodule PROPERTIES PREFIX "")
 SET_TARGET_PROPERTIES(_createrepo_cmodule PROPERTIES LIBRARY_OUTPUT_DIRECTORY "./createrepo_c")
 TARGET_LINK_LIBRARIES(_createrepo_cmodule libcreaterepo_c)

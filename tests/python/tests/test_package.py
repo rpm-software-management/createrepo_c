@@ -1,7 +1,7 @@
 import unittest
 import createrepo_c as cr
 
-from fixtures import *
+from .fixtures import *
 
 class TestCasePackage(unittest.TestCase):
     def test_package_empty(self):

@@ -1,7 +1,7 @@
 import unittest
 import createrepo_c as cr
 
-from fixtures import *
+from .fixtures import *
 
 class TestCaseMetadataLocation(unittest.TestCase):
     def test_metadatalocation(self):

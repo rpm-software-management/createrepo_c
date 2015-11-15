@@ -5,7 +5,7 @@ import os.path
 import sqlite3
 import createrepo_c as cr
 
-from fixtures import *
+from .fixtures import *
 
 class TestCaseSqlite(unittest.TestCase):
 

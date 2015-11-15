@@ -4,7 +4,7 @@ import tempfile
 import os.path
 import createrepo_c as cr
 
-from fixtures import *
+from .fixtures import *
 
 class TestCaseContentStat(unittest.TestCase):
 

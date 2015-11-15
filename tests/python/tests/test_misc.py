@@ -4,7 +4,7 @@ import unittest
 import shutil
 import createrepo_c as cr
 
-from fixtures import *
+from .fixtures import *
 
 class TestCaseMisc(unittest.TestCase):
 

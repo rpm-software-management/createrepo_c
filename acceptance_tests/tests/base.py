@@ -10,7 +10,7 @@ import unittest
 import threading
 import subprocess
 
-from fixtures import PACKAGESDIR
+from .fixtures import PACKAGESDIR
 
 OUTPUTDIR = None
 OUTPUTDIR_LOCK = threading.Lock()
@@ -161,7 +161,7 @@ class BaseTestCase(unittest.TestCase):
 
         output = ""
         while True:
-            lines = proc.stdout.readline()
+            lines = proc.stdout.readline().decode('utf-8')
             if lines == "":
                 break
             if logfile:

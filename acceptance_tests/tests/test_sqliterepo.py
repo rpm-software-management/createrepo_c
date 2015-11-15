@@ -2,8 +2,8 @@ import os
 import time
 import os.path
 
-from fixtures import PACKAGES
-from base import BaseTestCase
+from .fixtures import PACKAGES
+from .base import BaseTestCase
 
 BASE_XML_PATTERNS_SIMPLE = ["repomd\.xml", "primary\.xml\..+", "filelists\.xml\..+", "other\.xml\..+"]
 BASE_XML_PATTERNS_UNIQUE = ["repomd\.xml", ".*-primary\.xml\..+", ".*-filelists\.xml\..+", ".*-other\.xml\..+"]

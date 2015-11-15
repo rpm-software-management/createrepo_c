@@ -84,10 +84,15 @@ long long
 PyObject_ToLongLongOrZero(PyObject *pyobj)
 {
     long long num = 0;
-    if (PyLong_Check(pyobj))
+    if (PyLong_Check(pyobj)) {
         num = (long long) PyLong_AsLongLong(pyobj);
-    else if (PyInt_Check(pyobj))
+    } else if (PyFloat_Check(pyobj)) {
+        num = (long long) PyFloat_AS_DOUBLE(pyobj);
+#if PY_MAJOR_VERSION < 3
+    } else if (PyInt_Check(pyobj)) {
         num = (long long) PyInt_AS_LONG(pyobj);
+#endif
+    }
     return num;
 }
 

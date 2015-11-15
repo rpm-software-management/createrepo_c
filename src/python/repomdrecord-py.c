@@ -307,8 +307,12 @@ set_num(_RepomdRecordObject *self, PyObject *value, void *member_offset)
         return -1;
     if (PyLong_Check(value)) {
         val = (gint64) PyLong_AsLong(value);
+    } else if (PyFloat_Check(value)) {
+        val = (gint64) PyFloat_AS_DOUBLE(value);
+#if PY_MAJOR_VERSION < 3
     } else if (PyInt_Check(value)) {
         val = (gint64) PyInt_AS_LONG(value);
+#endif
     } else {
         PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;
@@ -326,8 +330,12 @@ set_int(_RepomdRecordObject *self, PyObject *value, void *member_offset)
         return -1;
     if (PyLong_Check(value)) {
         val = PyLong_AsLong(value);
+    } else if (PyFloat_Check(value)) {
+        val = (long long) PyFloat_AS_DOUBLE(value);
+#if PY_MAJOR_VERSION < 3
     } else if (PyInt_Check(value)) {
         val = PyInt_AS_LONG(value);
+#endif
     } else {
         PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;

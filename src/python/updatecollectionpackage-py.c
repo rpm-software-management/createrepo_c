@@ -175,8 +175,12 @@ set_int(_UpdateCollectionPackageObject *self, PyObject *value, void *member_offs
         return -1;
     if (PyLong_Check(value)) {
         val = PyLong_AsLong(value);
+    } else if (PyFloat_Check(value)) {
+        val = (long long) PyFloat_AS_DOUBLE(value);
+#if PY_MAJOR_VERSION < 3
     } else if (PyInt_Check(value)) {
         val = PyInt_AS_LONG(value);
+#endif
     } else {
         PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;

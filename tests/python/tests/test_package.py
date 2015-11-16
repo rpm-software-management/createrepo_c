@@ -118,11 +118,11 @@ class TestCasePackage(unittest.TestCase):
             ('', '/usr/share/doc/Archer-3.4.5/', 'README')
             ])
         self.assertEqual(pkg.changelogs, [
-            ('Tomas Mlcoch <tmlcoch@redhat.com> - 1.1.1-1', 1334664000L,
+            ('Tomas Mlcoch <tmlcoch@redhat.com> - 1.1.1-1', 1334664000,
                 '- First changelog.'),
-            ('Tomas Mlcoch <tmlcoch@redhat.com> - 2.2.2-2', 1334750400L,
+            ('Tomas Mlcoch <tmlcoch@redhat.com> - 2.2.2-2', 1334750400,
                 '- That was totally ninja!'),
-            ('Tomas Mlcoch <tmlcoch@redhat.com> - 3.3.3-3', 1365422400L,
+            ('Tomas Mlcoch <tmlcoch@redhat.com> - 3.3.3-3', 1365422400,
                 '- 3. changelog.')
             ])
 
@@ -202,8 +202,8 @@ class TestCasePackage(unittest.TestCase):
         self.assertEqual(pkg.supplements, [('foo_sup', 'GE', '0', '1.1.0', None, False)])
         pkg.files = [(None, '/foo/', 'bar')]
         self.assertEqual(pkg.files, [(None, '/foo/', 'bar')])
-        pkg.changelogs = [('me', 123456L, 'first commit')]
-        self.assertEqual(pkg.changelogs, [('me', 123456L, 'first commit')])
+        pkg.changelogs = [('me', 123456, 'first commit')]
+        self.assertEqual(pkg.changelogs, [('me', 123456, 'first commit')])
 
         self.assertEqual(pkg.nvra(), "bar-11-33.quantum")
         self.assertEqual(pkg.nevra(), "bar-22:11-33.quantum")

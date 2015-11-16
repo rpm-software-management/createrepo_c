@@ -100,7 +100,7 @@ class TestCaseXmlFile(unittest.TestCase):
         f.close()
 
         import gzip
-        content = gzip.open(path).read()
+        content = gzip.open(path).read().decode('utf-8')
         self.assertEqual(content,
 """<?xml version="1.0" encoding="UTF-8"?>
 <metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="0">
@@ -114,7 +114,7 @@ class TestCaseXmlFile(unittest.TestCase):
         f.close()
 
         import bz2
-        content = bz2.decompress(open(path).read())
+        content = bz2.decompress(open(path, 'rb').read()).decode('utf-8')
         self.assertEqual(content,
 """<?xml version="1.0" encoding="UTF-8"?>
 <metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="0">
@@ -129,7 +129,7 @@ class TestCaseXmlFile(unittest.TestCase):
 
         import subprocess
         p = subprocess.Popen(["unxz", "--stdout", path], stdout=subprocess.PIPE)
-        content = p.stdout.read()
+        content = p.stdout.read().decode('utf-8')
         self.assertEqual(content,
 """<?xml version="1.0" encoding="UTF-8"?>
 <metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="0">

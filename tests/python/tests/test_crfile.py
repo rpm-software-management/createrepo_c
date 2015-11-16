@@ -77,7 +77,7 @@ class TestCaseCrFile(unittest.TestCase):
         f.close()
 
         import gzip
-        content = gzip.open(path).read()
+        content = gzip.open(path).read().decode('utf-8')
         self.assertEqual(content, "foobar")
 
     def test_crfile_bz2_compression(self):
@@ -89,7 +89,7 @@ class TestCaseCrFile(unittest.TestCase):
         f.close()
 
         import bz2
-        content = bz2.decompress(open(path).read())
+        content = bz2.decompress(open(path, 'rb').read()).decode('utf-8')
         self.assertEqual(content, "foobar")
 
     def test_crfile_xz_compression(self):
@@ -102,5 +102,5 @@ class TestCaseCrFile(unittest.TestCase):
 
         import subprocess
         p = subprocess.Popen(["unxz", "--stdout", path], stdout=subprocess.PIPE)
-        content = p.stdout.read()
+        content = p.stdout.read().decode('utf-8')
         self.assertEqual(content, "foobar")

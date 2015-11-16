@@ -38,7 +38,7 @@ py_compression_suffix(G_GNUC_UNUSED PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "i:py_compression_suffix", &type))
         return NULL;
 
-    return PyBytesOrNone_FromString(cr_compression_suffix(type));
+    return PyUnicodeOrNone_FromString(cr_compression_suffix(type));
 }
 
 PyObject *
@@ -192,7 +192,7 @@ crfile_repr(_CrFileObject *self)
             mode = "Unknown mode";
     }
 
-    return PyBytes_FromFormat("<createrepo_c.CrFile %s object>", mode);
+    return PyUnicode_FromFormat("<createrepo_c.CrFile %s object>", mode);
 }
 
 /* CrFile methods */

@@ -121,7 +121,7 @@ updaterecord_dealloc(_UpdateRecordObject *self)
 static PyObject *
 updaterecord_repr(G_GNUC_UNUSED _UpdateRecordObject *self)
 {
-    return PyBytes_FromFormat("<createrepo_c.UpdateRecord object>");
+    return PyUnicode_FromFormat("<createrepo_c.UpdateRecord object>");
 }
 
 /* UpdateRecord methods */
@@ -257,7 +257,7 @@ get_str(_UpdateRecordObject *self, void *member_offset)
     char *str = *((char **) ((size_t) rec + (size_t) member_offset));
     if (str == NULL)
         Py_RETURN_NONE;
-    return PyBytes_FromString(str);
+    return PyUnicode_FromString(str);
 }
 
 static PyObject *
@@ -316,7 +316,7 @@ set_str(_UpdateRecordObject *self, PyObject *value, void *member_offset)
 {
     if (check_UpdateRecordStatus(self))
         return -1;
-    if (!PyBytes_Check(value) && value != Py_None) {
+    if (!PyUnicode_Check(value) && value != Py_None) {
         PyErr_SetString(PyExc_TypeError, "String or None expected!");
         return -1;
     }

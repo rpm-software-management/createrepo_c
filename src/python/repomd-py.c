@@ -101,7 +101,7 @@ repomd_dealloc(_RepomdObject *self)
 static PyObject *
 repomd_repr(G_GNUC_UNUSED _RepomdObject *self)
 {
-    return PyBytes_FromString("<createrepo_c.Repomd object>");
+    return PyUnicode_FromString("<createrepo_c.Repomd object>");
 }
 
 /* Repomd methods */
@@ -251,7 +251,7 @@ xml_dump(_RepomdObject *self, G_GNUC_UNUSED void *nothing)
         nice_exception(&tmp_err, NULL);
         return NULL;
     }
-    py_str = PyBytesOrNone_FromString(xml);
+    py_str = PyUnicodeOrNone_FromString(xml);
     free(xml);
     return py_str;
 }
@@ -299,9 +299,9 @@ typedef int (*ConversionToCheckFunc)(PyObject *);
 typedef void *(*ConversionToFunc)(PyObject *, GStringChunk *);
 
 static int
-CheckPyBytes(PyObject *dep)
+CheckPyUnicode(PyObject *dep)
 {
-    if (!PyBytes_Check(dep)) {
+    if (!PyUnicode_Check(dep)) {
         PyErr_SetString(PyExc_TypeError, "Element of list has to be a string");
         return 1;
     }
@@ -334,16 +334,16 @@ typedef struct {
 /** List of convertors for converting a lists in cr_Package. */
 static ListConvertor list_convertors[] = {
     { offsetof(cr_Repomd, repo_tags),
-      (ConversionFromFunc) PyBytesOrNone_FromString,
-      (ConversionToCheckFunc) CheckPyBytes,
+      (ConversionFromFunc) PyUnicodeOrNone_FromString,
+      (ConversionToCheckFunc) CheckPyUnicode,
       (ConversionToFunc) PyObject_ToChunkedString },
     { offsetof(cr_Repomd, distro_tags),
       (ConversionFromFunc) PyObject_FromDistroTag,
       (ConversionToCheckFunc) CheckPyDistroTag,
       (ConversionToFunc) PyObject_ToDistroTag },
     { offsetof(cr_Repomd, content_tags),
-      (ConversionFromFunc) PyBytesOrNone_FromString,
-      (ConversionToCheckFunc) CheckPyBytes,
+      (ConversionFromFunc) PyUnicodeOrNone_FromString,
+      (ConversionToCheckFunc) CheckPyUnicode,
       (ConversionToFunc) PyObject_ToChunkedString },
     { offsetof(cr_Repomd, records),
       (ConversionFromFunc) PyObject_FromRepomdRecord,
@@ -362,7 +362,7 @@ get_str(_RepomdObject *self, void *member_offset)
     char *str = *((char **) ((size_t) repomd + (size_t) member_offset));
     if (str == NULL)
         Py_RETURN_NONE;
-    return PyBytes_FromString(str);
+    return PyUnicode_FromString(str);
 }
 
 static PyObject *
@@ -396,7 +396,7 @@ set_str(_RepomdObject *self, PyObject *value, void *member_offset)
 {
     if (check_RepomdStatus(self))
         return -1;
-    if (!PyBytes_Check(value) && value != Py_None) {
+    if (!PyUnicode_Check(value) && value != Py_None) {
         PyErr_SetString(PyExc_TypeError, "String or None expected!");
         return -1;
     }

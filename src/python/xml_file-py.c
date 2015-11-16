@@ -155,7 +155,7 @@ xmlfile_repr(_XmlFileObject *self)
             type = "Unknown";
     }
 
-    return PyBytes_FromFormat("<createrepo_c.XmlFile %s object>", type);
+    return PyUnicode_FromFormat("<createrepo_c.XmlFile %s object>", type);
 }
 
 /* XmlFile methods */

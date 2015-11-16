@@ -87,9 +87,9 @@ py_xml_from_rpm(G_GNUC_UNUSED PyObject *self, PyObject *args)
     if ((tuple = PyTuple_New(3)) == NULL)
         goto py_xml_from_rpm_end; // Free xml_res and return NULL
 
-    PyTuple_SetItem(tuple, 0, PyBytesOrNone_FromString(xml_res.primary));
-    PyTuple_SetItem(tuple, 1, PyBytesOrNone_FromString(xml_res.filelists));
-    PyTuple_SetItem(tuple, 2, PyBytesOrNone_FromString(xml_res.other));
+    PyTuple_SetItem(tuple, 0, PyUnicodeOrNone_FromString(xml_res.primary));
+    PyTuple_SetItem(tuple, 1, PyUnicodeOrNone_FromString(xml_res.filelists));
+    PyTuple_SetItem(tuple, 2, PyUnicodeOrNone_FromString(xml_res.other));
 
 py_xml_from_rpm_end:
     free(xml_res.primary);

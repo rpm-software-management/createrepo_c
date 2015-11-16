@@ -119,7 +119,7 @@ sqlite_repr(_SqliteObject *self)
     else if (self->db->type == CR_DB_FILELISTS) type = "FilelistsDb";
     else if (self->db->type == CR_DB_OTHER)     type = "OtherDb";
     else                                        type = "UnknownDb";
-    return PyBytes_FromFormat("<createrepo_c.Sqlite %s object>", type);
+    return PyUnicode_FromFormat("<createrepo_c.Sqlite %s object>", type);
 }
 
 /* Sqlite methods */

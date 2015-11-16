@@ -106,7 +106,7 @@ contentstat_dealloc(_ContentStatObject *self)
 static PyObject *
 contentstat_repr(G_GNUC_UNUSED _ContentStatObject *self)
 {
-    return PyBytes_FromFormat("<createrepo_c.ContentStat object>");
+    return PyUnicode_FromFormat("<createrepo_c.ContentStat object>");
 }
 
 /* getsetters */
@@ -142,7 +142,7 @@ get_str(_ContentStatObject *self, void *member_offset)
     char *str = *((char **) ((size_t) rec + (size_t) member_offset));
     if (str == NULL)
         Py_RETURN_NONE;
-    return PyBytes_FromString(str);
+    return PyUnicode_FromString(str);
 }
 
 static int
@@ -196,7 +196,7 @@ set_str(_ContentStatObject *self, PyObject *value, void *member_offset)
 {
     if (check_ContentStatStatus(self))
         return -1;
-    if (!PyBytes_Check(value) && value != Py_None) {
+    if (!PyUnicode_Check(value) && value != Py_None) {
         PyErr_SetString(PyExc_TypeError, "String or None expected!");
         return -1;
     }

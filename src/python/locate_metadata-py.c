@@ -109,7 +109,7 @@ metadatalocation_dealloc(_MetadataLocationObject *self)
 static PyObject *
 metadatalocation_repr(G_GNUC_UNUSED _MetadataLocationObject *self)
 {
-    return PyBytes_FromFormat("<createrepo_c.MetadataLocation object>");
+    return PyUnicode_FromFormat("<createrepo_c.MetadataLocation object>");
 }
 
 /* MetadataLocation methods */
@@ -132,16 +132,22 @@ PyObject *
 getitem(_MetadataLocationObject *self, PyObject *pykey)
 {
     char *key, *value;
+    PyObject *bytekey;
 
     if (check_MetadataLocationStatus(self))
         return NULL;
 
-    if (!PyBytes_Check(pykey)) {
-        PyErr_SetString(PyExc_TypeError, "String expected!");
+    if (!PyUnicode_Check(pykey) && !PyBytes_Check(pykey)) {
+        PyErr_SetString(PyExc_TypeError, "Unicode or bytes expected!");
         return NULL;
     }
 
-    key = PyBytes_AsString(pykey);
+    if (PyUnicode_Check(pykey)) {
+        bytekey = PyUnicode_AsUTF8String(pykey);
+        key = PyBytes_AsString(bytekey);
+    } else {
+        key = PyBytes_AsString(pykey);
+    }
     value = NULL;
 
     if (!strcmp(key, "primary")) {
@@ -165,7 +171,7 @@ getitem(_MetadataLocationObject *self, PyObject *pykey)
     }
 
     if (value)
-        return PyBytes_FromString(value);
+        return PyUnicode_FromString(value);
     else
         Py_RETURN_NONE;
 }

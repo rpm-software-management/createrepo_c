@@ -118,7 +118,7 @@ updatecollection_dealloc(_UpdateCollectionObject *self)
 static PyObject *
 updatecollection_repr(G_GNUC_UNUSED _UpdateCollectionObject *self)
 {
-    return PyBytes_FromFormat("<createrepo_c.UpdateCollection object>");
+    return PyUnicode_FromFormat("<createrepo_c.UpdateCollection object>");
 }
 
 /* UpdateCollection methods */
@@ -222,7 +222,7 @@ get_str(_UpdateCollectionObject *self, void *member_offset)
     char *str = *((char **) ((size_t) rec + (size_t) member_offset));
     if (str == NULL)
         Py_RETURN_NONE;
-    return PyBytes_FromString(str);
+    return PyUnicode_FromString(str);
 }
 
 static PyObject *
@@ -254,7 +254,7 @@ set_str(_UpdateCollectionObject *self, PyObject *value, void *member_offset)
 {
     if (check_UpdateCollectionStatus(self))
         return -1;
-    if (!PyBytes_Check(value) && value != Py_None) {
+    if (!PyUnicode_Check(value) && value != Py_None) {
         PyErr_SetString(PyExc_TypeError, "String or None expected!");
         return -1;
     }

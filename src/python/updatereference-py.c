@@ -118,10 +118,10 @@ static PyObject *
 updatereference_repr(G_GNUC_UNUSED _UpdateReferenceObject *self)
 {
     if (self->reference->type)
-        return PyBytes_FromFormat("<createrepo_c.UpdateReference %s object>",
+        return PyUnicode_FromFormat("<createrepo_c.UpdateReference %s object>",
                                    self->reference->type);
     else
-        return PyBytes_FromFormat("<createrepo_c.UpdateReference object>");
+        return PyUnicode_FromFormat("<createrepo_c.UpdateReference object>");
 }
 
 /* UpdateReference methods */
@@ -157,7 +157,7 @@ get_str(_UpdateReferenceObject *self, void *member_offset)
     char *str = *((char **) ((size_t) ref + (size_t) member_offset));
     if (str == NULL)
         Py_RETURN_NONE;
-    return PyBytes_FromString(str);
+    return PyUnicode_FromString(str);
 }
 
 static int
@@ -165,7 +165,7 @@ set_str(_UpdateReferenceObject *self, PyObject *value, void *member_offset)
 {
     if (check_UpdateReferenceStatus(self))
         return -1;
-    if (!PyBytes_Check(value) && value != Py_None) {
+    if (!PyUnicode_Check(value) && value != Py_None) {
         PyErr_SetString(PyExc_TypeError, "String or None expected!");
         return -1;
     }

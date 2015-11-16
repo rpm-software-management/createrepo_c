@@ -34,7 +34,7 @@ py_checksum_name_str(G_GNUC_UNUSED PyObject *self, PyObject *args)
     if (!PyArg_ParseTuple(args, "i:py_checksum_name_Str", &type))
         return NULL;
 
-    return PyBytesOrNone_FromString(cr_checksum_name_str(type));
+    return PyUnicodeOrNone_FromString(cr_checksum_name_str(type));
 }
 
 PyObject *

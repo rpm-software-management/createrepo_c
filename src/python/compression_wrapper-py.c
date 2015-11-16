@@ -255,8 +255,7 @@ static struct PyMethodDef crfile_methods[] = {
 };
 
 PyTypeObject CrFile_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.CrFile",          /* tp_name */
     sizeof(_CrFileObject),          /* tp_basicsize */
     0,                              /* tp_itemsize */

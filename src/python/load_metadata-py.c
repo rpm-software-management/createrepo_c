@@ -351,8 +351,7 @@ static struct PyMethodDef metadata_methods[] = {
 /* Object */
 
 PyTypeObject Metadata_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.Metadata",        /* tp_name */
     sizeof(_MetadataObject),        /* tp_basicsize */
     0,                              /* tp_itemsize */

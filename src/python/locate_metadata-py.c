@@ -179,8 +179,7 @@ static PyMappingMethods mapping_methods = {
 /* Object */
 
 PyTypeObject MetadataLocation_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.MetadataLocation",/* tp_name */
     sizeof(_MetadataLocationObject),/* tp_basicsize */
     0,                              /* tp_itemsize */

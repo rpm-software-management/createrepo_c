@@ -219,8 +219,7 @@ static PyGetSetDef contentstat_getsetters[] = {
 /* Object */
 
 PyTypeObject ContentStat_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.ContentStat",     /* tp_name */
     sizeof(_ContentStatObject),     /* tp_basicsize */
     0,                              /* tp_itemsize */

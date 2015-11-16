@@ -271,8 +271,7 @@ static PyGetSetDef updateinfo_getsetters[] = {
 
 
 PyTypeObject UpdateInfo_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.UpdateInfo",      /* tp_name */
     sizeof(_UpdateInfoObject),      /* tp_basicsize */
     0,                              /* tp_itemsize */

@@ -206,8 +206,7 @@ static struct PyMethodDef sqlite_methods[] = {
 };
 
 PyTypeObject Sqlite_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.Sqlite",          /* tp_name */
     sizeof(_SqliteObject),          /* tp_basicsize */
     0,                              /* tp_itemsize */

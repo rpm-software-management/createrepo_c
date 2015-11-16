@@ -394,8 +394,7 @@ static PyGetSetDef updaterecord_getsetters[] = {
 /* Object */
 
 PyTypeObject UpdateRecord_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.UpdateRecord",    /* tp_name */
     sizeof(_UpdateRecordObject),    /* tp_basicsize */
     0,                              /* tp_itemsize */

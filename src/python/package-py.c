@@ -578,8 +578,7 @@ static PyGetSetDef package_getsetters[] = {
 /* Object */
 
 PyTypeObject Package_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.Package",         /* tp_name */
     sizeof(_PackageObject),         /* tp_basicsize */
     0,                              /* tp_itemsize */

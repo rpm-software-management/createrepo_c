@@ -191,8 +191,7 @@ static PyGetSetDef updatereference_getsetters[] = {
 /* Object */
 
 PyTypeObject UpdateReference_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.UpdateReference", /* tp_name */
     sizeof(_UpdateReferenceObject), /* tp_basicsize */
     0,                              /* tp_itemsize */

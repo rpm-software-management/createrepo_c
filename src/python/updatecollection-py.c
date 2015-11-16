@@ -278,8 +278,7 @@ static PyGetSetDef updatecollection_getsetters[] = {
 /* Object */
 
 PyTypeObject UpdateCollection_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.UpdateCollection",/* tp_name */
     sizeof(_UpdateCollectionObject),/* tp_basicsize */
     0,                              /* tp_itemsize */

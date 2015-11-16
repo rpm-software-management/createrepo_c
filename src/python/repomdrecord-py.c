@@ -393,8 +393,7 @@ static PyGetSetDef repomdrecord_getsetters[] = {
 /* Object */
 
 PyTypeObject RepomdRecord_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.RepomdRecord",    /* tp_name */
     sizeof(_RepomdRecordObject),    /* tp_basicsize */
     0,                              /* tp_itemsize */

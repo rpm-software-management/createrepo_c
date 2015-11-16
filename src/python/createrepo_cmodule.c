@@ -43,6 +43,10 @@
 #include "xml_file-py.h"
 #include "xml_parser-py.h"
 
+struct module_state {
+    PyObject *error;
+};
+
 static struct PyMethodDef createrepo_c_methods[] = {
     {"package_from_rpm",        (PyCFunction)py_package_from_rpm,
         METH_VARARGS | METH_KEYWORDS, package_from_rpm__doc__},
@@ -85,103 +89,130 @@ static struct PyMethodDef createrepo_c_methods[] = {
     { NULL }
 };
 
+#if PY_MAJOR_VERSION >= 3
+static struct PyModuleDef createrepo_c_module_def = {
+        PyModuleDef_HEAD_INIT,
+        "_createrepo_c",
+        NULL,
+        sizeof(struct module_state),
+        createrepo_c_methods,
+        NULL,
+        NULL,
+        NULL,
+        NULL
+};
+
+#define FAILURE NULL
+
+PyObject *
+PyInit__createrepo_c(void)
+
+#else
+
+#define FAILURE
+
 PyMODINIT_FUNC
 init_createrepo_c(void)
+#endif
 {
+#if PY_MAJOR_VERSION >= 3
+    PyObject *m = PyModule_Create(&createrepo_c_module_def);
+#else
     PyObject *m = Py_InitModule("_createrepo_c", createrepo_c_methods);
+#endif
     if (!m)
-        return;
+        return FAILURE;
 
     /* Exceptions */
     if (!init_exceptions())
-        return;
+        return FAILURE;
     PyModule_AddObject(m, "CreaterepoCError", CrErr_Exception);
 
     /* Objects */
 
     /* _createrepo_c.ContentStat */
     if (PyType_Ready(&ContentStat_Type) < 0)
-        return;
+        return FAILURE;
     Py_INCREF(&ContentStat_Type);
     PyModule_AddObject(m, "ContentStat", (PyObject *)&ContentStat_Type);
 
     /* _createrepo_c.CrFile */
     if (PyType_Ready(&CrFile_Type) < 0)
-        return;
+        return FAILURE;
     Py_INCREF(&CrFile_Type);
     PyModule_AddObject(m, "CrFile", (PyObject *)&CrFile_Type);
 
     /* _createrepo_c.Package */
     if (PyType_Ready(&Package_Type) < 0)
-        return;
+        return FAILURE;
     Py_INCREF(&Package_Type);
     PyModule_AddObject(m, "Package", (PyObject *)&Package_Type);
 
     /* _createrepo_c.Metadata */
     if (PyType_Ready(&Metadata_Type) < 0)
-        return;
+        return FAILURE;
     Py_INCREF(&Metadata_Type);
     PyModule_AddObject(m, "Metadata", (PyObject *)&Metadata_Type);
 
     /* _createrepo_c.MetadataLocation */
     if (PyType_Ready(&MetadataLocation_Type) < 0)
-        return;
+        return FAILURE;
     Py_INCREF(&MetadataLocation_Type);
     PyModule_AddObject(m, "MetadataLocation", (PyObject *)&MetadataLocation_Type);
 
     /* _createrepo_c.Repomd */
     if (PyType_Ready(&Repomd_Type) < 0)
-        return;
+        return FAILURE;
     Py_INCREF(&Repomd_Type);
     PyModule_AddObject(m, "Repomd", (PyObject *)&Repomd_Type);
 
     /* _createrepo_c.RepomdRecord */
     if (PyType_Ready(&RepomdRecord_Type) < 0)
-        return;
+        return FAILURE;
     Py_INCREF(&RepomdRecord_Type);
     PyModule_AddObject(m, "RepomdRecord", (PyObject *)&RepomdRecord_Type);
 
     /* _createrepo_c.Sqlite */
     if (PyType_Ready(&Sqlite_Type) < 0)
-        return;
+        return FAILURE;
     Py_INCREF(&Sqlite_Type);
     PyModule_AddObject(m, "Sqlite", (PyObject *)&Sqlite_Type);
 
     /* _createrepo_c.UpdateCollection */
     if (PyType_Ready(&UpdateCollection_Type) < 0)
-        return;
+        return FAILURE;
     Py_INCREF(&UpdateCollection_Type);
     PyModule_AddObject(m, "UpdateCollection",
                        (PyObject *)&UpdateCollection_Type);
 
     /* _createrepo_c.UpdateCollectionPackage */
     if (PyType_Ready(&UpdateCollectionPackage_Type) < 0)
-        return;
+        return FAILURE;
     Py_INCREF(&UpdateCollectionPackage_Type);
     PyModule_AddObject(m, "UpdateCollectionPackage",
                        (PyObject *)&UpdateCollectionPackage_Type);
 
     /* _createrepo_c.UpdateInfo */
     if (PyType_Ready(&UpdateInfo_Type) < 0)
-        return;
+        return FAILURE;
     Py_INCREF(&UpdateInfo_Type);
     PyModule_AddObject(m, "UpdateInfo", (PyObject *)&UpdateInfo_Type);
 
     /* _createrepo_c.UpdateRecord */
     if (PyType_Ready(&UpdateRecord_Type) < 0)
-        return;
+        return FAILURE;
     Py_INCREF(&UpdateRecord_Type);
     PyModule_AddObject(m, "UpdateRecord", (PyObject *)&UpdateRecord_Type);
 
     /* _createrepo_c.UpdateReference */
     if (PyType_Ready(&UpdateReference_Type) < 0)
-        return;
+        return FAILURE;
     Py_INCREF(&UpdateReference_Type);
     PyModule_AddObject(m, "UpdateReference", (PyObject *)&UpdateReference_Type);
 
     /* _createrepo_c.XmlFile */
     if (PyType_Ready(&XmlFile_Type) < 0)
-        return;
+        return FAILURE;
     Py_INCREF(&XmlFile_Type);
     PyModule_AddObject(m, "XmlFile", (PyObject *)&XmlFile_Type);
 
@@ -253,4 +284,10 @@ init_createrepo_c(void)
     PyModule_AddIntConstant(m, "XML_WARNING_MISSINGATTR", CR_XML_WARNING_MISSINGATTR);
     PyModule_AddIntConstant(m, "XML_WARNING_UNKNOWNVAL", CR_XML_WARNING_UNKNOWNVAL);
     PyModule_AddIntConstant(m, "XML_WARNING_BADATTRVAL", CR_XML_WARNING_BADATTRVAL);
+
+#if PY_MAJOR_VERSION >= 3
+    return m;
+#else
+    return;
+#endif
 }

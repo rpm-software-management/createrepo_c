@@ -132,7 +132,6 @@ PyObject *
 getitem(_MetadataLocationObject *self, PyObject *pykey)
 {
     char *key, *value;
-    PyObject *bytekey;
 
     if (check_MetadataLocationStatus(self))
         return NULL;
@@ -143,11 +142,11 @@ getitem(_MetadataLocationObject *self, PyObject *pykey)
     }
 
     if (PyUnicode_Check(pykey)) {
-        bytekey = PyUnicode_AsUTF8String(pykey);
-        key = PyBytes_AsString(bytekey);
-    } else {
-        key = PyBytes_AsString(pykey);
+        pykey = PyUnicode_AsUTF8String(pykey);
     }
+
+    key = PyBytes_AsString(pykey);
+
     value = NULL;
 
     if (!strcmp(key, "primary")) {

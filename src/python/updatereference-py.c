@@ -165,13 +165,19 @@ set_str(_UpdateReferenceObject *self, PyObject *value, void *member_offset)
 {
     if (check_UpdateReferenceStatus(self))
         return -1;
-    if (!PyUnicode_Check(value) && value != Py_None) {
-        PyErr_SetString(PyExc_TypeError, "String or None expected!");
+    if (!PyUnicode_Check(value) && !PyBytes_Check(value) && value != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "Unicode, bytes, or None expected!");
         return -1;
     }
+
+    if (PyUnicode_Check(value)) {
+        value = PyUnicode_AsUTF8String(value);
+    }
+
     cr_UpdateReference *ref = self->reference;
     char *str = cr_safe_string_chunk_insert(ref->chunk,
                                             PyObject_ToStrOrNull(value));
+
     *((char **) ((size_t) ref + (size_t) member_offset)) = str;
     return 0;
 }

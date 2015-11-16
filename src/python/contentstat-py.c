@@ -196,8 +196,8 @@ set_str(_ContentStatObject *self, PyObject *value, void *member_offset)
 {
     if (check_ContentStatStatus(self))
         return -1;
-    if (!PyUnicode_Check(value) && value != Py_None) {
-        PyErr_SetString(PyExc_TypeError, "String or None expected!");
+    if (!PyUnicode_Check(value) && !PyBytes_Check(value) && value != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "Unicode, bytes, or None expected!");
         return -1;
     }
     cr_ContentStat *rec = self->stat;

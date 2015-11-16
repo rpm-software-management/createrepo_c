@@ -316,8 +316,8 @@ set_str(_UpdateRecordObject *self, PyObject *value, void *member_offset)
 {
     if (check_UpdateRecordStatus(self))
         return -1;
-    if (!PyUnicode_Check(value) && value != Py_None) {
-        PyErr_SetString(PyExc_TypeError, "String or None expected!");
+    if (!PyUnicode_Check(value) && !PyBytes_Check(value) && value != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "Unicode, bytes, or None expected!");
         return -1;
     }
     cr_UpdateRecord *rec = self->record;

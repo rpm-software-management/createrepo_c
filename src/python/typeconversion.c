@@ -49,9 +49,11 @@ PyErr_ToGError(GError **err)
         g_set_error(err, ERR_DOMAIN, CRE_XMLPARSER,
                     "Error while error handling");
     } else {
-        PyObject *bytes = PyUnicode_AsUTF8String(pystr);
+        if (PyUnicode_Check(pystr)) {
+            pystr = PyUnicode_AsUTF8String(pystr);
+        }
         g_set_error(err, ERR_DOMAIN, CRE_XMLPARSER,
-                    "%s", PyBytes_AsString(bytes));
+                    "%s", PyBytes_AsString(pystr));
     }
 
     Py_XDECREF(pystr);
@@ -70,9 +72,13 @@ PyObject_ToStrOrNull(PyObject *pyobj)
 {
     // String returned by this function shoud not be freed or modified
     if (PyUnicode_Check(pyobj)) {
-        PyObject *bytes = PyUnicode_AsUTF8String(pyobj);
-        return PyBytes_AsString(bytes);
+        pyobj = PyUnicode_AsUTF8String(pyobj);
     }
+
+    if (PyBytes_Check(pyobj)) {
+        return PyBytes_AsString(pyobj);
+    }
+
     // TODO: ? Add support for pyobj like: ("xxx",) and ["xxx"]
     return NULL;
 }
@@ -254,11 +260,14 @@ GSList_FromPyList_Str(PyObject *py_list)
     for (Py_ssize_t x=0; x < size; x++) {
         PyObject *py_str = PyList_GetItem(py_list, x);
         assert(py_str != NULL);
-        if (!PyUnicode_Check(py_str))
+        if (!PyUnicode_Check(py_str) && !PyBytes_Check(py_str))
             // Hmm, element is not a string, just skip it
             continue;
-        PyObject *py_bytes = PyUnicode_AsUTF8String(py_str);
-        list = g_slist_prepend(list, PyBytes_AsString(py_bytes));
+
+        if (PyUnicode_Check(py_str))
+            py_str = PyUnicode_AsUTF8String(py_str);
+
+        list = g_slist_prepend(list, PyBytes_AsString(py_str));
     }
 
     return list;

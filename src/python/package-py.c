@@ -416,14 +416,11 @@ set_str(_PackageObject *self, PyObject *value, void *member_offset)
     if (!pkg->chunk)
         pkg->chunk = g_string_chunk_new(0);
 
-    PyObject *bytes;
     if (PyUnicode_Check(value)) {
-        bytes = PyUnicode_AsUTF8String(value);
-    } else {
-        bytes = value;
+        value = PyUnicode_AsUTF8String(value);
     }
 
-    char *str = g_string_chunk_insert(pkg->chunk, PyBytes_AsString(bytes));
+    char *str = g_string_chunk_insert(pkg->chunk, PyBytes_AsString(value));
     *((char **) ((size_t) pkg + (size_t) member_offset)) = str;
     return 0;
 }

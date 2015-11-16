@@ -101,7 +101,7 @@ updateinfo_dealloc(_UpdateInfoObject *self)
 static PyObject *
 updateinfo_repr(G_GNUC_UNUSED _UpdateInfoObject *self)
 {
-    return PyString_FromFormat("<createrepo_c.UpdateInfo object>");
+    return PyBytes_FromFormat("<createrepo_c.UpdateInfo object>");
 }
 
 /* UpdateInfo methods */
@@ -141,7 +141,7 @@ xml_dump(_UpdateInfoObject *self, G_GNUC_UNUSED void *nothing)
         nice_exception(&tmp_err, NULL);
         return NULL;
     }
-    py_str = PyStringOrNone_FromString(xml);
+    py_str = PyBytesOrNone_FromString(xml);
     free(xml);
     return py_str;
 }

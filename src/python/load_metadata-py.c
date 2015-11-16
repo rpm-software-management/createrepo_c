@@ -111,7 +111,7 @@ metadata_dealloc(_MetadataObject *self)
 static PyObject *
 metadata_repr(G_GNUC_UNUSED _MetadataObject *self)
 {
-    return PyString_FromFormat("<createrepo_c.Metadata object>");
+    return PyBytes_FromFormat("<createrepo_c.Metadata object>");
 }
 
 /* Getters */
@@ -256,7 +256,7 @@ ht_keys(_MetadataObject *self, G_GNUC_UNUSED PyObject *args)
     PyObject *list = PyList_New(0);
 
     for (GList *elem = keys; elem; elem = g_list_next(elem)) {
-        PyObject *py_str = PyString_FromString(elem->data);
+        PyObject *py_str = PyBytes_FromString(elem->data);
         assert(py_str);
         if (PyList_Append(list, py_str) == -1) {
             Py_XDECREF(list);

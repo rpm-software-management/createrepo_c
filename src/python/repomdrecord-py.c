@@ -125,10 +125,10 @@ static PyObject *
 repomdrecord_repr(G_GNUC_UNUSED _RepomdRecordObject *self)
 {
     if (self->record->type)
-        return PyString_FromFormat("<createrepo_c.RepomdRecord %s object>",
+        return PyBytes_FromFormat("<createrepo_c.RepomdRecord %s object>",
                                    self->record->type);
     else
-        return PyString_FromFormat("<createrepo_c.RepomdRecord object>");
+        return PyBytes_FromFormat("<createrepo_c.RepomdRecord object>");
 }
 
 /* RepomdRecord methods */
@@ -296,7 +296,7 @@ get_str(_RepomdRecordObject *self, void *member_offset)
     char *str = *((char **) ((size_t) rec + (size_t) member_offset));
     if (str == NULL)
         Py_RETURN_NONE;
-    return PyString_FromString(str);
+    return PyBytes_FromString(str);
 }
 
 static int
@@ -350,7 +350,7 @@ set_str(_RepomdRecordObject *self, PyObject *value, void *member_offset)
 {
     if (check_RepomdRecordStatus(self))
         return -1;
-    if (!PyString_Check(value) && value != Py_None) {
+    if (!PyBytes_Check(value) && value != Py_None) {
         PyErr_SetString(PyExc_TypeError, "String or None expected!");
         return -1;
     }

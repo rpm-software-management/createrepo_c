@@ -148,11 +148,11 @@ package_repr(_PackageObject *self)
     cr_Package *pkg = self->package;
     PyObject *repr;
     if (pkg) {
-        repr = PyString_FromFormat("<createrepo_c.Package object id %s, %s>",
+        repr = PyBytes_FromFormat("<createrepo_c.Package object id %s, %s>",
                                    (pkg->pkgId ? pkg->pkgId : "-"),
                                    (pkg->name  ? pkg->name  : "-"));
     } else {
-       repr = PyString_FromFormat("<createrepo_c.Package object id -, ->");
+       repr = PyBytes_FromFormat("<createrepo_c.Package object id -, ->");
     }
     return repr;
 }
@@ -165,10 +165,10 @@ package_str(_PackageObject *self)
         return NULL;
     if (self->package) {
         char *nevra = cr_package_nvra(self->package);
-        ret = PyString_FromString(nevra);
+        ret = PyBytes_FromString(nevra);
         free(nevra);
     } else {
-        ret = PyString_FromString("-");
+        ret = PyBytes_FromString("-");
     }
     return ret;
 }
@@ -186,7 +186,7 @@ nvra(_PackageObject *self, G_GNUC_UNUSED void *nothing)
     if (check_PackageStatus(self))
         return NULL;
     char *nvra = cr_package_nvra(self->package);
-    pystr = PyStringOrNone_FromString(nvra);
+    pystr = PyBytesOrNone_FromString(nvra);
     free(nvra);
     return pystr;
 }
@@ -202,7 +202,7 @@ nevra(_PackageObject *self, G_GNUC_UNUSED void *nothing)
     if (check_PackageStatus(self))
         return NULL;
     char *nevra = cr_package_nevra(self->package);
-    pystr = PyStringOrNone_FromString(nevra);
+    pystr = PyBytesOrNone_FromString(nevra);
     free(nevra);
     return pystr;
 }
@@ -261,7 +261,7 @@ get_str(_PackageObject *self, void *member_offset)
     char *str = *((char **) ((size_t) pkg + (size_t) member_offset));
     if (str == NULL)
         Py_RETURN_NONE;
-    return PyString_FromString(str);
+    return PyBytes_FromString(str);
 }
 
 /** Return offset of a selected member of cr_Package structure. */
@@ -395,7 +395,7 @@ set_str(_PackageObject *self, PyObject *value, void *member_offset)
 {
     if (check_PackageStatus(self))
         return -1;
-    if (!PyString_Check(value) && value != Py_None) {
+    if (!PyBytes_Check(value) && value != Py_None) {
         PyErr_SetString(PyExc_TypeError, "String or None expected!");
         return -1;
     }
@@ -416,7 +416,7 @@ set_str(_PackageObject *self, PyObject *value, void *member_offset)
     if (!pkg->chunk)
         pkg->chunk = g_string_chunk_new(0);
 
-    char *str = g_string_chunk_insert(pkg->chunk, PyString_AsString(value));
+    char *str = g_string_chunk_insert(pkg->chunk, PyBytes_AsString(value));
     *((char **) ((size_t) pkg + (size_t) member_offset)) = str;
     return 0;
 }

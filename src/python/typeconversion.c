@@ -50,26 +50,26 @@ PyErr_ToGError(GError **err)
                     "Error while error handling");
     } else {
         g_set_error(err, ERR_DOMAIN, CRE_XMLPARSER,
-                    "%s", PyString_AsString(pystr));
+                    "%s", PyBytes_AsString(pystr));
     }
 
     Py_XDECREF(pystr);
 }
 
 PyObject *
-PyStringOrNone_FromString(const char *str)
+PyBytesOrNone_FromString(const char *str)
 {
     if (str == NULL)
         Py_RETURN_NONE;
-    return PyString_FromString(str);
+    return PyBytes_FromString(str);
 }
 
 char *
 PyObject_ToStrOrNull(PyObject *pyobj)
 {
     // String returned by this function shoud not be freed or modified
-    if (PyString_Check(pyobj))
-        return PyString_AsString(pyobj);
+    if (PyBytes_Check(pyobj))
+        return PyBytes_AsString(pyobj);
     // TODO: ? Add support for pyobj like: ("xxx",) and ["xxx"]
     return NULL;
 }
@@ -104,11 +104,11 @@ PyObject_FromDependency(cr_Dependency *dep)
     if ((tuple = PyTuple_New(6)) == NULL)
         return NULL;
 
-    PyTuple_SetItem(tuple, 0, PyStringOrNone_FromString(dep->name));
-    PyTuple_SetItem(tuple, 1, PyStringOrNone_FromString(dep->flags));
-    PyTuple_SetItem(tuple, 2, PyStringOrNone_FromString(dep->epoch));
-    PyTuple_SetItem(tuple, 3, PyStringOrNone_FromString(dep->version));
-    PyTuple_SetItem(tuple, 4, PyStringOrNone_FromString(dep->release));
+    PyTuple_SetItem(tuple, 0, PyBytesOrNone_FromString(dep->name));
+    PyTuple_SetItem(tuple, 1, PyBytesOrNone_FromString(dep->flags));
+    PyTuple_SetItem(tuple, 2, PyBytesOrNone_FromString(dep->epoch));
+    PyTuple_SetItem(tuple, 3, PyBytesOrNone_FromString(dep->version));
+    PyTuple_SetItem(tuple, 4, PyBytesOrNone_FromString(dep->release));
     PyTuple_SetItem(tuple, 5, PyBool_FromLong((long) dep->pre));
 
     return tuple;
@@ -149,9 +149,9 @@ PyObject_FromPackageFile(cr_PackageFile *file)
     if ((tuple = PyTuple_New(3)) == NULL)
         return NULL;
 
-    PyTuple_SetItem(tuple, 0, PyStringOrNone_FromString(file->type));
-    PyTuple_SetItem(tuple, 1, PyStringOrNone_FromString(file->path));
-    PyTuple_SetItem(tuple, 2, PyStringOrNone_FromString(file->name));
+    PyTuple_SetItem(tuple, 0, PyBytesOrNone_FromString(file->type));
+    PyTuple_SetItem(tuple, 1, PyBytesOrNone_FromString(file->path));
+    PyTuple_SetItem(tuple, 2, PyBytesOrNone_FromString(file->name));
 
     return tuple;
 }
@@ -182,9 +182,9 @@ PyObject_FromChangelogEntry(cr_ChangelogEntry *log)
     if ((tuple = PyTuple_New(3)) == NULL)
         return NULL;
 
-    PyTuple_SetItem(tuple, 0, PyStringOrNone_FromString(log->author));
+    PyTuple_SetItem(tuple, 0, PyBytesOrNone_FromString(log->author));
     PyTuple_SetItem(tuple, 1, PyLong_FromLong((long) log->date));
-    PyTuple_SetItem(tuple, 2, PyStringOrNone_FromString(log->changelog));
+    PyTuple_SetItem(tuple, 2, PyBytesOrNone_FromString(log->changelog));
 
     return tuple;
 }
@@ -215,8 +215,8 @@ PyObject_FromDistroTag(cr_DistroTag *tag)
     if ((tuple = PyTuple_New(2)) == NULL)
         return NULL;
 
-    PyTuple_SetItem(tuple, 0, PyStringOrNone_FromString(tag->cpeid));
-    PyTuple_SetItem(tuple, 1, PyStringOrNone_FromString(tag->val));
+    PyTuple_SetItem(tuple, 0, PyBytesOrNone_FromString(tag->cpeid));
+    PyTuple_SetItem(tuple, 1, PyBytesOrNone_FromString(tag->val));
 
     return tuple;
 }
@@ -251,10 +251,10 @@ GSList_FromPyList_Str(PyObject *py_list)
     for (Py_ssize_t x=0; x < size; x++) {
         PyObject *py_str = PyList_GetItem(py_list, x);
         assert(py_str != NULL);
-        if (!PyString_Check(py_str))
+        if (!PyBytes_Check(py_str))
             // Hmm, element is not a string, just skip it
             continue;
-        list = g_slist_prepend(list, PyString_AsString(py_str));
+        list = g_slist_prepend(list, PyBytes_AsString(py_str));
     }
 
     return list;

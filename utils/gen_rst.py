@@ -140,7 +140,7 @@ def parse_arguments_from_c_file(filename):
 
 
 if __name__ == "__main__":
-    parser = OptionParser('usage: %prog [options] <filename> [--mergerepo|--modifyrepo]')
+    parser = OptionParser('usage: %prog [options] <filename> [--mergerepo|--modifyrepo|--sqliterepo]')
     parser.add_option('-m', '--mergerepo', action="store_true", help="Gen rst for mergerepo")
     parser.add_option('-r', '--modifyrepo', action="store_true", help="Gen rst for modifyrepo")
     parser.add_option('-s', '--sqliterepo', action="store_true", help="Gen rst for sqliterepo")

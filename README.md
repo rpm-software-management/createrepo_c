@@ -73,14 +73,9 @@ where the path is path to your build of drpm library.
 
 ## Building for a different Python version
 
-By default, cmake should find the default version of python on your system
-(say, Python 2), but if you want to build for Python 3 you need to specify
-parameters like the following:
+By default, cmake should set up things to build for Python 2, but you can do a build for Python 3 like this::
 
-    cmake \
-        -DPYTHON_LIBRARY=/usr/lib64/libpython3.4m.so \
-        -DPYTHON_INCLUDE_DIR=/usr/include/python3.4m \
-        -D PYTHON_EXECUTABLE=/usr/bin/python3 .
+    cmake -DPYTHON_DESIRED=2 .
 
 ## Build tarball
 

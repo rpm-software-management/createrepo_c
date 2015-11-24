@@ -75,7 +75,7 @@ where the path is path to your build of drpm library.
 
 By default, cmake should set up things to build for Python 2, but you can do a build for Python 3 like this::
 
-    cmake -DPYTHON_DESIRED=2 .
+    cmake -DPYTHON_DESIRED=3 .
 
 ## Build tarball
 

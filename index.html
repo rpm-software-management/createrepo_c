@@ -126,6 +126,14 @@ where the path is path to your build of drpm library.</p>
 </code></pre>
 
 <h2>
+<a id="building-for-a-different-python-version" class="anchor" href="#build-tarball" aria-hidden="true"><span class="octicon octicon-link"></span></a>Building for a different Python version</h2>
+
+<p>By default, cmake should set up things to build for Python 2, but you can do a build for Python 3 like this:</p>
+
+<pre><code>cmake -DPYTHON_DESIRED=3 .
+</code></pre>
+
+<h2>
 <a id="build-tarball" class="anchor" href="#build-tarball" aria-hidden="true"><span class="octicon octicon-link"></span></a>Build tarball</h2>
 
 <pre><code>utils/make_tarball.sh [git revision]

@@ -84,7 +84,7 @@ cr_set_cleanup_handler(const char *lock_dir,
         global_tmp_out_repo = NULL;
 
     // Register on exit cleanup function
-    if (on_exit(failure_exit_cleanup, NULL))
+    if (atexit(failure_exit_cleanup))
         g_warning("Cannot set exit cleanup function by atexit()");
 
     // Prepare signal handler configuration

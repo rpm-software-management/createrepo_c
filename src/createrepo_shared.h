@@ -40,7 +40,7 @@ extern "C" {
 
 /**
  * This function does:
- * 1) Sets on_exit cleanup function that removes temporary directories
+ * 1) Sets atexit cleanup function that removes temporary directories
  * 2) Sets a signal handler for signals that lead to process temination.
  *    (List obtained from the "man 7 signal")
  *    Signals that are ignored (SIGCHILD) or lead just to stop (SIGSTOP, ...)

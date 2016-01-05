@@ -71,6 +71,12 @@ where the path is path to your build of drpm library.
 
     cmake -DDRPM_PATH="/home/tmlcoch/git/drpm" .. && make
 
+## Building for a different Python version
+
+By default, cmake should set up things to build for Python 2, but you can do a build for Python 3 like this::
+
+    cmake -DPYTHON_DESIRED=3 .
+
 ## Build tarball
 
     utils/make_tarball.sh [git revision]
@@ -104,6 +110,10 @@ Note: The C tests have to be builded by ``make tests``)!
 ### Run only Python unittests (from your checkout dir):
 
     PYTHONPATH=`readlink -f ./build/src/python/` nosetests -s tests/python/tests/
+
+Or, for an alternative python version, specify the appropriate nosetests executable:
+
+    PYTHONPATH=`readlink -f ./build/src/python/` nosetests-3.4 -s tests/python/tests/
 
 ### Links
 

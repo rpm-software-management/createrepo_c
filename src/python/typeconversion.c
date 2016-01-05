@@ -49,27 +49,36 @@ PyErr_ToGError(GError **err)
         g_set_error(err, ERR_DOMAIN, CRE_XMLPARSER,
                     "Error while error handling");
     } else {
+        if (PyUnicode_Check(pystr)) {
+            pystr = PyUnicode_AsUTF8String(pystr);
+        }
         g_set_error(err, ERR_DOMAIN, CRE_XMLPARSER,
-                    "%s", PyString_AsString(pystr));
+                    "%s", PyBytes_AsString(pystr));
     }
 
     Py_XDECREF(pystr);
 }
 
 PyObject *
-PyStringOrNone_FromString(const char *str)
+PyUnicodeOrNone_FromString(const char *str)
 {
     if (str == NULL)
         Py_RETURN_NONE;
-    return PyString_FromString(str);
+    return PyUnicode_FromString(str);
 }
 
 char *
 PyObject_ToStrOrNull(PyObject *pyobj)
 {
     // String returned by this function shoud not be freed or modified
-    if (PyString_Check(pyobj))
-        return PyString_AsString(pyobj);
+    if (PyUnicode_Check(pyobj)) {
+        pyobj = PyUnicode_AsUTF8String(pyobj);
+    }
+
+    if (PyBytes_Check(pyobj)) {
+        return PyBytes_AsString(pyobj);
+    }
+
     // TODO: ? Add support for pyobj like: ("xxx",) and ["xxx"]
     return NULL;
 }
@@ -84,10 +93,15 @@ long long
 PyObject_ToLongLongOrZero(PyObject *pyobj)
 {
     long long num = 0;
-    if (PyLong_Check(pyobj))
+    if (PyLong_Check(pyobj)) {
         num = (long long) PyLong_AsLongLong(pyobj);
-    else if (PyInt_Check(pyobj))
+    } else if (PyFloat_Check(pyobj)) {
+        num = (long long) PyFloat_AS_DOUBLE(pyobj);
+#if PY_MAJOR_VERSION < 3
+    } else if (PyInt_Check(pyobj)) {
         num = (long long) PyInt_AS_LONG(pyobj);
+#endif
+    }
     return num;
 }
 
@@ -99,11 +113,11 @@ PyObject_FromDependency(cr_Dependency *dep)
     if ((tuple = PyTuple_New(6)) == NULL)
         return NULL;
 
-    PyTuple_SetItem(tuple, 0, PyStringOrNone_FromString(dep->name));
-    PyTuple_SetItem(tuple, 1, PyStringOrNone_FromString(dep->flags));
-    PyTuple_SetItem(tuple, 2, PyStringOrNone_FromString(dep->epoch));
-    PyTuple_SetItem(tuple, 3, PyStringOrNone_FromString(dep->version));
-    PyTuple_SetItem(tuple, 4, PyStringOrNone_FromString(dep->release));
+    PyTuple_SetItem(tuple, 0, PyUnicodeOrNone_FromString(dep->name));
+    PyTuple_SetItem(tuple, 1, PyUnicodeOrNone_FromString(dep->flags));
+    PyTuple_SetItem(tuple, 2, PyUnicodeOrNone_FromString(dep->epoch));
+    PyTuple_SetItem(tuple, 3, PyUnicodeOrNone_FromString(dep->version));
+    PyTuple_SetItem(tuple, 4, PyUnicodeOrNone_FromString(dep->release));
     PyTuple_SetItem(tuple, 5, PyBool_FromLong((long) dep->pre));
 
     return tuple;
@@ -144,9 +158,9 @@ PyObject_FromPackageFile(cr_PackageFile *file)
     if ((tuple = PyTuple_New(3)) == NULL)
         return NULL;
 
-    PyTuple_SetItem(tuple, 0, PyStringOrNone_FromString(file->type));
-    PyTuple_SetItem(tuple, 1, PyStringOrNone_FromString(file->path));
-    PyTuple_SetItem(tuple, 2, PyStringOrNone_FromString(file->name));
+    PyTuple_SetItem(tuple, 0, PyUnicodeOrNone_FromString(file->type));
+    PyTuple_SetItem(tuple, 1, PyUnicodeOrNone_FromString(file->path));
+    PyTuple_SetItem(tuple, 2, PyUnicodeOrNone_FromString(file->name));
 
     return tuple;
 }
@@ -177,9 +191,9 @@ PyObject_FromChangelogEntry(cr_ChangelogEntry *log)
     if ((tuple = PyTuple_New(3)) == NULL)
         return NULL;
 
-    PyTuple_SetItem(tuple, 0, PyStringOrNone_FromString(log->author));
+    PyTuple_SetItem(tuple, 0, PyUnicodeOrNone_FromString(log->author));
     PyTuple_SetItem(tuple, 1, PyLong_FromLong((long) log->date));
-    PyTuple_SetItem(tuple, 2, PyStringOrNone_FromString(log->changelog));
+    PyTuple_SetItem(tuple, 2, PyUnicodeOrNone_FromString(log->changelog));
 
     return tuple;
 }
@@ -210,8 +224,8 @@ PyObject_FromDistroTag(cr_DistroTag *tag)
     if ((tuple = PyTuple_New(2)) == NULL)
         return NULL;
 
-    PyTuple_SetItem(tuple, 0, PyStringOrNone_FromString(tag->cpeid));
-    PyTuple_SetItem(tuple, 1, PyStringOrNone_FromString(tag->val));
+    PyTuple_SetItem(tuple, 0, PyUnicodeOrNone_FromString(tag->cpeid));
+    PyTuple_SetItem(tuple, 1, PyUnicodeOrNone_FromString(tag->val));
 
     return tuple;
 }
@@ -246,10 +260,14 @@ GSList_FromPyList_Str(PyObject *py_list)
     for (Py_ssize_t x=0; x < size; x++) {
         PyObject *py_str = PyList_GetItem(py_list, x);
         assert(py_str != NULL);
-        if (!PyString_Check(py_str))
+        if (!PyUnicode_Check(py_str) && !PyBytes_Check(py_str))
             // Hmm, element is not a string, just skip it
             continue;
-        list = g_slist_prepend(list, PyString_AsString(py_str));
+
+        if (PyUnicode_Check(py_str))
+            py_str = PyUnicode_AsUTF8String(py_str);
+
+        list = g_slist_prepend(list, PyBytes_AsString(py_str));
     }
 
     return list;

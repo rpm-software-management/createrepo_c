@@ -5,7 +5,7 @@ import tempfile
 import os.path
 import createrepo_c as cr
 
-from fixtures import *
+from .fixtures import *
 
 class TestCaseXmlParserPrimary(unittest.TestCase):
 
@@ -433,10 +433,10 @@ class TestCaseXmlParserOther(unittest.TestCase):
         self.assertEqual(pkg.files, [])
         self.assertEqual(pkg.changelogs,
                 [('Tomas Mlcoch <tmlcoch@redhat.com> - 6.0.1-1',
-                   1334664000L,
+                   1334664000,
                   '- First release'),
                  ('Tomas Mlcoch <tmlcoch@redhat.com> - 6.0.1-2',
-                   1334664001L,
+                   1334664001,
                    '- Second release')])
 
     def test_xml_parser_other_repo02(self):

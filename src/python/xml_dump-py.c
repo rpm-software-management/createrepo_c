@@ -44,7 +44,7 @@ py_xml_dump_primary(G_GNUC_UNUSED PyObject *self, PyObject *args)
         return NULL;
     }
 
-    py_str = PyStringOrNone_FromString(xml);
+    py_str = PyUnicodeOrNone_FromString(xml);
     free(xml);
     return py_str;
 }
@@ -65,7 +65,7 @@ py_xml_dump_filelists(G_GNUC_UNUSED PyObject *self, PyObject *args)
         return NULL;
     }
 
-    py_str = PyStringOrNone_FromString(xml);
+    py_str = PyUnicodeOrNone_FromString(xml);
     free(xml);
     return py_str;
 }
@@ -86,7 +86,7 @@ py_xml_dump_other(G_GNUC_UNUSED PyObject *self, PyObject *args)
         return NULL;
     }
 
-    py_str = PyStringOrNone_FromString(xml);
+    py_str = PyUnicodeOrNone_FromString(xml);
     free(xml);
     return py_str;
 }
@@ -115,9 +115,9 @@ py_xml_dump(G_GNUC_UNUSED PyObject *self, PyObject *args)
         return NULL;
     }
 
-    PyTuple_SetItem(tuple, 0, PyStringOrNone_FromString(xml_res.primary));
-    PyTuple_SetItem(tuple, 1, PyStringOrNone_FromString(xml_res.filelists));
-    PyTuple_SetItem(tuple, 2, PyStringOrNone_FromString(xml_res.other));
+    PyTuple_SetItem(tuple, 0, PyUnicodeOrNone_FromString(xml_res.primary));
+    PyTuple_SetItem(tuple, 1, PyUnicodeOrNone_FromString(xml_res.filelists));
+    PyTuple_SetItem(tuple, 2, PyUnicodeOrNone_FromString(xml_res.other));
 
     free(xml_res.primary);
     free(xml_res.filelists);
@@ -144,7 +144,7 @@ py_xml_dump_updaterecord(G_GNUC_UNUSED PyObject *self, PyObject *args)
         return NULL;
     }
 
-    py_str = PyStringOrNone_FromString(xml);
+    py_str = PyUnicodeOrNone_FromString(xml);
     free(xml);
     return py_str;
 }

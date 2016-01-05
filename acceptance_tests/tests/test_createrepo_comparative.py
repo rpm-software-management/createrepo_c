@@ -1,8 +1,8 @@
 import os
 import os.path
 
-from fixtures import PACKAGES
-from base import BaseTestCase
+from .fixtures import PACKAGES
+from .base import BaseTestCase
 
 
 class TestCaseCreaterepoComparative_emptyrepo(BaseTestCase):

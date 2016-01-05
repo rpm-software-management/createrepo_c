@@ -125,10 +125,10 @@ static PyObject *
 repomdrecord_repr(G_GNUC_UNUSED _RepomdRecordObject *self)
 {
     if (self->record->type)
-        return PyString_FromFormat("<createrepo_c.RepomdRecord %s object>",
+        return PyUnicode_FromFormat("<createrepo_c.RepomdRecord %s object>",
                                    self->record->type);
     else
-        return PyString_FromFormat("<createrepo_c.RepomdRecord object>");
+        return PyUnicode_FromFormat("<createrepo_c.RepomdRecord object>");
 }
 
 /* RepomdRecord methods */
@@ -296,7 +296,7 @@ get_str(_RepomdRecordObject *self, void *member_offset)
     char *str = *((char **) ((size_t) rec + (size_t) member_offset));
     if (str == NULL)
         Py_RETURN_NONE;
-    return PyString_FromString(str);
+    return PyUnicode_FromString(str);
 }
 
 static int
@@ -307,8 +307,12 @@ set_num(_RepomdRecordObject *self, PyObject *value, void *member_offset)
         return -1;
     if (PyLong_Check(value)) {
         val = (gint64) PyLong_AsLong(value);
+    } else if (PyFloat_Check(value)) {
+        val = (gint64) PyFloat_AS_DOUBLE(value);
+#if PY_MAJOR_VERSION < 3
     } else if (PyInt_Check(value)) {
         val = (gint64) PyInt_AS_LONG(value);
+#endif
     } else {
         PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;
@@ -326,8 +330,12 @@ set_int(_RepomdRecordObject *self, PyObject *value, void *member_offset)
         return -1;
     if (PyLong_Check(value)) {
         val = PyLong_AsLong(value);
+    } else if (PyFloat_Check(value)) {
+        val = (long long) PyFloat_AS_DOUBLE(value);
+#if PY_MAJOR_VERSION < 3
     } else if (PyInt_Check(value)) {
         val = PyInt_AS_LONG(value);
+#endif
     } else {
         PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;
@@ -342,8 +350,8 @@ set_str(_RepomdRecordObject *self, PyObject *value, void *member_offset)
 {
     if (check_RepomdRecordStatus(self))
         return -1;
-    if (!PyString_Check(value) && value != Py_None) {
-        PyErr_SetString(PyExc_TypeError, "String or None expected!");
+    if (!PyUnicode_Check(value) && !PyBytes_Check(value) && value != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "Unicode, bytes, or None expected!");
         return -1;
     }
     cr_RepomdRecord *rec = self->record;
@@ -385,8 +393,7 @@ static PyGetSetDef repomdrecord_getsetters[] = {
 /* Object */
 
 PyTypeObject RepomdRecord_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.RepomdRecord",    /* tp_name */
     sizeof(_RepomdRecordObject),    /* tp_basicsize */
     0,                              /* tp_itemsize */

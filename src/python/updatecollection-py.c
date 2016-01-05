@@ -118,7 +118,7 @@ updatecollection_dealloc(_UpdateCollectionObject *self)
 static PyObject *
 updatecollection_repr(G_GNUC_UNUSED _UpdateCollectionObject *self)
 {
-    return PyString_FromFormat("<createrepo_c.UpdateCollection object>");
+    return PyUnicode_FromFormat("<createrepo_c.UpdateCollection object>");
 }
 
 /* UpdateCollection methods */
@@ -222,7 +222,7 @@ get_str(_UpdateCollectionObject *self, void *member_offset)
     char *str = *((char **) ((size_t) rec + (size_t) member_offset));
     if (str == NULL)
         Py_RETURN_NONE;
-    return PyString_FromString(str);
+    return PyUnicode_FromString(str);
 }
 
 static PyObject *
@@ -254,8 +254,8 @@ set_str(_UpdateCollectionObject *self, PyObject *value, void *member_offset)
 {
     if (check_UpdateCollectionStatus(self))
         return -1;
-    if (!PyString_Check(value) && value != Py_None) {
-        PyErr_SetString(PyExc_TypeError, "String or None expected!");
+    if (!PyUnicode_Check(value) && !PyBytes_Check(value) && value != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "Unicode, bytes, or None expected!");
         return -1;
     }
     cr_UpdateCollection *rec = self->collection;
@@ -278,8 +278,7 @@ static PyGetSetDef updatecollection_getsetters[] = {
 /* Object */
 
 PyTypeObject UpdateCollection_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.UpdateCollection",/* tp_name */
     sizeof(_UpdateCollectionObject),/* tp_basicsize */
     0,                              /* tp_itemsize */

@@ -111,7 +111,7 @@ metadata_dealloc(_MetadataObject *self)
 static PyObject *
 metadata_repr(G_GNUC_UNUSED _MetadataObject *self)
 {
-    return PyString_FromFormat("<createrepo_c.Metadata object>");
+    return PyUnicode_FromFormat("<createrepo_c.Metadata object>");
 }
 
 /* Getters */
@@ -256,7 +256,7 @@ ht_keys(_MetadataObject *self, G_GNUC_UNUSED PyObject *args)
     PyObject *list = PyList_New(0);
 
     for (GList *elem = keys; elem; elem = g_list_next(elem)) {
-        PyObject *py_str = PyString_FromString(elem->data);
+        PyObject *py_str = PyUnicode_FromString(elem->data);
         assert(py_str);
         if (PyList_Append(list, py_str) == -1) {
             Py_XDECREF(list);
@@ -351,8 +351,7 @@ static struct PyMethodDef metadata_methods[] = {
 /* Object */
 
 PyTypeObject Metadata_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.Metadata",        /* tp_name */
     sizeof(_MetadataObject),        /* tp_basicsize */
     0,                              /* tp_itemsize */

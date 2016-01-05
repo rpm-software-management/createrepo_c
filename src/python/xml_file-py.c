@@ -155,7 +155,7 @@ xmlfile_repr(_XmlFileObject *self)
             type = "Unknown";
     }
 
-    return PyString_FromFormat("<createrepo_c.XmlFile %s object>", type);
+    return PyUnicode_FromFormat("<createrepo_c.XmlFile %s object>", type);
 }
 
 /* XmlFile methods */
@@ -273,8 +273,7 @@ static struct PyMethodDef xmlfile_methods[] = {
 };
 
 PyTypeObject XmlFile_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.XmlFile",         /* tp_name */
     sizeof(_XmlFileObject),         /* tp_basicsize */
     0,                              /* tp_itemsize */

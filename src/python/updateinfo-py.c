@@ -101,7 +101,7 @@ updateinfo_dealloc(_UpdateInfoObject *self)
 static PyObject *
 updateinfo_repr(G_GNUC_UNUSED _UpdateInfoObject *self)
 {
-    return PyString_FromFormat("<createrepo_c.UpdateInfo object>");
+    return PyUnicode_FromFormat("<createrepo_c.UpdateInfo object>");
 }
 
 /* UpdateInfo methods */
@@ -141,7 +141,7 @@ xml_dump(_UpdateInfoObject *self, G_GNUC_UNUSED void *nothing)
         nice_exception(&tmp_err, NULL);
         return NULL;
     }
-    py_str = PyStringOrNone_FromString(xml);
+    py_str = PyUnicodeOrNone_FromString(xml);
     free(xml);
     return py_str;
 }
@@ -271,8 +271,7 @@ static PyGetSetDef updateinfo_getsetters[] = {
 
 
 PyTypeObject UpdateInfo_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.UpdateInfo",      /* tp_name */
     sizeof(_UpdateInfoObject),      /* tp_basicsize */
     0,                              /* tp_itemsize */

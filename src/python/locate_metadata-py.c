@@ -109,7 +109,7 @@ metadatalocation_dealloc(_MetadataLocationObject *self)
 static PyObject *
 metadatalocation_repr(G_GNUC_UNUSED _MetadataLocationObject *self)
 {
-    return PyString_FromFormat("<createrepo_c.MetadataLocation object>");
+    return PyUnicode_FromFormat("<createrepo_c.MetadataLocation object>");
 }
 
 /* MetadataLocation methods */
@@ -136,12 +136,17 @@ getitem(_MetadataLocationObject *self, PyObject *pykey)
     if (check_MetadataLocationStatus(self))
         return NULL;
 
-    if (!PyString_Check(pykey)) {
-        PyErr_SetString(PyExc_TypeError, "String expected!");
+    if (!PyUnicode_Check(pykey) && !PyBytes_Check(pykey)) {
+        PyErr_SetString(PyExc_TypeError, "Unicode or bytes expected!");
         return NULL;
     }
 
-    key = PyString_AsString(pykey);
+    if (PyUnicode_Check(pykey)) {
+        pykey = PyUnicode_AsUTF8String(pykey);
+    }
+
+    key = PyBytes_AsString(pykey);
+
     value = NULL;
 
     if (!strcmp(key, "primary")) {
@@ -165,7 +170,7 @@ getitem(_MetadataLocationObject *self, PyObject *pykey)
     }
 
     if (value)
-        return PyString_FromString(value);
+        return PyUnicode_FromString(value);
     else
         Py_RETURN_NONE;
 }
@@ -179,8 +184,7 @@ static PyMappingMethods mapping_methods = {
 /* Object */
 
 PyTypeObject MetadataLocation_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.MetadataLocation",/* tp_name */
     sizeof(_MetadataLocationObject),/* tp_basicsize */
     0,                              /* tp_itemsize */

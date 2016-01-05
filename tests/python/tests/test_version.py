@@ -1,7 +1,7 @@
 import unittest
 import createrepo_c as cr
 
-import fixtures
+from . import fixtures
 
 class TestCaseVersion(unittest.TestCase):
     def test_version(self):

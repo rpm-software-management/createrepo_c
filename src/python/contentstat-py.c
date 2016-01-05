@@ -106,7 +106,7 @@ contentstat_dealloc(_ContentStatObject *self)
 static PyObject *
 contentstat_repr(G_GNUC_UNUSED _ContentStatObject *self)
 {
-    return PyString_FromFormat("<createrepo_c.ContentStat object>");
+    return PyUnicode_FromFormat("<createrepo_c.ContentStat object>");
 }
 
 /* getsetters */
@@ -142,7 +142,7 @@ get_str(_ContentStatObject *self, void *member_offset)
     char *str = *((char **) ((size_t) rec + (size_t) member_offset));
     if (str == NULL)
         Py_RETURN_NONE;
-    return PyString_FromString(str);
+    return PyUnicode_FromString(str);
 }
 
 static int
@@ -153,8 +153,12 @@ set_num(_ContentStatObject *self, PyObject *value, void *member_offset)
         return -1;
     if (PyLong_Check(value)) {
         val = (gint64) PyLong_AsLong(value);
+    } else if (PyFloat_Check(value)) {
+        val = (gint64) PyFloat_AS_DOUBLE(value);
+#if PY_MAJOR_VERSION < 3
     } else if (PyInt_Check(value)) {
         val = (gint64) PyInt_AS_LONG(value);
+#endif
     } else {
         PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;
@@ -172,8 +176,12 @@ set_int(_ContentStatObject *self, PyObject *value, void *member_offset)
         return -1;
     if (PyLong_Check(value)) {
         val = PyLong_AsLong(value);
+    } else if (PyFloat_Check(value)) {
+        val = (gint64) PyFloat_AS_DOUBLE(value);
+#if PY_MAJOR_VERSION < 3
     } else if (PyInt_Check(value)) {
-        val = PyInt_AS_LONG(value);
+        val = (gint64) PyInt_AS_LONG(value);
+#endif
     } else {
         PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;
@@ -188,8 +196,8 @@ set_str(_ContentStatObject *self, PyObject *value, void *member_offset)
 {
     if (check_ContentStatStatus(self))
         return -1;
-    if (!PyString_Check(value) && value != Py_None) {
-        PyErr_SetString(PyExc_TypeError, "String or None expected!");
+    if (!PyUnicode_Check(value) && !PyBytes_Check(value) && value != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "Unicode, bytes, or None expected!");
         return -1;
     }
     cr_ContentStat *rec = self->stat;
@@ -211,8 +219,7 @@ static PyGetSetDef contentstat_getsetters[] = {
 /* Object */
 
 PyTypeObject ContentStat_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.ContentStat",     /* tp_name */
     sizeof(_ContentStatObject),     /* tp_basicsize */
     0,                              /* tp_itemsize */

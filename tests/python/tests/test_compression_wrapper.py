@@ -2,7 +2,7 @@ import unittest
 import os.path
 import createrepo_c as cr
 
-from fixtures import *
+from .fixtures import *
 
 class TestCaseCompressionWrapper(unittest.TestCase):
     def test_compression_suffix(self):

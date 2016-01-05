@@ -118,10 +118,10 @@ static PyObject *
 updatereference_repr(G_GNUC_UNUSED _UpdateReferenceObject *self)
 {
     if (self->reference->type)
-        return PyString_FromFormat("<createrepo_c.UpdateReference %s object>",
+        return PyUnicode_FromFormat("<createrepo_c.UpdateReference %s object>",
                                    self->reference->type);
     else
-        return PyString_FromFormat("<createrepo_c.UpdateReference object>");
+        return PyUnicode_FromFormat("<createrepo_c.UpdateReference object>");
 }
 
 /* UpdateReference methods */
@@ -157,7 +157,7 @@ get_str(_UpdateReferenceObject *self, void *member_offset)
     char *str = *((char **) ((size_t) ref + (size_t) member_offset));
     if (str == NULL)
         Py_RETURN_NONE;
-    return PyString_FromString(str);
+    return PyUnicode_FromString(str);
 }
 
 static int
@@ -165,13 +165,19 @@ set_str(_UpdateReferenceObject *self, PyObject *value, void *member_offset)
 {
     if (check_UpdateReferenceStatus(self))
         return -1;
-    if (!PyString_Check(value) && value != Py_None) {
-        PyErr_SetString(PyExc_TypeError, "String or None expected!");
+    if (!PyUnicode_Check(value) && !PyBytes_Check(value) && value != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "Unicode, bytes, or None expected!");
         return -1;
     }
+
+    if (PyUnicode_Check(value)) {
+        value = PyUnicode_AsUTF8String(value);
+    }
+
     cr_UpdateReference *ref = self->reference;
     char *str = cr_safe_string_chunk_insert(ref->chunk,
                                             PyObject_ToStrOrNull(value));
+
     *((char **) ((size_t) ref + (size_t) member_offset)) = str;
     return 0;
 }
@@ -191,8 +197,7 @@ static PyGetSetDef updatereference_getsetters[] = {
 /* Object */
 
 PyTypeObject UpdateReference_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.UpdateReference", /* tp_name */
     sizeof(_UpdateReferenceObject), /* tp_basicsize */
     0,                              /* tp_itemsize */

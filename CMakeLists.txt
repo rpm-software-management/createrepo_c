@@ -91,6 +91,11 @@ SET (VERSION "${CR_MAJOR}.${CR_MINOR}.${CR_PATCH}")
 message("Package version: ${VERSION}")
 
 
+# Default python version
+if (NOT PYTHON_DESIRED)
+    set (PYTHON_DESIRED "2")
+endif()
+
 # Other files
 
 pkg_check_modules(BASHCOMP bash-completion)

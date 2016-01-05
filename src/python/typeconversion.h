@@ -26,7 +26,7 @@
 // Clears the current Python Exception and return its representation in GError
 void PyErr_ToGError(GError **err);
 
-PyObject *PyStringOrNone_FromString(const char *str);
+PyObject *PyUnicodeOrNone_FromString(const char *str);
 char *PyObject_ToStrOrNull(PyObject *pyobj);
 char *PyObject_ToChunkedString(PyObject *pyobj, GStringChunk *chunk);
 

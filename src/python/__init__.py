@@ -1,8 +1,8 @@
 """
 """
 
-import _createrepo_c
-from _createrepo_c import *
+from . import _createrepo_c
+from ._createrepo_c import *
 
 VERSION_MAJOR = _createrepo_c.VERSION_MAJOR  #: Major version
 VERSION_MINOR = _createrepo_c.VERSION_MINOR  #: Minor version

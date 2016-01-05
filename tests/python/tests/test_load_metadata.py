@@ -1,7 +1,7 @@
 import unittest
 import createrepo_c as cr
 
-from fixtures import *
+from .fixtures import *
 
 class TestCaseLoadMetadata(unittest.TestCase):
     def test_load_metadata__repo00(self):

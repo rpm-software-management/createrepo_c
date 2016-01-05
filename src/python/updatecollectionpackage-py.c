@@ -117,7 +117,7 @@ updatecollectionpackage_dealloc(_UpdateCollectionPackageObject *self)
 static PyObject *
 updatecollectionpackage_repr(G_GNUC_UNUSED _UpdateCollectionPackageObject *self)
 {
-    return PyString_FromFormat("<createrepo_c.UpdateCollectionPackage object>");
+    return PyUnicode_FromFormat("<createrepo_c.UpdateCollectionPackage object>");
 }
 
 /* UpdateCollectionPackage methods */
@@ -164,7 +164,7 @@ get_str(_UpdateCollectionPackageObject *self, void *member_offset)
     char *str = *((char **) ((size_t) pkg + (size_t) member_offset));
     if (str == NULL)
         Py_RETURN_NONE;
-    return PyString_FromString(str);
+    return PyUnicode_FromString(str);
 }
 
 static int
@@ -175,8 +175,12 @@ set_int(_UpdateCollectionPackageObject *self, PyObject *value, void *member_offs
         return -1;
     if (PyLong_Check(value)) {
         val = PyLong_AsLong(value);
+    } else if (PyFloat_Check(value)) {
+        val = (long long) PyFloat_AS_DOUBLE(value);
+#if PY_MAJOR_VERSION < 3
     } else if (PyInt_Check(value)) {
         val = PyInt_AS_LONG(value);
+#endif
     } else {
         PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;
@@ -191,8 +195,8 @@ set_str(_UpdateCollectionPackageObject *self, PyObject *value, void *member_offs
 {
     if (check_UpdateCollectionPackageStatus(self))
         return -1;
-    if (!PyString_Check(value) && value != Py_None) {
-        PyErr_SetString(PyExc_TypeError, "String or None expected!");
+    if (!PyUnicode_Check(value) && !PyBytes_Check(value) && value != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "Unicode, bytes, or None expected!");
         return -1;
     }
     cr_UpdateCollectionPackage *pkg = self->pkg;
@@ -229,8 +233,7 @@ static PyGetSetDef updatecollectionpackage_getsetters[] = {
 /* Object */
 
 PyTypeObject UpdateCollectionPackage_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                                          /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.UpdateCollectionPackage",     /* tp_name */
     sizeof(_UpdateCollectionPackageObject),     /* tp_basicsize */
     0,                                          /* tp_itemsize */

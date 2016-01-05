@@ -4,7 +4,7 @@ import unittest
 import shutil
 import createrepo_c as cr
 
-from fixtures import *
+from .fixtures import *
 
 class TestCaseMisc(unittest.TestCase):
 
@@ -77,5 +77,5 @@ class TestCaseMisc(unittest.TestCase):
         self.assertTrue(os.path.isfile(dest))
         self.assertEqual(stat.checksum, FILE_TEXT_SHA256SUM)
         self.assertEqual(stat.checksum_type, cr.SHA256)
-        self.assertEqual(stat.size, 910L)
+        self.assertEqual(stat.size, 910)
 

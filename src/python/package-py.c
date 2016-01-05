@@ -148,11 +148,11 @@ package_repr(_PackageObject *self)
     cr_Package *pkg = self->package;
     PyObject *repr;
     if (pkg) {
-        repr = PyString_FromFormat("<createrepo_c.Package object id %s, %s>",
+        repr = PyUnicode_FromFormat("<createrepo_c.Package object id %s, %s>",
                                    (pkg->pkgId ? pkg->pkgId : "-"),
                                    (pkg->name  ? pkg->name  : "-"));
     } else {
-       repr = PyString_FromFormat("<createrepo_c.Package object id -, ->");
+       repr = PyUnicode_FromFormat("<createrepo_c.Package object id -, ->");
     }
     return repr;
 }
@@ -165,10 +165,10 @@ package_str(_PackageObject *self)
         return NULL;
     if (self->package) {
         char *nevra = cr_package_nvra(self->package);
-        ret = PyString_FromString(nevra);
+        ret = PyUnicode_FromString(nevra);
         free(nevra);
     } else {
-        ret = PyString_FromString("-");
+        ret = PyUnicode_FromString("-");
     }
     return ret;
 }
@@ -186,7 +186,7 @@ nvra(_PackageObject *self, G_GNUC_UNUSED void *nothing)
     if (check_PackageStatus(self))
         return NULL;
     char *nvra = cr_package_nvra(self->package);
-    pystr = PyStringOrNone_FromString(nvra);
+    pystr = PyUnicodeOrNone_FromString(nvra);
     free(nvra);
     return pystr;
 }
@@ -202,7 +202,7 @@ nevra(_PackageObject *self, G_GNUC_UNUSED void *nothing)
     if (check_PackageStatus(self))
         return NULL;
     char *nevra = cr_package_nevra(self->package);
-    pystr = PyStringOrNone_FromString(nevra);
+    pystr = PyUnicodeOrNone_FromString(nevra);
     free(nevra);
     return pystr;
 }
@@ -261,7 +261,7 @@ get_str(_PackageObject *self, void *member_offset)
     char *str = *((char **) ((size_t) pkg + (size_t) member_offset));
     if (str == NULL)
         Py_RETURN_NONE;
-    return PyString_FromString(str);
+    return PyUnicode_FromString(str);
 }
 
 /** Return offset of a selected member of cr_Package structure. */
@@ -375,8 +375,12 @@ set_num(_PackageObject *self, PyObject *value, void *member_offset)
         return -1;
     if (PyLong_Check(value)) {
         val = (gint64) PyLong_AsLong(value);
+    } else if (PyFloat_Check(value)) {
+        val = (gint64) PyFloat_AS_DOUBLE(value);
+#if PY_MAJOR_VERSION < 3
     } else if (PyInt_Check(value)) {
         val = (gint64) PyInt_AS_LONG(value);
+#endif
     } else {
         PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;
@@ -391,8 +395,8 @@ set_str(_PackageObject *self, PyObject *value, void *member_offset)
 {
     if (check_PackageStatus(self))
         return -1;
-    if (!PyString_Check(value) && value != Py_None) {
-        PyErr_SetString(PyExc_TypeError, "String or None expected!");
+    if (!PyUnicode_Check(value) && !PyBytes_Check(value) && value != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "Unicode, bytes, or None expected!");
         return -1;
     }
     cr_Package *pkg = self->package;
@@ -412,7 +416,11 @@ set_str(_PackageObject *self, PyObject *value, void *member_offset)
     if (!pkg->chunk)
         pkg->chunk = g_string_chunk_new(0);
 
-    char *str = g_string_chunk_insert(pkg->chunk, PyString_AsString(value));
+    if (PyUnicode_Check(value)) {
+        value = PyUnicode_AsUTF8String(value);
+    }
+
+    char *str = g_string_chunk_insert(pkg->chunk, PyBytes_AsString(value));
     *((char **) ((size_t) pkg + (size_t) member_offset)) = str;
     return 0;
 }
@@ -574,8 +582,7 @@ static PyGetSetDef package_getsetters[] = {
 /* Object */
 
 PyTypeObject Package_Type = {
-    PyObject_HEAD_INIT(NULL)
-    0,                              /* ob_size */
+    PyVarObject_HEAD_INIT(NULL, 0)
     "createrepo_c.Package",         /* tp_name */
     sizeof(_PackageObject),         /* tp_basicsize */
     0,                              /* tp_itemsize */

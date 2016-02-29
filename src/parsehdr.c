@@ -31,6 +31,8 @@
 #define RPM_WEAK_DEPS_SUPPORT 1
 #endif
 
+#define RPMSENSE_STRONG (1 << 27)
+
 typedef enum DepType_e {
     DEP_PROVIDES,
     DEP_CONFLICTS,
@@ -40,6 +42,8 @@ typedef enum DepType_e {
     DEP_ENHANCES,
     DEP_RECOMMENDS,
     DEP_SUPPLEMENTS,
+    DEP_OLDSUGGESTS,
+    DEP_OLDENHANCES,
     DEP_SENTINEL
 } DepType;
 
@@ -57,10 +61,12 @@ static DepItem dep_items[] = {
     { DEP_OBSOLETES, RPMTAG_OBSOLETENAME, RPMTAG_OBSOLETEFLAGS, RPMTAG_OBSOLETEVERSION },
     { DEP_REQUIRES, RPMTAG_REQUIRENAME, RPMTAG_REQUIREFLAGS, RPMTAG_REQUIREVERSION },
 #ifdef RPM_WEAK_DEPS_SUPPORT
-    { DEP_SUGGESTS, RPMTAG_SUGGESTNAME, RPMTAG_SUGGESTFLAGS, RPMTAG_SUGGESTVERSION },
-    { DEP_ENHANCES, RPMTAG_ENHANCENAME, RPMTAG_ENHANCEFLAGS, RPMTAG_ENHANCEVERSION },
-    { DEP_RECOMMENDS, RPMTAG_RECOMMENDNAME, RPMTAG_RECOMMENDFLAGS, RPMTAG_RECOMMENDVERSION },
-    { DEP_SUPPLEMENTS, RPMTAG_SUPPLEMENTNAME, RPMTAG_SUPPLEMENTFLAGS, RPMTAG_SUPPLEMENTVERSION },
+    { DEP_SUGGESTS,       RPMTAG_SUGGESTNAME,     RPMTAG_SUGGESTFLAGS,     RPMTAG_SUGGESTVERSION },
+    { DEP_ENHANCES,       RPMTAG_ENHANCENAME,     RPMTAG_ENHANCEFLAGS,     RPMTAG_ENHANCEVERSION },
+    { DEP_RECOMMENDS,     RPMTAG_RECOMMENDNAME,   RPMTAG_RECOMMENDFLAGS,   RPMTAG_RECOMMENDVERSION },
+    { DEP_SUPPLEMENTS,    RPMTAG_SUPPLEMENTNAME,  RPMTAG_SUPPLEMENTFLAGS,  RPMTAG_SUPPLEMENTVERSION },
+    { DEP_OLDSUGGESTS,   RPMTAG_OLDSUGGESTSNAME, RPMTAG_OLDSUGGESTSFLAGS, RPMTAG_OLDSUGGESTSVERSION },
+    { DEP_OLDENHANCES,    RPMTAG_OLDENHANCESNAME, RPMTAG_OLDENHANCESFLAGS, RPMTAG_OLDENHANCESVERSION },
 #endif
     { DEP_SENTINEL, 0, 0, 0 },
 };
@@ -450,6 +456,20 @@ cr_package_from_header(Header hdr,
                         break;
                     case DEP_SUPPLEMENTS:
                         pkg->supplements = g_slist_prepend(pkg->supplements, dependency);
+                        break;
+                    case DEP_OLDSUGGESTS:
+                        if ( num_flags & RPMSENSE_STRONG ) {
+                            pkg->recommends = g_slist_prepend(pkg->recommends, dependency);
+                        } else {
+                            pkg->suggests = g_slist_prepend(pkg->suggests, dependency);
+                        }
+                        break;
+                    case DEP_OLDENHANCES:
+                        if ( num_flags & RPMSENSE_STRONG ) {
+                            pkg->supplements = g_slist_prepend(pkg->supplements, dependency);
+                        } else {
+                            pkg->enhances = g_slist_prepend(pkg->enhances, dependency);
+                        }
                         break;
                 } // Switch end
             } // While end

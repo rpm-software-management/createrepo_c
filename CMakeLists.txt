@@ -69,6 +69,12 @@ ELSE (RPM_PATH)
     message("Using system RPM: ${RPMDB_LIBRARY}")
 ENDIF (RPM_PATH)
 
+# SuSE legacy weak deps support
+OPTION (ENABLE_LEGACY_WEAKDEPS "Enable legacy SUSE weakdeps support?" OFF)
+IF (ENABLE_LEGACY_WEAKDEPS)
+    ADD_DEFINITIONS("-DENABLE_LEGACY_WEAKDEPS=1")
+ENDIF (ENABLE_LEGACY_WEAKDEPS)
+
 # drpm
 if (DRPM_PATH)
     include_directories (${DRPM_PATH}/)
@@ -130,3 +136,4 @@ ADD_SUBDIRECTORY (src)
 ADD_SUBDIRECTORY (doc)
 ENABLE_TESTING()
 ADD_SUBDIRECTORY (tests EXCLUDE_FROM_ALL)
+

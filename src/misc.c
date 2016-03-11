@@ -36,9 +36,13 @@
 #include "cleanup.h"
 #include "error.h"
 #include "misc.h"
+#include "version.h"
 
 #define ERR_DOMAIN      CREATEREPO_C_ERROR
 #define BUFFER_SIZE     4096
+
+#define xstr(s) str(s)
+#define str(s) #s
 
 
 const char *
@@ -1482,4 +1486,22 @@ cr_cut_dirs(gchar *path, gint cut_dirs)
     }
 
     return cut+1;
+}
+
+const gchar *
+cr_version_string_with_features(void)
+{
+    return (xstr(CR_VERSION_MAJOR)
+            "."
+            xstr(CR_VERSION_MINOR)
+            "."
+            xstr(CR_VERSION_PATCH)
+            " (Features: "
+#ifdef CR_DELTA_RPM_SUPPORT
+            "DeltaRPM "
+#endif
+#ifdef ENABLE_LEGACY_WEAKDEPS
+            "LegacyWeakdeps "
+#endif
+            ")");
 }

@@ -529,6 +529,12 @@ cr_identical_files(const gchar *fn1,
 gchar *
 cr_cut_dirs(gchar *path, gint cut_dirs);
 
+/** Return string with createrepo_c lib version and available features
+ * @return              String with version and list of features
+ */
+const gchar *
+cr_version_string_with_features(void);
+
 /** @} */
 
 #ifdef __cplusplus

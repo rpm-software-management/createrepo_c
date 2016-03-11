@@ -334,9 +334,7 @@ main(int argc, char **argv)
     // Arguments pre-check
     if (cmd_options->version) {
         // Just print version
-        printf("Version: %d.%d.%d\n", CR_VERSION_MAJOR,
-                                      CR_VERSION_MINOR,
-                                      CR_VERSION_PATCH);
+        printf("Version: %s\n", cr_version_string_with_features());
         free_options(cmd_options);
         exit(EXIT_SUCCESS);
     }
@@ -388,9 +386,7 @@ main(int argc, char **argv)
     cr_setup_logging(cmd_options->quiet, cmd_options->verbose);
 
     // Emit debug message with version
-    g_debug("Version: %d.%d.%d\n", CR_VERSION_MAJOR,
-                                   CR_VERSION_MINOR,
-                                   CR_VERSION_PATCH);
+    g_debug("Version: %s", cr_version_string_with_features());
 
     // Set paths of input and output repos
     in_repo = g_strconcat(in_dir, "repodata/", NULL);

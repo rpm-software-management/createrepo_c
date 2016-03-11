@@ -999,9 +999,7 @@ main(int argc, char **argv)
 
     // Print version if required
     if (options->version) {
-        printf("Version: %d.%d.%d\n", CR_VERSION_MAJOR,
-                                      CR_VERSION_MINOR,
-                                      CR_VERSION_PATCH);
+        printf("Version: %s\n", cr_version_string_with_features());
         exit(EXIT_SUCCESS);
     }
 
@@ -1017,9 +1015,7 @@ main(int argc, char **argv)
     }
 
     // Emit debug message with version
-    g_debug("Version: %d.%d.%d\n", CR_VERSION_MAJOR,
-                                   CR_VERSION_MINOR,
-                                   CR_VERSION_PATCH);
+    g_debug("Version: %s", cr_version_string_with_features());
 
     g_thread_init(NULL); // Initialize threading
 

@@ -1618,9 +1618,7 @@ main(int argc, char **argv)
     }
 
     if (cmd_options->version) {
-        printf("Version: %d.%d.%d\n", CR_VERSION_MAJOR,
-                                      CR_VERSION_MINOR,
-                                      CR_VERSION_PATCH);
+        printf("Version: %s\n", cr_version_string_with_features());
         free_options(cmd_options);
         exit(0);
     }
@@ -1634,9 +1632,7 @@ main(int argc, char **argv)
         return 1;
     }
 
-    g_debug("Version: %d.%d.%d\n", CR_VERSION_MAJOR,
-                                   CR_VERSION_MINOR,
-                                   CR_VERSION_PATCH);
+    g_debug("Version: %s", cr_version_string_with_features());
 
     g_thread_init(NULL); // Initialize threading
 

@@ -1503,5 +1503,8 @@ cr_version_string_with_features(void)
 #ifdef ENABLE_LEGACY_WEAKDEPS
             "LegacyWeakdeps "
 #endif
+#ifdef ENABLE_THREADED_XZ_ENCODER
+            "ThreadedXzEncoder "
+#endif
             ")");
 }

@@ -77,6 +77,24 @@ By default, cmake should set up things to build for Python 2, but you can do a b
 
     cmake -DPYTHON_DESIRED=3 .
 
+## Other build options
+
+### ``-DENABLE_LEGACY_WEAKDEPS=ON``
+
+Enable old SUSE weaktags (Default: OFF)
+
+### ``-DENABLE_THREADED_XZ_ENCODER=ON``
+
+Threaded XZ encoding (Default: OFF)
+
+Note: This option is disabled by default, because Createrepo_c
+parallelize a lot of tasks (including compression) by default, this
+only adds extra threads on XZ library level which causes thread bloat
+and for most usecases doesn't bring any performance boost.
+On regular hardware (e.g. less-or-equal 4 cores) this option may even
+cause degradation of performance.
+
+
 ## Build tarball
 
     utils/make_tarball.sh [git revision]

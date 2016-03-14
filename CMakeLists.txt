@@ -98,6 +98,18 @@ IF (ENABLE_DRPM)
     ENDIF (CR_DELTA_RPM_SUPPORT)
 ENDIF (ENABLE_DRPM)
 
+# Threaded XZ Compression
+# Note: This option is disabled by default, because Createrepo_c
+# parallelize a lot of tasks (including compression) by default, this
+# only adds extra threads on XZ library level which causes thread bloat
+# and for most usecases doesn't bring any performance boost.
+# On regular hardware (e.g. less-or-equal 4 cores) this option may even
+# cause degradation of performance.
+OPTION(ENABLE_THREADED_XZ_ENCODER "Enable threaded XZ encoder?" OFF)
+IF (ENABLE_THREADED_XZ_ENCODER)
+    ADD_DEFINITIONS("-DENABLE_THREADED_XZ_ENCODER=1")
+ENDIF (ENABLE_THREADED_XZ_ENCODER)
+
 # Get package version
 INCLUDE (${CMAKE_SOURCE_DIR}/VERSION.cmake)
 SET (VERSION "${CR_MAJOR}.${CR_MINOR}.${CR_PATCH}")

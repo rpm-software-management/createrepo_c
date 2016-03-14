@@ -443,14 +443,65 @@ cr_sopen(const char *filename,
 
             // Prepare coder/decoder
 
-            if (mode == CR_CW_MODE_WRITE)
-                ret = lzma_easy_encoder(stream,
-                                        CR_CW_XZ_COMPRESSION_LEVEL,
-                                        XZ_CHECK);
-            else
+            if (mode == CR_CW_MODE_WRITE) {
+
+#ifdef ENABLE_THREADED_XZ_ENCODER
+                // The threaded encoder takes the options as pointer to
+                // a lzma_mt structure.
+                lzma_mt mt = {
+                    // No flags are needed.
+                    .flags = 0,
+
+                    // Let liblzma determine a sane block size.
+                    .block_size = 0,
+
+                    // Use no timeout for lzma_code() calls by setting timeout
+                    // to zero. That is, sometimes lzma_code() might block for
+                    // a long time (from several seconds to even minutes).
+                    // If this is not OK, for example due to progress indicator
+                    // needing updates, specify a timeout in milliseconds here.
+                    // See the documentation of lzma_mt in lzma/container.h for
+                    // information how to choose a reasonable timeout.
+                    .timeout = 0,
+
+                    // Use the default preset (6) for LZMA2.
+                    // To use a preset, filters must be set to NULL.
+                    .preset = LZMA_PRESET_DEFAULT,
+                    .filters = NULL,
+
+                    // Integrity checking.
+                    .check = XZ_CHECK,
+                };
+
+                // Detect how many threads the CPU supports.
+                mt.threads = lzma_cputhreads();
+
+                // If the number of CPU cores/threads cannot be detected,
+                // use one thread.
+                if (mt.threads == 0)
+                    mt.threads = 1;
+
+                // If the number of CPU cores/threads exceeds threads_max,
+                // limit the number of threads to keep memory usage lower.
+                const uint32_t threads_max = 2;
+                if (mt.threads > threads_max)
+                    mt.threads = threads_max;
+
+                if (mt.threads > 1)
+                    // Initialize the threaded encoder
+                    ret = lzma_stream_encoder_mt(stream, &mt);
+                else
+#endif
+                    // Initialize the single-threaded encoder
+                    ret = lzma_easy_encoder(stream,
+                                            CR_CW_XZ_COMPRESSION_LEVEL,
+                                            XZ_CHECK);
+
+            } else {
                 ret = lzma_auto_decoder(stream,
                                         XZ_MEMORY_USAGE_LIMIT,
                                         XZ_DECODER_FLAGS);
+            }
 
             if (ret != LZMA_OK) {
                 const char *err_msg;

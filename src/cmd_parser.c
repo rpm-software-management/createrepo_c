@@ -106,6 +106,8 @@ static GOptionEntry cmd_entries[] =
       "Skip the stat() call on a --update, assumes if the filename is the same "
       "then the file is still the same (only use this if you're fairly "
       "trusting or gullible).", NULL },
+    { "split", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.split),
+      "generate split media", NULL },
     { "pkglist", 'i', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.pkglist),
       "Specify a text file which contains the complete list of files to "
       "include in the repository from the set found in the directory. File "

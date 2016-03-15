@@ -339,15 +339,19 @@ main(int argc, char **argv)
         exit(EXIT_SUCCESS);
     }
 
-    if (argc != 2) {
-        // No mandatory arguments
-        g_printerr("Must specify exactly one directory to index.\n");
-        g_printerr("Usage: %s [options] <directory_to_index>\n\n",
-                         cr_get_filename(argv[0]));
-        free_options(cmd_options);
-        exit(EXIT_FAILURE);
+    if ( ! cmd_options->split ) {
+	if (argc != 2) {
+	    // No mandatory arguments
+	    g_printerr("Must specify exactly one directory to index.\n");
+	    g_printerr("Usage: %s [options] <directory_to_index>\n\n",
+			     cr_get_filename(argv[0]));
+	    free_options(cmd_options);
+	    exit(EXIT_FAILURE);
+	}
     }
 
+// TODO M0ses: loop over argv for in_dir starts here
+// use tmp_in_dir
     // Dirs
     gchar *in_dir       = NULL;  // path/to/repo/
     gchar *in_repo      = NULL;  // path/to/repo/repodata/
@@ -358,15 +362,20 @@ main(int argc, char **argv)
 
     if (cmd_options->basedir && !g_str_has_prefix(argv[1], "/")) {
         gchar *tmp = cr_normalize_dir_path(argv[1]);
+// TODO M0ses : use tmp_in_dir
         in_dir = g_build_filename(cmd_options->basedir, tmp, NULL);
         g_free(tmp);
     } else {
+// TODO M0ses : use tmp_in_dir
         in_dir = cr_normalize_dir_path(argv[1]);
     }
 
     // Check if inputdir exists
+// TODO M0ses : use tmp_in_dir
     if (!g_file_test(in_dir, G_FILE_TEST_IS_DIR)) {
+// TODO M0ses : use tmp_in_dir
         g_printerr("Directory %s must exist\n", in_dir);
+// TODO M0ses : use tmp_in_dir
         g_free(in_dir);
         free_options(cmd_options);
         exit(EXIT_FAILURE);
@@ -374,9 +383,12 @@ main(int argc, char **argv)
 
 
     // Check parsed arguments
+// TODO M0ses : use tmp_in_dir
+// TODO M0ses : breakup check_arguments because doing this in loop makes no sense
     if (!check_arguments(cmd_options, in_dir, &tmp_err)) {
         g_printerr("%s\n", tmp_err->message);
         g_error_free(tmp_err);
+// TODO M0ses : use tmp_in_dir
         g_free(in_dir);
         free_options(cmd_options);
         exit(EXIT_FAILURE);
@@ -389,12 +401,14 @@ main(int argc, char **argv)
     g_debug("Version: %s", cr_version_string_with_features());
 
     // Set paths of input and output repos
+// TODO M0ses : use tmp_in_dir
     in_repo = g_strconcat(in_dir, "repodata/", NULL);
 
     if (cmd_options->outputdir) {
         out_dir = cr_normalize_dir_path(cmd_options->outputdir);
         out_repo = g_strconcat(out_dir, "repodata/", NULL);
     } else {
+// TODO M0ses : use tmp_in_dir
         out_dir  = g_strdup(in_dir);
         out_repo = g_strdup(in_repo);
     }
@@ -403,6 +417,7 @@ main(int argc, char **argv)
     if (!prepare_cache_dir(cmd_options, out_dir, &tmp_err)) {
         g_printerr("%s\n", tmp_err->message);
         g_error_free(tmp_err);
+// TODO M0ses : use tmp_in_dir
         g_free(in_dir);
         g_free(in_repo);
         g_free(out_dir);
@@ -467,6 +482,7 @@ main(int argc, char **argv)
 
 
     // Thread pool - Fill with tasks
+// TODO M0ses : use tmp_in_dir
     package_count = fill_pool(pool,
                               in_dir,
                               cmd_options,
@@ -495,6 +511,7 @@ main(int argc, char **argv)
         if (cmd_options->outputdir)
             old_metadata_location = cr_locate_metadata(out_dir, TRUE, NULL);
         else
+// TODO M0ses : use first argv instead of in_dir
             old_metadata_location = cr_locate_metadata(in_dir, TRUE, NULL);
 
         if (old_metadata_location) {
@@ -809,6 +826,8 @@ main(int argc, char **argv)
     user_data.checksum_type     = cmd_options->checksum_type;
     user_data.checksum_cachedir = cmd_options->checksum_cachedir;
     user_data.skip_symlinks     = cmd_options->skip_symlinks;
+// TODO M0ses : use first argv instead of in_dir
+// to be investigated
     user_data.repodir_name_len  = strlen(in_dir);
     user_data.package_count     = package_count;
     user_data.skip_stat         = cmd_options->skip_stat;
@@ -1309,6 +1328,7 @@ deltaerror:
     g_free(in_repo);
     g_free(out_repo);
     g_free(tmp_out_repo);
+// TODO M0ses: g_free must be done inside loop
     g_free(in_dir);
     g_free(out_dir);
     g_free(lock_dir);

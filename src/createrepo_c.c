@@ -141,6 +141,7 @@ fill_pool(GThreadPool *pool,
         GQueue *sub_dirs = g_queue_new();
         gchar *input_dir_stripped;
 
+
         input_dir_stripped = g_string_chunk_insert_len(sub_dirs_chunk,
                                                        in_dir,
                                                        in_dir_len-1);
@@ -148,6 +149,8 @@ fill_pool(GThreadPool *pool,
 
         char *dirname;
         while ((dirname = g_queue_pop_head(sub_dirs))) {
+g_printerr("dirname: %s\n",dirname);
+
             // Open dir
             GDir *dirp;
             dirp = g_dir_open (dirname, 0, NULL);
@@ -199,7 +202,9 @@ fill_pool(GThreadPool *pool,
                     task->path = g_strdup(dirname);
                     if (output_pkg_list)
                         fprintf(output_pkg_list, "%s\n", repo_relative_path);
+
                     *current_pkglist = g_slist_prepend(*current_pkglist, task->filename);
+
                     // TODO: One common path for all tasks with the same path?
                     g_queue_insert_sorted(&queue, task, task_cmp, NULL);
                 } else {
@@ -350,8 +355,6 @@ main(int argc, char **argv)
 	}
     }
 
-// TODO M0ses: loop over argv for in_dir starts here
-// use tmp_in_dir
     // Dirs
     gchar *in_dir       = NULL;  // path/to/repo/
     gchar *in_repo      = NULL;  // path/to/repo/repodata/
@@ -361,37 +364,28 @@ main(int argc, char **argv)
     gchar *lock_dir     = NULL;  // path/to/out_repo/.repodata/
 
     if (cmd_options->basedir && !g_str_has_prefix(argv[1], "/")) {
-        gchar *tmp = cr_normalize_dir_path(argv[1]);
-// TODO M0ses : use tmp_in_dir
-        in_dir = g_build_filename(cmd_options->basedir, tmp, NULL);
-        g_free(tmp);
+	gchar *tmp = cr_normalize_dir_path(argv[1]);
+	in_dir = g_build_filename(cmd_options->basedir, tmp, NULL);
+	g_free(tmp);
     } else {
-// TODO M0ses : use tmp_in_dir
-        in_dir = cr_normalize_dir_path(argv[1]);
+	in_dir = cr_normalize_dir_path(argv[1]);
     }
 
-    // Check if inputdir exists
-// TODO M0ses : use tmp_in_dir
     if (!g_file_test(in_dir, G_FILE_TEST_IS_DIR)) {
-// TODO M0ses : use tmp_in_dir
-        g_printerr("Directory %s must exist\n", in_dir);
-// TODO M0ses : use tmp_in_dir
-        g_free(in_dir);
-        free_options(cmd_options);
-        exit(EXIT_FAILURE);
+	g_printerr("Directory %s must exist\n", in_dir);
+	g_free(in_dir);
+	free_options(cmd_options);
+	exit(EXIT_FAILURE);
     }
 
 
     // Check parsed arguments
-// TODO M0ses : use tmp_in_dir
-// TODO M0ses : breakup check_arguments because doing this in loop makes no sense
     if (!check_arguments(cmd_options, in_dir, &tmp_err)) {
-        g_printerr("%s\n", tmp_err->message);
-        g_error_free(tmp_err);
-// TODO M0ses : use tmp_in_dir
-        g_free(in_dir);
-        free_options(cmd_options);
-        exit(EXIT_FAILURE);
+	g_printerr("%s\n", tmp_err->message);
+	g_error_free(tmp_err);
+	g_free(in_dir);
+	free_options(cmd_options);
+	exit(EXIT_FAILURE);
     }
 
     // Set logging stuff
@@ -401,64 +395,63 @@ main(int argc, char **argv)
     g_debug("Version: %s", cr_version_string_with_features());
 
     // Set paths of input and output repos
-// TODO M0ses : use tmp_in_dir
     in_repo = g_strconcat(in_dir, "repodata/", NULL);
 
     if (cmd_options->outputdir) {
-        out_dir = cr_normalize_dir_path(cmd_options->outputdir);
-        out_repo = g_strconcat(out_dir, "repodata/", NULL);
+	out_dir = cr_normalize_dir_path(cmd_options->outputdir);
+	out_repo = g_strconcat(out_dir, "repodata/", NULL);
     } else {
-// TODO M0ses : use tmp_in_dir
-        out_dir  = g_strdup(in_dir);
-        out_repo = g_strdup(in_repo);
+	out_dir  = g_strdup(in_dir);
+	out_repo = g_strdup(in_repo);
     }
 
     // Prepare cachedir for checksum if --cachedir is used
     if (!prepare_cache_dir(cmd_options, out_dir, &tmp_err)) {
-        g_printerr("%s\n", tmp_err->message);
-        g_error_free(tmp_err);
-// TODO M0ses : use tmp_in_dir
-        g_free(in_dir);
-        g_free(in_repo);
-        g_free(out_dir);
-        g_free(out_repo);
-        free_options(cmd_options);
-        exit(EXIT_FAILURE);
+	g_printerr("%s\n", tmp_err->message);
+	g_error_free(tmp_err);
+
+	g_free(in_dir);
+	g_free(in_repo);
+	g_free(out_dir);
+	g_free(out_repo);
+	free_options(cmd_options);
+	exit(EXIT_FAILURE);
     }
 
+    // Check if inputdir exists
     // Block signals that terminates the process
     if (!cr_block_terminating_signals(&tmp_err)) {
-        g_printerr("%s\n", tmp_err->message);
-        exit(EXIT_FAILURE);
+	g_printerr("%s\n", tmp_err->message);
+	exit(EXIT_FAILURE);
     }
 
     // Check if lock exists & Create lock dir
     if (!cr_lock_repo(out_dir, cmd_options->ignore_lock, &lock_dir, &tmp_out_repo, &tmp_err)) {
-        g_printerr("%s\n", tmp_err->message);
-        exit(EXIT_FAILURE);
+	g_printerr("%s\n", tmp_err->message);
+	exit(EXIT_FAILURE);
     }
 
     // Setup cleanup handlers
     if (!cr_set_cleanup_handler(lock_dir, tmp_out_repo, &tmp_err)) {
-        g_printerr("%s\n", tmp_err->message);
-        exit(EXIT_FAILURE);
+	g_printerr("%s\n", tmp_err->message);
+	exit(EXIT_FAILURE);
     }
 
     // Unblock the blocked signals
     if (!cr_unblock_terminating_signals(&tmp_err)) {
-        g_printerr("%s\n", tmp_err->message);
-        exit(EXIT_FAILURE);
+	g_printerr("%s\n", tmp_err->message);
+	exit(EXIT_FAILURE);
     }
 
     // Open package list
     FILE *output_pkg_list = NULL;
     if (cmd_options->read_pkgs_list) {
-        output_pkg_list = fopen(cmd_options->read_pkgs_list, "w");
-        if (!output_pkg_list) {
-            g_critical("Cannot open \"%s\" for writing: %s",
-                       cmd_options->read_pkgs_list, g_strerror(errno));
-            exit(EXIT_FAILURE);
-        }
+	output_pkg_list = fopen(cmd_options->read_pkgs_list, "w");
+	if (!output_pkg_list) {
+	    g_critical("Cannot open \"%s\" for writing: %s",
+		       cmd_options->read_pkgs_list, g_strerror(errno));
+	    exit(EXIT_FAILURE);
+	}
     }
 
 
@@ -470,24 +463,27 @@ main(int argc, char **argv)
     struct UserData user_data;
     g_thread_init(NULL);
     GThreadPool *pool = g_thread_pool_new(cr_dumper_thread,
-                                          &user_data,
-                                          0,
-                                          TRUE,
-                                          NULL);
+					  &user_data,
+					  0,
+					  TRUE,
+					  NULL);
     g_debug("Thread pool ready");
 
-    long package_count;
+    long package_count = 0;
     GSList *current_pkglist = NULL;
     /* ^^^ List with basenames of files which will be processed */
 
+    for (int i = 1; i < argc; i++ ) {
+	gchar *tmp_in_dir = cr_normalize_dir_path(argv[i]);
+	// Thread pool - Fill with tasks
+	package_count += fill_pool(pool,
+				  tmp_in_dir,
+				  cmd_options,
+				  &current_pkglist,
+				  output_pkg_list);
+	g_free(tmp_in_dir);
 
-    // Thread pool - Fill with tasks
-// TODO M0ses : use tmp_in_dir
-    package_count = fill_pool(pool,
-                              in_dir,
-                              cmd_options,
-                              &current_pkglist,
-                              output_pkg_list);
+    }
 
     g_debug("Package count: %ld", package_count);
     g_message("Directory walk done - %ld packages", package_count);
@@ -511,7 +507,6 @@ main(int argc, char **argv)
         if (cmd_options->outputdir)
             old_metadata_location = cr_locate_metadata(out_dir, TRUE, NULL);
         else
-// TODO M0ses : use first argv instead of in_dir
             old_metadata_location = cr_locate_metadata(in_dir, TRUE, NULL);
 
         if (old_metadata_location) {
@@ -826,8 +821,6 @@ main(int argc, char **argv)
     user_data.checksum_type     = cmd_options->checksum_type;
     user_data.checksum_cachedir = cmd_options->checksum_cachedir;
     user_data.skip_symlinks     = cmd_options->skip_symlinks;
-// TODO M0ses : use first argv instead of in_dir
-// to be investigated
     user_data.repodir_name_len  = strlen(in_dir);
     user_data.package_count     = package_count;
     user_data.skip_stat         = cmd_options->skip_stat;

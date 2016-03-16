@@ -123,11 +123,17 @@ fill_pool(GThreadPool *pool,
           gchar *in_dir,
           struct CmdOptions *cmd_options,
           GSList **current_pkglist,
-          FILE *output_pkg_list)
+          FILE *output_pkg_list,
+          long package_count,
+          int  media_id)
 {
     GQueue queue = G_QUEUE_INIT;
     struct PoolTask *task;
-    long package_count = 0;
+
+    if ( ! cmd_options->split ) {
+        media_id = 0;
+    }
+
 
     if (cmd_options->pkglist && !cmd_options->include_pkgs) {
         g_warning("Used pkglist doesn't contain any useful items");
@@ -149,8 +155,6 @@ fill_pool(GThreadPool *pool,
 
         char *dirname;
         while ((dirname = g_queue_pop_head(sub_dirs))) {
-g_printerr("dirname: %s\n",dirname);
-
             // Open dir
             GDir *dirp;
             dirp = g_dir_open (dirname, 0, NULL);
@@ -259,6 +263,7 @@ g_printerr("dirname: %s\n",dirname);
     // Push sorted tasks into the thread pool
     while ((task = g_queue_pop_head(&queue)) != NULL) {
         task->id = package_count;
+        task->media_id = media_id;
         g_thread_pool_push(pool, task, NULL);
         ++package_count;
     }
@@ -345,14 +350,14 @@ main(int argc, char **argv)
     }
 
     if ( ! cmd_options->split ) {
-	if (argc != 2) {
-	    // No mandatory arguments
-	    g_printerr("Must specify exactly one directory to index.\n");
-	    g_printerr("Usage: %s [options] <directory_to_index>\n\n",
-			     cr_get_filename(argv[0]));
-	    free_options(cmd_options);
-	    exit(EXIT_FAILURE);
-	}
+        if (argc != 2) {
+            // No mandatory arguments
+            g_printerr("Must specify exactly one directory to index.\n");
+            g_printerr("Usage: %s [options] <directory_to_index>\n\n",
+                     cr_get_filename(argv[0]));
+            free_options(cmd_options);
+            exit(EXIT_FAILURE);
+        }
     }
 
     // Dirs
@@ -364,28 +369,28 @@ main(int argc, char **argv)
     gchar *lock_dir     = NULL;  // path/to/out_repo/.repodata/
 
     if (cmd_options->basedir && !g_str_has_prefix(argv[1], "/")) {
-	gchar *tmp = cr_normalize_dir_path(argv[1]);
-	in_dir = g_build_filename(cmd_options->basedir, tmp, NULL);
-	g_free(tmp);
+        gchar *tmp = cr_normalize_dir_path(argv[1]);
+        in_dir = g_build_filename(cmd_options->basedir, tmp, NULL);
+        g_free(tmp);
     } else {
-	in_dir = cr_normalize_dir_path(argv[1]);
+        in_dir = cr_normalize_dir_path(argv[1]);
     }
 
     if (!g_file_test(in_dir, G_FILE_TEST_IS_DIR)) {
-	g_printerr("Directory %s must exist\n", in_dir);
-	g_free(in_dir);
-	free_options(cmd_options);
-	exit(EXIT_FAILURE);
+        g_printerr("Directory %s must exist\n", in_dir);
+        g_free(in_dir);
+        free_options(cmd_options);
+        exit(EXIT_FAILURE);
     }
 
 
     // Check parsed arguments
     if (!check_arguments(cmd_options, in_dir, &tmp_err)) {
-	g_printerr("%s\n", tmp_err->message);
-	g_error_free(tmp_err);
-	g_free(in_dir);
-	free_options(cmd_options);
-	exit(EXIT_FAILURE);
+        g_printerr("%s\n", tmp_err->message);
+        g_error_free(tmp_err);
+        g_free(in_dir);
+        free_options(cmd_options);
+        exit(EXIT_FAILURE);
     }
 
     // Set logging stuff
@@ -398,60 +403,60 @@ main(int argc, char **argv)
     in_repo = g_strconcat(in_dir, "repodata/", NULL);
 
     if (cmd_options->outputdir) {
-	out_dir = cr_normalize_dir_path(cmd_options->outputdir);
-	out_repo = g_strconcat(out_dir, "repodata/", NULL);
+        out_dir = cr_normalize_dir_path(cmd_options->outputdir);
+        out_repo = g_strconcat(out_dir, "repodata/", NULL);
     } else {
-	out_dir  = g_strdup(in_dir);
-	out_repo = g_strdup(in_repo);
+        out_dir  = g_strdup(in_dir);
+        out_repo = g_strdup(in_repo);
     }
 
     // Prepare cachedir for checksum if --cachedir is used
     if (!prepare_cache_dir(cmd_options, out_dir, &tmp_err)) {
-	g_printerr("%s\n", tmp_err->message);
-	g_error_free(tmp_err);
+        g_printerr("%s\n", tmp_err->message);
+        g_error_free(tmp_err);
 
-	g_free(in_dir);
-	g_free(in_repo);
-	g_free(out_dir);
-	g_free(out_repo);
-	free_options(cmd_options);
-	exit(EXIT_FAILURE);
+        g_free(in_dir);
+        g_free(in_repo);
+        g_free(out_dir);
+        g_free(out_repo);
+        free_options(cmd_options);
+        exit(EXIT_FAILURE);
     }
 
     // Check if inputdir exists
     // Block signals that terminates the process
     if (!cr_block_terminating_signals(&tmp_err)) {
-	g_printerr("%s\n", tmp_err->message);
-	exit(EXIT_FAILURE);
+        g_printerr("%s\n", tmp_err->message);
+        exit(EXIT_FAILURE);
     }
 
     // Check if lock exists & Create lock dir
     if (!cr_lock_repo(out_dir, cmd_options->ignore_lock, &lock_dir, &tmp_out_repo, &tmp_err)) {
-	g_printerr("%s\n", tmp_err->message);
-	exit(EXIT_FAILURE);
+        g_printerr("%s\n", tmp_err->message);
+        exit(EXIT_FAILURE);
     }
 
     // Setup cleanup handlers
     if (!cr_set_cleanup_handler(lock_dir, tmp_out_repo, &tmp_err)) {
-	g_printerr("%s\n", tmp_err->message);
-	exit(EXIT_FAILURE);
+        g_printerr("%s\n", tmp_err->message);
+        exit(EXIT_FAILURE);
     }
 
     // Unblock the blocked signals
     if (!cr_unblock_terminating_signals(&tmp_err)) {
-	g_printerr("%s\n", tmp_err->message);
-	exit(EXIT_FAILURE);
+        g_printerr("%s\n", tmp_err->message);
+        exit(EXIT_FAILURE);
     }
 
     // Open package list
     FILE *output_pkg_list = NULL;
     if (cmd_options->read_pkgs_list) {
-	output_pkg_list = fopen(cmd_options->read_pkgs_list, "w");
-	if (!output_pkg_list) {
-	    g_critical("Cannot open \"%s\" for writing: %s",
-		       cmd_options->read_pkgs_list, g_strerror(errno));
-	    exit(EXIT_FAILURE);
-	}
+        output_pkg_list = fopen(cmd_options->read_pkgs_list, "w");
+        if (!output_pkg_list) {
+            g_critical("Cannot open \"%s\" for writing: %s",
+                   cmd_options->read_pkgs_list, g_strerror(errno));
+            exit(EXIT_FAILURE);
+        }
     }
 
 
@@ -463,25 +468,29 @@ main(int argc, char **argv)
     struct UserData user_data;
     g_thread_init(NULL);
     GThreadPool *pool = g_thread_pool_new(cr_dumper_thread,
-					  &user_data,
-					  0,
-					  TRUE,
-					  NULL);
+                                          &user_data,
+                                          0,
+                                          TRUE,
+                                          NULL);
     g_debug("Thread pool ready");
 
     long package_count = 0;
     GSList *current_pkglist = NULL;
     /* ^^^ List with basenames of files which will be processed */
 
-    for (int i = 1; i < argc; i++ ) {
-	gchar *tmp_in_dir = cr_normalize_dir_path(argv[i]);
-	// Thread pool - Fill with tasks
-	package_count += fill_pool(pool,
-				  tmp_in_dir,
-				  cmd_options,
-				  &current_pkglist,
-				  output_pkg_list);
-	g_free(tmp_in_dir);
+    for (int media_id = 1; media_id < argc; media_id++ ) {
+    gchar *tmp_in_dir = cr_normalize_dir_path(argv[media_id]);
+    // Thread pool - Fill with tasks
+// TODO M0ses: looks ugly for me to get package_count back again
+// discuss better solutions
+        package_count = fill_pool(pool,
+                                  tmp_in_dir,
+                                  cmd_options,
+                                  &current_pkglist,
+                                  output_pkg_list,
+                                  package_count,
+                                  media_id);
+        g_free(tmp_in_dir);
 
     }
 

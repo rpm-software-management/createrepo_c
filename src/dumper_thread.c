@@ -230,7 +230,8 @@ load_rpm(const char *fullpath,
          int changelog_limit,
          struct stat *stat_buf,
          cr_HeaderReadingFlags hdrrflags,
-         GError **err)
+         GError **err,
+         int media_id)
 {
     cr_Package *pkg = NULL;
     GError *tmp_err = NULL;
@@ -242,6 +243,11 @@ load_rpm(const char *fullpath,
     pkg = cr_package_from_rpm_base(fullpath, changelog_limit, hdrrflags, err);
     if (!pkg)
         goto errexit;
+
+// TODO M0ses: clarify is this is really what was expected, looks very ugly to me
+    if ( g_strcmp0(location_base,"media://") == 0 && media_id > 0 ) {
+	sprintf(location_base,"media:#%i",media_id);
+    }
 
     pkg->location_href = cr_safe_string_chunk_insert(pkg->chunk, location_href);
     pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, location_base);
@@ -380,7 +386,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         pkg = load_rpm(task->full_path, udata->checksum_type,
                        udata->checksum_cachedir, location_href,
                        udata->location_base, udata->changelog_limit,
-                       NULL, hdrrflags, &tmp_err);
+                       NULL, hdrrflags, &tmp_err,task->media_id);
         assert(pkg || tmp_err);
 
         if (!pkg) {

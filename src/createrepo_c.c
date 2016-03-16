@@ -124,7 +124,7 @@ fill_pool(GThreadPool *pool,
           struct CmdOptions *cmd_options,
           GSList **current_pkglist,
           FILE *output_pkg_list,
-          long package_count,
+          long *package_count,
           int  media_id)
 {
     GQueue queue = G_QUEUE_INIT;
@@ -259,10 +259,10 @@ fill_pool(GThreadPool *pool,
 
     // Push sorted tasks into the thread pool
     while ((task = g_queue_pop_head(&queue)) != NULL) {
-        task->id = package_count;
+        task->id = *package_count;
         task->media_id = media_id;
         g_thread_pool_push(pool, task, NULL);
-        ++package_count;
+        ++*package_count;
     }
 
     return package_count;
@@ -475,19 +475,16 @@ main(int argc, char **argv)
     /* ^^^ List with basenames of files which will be processed */
 
     for (int media_id = 1; media_id < argc; media_id++ ) {
-    gchar *tmp_in_dir = cr_normalize_dir_path(argv[media_id]);
-    // Thread pool - Fill with tasks
-// TODO M0ses: looks ugly for me to get package_count back again
-// discuss better solutions
-        package_count = fill_pool(pool,
-                                  tmp_in_dir,
-                                  cmd_options,
-                                  &current_pkglist,
-                                  output_pkg_list,
-                                  package_count,
-                                  media_id);
+        gchar *tmp_in_dir = cr_normalize_dir_path(argv[media_id]);
+        // Thread pool - Fill with tasks
+        fill_pool(pool,
+                  tmp_in_dir,
+                  cmd_options,
+                  &current_pkglist,
+                  output_pkg_list,
+                  &package_count,
+                  media_id);
         g_free(tmp_in_dir);
-
     }
 
     g_debug("Package count: %ld", package_count);

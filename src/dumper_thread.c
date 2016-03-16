@@ -244,13 +244,24 @@ load_rpm(const char *fullpath,
     if (!pkg)
         goto errexit;
 
-// TODO M0ses: clarify is this is really what was expected, looks very ugly to me
-    if ( g_strcmp0(location_base,"media://") == 0 && media_id > 0 ) {
-	sprintf(location_base,"media:#%i",media_id);
+    // cut off trailing slashes from urls e.g. media:// -> media:
+    gsize  lb_length       = strlen(location_base);
+    gchar  *t_location_base;
+    char suf[2];
+    strncpy(suf,&location_base[lb_length-2],2);
+
+    if ( g_strcmp0(suf,"//") == 0 ) {
+        t_location_base = g_strndup(location_base,lb_length-2);
+    } else {
+        t_location_base = g_strdup(location_base);
     }
 
+    // if --split option was given, the media_id == 0
+    if ( media_id > 0 )
+	    sprintf(t_location_base,"%s#%i",t_location_base,media_id);
+
     pkg->location_href = cr_safe_string_chunk_insert(pkg->chunk, location_href);
-    pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, location_base);
+    pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, t_location_base);
 
     // Get checksum type string
     pkg->checksum_type = cr_safe_string_chunk_insert(pkg->chunk,

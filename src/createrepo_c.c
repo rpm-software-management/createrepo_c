@@ -147,7 +147,6 @@ fill_pool(GThreadPool *pool,
         GQueue *sub_dirs = g_queue_new();
         gchar *input_dir_stripped;
 
-
         input_dir_stripped = g_string_chunk_insert_len(sub_dirs_chunk,
                                                        in_dir,
                                                        in_dir_len-1);
@@ -206,9 +205,7 @@ fill_pool(GThreadPool *pool,
                     task->path = g_strdup(dirname);
                     if (output_pkg_list)
                         fprintf(output_pkg_list, "%s\n", repo_relative_path);
-
                     *current_pkglist = g_slist_prepend(*current_pkglist, task->filename);
-
                     // TODO: One common path for all tasks with the same path?
                     g_queue_insert_sorted(&queue, task, task_cmp, NULL);
                 } else {
@@ -376,6 +373,7 @@ main(int argc, char **argv)
         in_dir = cr_normalize_dir_path(argv[1]);
     }
 
+    // Check if inputdir exists
     if (!g_file_test(in_dir, G_FILE_TEST_IS_DIR)) {
         g_printerr("Directory %s must exist\n", in_dir);
         g_free(in_dir);
@@ -414,7 +412,6 @@ main(int argc, char **argv)
     if (!prepare_cache_dir(cmd_options, out_dir, &tmp_err)) {
         g_printerr("%s\n", tmp_err->message);
         g_error_free(tmp_err);
-
         g_free(in_dir);
         g_free(in_repo);
         g_free(out_dir);
@@ -423,7 +420,6 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    // Check if inputdir exists
     // Block signals that terminates the process
     if (!cr_block_terminating_signals(&tmp_err)) {
         g_printerr("%s\n", tmp_err->message);
@@ -454,7 +450,7 @@ main(int argc, char **argv)
         output_pkg_list = fopen(cmd_options->read_pkgs_list, "w");
         if (!output_pkg_list) {
             g_critical("Cannot open \"%s\" for writing: %s",
-                   cmd_options->read_pkgs_list, g_strerror(errno));
+                       cmd_options->read_pkgs_list, g_strerror(errno));
             exit(EXIT_FAILURE);
         }
     }
@@ -1330,7 +1326,6 @@ deltaerror:
     g_free(in_repo);
     g_free(out_repo);
     g_free(tmp_out_repo);
-// TODO M0ses: g_free must be done inside loop
     g_free(in_dir);
     g_free(out_dir);
     g_free(lock_dir);

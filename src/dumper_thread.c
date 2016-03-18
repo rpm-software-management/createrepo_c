@@ -245,8 +245,8 @@ load_rpm(const char *fullpath,
         goto errexit;
 
     // cut off trailing slashes from urls e.g. media:// -> media:
-    gsize  lb_length       = strlen(location_base);
-    gchar  *t_location_base;
+    gsize  lb_length        = strlen(location_base);
+    gchar  *t_location_base = g_malloc0(sizeof(location_base));
     char suf[2];
     strncpy(suf,&location_base[lb_length-2],2);
 
@@ -262,6 +262,8 @@ load_rpm(const char *fullpath,
 
     pkg->location_href = cr_safe_string_chunk_insert(pkg->chunk, location_href);
     pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, t_location_base);
+
+    g_free(t_location_base);
 
     // Get checksum type string
     pkg->checksum_type = cr_safe_string_chunk_insert(pkg->chunk,

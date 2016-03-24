@@ -256,7 +256,7 @@ load_rpm(const char *fullpath,
         size_t lb_length = strlen(location_base);
         gchar *t_location_base = g_malloc0(lb_length + 32);
         strcpy(t_location_base, location_base);
-        if (lb_length > 2 && g_strcmp0(location_base + lb_length - 3, "://") == 0)
+        if (lb_length > 3 && g_strcmp0(location_base + lb_length - 3, "://") == 0)
             lb_length -= 2;
         sprintf(t_location_base + lb_length, "#%d", media_id);
         pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, t_location_base);

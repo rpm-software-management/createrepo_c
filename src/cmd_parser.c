@@ -107,7 +107,8 @@ static GOptionEntry cmd_entries[] =
       "then the file is still the same (only use this if you're fairly "
       "trusting or gullible).", NULL },
     { "split", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.split),
-      "generate split media", NULL },
+      "take a set of directories corresponding to different volumes in a media set "
+      "and creates meta data in first directory", NULL },
     { "pkglist", 'i', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.pkglist),
       "Specify a text file which contains the complete list of files to "
       "include in the repository from the set found in the directory. File "

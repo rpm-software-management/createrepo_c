@@ -230,8 +230,8 @@ load_rpm(const char *fullpath,
          int changelog_limit,
          struct stat *stat_buf,
          cr_HeaderReadingFlags hdrrflags,
-         GError **err,
-         int media_id)
+         int media_id,
+         GError **err)
 {
     cr_Package *pkg = NULL;
     GError *tmp_err = NULL;
@@ -399,7 +399,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         pkg = load_rpm(task->full_path, udata->checksum_type,
                        udata->checksum_cachedir, location_href,
                        udata->location_base, udata->changelog_limit,
-                       NULL, hdrrflags, &tmp_err,task->media_id);
+                       NULL, hdrrflags, task->media_id, &tmp_err);
         assert(pkg || tmp_err);
 
         if (!pkg) {

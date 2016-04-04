@@ -346,7 +346,15 @@ main(int argc, char **argv)
         exit(EXIT_SUCCESS);
     }
 
-    if ( ! cmd_options->split ) {
+    if ( cmd_options->split ) {
+        if (argc < 2) {
+            g_printerr("Must specify at least one directory to index.\n");
+            g_printerr("Usage: %s [options] <directory_to_index> [directory_to_index] ...\n\n",
+                     cr_get_filename(argv[0]));
+            free_options(cmd_options);
+            exit(EXIT_FAILURE);
+        }
+    } else {
         if (argc != 2) {
             // No mandatory arguments
             g_printerr("Must specify exactly one directory to index.\n");

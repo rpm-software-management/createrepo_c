@@ -852,10 +852,7 @@ main(int argc, char **argv)
     user_data.cut_dirs          = cmd_options->cut_dirs;
     user_data.location_prefix   = cmd_options->location_prefix;
 
-    if ( cmd_options->split && ! cmd_options->location_base)
-        user_data.location_base     = "media://";
-    else
-        user_data.location_base     = cmd_options->location_base;
+    user_data.location_base     = cmd_options->location_base;
 
     g_debug("Thread pool user data ready");
 

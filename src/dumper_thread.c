@@ -34,6 +34,7 @@
 #include "misc.h"
 #include "parsepkg.h"
 #include "xml_dump.h"
+#include "package.h"
 
 #define MAX_TASK_BUFFER_LEN         20
 #define CACHEDCHKSUM_BUFFER_LEN     2048
@@ -221,6 +222,27 @@ exit:
     return checksum;
 }
 
+int prepare_split_media_baseurl(int media_id,const char *location_base,cr_Package *pkg)
+{
+    // default location_base "media:" in split mode
+    if (!location_base)
+        location_base = "media:";
+
+    // calculate location_base
+    size_t lb_length = strlen(location_base);
+    gchar *t_location_base = g_malloc0(lb_length + 32);
+    strcpy(t_location_base, location_base);
+    if (lb_length > 3 && g_strcmp0(location_base + lb_length - 3, "://") == 0)
+        lb_length -= 2;
+    sprintf(t_location_base + lb_length, "#%d", media_id);
+
+    pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, t_location_base);
+
+    g_free(t_location_base);
+
+    return 0;
+}
+
 static cr_Package *
 load_rpm(const char *fullpath,
          cr_ChecksumType checksum_type,
@@ -248,19 +270,8 @@ load_rpm(const char *fullpath,
     if (!media_id) {
         pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, location_base);
     } else {
-        // default location_base "media:" in split mode
-        if (!location_base)
-            location_base = "media:";
-
         // calculate location_base
-        size_t lb_length = strlen(location_base);
-        gchar *t_location_base = g_malloc0(lb_length + 32);
-        strcpy(t_location_base, location_base);
-        if (lb_length > 3 && g_strcmp0(location_base + lb_length - 3, "://") == 0)
-            lb_length -= 2;
-        sprintf(t_location_base + lb_length, "#%d", media_id);
-        pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, t_location_base);
-        g_free(t_location_base);
+        prepare_split_media_baseurl(media_id, location_base, pkg);
     }
 
     pkg->location_href = cr_safe_string_chunk_insert(pkg->chunk, location_href);
@@ -312,6 +323,7 @@ errexit:
     cr_package_free(pkg);
     return NULL;
 }
+
 
 void
 cr_dumper_thread(gpointer data, gpointer user_data)
@@ -418,6 +430,13 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         }
     } else {
         // Just gen XML from old loaded metadata
+        if ( task->media_id ) {
+	    if ( ! md->chunk ) {
+		g_debug("Creating new chunk");
+		md->chunk = g_string_chunk_new (PACKAGE_CHUNK_SIZE);
+	    }
+            prepare_split_media_baseurl(task->media_id, location_base, md);
+        }
         pkg = md;
         res = cr_xml_dump(md, &tmp_err);
         if (tmp_err) {

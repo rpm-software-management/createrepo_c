@@ -28,6 +28,8 @@ extern "C" {
 
 #include <glib.h>
 
+#define PACKAGE_CHUNK_SIZE 2048
+
 /** \defgroup   package         Package representation.
  *  \addtogroup package
  *  @{

@@ -431,10 +431,10 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     } else {
         // Just gen XML from old loaded metadata
         if ( task->media_id ) {
-	    if ( ! md->chunk ) {
-		g_debug("Creating new chunk");
-		md->chunk = g_string_chunk_new (PACKAGE_CHUNK_SIZE);
-	    }
+            // need chunk to store location_base foreach package
+            if ( ! md->chunk )
+                md->chunk = g_string_chunk_new (PACKAGE_CHUNK_SIZE);
+
             prepare_split_media_baseurl(task->media_id, location_base, md);
         }
         pkg = md;
@@ -518,6 +518,8 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     // Clean up
     if (pkg != md)
         cr_package_free(pkg);
+    else
+        g_string_chunk_free(md->chunk);
     g_free(res.primary);
     g_free(res.filelists);
     g_free(res.other);
@@ -565,6 +567,8 @@ task_cleanup:
             // Clean up
             if (!buf_task->pkg_from_md)
                 cr_package_free(buf_task->pkg);
+            else
+                g_string_chunk_free(buf_task->pkg->chunk);
             g_free(buf_task->res.primary);
             g_free(buf_task->res.filelists);
             g_free(buf_task->res.other);

@@ -34,7 +34,6 @@
 #include "misc.h"
 #include "parsepkg.h"
 #include "xml_dump.h"
-#include "package.h"
 
 #define MAX_TASK_BUFFER_LEN         20
 #define CACHEDCHKSUM_BUFFER_LEN     2048
@@ -44,6 +43,7 @@ struct BufferedTask {
     struct cr_XmlStruct res;        // XML for primary, filelists and other
     cr_Package *pkg;                // Package structure
     char *location_href;            // location_href path
+    char *location_base;            // location_base path
     int pkg_from_md;                // If true - package structure if from
                                     // old metadata and must not be freed!
                                     // If false - package is from file and
@@ -222,7 +222,7 @@ exit:
     return checksum;
 }
 
-int prepare_split_media_baseurl(int media_id,const char *location_base,cr_Package *pkg)
+gchar * prepare_split_media_baseurl(int media_id,const char *location_base,cr_Package *pkg)
 {
     // default location_base "media:" in split mode
     if (!location_base)
@@ -234,13 +234,10 @@ int prepare_split_media_baseurl(int media_id,const char *location_base,cr_Packag
     strcpy(t_location_base, location_base);
     if (lb_length > 3 && g_strcmp0(location_base + lb_length - 3, "://") == 0)
         lb_length -= 2;
+
     sprintf(t_location_base + lb_length, "#%d", media_id);
 
-    pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, t_location_base);
-
-    g_free(t_location_base);
-
-    return 0;
+    return t_location_base;
 }
 
 static cr_Package *
@@ -266,15 +263,17 @@ load_rpm(const char *fullpath,
     if (!pkg)
         goto errexit;
 
+    pkg->location_href = cr_safe_string_chunk_insert(pkg->chunk, location_href);
 
     if (!media_id) {
         pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, location_base);
     } else {
         // calculate location_base
-        prepare_split_media_baseurl(media_id, location_base, pkg);
+        gchar *t_location_base = prepare_split_media_baseurl(media_id, location_base, pkg);
+        pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, t_location_base);
+        g_free(t_location_base);
     }
 
-    pkg->location_href = cr_safe_string_chunk_insert(pkg->chunk, location_href);
 
     // Get checksum type string
     pkg->checksum_type = cr_safe_string_chunk_insert(pkg->chunk,
@@ -341,9 +340,11 @@ cr_dumper_thread(gpointer data, gpointer user_data)
 
     // get location_href without leading part of path (path to repo)
     // including '/' char
-    const gchar *location_base = udata->location_base;
     _cleanup_free_ gchar *location_href = NULL;
     location_href = g_strdup(task->full_path + udata->repodir_name_len);
+
+    _cleanup_free_ gchar *location_base = NULL;
+    location_base = g_strdup(udata->location_base);
 
     // User requested modification of the location href
     if (udata->cut_dirs) {
@@ -431,11 +432,11 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     } else {
         // Just gen XML from old loaded metadata
         if ( task->media_id ) {
-            // need chunk to store location_base foreach package
-            if ( ! md->chunk )
-                md->chunk = g_string_chunk_new (PACKAGE_CHUNK_SIZE);
-
-            prepare_split_media_baseurl(task->media_id, location_base, md);
+            _cleanup_free_ gchar *t_location_base;
+            t_location_base = prepare_split_media_baseurl(task->media_id, location_base, md);
+            g_free(location_base);
+            location_base = g_strdup(t_location_base);
+            md->location_base = location_base;
         }
         pkg = md;
         res = cr_xml_dump(md, &tmp_err);
@@ -492,11 +493,11 @@ cr_dumper_thread(gpointer data, gpointer user_data)
 
         if (pkg == md) {
             // We MUST store location_href for reused packages who goes to the buffer
-            // We don't need to store location_base because it is allocated in
-            // user_data during this function calls.
-
             buf_task->location_href = g_strdup(location_href);
             buf_task->pkg->location_href = buf_task->location_href;
+
+            buf_task->location_base = g_strdup(location_base);
+            buf_task->pkg->location_base = buf_task->location_base;
         }
 
         g_queue_insert_sorted(udata->buffer, buf_task, buf_task_sort_func, NULL);
@@ -518,8 +519,6 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     // Clean up
     if (pkg != md)
         cr_package_free(pkg);
-    else
-        g_string_chunk_free(md->chunk);
     g_free(res.primary);
     g_free(res.filelists);
     g_free(res.other);
@@ -568,7 +567,7 @@ task_cleanup:
             if (!buf_task->pkg_from_md)
                 cr_package_free(buf_task->pkg);
             else
-                g_string_chunk_free(buf_task->pkg->chunk);
+                g_free(buf_task->location_base);
             g_free(buf_task->res.primary);
             g_free(buf_task->res.filelists);
             g_free(buf_task->res.other);

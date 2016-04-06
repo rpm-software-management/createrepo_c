@@ -826,6 +826,7 @@ main(int argc, char **argv)
     user_data.fil_db            = fil_db;
     user_data.oth_db            = oth_db;
     user_data.changelog_limit   = cmd_options->changelog_limit;
+    user_data.location_base     = cmd_options->location_base;
     user_data.checksum_type_str = cr_checksum_name_str(cmd_options->checksum_type);
     user_data.checksum_type     = cmd_options->checksum_type;
     user_data.checksum_cachedir = cmd_options->checksum_cachedir;
@@ -851,8 +852,6 @@ main(int argc, char **argv)
     user_data.deltatargetpackages = NULL;
     user_data.cut_dirs          = cmd_options->cut_dirs;
     user_data.location_prefix   = cmd_options->location_prefix;
-
-    user_data.location_base     = cmd_options->location_base;
 
     g_debug("Thread pool user data ready");
 

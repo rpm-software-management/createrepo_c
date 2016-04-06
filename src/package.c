@@ -22,6 +22,8 @@
 #include "package.h"
 #include "misc.h"
 
+#define PACKAGE_CHUNK_SIZE 2048
+
 cr_Dependency *
 cr_dependency_new(void)
 {

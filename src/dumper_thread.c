@@ -323,7 +323,6 @@ errexit:
     return NULL;
 }
 
-
 void
 cr_dumper_thread(gpointer data, gpointer user_data)
 {

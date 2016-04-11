@@ -40,6 +40,7 @@ extern "C" {
 
 struct PoolTask {
     long  id;                       // ID of the task
+    long  media_id;                 // ID of media in split mode, 0 if not in split mode
     char* full_path;                // Complete path - /foo/bar/packages/foo.rpm
     char* filename;                 // Just filename - foo.rpm
     char* path;                     // Just path     - /foo/bar/packages

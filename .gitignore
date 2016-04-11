@@ -42,3 +42,6 @@ deltarepo/acceptance_tests/repos/repo*/repodata
 BUG*/
 JIRA*/
 ISSUE*/
+
+# vim swap files
+*.sw?

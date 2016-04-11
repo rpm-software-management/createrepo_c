@@ -46,6 +46,7 @@ struct CmdOptions {
     char **update_md_paths;     /*!< list of paths to repositories which should
                                      be used for update */
     gboolean skip_stat;         /*!< skip stat() call during --update */
+    gboolean split;             /*!< generate split media */
     gboolean version;           /*!< print program version */
     gboolean database;          /*!< create sqlite database metadata */
     gboolean no_database;       /*!< do not create database */

@@ -123,11 +123,17 @@ fill_pool(GThreadPool *pool,
           gchar *in_dir,
           struct CmdOptions *cmd_options,
           GSList **current_pkglist,
-          FILE *output_pkg_list)
+          FILE *output_pkg_list,
+          long *package_count,
+          int  media_id)
 {
     GQueue queue = G_QUEUE_INIT;
     struct PoolTask *task;
-    long package_count = 0;
+
+    if ( ! cmd_options->split ) {
+        media_id = 0;
+    }
+
 
     if (cmd_options->pkglist && !cmd_options->include_pkgs) {
         g_warning("Used pkglist doesn't contain any useful items");
@@ -253,12 +259,13 @@ fill_pool(GThreadPool *pool,
 
     // Push sorted tasks into the thread pool
     while ((task = g_queue_pop_head(&queue)) != NULL) {
-        task->id = package_count;
+        task->id = *package_count;
+        task->media_id = media_id;
         g_thread_pool_push(pool, task, NULL);
-        ++package_count;
+        ++*package_count;
     }
 
-    return package_count;
+    return *package_count;
 }
 
 
@@ -339,13 +346,23 @@ main(int argc, char **argv)
         exit(EXIT_SUCCESS);
     }
 
-    if (argc != 2) {
-        // No mandatory arguments
-        g_printerr("Must specify exactly one directory to index.\n");
-        g_printerr("Usage: %s [options] <directory_to_index>\n\n",
-                         cr_get_filename(argv[0]));
-        free_options(cmd_options);
-        exit(EXIT_FAILURE);
+    if ( cmd_options->split ) {
+        if (argc < 2) {
+            g_printerr("Must specify at least one directory to index.\n");
+            g_printerr("Usage: %s [options] <directory_to_index> [directory_to_index] ...\n\n",
+                     cr_get_filename(argv[0]));
+            free_options(cmd_options);
+            exit(EXIT_FAILURE);
+        }
+    } else {
+        if (argc != 2) {
+            // No mandatory arguments
+            g_printerr("Must specify exactly one directory to index.\n");
+            g_printerr("Usage: %s [options] <directory_to_index>\n\n",
+                     cr_get_filename(argv[0]));
+            free_options(cmd_options);
+            exit(EXIT_FAILURE);
+        }
     }
 
     // Dirs
@@ -461,17 +478,22 @@ main(int argc, char **argv)
                                           NULL);
     g_debug("Thread pool ready");
 
-    long package_count;
+    long package_count = 0;
     GSList *current_pkglist = NULL;
     /* ^^^ List with basenames of files which will be processed */
 
-
-    // Thread pool - Fill with tasks
-    package_count = fill_pool(pool,
-                              in_dir,
-                              cmd_options,
-                              &current_pkglist,
-                              output_pkg_list);
+    for (int media_id = 1; media_id < argc; media_id++ ) {
+        gchar *tmp_in_dir = cr_normalize_dir_path(argv[media_id]);
+        // Thread pool - Fill with tasks
+        fill_pool(pool,
+                  tmp_in_dir,
+                  cmd_options,
+                  &current_pkglist,
+                  output_pkg_list,
+                  &package_count,
+                  media_id);
+        g_free(tmp_in_dir);
+    }
 
     g_debug("Package count: %ld", package_count);
     g_message("Directory walk done - %ld packages", package_count);

@@ -222,22 +222,22 @@ exit:
     return checksum;
 }
 
-gchar * prepare_split_media_baseurl(int media_id,const char *location_base,cr_Package *pkg)
+gchar *
+prepare_split_media_baseurl(int media_id, const char *location_base)
 {
-    // default location_base "media:" in split mode
-    if (!location_base)
-        location_base = "media:";
+    // Default location_base "media:" in split mode
+    if (!location_base || !*location_base)
+        return g_strdup_printf("media:#%d", media_id);
 
-    // calculate location_base
+    // Location doesn't end with "://" -> just append "#MEDIA_ID"
+    if (!g_str_has_suffix(location_base, "://"))
+        return g_strdup_printf("%s#%d", location_base, media_id);
+
+    // Calculate location_base -> replace ending "//" with "#MEDIA_ID"
     size_t lb_length = strlen(location_base);
-    gchar *t_location_base = g_malloc0(lb_length + 32);
-    strcpy(t_location_base, location_base);
-    if (lb_length > 3 && g_strcmp0(location_base + lb_length - 3, "://") == 0)
-        lb_length -= 2;
-
-    sprintf(t_location_base + lb_length, "#%d", media_id);
-
-    return t_location_base;
+    _cleanup_free_ gchar *tmp_location_base = NULL;
+    tmp_location_base = g_strndup(location_base, (lb_length-2));
+    return g_strdup_printf("%s#%d", tmp_location_base, media_id);
 }
 
 static cr_Package *
@@ -249,7 +249,6 @@ load_rpm(const char *fullpath,
          int changelog_limit,
          struct stat *stat_buf,
          cr_HeaderReadingFlags hdrrflags,
-         int media_id,
          GError **err)
 {
     cr_Package *pkg = NULL;
@@ -263,17 +262,9 @@ load_rpm(const char *fullpath,
     if (!pkg)
         goto errexit;
 
+    // Locations
     pkg->location_href = cr_safe_string_chunk_insert(pkg->chunk, location_href);
-
-    if (!media_id) {
-        pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, location_base);
-    } else {
-        // calculate location_base
-        gchar *t_location_base = prepare_split_media_baseurl(media_id, location_base, pkg);
-        pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, t_location_base);
-        g_free(t_location_base);
-    }
-
+    pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, location_base);
 
     // Get checksum type string
     pkg->checksum_type = cr_safe_string_chunk_insert(pkg->chunk,
@@ -358,6 +349,14 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         g_free(tmp);
     }
 
+    // Prepare location base (if split option is used)
+    if (task->media_id) {
+        gchar *new_location_base = prepare_split_media_baseurl(task->media_id,
+                                                               location_base);
+        g_free(location_base);
+        location_base = new_location_base;
+    }
+
     // If --cachedir is used, load signatures and hdrid from packages too
     if (udata->checksum_cachedir)
         hdrrflags = CR_HDRR_LOADHDRID | CR_HDRR_LOADSIGNATURES;
@@ -397,10 +396,10 @@ cr_dumper_thread(gpointer data, gpointer user_data)
                 // WARNING! This two lines destructively modifies content of
                 // packages in old metadata.
                 md->location_href = location_href;
-                md->location_base = (gchar *) location_base;
-                // ^^^ The location_base is not properly saved into pkg chunk
-                // this is intentional as after the metadata are written
-                // (dumped) none should use them again.
+                md->location_base = location_base;
+                // ^^^ The location_base not location_href are properly saved
+                // into pkg chunk this is intentional as after the metadata
+                // are written (dumped) none should use them again.
             }
         }
     }
@@ -410,8 +409,8 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         // Load package from file
         pkg = load_rpm(task->full_path, udata->checksum_type,
                        udata->checksum_cachedir, location_href,
-                       udata->location_base, udata->changelog_limit,
-                       NULL, hdrrflags, task->media_id, &tmp_err);
+                       location_base, udata->changelog_limit,
+                       NULL, hdrrflags, &tmp_err);
         assert(pkg || tmp_err);
 
         if (!pkg) {
@@ -430,13 +429,6 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         }
     } else {
         // Just gen XML from old loaded metadata
-        if ( task->media_id ) {
-            _cleanup_free_ gchar *t_location_base;
-            t_location_base = prepare_split_media_baseurl(task->media_id, location_base, md);
-            g_free(location_base);
-            location_base = g_strdup(t_location_base);
-            md->location_base = location_base;
-        }
         pkg = md;
         res = cr_xml_dump(md, &tmp_err);
         if (tmp_err) {
@@ -488,10 +480,11 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         buf_task->res = res;
         buf_task->pkg = pkg;
         buf_task->location_href = NULL;
+        buf_task->location_base = NULL;
         buf_task->pkg_from_md = (pkg == md) ? 1 : 0;
 
         if (pkg == md) {
-            // We MUST store location_href for reused packages who goes to the buffer
+            // We MUST store locations for reused packages who goes to the buffer
             buf_task->location_href = g_strdup(location_href);
             buf_task->pkg->location_href = buf_task->location_href;
 
@@ -565,12 +558,11 @@ task_cleanup:
             // Clean up
             if (!buf_task->pkg_from_md)
                 cr_package_free(buf_task->pkg);
-            else
-                g_free(buf_task->location_base);
             g_free(buf_task->res.primary);
             g_free(buf_task->res.filelists);
             g_free(buf_task->res.other);
             g_free(buf_task->location_href);
+            g_free(buf_task->location_base);
             g_free(buf_task);
         } else {
             g_mutex_unlock(udata->mutex_buffer);

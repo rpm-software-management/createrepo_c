@@ -37,4 +37,6 @@ ADD_DEPENDENCIES(tests test_xml_parser_updateinfo)
 CONFIGURE_FILE("run_gtester.sh.in"  "${CMAKE_BINARY_DIR}/tests/run_gtester.sh")
 ADD_TEST(test_main run_gtester.sh)
 
+IF (ENABLE_PYTHON)
 ADD_SUBDIRECTORY(python)
+ENDIF (ENABLE_PYTHON)

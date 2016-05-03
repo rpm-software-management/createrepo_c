@@ -98,6 +98,9 @@ IF (ENABLE_DRPM)
     ENDIF (CR_DELTA_RPM_SUPPORT)
 ENDIF (ENABLE_DRPM)
 
+# option to enable/disable python support
+OPTION (ENABLE_PYTHON "Enable python support?" ON)
+
 # Threaded XZ Compression
 # Note: This option is disabled by default, because Createrepo_c
 # parallelize a lot of tasks (including compression) by default, this

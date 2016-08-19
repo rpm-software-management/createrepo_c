@@ -258,12 +258,11 @@ cr_lock_repo(const gchar *repo_dir,
             g_debug("(--ignore-lock enabled) For data generation is used: %s",
                     tmp_repodata_dir);
         }
-    }
 
-    if (tmp_repodata_dir)
         *tmp_repodata_dir_p = g_strdup(tmp_repodata_dir);
-    else
+    } else {
         *tmp_repodata_dir_p = g_strdup(lock_dir);
+    }
 
     return TRUE;
 }

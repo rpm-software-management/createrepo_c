@@ -59,7 +59,7 @@ SET (createrepo_cmodule_SRCS
      xml_parser-py.c
     )
 
-ADD_LIBRARY(_createrepo_c SHARED ${createrepo_cmodule_SRCS})
+ADD_LIBRARY(_createrepo_c MODULE ${createrepo_cmodule_SRCS})
 SET_TARGET_PROPERTIES(_createrepo_c PROPERTIES PREFIX "")
 SET_TARGET_PROPERTIES(_createrepo_c PROPERTIES LIBRARY_OUTPUT_DIRECTORY "./createrepo_c")
 TARGET_LINK_LIBRARIES(_createrepo_c libcreaterepo_c)

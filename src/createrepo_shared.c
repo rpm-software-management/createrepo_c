@@ -188,7 +188,6 @@ cr_lock_repo(const gchar *repo_dir,
     assert(!err || *err == NULL);
 
     _cleanup_free_ gchar *lock_dir = NULL;
-    _cleanup_free_ gchar *tmp_repodata_dir = NULL;
     _cleanup_error_free_ GError *tmp_err = NULL;
 
     lock_dir = g_build_filename(repo_dir, ".repodata/", NULL);
@@ -242,10 +241,11 @@ cr_lock_repo(const gchar *repo_dir,
         }
 
         // To data generation use a different one
+        _cleanup_free_ gchar *tmp_repodata_dir = NULL;
         _cleanup_free_ gchar *tmp = NULL;
-        tmp_repodata_dir = g_build_filename(repo_dir, ".repodata.", NULL);
-        tmp = cr_append_pid_and_datetime(tmp_repodata_dir, "/");
-        tmp_repodata_dir = tmp;
+
+        tmp = g_build_filename(repo_dir, ".repodata.", NULL);
+        tmp_repodata_dir = cr_append_pid_and_datetime(tmp, "/");
 
         if (g_mkdir(tmp_repodata_dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
             g_critical("(--ignore-lock enabled) Cannot create %s: %s",

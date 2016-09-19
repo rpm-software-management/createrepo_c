@@ -94,6 +94,7 @@ struct UserData {
                                     // in location href path
     gchar *location_prefix;         // Append this prefix into location_href
                                     // during repodata generation
+    gboolean had_errors;            // Any errors encountered?
 };
 
 

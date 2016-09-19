@@ -328,7 +328,7 @@ main(int argc, char **argv)
     struct CmdOptions *cmd_options;
     gboolean ret;
     GError *tmp_err = NULL;
-
+    int exit_val = EXIT_SUCCESS;
 
     // Arguments parsing
     cmd_options = parse_arguments(&argc, &argv, &tmp_err);
@@ -852,6 +852,7 @@ main(int argc, char **argv)
     user_data.deltatargetpackages = NULL;
     user_data.cut_dirs          = cmd_options->cut_dirs;
     user_data.location_prefix   = cmd_options->location_prefix;
+    user_data.had_errors        = 0;
 
     g_debug("Thread pool user data ready");
 
@@ -861,7 +862,13 @@ main(int argc, char **argv)
 
     // Wait until pool is finished
     g_thread_pool_free(pool, FALSE, TRUE);
-    g_message("Pool finished");
+
+    // if there were any errors, exit nonzero
+    if( user_data.had_errors ) {
+	exit_val = EXIT_FAILURE;
+    }
+
+    g_message("Pool finished%s", (user_data.had_errors ? " with errors" : ""));
 
     cr_xml_dump_cleanup();
 
@@ -1347,5 +1354,5 @@ deltaerror:
     cr_package_parser_cleanup();
 
     g_debug("All done");
-    exit(EXIT_SUCCESS);
+    exit(exit_val);
 }

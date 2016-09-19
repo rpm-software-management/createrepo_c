@@ -79,6 +79,7 @@ write_pkg(long id,
     if (tmp_err) {
         g_critical("Cannot add primary chunk:\n%s\nError: %s",
                    res.primary, tmp_err->message);
+        udata->had_errors = TRUE;
         g_clear_error(&tmp_err);
     }
 
@@ -87,6 +88,7 @@ write_pkg(long id,
         if (tmp_err) {
             g_critical("Cannot add record of %s (%s) to primary db: %s",
                        pkg->name, pkg->pkgId, tmp_err->message);
+            udata->had_errors = TRUE;
             g_clear_error(&tmp_err);
         }
     }
@@ -103,6 +105,7 @@ write_pkg(long id,
     if (tmp_err) {
         g_critical("Cannot add filelists chunk:\n%s\nError: %s",
                    res.filelists, tmp_err->message);
+        udata->had_errors = TRUE;
         g_clear_error(&tmp_err);
     }
 
@@ -111,6 +114,7 @@ write_pkg(long id,
         if (tmp_err) {
             g_critical("Cannot add record of %s (%s) to filelists db: %s",
                        pkg->name, pkg->pkgId, tmp_err->message);
+            udata->had_errors = TRUE;
             g_clear_error(&tmp_err);
         }
     }
@@ -127,6 +131,7 @@ write_pkg(long id,
     if (tmp_err) {
         g_critical("Cannot add other chunk:\n%s\nError: %s",
                    res.other, tmp_err->message);
+        udata->had_errors = TRUE;
         g_clear_error(&tmp_err);
     }
 
@@ -135,6 +140,7 @@ write_pkg(long id,
         if (tmp_err) {
             g_critical("Cannot add record of %s (%s) to other db: %s",
                        pkg->name, pkg->pkgId, tmp_err->message);
+            udata->had_errors = TRUE;
             g_clear_error(&tmp_err);
         }
     }
@@ -416,6 +422,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         if (!pkg) {
             g_warning("Cannot read package: %s: %s",
                       task->full_path, tmp_err->message);
+            udata->had_errors = TRUE;
             g_clear_error(&tmp_err);
             goto task_cleanup;
         }
@@ -424,6 +431,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         if (tmp_err) {
             g_critical("Cannot dump XML for %s (%s): %s",
                        pkg->name, pkg->pkgId, tmp_err->message);
+            udata->had_errors = TRUE;
             g_clear_error(&tmp_err);
             goto task_cleanup;
         }
@@ -434,6 +442,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         if (tmp_err) {
             g_critical("Cannot dump XML for %s (%s): %s",
                        md->name, md->pkgId, tmp_err->message);
+            udata->had_errors = TRUE;
             g_clear_error(&tmp_err);
             goto task_cleanup;
         }
@@ -572,5 +581,3 @@ task_cleanup:
 
     return;
 }
-
-

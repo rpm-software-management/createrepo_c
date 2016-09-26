@@ -682,6 +682,14 @@ cr_repomd_set_record(cr_Repomd *repomd,
                      cr_RepomdRecord *record)
 {
     if (!repomd || !record) return;
+
+    cr_RepomdRecord *delrec = NULL;
+    // Remove all existing record of the same type
+    while((delrec = cr_repomd_get_record(repomd, record->type)) != NULL) {
+	cr_repomd_detach_record(repomd, delrec);
+	cr_repomd_record_free(delrec);
+    }
+
     repomd->records = g_slist_append(repomd->records, record);
 }
 

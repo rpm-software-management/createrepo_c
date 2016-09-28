@@ -79,6 +79,7 @@ void cr_contentstat_free(cr_ContentStat *cstat, GError **err);
 typedef struct {
     cr_CompressionType  type;           /*!< Type of compression */
     void                *FILE;          /*!< Pointer to gzFile, BZFILE, ... */
+    void                *INNERFILE;     /*!< Pointer to underlying FILE */
     cr_OpenMode         mode;           /*!< Mode */
     cr_ContentStat      *stat;          /*!< Content stats */
     cr_ChecksumCtx      *checksum_ctx;  /*!< Checksum contenxt */

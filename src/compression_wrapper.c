@@ -347,6 +347,7 @@ cr_sopen(const char *filename,
     file = g_malloc0(sizeof(CR_FILE));
     file->mode = mode;
     file->type = type;
+    file->INNERFILE = NULL;
 
     switch (type) {
 
@@ -380,6 +381,7 @@ cr_sopen(const char *filename,
 
         case (CR_CW_BZ2_COMPRESSION): { // ------------------------------------
             FILE *f = fopen(filename, mode_str);
+            file->INNERFILE = f;
             int bzerror;
 
             if (!f) {
@@ -404,6 +406,8 @@ cr_sopen(const char *filename,
 
             if (bzerror != BZ_OK) {
                 const char *err_msg;
+
+                fclose(f);
 
                 switch (bzerror) {
                     case BZ_CONFIG_ERROR:
@@ -641,6 +645,8 @@ cr_close(CR_FILE *cr_file, GError **err)
             else
                 BZ2_bzWriteClose(&rc, (BZFILE *) cr_file->FILE,
                                  BZ2_SKIP_FFLUSH, NULL, NULL);
+
+            fclose(cr_file->INNERFILE);
 
             if (rc == BZ_OK) {
                 ret = CRE_OK;

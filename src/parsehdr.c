@@ -322,7 +322,7 @@ cr_package_from_header(Header hdr,
     GHashTable *provided_hashtable = g_hash_table_new_full(g_str_hash,
                                                            g_str_equal,
                                                            NULL,
-                                                           free);
+                                                           g_free);
 
     // Hashtable with already processed files from requires
     GHashTable *ap_hashtable = g_hash_table_new_full(g_str_hash,
@@ -372,7 +372,7 @@ cr_package_from_header(Header hdr,
                     if (g_hash_table_lookup_extended(provided_hashtable, filename, NULL, &pvalue)) {
                         struct ap_value_struct *ap_value = pvalue;
                         if (!ap_value->flags || !ap_value->flags[0] || !flags || !flags[0] ||
-                            (!g_strcmp0(ap_value->flags, flags) && !strcmp(ap_value->version, full_version)))
+                            (!g_strcmp0(ap_value->flags, flags) && !g_strcmp0(ap_value->version, full_version)))
                            continue;
                     }
 
@@ -421,7 +421,7 @@ cr_package_from_header(Header hdr,
                 switch (deptype) {
                     case DEP_PROVIDES:
                         pkg->provides = g_slist_prepend(pkg->provides, dependency);
-                        struct ap_value_struct *pvalue = malloc(sizeof(struct ap_value_struct));
+                        struct ap_value_struct *pvalue = g_malloc(sizeof(struct ap_value_struct));
                         pvalue->flags = flags;
                         pvalue->version = full_version;
                         pvalue->pre = dependency->pre;

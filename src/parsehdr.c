@@ -319,7 +319,10 @@ cr_package_from_header(Header hdr,
     };
 
     // Hastable with filenames from provided
-    GHashTable *provided_hashtable = g_hash_table_new(g_str_hash, g_str_equal);
+    GHashTable *provided_hashtable = g_hash_table_new_full(g_str_hash,
+                                                           g_str_equal,
+                                                           NULL,
+                                                           free);
 
     // Hashtable with already processed files from requires
     GHashTable *ap_hashtable = g_hash_table_new_full(g_str_hash,
@@ -358,15 +361,19 @@ cr_package_from_header(Header hdr,
                     }
 
                     // Skip package primary files
-                    if (g_hash_table_lookup_extended(filenames_hashtable, filename, NULL, NULL)) {
+                    if (*filename == '/' && g_hash_table_lookup_extended(filenames_hashtable, filename, NULL, NULL)) {
                         if (cr_is_primary(filename)) {
                             continue;
                         }
                     }
 
                     // Skip files which are provided
-                    if (g_hash_table_lookup_extended(provided_hashtable, filename, NULL, NULL)) {
-                        continue;
+                    gpointer pvalue;
+                    if (g_hash_table_lookup_extended(provided_hashtable, filename, NULL, &pvalue)) {
+                        struct ap_value_struct *ap_value = pvalue;
+                        if (!ap_value->flags || !ap_value->flags[0] || !flags || !flags[0] ||
+                            (!g_strcmp0(ap_value->flags, flags) && !strcmp(ap_value->version, full_version)))
+                           continue;
                     }
 
                     // Calculate pre value
@@ -413,8 +420,12 @@ cr_package_from_header(Header hdr,
 
                 switch (deptype) {
                     case DEP_PROVIDES:
-                        g_hash_table_replace(provided_hashtable, dependency->name, dependency->name);
                         pkg->provides = g_slist_prepend(pkg->provides, dependency);
+                        struct ap_value_struct *pvalue = malloc(sizeof(struct ap_value_struct));
+                        pvalue->flags = flags;
+                        pvalue->version = full_version;
+                        pvalue->pre = dependency->pre;
+                        g_hash_table_replace(provided_hashtable, dependency->name, pvalue);
                         break;
                     case DEP_CONFLICTS:
                         pkg->conflicts = g_slist_prepend(pkg->conflicts, dependency);

@@ -105,6 +105,7 @@ struct CmdOptions {
     gchar *location_prefix;     /*!< Append this prefix into location_href
                                      during repodata generation. */
     gchar *repomd_checksum;     /*!< Checksum type for entries in repomd.xml */
+    gboolean error_exit_val;        /*!< exit 2 on processing errors */
 
     /* Items filled by check_arguments() */
 

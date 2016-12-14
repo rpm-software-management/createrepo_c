@@ -864,8 +864,8 @@ main(int argc, char **argv)
     g_thread_pool_free(pool, FALSE, TRUE);
 
     // if there were any errors, exit nonzero
-    if( user_data.had_errors ) {
-	exit_val = EXIT_FAILURE;
+    if( cmd_options->error_exit_val && user_data.had_errors ) {
+	exit_val = 2;
     }
 
     g_message("Pool finished%s", (user_data.had_errors ? " with errors" : ""));

@@ -99,6 +99,10 @@ class TestCaseRepomd(unittest.TestCase):
 
         self.assertEqual(len(md.records), 1)
 
+        md.set_record(rec)
+
+        self.assertEqual(len(md.records), 1)
+
         md.repoid = None
         md.contenthash = None
 

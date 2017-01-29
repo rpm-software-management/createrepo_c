@@ -319,7 +319,10 @@ cr_package_from_header(Header hdr,
     };
 
     // Hastable with filenames from provided
-    GHashTable *provided_hashtable = g_hash_table_new(g_str_hash, g_str_equal);
+    GHashTable *provided_hashtable = g_hash_table_new_full(g_str_hash,
+                                                           g_str_equal,
+                                                           g_free,
+                                                           NULL);
 
     // Hashtable with already processed files from requires
     GHashTable *ap_hashtable = g_hash_table_new_full(g_str_hash,
@@ -350,6 +353,12 @@ cr_package_from_header(Header hdr,
                 const char *flags = cr_flag_to_str(num_flags);
                 const char *full_version = rpmtdGetString(fileversions);
 
+                _cleanup_free_ char *depnfv = NULL;  // Dep NameFlagsVersion
+                depnfv = g_strconcat(filename,
+                                     flags ? flags : "",
+                                     full_version ? full_version : "",
+                                     NULL);
+
                 // Requires specific stuff
                 if (deptype == DEP_REQUIRES) {
                     // Skip requires which start with "rpmlib("
@@ -358,14 +367,14 @@ cr_package_from_header(Header hdr,
                     }
 
                     // Skip package primary files
-                    if (g_hash_table_lookup_extended(filenames_hashtable, filename, NULL, NULL)) {
+                    if (*filename == '/' && g_hash_table_lookup_extended(filenames_hashtable, filename, NULL, NULL)) {
                         if (cr_is_primary(filename)) {
                             continue;
                         }
                     }
 
                     // Skip files which are provided
-                    if (g_hash_table_lookup_extended(provided_hashtable, filename, NULL, NULL)) {
+                    if (g_hash_table_lookup_extended(provided_hashtable, depnfv, NULL, NULL)) {
                         continue;
                     }
 
@@ -412,10 +421,12 @@ cr_package_from_header(Header hdr,
                 g_free(evr);
 
                 switch (deptype) {
-                    case DEP_PROVIDES:
-                        g_hash_table_replace(provided_hashtable, dependency->name, dependency->name);
+                    case DEP_PROVIDES: {
+                        char *depnfv_dup = g_strdup(depnfv);
+                        g_hash_table_replace(provided_hashtable, depnfv_dup, NULL);
                         pkg->provides = g_slist_prepend(pkg->provides, dependency);
                         break;
+                    }
                     case DEP_CONFLICTS:
                         pkg->conflicts = g_slist_prepend(pkg->conflicts, dependency);
                         break;

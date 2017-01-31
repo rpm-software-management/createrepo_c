@@ -272,14 +272,14 @@ get_datetime(_UpdateRecordObject *self, void *member_offset)
     if (str == NULL)
         Py_RETURN_NONE;
 
-    struct tm *dt = malloc(sizeof(struct tm));
+    struct tm *dt = g_malloc0(sizeof(struct tm));
     char *res = strptime(str, "%Y-%m-%d %H:%M:%S", dt);
     if (res == NULL) {
-        memset(res,0,sizeof(dt));
+        memset(dt, 0, sizeof(struct tm));
         res = strptime(str, "%Y-%m-%d", dt);
         if (res == NULL)
            PyErr_SetString(CrErr_Exception, "Invalid date");
-        }
+    }
     PyObject *py_dt = PyDateTime_FromDateAndTime(dt->tm_year + 1900,
                                       dt->tm_mon + 1, dt->tm_mday,
                                       dt->tm_hour, dt->tm_min, dt->tm_sec, 0);

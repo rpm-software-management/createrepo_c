@@ -186,6 +186,8 @@ static GOptionEntry cmd_entries[] =
       "Append this prefix before location_href in output repodata", "PREFIX" },
     { "repomd-checksum", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.repomd_checksum),
       "Checksum type to be used in repomd.xml", "CHECKSUM_TYPE"},
+    { "error-exit-val", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.error_exit_val),
+      "Exit with retval 2 if there were any errors during processing", NULL },
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL },
 };
 

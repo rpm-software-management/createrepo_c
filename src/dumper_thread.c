@@ -387,11 +387,13 @@ cr_dumper_thread(gpointer data, gpointer user_data)
 
             if (udata->skip_stat) {
                 old_used = TRUE;
+                udata->old_used++;
             } else if (stat_buf.st_mtime == md->time_file
                        && stat_buf.st_size == md->size_package
                        && !strcmp(udata->checksum_type_str, md->checksum_type))
             {
                 old_used = TRUE;
+                udata->old_used++;
             } else {
                 g_debug("%s metadata are obsolete -> generating new",
                         task->filename);

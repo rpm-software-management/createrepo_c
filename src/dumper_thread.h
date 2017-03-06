@@ -62,6 +62,7 @@ struct UserData {
     const char *checksum_cachedir;  // Dir with cached checksums
     gboolean skip_symlinks;         // Skip symlinks
     long package_count;             // Total number of packages to process
+    long old_used;                  // Total number of packages where we used the old metadata
 
     // Update stuff
     gboolean skip_stat;             // Skip stat() while updating

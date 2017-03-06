@@ -833,6 +833,7 @@ main(int argc, char **argv)
     user_data.skip_symlinks     = cmd_options->skip_symlinks;
     user_data.repodir_name_len  = strlen(in_dir);
     user_data.package_count     = package_count;
+    user_data.old_used          = 0;
     user_data.skip_stat         = cmd_options->skip_stat;
     user_data.old_metadata      = old_metadata;
     user_data.mutex_pri         = g_mutex_new();
@@ -869,6 +870,16 @@ main(int argc, char **argv)
     }
 
     g_message("Pool finished%s", (user_data.had_errors ? " with errors" : ""));
+
+    g_debug("Package count: %ld old_used: %ld", package_count, user_data.old_used);
+    if (user_data.old_used == package_count && cmd_options->update) {
+        g_debug("All packages were perfect cache hits, not updating repo.");
+        cr_remove_dir(tmp_out_repo, NULL);
+        if (g_strcmp0(lock_dir, tmp_out_repo))
+            // If lock_dir is not same as temporary repo dir then remove it
+            cr_remove_dir(lock_dir, NULL);
+        exit(EXIT_SUCCESS);
+    }
 
     cr_xml_dump_cleanup();
 

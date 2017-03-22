@@ -25,7 +25,11 @@ extern "C" {
 #endif
 
 #include <glib.h>
+
+#ifndef	RPM5
 #include <rpm/rpmlib.h>
+#endif	/* RPM5*/
+
 #include "package.h"
 #include "parsehdr.h"
 #include "xml_file.h"

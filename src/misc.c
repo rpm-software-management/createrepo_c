@@ -26,7 +26,13 @@
 #include <curl/curl.h>
 #include <errno.h>
 #include <ftw.h>
+
+#ifdef	RPM5
+#include <rpmevr.h>
+#else	/* RPM5 */
 #include <rpm/rpmlib.h>
+#endif	/* RPM5 */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1370,7 +1376,7 @@ cr_append_pid_and_datetime(const char *str, const char *suffix)
                                     str ? str : "",
                                     (intmax_t) getpid(),
                                     datetime,
-                                    tv.tv_usec,
+                                    (long)tv.tv_usec,
                                     suffix ? suffix : "");
     return result;
 }

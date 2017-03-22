@@ -19,9 +19,15 @@
 
 #include <glib.h>
 #include <assert.h>
-#include <rpm/rpmfi.h>
 #include <stdlib.h>
 #include "parsehdr.h"
+
+#ifdef	RPM5
+#include <rpmfi.h>
+#else	/* RPM5 */
+#include <rpm/rpmfi.h>
+#endif	/* RPM5 */
+
 #include "xml_dump.h"
 #include "misc.h"
 #include "cleanup.h"
@@ -76,6 +82,36 @@ static DepItem dep_items[] = {
 #endif
     { DEP_SENTINEL, 0, 0, 0 },
 };
+
+#ifdef	RPM5
+static
+const char * headerGetString(Header h, rpmTag tag)
+{
+    const char * res = NULL;
+    HE_t he = (HE_t) memset(alloca(sizeof(*he)), 0, sizeof(*he));
+    he->tag = tag;
+    if (headerGet(h, he, 0) && he->t == RPM_STRING_TYPE) {
+	res = he->p.str;
+	he->p.ptr = NULL;
+    }
+    if (he->p.ptr)
+	free(he->p.ptr);
+    return (res ? res : strdup(""));
+}
+
+static
+uint64_t headerGetNumber(Header h, rpmTag tag)
+{
+    uint64_t res = 0;
+    HE_t he = (HE_t) memset(alloca(sizeof(*he)), 0, sizeof(*he));
+    he->tag = tag;
+    if (headerGet(h, he, 0) && he->t == RPM_UINT32_TYPE)
+	res = he->p.ui32p[0];
+    if (he->p.ptr)
+	free(he->p.ptr);
+    return res;
+}
+#endif	/* RPM5 */
 
 static inline int
 cr_compare_dependency(const char *dep1, const char *dep2)
@@ -172,8 +208,10 @@ cr_package_from_header(Header hdr,
 
     // Create rpm tag data container
 
+#ifndef	RPM5
     rpmtd td = rpmtdNew();
     headerGetFlags flags = HEADERGET_MINMEM | HEADERGET_EXT;
+#endif
 
 
     // Fill package structure
@@ -200,15 +238,26 @@ cr_package_from_header(Header hdr,
     pkg->summary = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_SUMMARY));
     pkg->description = cr_safe_string_chunk_insert_null(pkg->chunk, headerGetString(hdr, RPMTAG_DESCRIPTION));
     pkg->url = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_URL));
+
+#ifdef	RPM5
+    pkg->time_build = headerGetNumber(hdr, RPMTAG_BUILDTIME);
+#else	/* RPM5 */
     if (headerGet(hdr, RPMTAG_BUILDTIME, td, flags)) {
         pkg->time_build = rpmtdGetNumber(td);
     }
+#endif	/* RPM5 */
+
     pkg->rpm_license = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_LICENSE));
     pkg->rpm_vendor = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_VENDOR));
     pkg->rpm_group = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_GROUP));
     pkg->rpm_buildhost = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_BUILDHOST));
     pkg->rpm_sourcerpm = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_SOURCERPM));
     pkg->rpm_packager = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_PACKAGER));
+
+#ifdef	RPM5
+    pkg->size_installed = headerGetNumber(hdr, RPMTAG_SIZE);
+    pkg->size_archive = headerGetNumber(hdr, RPMTAG_ARCHIVESIZE);
+#else	/* RPM5 */
     if (headerGet(hdr, RPMTAG_SIZE, td, flags)) {
         pkg->size_installed = rpmtdGetNumber(td);
     }
@@ -218,19 +267,22 @@ cr_package_from_header(Header hdr,
 
     rpmtdFreeData(td);
     rpmtdFree(td);
-
+#endif	/* RPM5 */
 
     //
     // Fill files
     //
 
+    GHashTable *filenames_hashtable = g_hash_table_new(g_str_hash, g_str_equal);
+
+#ifdef	RPM5
+#warning FIXME: file data.
+#else	/* RPM5 */
     rpmtd full_filenames = rpmtdNew(); // Only for filenames_hashtable
     rpmtd indexes   = rpmtdNew();
     rpmtd filenames = rpmtdNew();
     rpmtd fileflags = rpmtdNew();
     rpmtd filemodes = rpmtdNew();
-
-    GHashTable *filenames_hashtable = g_hash_table_new(g_str_hash, g_str_equal);
 
     rpmtd dirnames = rpmtdNew();
 
@@ -303,13 +355,12 @@ cr_package_from_header(Header hdr,
     if (dir_list) {
         free((void *) dir_list);
     }
+#endif	/* RPM5 */
 
 
     //
     // PCOR (provides, conflicts, obsoletes, requires)
     //
-
-    rpmtd fileversions = rpmtdNew();
 
     // Struct used as value in ap_hashtable
     struct ap_value_struct {
@@ -329,6 +380,20 @@ cr_package_from_header(Header hdr,
                                                      g_str_equal,
                                                      NULL,
                                                      free);
+
+#ifdef	RPM5
+
+#warning FIXME: PRCO data.
+    g_hash_table_remove_all(filenames_hashtable);
+    g_hash_table_remove_all(provided_hashtable);
+    g_hash_table_remove_all(ap_hashtable);
+
+    g_hash_table_unref(filenames_hashtable);
+    g_hash_table_unref(provided_hashtable);
+    g_hash_table_unref(ap_hashtable);
+
+#else	/* RPM5 */
+    rpmtd fileversions = rpmtdNew();
 
     for (int deptype=0; dep_items[deptype].type != DEP_SENTINEL; deptype++) {
         if (headerGet(hdr, dep_items[deptype].nametag, filenames, flags) &&
@@ -527,11 +592,78 @@ cr_package_from_header(Header hdr,
 
     rpmtdFreeData(full_filenames);
     rpmtdFree(full_filenames);
+#endif	/* RPM5 */
 
 
     //
     // Changelogs
     //
+
+#ifdef	RPM5
+
+    HE_t TIMEhe = (HE_t) memset(alloca(sizeof(*TIMEhe)), 0, sizeof(*TIMEhe));
+    HE_t NAMEhe = (HE_t) memset(alloca(sizeof(*NAMEhe)), 0, sizeof(*NAMEhe));
+    HE_t TEXThe = (HE_t) memset(alloca(sizeof(*TEXThe)), 0, sizeof(*TEXThe));
+    TIMEhe->tag = RPMTAG_CHANGELOGTIME;
+    NAMEhe->tag = RPMTAG_CHANGELOGNAME;
+    TEXThe->tag = RPMTAG_CHANGELOGTEXT;
+
+    if (headerGet(hdr, TIMEhe, 0) &&
+        headerGet(hdr, NAMEhe, 0) &&
+        headerGet(hdr, TEXThe, 0))
+    {
+        gint64 last_time = G_GINT64_CONSTANT(0);
+	for (uint32_t ix = 0; ix < TIMEhe->c; ix++)
+	{
+            gint64 time = TIMEhe->p.ui32p[ix];
+
+            if (!(changelog_limit > 0 || changelog_limit == -1))
+                break;
+
+            cr_ChangelogEntry *changelog = cr_changelog_entry_new();
+            changelog->author    = cr_safe_string_chunk_insert(pkg->chunk,
+                                           NAMEhe->p.argv[ix]);
+            changelog->date      = time;
+            changelog->changelog = cr_safe_string_chunk_insert(pkg->chunk,
+                                            TEXThe->p.argv[ix]);
+
+            // Remove space from end of author name
+            if (changelog->author) {
+                size_t len, x;
+                len = strlen(changelog->author);
+                for (x=(len-1); x > 0; x--) {
+                    if (changelog->author[x] == ' ') {
+                        changelog->author[x] = '\0';
+                    } else {
+                        break;
+                    }
+                }
+            }
+
+            pkg->changelogs = g_slist_prepend(pkg->changelogs, changelog);
+            if (changelog_limit != -1)
+                changelog_limit--;
+
+            // If a previous entry has the same time, increment time of the previous
+            // entry by one. Ugly but works!
+            if (last_time == time) {
+                int tmp_time = time;
+                GSList *previous = pkg->changelogs;
+                while ((previous = g_slist_next(previous)) != NULL &&
+                       ((cr_ChangelogEntry *) (previous->data))->date == tmp_time) {
+                    ((cr_ChangelogEntry *) (previous->data))->date++;
+                    tmp_time++;
+                }
+            } else {
+                last_time = time;
+            }
+	}
+    }
+    if (TIMEhe->p.ptr) free(TIMEhe->p.ptr);
+    if (NAMEhe->p.ptr) free(NAMEhe->p.ptr);
+    if (TEXThe->p.ptr) free(TEXThe->p.ptr);
+
+#else	/* RPM5 */
 
     rpmtd changelogtimes = rpmtdNew();
     rpmtd changelognames = rpmtdNew();
@@ -603,6 +735,8 @@ cr_package_from_header(Header hdr,
     rpmtdFree(changelognames);
     rpmtdFree(changelogtexts);
 
+#endif	/* RPM5 */
+
 
     //
     // Keys and hdrid (data used for caching when the --cachedir is specified)
@@ -613,6 +747,28 @@ cr_package_from_header(Header hdr,
                                                  headerGetString(hdr, RPMTAG_HDRID));
 
     if (hdrrflags & CR_HDRR_LOADSIGNATURES) {
+#ifdef	RPM5
+        HE_t he = (HE_t) memset(alloca(sizeof(*he)), 0, sizeof(*he));
+        he->tag = RPMTAG_SIGGPG;
+        if (headerGet(hdr, he, 0) && he->t == RPM_BIN_TYPE && he->c > 0) {
+            pkg->siggpg = cr_binary_data_new();
+            pkg->siggpg->size = he->c;
+            pkg->siggpg->data = g_string_chunk_insert_len(pkg->chunk,
+                                                          he->p.ptr,
+                                                          he->c);
+        }
+        if (he->p.ptr) free(he->p.ptr);
+
+        he->tag = RPMTAG_SIGPGP;
+        if (headerGet(hdr, he, 0) && he->t == RPM_BIN_TYPE && he->c > 0) {
+            pkg->sigpgp = cr_binary_data_new();
+            pkg->sigpgp->size = he->c;
+            pkg->sigpgp->data = g_string_chunk_insert_len(pkg->chunk,
+                                                          he->p.ptr,
+                                                          he->c);
+        }
+        if (he->p.ptr) free(he->p.ptr);
+#else	/* RPM5 */
         rpmtd gpgtd = rpmtdNew();
         rpmtd pgptd = rpmtdNew();
 
@@ -638,6 +794,7 @@ cr_package_from_header(Header hdr,
 
         rpmtdFree(gpgtd);
         rpmtdFree(pgptd);
+#endif	/* RPM5 */
     }
 
     return pkg;

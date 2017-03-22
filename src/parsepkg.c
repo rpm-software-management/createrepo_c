@@ -24,13 +24,38 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+
+#include "error.h"
+#include "parsehdr.h"
+
+#ifdef	RPM5
+#include <rpmio.h>
+#include <rpmmacro.h>
+#include <pkgio.h>
+#include <rpmfi.h>
+#include <rpmts.h>
+#define _RPMVSF_NODIGESTS       \
+  ( RPMVSF_NOSHA1HEADER |       \
+    RPMVSF_NOMD5HEADER |        \
+    RPMVSF_NOSHA1 |             \
+    RPMVSF_NOMD5 )
+
+#define _RPMVSF_NOSIGNATURES    \
+  ( RPMVSF_NODSAHEADER |        \
+    RPMVSF_NORSAHEADER |        \
+    RPMVSF_NODSA |              \
+    RPMVSF_NORSA )
+#include <rpmrc.h>
+
+#else	/* RPM5 */
+
 #include <rpm/rpmts.h>
 #include <rpm/rpmfi.h>
 #include <rpm/rpmlib.h>
 #include <rpm/rpmmacro.h>
 #include <rpm/rpmkeyring.h>
-#include "error.h"
-#include "parsehdr.h"
+#endif	/* RPM5 */
+
 #include "parsepkg.h"
 #include "misc.h"
 #include "checksum.h"

@@ -25,7 +25,14 @@ extern "C" {
 #endif
 
 #include <glib.h>
+
+#ifdef  RPM5
+#include <rpmtag.h>
+#include <rpmevr.h>
+#else   /* RPM5 */
 #include <rpm/rpmlib.h>
+#endif   /* RPM5 */
+
 #include "package.h"
 
 /** \defgroup   parsehdr         Header parser API.

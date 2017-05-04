@@ -209,10 +209,12 @@ cr_package_from_header(Header hdr,
     pkg->rpm_buildhost = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_BUILDHOST));
     pkg->rpm_sourcerpm = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_SOURCERPM));
     pkg->rpm_packager = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_PACKAGER));
-    if (headerGet(hdr, RPMTAG_SIZE, td, flags)) {
+    // RPMTAG_LONGSIZE is allways present (is emulated for small packages because HEADERGET_EXT flag was used)
+    if (headerGet(hdr, RPMTAG_LONGSIZE, td, flags)) {
         pkg->size_installed = rpmtdGetNumber(td);
     }
-    if (headerGet(hdr, RPMTAG_ARCHIVESIZE, td, flags)) {
+    // RPMTAG_LONGARCHIVESIZE is allways present (is emulated for small packages because HEADERGET_EXT flag was used)
+    if (headerGet(hdr, RPMTAG_LONGARCHIVESIZE, td, flags)) {
         pkg->size_archive = rpmtdGetNumber(td);
     }
 

@@ -635,6 +635,11 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
 
             nevra = cr_split_rpm_filename(pkg->rpm_sourcerpm);
 
+            if (!nevra) {
+                g_debug("Srpm name is invalid: %s", pkg->rpm_sourcerpm);
+                continue;
+            }
+
             if (blocked_srpms) {
                 // Check if srpm is blocked
                 blocked = g_hash_table_lookup_extended(blocked_srpms,
@@ -777,6 +782,11 @@ add_package(cr_Package *pkg,
             // in future.
             struct srpm_val *value;
             cr_NEVRA *nevra = cr_split_rpm_filename(pkg->rpm_sourcerpm);
+            if (!nevra) {
+                 g_debug("Package %s has invalid srpm %s", pkg->name,
+                                                           pkg->rpm_sourcerpm);
+                 return 0;
+            }
             value = g_hash_table_lookup(koji_stuff->include_srpms, nevra->name);
             cr_nevra_free(nevra);
             if (!value || g_strcmp0(pkg->rpm_sourcerpm, value->sourcerpm)) {

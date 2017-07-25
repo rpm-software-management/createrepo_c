@@ -227,6 +227,9 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         if (!pd->pkg->release)
             pd->pkg->release = cr_safe_string_chunk_insert(pd->pkg->chunk,
                                             cr_find_attr("rel", attr));
+        if (!pd->pkg->vcs)
+            pd->pkg->vcs = cr_safe_string_chunk_insert(pd->pkg->chunk,
+                                            cr_find_attr("vcs", attr));
         break;
 
     case STATE_CHECKSUM:

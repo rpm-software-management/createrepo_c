@@ -88,6 +88,7 @@ typedef struct {
     char *version;              /*!< version */
     char *epoch;                /*!< epoch */
     char *release;              /*!< release */
+    char *vcs;                  /*!< vcs */
     char *summary;              /*!< summary */
     char *description;          /*!< description */
     char *url;                  /*!< package homepage */

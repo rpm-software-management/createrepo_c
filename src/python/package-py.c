@@ -507,6 +507,8 @@ static PyGetSetDef package_getsetters[] = {
         "Version of the packaged software", OFFSET(version)},
     {"epoch",            (getter)get_str, (setter)set_str,
         "Epoch", OFFSET(epoch)},
+    {"vcs",            (getter)get_str, (setter)set_str,
+        "VCS tag", OFFSET(vcs)},
     {"release",          (getter)get_str, (setter)set_str,
         "Release number of the package", OFFSET(release)},
     {"summary",          (getter)get_str, (setter)set_str,

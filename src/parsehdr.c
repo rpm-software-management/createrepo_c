@@ -188,6 +188,7 @@ cr_package_from_header(Header hdr,
     }
 
     pkg->version = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_VERSION));
+    pkg->vcs = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_VCS));
 
 #define MAX_STR_INT_LEN 24
     char tmp_epoch[MAX_STR_INT_LEN];

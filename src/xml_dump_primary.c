@@ -174,6 +174,8 @@ cr_xml_dump_primary_base_items(xmlNodePtr root, cr_Package *package)
     // Write version attribute rel
     cr_xmlNewProp(version, BAD_CAST "rel", BAD_CAST package->release);
 
+    // Write version attribute vcs tag
+    cr_xmlNewProp(version, BAD_CAST "vcs", BAD_CAST package->vcs);
 
     /***********************************
      Element: checksum

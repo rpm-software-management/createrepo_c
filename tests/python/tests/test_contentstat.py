@@ -38,10 +38,10 @@ class TestCaseContentStat(unittest.TestCase):
 
         self.assertTrue(os.path.isfile(path))
 
-        self.assertEqual(cs.size, 2668)
+        self.assertEqual(cs.size, 2675)
         self.assertEqual(cs.checksum_type, cr.SHA256)
-        self.assertEqual(cs.checksum, "67bc6282915fad80dc11f3d7c3210977a0bde"\
-                                      "05a762256d86083c2447d425776")
+        self.assertEqual(cs.checksum, "4eff31e3ee2cb389aaee7d2891104"\
+                                      "6e8679440f9c5884e02a65b59e2fb0a2dc8")
 
     def test_contentstat_ref_in_xmlfile(self):
         """Test if reference is saved properly"""

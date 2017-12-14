@@ -22,6 +22,8 @@
 
 /* This file was taken from libhif (https://github.com/hughsie/libhif) */
 
+#include "glnx-backport-autocleanups.h"
+
 #ifndef __CR_CLEANUP_H__
 #define __CR_CLEANUP_H__
 
@@ -85,7 +87,7 @@ CR_DEFINE_CLEANUP_FUNCTION(int, cr_local_file_close, my_close)
 #define _cleanup_error_free_ __attribute__ ((cleanup(cr_local_free_error)))
 #define _cleanup_file_close_ __attribute__ ((cleanup(cr_local_file_close)))
 #define _cleanup_file_fclose_ __attribute__ ((cleanup(cr_local_file_fclose)))
-#define _cleanup_free_ __attribute__ ((cleanup(cr_local_free)))
+#define _cleanup_free_ g_autofree
 #define _cleanup_hashtable_unref_ __attribute__ ((cleanup(cr_local_hashtable_unref)))
 #define _cleanup_keyfile_free_ __attribute__ ((cleanup(cr_local_keyfile_free)))
 #define _cleanup_keyfile_unref_ __attribute__ ((cleanup(cr_local_keyfile_unref)))

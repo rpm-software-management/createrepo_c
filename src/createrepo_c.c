@@ -165,7 +165,7 @@ fill_pool(GThreadPool *pool,
             const gchar *filename;
             while ((filename = g_dir_read_name(dirp))) {
 
-                gchar *full_path = g_strconcat(dirname, "/", filename, NULL);
+                g_autofree gchar *full_path = g_strconcat(dirname, "/", filename, NULL);
 
                 // Non .rpm files
                 if (!g_str_has_suffix (filename, ".rpm")) {
@@ -177,7 +177,6 @@ fill_pool(GThreadPool *pool,
                         g_queue_push_head(sub_dirs, sub_dir_in_chunk);
                         g_debug("Dir to scan: %s", sub_dir_in_chunk);
                     }
-                    g_free(full_path);
                     continue;
                 }
 
@@ -186,7 +185,6 @@ fill_pool(GThreadPool *pool,
                     && g_file_test(full_path, G_FILE_TEST_IS_SYMLINK))
                 {
                     g_debug("Skipped symlink: %s", full_path);
-                    g_free(full_path);
                     continue;
                 }
 
@@ -200,7 +198,7 @@ fill_pool(GThreadPool *pool,
                     // FINALLY! Add file into pool
                     g_debug("Adding pkg: %s", full_path);
                     task = g_malloc(sizeof(struct PoolTask));
-                    task->full_path = full_path;
+                    task->full_path = g_steal_pointer(&full_path);
                     task->filename = g_strdup(filename);
                     task->path = g_strdup(dirname);
                     if (output_pkg_list)
@@ -208,8 +206,6 @@ fill_pool(GThreadPool *pool,
                     *current_pkglist = g_slist_prepend(*current_pkglist, task->filename);
                     // TODO: One common path for all tasks with the same path?
                     g_queue_insert_sorted(&queue, task, task_cmp, NULL);
-                } else {
-                    g_free(full_path);
                 }
             }
 

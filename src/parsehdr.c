@@ -33,6 +33,7 @@
 
 #ifdef ENABLE_LEGACY_WEAKDEPS
 #define RPMSENSE_STRONG (1 << 27)
+#define RPMSENSE_MISSINGOK (1 << 19)
 #endif
 
 typedef enum DepType_e {
@@ -436,6 +437,12 @@ cr_package_from_header(Header hdr,
                         pkg->obsoletes = g_slist_prepend(pkg->obsoletes, dependency);
                         break;
                     case DEP_REQUIRES:
+#ifdef ENABLE_LEGACY_WEAKDEPS
+                        if ( num_flags & RPMSENSE_MISSINGOK ) {
+                            pkg->recommends = g_slist_prepend(pkg->recommends, dependency);
+                            break;
+                        }
+#endif
                         dependency->pre = pre;
 
                         // XXX: libc.so filtering ////////////////////////////

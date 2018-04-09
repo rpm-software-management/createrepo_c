@@ -286,8 +286,8 @@ cr_setup_logging(gboolean quiet, gboolean verbose)
         g_log_set_handler("C_CREATEREPOLIB", levels, cr_log_fn, NULL);
     } else {
         // Standard mode
-        GLogLevelFlags levels = G_LOG_LEVEL_DEBUG;
+        GLogLevelFlags levels = G_LOG_LEVEL_MESSAGE;
         g_log_set_handler(NULL, levels, cr_null_log_fn, NULL);
-        g_log_set_handler("C_CREATEREPOLIB", levels, cr_null_log_fn, NULL);
+        g_log_set_handler("C_CREATEREPOLIB", levels, cr_log_fn, NULL);
     }
 }

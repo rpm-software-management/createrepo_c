@@ -280,7 +280,7 @@ cr_setup_logging(gboolean quiet, gboolean verbose)
         g_log_set_default_handler (cr_log_fn, GINT_TO_POINTER(0));
     } else {
         // Standard mode
-        GLogLevelFlags hidden_levels = G_LOG_LEVEL_DEBUG;
+        GLogLevelFlags hidden_levels = G_LOG_LEVEL_MESSAGE;
         g_log_set_default_handler (cr_log_fn, GINT_TO_POINTER(hidden_levels));
     }
 }

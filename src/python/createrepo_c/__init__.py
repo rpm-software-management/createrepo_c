@@ -46,6 +46,9 @@ BZ2_COMPRESSION         = _createrepo_c.BZ2_COMPRESSION
 #: XZ compression
 XZ_COMPRESSION          = _createrepo_c.XZ_COMPRESSION
 
+#: Zchunk compression
+ZCK_COMPRESSION         = _createrepo_c.ZCK_COMPRESSION
+
 #: Gzip compression alias
 GZ                      = _createrepo_c.GZ_COMPRESSION
 
@@ -54,6 +57,9 @@ BZ2                     = _createrepo_c.BZ2_COMPRESSION
 
 #: XZ compression alias
 XZ                      = _createrepo_c.XZ_COMPRESSION
+
+#: Zchunk compression alias
+ZCK                     = _createrepo_c.ZCK_COMPRESSION
 
 HT_KEY_DEFAULT  = _createrepo_c.HT_KEY_DEFAULT  #: Default key (hash)
 HT_KEY_HASH     = _createrepo_c.HT_KEY_HASH     #: Package hash as a key

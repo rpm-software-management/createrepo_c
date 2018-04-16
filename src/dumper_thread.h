@@ -53,6 +53,11 @@ struct UserData {
     cr_SqliteDb *pri_db;            // Primary db
     cr_SqliteDb *fil_db;            // Filelists db
     cr_SqliteDb *oth_db;            // Other db
+    cr_XmlFile *pri_zck;            // Opened compressed primary.xml.zck
+    cr_XmlFile *fil_zck;            // Opened compressed filelists.xml.zck
+    cr_XmlFile *oth_zck;            // Opened compressed other.xml.zck
+    char *prev_srpm;                // Previous srpm
+    char *cur_srpm;                 // Current srpm
     int changelog_limit;            // Max number of changelogs for a package
     const char *location_base;      // Base location url
     int repodir_name_len;           // Len of path to repo /foo/bar/repodata

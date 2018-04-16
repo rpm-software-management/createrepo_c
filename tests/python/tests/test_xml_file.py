@@ -135,6 +135,21 @@ class TestCaseXmlFile(unittest.TestCase):
 <metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="0">
 </metadata>""")
 
+    def test_xmlfile_zck_compression(self):
+        path = os.path.join(self.tmpdir, "primary.xml.zck")
+        f = cr.PrimaryXmlFile(path, cr.ZCK_COMPRESSION)
+        self.assertTrue(f)
+        self.assertTrue(os.path.isfile(path))
+        f.close()
+
+        import subprocess
+        p = subprocess.Popen(["unzck", "--stdout", path], stdout=subprocess.PIPE)
+        content = p.stdout.read().decode('utf-8')
+        self.assertEqual(content,
+"""<?xml version="1.0" encoding="UTF-8"?>
+<metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="0">
+</metadata>""")
+
     def test_xmlfile_set_num_of_pkgs(self):
         path = os.path.join(self.tmpdir, "primary.xml")
         f = cr.PrimaryXmlFile(path, cr.NO_COMPRESSION)

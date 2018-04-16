@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH CREATEREPO_C  "2017-02-23" "" ""
+.TH CREATEREPO_C  "2018-06-13" "" ""
 .SH NAME
 createrepo_c \- Create rpm-md format (xml-rpm-metadata) repository
 .
@@ -126,6 +126,18 @@ Number of workers to spawn to read rpms.
 .SS \-\-xz
 .sp
 Use xz for repodata compression.
+.SS \-\-zck
+.sp
+Generate zchunk files as well as the standard repodata.
+.SS \-\-zck\-primary\-dict ZCK_PRIMARY_DICT
+.sp
+Compression dictionary to use for zchunk primary file
+.SS \-\-zck\-filelists\-dict ZCK_FILELISTS_DICT
+.sp
+Compression dictionary to use for zchunk filelists file
+.SS \-\-zck\-other\-dict ZCK_OTHER_DICT
+.sp
+Compression dictionary to use for zchunk other file
 .SS \-\-compress\-type COMPRESSION_TYPE
 .sp
 Which compression type to use.

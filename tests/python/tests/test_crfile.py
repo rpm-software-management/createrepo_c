@@ -104,3 +104,16 @@ class TestCaseCrFile(unittest.TestCase):
         p = subprocess.Popen(["unxz", "--stdout", path], stdout=subprocess.PIPE)
         content = p.stdout.read().decode('utf-8')
         self.assertEqual(content, "foobar")
+
+    def test_crfile_zck_compression(self):
+        path = os.path.join(self.tmpdir, "foo.zck")
+        f = cr.CrFile(path, cr.MODE_WRITE, cr.ZCK_COMPRESSION)
+        self.assertTrue(f)
+        self.assertTrue(os.path.isfile(path))
+        f.write("foobar")
+        f.close()
+
+        import subprocess
+        p = subprocess.Popen(["unzck", "--stdout", path], stdout=subprocess.PIPE)
+        content = p.stdout.read().decode('utf-8')
+        self.assertEqual(content, "foobar")

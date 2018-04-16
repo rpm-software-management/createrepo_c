@@ -26,9 +26,11 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <stdbool.h>
 #include <zlib.h>
 #include <bzlib.h>
 #include <lzma.h>
+#include <zck.h>
 #include "error.h"
 #include "compression_wrapper.h"
 
@@ -108,6 +110,7 @@ cr_contentstat_free(cr_ContentStat *cstat, GError **err)
     if (!cstat)
         return;
 
+    g_free(cstat->hdr_checksum);
     g_free(cstat->checksum);
     g_free(cstat);
 }
@@ -148,6 +151,9 @@ cr_detect_compression(const char *filename, GError **err)
     } else if (g_str_has_suffix(filename, ".xz"))
     {
         return CR_CW_XZ_COMPRESSION;
+    } else if (g_str_has_suffix(filename, ".zck"))
+    {
+        return CR_CW_ZCK_COMPRESSION;
     } else if (g_str_has_suffix(filename, ".xml"))
     {
         return CR_CW_NO_COMPRESSION;
@@ -248,7 +254,8 @@ cr_compression_type(const char *name)
         type = CR_CW_BZ2_COMPRESSION;
     if (!g_strcmp0(name_lower, "xz"))
         type = CR_CW_XZ_COMPRESSION;
-
+    if (!g_strcmp0(name_lower, "zck"))
+        type = CR_CW_ZCK_COMPRESSION;
     g_free(name_lower);
 
     return type;
@@ -264,6 +271,8 @@ cr_compression_suffix(cr_CompressionType comtype)
             return ".bz2";
         case CR_CW_XZ_COMPRESSION:
             return ".xz";
+        case CR_CW_ZCK_COMPRESSION:
+            return ".zck";
         default:
             return NULL;
     }
@@ -280,6 +289,28 @@ cr_gz_strerror(gzFile f)
     return msg;
 }
 
+cr_ChecksumType
+cr_cktype_from_zck(zckCtx *zck, GError **err)
+{
+    int cktype = zck_get_full_hash_type(zck);
+    if(cktype < 0) {
+        g_set_error(err, ERR_DOMAIN, CRE_ZCK,
+                    "Unable to read hash from zchunk file");
+        return CR_CHECKSUM_UNKNOWN;
+    }
+    if(cktype == ZCK_HASH_SHA1)
+        return CR_CHECKSUM_SHA1;
+    else if(cktype == ZCK_HASH_SHA256)
+        return CR_CHECKSUM_SHA256;
+    else {
+        const char *ckname = zck_hash_name_from_type(cktype);
+        if(ckname == NULL)
+            ckname = "Unknown";
+        g_set_error(err, ERR_DOMAIN, CRE_ZCK,
+                    "Unknown zchunk checksum type: %s", ckname);
+        return CR_CHECKSUM_UNKNOWN;
+    }
+}
 
 CR_FILE *
 cr_sopen(const char *filename,
@@ -550,6 +581,38 @@ cr_sopen(const char *filename,
             file->FILE = (void *) xz_file;
             break;
         }
+        case (CR_CW_ZCK_COMPRESSION): { // -------------------------------------
+            FILE *f = fopen(filename, mode_str);
+            file->INNERFILE = f;
+            int fd = fileno(f);
+
+            if (!f) {
+                g_set_error(err, ERR_DOMAIN, CRE_IO,
+                            "fopen(): %s", g_strerror(errno));
+                break;
+            }
+
+            file->FILE = (void *) zck_create();
+            zckCtx *zck = file->FILE;
+            if (mode == CR_CW_MODE_WRITE) {
+                if(!file->FILE || !zck_init_write(zck, fd) ||
+                   !zck_set_ioption(zck, ZCK_MANUAL_CHUNK, 1)) {
+                    zck_set_log_fd(STDOUT_FILENO);
+                    g_set_error(err, ERR_DOMAIN, CRE_IO, "%s",
+                                zck_get_error(zck));
+                    g_free(file);
+                    break;
+                }
+            } else {
+                if (!file->FILE || !zck_init_read(zck, fd)) {
+                    g_set_error(err, ERR_DOMAIN, CRE_IO,
+                                "%s", zck_get_error(zck));
+                    g_free(file);
+                    break;
+                }
+            }
+            break;
+        }
 
         default: // -----------------------------------------------------------
             break;
@@ -578,6 +641,25 @@ cr_sopen(const char *filename,
                 return NULL;
             }
         }
+
+        /* Fill zchunk header_stat with header information */
+        if(mode == CR_CW_MODE_READ && type == CR_CW_ZCK_COMPRESSION) {
+            zckCtx *zck = (zckCtx *)file->FILE;
+            cr_ChecksumType cktype = cr_cktype_from_zck(zck, err);
+            if(cktype == CR_CHECKSUM_UNKNOWN) {
+                /* Error is already set in cr_cktype_from_zck */
+                g_free(file);
+                return NULL;
+            }
+            file->stat->hdr_checksum_type = cktype;
+            file->stat->hdr_checksum = zck_get_header_digest(zck);
+            file->stat->hdr_size = zck_get_header_length(zck);
+            if(*err != NULL || file->stat->hdr_checksum == NULL ||
+               file->stat->hdr_size < 0) {
+                g_free(file);
+                return NULL;
+            }
+        }
     }
 
     assert(!err || (!file && *err != NULL) || (file && *err == NULL));
@@ -585,7 +667,39 @@ cr_sopen(const char *filename,
     return file;
 }
 
+int
+cr_set_dict(CR_FILE *cr_file, const void *dict, unsigned int len, GError **err)
+{
+    int ret = CRE_OK;
+    assert(!err || *err == NULL);
 
+    if(len == 0)
+        return CRE_OK;
+
+    switch (cr_file->type) {
+
+        case (CR_CW_ZCK_COMPRESSION): { // ------------------------------------
+            zckCtx *zck = (zckCtx *)cr_file->FILE;
+            size_t wlen = (size_t)len;
+            if(!zck_set_soption(zck, ZCK_COMP_DICT, dict, wlen)) {
+                ret = CRE_ERROR;
+                g_set_error(err, ERR_DOMAIN, CRE_ZCK,
+                            "Error setting dict");
+                break;
+            }
+            break;
+        }
+
+        default: { // ---------------------------------------------------------
+            ret = CRE_ERROR;
+            g_set_error(err, ERR_DOMAIN, CRE_ERROR,
+                            "Compression format doesn't support dict");
+            break;
+        }
+
+    }
+    return ret;
+}
 
 int
 cr_close(CR_FILE *cr_file, GError **err)
@@ -743,7 +857,43 @@ cr_close(CR_FILE *cr_file, GError **err)
             g_free(stream);
             break;
         }
-
+        case (CR_CW_ZCK_COMPRESSION): { // ------------------------------------
+            zckCtx *zck = (zckCtx *) cr_file->FILE;
+            ret = CRE_OK;
+            if (cr_file->mode == CR_CW_MODE_WRITE) {
+                if(!zck_end_chunk(zck)) {
+                    ret = CRE_ZCK;
+                    g_set_error(err, ERR_DOMAIN, CRE_ZCK,
+                        "Unable to end final chunk: %s", zck_get_error(zck));
+                }
+            }
+            if (!zck_close(zck)) {
+                ret = CRE_ZCK;
+                g_set_error(err, ERR_DOMAIN, CRE_ZCK,
+                        "Unable to close zchunk file: %s", zck_get_error(zck));
+            }
+            cr_ChecksumType cktype = cr_cktype_from_zck(zck, err);
+            if(cktype == CR_CHECKSUM_UNKNOWN) {
+                /* Error is already set in cr_cktype_from_zck */
+                break;
+            }
+            if(cr_file->stat) {
+                cr_file->stat->hdr_checksum_type = cktype;
+                cr_file->stat->hdr_checksum = zck_get_header_digest(zck);
+                cr_file->stat->hdr_size = zck_get_header_length(zck);
+                if((err && *err) || cr_file->stat->hdr_checksum == NULL ||
+                   cr_file->stat->hdr_size < 0) {
+                    ret = CRE_ZCK;
+                    g_set_error(err, ERR_DOMAIN, CRE_ZCK,
+                                "Unable to get zchunk header information: %s",
+                                zck_get_error(zck));
+                    break;
+                }
+            }
+            zck_free(&zck);
+            fclose(cr_file->INNERFILE);
+            break;
+        }
         default: // -----------------------------------------------------------
             ret = CRE_BADARG;
             g_set_error(err, ERR_DOMAIN, CRE_BADARG,
@@ -943,6 +1093,18 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
             ret = len - stream->avail_out;
             break;
         }
+        case (CR_CW_ZCK_COMPRESSION): { // ------------------------------------
+            zckCtx *zck = (zckCtx *) cr_file->FILE;
+            ssize_t rb = zck_read(zck, buffer, len);
+            if(rb < 0) {
+                ret = CR_CW_ERR;
+                g_set_error(err, ERR_DOMAIN, CRE_ZCK, "ZCK: Unable to read: %s",
+                            zck_get_error(zck));
+                break;
+            }
+            ret = rb;
+            break;
+        }
 
         default: // -----------------------------------------------------------
             ret = CR_CW_ERR;
@@ -1111,6 +1273,19 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
             break;
         }
 
+        case (CR_CW_ZCK_COMPRESSION): { // ------------------------------------
+            zckCtx *zck = (zckCtx *) cr_file->FILE;
+            ssize_t wb = zck_write(zck, buffer, len);
+            if(wb < 0) {
+                ret = CR_CW_ERR;
+                g_set_error(err, ERR_DOMAIN, CRE_ZCK,
+                            "ZCK: Unable to write: %s", zck_get_error(zck));
+                break;
+            }
+            ret = wb;
+            break;
+        }
+
         default: // -----------------------------------------------------------
             g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                         "Bad compressed file type");
@@ -1149,6 +1324,7 @@ cr_puts(CR_FILE *cr_file, const char *str, GError **err)
         case (CR_CW_GZ_COMPRESSION): // ---------------------------------------
         case (CR_CW_BZ2_COMPRESSION): // --------------------------------------
         case (CR_CW_XZ_COMPRESSION): // ---------------------------------------
+        case (CR_CW_ZCK_COMPRESSION): // --------------------------------------
             len = strlen(str);
             ret = cr_write(cr_file, str, len, err);
             if (ret != (int) len)
@@ -1167,6 +1343,50 @@ cr_puts(CR_FILE *cr_file, const char *str, GError **err)
     return ret;
 }
 
+int
+cr_end_chunk(CR_FILE *cr_file, GError **err)
+{
+    int ret = CRE_OK;
+
+    assert(cr_file);
+    assert(!err || *err == NULL);
+
+    if (cr_file->mode != CR_CW_MODE_WRITE) {
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
+                    "File is not opened in write mode");
+        return CR_CW_ERR;
+    }
+
+    switch (cr_file->type) {
+        case (CR_CW_NO_COMPRESSION): // ---------------------------------------
+        case (CR_CW_GZ_COMPRESSION): // ---------------------------------------
+        case (CR_CW_BZ2_COMPRESSION): // --------------------------------------
+        case (CR_CW_XZ_COMPRESSION): // ---------------------------------------
+            break;
+        case (CR_CW_ZCK_COMPRESSION): { // ------------------------------------
+            zckCtx *zck = (zckCtx *) cr_file->FILE;
+            ssize_t wb = zck_end_chunk(zck);
+            if(wb < 0) {
+                g_set_error(err, ERR_DOMAIN, CRE_ZCK,
+                            "Error ending chunk");
+                return CR_CW_ERR;
+            }
+            ret = wb;
+            break;
+        }
+
+        default: // -----------------------------------------------------------
+            g_set_error(err, ERR_DOMAIN, CRE_BADARG,
+                        "Bad compressed file type");
+            return CR_CW_ERR;
+            break;
+    }
+
+    assert(!err || (ret == CR_CW_ERR && *err != NULL)
+           || (ret != CR_CW_ERR && *err == NULL));
+
+    return ret;
+}
 
 
 int
@@ -1210,6 +1430,7 @@ cr_printf(GError **err, CR_FILE *cr_file, const char *format, ...)
         case (CR_CW_GZ_COMPRESSION): // ---------------------------------------
         case (CR_CW_BZ2_COMPRESSION): // --------------------------------------
         case (CR_CW_XZ_COMPRESSION): // ---------------------------------------
+        case (CR_CW_ZCK_COMPRESSION): // --------------------------------------
             tmp_ret = cr_write(cr_file, buf, ret, err);
             if (tmp_ret != (int) ret)
                 ret = CR_CW_ERR;

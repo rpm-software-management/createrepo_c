@@ -74,6 +74,14 @@ write_pkg(long id,
     g_mutex_lock(udata->mutex_pri);
     while (udata->id_pri != id)
         g_cond_wait (udata->cond_pri, udata->mutex_pri);
+
+    g_free(udata->prev_srpm);
+    udata->prev_srpm = udata->cur_srpm;
+    udata->cur_srpm = g_strdup(pkg->rpm_sourcerpm);
+    gboolean new_pkg = FALSE;
+    if(g_strcmp0(udata->prev_srpm, udata->cur_srpm) != 0)
+        new_pkg = TRUE;
+
     ++udata->id_pri;
     cr_xmlfile_add_chunk(udata->pri_f, (const char *) res.primary, &tmp_err);
     if (tmp_err) {
@@ -88,6 +96,23 @@ write_pkg(long id,
         if (tmp_err) {
             g_critical("Cannot add record of %s (%s) to primary db: %s",
                        pkg->name, pkg->pkgId, tmp_err->message);
+            udata->had_errors = TRUE;
+            g_clear_error(&tmp_err);
+        }
+    }
+    if(udata->pri_zck) {
+        if(new_pkg) {
+            cr_end_chunk(udata->pri_zck->f, &tmp_err);
+            if (tmp_err) {
+                g_critical("Unable to end primary zchunk: %s", tmp_err->message);
+                udata->had_errors = TRUE;
+                g_clear_error(&tmp_err);
+            }
+        }
+        cr_xmlfile_add_chunk(udata->pri_zck, (const char *) res.primary, &tmp_err);
+        if (tmp_err) {
+            g_critical("Cannot add primary zchunk:\n%s\nError: %s",
+                       res.primary, tmp_err->message);
             udata->had_errors = TRUE;
             g_clear_error(&tmp_err);
         }
@@ -118,6 +143,23 @@ write_pkg(long id,
             g_clear_error(&tmp_err);
         }
     }
+    if (udata->fil_zck) {
+        if(new_pkg) {
+            cr_end_chunk(udata->fil_zck->f, &tmp_err);
+            if (tmp_err) {
+                g_critical("Unable to end filelists zchunk: %s", tmp_err->message);
+                udata->had_errors = TRUE;
+                g_clear_error(&tmp_err);
+            }
+        }
+        cr_xmlfile_add_chunk(udata->fil_zck, (const char *) res.filelists, &tmp_err);
+        if (tmp_err) {
+            g_critical("Cannot add filelists zchunk:\n%s\nError: %s",
+                       res.filelists, tmp_err->message);
+            udata->had_errors = TRUE;
+            g_clear_error(&tmp_err);
+        }
+    }
 
     g_cond_broadcast(udata->cond_fil);
     g_mutex_unlock(udata->mutex_fil);
@@ -144,7 +186,23 @@ write_pkg(long id,
             g_clear_error(&tmp_err);
         }
     }
-
+    if (udata->oth_zck) {
+        if(new_pkg) {
+            cr_end_chunk(udata->oth_zck->f, &tmp_err);
+            if (tmp_err) {
+                g_critical("Unable to end other zchunk: %s", tmp_err->message);
+                udata->had_errors = TRUE;
+                g_clear_error(&tmp_err);
+            }
+        }
+        cr_xmlfile_add_chunk(udata->oth_zck, (const char *) res.other, &tmp_err);
+        if (tmp_err) {
+            g_critical("Cannot add other zchunk:\n%s\nError: %s",
+                       res.other, tmp_err->message);
+            udata->had_errors = TRUE;
+            g_clear_error(&tmp_err);
+        }
+    }
     g_cond_broadcast(udata->cond_oth);
     g_mutex_unlock(udata->mutex_oth);
 }

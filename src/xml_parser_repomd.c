@@ -47,9 +47,11 @@ typedef enum {
     STATE_LOCATION,
     STATE_CHECKSUM,
     STATE_OPENCHECKSUM,
+    STATE_HEADERCHECKSUM,
     STATE_TIMESTAMP,
     STATE_SIZE,
     STATE_OPENSIZE,
+    STATE_HEADERSIZE,
     STATE_DBVERSION,
     NUMSTATES
 } cr_RepomdState;
@@ -60,22 +62,24 @@ typedef enum {
  * has a "file" element listed first, because it is more frequent
  * than a "version" element). */
 static cr_StatesSwitch stateswitches[] = {
-    { STATE_START,      "repomd",           STATE_REPOMD,       0 },
-    { STATE_REPOMD,     "revision",         STATE_REVISION,     1 },
-    { STATE_REPOMD,     "repoid",           STATE_REPOID,       1 },
-    { STATE_REPOMD,     "contenthash",      STATE_CONTENTHASH,  1 },
-    { STATE_REPOMD,     "tags",             STATE_TAGS,         0 },
-    { STATE_REPOMD,     "data",             STATE_DATA,         0 },
-    { STATE_TAGS,       "repo",             STATE_REPO,         1 },
-    { STATE_TAGS,       "content",          STATE_CONTENT,      1 },
-    { STATE_TAGS,       "distro",           STATE_DISTRO,       1 },
-    { STATE_DATA,       "location",         STATE_LOCATION,     0 },
-    { STATE_DATA,       "checksum",         STATE_CHECKSUM,     1 },
-    { STATE_DATA,       "open-checksum",    STATE_OPENCHECKSUM, 1 },
-    { STATE_DATA,       "timestamp",        STATE_TIMESTAMP,    1 },
-    { STATE_DATA,       "size",             STATE_SIZE,         1 },
-    { STATE_DATA,       "open-size",        STATE_OPENSIZE,     1 },
-    { STATE_DATA,       "database_version", STATE_DBVERSION,    1 },
+    { STATE_START,      "repomd",              STATE_REPOMD,         0 },
+    { STATE_REPOMD,     "revision",            STATE_REVISION,       1 },
+    { STATE_REPOMD,     "repoid",              STATE_REPOID,         1 },
+    { STATE_REPOMD,     "contenthash",         STATE_CONTENTHASH,    1 },
+    { STATE_REPOMD,     "tags",                STATE_TAGS,           0 },
+    { STATE_REPOMD,     "data",                STATE_DATA,           0 },
+    { STATE_TAGS,       "repo",                STATE_REPO,           1 },
+    { STATE_TAGS,       "content",             STATE_CONTENT,        1 },
+    { STATE_TAGS,       "distro",              STATE_DISTRO,         1 },
+    { STATE_DATA,       "location",            STATE_LOCATION,       0 },
+    { STATE_DATA,       "checksum",            STATE_CHECKSUM,       1 },
+    { STATE_DATA,       "open-checksum",       STATE_OPENCHECKSUM,   1 },
+    { STATE_DATA,       "header-checksum",     STATE_HEADERCHECKSUM, 1 },
+    { STATE_DATA,       "timestamp",           STATE_TIMESTAMP,      1 },
+    { STATE_DATA,       "size",                STATE_SIZE,           1 },
+    { STATE_DATA,       "open-size",           STATE_OPENSIZE,       1 },
+    { STATE_DATA,       "header-size",         STATE_HEADERSIZE,     1 },
+    { STATE_DATA,       "database_version",    STATE_DBVERSION,      1 },
     { NUMSTATES,        NULL, NUMSTATES, 0 }
 };
 
@@ -231,9 +235,26 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
                                                     val);
         break;
 
+    case STATE_HEADERCHECKSUM:
+        assert(pd->repomd);
+        assert(pd->repomdrecord);
+
+        val = cr_find_attr("type", attr);
+        if (!val) {
+            cr_xml_parser_warning(pd, CR_XML_WARNING_MISSINGATTR,
+                    "Missing attribute \"type\" of a header checksum element");
+            break;
+        }
+
+        pd->repomdrecord->checksum_header_type = g_string_chunk_insert(
+                                                    pd->repomdrecord->chunk,
+                                                    val);
+        break;
+
     case STATE_TIMESTAMP:
     case STATE_SIZE:
     case STATE_OPENSIZE:
+    case STATE_HEADERSIZE:
     case STATE_DBVERSION:
     default:
         break;
@@ -350,6 +371,15 @@ cr_end_handler(void *pdata, G_GNUC_UNUSED const char *element)
                                             pd->content);
         break;
 
+    case STATE_HEADERCHECKSUM:
+        assert(pd->repomd);
+        assert(pd->repomdrecord);
+
+        pd->repomdrecord->checksum_header = cr_safe_string_chunk_insert(
+                                            pd->repomdrecord->chunk,
+                                            pd->content);
+        break;
+
     case STATE_TIMESTAMP:
         assert(pd->repomd);
         assert(pd->repomdrecord);
@@ -369,6 +399,13 @@ cr_end_handler(void *pdata, G_GNUC_UNUSED const char *element)
         assert(pd->repomdrecord);
 
         pd->repomdrecord->size_open = cr_xml_parser_strtoll(pd, pd->content, 0);
+        break;
+
+    case STATE_HEADERSIZE:
+        assert(pd->repomd);
+        assert(pd->repomdrecord);
+
+        pd->repomdrecord->size_header = cr_xml_parser_strtoll(pd, pd->content, 0);
         break;
 
     case STATE_DBVERSION:

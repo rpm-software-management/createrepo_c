@@ -214,6 +214,7 @@ cr_package_from_header(Header hdr,
     if (headerGet(hdr, RPMTAG_LONGSIZE, td, flags)) {
         pkg->size_installed = rpmtdGetNumber(td);
     }
+    rpmtdFreeData(td);
     // RPMTAG_LONGARCHIVESIZE is allways present (is emulated for small packages because HEADERGET_EXT flag was used)
     if (headerGet(hdr, RPMTAG_LONGARCHIVESIZE, td, flags)) {
         pkg->size_archive = rpmtdGetNumber(td);

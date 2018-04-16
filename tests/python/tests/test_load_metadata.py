@@ -4,7 +4,7 @@ import createrepo_c as cr
 from .fixtures import *
 
 class TestCaseLoadMetadata(unittest.TestCase):
-    def test_load_metadata__repo00(self):
+    def test_load_metadata_repo00(self):
         md = cr.Metadata()
         md.locate_and_load_xml(REPO_00_PATH)
         self.assertTrue(md)

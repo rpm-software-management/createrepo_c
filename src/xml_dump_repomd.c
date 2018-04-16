@@ -63,6 +63,17 @@ cr_xml_dump_repomd_record(xmlNodePtr root, cr_RepomdRecord *rec)
                       BAD_CAST rec->checksum_open_type);
     }
 
+    // Checksum_header element
+    if (rec->checksum_header) {
+        node = cr_xmlNewTextChild(data,
+                                  NULL,
+                                  BAD_CAST "header-checksum",
+                                  BAD_CAST rec->checksum_header);
+        cr_xmlNewProp(node,
+                      BAD_CAST "type",
+                      BAD_CAST rec->checksum_header_type);
+    }
+
     // Location element
     node = xmlNewChild(data,
                        NULL,
@@ -75,6 +86,7 @@ cr_xml_dump_repomd_record(xmlNodePtr root, cr_RepomdRecord *rec)
         cr_xmlNewProp(node,
                       BAD_CAST "xml:base",
                       BAD_CAST rec->location_base);
+
 
     // Timestamp element
     g_snprintf(str_buffer, DATESIZE_STR_MAX_LEN,
@@ -91,6 +103,13 @@ cr_xml_dump_repomd_record(xmlNodePtr root, cr_RepomdRecord *rec)
         g_snprintf(str_buffer, DATESIZE_STR_MAX_LEN,
                    "%"G_GINT64_FORMAT, rec->size_open);
         xmlNewChild(data, NULL, BAD_CAST "open-size", BAD_CAST str_buffer);
+    }
+
+    // Header-size element
+    if (rec->checksum_header && rec->size_header != -1) {
+        g_snprintf(str_buffer, DATESIZE_STR_MAX_LEN,
+                   "%"G_GINT64_FORMAT, rec->size_header);
+        xmlNewChild(data, NULL, BAD_CAST "header-size", BAD_CAST str_buffer);
     }
 
     // Database_version element

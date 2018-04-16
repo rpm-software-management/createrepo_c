@@ -15,50 +15,88 @@ class TestCaseRepomdRecord(unittest.TestCase):
         self.tmpdir = tempfile.mkdtemp(prefix="createrepo_ctest-")
         self.FN_00 = "primary.xml.gz"
         self.FN_01 = "primary.xml"
+        self.FN_02 = "primary.xml.zck"
         self.path00 = os.path.join(self.tmpdir, self.FN_00)
         self.path01 = os.path.join(self.tmpdir, self.FN_01)
+        self.path02 = os.path.join(self.tmpdir, self.FN_02)
 
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
 
     def test_repomdrecord_fill(self):
         shutil.copyfile(REPO_00_PRIXML, self.path00)
+        shutil.copyfile(REPO_00_PRIZCK, self.path02)
         self.assertTrue(os.path.exists(self.path00))
+        self.assertTrue(os.path.exists(self.path02))
 
         rec = cr.RepomdRecord("primary", self.path00)
+        zrc = cr.RepomdRecord("primary_zck", self.path02)
         self.assertTrue(rec)
+        self.assertTrue(zrc)
 
         self.assertEqual(rec.location_real, self.path00)
         self.assertEqual(rec.location_href, "repodata/primary.xml.gz")
         self.assertEqual(rec.location_base, None)
+        self.assertEqual(zrc.location_real, self.path02)
+        self.assertEqual(zrc.location_href, "repodata/primary.xml.zck")
+        self.assertEqual(zrc.location_base, None)
         self.assertEqual(rec.checksum, None)
         self.assertEqual(rec.checksum_type, None)
         self.assertEqual(rec.checksum_open, None)
         self.assertEqual(rec.checksum_open_type, None)
+        self.assertEqual(zrc.checksum, None)
+        self.assertEqual(zrc.checksum_type, None)
+        self.assertEqual(zrc.checksum_open, None)
+        self.assertEqual(zrc.checksum_open_type, None)
+        self.assertEqual(zrc.checksum_header, None)
+        self.assertEqual(zrc.checksum_header_type, None)
         self.assertEqual(rec.timestamp, 0)
+        self.assertEqual(zrc.timestamp, 0)
+
         self.assertEqual(rec.size, 0)
         self.assertEqual(rec.size_open, -1)
+        self.assertEqual(zrc.size, 0)
+        self.assertEqual(zrc.size_open, -1)
+        self.assertEqual(zrc.size_header, -1)
         self.assertEqual(rec.db_ver, 0)
 
         rec.fill(cr.SHA256)
+        zrc.fill(cr.SHA256)
 
         self.assertEqual(rec.location_real, self.path00)
         self.assertEqual(rec.location_href, "repodata/primary.xml.gz")
         self.assertEqual(rec.location_base, None)
-        self.assertEqual(rec.checksum, "dabe2ce5481d23de1f4f52bdcfee0f9af98316c9e0de2ce8123adeefa0dd08b9")
+        self.assertEqual(rec.checksum, "1cb61ea996355add02b1426ed4c1780ea75ce0c04c5d1107c025c3fbd7d8bcae")
         self.assertEqual(rec.checksum_type, "sha256")
         self.assertEqual(rec.checksum_open, "e1e2ffd2fb1ee76f87b70750d00ca5677a252b397ab6c2389137a0c33e7b359f")
         self.assertEqual(rec.checksum_open_type, "sha256")
         self.assertTrue(rec.timestamp > 0)
         self.assertEqual(rec.size, 134)
         self.assertEqual(rec.size_open, 167)
-        self.assertEqual(rec.db_ver, 10)
+        self.assertEqual(zrc.location_real, self.path02)
+        self.assertEqual(zrc.location_href, "repodata/primary.xml.zck")
+        self.assertEqual(zrc.location_base, None)
+        self.assertEqual(zrc.checksum, "e0ac03cd77e95e724dbf90ded0dba664e233315a8940051dd8882c56b9878595")
+        self.assertEqual(zrc.checksum_type, "sha256")
+        self.assertEqual(zrc.checksum_open, "e1e2ffd2fb1ee76f87b70750d00ca5677a252b397ab6c2389137a0c33e7b359f")
+        self.assertEqual(zrc.checksum_open_type, "sha256")
+        self.assertEqual(zrc.checksum_header, "243baf7c02f5241d46f2e8c237ebc7ea7e257ca993d9cfe1304254c7ba7f6546")
+        self.assertEqual(zrc.checksum_header_type, "sha256")
+        self.assertTrue(zrc.timestamp > 0)
+        self.assertEqual(zrc.size, 269)
+        self.assertEqual(zrc.size_open, 167)
+        self.assertEqual(zrc.size_header, 132)
+        self.assertEqual(zrc.db_ver, 10)
 
         rec.rename_file()
+        zrc.rename_file()
 
         # Filename shoud contain a (valid) checksum
-        self.assertEqual(os.listdir(self.tmpdir),
-            ['dabe2ce5481d23de1f4f52bdcfee0f9af98316c9e0de2ce8123adeefa0dd08b9-primary.xml.gz'])
+        filelist = os.listdir(self.tmpdir)
+        filelist.sort()
+        self.assertEqual(filelist,
+            ['1cb61ea996355add02b1426ed4c1780ea75ce0c04c5d1107c025c3fbd7d8bcae-primary.xml.gz',
+             'e0ac03cd77e95e724dbf90ded0dba664e233315a8940051dd8882c56b9878595-primary.xml.zck'])
 
     def test_repomdrecord_setters(self):
         shutil.copyfile(REPO_00_PRIXML, self.path00)
@@ -72,7 +110,7 @@ class TestCaseRepomdRecord(unittest.TestCase):
         self.assertEqual(rec.type, "primary")
         self.assertEqual(rec.location_real, self.path00)
         self.assertEqual(rec.location_href, "repodata/primary.xml.gz")
-        self.assertEqual(rec.checksum, "dabe2ce5481d23de1f4f52bdcfee0f9af98316c9e0de2ce8123adeefa0dd08b9")
+        self.assertEqual(rec.checksum, "1cb61ea996355add02b1426ed4c1780ea75ce0c04c5d1107c025c3fbd7d8bcae")
         self.assertEqual(rec.checksum_type, "sha256")
         self.assertEqual(rec.checksum_open, "e1e2ffd2fb1ee76f87b70750d00ca5677a252b397ab6c2389137a0c33e7b359f")
         self.assertEqual(rec.checksum_open_type, "sha256")

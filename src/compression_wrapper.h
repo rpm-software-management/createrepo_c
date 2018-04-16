@@ -41,6 +41,7 @@ typedef enum {
     CR_CW_GZ_COMPRESSION,             /*!< Gzip compression */
     CR_CW_BZ2_COMPRESSION,            /*!< BZip2 compression */
     CR_CW_XZ_COMPRESSION,             /*!< XZ compression */
+    CR_CW_ZCK_COMPRESSION,            /*!< ZCK compression */
     CR_CW_COMPRESSION_SENTINEL,       /*!< Sentinel of the list */
 } cr_CompressionType;
 
@@ -55,9 +56,12 @@ typedef enum {
 /** Stat build about open content during compression (writting).
  */
 typedef struct {
-    gint64          size;           /*!< Size of content */
-    cr_ChecksumType checksum_type;  /*!< Checksum type */
-    char            *checksum;      /*!< Checksum */
+    gint64          size;               /*!< Size of content */
+    cr_ChecksumType checksum_type;      /*!< Checksum type */
+    char            *checksum;          /*!< Checksum */
+    gint64          hdr_size;           /*!< Size of content */
+    cr_ChecksumType hdr_checksum_type;  /*!< Checksum type */
+    char            *hdr_checksum;      /*!< Checksum */
 } cr_ContentStat;
 
 /** Creates new cr_ContentStat object
@@ -132,6 +136,15 @@ CR_FILE *cr_sopen(const char *filename,
                   cr_ContentStat *stat,
                   GError **err);
 
+/** Sets the compression dictionary for a file
+ * @param cr_file       CR_FILE pointer
+ * @param dict          dictionary
+ * @param len           length of dictionary
+ * @param err           GError **
+ * @return              CRE_OK or CR_CW_ERR (-1)
+ */
+int cr_set_dict(CR_FILE *cr_file, const void *dict, unsigned int len, GError **err);
+
 /** Reads an array of len bytes from the CR_FILE.
  * @param cr_file       CR_FILE pointer
  * @param buffer        target buffer
@@ -161,6 +174,13 @@ int cr_write(CR_FILE *cr_file,
  * @return              number of uncompressed bytes writed or CR_CW_ERR
  */
 int cr_puts(CR_FILE *cr_file, const char *str, GError **err);
+
+/** If compression format allows ending of chunks, tell it to end chunk
+ * @param cr_file       CR_FILE pointer
+ * @param err           GError **
+ * @return              CRE_OK or CR_CW_ERR
+ */
+int cr_end_chunk(CR_FILE *cr_file, GError **err);
 
 /** Writes a formatted string into the cr_file.
  * @param err           GError **

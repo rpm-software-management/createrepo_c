@@ -256,6 +256,7 @@ init_createrepo_c(void)
     PyModule_AddIntConstant(m, "GZ_COMPRESSION", CR_CW_GZ_COMPRESSION);
     PyModule_AddIntConstant(m, "BZ2_COMPRESSION", CR_CW_BZ2_COMPRESSION);
     PyModule_AddIntConstant(m, "XZ_COMPRESSION", CR_CW_XZ_COMPRESSION);
+    PyModule_AddIntConstant(m, "ZCK_COMPRESSION", CR_CW_ZCK_COMPRESSION);
 
     /* Load Metadata key values */
     PyModule_AddIntConstant(m, "HT_KEY_DEFAULT", CR_HT_KEY_DEFAULT);

@@ -30,7 +30,7 @@ class TestCaseRepomd(unittest.TestCase):
 
         # Filename shoud contain a (valid) checksum
         self.assertEqual(os.listdir(self.tmpdir),
-            ['dabe2ce5481d23de1f4f52bdcfee0f9af98316c9e0de2ce8123adeefa0dd08b9-primary.xml.gz'])
+            ['1cb61ea996355add02b1426ed4c1780ea75ce0c04c5d1107c025c3fbd7d8bcae-primary.xml.gz'])
 
     def test_repomd(self):
         shutil.copyfile(REPO_00_PRIXML, self.path00)
@@ -119,7 +119,7 @@ class TestCaseRepomd(unittest.TestCase):
     <distro cpeid="cpeid2">tag3</distro>
   </tags>
   <data type="primary">
-    <checksum type="sha256">dabe2ce5481d23de1f4f52bdcfee0f9af98316c9e0de2ce8123adeefa0dd08b9</checksum>
+    <checksum type="sha256">1cb61ea996355add02b1426ed4c1780ea75ce0c04c5d1107c025c3fbd7d8bcae</checksum>
     <open-checksum type="sha256">e1e2ffd2fb1ee76f87b70750d00ca5677a252b397ab6c2389137a0c33e7b359f</open-checksum>
     <location href="repodata/primary.xml.gz" xml:base="http://foo/"/>
     <timestamp>1</timestamp>

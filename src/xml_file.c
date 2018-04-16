@@ -150,7 +150,7 @@ cr_xmlfile_write_xml_header(cr_XmlFile *f, GError **err)
 
     f->header = 1;
 
-    return CRE_OK;
+    return cr_end_chunk(f->f, err);
 }
 
 int

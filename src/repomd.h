@@ -79,10 +79,13 @@ typedef struct {
     char *checksum;             /*!< checksum of file */
     char *checksum_type;        /*!< checksum type */
     char *checksum_open;        /*!< checksum of uncompressed file */
-    char *checksum_open_type;   /*!< checksum type of uncompressed file*/
+    char *checksum_open_type;   /*!< checksum type of uncompressed file */
+    char *checksum_header;      /*!< checksum of header */
+    char *checksum_header_type; /*!< checksum type of header */
     gint64 timestamp;           /*!< mtime of the file */
     gint64 size;                /*!< size of file in bytes */
     gint64 size_open;           /*!< size of uncompressed file in bytes */
+    gint64 size_header;         /*!< header size */
     int db_ver;                 /*!< version of database */
 
     GStringChunk *chunk;        /*!< String chunk */
@@ -179,6 +182,14 @@ int cr_repomd_record_rename_file(cr_RepomdRecord *record, GError **err);
  */
 void cr_repomd_record_load_contentstat(cr_RepomdRecord *record,
                                        cr_ContentStat *stats);
+
+/** Load the zchunk stats (zck_header_checksum, zck_header_checksum_type and zck_header_size)
+ * from the cr_ContentStat object.
+ * @param record                cr_RepomdRecord
+ * @param stats                 cr_ContentStat
+ */
+void cr_repomd_record_load_zck_contentstat(cr_RepomdRecord *record,
+                                           cr_ContentStat *stats);
 
 /** Create new empty cr_Repomd object wich represents content of repomd.xml.
  */

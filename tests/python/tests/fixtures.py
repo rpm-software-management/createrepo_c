@@ -56,11 +56,17 @@ PKG_SUPER_KERNEL_PATH = os.path.join(PACKAGES_PATH, PKG_SUPER_KERNEL)
 REPO_00_PATH = os.path.join(REPOS_PATH, "repo_00")
 REPO_00_REPOMD = os.path.join(REPO_00_PATH, "repodata/repomd.xml")
 REPO_00_PRIXML = os.path.join(REPO_00_PATH, "repodata/",
-    "dabe2ce5481d23de1f4f52bdcfee0f9af98316c9e0de2ce8123adeefa0dd08b9-primary.xml.gz")
+    "1cb61ea996355add02b1426ed4c1780ea75ce0c04c5d1107c025c3fbd7d8bcae-primary.xml.gz")
 REPO_00_FILXML = os.path.join(REPO_00_PATH, "repodata/",
-    "401dc19bda88c82c403423fb835844d64345f7e95f5b9835888189c03834cc93-filelists.xml.gz")
+    "95a4415d859d7120efb6b3cf964c07bebbff9a5275ca673e6e74a97bcbfb2a5f-filelists.xml.gz")
 REPO_00_OTHXML = os.path.join(REPO_00_PATH, "repodata/",
-    "6bf9672d0862e8ef8b8ff05a2fd0208a922b1f5978e6589d87944c88259cb670-other.xml.gz")
+    "ef3e20691954c3d1318ec3071a982da339f4ed76967ded668b795c9e070aaab6-other.xml.gz")
+REPO_00_PRIZCK = os.path.join(REPO_00_PATH, "repodata/",
+    "e0ac03cd77e95e724dbf90ded0dba664e233315a8940051dd8882c56b9878595-primary.xml.zck")
+REPO_00_FILZCK = os.path.join(REPO_00_PATH, "repodata/",
+    "2e7db4492173b6c437fd1299dc335e63d09f24cbdadeac5175a61b787c2f7a44-filelists.xml.zck")
+REPO_00_OTHZCK = os.path.join(REPO_00_PATH, "repodata/",
+    "a939c4765106655c3f7a13fb41d0f239824efa66bcd6c1e6c044a854012bda75-other.xml.zck")
 
 REPO_01_PATH = os.path.join(REPOS_PATH, "repo_01")
 REPO_01_REPOMD = os.path.join(REPO_01_PATH, "repodata/repomd.xml")

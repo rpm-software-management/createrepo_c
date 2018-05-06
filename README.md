@@ -27,7 +27,7 @@ Package build requires - Pkg name in Fedora/Ubuntu:
 * *Documentation:* sphinx (http://sphinx-doc.org/) - python-sphinx/
 * **Test requires:** check (http://check.sourceforge.net/) - check-devel/check
 * **Test requires:** python-nose (https://nose.readthedocs.org/) - python-nose/python-nose
-* **Experimental support:** drpm (https://git.fedorahosted.org/git/drpm.git)
+* **Experimental support:** drpm (https://github.com/rpm-software-management/drpm)
 
 From your checkout dir:
 

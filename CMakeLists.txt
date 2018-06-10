@@ -69,8 +69,8 @@ ELSE (RPM_PATH)
     message("Using system RPM: ${RPMDB_LIBRARY}")
 ENDIF (RPM_PATH)
 
-# SuSE legacy weak deps support
-OPTION (ENABLE_LEGACY_WEAKDEPS "Enable legacy SUSE weakdeps support?" OFF)
+# SuSE/Mageia/Mandriva legacy weak deps support
+OPTION (ENABLE_LEGACY_WEAKDEPS "Enable legacy SUSE/Mageia/Mandriva weakdeps support?" ON)
 IF (ENABLE_LEGACY_WEAKDEPS)
     ADD_DEFINITIONS("-DENABLE_LEGACY_WEAKDEPS=1")
 ENDIF (ENABLE_LEGACY_WEAKDEPS)

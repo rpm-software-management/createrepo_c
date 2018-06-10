@@ -81,7 +81,7 @@ By default, cmake should set up things to build for Python 2, but you can do a b
 
 ### ``-DENABLE_LEGACY_WEAKDEPS=ON``
 
-Enable old SUSE weaktags (Default: OFF)
+Enable legacy SUSE/Mageia/Mandriva weakdeps support (Default: ON)
 
 ### ``-DENABLE_THREADED_XZ_ENCODER=ON``
 

@@ -17,7 +17,7 @@ Package build requires - Pkg name in Fedora/Ubuntu:
 * glib2 (http://developer.gnome.org/glib/) - glib2-devel/libglib2.0-dev
 * libcurl (http://curl.haxx.se/libcurl/) - libcurl-devel/libcurl4-openssl-dev
 * libxml2 (http://xmlsoft.org/) - libxml2-devel/libxml2-dev
-* python (http://python.org/) - python2-devel/libpython2.7-dev
+* python (http://python.org/) - python3-devel/libpython3-dev
 * rpm (http://www.rpm.org/) - rpm-devel/librpm-dev
 * openssl (http://www.openssl.org/) - openssl-devel/libssl-dev
 * sqlite3 (https://sqlite.org/) - sqlite-devel/libsqlite3-dev
@@ -74,9 +74,9 @@ where the path is path to your build of drpm library.
 
 ## Building for a different Python version
 
-By default, cmake should set up things to build for Python 2, but you can do a build for Python 3 like this::
+By default, cmake should set up things to build for Python 3, but you can do a build for Python 2 like this::
 
-    cmake -DPYTHON_DESIRED=3 .
+    cmake -DPYTHON_DESIRED=2 .
 
 ## Other build options
 

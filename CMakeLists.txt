@@ -121,7 +121,7 @@ message("Package version: ${VERSION}")
 
 # Default python version
 if (NOT PYTHON_DESIRED)
-    set (PYTHON_DESIRED "2")
+    set (PYTHON_DESIRED "3")
 endif()
 
 # Other files

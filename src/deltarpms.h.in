@@ -35,7 +35,9 @@ extern "C" {
  *  @{
  */
 
+#ifndef CR_DELTA_RPM_SUPPORT
 #cmakedefine CR_DELTA_RPM_SUPPORT
+#endif
 #define CR_DEFAULT_MAX_DELTA_RPM_SIZE   100000000
 
 typedef struct {

@@ -69,5 +69,10 @@ TARGET_LINK_LIBRARIES(_createrepo_c
                         ${PYTHON_LIBRARY}
                      )
 
-INSTALL(FILES __init__.py DESTINATION ${PYTHON_INSTALL_DIR}/createrepo_c)
-INSTALL(TARGETS _createrepo_c LIBRARY DESTINATION ${PYTHON_INSTALL_DIR}/createrepo_c)
+IF (SKBUILD)
+    INSTALL(FILES __init__.py DESTINATION src)
+    INSTALL(TARGETS _createrepo_c LIBRARY DESTINATION src)
+ELSE (SKBUILD)
+    INSTALL(FILES __init__.py DESTINATION ${PYTHON_INSTALL_DIR}/createrepo_c)
+    INSTALL(TARGETS _createrepo_c LIBRARY DESTINATION ${PYTHON_INSTALL_DIR}/createrepo_c)
+ENDIF ()

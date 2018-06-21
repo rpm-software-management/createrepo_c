@@ -126,20 +126,26 @@ endif()
 
 # Other files
 
-pkg_check_modules(BASHCOMP bash-completion)
-if (BASHCOMP_FOUND)
-    execute_process(COMMAND ${PKG_CONFIG_EXECUTABLE} --variable=completionsdir bash-completion OUTPUT_VARIABLE BASHCOMP_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
-    message("Bash completion directory: ${BASHCOMP_DIR}")
-    INSTALL(FILES createrepo_c.bash DESTINATION ${BASHCOMP_DIR} RENAME createrepo_c)
-    INSTALL(CODE "
-        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink createrepo_c \$ENV{DESTDIR}${BASHCOMP_DIR}/mergerepo_c)
-        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink createrepo_c \$ENV{DESTDIR}${BASHCOMP_DIR}/modifyrepo_c)
-        execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink createrepo_c \$ENV{DESTDIR}${BASHCOMP_DIR}/sqliterepo_c)
-        ")
-ELSE (BASHCOMP_FOUND)
-    INSTALL(FILES createrepo_c.bash DESTINATION "/etc/bash_completion.d")
-    message("Bash completion directory: /etc/bash_completion.d")
-endif (BASHCOMP_FOUND)
+OPTION(ENABLE_BASHCOMP "Install Bash autocompletions?" ON)
+IF (SKBUILD)
+    SET (ENABLE_BASHCOMP OFF)
+ENDIF ()
+IF (ENABLE_BASHCOMP)
+    pkg_check_modules(BASHCOMP bash-completion)
+    IF (BASHCOMP_FOUND)
+        execute_process(COMMAND ${PKG_CONFIG_EXECUTABLE} --variable=completionsdir bash-completion OUTPUT_VARIABLE BASHCOMP_DIR OUTPUT_STRIP_TRAILING_WHITESPACE)
+        message("Bash completion directory: ${BASHCOMP_DIR}")
+        INSTALL(FILES createrepo_c.bash DESTINATION ${BASHCOMP_DIR} RENAME createrepo_c)
+        INSTALL(CODE "
+            execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink createrepo_c \$ENV{DESTDIR}${BASHCOMP_DIR}/mergerepo_c)
+            execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink createrepo_c \$ENV{DESTDIR}${BASHCOMP_DIR}/modifyrepo_c)
+            execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink createrepo_c \$ENV{DESTDIR}${BASHCOMP_DIR}/sqliterepo_c)
+            ")
+    ELSEIF (BASHCOMP_FOUND)
+        INSTALL(FILES createrepo_c.bash DESTINATION "/etc/bash_completion.d")
+        message("Bash completion directory: /etc/bash_completion.d")
+    ENDIF (BASHCOMP_FOUND)
+ENDIF (ENABLE_BASHCOMP)
 
 
 # Gen manpage

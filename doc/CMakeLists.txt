@@ -8,9 +8,11 @@ if(DOXYGEN_FOUND)
         COMMENT "Building C API documentation with Doxygen" VERBATIM)
 endif(DOXYGEN_FOUND)
 
+IF (NOT SKBUILD)
 INSTALL(FILES createrepo_c.8 mergerepo_c.8 modifyrepo_c.8 sqliterepo_c.8
         DESTINATION share/man/man8
         COMPONENT bin)
+ENDIF (NOT SKBUILD)
 
 ADD_CUSTOM_TARGET (doc)
 ADD_DEPENDENCIES (doc doc-python doc-c)

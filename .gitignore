@@ -28,6 +28,12 @@ _CPack_Packages/
 src/version.h
 src/createrepo_c.pc
 src/deltarpms.h
+_skbuild/
+
+# Python distribution stuff
+dist/
+MANIFEST
+*.egg-info/
 
 # Devel stuff
 notes

@@ -471,7 +471,7 @@ new_merged_metadata_hashtable()
 {
     GHashTable *hashtable = g_hash_table_new_full(g_str_hash,
                                                   g_str_equal,
-                                                  NULL,
+                                                  g_free,
                                                   free_merged_values);
     return hashtable;
 }
@@ -824,7 +824,7 @@ add_package(cr_Package *pkg,
             repopath_with_protocol = prepend_protocol(repopath);
             pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, repopath_with_protocol);
         }
-        g_hash_table_insert (merged, (gpointer) pkg->name, (gpointer) list);
+        g_hash_table_insert (merged, (gpointer) g_strdup(pkg->name), (gpointer) list);
         return 1;
     }
 

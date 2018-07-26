@@ -115,6 +115,8 @@ struct CmdOptions {
 
     gboolean version;
     char **repos;
+    char *repo_prefix_search;
+    char *repo_prefix_replace;
     char *archlist;
     gboolean database;
     gboolean no_database;
@@ -164,6 +166,10 @@ static GOptionEntry cmd_entries[] =
       "Show program's version number and exit", NULL },
     { "repo", 'r', 0, G_OPTION_ARG_FILENAME_ARRAY, &(_cmd_options.repos),
       "Repo url", "REPOS" },
+    { "repo-prefix-search", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.repo_prefix_search),
+      "Repository prefix to be replaced by repo-prefix-url." },
+    { "repo-prefix-replace", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.repo_prefix_replace),
+      "Repository prefix URL by which the repo-prefix is replaced." },
     { "archlist", 'a', 0, G_OPTION_ARG_STRING, &(_cmd_options.archlist),
       "Defaults to all arches - otherwise specify arches", "ARCHLIST" },
     { "database", 'd', 0, G_OPTION_ARG_NONE, &(_cmd_options.database),
@@ -387,6 +393,21 @@ check_arguments(struct CmdOptions *options)
         }
         if (!g_file_test(options->blocked, G_FILE_TEST_EXISTS)) {
             g_critical("File %s doesn't exists", options->blocked);
+            ret = FALSE;
+        }
+    }
+
+    if (options->repo_prefix_search || options->repo_prefix_replace) {
+        if (options->repo_prefix_search == NULL) {
+            g_critical("--repo-prefix-replace must be used together with --repo-prefix-search");
+            ret = FALSE;
+        }
+        else if (options->repo_prefix_replace == NULL) {
+            g_critical("--repo-prefix-search must be used together with --repo-prefix-replace");
+            ret = FALSE;
+        }
+        else if (*options->repo_prefix_search == '\0') {
+            g_critical("--repo-prefix-search cannot be an empty string.");
             ret = FALSE;
         }
     }
@@ -948,7 +969,9 @@ merge_repos(GHashTable *merged,
             gboolean include_all,
             GHashTable *noarch_hashtable,
             struct KojiMergedReposStuff *koji_stuff,
-            gboolean omit_baseurl)
+            gboolean omit_baseurl,
+            gchar *repo_prefix_search,
+            gchar *repo_prefix_replace)
 {
     long loaded_packages = 0;
     GSList *used_noarch_keys = NULL;
@@ -974,6 +997,17 @@ merge_repos(GHashTable *merged,
         // Base paths in output of original createrepo doesn't have trailing '/'
         if (repopath && strlen(repopath) > 1)
             repopath[strlen(repopath)-1] = '\0';
+
+        // If repo_prefix_search and repo_prefix_replace is set, replace
+        // repo_prefix_search in the repopath by repo_prefix_replace.
+        if (repo_prefix_search && *repo_prefix_search &&
+                repo_prefix_replace &&
+                g_str_has_prefix(repopath, repo_prefix_search)) {
+            gchar *repo_suffix = repopath + strlen(repo_prefix_search);
+            gchar *new_repopath = g_strconcat(repo_prefix_replace, repo_suffix, NULL);
+            g_free(repopath);
+            repopath = new_repopath;
+        }
 
         g_debug("Processing: %s", repopath);
 
@@ -1792,7 +1826,10 @@ main(int argc, char **argv)
                                         cr_metadata_hashtable(noarch_metadata)
                                       : NULL,
                                   koji_stuff,
-                                  cmd_options->omit_baseurl);
+                                  cmd_options->omit_baseurl,
+                                  cmd_options->repo_prefix_search,
+                                  cmd_options->repo_prefix_replace
+                                 );
 
     // Destroy koji stuff - we have to close pkgorigins file before dump
 

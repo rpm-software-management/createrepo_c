@@ -24,10 +24,10 @@ Package build requires - Pkg name in Fedora/Ubuntu:
 * xz (http://tukaani.org/xz/) - xz-devel/liblzma-dev
 * zlib (http://www.zlib.net/) - zlib-devel/zlib1g-dev
 * *Documentation:* doxygen (http://doxygen.org/) - doxygen/doxygen
-* *Documentation:* sphinx (http://sphinx-doc.org/) - python-sphinx/
+* *Documentation:* sphinx (http://sphinx-doc.org/) - python-sphinx/python-sphinx
 * **Test requires:** check (http://check.sourceforge.net/) - check-devel/check
 * **Test requires:** python-nose (https://nose.readthedocs.org/) - python-nose/python-nose
-* **Experimental support:** drpm (https://github.com/rpm-software-management/drpm)
+* **Experimental support:** drpm (https://github.com/rpm-software-management/drpm) - drpm-devel/
 
 From your checkout dir:
 
@@ -37,6 +37,7 @@ From your checkout dir:
     make
 
 To build the documentation, from the build/ directory:
+
     make doc
 
 **Note:** For build with debugging symbols you could use (from the build/ directory):
@@ -49,9 +50,9 @@ E.g. when you want to try weak and rich dependencies.
 
     cmake -DRPM_PATH="/home/tmlcoch/git/rpm" .. && make
 
-**Note:** The RPM must be buit in that directory
+**Note:** The RPM must be built in that directory
 
-Commands I am using for building of RPM:
+Commands I am using for building the RPM:
 
     cd /home/tmlcoch/git/rpm
     CPPFLAGS='-I/usr/include/nss3/ -I/usr/include/nspr4/' ./autogen.sh --rpmconfigure --with-vendor=redhat --with-external-db --with-lua --with-selinux --with-cap --with-acl --enable-python
@@ -59,10 +60,10 @@ Commands I am using for building of RPM:
 
 ## Building with delta rpm support (drpm)
 
-At first, you have to checkout drpm library from the
-https://git.fedorahosted.org/git/drpm.git and build it.
+At first, you have to checkout the drpm library from
+https://github.com/rpm-software-management/drpm.git and build it.
 
-    git clone ssh://git.fedorahosted.org/git/drpm.git
+    git clone https://github.com/rpm-software-management/drpm.git
     cd drpm/
     make
 
@@ -88,7 +89,7 @@ Enable legacy SUSE/Mageia/Mandriva weakdeps support (Default: ON)
 Threaded XZ encoding (Default: OFF)
 
 Note: This option is disabled by default, because Createrepo_c
-parallelize a lot of tasks (including compression) by default, this
+parallelizes a lot of tasks (including compression) by default; this
 only adds extra threads on XZ library level which causes thread bloat
 and for most usecases doesn't bring any performance boost.
 On regular hardware (e.g. less-or-equal 4 cores) this option may even
@@ -252,17 +253,17 @@ Modifyrepo - at least not yet.
     unique-md-filenames=true
     checksum=sha256
     new-name=group.xml
-    
+
     # Metadata that use default settings
     [some/path/bar.xml]
-    
+
     # Remove:
     #   [<metadata name>]
     #   remove=true
-    
+
     [updateinfo]
     remove=true
-    
+
 
 #### Supported options
 
@@ -275,7 +276,7 @@ Modifyrepo - at least not yet.
 | compress-type | Compression format to use | ``gz``, ``bz2``, ``xz`` | ``gz`` |
 | checksum      | Checksum type to use | ``md5``, ``sha``, ``sha1``, ``sha224``, ``sha256``, ``sha384``, ``sha512`` | ``sha256`` |
 | unique-md-filenames | Include the file's checksum in the filename | ``true`` or ``false`` | ``true`` |
-| new-name      | New name for the file. If ``compress`` is ``true``, then compression suffix will be appended. If ``unique-md-filenames`` is ``true``, then checksum will be prepended. | Any string | Original source filename | 
+| new-name      | New name for the file. If ``compress`` is ``true``, then compression suffix will be appended. If ``unique-md-filenames`` is ``true``, then checksum will be prepended. | Any string | Original source filename |
 
 #### Notes
 

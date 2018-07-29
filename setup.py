@@ -19,7 +19,7 @@ setup(
     python_requires=">=3.5",
     packages=['createrepo_c'],
     package_dir={
-        'createrepo_c': 'createrepo_c'
+        'createrepo_c': 'src/python'
     },
     cmake_args=['-DPYTHON_DESIRED:STRING=3', '-DBUILD_LIBCREATEREPO_C_SHARED:BOOL=OFF'],
     cmake_languages=['C'],

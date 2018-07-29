@@ -71,8 +71,8 @@ ENDIF ()
 
 
 IF (SKBUILD)
-    INSTALL(FILES __init__.py DESTINATION createrepo_c)
-    INSTALL(TARGETS _createrepo_c LIBRARY DESTINATION createrepo_c)
+    INSTALL(FILES __init__.py DESTINATION src/python)
+    INSTALL(TARGETS _createrepo_c LIBRARY DESTINATION src/python)
 ELSE (SKBUILD)
     INSTALL(FILES __init__.py DESTINATION ${PYTHON_INSTALL_DIR}/createrepo_c)
     INSTALL(TARGETS _createrepo_c LIBRARY DESTINATION ${PYTHON_INSTALL_DIR}/createrepo_c)

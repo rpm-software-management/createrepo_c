@@ -21,6 +21,6 @@ setup(
     package_dir={
         'createrepo_c': 'createrepo_c'
     },
-    cmake_args=['-DPYTHON_DESIRED:STRING=3'],
+    cmake_args=['-DPYTHON_DESIRED:STRING=3', '-DBUILD_LIBCREATEREPO_C_SHARED:BOOL=OFF'],
     cmake_languages=['C'],
 )

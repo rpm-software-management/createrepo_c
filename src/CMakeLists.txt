@@ -56,7 +56,12 @@ SET(headers
     xml_file.h
     xml_parser.h)
 
-ADD_LIBRARY(libcreaterepo_c SHARED ${createrepo_c_SRCS})
+IF (BUILD_LIBCREATEREPO_C_SHARED)
+  SET (createrepo_c_library_type SHARED)
+ELSE ()
+  SET (createrepo_c_library_type STATIC)
+ENDIF ()
+ADD_LIBRARY(libcreaterepo_c ${createrepo_c_library_type} ${createrepo_c_SRCS})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${BZIP2_LIBRARIES})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${CURL_LIBRARY})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${EXPAT_LIBRARIES})

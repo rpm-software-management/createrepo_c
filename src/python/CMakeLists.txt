@@ -1,4 +1,4 @@
-if (${PYTHON_DESIRED} STREQUAL "2")
+if (NOT SKBUILD AND ${PYTHON_DESIRED} STREQUAL "2")
     unset(PYTHON_LIBRARY)
     unset(PYTHON_INCLUDE_DIR)
     unset(PYTHON_EXECUTABLE)
@@ -7,7 +7,7 @@ if (${PYTHON_DESIRED} STREQUAL "2")
     unset(PYTHON_EXECUTABLE CACHE)
     FIND_PACKAGE(PythonLibs 2)
     FIND_PACKAGE(PythonInterp 2 REQUIRED)
-else()
+elseif(NOT SKBUILD)
     SET(Python_ADDITIONAL_VERSIONS 3.0)
     unset(PYTHON_LIBRARY)
     unset(PYTHON_INCLUDE_DIR)
@@ -60,8 +60,15 @@ TARGET_LINK_LIBRARIES(_createrepo_c libcreaterepo_c)
 TARGET_LINK_LIBRARIES(_createrepo_c
                         ${EXPAT_LIBRARIES}
                         ${CURL_LIBRARY}
-                        ${PYTHON_LIBRARY}
                      )
+
+IF (SKBUILD)
+    find_package(PythonExtensions REQUIRED)
+    python_extension_module(_createrepo_c)
+ELSE ()
+    TARGET_LINK_LIBRARIES(_createrepo_c ${PYTHON_LIBRARY})
+ENDIF ()
+
 
 IF (SKBUILD)
     INSTALL(FILES __init__.py DESTINATION createrepo_c)

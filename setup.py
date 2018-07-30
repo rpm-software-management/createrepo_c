@@ -23,6 +23,7 @@ setup(
     },
     cmake_args=[
         '-DBUILD_LIBCREATEREPO_C_SHARED:BOOL=OFF',
+        '-DCREATEREPO_C_INSTALL_MANPAGES:BOOL=OFF',
         '-DENABLE_BASHCOMP:BOOL=OFF',
         '-DPYTHON_DESIRED:STRING=3',
     ],

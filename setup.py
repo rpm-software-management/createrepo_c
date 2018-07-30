@@ -22,6 +22,7 @@ setup(
         'createrepo_c': 'src/python'
     },
     cmake_args=[
+        '-DBIN_INSTALL_DIR:PATH=src/python/data/bin',
         '-DBUILD_LIBCREATEREPO_C_SHARED:BOOL=OFF',
         '-DCREATEREPO_C_INSTALL_DEVELOPMENT:BOOL=OFF',
         '-DCREATEREPO_C_INSTALL_MANPAGES:BOOL=OFF',
@@ -29,4 +30,12 @@ setup(
         '-DPYTHON_DESIRED:STRING=3',
     ],
     cmake_languages=['C'],
+    entry_points={
+            'console_scripts': [
+                'createrepo_c=createrepo_c:createrepo_c',
+                'mergerepo_c=createrepo_c:mergerepo_c',
+                'modifyrepo_c=createrepo_c:modifyrepo_c',
+                'sqliterepo_c=createrepo_c:sqliterepo_c'
+            ]
+    },
 )

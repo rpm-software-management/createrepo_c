@@ -133,9 +133,6 @@ endif()
 # Other files
 
 OPTION(ENABLE_BASHCOMP "Install Bash autocompletions?" ON)
-IF (SKBUILD)
-    SET (ENABLE_BASHCOMP OFF)
-ENDIF ()
 IF (ENABLE_BASHCOMP)
     pkg_check_modules(BASHCOMP bash-completion)
     IF (BASHCOMP_FOUND)

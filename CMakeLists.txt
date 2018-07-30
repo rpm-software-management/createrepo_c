@@ -19,6 +19,8 @@ if(NOT BUILD_LIBCREATEREPO_C_SHARED)
   set(CMAKE_POSITION_INDEPENDENT_CODE 1)
 endif()
 
+option(CREATEREPO_C_INSTALL_MANPAGES "Install createrepo_c man-pages." ON)
+
 # Add path with own cmake modules
 
 INCLUDE_DIRECTORIES (${CMAKE_SOURCE_DIR})

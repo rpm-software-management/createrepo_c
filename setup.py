@@ -14,9 +14,14 @@ setup(
         'Programming Language :: C',
         'Topic :: System :: Software Distribution',
         'Topic :: System :: Systems Administration',
+        "Programming Language :: Python :: 2",
+        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
+        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
     ),
-    python_requires=">=3.5",
     packages=['createrepo_c'],
     package_dir={
         'createrepo_c': 'src/python'
@@ -27,7 +32,6 @@ setup(
         '-DCREATEREPO_C_INSTALL_DEVELOPMENT:BOOL=OFF',
         '-DCREATEREPO_C_INSTALL_MANPAGES:BOOL=OFF',
         '-DENABLE_BASHCOMP:BOOL=OFF',
-        '-DPYTHON_DESIRED:STRING=3',
     ],
     cmake_languages=['C'],
     entry_points={

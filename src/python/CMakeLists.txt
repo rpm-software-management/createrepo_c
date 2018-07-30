@@ -30,6 +30,14 @@ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-strict-aliasing")
 set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fno-strict-aliasing")
 set (CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-strict-aliasing")
 
+IF (NOT SKBUILD)
+    IF (${CMAKE_VERSION} VERSION_LESS "2.8.0")
+        CONFIGURE_FILE(__init__.py "src/python/createrepo_c/__init__.py" COPYONLY)
+    ELSE()
+        FILE(COPY __init__.py DESTINATION createrepo_c)
+    ENDIF()
+ENDIF()
+
 SET (createrepo_cmodule_SRCS
      checksum-py.c
      compression_wrapper-py.c

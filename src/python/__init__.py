@@ -1,6 +1,10 @@
 """
 """
 
+import os
+import subprocess
+import sys
+
 from . import _createrepo_c
 from ._createrepo_c import *
 
@@ -326,3 +330,36 @@ def decompress_file(src, dst, comtype, stat=None):
 compression_suffix  = _createrepo_c.compression_suffix
 detect_compression  = _createrepo_c.detect_compression
 compression_type    = _createrepo_c.compression_type
+
+
+DATA = os.path.join(os.path.dirname(__file__), 'data')
+
+# Support running tests from the source tree
+if not os.path.exists(DATA):
+    from skbuild.constants import CMAKE_INSTALL_DIR as SKBUILD_CMAKE_INSTALL_DIR
+    _data = os.path.abspath(os.path.join(
+        os.path.dirname(__file__), '..', SKBUILD_CMAKE_INSTALL_DIR, 'src/python/data'))
+    if os.path.exists(_data):
+        DATA = _data
+
+BIN_DIR = os.path.join(DATA, 'bin')
+
+
+def _program(name, args):
+    return subprocess.call([os.path.join(BIN_DIR, name)] + args)
+
+
+def createrepo_c():
+    raise SystemExit(_program('createrepo_c', sys.argv[1:]))
+
+
+def mergerepo_c():
+    raise SystemExit(_program('mergerepo_c', sys.argv[1:]))
+
+
+def modifyrepo_c():
+    raise SystemExit(_program('modifyrepo_c', sys.argv[1:]))
+
+
+def sqliterepo_c():
+    raise SystemExit(_program('sqliterepo_c', sys.argv[1:]))

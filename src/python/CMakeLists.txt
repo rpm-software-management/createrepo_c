@@ -31,11 +31,7 @@ set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -fno-strict-aliasing")
 set (CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-strict-aliasing")
 
 IF (NOT SKBUILD)
-    IF (${CMAKE_VERSION} VERSION_LESS "2.8.0")
-        CONFIGURE_FILE(__init__.py "src/python/createrepo_c/__init__.py" COPYONLY)
-    ELSE()
-        FILE(COPY __init__.py DESTINATION createrepo_c)
-    ENDIF()
+    FILE(COPY __init__.py DESTINATION createrepo_c)
 ENDIF()
 
 SET (createrepo_cmodule_SRCS
@@ -79,6 +75,9 @@ ELSE ()
     TARGET_LINK_LIBRARIES(_createrepo_c ${PYTHON_LIBRARY})
 ENDIF ()
 
+IF (NOT SKBUILD)
+    FILE(COPY createrepo_c/__init__.py DESTINATION createrepo_c)
+ENDIF()
 
 IF (SKBUILD)
     INSTALL(FILES __init__.py DESTINATION src/python)

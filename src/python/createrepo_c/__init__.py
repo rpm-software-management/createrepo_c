@@ -332,21 +332,34 @@ detect_compression  = _createrepo_c.detect_compression
 compression_type    = _createrepo_c.compression_type
 
 
-DATA = os.path.join(os.path.dirname(__file__), 'data')
+# If we have been built as a Python package, e.g. "setup.py", this is
+# where the binaries will be located.
+_DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
-# Support running tests from the source tree
-if not os.path.exists(DATA):
-    from skbuild.constants import CMAKE_INSTALL_DIR as SKBUILD_CMAKE_INSTALL_DIR
-    _data = os.path.abspath(os.path.join(
-        os.path.dirname(__file__), '..', SKBUILD_CMAKE_INSTALL_DIR, 'src/python/data'))
-    if os.path.exists(_data):
-        DATA = _data
+# Where we will look for the binaries. Default to looking on the system PATH.
+# If one of the following test succeeds, we can change this to look somewhere else.
+# Otherwise, we probably were not built as a Python package (e.g. RPM, "cmake ..; make")
+# In that case, let's just assume that the binary will be on the PATH somewhere.
+_BIN_DIR = ""
 
-BIN_DIR = os.path.join(DATA, 'bin')
+if os.path.exists(_DATA_DIR):
+    _BIN_DIR = os.path.join(_DATA_DIR, 'bin')
+else:
+    # We can't find it. This could mean we've been built as an "editable" Python installation.
+    # Try building the path manually if scikit-build is available. If it isn't, or if the path
+    # doesn't exist in the source tree, continue assuming it's just on the PATH.
+    try:
+        from skbuild.constants import CMAKE_INSTALL_DIR as SKBUILD_CMAKE_INSTALL_DIR
+        _data = os.path.abspath(os.path.join(
+            os.path.dirname(__file__), '../../..', SKBUILD_CMAKE_INSTALL_DIR, 'src/python/createrepo_c/data'))
+        if os.path.exists(_data):
+            _BIN_DIR = os.path.join(_data, 'bin')
+    except ImportError:
+        pass
 
 
 def _program(name, args):
-    return subprocess.call([os.path.join(BIN_DIR, name)] + args)
+    return subprocess.call([os.path.join(_BIN_DIR, name)] + args)
 
 
 def createrepo_c():

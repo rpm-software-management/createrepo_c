@@ -5,12 +5,6 @@
 *_wrap.c
 snippets/
 
-# Binary files
-mergerepo_c
-createrepo_c
-modifyrepo_c
-sqliterepo_c
-
 # Packages and tarball
 createrepo*.rpm
 python-createrepo*.rpm

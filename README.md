@@ -102,6 +102,31 @@ cause degradation of performance.
 
 Without git revision specified HEAD is used.
 
+## Build Python package
+
+To create a binary "wheel" distribution, use:
+
+    python setup.py bdist_wheel
+
+To create a source distribution, use:
+
+    python setup.py sdist
+
+Installing source distributions require the installer of the package to have all of the build dependencies installed on their system, since they compile the code during installation. Binary distributions are pre-compiled, but they are likely not portable between substantially different systems, e.g. Fedora and Ubuntu.
+
+Note: if you are building a bdist or installing the sdist on a system with an older version of Pip, you may need to install the ```scikit-build``` Python package first.
+
+To install either of these packages, use:
+
+    pip install dist/{{ package name }}
+
+To create an "editable" install of createrepo_c, use:
+
+    python setup.py develop
+
+Note: To recompile the libraries and binaries, you muse re-run this command.
+
+
 ## Build RPM package
 
 Modify createrepo_c.spec and run:

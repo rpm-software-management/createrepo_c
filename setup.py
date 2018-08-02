@@ -1,9 +1,20 @@
 from skbuild import setup
 
+version = '{major}.{minor}.{patch}'
+
+with open('VERSION.cmake', 'r+') as version_file:
+    version_text = version_file.read()
+    # split on lines, remove empty lines
+    lines = filter(len, version_text.split('\n'))
+    # parse out digit characters from the line, convert to int
+    numbers = [int("".join(filter(str.isdigit, line))) for line in lines]
+    # build version string
+    version = version.format(major=numbers[0], minor=numbers[1], patch=numbers[2])
+
 setup(
     name='createrepo_c',
     description='C implementation of createrepo',
-    version='0.10.0',
+    version=version,
     license='GPLv2',
     author='RPM Software Management',
     author_email='',

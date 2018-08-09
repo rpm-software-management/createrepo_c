@@ -1,15 +1,16 @@
 from skbuild import setup
 
-version = '{major}.{minor}.{patch}'
 
 with open('VERSION.cmake', 'r+') as version_file:
-    version_text = version_file.read()
-    # split on lines, remove empty lines
-    lines = filter(len, version_text.split('\n'))
+    lines = version_file.read().splitlines()
     # parse out digit characters from the line, convert to int
     numbers = [int("".join(filter(str.isdigit, line))) for line in lines]
     # build version string
-    version = version.format(major=numbers[0], minor=numbers[1], patch=numbers[2])
+    version = '{major}.{minor}.{patch}'.format(
+        major=numbers[0],
+        minor=numbers[1],
+        patch=numbers[2]
+    )
 
 setup(
     name='createrepo_c',

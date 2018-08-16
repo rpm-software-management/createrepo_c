@@ -36,9 +36,9 @@
 // Repo files
 
 #define TEST_REPO_00_REPOMD     TEST_REPO_00"repodata/repomd.xml"
-#define TEST_REPO_00_PRIMARY    TEST_REPO_00"repodata/dabe2ce5481d23de1f4f52bdcfee0f9af98316c9e0de2ce8123adeefa0dd08b9-primary.xml.gz"
-#define TEST_REPO_00_FILELISTS  TEST_REPO_00"repodata/401dc19bda88c82c403423fb835844d64345f7e95f5b9835888189c03834cc93-filelists.xml.gz"
-#define TEST_REPO_00_OTHER      TEST_REPO_00"repodata/6bf9672d0862e8ef8b8ff05a2fd0208a922b1f5978e6589d87944c88259cb670-other.xml.gz"
+#define TEST_REPO_00_PRIMARY    TEST_REPO_00"repodata/1cb61ea996355add02b1426ed4c1780ea75ce0c04c5d1107c025c3fbd7d8bcae-primary.xml.gz"
+#define TEST_REPO_00_FILELISTS  TEST_REPO_00"repodata/95a4415d859d7120efb6b3cf964c07bebbff9a5275ca673e6e74a97bcbfb2a5f-filelists.xml.gz"
+#define TEST_REPO_00_OTHER      TEST_REPO_00"repodata/ef3e20691954c3d1318ec3071a982da339f4ed76967ded668b795c9e070aaab6-other.xml.gz"
 
 #define TEST_REPO_01_REPOMD     TEST_REPO_01"repodata/repomd.xml"
 #define TEST_REPO_01_PRIMARY    TEST_REPO_01"repodata/6c662d665c24de9a0f62c17d8fa50622307739d7376f0d19097ca96c6d7f5e3e-primary.xml.gz"

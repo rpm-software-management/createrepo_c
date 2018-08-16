@@ -51,6 +51,7 @@ pkg_check_modules(ZCK REQUIRED zck)
 include_directories(${GLIB2_INCLUDE_DIRS})
 include_directories(${LIBXML2_INCLUDE_DIR})
 include_directories(${OPENSSL_INCLUDE_DIR})
+include_directories(${ZCK_INCLUDE_DIRS})
 
 
 IF (RPM_PATH)

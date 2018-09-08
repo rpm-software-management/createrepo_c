@@ -289,6 +289,7 @@ cr_gz_strerror(gzFile f)
     return msg;
 }
 
+#ifdef WITH_ZCHUNK
 cr_ChecksumType
 cr_cktype_from_zck(zckCtx *zck, GError **err)
 {
@@ -311,6 +312,7 @@ cr_cktype_from_zck(zckCtx *zck, GError **err)
         return CR_CHECKSUM_UNKNOWN;
     }
 }
+#endif // WITH_ZCHUNK
 
 CR_FILE *
 cr_sopen(const char *filename,
@@ -582,6 +584,7 @@ cr_sopen(const char *filename,
             break;
         }
         case (CR_CW_ZCK_COMPRESSION): { // -------------------------------------
+#ifdef WITH_ZCHUNK
             FILE *f = fopen(filename, mode_str);
             file->INNERFILE = f;
             int fd = fileno(f);
@@ -612,6 +615,11 @@ cr_sopen(const char *filename,
                 }
             }
             break;
+#else
+            g_set_error(err, ERR_DOMAIN, CRE_IO, "createrepo_c wasn't compiled "
+                        "with zchunk support");
+            break;
+#endif // WITH_ZCHUNK
         }
 
         default: // -----------------------------------------------------------
@@ -642,6 +650,7 @@ cr_sopen(const char *filename,
             }
         }
 
+#ifdef WITH_ZCHUNK
         /* Fill zchunk header_stat with header information */
         if(mode == CR_CW_MODE_READ && type == CR_CW_ZCK_COMPRESSION) {
             zckCtx *zck = (zckCtx *)file->FILE;
@@ -660,6 +669,7 @@ cr_sopen(const char *filename,
                 return NULL;
             }
         }
+#endif // WITH_ZCHUNK
     }
 
     assert(!err || (!file && *err != NULL) || (file && *err == NULL));
@@ -679,6 +689,7 @@ cr_set_dict(CR_FILE *cr_file, const void *dict, unsigned int len, GError **err)
     switch (cr_file->type) {
 
         case (CR_CW_ZCK_COMPRESSION): { // ------------------------------------
+#ifdef WITH_ZCHUNK
             zckCtx *zck = (zckCtx *)cr_file->FILE;
             size_t wlen = (size_t)len;
             if(!zck_set_soption(zck, ZCK_COMP_DICT, dict, wlen)) {
@@ -688,6 +699,11 @@ cr_set_dict(CR_FILE *cr_file, const void *dict, unsigned int len, GError **err)
                 break;
             }
             break;
+#else
+            g_set_error(err, ERR_DOMAIN, CRE_IO, "createrepo_c wasn't compiled "
+                        "with zchunk support");
+            break;
+#endif // WITH_ZCHUNK
         }
 
         default: { // ---------------------------------------------------------
@@ -858,6 +874,7 @@ cr_close(CR_FILE *cr_file, GError **err)
             break;
         }
         case (CR_CW_ZCK_COMPRESSION): { // ------------------------------------
+#ifdef WITH_ZCHUNK
             zckCtx *zck = (zckCtx *) cr_file->FILE;
             ret = CRE_OK;
             if (cr_file->mode == CR_CW_MODE_WRITE) {
@@ -893,6 +910,11 @@ cr_close(CR_FILE *cr_file, GError **err)
             zck_free(&zck);
             fclose(cr_file->INNERFILE);
             break;
+#else
+            g_set_error(err, ERR_DOMAIN, CRE_IO, "createrepo_c wasn't compiled "
+                        "with zchunk support");
+            break;
+#endif // WITH_ZCHUNK
         }
         default: // -----------------------------------------------------------
             ret = CRE_BADARG;
@@ -1094,6 +1116,7 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
             break;
         }
         case (CR_CW_ZCK_COMPRESSION): { // ------------------------------------
+#ifdef WITH_ZCHUNK
             zckCtx *zck = (zckCtx *) cr_file->FILE;
             ssize_t rb = zck_read(zck, buffer, len);
             if(rb < 0) {
@@ -1104,6 +1127,11 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
             }
             ret = rb;
             break;
+#else
+            g_set_error(err, ERR_DOMAIN, CRE_IO, "createrepo_c wasn't compiled "
+                        "with zchunk support");
+            break;
+#endif // WITH_ZCHUNK
         }
 
         default: // -----------------------------------------------------------
@@ -1274,6 +1302,7 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
         }
 
         case (CR_CW_ZCK_COMPRESSION): { // ------------------------------------
+#ifdef WITH_ZCHUNK
             zckCtx *zck = (zckCtx *) cr_file->FILE;
             ssize_t wb = zck_write(zck, buffer, len);
             if(wb < 0) {
@@ -1284,6 +1313,11 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
             }
             ret = wb;
             break;
+#else
+            g_set_error(err, ERR_DOMAIN, CRE_IO, "createrepo_c wasn't compiled "
+                        "with zchunk support");
+            break;
+#endif // WITH_ZCHUNK
         }
 
         default: // -----------------------------------------------------------
@@ -1364,6 +1398,7 @@ cr_end_chunk(CR_FILE *cr_file, GError **err)
         case (CR_CW_XZ_COMPRESSION): // ---------------------------------------
             break;
         case (CR_CW_ZCK_COMPRESSION): { // ------------------------------------
+#ifdef WITH_ZCHUNK
             zckCtx *zck = (zckCtx *) cr_file->FILE;
             ssize_t wb = zck_end_chunk(zck);
             if(wb < 0) {
@@ -1373,6 +1408,11 @@ cr_end_chunk(CR_FILE *cr_file, GError **err)
             }
             ret = wb;
             break;
+#else
+            g_set_error(err, ERR_DOMAIN, CRE_IO, "createrepo_c wasn't compiled "
+                        "with zchunk support");
+            break;
+#endif // WITH_ZCHUNK
         }
 
         default: // -----------------------------------------------------------

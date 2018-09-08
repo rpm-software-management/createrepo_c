@@ -146,10 +146,12 @@ static GOptionEntry cmd_entries[] =
       "Number of workers to spawn to read rpms.", NULL },
     { "xz", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.xz_compression),
       "Use xz for repodata compression.", NULL },
+#ifdef WITH_ZCHUNK
     { "zck", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.zck_compression),
       "Generate zchunk files as well as the standard repodata.", NULL },
     { "zck-dict-dir", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.zck_dict_dir),
       "Directory containing compression dictionaries for use by zchunk", "ZCK_DICT_DIR" },
+#endif
     { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type),
       "Which compression type to use.", "COMPRESSION_TYPE" },
     { "general-compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.general_compress_type),

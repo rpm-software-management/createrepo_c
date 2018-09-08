@@ -44,14 +44,12 @@ find_package(LZMA REQUIRED)
 find_package(OpenSSL REQUIRED)
 find_package(Sqlite3 REQUIRED)
 find_package(ZLIB REQUIRED)
-pkg_check_modules(ZCK REQUIRED zck)
 
 # Add include dirs
 
 include_directories(${GLIB2_INCLUDE_DIRS})
 include_directories(${LIBXML2_INCLUDE_DIR})
 include_directories(${OPENSSL_INCLUDE_DIR})
-include_directories(${ZCK_INCLUDE_DIRS})
 
 
 IF (RPM_PATH)
@@ -113,6 +111,14 @@ ENDIF (ENABLE_DRPM)
 
 # option to enable/disable python support
 OPTION (ENABLE_PYTHON "Enable python support?" ON)
+
+OPTION (WITH_ZCHUNK "Build with zchunk support" ON)
+IF (WITH_ZCHUNK)
+    pkg_check_modules(ZCK REQUIRED zck)
+    include_directories(${ZCK_INCLUDE_DIRS})
+    SET (CMAKE_C_FLAGS          "${CMAKE_C_FLAGS} -DWITH_ZCHUNK")
+    SET (CMAKE_C_FLAGS_DEBUG    "${CMAKE_C_FLAGS_DEBUG} -DWITH_ZCHUNK")
+ENDIF (WITH_ZCHUNK)
 
 # Threaded XZ Compression
 # Note: This option is disabled by default, because Createrepo_c

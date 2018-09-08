@@ -25,43 +25,25 @@ class TestCaseRepomdRecord(unittest.TestCase):
 
     def test_repomdrecord_fill(self):
         shutil.copyfile(REPO_00_PRIXML, self.path00)
-        shutil.copyfile(REPO_00_PRIZCK, self.path02)
         self.assertTrue(os.path.exists(self.path00))
-        self.assertTrue(os.path.exists(self.path02))
 
         rec = cr.RepomdRecord("primary", self.path00)
-        zrc = cr.RepomdRecord("primary_zck", self.path02)
         self.assertTrue(rec)
-        self.assertTrue(zrc)
 
         self.assertEqual(rec.location_real, self.path00)
         self.assertEqual(rec.location_href, "repodata/primary.xml.gz")
         self.assertEqual(rec.location_base, None)
-        self.assertEqual(zrc.location_real, self.path02)
-        self.assertEqual(zrc.location_href, "repodata/primary.xml.zck")
-        self.assertEqual(zrc.location_base, None)
         self.assertEqual(rec.checksum, None)
         self.assertEqual(rec.checksum_type, None)
         self.assertEqual(rec.checksum_open, None)
         self.assertEqual(rec.checksum_open_type, None)
-        self.assertEqual(zrc.checksum, None)
-        self.assertEqual(zrc.checksum_type, None)
-        self.assertEqual(zrc.checksum_open, None)
-        self.assertEqual(zrc.checksum_open_type, None)
-        self.assertEqual(zrc.checksum_header, None)
-        self.assertEqual(zrc.checksum_header_type, None)
         self.assertEqual(rec.timestamp, 0)
-        self.assertEqual(zrc.timestamp, 0)
 
         self.assertEqual(rec.size, 0)
         self.assertEqual(rec.size_open, -1)
-        self.assertEqual(zrc.size, 0)
-        self.assertEqual(zrc.size_open, -1)
-        self.assertEqual(zrc.size_header, -1)
         self.assertEqual(rec.db_ver, 0)
 
         rec.fill(cr.SHA256)
-        zrc.fill(cr.SHA256)
 
         self.assertEqual(rec.location_real, self.path00)
         self.assertEqual(rec.location_href, "repodata/primary.xml.gz")
@@ -73,6 +55,40 @@ class TestCaseRepomdRecord(unittest.TestCase):
         self.assertTrue(rec.timestamp > 0)
         self.assertEqual(rec.size, 134)
         self.assertEqual(rec.size_open, 167)
+
+        rec.rename_file()
+
+        shutil.copyfile(REPO_00_PRIZCK, self.path02)
+        self.assertTrue(os.path.exists(self.path02))
+
+        zrc = cr.RepomdRecord("primary_zck", self.path02)
+        self.assertTrue(zrc)
+
+        self.assertEqual(zrc.location_real, self.path02)
+        self.assertEqual(zrc.location_href, "repodata/primary.xml.zck")
+        self.assertEqual(zrc.location_base, None)
+        self.assertEqual(zrc.checksum, None)
+        self.assertEqual(zrc.checksum_type, None)
+        self.assertEqual(zrc.checksum_open, None)
+        self.assertEqual(zrc.checksum_open_type, None)
+        self.assertEqual(zrc.checksum_header, None)
+        self.assertEqual(zrc.checksum_header_type, None)
+        self.assertEqual(zrc.timestamp, 0)
+
+        self.assertEqual(zrc.size, 0)
+        self.assertEqual(zrc.size_open, -1)
+        self.assertEqual(zrc.size_header, -1)
+
+        if cr.HAS_ZCK == 0:
+            filelist = os.listdir(self.tmpdir)
+            filelist.sort()
+            self.assertEqual(filelist,
+                ['1cb61ea996355add02b1426ed4c1780ea75ce0c04c5d1107c025c3fbd7d8bcae-primary.xml.gz',
+                 'primary.xml.zck'])
+            return
+
+        zrc.fill(cr.SHA256)
+
         self.assertEqual(zrc.location_real, self.path02)
         self.assertEqual(zrc.location_href, "repodata/primary.xml.zck")
         self.assertEqual(zrc.location_base, None)
@@ -88,7 +104,6 @@ class TestCaseRepomdRecord(unittest.TestCase):
         self.assertEqual(zrc.size_header, 132)
         self.assertEqual(zrc.db_ver, 10)
 
-        rec.rename_file()
         zrc.rename_file()
 
         # Filename shoud contain a (valid) checksum

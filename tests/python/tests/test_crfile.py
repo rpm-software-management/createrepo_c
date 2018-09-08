@@ -106,6 +106,9 @@ class TestCaseCrFile(unittest.TestCase):
         self.assertEqual(content, "foobar")
 
     def test_crfile_zck_compression(self):
+        if cr.HAS_ZCK == 0:
+            return
+
         path = os.path.join(self.tmpdir, "foo.zck")
         f = cr.CrFile(path, cr.MODE_WRITE, cr.ZCK_COMPRESSION)
         self.assertTrue(f)

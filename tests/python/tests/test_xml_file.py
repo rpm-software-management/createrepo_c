@@ -136,6 +136,9 @@ class TestCaseXmlFile(unittest.TestCase):
 </metadata>""")
 
     def test_xmlfile_zck_compression(self):
+        if cr.HAS_ZCK == 0:
+            return
+
         path = os.path.join(self.tmpdir, "primary.xml.zck")
         f = cr.PrimaryXmlFile(path, cr.ZCK_COMPRESSION)
         self.assertTrue(f)

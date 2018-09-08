@@ -258,6 +258,13 @@ init_createrepo_c(void)
     PyModule_AddIntConstant(m, "XZ_COMPRESSION", CR_CW_XZ_COMPRESSION);
     PyModule_AddIntConstant(m, "ZCK_COMPRESSION", CR_CW_ZCK_COMPRESSION);
 
+    /* Zchunk support */
+#ifdef WITH_ZCHUNK
+    PyModule_AddIntConstant(m, "HAS_ZCK", 1);
+#else
+    PyModule_AddIntConstant(m, "HAS_ZCK", 0);
+#endif // WITH_ZCHUNK
+
     /* Load Metadata key values */
     PyModule_AddIntConstant(m, "HT_KEY_DEFAULT", CR_HT_KEY_DEFAULT);
     PyModule_AddIntConstant(m, "HT_KEY_HASH", CR_HT_KEY_HASH);

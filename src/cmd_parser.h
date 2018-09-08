@@ -70,9 +70,7 @@ struct CmdOptions {
     gint workers;               /*!< number of threads to spawn */
     gboolean xz_compression;    /*!< use xz for repodata compression */
     gboolean zck_compression;   /*!< generate zchunk files */
-    char *zck_primary_dict;     /*!< dictionary for zchunk primary file */
-    char *zck_filelists_dict;   /*!< dictionary for zchunk filelists file */
-    char *zck_other_dict;       /*!< dictionary for zchunk other file */
+    char *zck_dict_dir;         /*!< directory with zchunk dictionaries */
     gboolean keep_all_metadata; /*!< keep groupfile and updateinfo from source
                                      repo during update */
     gboolean ignore_lock;       /*!< Ignore existing .repodata/ - remove it,

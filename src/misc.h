@@ -535,6 +535,23 @@ cr_cut_dirs(gchar *path, gint cut_dirs);
 const gchar *
 cr_version_string_with_features(void);
 
+/** Get dict file from dict directory
+ * This functions returns a zchunk dictionary file from the zchunk dictionary
+ * directory that matches the passed filename.  If no zchunk dictionary file
+ * exists or no dictionary directory is set, this function returns NULL
+ *
+ * The zchunk dictionary file must be the same as the passed filename with a
+ * ".dict" extension
+ *
+ * @param dir           Zchunk dictionary directory
+ * @param file          File being zchunked
+ * @return              NULL if no matching file exists, or the full path to the
+ *                      file otherwise
+ */
+gchar *
+cr_get_dict_file(const gchar *dir,
+                 const gchar *file);
+
 /** @} */
 
 #ifdef __cplusplus

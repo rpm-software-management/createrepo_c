@@ -1511,3 +1511,22 @@ cr_version_string_with_features(void)
 #endif
             ")");
 }
+
+gchar *
+cr_get_dict_file(const gchar *dir, const gchar *file)
+{
+    gchar *dict_file = malloc(strlen(file) + 6);
+    assert(dict_file);
+
+    snprintf(dict_file, strlen(file) + 6, "%s.dict", file);
+    gchar *full_path = g_build_path("/", dir, dict_file);
+    assert(full_path);
+
+    free(dict_file);
+    if(!g_file_test(full_path, G_FILE_TEST_EXISTS)) {
+        g_warning("%s: Zchunk dict %s doesn't exist", __func__, full_path);
+        free(full_path);
+        return NULL;
+    }
+    return full_path;
+}

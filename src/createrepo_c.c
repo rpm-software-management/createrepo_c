@@ -833,41 +833,38 @@ main(int argc, char **argv)
     size_t pri_dict_size = 0;
     size_t fil_dict_size = 0;
     size_t oth_dict_size = 0;
-    if(cmd_options->zck_primary_dict) {
-        if(!cmd_options->zck_compression) {
-            g_critical("Cannot use --zck-primary-dict without setting --zck");
-            exit(EXIT_FAILURE);
-        }
-        if(!g_file_get_contents(cmd_options->zck_primary_dict, &pri_dict,
-                                &pri_dict_size, &tmp_err)) {
+    gchar *pri_dict_file = NULL;
+    gchar *fil_dict_file = NULL;
+    gchar *oth_dict_file = NULL;
+    if(cmd_options->zck_dict_dir && !cmd_options->zck_compression) {
+        g_critical("Cannot use --zck-dict-dir without setting --zck");
+        exit(EXIT_FAILURE);
+    }
+    if(cmd_options->zck_dict_dir) {
+        pri_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
+                                         "primary.xml");
+        fil_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
+                                         "filelists.xml");
+        oth_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
+                                         "other.xml");
+        if(pri_dict_file && !g_file_get_contents(pri_dict_file, &pri_dict,
+                                                 &pri_dict_size, &tmp_err)) {
             g_critical("Error reading zchunk primary dict %s: %s",
-                       cmd_options->zck_primary_dict, tmp_err->message);
+                       pri_dict_file, tmp_err->message);
             g_clear_error(&tmp_err);
             exit(EXIT_FAILURE);
         }
-    }
-    if(cmd_options->zck_filelists_dict) {
-        if(!cmd_options->zck_compression) {
-            g_critical("Cannot use --zck-filelists-dict without setting --zck");
-            exit(EXIT_FAILURE);
-        }
-        if(!g_file_get_contents(cmd_options->zck_filelists_dict, &fil_dict,
-                                &fil_dict_size, &tmp_err)) {
+        if(fil_dict_file && !g_file_get_contents(fil_dict_file, &fil_dict,
+                                                 &fil_dict_size, &tmp_err)) {
             g_critical("Error reading zchunk filelists dict %s: %s",
-                       cmd_options->zck_filelists_dict, tmp_err->message);
+                       fil_dict_file, tmp_err->message);
             g_clear_error(&tmp_err);
             exit(EXIT_FAILURE);
         }
-    }
-    if(cmd_options->zck_other_dict) {
-        if(!cmd_options->zck_compression) {
-            g_critical("Cannot use --zck-other-dict without setting --zck");
-            exit(EXIT_FAILURE);
-        }
-        if(!g_file_get_contents(cmd_options->zck_other_dict, &oth_dict,
-                                &oth_dict_size, &tmp_err)) {
+        if(oth_dict_file && !g_file_get_contents(oth_dict_file, &oth_dict,
+                                                 &oth_dict_size, &tmp_err)) {
             g_critical("Error reading zchunk other dict %s: %s",
-                       cmd_options->zck_other_dict, tmp_err->message);
+                       oth_dict_file, tmp_err->message);
             g_clear_error(&tmp_err);
             exit(EXIT_FAILURE);
         }
@@ -898,7 +895,7 @@ main(int argc, char **argv)
         cr_set_dict(pri_cr_zck->f, pri_dict, pri_dict_size, &tmp_err);
         if (tmp_err) {
             g_critical("Error reading setting primary dict %s: %s",
-                       cmd_options->zck_primary_dict, tmp_err->message);
+                       pri_dict_file, tmp_err->message);
             g_clear_error(&tmp_err);
             exit(EXIT_FAILURE);
         }
@@ -925,7 +922,7 @@ main(int argc, char **argv)
         cr_set_dict(fil_cr_zck->f, fil_dict, fil_dict_size, &tmp_err);
         if (tmp_err) {
             g_critical("Error reading setting filelists dict %s: %s",
-                       cmd_options->zck_filelists_dict, tmp_err->message);
+                       fil_dict_file, tmp_err->message);
             g_clear_error(&tmp_err);
             exit(EXIT_FAILURE);
         }
@@ -954,7 +951,7 @@ main(int argc, char **argv)
         cr_set_dict(oth_cr_zck->f, oth_dict, oth_dict_size, &tmp_err);
         if (tmp_err) {
             g_critical("Error reading setting other dict %s: %s",
-                       cmd_options->zck_other_dict, tmp_err->message);
+                       oth_dict_file, tmp_err->message);
             g_clear_error(&tmp_err);
             exit(EXIT_FAILURE);
         }

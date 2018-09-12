@@ -126,6 +126,8 @@ struct CmdOptions {
     gboolean nogroups;
     gboolean noupdateinfo;
     char *compress_type;
+    gboolean zck_compression;
+    char *zck_dict_dir;
     char *merge_method_str;
     gboolean all;
     char *noarch_repo_url;
@@ -157,6 +159,9 @@ struct CmdOptions _cmd_options = {
         .merge_method = MM_DEFAULT,
         .unique_md_filenames = TRUE,
         .simple_md_filenames = FALSE,
+
+        .zck_compression = FALSE,
+        .zck_dict_dir = NULL,
     };
 
 
@@ -186,6 +191,12 @@ static GOptionEntry cmd_entries[] =
       "Do not merge updateinfo metadata", NULL },
     { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type),
       "Which compression type to use", "COMPRESS_TYPE" },
+#ifdef WITH_ZCHUNK
+    { "zck", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.zck_compression),
+      "Generate zchunk files as well as the standard repodata.", NULL },
+    { "zck-dict-dir", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.zck_dict_dir),
+      "Directory containing compression dictionaries for use by zchunk", "ZCK_DICT_DIR" },
+#endif
     { "method", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.merge_method_str),
       "Specify merge method for packages with the same name and arch (available"
       " merge methods: repo (default), ts, nvr)", "MERGE_METHOD" },
@@ -212,6 +223,7 @@ static GOptionEntry cmd_entries[] =
       "A file containing a list of srpm names to exclude from the merged repo. "
       "Only works with combination with --koji/-k.", "FILE" },
     // -- Options related to Koji-mergerepos behaviour - end
+
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL }
 };
 
@@ -411,6 +423,14 @@ check_arguments(struct CmdOptions *options)
             ret = FALSE;
         }
     }
+
+    // Zchunk options
+    if(options->zck_dict_dir && !options->zck_compression) {
+        g_critical("Cannot use --zck-dict-dir without setting --zck");
+        ret = FALSE;
+    }
+    if (options->zck_dict_dir)
+        options->zck_dict_dir = cr_normalize_dir_path(options->zck_dict_dir);
 
     return ret;
 }
@@ -1134,6 +1154,55 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_XmlFile *fil_f;
     cr_XmlFile *oth_f;
 
+    gchar *pri_zck_filename = NULL;
+    gchar *fil_zck_filename = NULL;
+    gchar *oth_zck_filename = NULL;
+    cr_XmlFile *pri_cr_zck = NULL;
+    cr_XmlFile *fil_cr_zck = NULL;
+    cr_XmlFile *oth_cr_zck = NULL;
+    cr_ContentStat *pri_zck_stat = cr_contentstat_new(CR_CHECKSUM_SHA256, NULL);
+    cr_ContentStat *fil_zck_stat = cr_contentstat_new(CR_CHECKSUM_SHA256, NULL);
+    cr_ContentStat *oth_zck_stat = cr_contentstat_new(CR_CHECKSUM_SHA256, NULL);
+    gchar *pri_dict = NULL;
+    gchar *fil_dict = NULL;
+    gchar *oth_dict = NULL;
+    size_t pri_dict_size = 0;
+    size_t fil_dict_size = 0;
+    size_t oth_dict_size = 0;
+    gchar *pri_dict_file = NULL;
+    gchar *fil_dict_file = NULL;
+    gchar *oth_dict_file = NULL;
+
+    if(cmd_options->zck_dict_dir) {
+        pri_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
+                                         "primary.xml");
+        fil_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
+                                         "filelists.xml");
+        oth_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
+                                         "other.xml");
+        if(pri_dict_file && !g_file_get_contents(pri_dict_file, &pri_dict,
+                                                 &pri_dict_size, &tmp_err)) {
+            g_critical("Error reading zchunk primary dict %s: %s",
+                       pri_dict_file, tmp_err->message);
+            g_clear_error(&tmp_err);
+            exit(EXIT_FAILURE);
+        }
+        if(fil_dict_file && !g_file_get_contents(fil_dict_file, &fil_dict,
+                                                 &fil_dict_size, &tmp_err)) {
+            g_critical("Error reading zchunk filelists dict %s: %s",
+                       fil_dict_file, tmp_err->message);
+            g_clear_error(&tmp_err);
+            exit(EXIT_FAILURE);
+        }
+        if(oth_dict_file && !g_file_get_contents(oth_dict_file, &oth_dict,
+                                                 &oth_dict_size, &tmp_err)) {
+            g_critical("Error reading zchunk other dict %s: %s",
+                       oth_dict_file, tmp_err->message);
+            g_clear_error(&tmp_err);
+            exit(EXIT_FAILURE);
+        }
+    }
+
     const char *groupfile_suffix = cr_compression_suffix(
                                     cmd_options->groupfile_compression_type);
 
@@ -1143,6 +1212,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                                           "/filelists.xml.gz", NULL);
     gchar *oth_xml_filename = g_strconcat(cmd_options->tmp_out_repo,
                                           "/other.xml.gz", NULL);
+
     gchar *update_info_filename = NULL;
     if (!cmd_options->noupdateinfo)
         update_info_filename  = g_strconcat(cmd_options->tmp_out_repo,
@@ -1208,6 +1278,100 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_xmlfile_set_num_of_pkgs(fil_f, packages, NULL);
     cr_xmlfile_set_num_of_pkgs(oth_f, packages, NULL);
 
+    if(cmd_options->zck_compression) {
+        g_debug("Creating .xml.zck files");
+
+        pri_zck_filename = g_strconcat(cmd_options->tmp_out_repo,
+                                       "/primary.xml.zck", NULL);
+        fil_zck_filename = g_strconcat(cmd_options->tmp_out_repo,
+                                       "/filelists.xml.zck", NULL);
+        oth_zck_filename = g_strconcat(cmd_options->tmp_out_repo,
+                                       "/other.xml.zck", NULL);
+
+        pri_cr_zck = cr_xmlfile_sopen_primary(pri_zck_filename,
+                                              CR_CW_ZCK_COMPRESSION,
+                                              pri_zck_stat,
+                                              &tmp_err);
+        assert(pri_cr_zck || tmp_err);
+        if (!pri_cr_zck) {
+            g_critical("Cannot open file %s: %s",
+                       pri_zck_filename, tmp_err->message);
+            g_clear_error(&tmp_err);
+            cr_contentstat_free(pri_zck_stat, NULL);
+            g_free(pri_zck_filename);
+            g_free(fil_zck_filename);
+            g_free(oth_zck_filename);
+            exit(EXIT_FAILURE);
+        }
+        cr_set_dict(pri_cr_zck->f, pri_dict, pri_dict_size, &tmp_err);
+        if (tmp_err) {
+            g_critical("Error reading setting primary dict %s: %s",
+                       pri_dict_file, tmp_err->message);
+            g_clear_error(&tmp_err);
+            exit(EXIT_FAILURE);
+        }
+        g_free(pri_dict);
+
+        fil_cr_zck = cr_xmlfile_sopen_filelists(fil_zck_filename,
+                                                CR_CW_ZCK_COMPRESSION,
+                                                fil_zck_stat,
+                                                &tmp_err);
+        assert(fil_cr_zck || tmp_err);
+        if (!fil_cr_zck) {
+            g_critical("Cannot open file %s: %s",
+                       fil_zck_filename, tmp_err->message);
+            g_clear_error(&tmp_err);
+            cr_contentstat_free(pri_zck_stat, NULL);
+            cr_contentstat_free(fil_zck_stat, NULL);
+            g_free(pri_zck_filename);
+            g_free(fil_zck_filename);
+            g_free(oth_zck_filename);
+            cr_xmlfile_close(pri_cr_zck, NULL);
+            exit(EXIT_FAILURE);
+        }
+        cr_set_dict(fil_cr_zck->f, fil_dict, fil_dict_size, &tmp_err);
+        if (tmp_err) {
+            g_critical("Error reading setting filelists dict %s: %s",
+                       fil_dict_file, tmp_err->message);
+            g_clear_error(&tmp_err);
+            exit(EXIT_FAILURE);
+        }
+        g_free(fil_dict);
+
+        oth_cr_zck = cr_xmlfile_sopen_other(oth_zck_filename,
+                                            CR_CW_ZCK_COMPRESSION,
+                                            oth_zck_stat,
+                                            &tmp_err);
+        assert(oth_cr_zck || tmp_err);
+        if (!oth_cr_zck) {
+            g_critical("Cannot open file %s: %s",
+                       oth_zck_filename, tmp_err->message);
+            g_clear_error(&tmp_err);
+            cr_contentstat_free(pri_zck_stat, NULL);
+            cr_contentstat_free(fil_zck_stat, NULL);
+            cr_contentstat_free(oth_zck_stat, NULL);
+            g_free(pri_zck_filename);
+            g_free(fil_zck_filename);
+            g_free(oth_zck_filename);
+            cr_xmlfile_close(fil_cr_zck, NULL);
+            cr_xmlfile_close(pri_cr_zck, NULL);
+            exit(EXIT_FAILURE);
+        }
+        cr_set_dict(oth_cr_zck->f, oth_dict, oth_dict_size, &tmp_err);
+        if (tmp_err) {
+            g_critical("Error reading setting other dict %s: %s",
+                       oth_dict_file, tmp_err->message);
+            g_clear_error(&tmp_err);
+            exit(EXIT_FAILURE);
+        }
+        g_free(oth_dict);
+
+        // Set number of packages
+        g_debug("Setting number of packages");
+        cr_xmlfile_set_num_of_pkgs(pri_cr_zck, packages, NULL);
+        cr_xmlfile_set_num_of_pkgs(fil_cr_zck, packages, NULL);
+        cr_xmlfile_set_num_of_pkgs(oth_cr_zck, packages, NULL);
+    }
 
     // Prepare sqlite if needed
 
@@ -1260,6 +1424,14 @@ dump_merged_metadata(GHashTable *merged_hashtable,
             cr_xmlfile_add_chunk(pri_f, (const char *) res.primary, NULL);
             cr_xmlfile_add_chunk(fil_f, (const char *) res.filelists, NULL);
             cr_xmlfile_add_chunk(oth_f, (const char *) res.other, NULL);
+            if(cmd_options->zck_compression) {
+                cr_xmlfile_add_chunk(pri_cr_zck, (const char *) res.primary, NULL);
+                cr_xmlfile_add_chunk(fil_cr_zck, (const char *) res.filelists, NULL);
+                cr_xmlfile_add_chunk(oth_cr_zck, (const char *) res.other, NULL);
+                cr_end_chunk(pri_cr_zck->f, NULL);
+                cr_end_chunk(fil_cr_zck->f, NULL);
+                cr_end_chunk(oth_cr_zck->f, NULL);
+            }
 
             if (!cmd_options->no_database) {
                 cr_db_add_pkg(pri_db, pkg, NULL);
@@ -1281,6 +1453,11 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_xmlfile_close(pri_f, NULL);
     cr_xmlfile_close(fil_f, NULL);
     cr_xmlfile_close(oth_f, NULL);
+    if(cmd_options->zck_compression) {
+        cr_xmlfile_close(pri_cr_zck, NULL);
+        cr_xmlfile_close(fil_cr_zck, NULL);
+        cr_xmlfile_close(oth_cr_zck, NULL);
+    }
 
 
     // Write updateinfo.xml
@@ -1315,6 +1492,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_RepomdRecord *pri_db_rec               = NULL;
     cr_RepomdRecord *fil_db_rec               = NULL;
     cr_RepomdRecord *oth_db_rec               = NULL;
+    cr_RepomdRecord *pri_zck_rec              = NULL;
+    cr_RepomdRecord *fil_zck_rec              = NULL;
+    cr_RepomdRecord *oth_zck_rec              = NULL;
     cr_RepomdRecord *groupfile_rec            = NULL;
     cr_RepomdRecord *compressed_groupfile_rec = NULL;
     cr_RepomdRecord *update_info_rec          = NULL;
@@ -1499,6 +1679,52 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     }
 
+    // Zchunk
+    if(cmd_options->zck_compression) {
+        // Prepare repomd records
+        pri_zck_rec = cr_repomd_record_new("primary_zck", pri_zck_filename);
+        fil_zck_rec = cr_repomd_record_new("filelists_zck", fil_zck_filename);
+        oth_zck_rec = cr_repomd_record_new("other_zck", oth_zck_filename);
+
+        g_free(pri_zck_filename);
+        g_free(fil_zck_filename);
+        g_free(oth_zck_filename);
+
+        cr_repomd_record_load_zck_contentstat(pri_zck_rec, pri_zck_stat);
+        cr_repomd_record_load_zck_contentstat(fil_zck_rec, fil_zck_stat);
+        cr_repomd_record_load_zck_contentstat(oth_zck_rec, oth_zck_stat);
+
+        fill_pool = g_thread_pool_new(cr_repomd_record_fill_thread,
+                                      NULL, 3, FALSE, NULL);
+
+        cr_RepomdRecordFillTask *pri_zck_fill_task;
+        cr_RepomdRecordFillTask *fil_zck_fill_task;
+        cr_RepomdRecordFillTask *oth_zck_fill_task;
+
+        pri_zck_fill_task = cr_repomdrecordfilltask_new(pri_zck_rec,
+                                                        CR_CHECKSUM_SHA256,
+                                                        NULL);
+        g_thread_pool_push(fill_pool, pri_zck_fill_task, NULL);
+
+        fil_zck_fill_task = cr_repomdrecordfilltask_new(fil_zck_rec,
+                                                        CR_CHECKSUM_SHA256,
+                                                        NULL);
+        g_thread_pool_push(fill_pool, fil_zck_fill_task, NULL);
+
+        oth_zck_fill_task = cr_repomdrecordfilltask_new(oth_zck_rec,
+                                                        CR_CHECKSUM_SHA256,
+                                                        NULL);
+        g_thread_pool_push(fill_pool, oth_zck_fill_task, NULL);
+
+        g_thread_pool_free(fill_pool, FALSE, TRUE);
+
+        cr_repomdrecordfilltask_free(pri_zck_fill_task, NULL);
+        cr_repomdrecordfilltask_free(fil_zck_fill_task, NULL);
+        cr_repomdrecordfilltask_free(oth_zck_fill_task, NULL);
+    }
+    cr_contentstat_free(pri_zck_stat, NULL);
+    cr_contentstat_free(fil_zck_stat, NULL);
+    cr_contentstat_free(oth_zck_stat, NULL);
 
     // Add checksums into files names
 
@@ -1509,6 +1735,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         cr_repomd_record_rename_file(pri_db_rec, NULL);
         cr_repomd_record_rename_file(fil_db_rec, NULL);
         cr_repomd_record_rename_file(oth_db_rec, NULL);
+        cr_repomd_record_rename_file(pri_zck_rec, NULL);
+        cr_repomd_record_rename_file(fil_zck_rec, NULL);
+        cr_repomd_record_rename_file(oth_zck_rec, NULL);
         cr_repomd_record_rename_file(groupfile_rec, NULL);
         cr_repomd_record_rename_file(compressed_groupfile_rec, NULL);
         cr_repomd_record_rename_file(update_info_rec, NULL);
@@ -1525,6 +1754,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_repomd_set_record(repomd_obj, pri_db_rec);
     cr_repomd_set_record(repomd_obj, fil_db_rec);
     cr_repomd_set_record(repomd_obj, oth_db_rec);
+    cr_repomd_set_record(repomd_obj, pri_zck_rec);
+    cr_repomd_set_record(repomd_obj, fil_zck_rec);
+    cr_repomd_set_record(repomd_obj, oth_zck_rec);
     cr_repomd_set_record(repomd_obj, groupfile_rec);
     cr_repomd_set_record(repomd_obj, compressed_groupfile_rec);
     cr_repomd_set_record(repomd_obj, update_info_rec);

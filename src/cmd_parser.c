@@ -62,6 +62,9 @@ struct CmdOptions _cmd_options = {
 
         .checksum_cachedir          = NULL,
         .repomd_checksum_type       = CR_CHECKSUM_SHA256,
+
+        .zck_compression            = FALSE,
+        .zck_dict_dir               = NULL,
     };
 
 
@@ -146,17 +149,17 @@ static GOptionEntry cmd_entries[] =
       "Number of workers to spawn to read rpms.", NULL },
     { "xz", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.xz_compression),
       "Use xz for repodata compression.", NULL },
+    { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type),
+      "Which compression type to use.", "COMPRESSION_TYPE" },
+    { "general-compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.general_compress_type),
+      "Which compression type to use (even for primary, filelists and other xml).",
+      "COMPRESSION_TYPE" },
 #ifdef WITH_ZCHUNK
     { "zck", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.zck_compression),
       "Generate zchunk files as well as the standard repodata.", NULL },
     { "zck-dict-dir", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.zck_dict_dir),
       "Directory containing compression dictionaries for use by zchunk", "ZCK_DICT_DIR" },
 #endif
-    { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type),
-      "Which compression type to use.", "COMPRESSION_TYPE" },
-    { "general-compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.general_compress_type),
-      "Which compression type to use (even for primary, filelists and other xml).",
-      "COMPRESSION_TYPE" },
     { "keep-all-metadata", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.keep_all_metadata),
       "Keep groupfile and updateinfo from source repo during update.", NULL },
     { "compatibility", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.compatibility),
@@ -559,6 +562,15 @@ check_arguments(struct CmdOptions *options,
                     "--cur-dirs value must be possitive integer");
         return FALSE;
     }
+
+    // Zchunk options
+    if(options->zck_dict_dir && !options->zck_compression) {
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
+                    "Cannot use --zck-dict-dir without setting --zck");
+        return FALSE;
+    }
+    if (options->zck_dict_dir)
+        options->zck_dict_dir = cr_normalize_dir_path(options->zck_dict_dir);
 
     return TRUE;
 }

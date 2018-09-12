@@ -836,10 +836,7 @@ main(int argc, char **argv)
     gchar *pri_dict_file = NULL;
     gchar *fil_dict_file = NULL;
     gchar *oth_dict_file = NULL;
-    if(cmd_options->zck_dict_dir && !cmd_options->zck_compression) {
-        g_critical("Cannot use --zck-dict-dir without setting --zck");
-        exit(EXIT_FAILURE);
-    }
+
     if(cmd_options->zck_dict_dir) {
         pri_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
                                          "primary.xml");
@@ -1248,7 +1245,7 @@ main(int argc, char **argv)
         cr_repomdrecordfilltask_free(oth_db_fill_task, NULL);
     }
 
-    // Sqlite db
+    // Zchunk
     if(cmd_options->zck_compression) {
         // Prepare repomd records
         pri_zck_rec = cr_repomd_record_new("primary_zck", pri_zck_filename);

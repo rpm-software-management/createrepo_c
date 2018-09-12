@@ -1407,6 +1407,8 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     keys = g_hash_table_get_keys(merged_hashtable);
     keys = g_list_sort(keys, (GCompareFunc) g_strcmp0);
 
+    char *prev_srpm = NULL;
+
     for (key = keys; key; key = g_list_next(key)) {
         gpointer value = g_hash_table_lookup(merged_hashtable, key->data);
         GSList *element = (GSList *) value;
@@ -1421,6 +1423,18 @@ dump_merged_metadata(GHashTable *merged_hashtable,
             g_debug("Writing metadata for %s (%s-%s.%s)",
                     pkg->name, pkg->version, pkg->release, pkg->arch);
 
+            if(!prev_srpm || !pkg->rpm_sourcerpm ||
+               strlen(prev_srpm) != strlen(pkg->rpm_sourcerpm) ||
+               strncmp(pkg->rpm_sourcerpm, prev_srpm, strlen(prev_srpm)) != 0) {
+                cr_end_chunk(pri_cr_zck->f, NULL);
+                cr_end_chunk(fil_cr_zck->f, NULL);
+                cr_end_chunk(oth_cr_zck->f, NULL);
+                g_free(prev_srpm);
+                if(pkg->rpm_sourcerpm)
+                    prev_srpm = g_strdup(pkg->rpm_sourcerpm);
+                else
+                    prev_srpm = NULL;
+            }
             cr_xmlfile_add_chunk(pri_f, (const char *) res.primary, NULL);
             cr_xmlfile_add_chunk(fil_f, (const char *) res.filelists, NULL);
             cr_xmlfile_add_chunk(oth_f, (const char *) res.other, NULL);
@@ -1428,9 +1442,6 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                 cr_xmlfile_add_chunk(pri_cr_zck, (const char *) res.primary, NULL);
                 cr_xmlfile_add_chunk(fil_cr_zck, (const char *) res.filelists, NULL);
                 cr_xmlfile_add_chunk(oth_cr_zck, (const char *) res.other, NULL);
-                cr_end_chunk(pri_cr_zck->f, NULL);
-                cr_end_chunk(fil_cr_zck->f, NULL);
-                cr_end_chunk(oth_cr_zck->f, NULL);
             }
 
             if (!cmd_options->no_database) {
@@ -1444,7 +1455,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
             free(res.other);
         }
     }
-
+    g_free(prev_srpm);
     g_list_free(keys);
 
 

@@ -10,7 +10,7 @@ endif(DOXYGEN_FOUND)
 
 IF(CREATEREPO_C_INSTALL_MANPAGES)
     INSTALL(FILES createrepo_c.8 mergerepo_c.8 modifyrepo_c.8 sqliterepo_c.8
-            DESTINATION share/man/man8
+            DESTINATION "${CMAKE_INSTALL_MANDIR}/man8"
             COMPONENT bin)
 ENDIF(CREATEREPO_C_INSTALL_MANPAGES)
 

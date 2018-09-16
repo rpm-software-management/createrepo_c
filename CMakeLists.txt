@@ -1,5 +1,7 @@
 PROJECT (createrepo_c C)
-CMAKE_MINIMUM_REQUIRED (VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED (VERSION 2.8.10)
+
+include(GNUInstallDirs)
 
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=gnu99")
 set (CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -ggdb -g -Wall -Wextra -Og")

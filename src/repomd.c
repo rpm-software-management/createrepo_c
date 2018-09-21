@@ -292,6 +292,7 @@ cr_repomd_record_fill(cr_RepomdRecord *md,
                 md->checksum_header = g_string_chunk_insert(md->chunk, open_stat->hdr_checksum);
                 if (md->size_header == G_GINT64_CONSTANT(-1))
                     md->size_header = open_stat->hdr_size;
+                g_free(open_stat->hdr_checksum);
             }
             g_free(open_stat->checksum);
             g_free(open_stat);

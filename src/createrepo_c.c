@@ -1252,10 +1252,6 @@ main(int argc, char **argv)
         fil_zck_rec = cr_repomd_record_new("filelists_zck", fil_zck_filename);
         oth_zck_rec = cr_repomd_record_new("other_zck", oth_zck_filename);
 
-        g_free(pri_zck_filename);
-        g_free(fil_zck_filename);
-        g_free(oth_zck_filename);
-
         cr_repomd_record_load_zck_contentstat(pri_zck_rec, pri_zck_stat);
         cr_repomd_record_load_zck_contentstat(fil_zck_rec, fil_zck_stat);
         cr_repomd_record_load_zck_contentstat(oth_zck_rec, oth_zck_stat);

@@ -897,6 +897,7 @@ main(int argc, char **argv)
             exit(EXIT_FAILURE);
         }
         g_free(pri_dict);
+        g_free(pri_dict_file);
 
         fil_zck_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
         fil_cr_zck = cr_xmlfile_sopen_filelists(fil_zck_filename,
@@ -924,6 +925,7 @@ main(int argc, char **argv)
             exit(EXIT_FAILURE);
         }
         g_free(fil_dict);
+        g_free(fil_dict_file);
 
         oth_zck_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
         oth_cr_zck = cr_xmlfile_sopen_other(oth_zck_filename,
@@ -953,6 +955,7 @@ main(int argc, char **argv)
             exit(EXIT_FAILURE);
         }
         g_free(oth_dict);
+        g_free(oth_dict_file);
 
         // Set number of packages
         g_debug("Setting number of packages");

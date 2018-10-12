@@ -225,6 +225,30 @@ rename_file(_RepomdRecordObject *self, G_GNUC_UNUSED void *nothing)
     Py_RETURN_NONE;
 }
 
+PyDoc_STRVAR(set_timestamp__doc__,
+"set_timestamp(timestamp) -> None\n\n"
+"Set timestamp to specific value and adjust file modification time."
+"This is needed to reproduce exact metadata as one produced in the "
+"past from the same package(s).");
+
+static PyObject *
+set_timestamp(_RepomdRecordObject *self, PyObject *args)
+{
+    int timestamp;
+
+    if (!PyArg_ParseTuple(args, "i:timestamp", &timestamp))
+        return NULL;
+
+    if (check_RepomdRecordStatus(self))
+        return NULL;
+
+    if (check_RepomdRecordStatus(self))
+        return NULL;
+
+    cr_repomd_record_set_timestamp(self->record, timestamp);
+    Py_RETURN_NONE;
+}
+
 PyDoc_STRVAR(load_contentstat__doc__,
 "load_contentstat(contentstat) -> None\n\n"
 "Load some content statistics from the ContentStat object. "
@@ -258,6 +282,8 @@ static struct PyMethodDef repomdrecord_methods[] = {
         compress_and_fill__doc__},
     {"rename_file", (PyCFunction)rename_file, METH_NOARGS,
         rename_file__doc__},
+    {"set_timestamp", (PyCFunction)set_timestamp, METH_VARARGS,
+        set_timestamp__doc__},
     {"load_contentstat", (PyCFunction)load_contentstat, METH_VARARGS,
         load_contentstat__doc__},
     {NULL} /* sentinel */

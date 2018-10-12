@@ -21,6 +21,8 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+#include <utime.h>
 #include <time.h>
 #include <zlib.h>
 #include <assert.h>
@@ -655,6 +657,19 @@ cr_repomd_record_rename_file(cr_RepomdRecord *md, GError **err)
     int retval = rename_file(&(md->location_real), &(md->location_href),
                              checksum, md, err);
     return retval;
+}
+
+void
+cr_repomd_record_set_timestamp(cr_RepomdRecord *record,
+                               gint64 timestamp)
+{
+    struct utimbuf times = { timestamp, timestamp };
+
+    if (!record)
+        return;
+    record->timestamp = timestamp;
+    // intentionally ignore error
+    utime(record->location_real, &times);
 }
 
 void

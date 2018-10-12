@@ -175,6 +175,12 @@ int cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
  */
 int cr_repomd_record_rename_file(cr_RepomdRecord *record, GError **err);
 
+/** Set timestamp of the file. Needed to reproduce bit-by-bit identical metadata.
+ * @param record                cr_RepomdRecord of file to be renamed
+ * @param timestamp             timestamp in number of seconds since 1970-01-01
+ */
+void cr_repomd_record_set_timestamp(cr_RepomdRecord *record, gint64 timestamp);
+
 /** Load the open stats (checksum_open, checksum_open_type and size_open)
  * from the cr_ContentStat object.
  * @param record                cr_RepomdRecord

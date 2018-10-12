@@ -1410,6 +1410,21 @@ deltaerror:
         cr_repomd_record_rename_file(prestodelta_rec, NULL);
     }
 
+    if (cmd_options->set_timestamp_to_revision) {
+        // validated already in cmd_parser.c:check_arguments
+        gint64 revision = strtoll(cmd_options->revision, NULL, 0);
+        cr_repomd_record_set_timestamp(pri_xml_rec, revision);
+        cr_repomd_record_set_timestamp(fil_xml_rec, revision);
+        cr_repomd_record_set_timestamp(oth_xml_rec, revision);
+        cr_repomd_record_set_timestamp(pri_db_rec, revision);
+        cr_repomd_record_set_timestamp(fil_db_rec, revision);
+        cr_repomd_record_set_timestamp(oth_db_rec, revision);
+        cr_repomd_record_set_timestamp(groupfile_rec, revision);
+        cr_repomd_record_set_timestamp(compressed_groupfile_rec, revision);
+        cr_repomd_record_set_timestamp(updateinfo_rec, revision);
+        cr_repomd_record_set_timestamp(prestodelta_rec, revision);
+    }
+
     // Gen xml
     cr_repomd_set_record(repomd_obj, pri_xml_rec);
     cr_repomd_set_record(repomd_obj, fil_xml_rec);

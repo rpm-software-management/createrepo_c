@@ -142,6 +142,8 @@ static GOptionEntry cmd_entries[] =
       "Tags to describe the repository itself.", "REPO_TAGS" },
     { "revision", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.revision),
       "User-specified revision for this repository.", "REVISION" },
+    { "set-timestamp-to-revision", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.set_timestamp_to_revision),
+      "Set timestamps in metadata and mtime of files to --revision value (date +%s format)", NULL },
     { "read-pkgs-list", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.read_pkgs_list),
       "Output the paths to the pkgs actually read useful with --update.",
       "READ_PKGS_LIST" },
@@ -544,6 +546,22 @@ check_arguments(struct CmdOptions *options,
                                   &options->md_max_age,
                                   err))
             return FALSE;
+    }
+
+    // check if --revision is numeric, when --set-timestamp-to-revision is given
+    if (options->set_timestamp_to_revision) {
+        char *endptr;
+        gint64 revision = strtoll(options->revision, &endptr, 0);
+        if (endptr == options->revision || *endptr != '\0') {
+            g_set_error(err, ERR_DOMAIN, CRE_BADARG,
+                    "--set-timestamp-to-revision require numeric value for --revision");
+            return FALSE;
+        }
+        if ((errno == ERANGE && revision == LLONG_MAX) || revision < 0) {
+            g_set_error(err, ERR_DOMAIN, CRE_BADARG,
+                    "--revision value out of range");
+            return FALSE;
+        }
     }
 
     // Check oldpackagedirs

@@ -117,6 +117,11 @@ Tags to describe the repository itself.
 .SS \-\-revision REVISION
 .sp
 User\-specified revision for this repository.
+.SS \-\-set-timestamp-to-revision
+.sp
+Set timestamp field in metatada to value given with \-\-revision. This require
+\-\-revision being a timestamp formated in "date +%s" format. This option also
+clamp created files modification time to the same value.
 .SS \-\-read\-pkgs\-list READ_PKGS_LIST
 .sp
 Output the paths to the pkgs actually read useful with \-\-update.

@@ -912,8 +912,11 @@ void
 cr_log_fn(const gchar *log_domain,
           GLogLevelFlags log_level,
           const gchar *message,
-          G_GNUC_UNUSED gpointer user_data)
+          gpointer user_data)
 {
+    gint hidden_log_levels = GPOINTER_TO_INT(user_data);
+    if (log_level & hidden_log_levels)
+        return;
     switch(log_level) {
         case G_LOG_LEVEL_ERROR:
             if (log_domain) g_printerr("%s: ", log_domain);

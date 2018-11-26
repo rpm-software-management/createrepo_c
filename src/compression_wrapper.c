@@ -30,7 +30,9 @@
 #include <zlib.h>
 #include <bzlib.h>
 #include <lzma.h>
+#ifdef WITH_ZCHUNK
 #include <zck.h>
+#endif  // WITH_ZCHUNK
 #include "error.h"
 #include "compression_wrapper.h"
 

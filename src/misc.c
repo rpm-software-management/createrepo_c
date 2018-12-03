@@ -1515,10 +1515,10 @@ cr_version_string_with_features(void)
 gchar *
 cr_get_dict_file(const gchar *dir, const gchar *file)
 {
-    gchar *dict_file = malloc(strlen(file) + 6);
+    gchar *dict_file = malloc(strlen(file) + 7);
     assert(dict_file);
 
-    snprintf(dict_file, strlen(file) + 6, "%s.dict", file);
+    snprintf(dict_file, strlen(file) + 7, "%s.zdict", file);
     gchar *full_path = g_build_path("/", dir, dict_file);
     assert(full_path);
 

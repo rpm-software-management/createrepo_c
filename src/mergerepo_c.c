@@ -1423,9 +1423,10 @@ dump_merged_metadata(GHashTable *merged_hashtable,
             g_debug("Writing metadata for %s (%s-%s.%s)",
                     pkg->name, pkg->version, pkg->release, pkg->arch);
 
-            if(!prev_srpm || !pkg->rpm_sourcerpm ||
-               strlen(prev_srpm) != strlen(pkg->rpm_sourcerpm) ||
-               strncmp(pkg->rpm_sourcerpm, prev_srpm, strlen(prev_srpm)) != 0) {
+            if(cmd_options->zck_compression &&
+               (!prev_srpm || !pkg->rpm_sourcerpm ||
+                strlen(prev_srpm) != strlen(pkg->rpm_sourcerpm) ||
+                strncmp(pkg->rpm_sourcerpm, prev_srpm, strlen(prev_srpm)) != 0)) {
                 cr_end_chunk(pri_cr_zck->f, NULL);
                 cr_end_chunk(fil_cr_zck->f, NULL);
                 cr_end_chunk(oth_cr_zck->f, NULL);

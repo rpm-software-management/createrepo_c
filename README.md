@@ -22,6 +22,7 @@ Package build requires - Pkg name in Fedora/Ubuntu:
 * openssl (http://www.openssl.org/) - openssl-devel/libssl-dev
 * sqlite3 (https://sqlite.org/) - sqlite-devel/libsqlite3-dev
 * xz (http://tukaani.org/xz/) - xz-devel/liblzma-dev
+* zchunk (https://github.com/zchunk/zchunk) - zchunk-devel/
 * zlib (http://www.zlib.net/) - zlib-devel/zlib1g-dev
 * *Documentation:* doxygen (http://doxygen.org/) - doxygen/doxygen
 * *Documentation:* sphinx (http://sphinx-doc.org/) - python-sphinx/python-sphinx
@@ -94,6 +95,10 @@ only adds extra threads on XZ library level which causes thread bloat
 and for most usecases doesn't bring any performance boost.
 On regular hardware (e.g. less-or-equal 4 cores) this option may even
 cause degradation of performance.
+
+### ``-DWITH_ZCHUNK=ON``
+
+Build with zchunk support (Default: ON)
 
 
 ## Build tarball

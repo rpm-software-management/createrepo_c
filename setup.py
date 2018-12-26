@@ -44,7 +44,8 @@ setup(
         '-DCREATEREPO_C_INSTALL_DEVELOPMENT:BOOL=OFF',
         '-DCREATEREPO_C_INSTALL_MANPAGES:BOOL=OFF',
         '-DENABLE_BASHCOMP:BOOL=OFF',
-        '-DENABLE_DRPM:BOOL=OFF'
+        '-DENABLE_DRPM:BOOL=OFF',
+        '-DWITH_ZCHUNK:BOOL=OFF'
     ],
     cmake_languages=['C'],
     entry_points={

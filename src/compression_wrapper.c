@@ -880,7 +880,7 @@ cr_close(CR_FILE *cr_file, GError **err)
             zckCtx *zck = (zckCtx *) cr_file->FILE;
             ret = CRE_OK;
             if (cr_file->mode == CR_CW_MODE_WRITE) {
-                if(!zck_end_chunk(zck)) {
+                if(zck_end_chunk(zck) < 0) {
                     ret = CRE_ZCK;
                     g_set_error(err, ERR_DOMAIN, CRE_ZCK,
                         "Unable to end final chunk: %s", zck_get_error(zck));

@@ -168,6 +168,90 @@ test_cr_xml_parse_updateinfo_02(void)
     cr_updateinfo_free(ui);
 }
 
+//Test for module support
+static void
+test_cr_xml_parse_updateinfo_03(void)
+{
+    GError *tmp_err = NULL;
+    cr_UpdateInfo *ui = cr_updateinfo_new();
+    cr_UpdateRecord *update;
+    cr_UpdateReference *ref;
+    cr_UpdateCollection *col;
+    cr_UpdateCollectionModule *module;
+    cr_UpdateCollectionPackage *pkg;
+
+    int ret = cr_xml_parse_updateinfo(TEST_UPDATEINFO_03, ui,
+                                      NULL, NULL, &tmp_err);
+
+    g_assert(tmp_err == NULL);
+    g_assert_cmpint(ret, ==, CRE_OK);
+
+    g_assert_cmpint(g_slist_length(ui->updates), ==, 6);
+    update = g_slist_nth_data(ui->updates, 3);
+
+    g_assert_cmpstr(update->from, ==, "errata@redhat.com");
+    g_assert_cmpstr(update->status, ==, "stable");
+    g_assert_cmpstr(update->type, ==, "enhancement");
+    g_assert_cmpstr(update->version, ==, "1");
+    g_assert_cmpstr(update->id, ==, "RHEA-2012:0058");
+    g_assert_cmpstr(update->title, ==, "Gorilla_Erratum");
+    g_assert_cmpstr(update->description, ==, "Gorilla_Erratum");
+
+    update = g_slist_nth_data(ui->updates, 4);
+
+    g_assert_cmpstr(update->id, ==, "RHEA-2012:0059");
+    g_assert_cmpstr(update->title, ==, "Duck_Kangaroo_Erratum");
+    g_assert_cmpstr(update->description, ==, "Duck_Kangaro_Erratum description");
+    g_assert_cmpstr(update->issued_date, ==, "2018-01-27 16:08:09");
+    g_assert_cmpstr(update->updated_date, ==, "2018-07-20 06:00:01 UTC");
+    g_assert_cmpstr(update->release, ==, "1");
+
+    g_assert_cmpint(g_slist_length(update->references), ==, 0);
+
+    g_assert_cmpint(g_slist_length(update->collections), ==, 2);
+    col = g_slist_nth_data(update->collections, 0);
+    g_assert_cmpstr(col->shortname, ==, "");
+    g_assert_cmpstr(col->name, ==, "coll_name1");
+
+    module = col->module;
+    g_assert_cmpstr(module->name, ==, "kangaroo");
+    g_assert_cmpstr(module->stream, ==, "0");
+    g_assert_cmpuint(module->version, ==, 20180730223407);
+    g_assert_cmpstr(module->context, ==, "deadbeef");
+    g_assert_cmpstr(module->arch, ==, "noarch");
+
+    g_assert_cmpint(g_slist_length(col->packages), ==, 1);
+    pkg = col->packages->data;
+    g_assert_cmpstr(pkg->name, ==, "kangaroo");
+    g_assert_cmpstr(pkg->version, ==, "0.3");
+    g_assert_cmpstr(pkg->release, ==, "1");
+    g_assert(!pkg->epoch);
+    g_assert_cmpstr(pkg->arch, ==, "noarch");
+    g_assert_cmpstr(pkg->src, ==, "http://www.fedoraproject.org");
+    g_assert_cmpstr(pkg->filename, ==, "kangaroo-0.3-1.noarch.rpm");
+    g_assert(!pkg->sum);
+    g_assert(!pkg->sum_type);
+
+    col = g_slist_nth_data(update->collections, 1);
+    g_assert_cmpstr(col->shortname, ==, "");
+    g_assert_cmpstr(col->name, ==, "coll_name2");
+
+    module = col->module;
+    g_assert_cmpstr(module->name, ==, "duck");
+    g_assert_cmpstr(module->stream, ==, "0");
+    g_assert_cmpuint(module->version, ==, 20180730233102);
+    g_assert_cmpstr(module->context, ==, "deadbeef");
+    g_assert_cmpstr(module->arch, ==, "noarch");
+
+    g_assert_cmpint(g_slist_length(col->packages), ==, 1);
+    pkg = col->packages->data;
+    g_assert_cmpstr(pkg->name, ==, "duck");
+    g_assert_cmpstr(pkg->version, ==, "0.7");
+    g_assert_cmpstr(pkg->filename, ==, "duck-0.7-1.noarch.rpm");
+
+    cr_updateinfo_free(ui);
+}
+
 int
 main(int argc, char *argv[])
 {
@@ -179,6 +263,8 @@ main(int argc, char *argv[])
                     test_cr_xml_parse_updateinfo_01);
     g_test_add_func("/xml_parser_updateinfo/test_cr_xml_parse_updateinfo_02",
                     test_cr_xml_parse_updateinfo_02);
+    g_test_add_func("/xml_parser_updateinfo/test_cr_xml_parse_updateinfo_03",
+                    test_cr_xml_parse_updateinfo_03);
 
     return g_test_run();
 }

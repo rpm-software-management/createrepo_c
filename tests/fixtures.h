@@ -83,5 +83,6 @@
 #define TEST_UPDATEINFO_00      TEST_UPDATEINFO_FILES_PATH"updateinfo_00.xml"
 #define TEST_UPDATEINFO_01      TEST_UPDATEINFO_FILES_PATH"updateinfo_01.xml"
 #define TEST_UPDATEINFO_02      TEST_UPDATEINFO_FILES_PATH"updateinfo_02.xml.xz"
+#define TEST_UPDATEINFO_03      TEST_UPDATEINFO_FILES_PATH"updateinfo_03.xml"
 
 #endif

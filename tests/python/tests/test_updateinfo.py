@@ -123,6 +123,13 @@ class TestCaseUpdateInfo(unittest.TestCase):
         now = datetime(now.year, now.month, now.day, now.hour, now.minute,
                        now.second, 0)
 
+        mod = cr.UpdateCollectionModule()
+        mod.name = "kangaroo"
+        mod.stream = "0"
+        mod.version = 18446744073709551615
+        mod.context = "deadbeef"
+        mod.arch = "x86"
+
         pkg = cr.UpdateCollectionPackage()
         pkg.name = "foo"
         pkg.version = "1.2"
@@ -135,6 +142,94 @@ class TestCaseUpdateInfo(unittest.TestCase):
         pkg.sum_type = cr.SHA1
         pkg.reboot_suggested = True
 
+        col = cr.UpdateCollection()
+        col.shortname = "short name"
+        col.name = "long name"
+        col.module = mod
+        col.append(pkg)
+
+        ref = cr.UpdateReference()
+        ref.href = "href"
+        ref.id = "id"
+        ref.type = "type"
+        ref.title = "title"
+
+        rec = cr.UpdateRecord()
+        rec.fromstr = "from"
+        rec.status = "status"
+        rec.type = "type"
+        rec.version = "version"
+        rec.id = "id"
+        rec.title = "title"
+        rec.issued_date = now
+        rec.updated_date = now
+        rec.rights = "rights"
+        rec.release = "release"
+        rec.pushcount = "pushcount"
+        rec.severity = "severity"
+        rec.summary = "summary"
+        rec.description = "description"
+        rec.solution = "solution"
+        rec.append_collection(col)
+        rec.append_reference(ref)
+
+        ui = cr.UpdateInfo()
+        ui.append(rec)
+
+        xml = ui.xml_dump()
+
+        self.assertEqual(xml,
+"""<?xml version="1.0" encoding="UTF-8"?>
+<updates>
+  <update from="from" status="status" type="type" version="version">
+    <id>id</id>
+    <title>title</title>
+    <issued date="%(now)s"/>
+    <updated date="%(now)s"/>
+    <rights>rights</rights>
+    <release>release</release>
+    <pushcount>pushcount</pushcount>
+    <severity>severity</severity>
+    <summary>summary</summary>
+    <description>description</description>
+    <solution>solution</solution>
+    <references>
+      <reference href="href" id="id" type="type" title="title"/>
+    </references>
+    <pkglist>
+      <collection short="short name">
+        <name>long name</name>
+        <module name="kangaroo" stream="0" version="18446744073709551615" context="deadbeef" arch="x86"/>
+        <package name="foo" version="1.2" release="3" epoch="0" arch="x86" src="foo.src.rpm">
+          <filename>foo.rpm</filename>
+          <sum type="sha1">abcdef</sum>
+          <reboot_suggested/>
+        </package>
+      </collection>
+    </pkglist>
+  </update>
+</updates>
+""" % {"now": now.strftime("%Y-%m-%d %H:%M:%S")})
+
+    def test_updateinfo_xml_dump_04(self):
+        now = datetime.now()
+        # Microseconds are always 0 in updateinfo
+        now = datetime(now.year, now.month, now.day, now.hour, now.minute,
+                       now.second, 0)
+
+        pkg = cr.UpdateCollectionPackage()
+        pkg.name = "foo"
+        pkg.version = "1.2"
+        pkg.release = "3"
+        pkg.epoch = "0"
+        pkg.arch = "x86"
+        pkg.src = "foo.src.rpm"
+        pkg.filename = "foo.rpm"
+        pkg.sum = "abcdef"
+        pkg.sum_type = cr.SHA1
+        pkg.reboot_suggested = True
+
+        # Collection without module
         col = cr.UpdateCollection()
         col.shortname = "short name"
         col.name = "long name"
@@ -167,6 +262,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
 
         ui = cr.UpdateInfo()
         ui.append(rec)
+
         xml = ui.xml_dump()
 
         self.assertEqual(xml,
@@ -190,6 +286,99 @@ class TestCaseUpdateInfo(unittest.TestCase):
     <pkglist>
       <collection short="short name">
         <name>long name</name>
+        <package name="foo" version="1.2" release="3" epoch="0" arch="x86" src="foo.src.rpm">
+          <filename>foo.rpm</filename>
+          <sum type="sha1">abcdef</sum>
+          <reboot_suggested/>
+        </package>
+      </collection>
+    </pkglist>
+  </update>
+</updates>
+""" % {"now": now.strftime("%Y-%m-%d %H:%M:%S")})
+
+    def test_updateinfo_xml_dump_05(self):
+        now = datetime.now()
+        # Microseconds are always 0 in updateinfo
+        now = datetime(now.year, now.month, now.day, now.hour, now.minute,
+                       now.second, 0)
+
+        # Collection module with unset fields
+        mod = cr.UpdateCollectionModule()
+        mod.version = 18446744073709551615
+        mod.context = "deadbeef"
+        mod.arch = "x86"
+
+        pkg = cr.UpdateCollectionPackage()
+        pkg.name = "foo"
+        pkg.version = "1.2"
+        pkg.release = "3"
+        pkg.epoch = "0"
+        pkg.arch = "x86"
+        pkg.src = "foo.src.rpm"
+        pkg.filename = "foo.rpm"
+        pkg.sum = "abcdef"
+        pkg.sum_type = cr.SHA1
+        pkg.reboot_suggested = True
+
+        col = cr.UpdateCollection()
+        col.shortname = "short name"
+        col.name = "long name"
+        col.module = mod
+        col.append(pkg)
+
+        ref = cr.UpdateReference()
+        ref.href = "href"
+        ref.id = "id"
+        ref.type = "type"
+        ref.title = "title"
+
+        rec = cr.UpdateRecord()
+        rec.fromstr = "from"
+        rec.status = "status"
+        rec.type = "type"
+        rec.version = "version"
+        rec.id = "id"
+        rec.title = "title"
+        rec.issued_date = now
+        rec.updated_date = now
+        rec.rights = "rights"
+        rec.release = "release"
+        rec.pushcount = "pushcount"
+        rec.severity = "severity"
+        rec.summary = "summary"
+        rec.description = "description"
+        rec.solution = "solution"
+        rec.append_collection(col)
+        rec.append_reference(ref)
+
+        ui = cr.UpdateInfo()
+        ui.append(rec)
+
+        xml = ui.xml_dump()
+
+        self.assertEqual(xml,
+"""<?xml version="1.0" encoding="UTF-8"?>
+<updates>
+  <update from="from" status="status" type="type" version="version">
+    <id>id</id>
+    <title>title</title>
+    <issued date="%(now)s"/>
+    <updated date="%(now)s"/>
+    <rights>rights</rights>
+    <release>release</release>
+    <pushcount>pushcount</pushcount>
+    <severity>severity</severity>
+    <summary>summary</summary>
+    <description>description</description>
+    <solution>solution</solution>
+    <references>
+      <reference href="href" id="id" type="type" title="title"/>
+    </references>
+    <pkglist>
+      <collection short="short name">
+        <name>long name</name>
+        <module version="18446744073709551615" context="deadbeef" arch="x86"/>
         <package name="foo" version="1.2" release="3" epoch="0" arch="x86" src="foo.src.rpm">
           <filename>foo.rpm</filename>
           <sum type="sha1">abcdef</sum>

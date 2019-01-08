@@ -54,6 +54,7 @@ typedef enum {
     STATE_PKGLIST,          // <pkglist> ----------------------------
     STATE_COLLECTION,
     STATE_NAME,
+    STATE_MODULE,
     STATE_PACKAGE,
     STATE_FILENAME,
     STATE_SUM,
@@ -89,6 +90,7 @@ static cr_StatesSwitch stateswitches[] = {
     { STATE_PKGLIST,    "collection",        STATE_COLLECTION,        0 },
     { STATE_COLLECTION, "package",           STATE_PACKAGE,           0 },
     { STATE_COLLECTION, "name",              STATE_NAME,              1 },
+    { STATE_COLLECTION, "module",            STATE_MODULE,            0 },
     { STATE_PACKAGE,    "filename",          STATE_FILENAME,          1 },
     { STATE_PACKAGE,    "sum",               STATE_SUM,               1 },
     { STATE_PACKAGE,    "reboot_suggested",  STATE_REBOOTSUGGESTED,   0 },
@@ -141,6 +143,7 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
     // Shortcuts
     cr_UpdateRecord *rec = pd->updaterecord;
     cr_UpdateCollection *collection = pd->updatecollection;
+    cr_UpdateCollectionModule *module = pd->updatecollectionmodule;
     cr_UpdateCollectionPackage *package = pd->updatecollectionpackage;
 
     switch(pd->state) {
@@ -173,6 +176,7 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         assert(pd->updateinfo);
         assert(!pd->updaterecord);
         assert(!pd->updatecollection);
+        assert(!pd->updatecollectionmodule);
         assert(!pd->updatecollectionpackage);
 
         rec = cr_updaterecord_new();
@@ -201,6 +205,7 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         assert(pd->updateinfo);
         assert(pd->updaterecord);
         assert(!pd->updatecollection);
+        assert(!pd->updatecollectionmodule);
         assert(!pd->updatecollectionpackage);
         val = cr_find_attr("date", attr);
         if (val)
@@ -211,6 +216,7 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         assert(pd->updateinfo);
         assert(pd->updaterecord);
         assert(!pd->updatecollection);
+        assert(!pd->updatecollectionmodule);
         assert(!pd->updatecollectionpackage);
         val = cr_find_attr("date", attr);
         if (val)
@@ -223,6 +229,7 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         assert(pd->updateinfo);
         assert(pd->updaterecord);
         assert(!pd->updatecollection);
+        assert(!pd->updatecollectionmodule);
         assert(!pd->updatecollectionpackage);
 
         ref = cr_updatereference_new();
@@ -251,6 +258,7 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         assert(pd->updateinfo);
         assert(pd->updaterecord);
         assert(!pd->updatecollection);
+        assert(!pd->updatecollectionmodule);
         assert(!pd->updatecollectionpackage);
 
         collection = cr_updatecollection_new();
@@ -260,6 +268,49 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         val = cr_find_attr("short", attr);
         if (val)
             collection->shortname = g_string_chunk_insert(collection->chunk, val);
+
+        break;
+
+    case STATE_MODULE:
+        assert(pd->updateinfo);
+        assert(pd->updaterecord);
+        assert(pd->updatecollection);
+        assert(!pd->updatecollectionmodule);
+        assert(!pd->updatecollectionpackage);
+
+        module = cr_updatecollectionmodule_new();
+        if (module)
+            collection->module = module;
+
+        val = cr_find_attr("name", attr);
+        if (val)
+            module->name = g_string_chunk_insert(module->chunk, val);
+
+        val = cr_find_attr("stream", attr);
+        if (val)
+            module->stream = g_string_chunk_insert(module->chunk, val);
+
+        val = cr_find_attr("version", attr);
+        if (val){
+            gchar *endptr;
+            errno = 0;
+            module->version = strtoull(val, &endptr, 10);
+            if ((errno == ERANGE && (module->version == ULLONG_MAX))
+                 || (errno != 0 && module->version == 0)) {
+                perror("strtoull error when parsing module version");
+                module->version = 0;
+            }
+            if (endptr == val)
+                module->version = 0;
+        }
+
+        val = cr_find_attr("context", attr);
+        if (val)
+            module->context = g_string_chunk_insert(module->chunk, val);
+
+        val = cr_find_attr("arch", attr);
+        if (val)
+            module->arch = g_string_chunk_insert(module->chunk, val);
 
         break;
 
@@ -303,6 +354,7 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         assert(pd->updateinfo);
         assert(pd->updaterecord);
         assert(pd->updatecollection);
+        assert(pd->updatecollectionmodule);
         assert(pd->updatecollectionpackage);
         val = cr_find_attr("type", attr);
         if (val)
@@ -313,6 +365,7 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         assert(pd->updateinfo);
         assert(pd->updaterecord);
         assert(pd->updatecollection);
+        assert(pd->updatecollectionmodule);
         assert(pd->updatecollectionpackage);
         package->reboot_suggested = TRUE;
         break;
@@ -352,6 +405,7 @@ cr_end_handler(void *pdata, G_GNUC_UNUSED const char *element)
     case STATE_UPDATED:
     case STATE_REFERENCES:
     case STATE_REFERENCE:
+    case STATE_MODULE:
     case STATE_PKGLIST:
     case STATE_REBOOTSUGGESTED:
         // All elements with no text data and without need of any

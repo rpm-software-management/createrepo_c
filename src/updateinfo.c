@@ -74,6 +74,46 @@ cr_updatecollectionpackage_free(cr_UpdateCollectionPackage *pkg)
 
 
 /*
+ * cr_UpdateCollectionModule
+ */
+
+cr_UpdateCollectionModule *
+cr_updatecollectionmodule_new(void)
+{
+    cr_UpdateCollectionModule *module = g_malloc0(sizeof(*module));
+    module->chunk = g_string_chunk_new(0);
+    return module;
+}
+
+cr_UpdateCollectionModule *
+cr_updatecollectionmodule_copy(const cr_UpdateCollectionModule *orig)
+{
+    cr_UpdateCollectionModule *module;
+
+    if (!orig) return NULL;
+
+    module = cr_updatecollectionmodule_new();
+
+    module->name    = cr_safe_string_chunk_insert(module->chunk, orig->name);
+    module->stream  = cr_safe_string_chunk_insert(module->chunk, orig->stream);
+    module->version = orig->version;
+    module->context = cr_safe_string_chunk_insert(module->chunk, orig->context);
+    module->arch    = cr_safe_string_chunk_insert(module->chunk, orig->arch);
+
+    return module;
+}
+
+void
+cr_updatecollectionmodule_free(cr_UpdateCollectionModule *module)
+{
+    if (!module)
+        return;
+    g_string_chunk_free(module->chunk);
+    g_free(module);
+}
+
+
+/*
  * cr_UpdateCollection
  */
 
@@ -96,6 +136,10 @@ cr_updatecollection_copy(const cr_UpdateCollection *orig)
 
     col->shortname = cr_safe_string_chunk_insert(col->chunk, orig->shortname);
     col->name      = cr_safe_string_chunk_insert(col->chunk, orig->name);
+
+    if (orig->module) {
+      col->module = cr_updatecollectionmodule_copy(orig->module);
+    }
 
     if (orig->packages) {
         GSList *newlist = NULL;

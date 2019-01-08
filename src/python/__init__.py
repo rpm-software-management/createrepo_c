@@ -206,6 +206,9 @@ class OtherSqlite(Sqlite):
 
 UpdateCollection = _createrepo_c.UpdateCollection
 
+# UpdateCollectionModule class
+
+UpdateCollectionModule = _createrepo_c.UpdateCollectionModule
 
 # UpdateCollectionPackage class
 

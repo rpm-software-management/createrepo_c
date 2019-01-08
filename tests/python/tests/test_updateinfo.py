@@ -123,6 +123,13 @@ class TestCaseUpdateInfo(unittest.TestCase):
         now = datetime(now.year, now.month, now.day, now.hour, now.minute,
                        now.second, 0)
 
+        mod = cr.UpdateCollectionModule()
+        mod.name = "kangaroo"
+        mod.stream = "0"
+        mod.version = 18446744073709551615
+        mod.context = "deadbeef"
+        mod.arch = "x86"
+
         pkg = cr.UpdateCollectionPackage()
         pkg.name = "foo"
         pkg.version = "1.2"
@@ -138,6 +145,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
         col = cr.UpdateCollection()
         col.shortname = "short name"
         col.name = "long name"
+        col.module = mod
         col.append(pkg)
 
         ref = cr.UpdateReference()
@@ -167,6 +175,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
 
         ui = cr.UpdateInfo()
         ui.append(rec)
+
         xml = ui.xml_dump()
 
         self.assertEqual(xml,
@@ -190,6 +199,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
     <pkglist>
       <collection short="short name">
         <name>long name</name>
+        <module name="kangaroo" stream="0" version="18446744073709551615" context="deadbeef" arch="x86"/>
         <package name="foo" version="1.2" release="3" epoch="0" arch="x86" src="foo.src.rpm">
           <filename>foo.rpm</filename>
           <sum type="sha1">abcdef</sum>

@@ -35,6 +35,7 @@
 #include "repomdrecord-py.h"
 #include "sqlite-py.h"
 #include "updatecollection-py.h"
+#include "updatecollectionmodule-py.h"
 #include "updatecollectionpackage-py.h"
 #include "updateinfo-py.h"
 #include "updaterecord-py.h"
@@ -184,6 +185,13 @@ init_createrepo_c(void)
     Py_INCREF(&UpdateCollection_Type);
     PyModule_AddObject(m, "UpdateCollection",
                        (PyObject *)&UpdateCollection_Type);
+
+    /* _createrepo_c.UpdateCollectionModule */
+    if (PyType_Ready(&UpdateCollectionModule_Type) < 0)
+        return FAILURE;
+    Py_INCREF(&UpdateCollectionModule_Type);
+    PyModule_AddObject(m, "UpdateCollectionModule",
+                       (PyObject *)&UpdateCollectionModule_Type);
 
     /* _createrepo_c.UpdateCollectionPackage */
     if (PyType_Ready(&UpdateCollectionPackage_Type) < 0)

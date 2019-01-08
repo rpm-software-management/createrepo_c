@@ -51,8 +51,19 @@ typedef struct {
 } cr_UpdateCollectionPackage;
 
 typedef struct {
+    gchar *name;
+    gchar *stream;
+    guint64 version;
+    gchar *context;
+    gchar *arch;
+
+    GStringChunk *chunk;
+} cr_UpdateCollectionModule;
+
+typedef struct {
     gchar *shortname;   /*!< e.g. rhn-tools-rhel-x86_64-server-6.5.aus */
     gchar *name;        /*!< e.g. RHN Tools for RHEL AUS (v. 6.5 for 64-bit x86_64) */
+    cr_UpdateCollectionModule *module;
     GSList *packages;   /*!< List of cr_UpdateCollectionPackage */
     GStringChunk *chunk;
 } cr_UpdateCollection;
@@ -104,6 +115,19 @@ cr_updatecollectionpackage_copy(const cr_UpdateCollectionPackage *orig);
 
 void
 cr_updatecollectionpackage_free(cr_UpdateCollectionPackage *pkg);
+
+/*
+ * cr_UpdateCollectionModule
+ */
+
+cr_UpdateCollectionModule *
+cr_updatecollectionmodule_new(void);
+
+cr_UpdateCollectionModule *
+cr_updatecollectionmodule_copy(const cr_UpdateCollectionModule *orig);
+
+void
+cr_updatecollectionmodule_free(cr_UpdateCollectionModule *pkg);
 
 /*
  * cr_UpdateCollection

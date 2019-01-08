@@ -52,6 +52,7 @@ SET (createrepo_cmodule_SRCS
      sqlite-py.c
      typeconversion.c
      updatecollection-py.c
+     updatecollectionmodule-py.c
      updatecollectionpackage-py.c
      updateinfo-py.c
      updaterecord-py.c

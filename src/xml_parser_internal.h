@@ -151,6 +151,8 @@ typedef struct _cr_ParserData {
         Update record object */
     cr_UpdateCollection *updatecollection; /*!<
         Update collection object */
+    cr_UpdateCollectionModule *updatecollectionmodule; /*!<
+        Update collection module object */
     cr_UpdateCollectionPackage *updatecollectionpackage; /*!<
         Update collection package object */
 

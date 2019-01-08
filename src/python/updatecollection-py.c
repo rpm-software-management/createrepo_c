@@ -22,6 +22,7 @@
 #include <stddef.h>
 
 #include "updatecollection-py.h"
+#include "updatecollectionmodule-py.h"
 #include "updatecollectionpackage-py.h"
 #include "exception-py.h"
 #include "typeconversion.h"
@@ -188,6 +189,13 @@ typedef int (*ConversionToCheckFunc)(PyObject *);
 typedef void *(*ConversionToFunc)(PyObject *, GStringChunk *);
 
 PyObject *
+PyObject_FromUpdateCollectionModule(cr_UpdateCollectionModule *module)
+{
+    return Object_FromUpdateCollectionModule(
+                        cr_updatecollectionmodule_copy(module));
+}
+
+PyObject *
 PyObject_FromUpdateCollectionPackage(cr_UpdateCollectionPackage *pkg)
 {
     return Object_FromUpdateCollectionPackage(
@@ -249,6 +257,23 @@ get_list(_UpdateCollectionObject *self, void *conv)
     return list;
 }
 
+static PyObject *
+get_module(_UpdateCollectionObject *self, void *member_offset)
+{
+    if (check_UpdateCollectionStatus(self))
+        return NULL;
+
+    cr_UpdateCollection *collection = self->collection;
+
+    cr_UpdateCollectionModule *module = *((cr_UpdateCollectionModule **) ((size_t) collection + (size_t) member_offset));
+    if (module == NULL)
+        Py_RETURN_NONE;
+
+    PyObject *py_module = PyObject_FromUpdateCollectionModule(module);
+
+    return py_module;
+}
+
 static int
 set_str(_UpdateCollectionObject *self, PyObject *value, void *member_offset)
 {
@@ -265,11 +290,29 @@ set_str(_UpdateCollectionObject *self, PyObject *value, void *member_offset)
     return 0;
 }
 
+static int
+set_module(_UpdateCollectionObject *self, PyObject *value, void *member_offset)
+{
+    if (check_UpdateCollectionStatus(self))
+        return -1;
+    if (!UpdateCollectionModuleObject_Check(value) && value != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "Module or None expected!");
+        return -1;
+    }
+    cr_UpdateCollectionModule *module = UpdateCollectionModule_FromPyObject(value);
+    cr_UpdateCollection *collection = self->collection;
+    *((cr_UpdateCollectionModule **) ((size_t) collection + (size_t) member_offset)) = module;
+
+    return 0;
+}
+
 static PyGetSetDef updatecollection_getsetters[] = {
     {"shortname",     (getter)get_str, (setter)set_str,
         "Short name", OFFSET(shortname)},
     {"name",          (getter)get_str, (setter)set_str,
         "Name of the collection", OFFSET(name)},
+    {"module",        (getter)get_module, (setter)set_module,
+        "Module information", OFFSET(module)},
     {"packages",       (getter)get_list, (setter)NULL,
         "List of packages", &(list_convertors[0])},
     {NULL, NULL, NULL, NULL, NULL} /* sentinel */

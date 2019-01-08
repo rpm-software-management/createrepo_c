@@ -16,6 +16,13 @@ class TestCaseUpdateCollection(unittest.TestCase):
         self.assertEqual(col.name, None)
         self.assertEqual(col.packages, [])
 
+        module = cr.UpdateCollectionModule()
+        module.name = "kangaroo"
+        module.stream = "0"
+        module.version = 20180730223407
+        module.context = "deadbeef"
+        module.arch = "noarch"
+
         pkg = cr.UpdateCollectionPackage()
         pkg.name = "foo"
         pkg.version = "1.2"
@@ -30,11 +37,20 @@ class TestCaseUpdateCollection(unittest.TestCase):
 
         col.shortname = "short name"
         col.name = "long name"
+        col.module = module
         col.append(pkg)
 
         self.assertEqual(col.shortname, "short name")
         self.assertEqual(col.name, "long name")
         self.assertEqual(len(col.packages), 1)
+
+        # Check if the appended module was appended properly
+        module = col.module
+        self.assertEqual(module.name, "kangaroo")
+        self.assertEqual(module.stream, "0")
+        self.assertEqual(module.version, 20180730223407)
+        self.assertEqual(module.context, "deadbeef")
+        self.assertEqual(module.arch, "noarch")
 
         # Also check if the appended package was appended properly
         pkg = col.packages[0]

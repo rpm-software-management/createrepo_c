@@ -1554,7 +1554,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                                            compressed_groupfile_rec,
                                            CR_CHECKSUM_SHA256,
                                            cmd_options->groupfile_compression_type,
-                                           NULL);
+                                           NULL, NULL);
     }
 
 
@@ -1621,21 +1621,21 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                                              pri_db_c_filename,
                                              cmd_options->db_compression_type,
                                              CR_CHECKSUM_SHA256,
-                                             1, NULL);
+                                             NULL, FALSE, 1, NULL);
         g_thread_pool_push(compress_pool, pri_db_task, NULL);
 
         fil_db_task = cr_compressiontask_new(fil_db_filename,
                                              fil_db_c_filename,
                                              cmd_options->db_compression_type,
                                              CR_CHECKSUM_SHA256,
-                                             1, NULL);
+                                             NULL, FALSE, 1, NULL);
         g_thread_pool_push(compress_pool, fil_db_task, NULL);
 
         oth_db_task = cr_compressiontask_new(oth_db_filename,
                                              oth_db_c_filename,
                                              cmd_options->db_compression_type,
                                              CR_CHECKSUM_SHA256,
-                                             1, NULL);
+                                             NULL, FALSE, 1, NULL);
         g_thread_pool_push(compress_pool, oth_db_task, NULL);
 
         g_thread_pool_free(compress_pool, FALSE, TRUE);

@@ -1405,7 +1405,8 @@ cr_end_chunk(CR_FILE *cr_file, GError **err)
             ssize_t wb = zck_end_chunk(zck);
             if(wb < 0) {
                 g_set_error(err, ERR_DOMAIN, CRE_ZCK,
-                            "Error ending chunk");
+                            "Error ending chunk: %s",
+                            zck_get_error(zck));
                 return CR_CW_ERR;
             }
             ret = wb;
@@ -1430,6 +1431,55 @@ cr_end_chunk(CR_FILE *cr_file, GError **err)
     return ret;
 }
 
+int
+cr_set_autochunk(CR_FILE *cr_file, gboolean auto_chunk, GError **err)
+{
+    int ret = CRE_OK;
+
+    assert(cr_file);
+    assert(!err || *err == NULL);
+
+    if (cr_file->mode != CR_CW_MODE_WRITE) {
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
+                    "File is not opened in write mode");
+        return CR_CW_ERR;
+    }
+
+    switch (cr_file->type) {
+        case (CR_CW_NO_COMPRESSION): // ---------------------------------------
+        case (CR_CW_GZ_COMPRESSION): // ---------------------------------------
+        case (CR_CW_BZ2_COMPRESSION): // --------------------------------------
+        case (CR_CW_XZ_COMPRESSION): // ---------------------------------------
+            break;
+        case (CR_CW_ZCK_COMPRESSION): { // ------------------------------------
+#ifdef WITH_ZCHUNK
+            zckCtx *zck = (zckCtx *) cr_file->FILE;
+            if(!zck_set_ioption(zck, ZCK_MANUAL_CHUNK, !auto_chunk)) {
+                g_set_error(err, ERR_DOMAIN, CRE_ZCK,
+                            "Error setting auto_chunk: %s",
+                            zck_get_error(zck));
+                return CR_CW_ERR;
+            }
+            break;
+#else
+            g_set_error(err, ERR_DOMAIN, CRE_IO, "createrepo_c wasn't compiled "
+                        "with zchunk support");
+            break;
+#endif // WITH_ZCHUNK
+        }
+
+        default: // -----------------------------------------------------------
+            g_set_error(err, ERR_DOMAIN, CRE_BADARG,
+                        "Bad compressed file type");
+            return CR_CW_ERR;
+            break;
+    }
+
+    assert(!err || (ret == CR_CW_ERR && *err != NULL)
+           || (ret != CR_CW_ERR && *err == NULL));
+
+    return ret;
+}
 
 int
 cr_printf(GError **err, CR_FILE *cr_file, const char *format, ...)

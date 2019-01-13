@@ -182,13 +182,15 @@ compress_and_fill(_RepomdRecordObject *self, PyObject *args)
 {
     int checksum_type, compression_type;
     PyObject *compressed_repomdrecord;
+    gchar *zck_dict_dir = NULL;
     GError *err = NULL;
 
-    if (!PyArg_ParseTuple(args, "O!ii:compress_and_fill",
+    if (!PyArg_ParseTuple(args, "O!ii|s:compress_and_fill",
                           &RepomdRecord_Type,
                           &compressed_repomdrecord,
                           &checksum_type,
-                          &compression_type))
+                          &compression_type,
+                          &zck_dict_dir))
         return NULL;
 
     if (check_RepomdRecordStatus(self))
@@ -198,6 +200,7 @@ compress_and_fill(_RepomdRecordObject *self, PyObject *args)
                                        RepomdRecord_FromPyObject(compressed_repomdrecord),
                                        checksum_type,
                                        compression_type,
+                                       zck_dict_dir,
                                        &err);
     if (err) {
         nice_exception(&err, NULL);

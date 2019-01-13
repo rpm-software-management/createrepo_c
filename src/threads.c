@@ -32,6 +32,8 @@ cr_compressiontask_new(const char *src,
                        const char *dst,
                        cr_CompressionType compression_type,
                        cr_ChecksumType checksum_type,
+                       const char *zck_dict_dir,
+                       gboolean zck_auto_chunk,
                        int delsrc,
                        GError **err)
 {
@@ -58,6 +60,9 @@ cr_compressiontask_new(const char *src,
     task->dst    = g_strdup(dst);
     task->type   = compression_type;
     task->stat   = stat;
+    if(zck_dict_dir != NULL)
+        task->zck_dict_dir = g_strdup(zck_dict_dir);
+    task->zck_auto_chunk = zck_auto_chunk;
     task->delsrc = delsrc;
 
     return task;
@@ -76,6 +81,8 @@ cr_compressiontask_free(cr_CompressionTask *task, GError **err)
     cr_contentstat_free(task->stat, err);
     if (task->err)
         g_error_free(task->err);
+    if (task->zck_dict_dir)
+        g_free(task->zck_dict_dir);
     g_free(task);
 }
 
@@ -96,6 +103,8 @@ cr_compressing_thread(gpointer data, G_GNUC_UNUSED gpointer user_data)
                                task->dst,
                                task->type,
                                task->stat,
+                               task->zck_dict_dir,
+                               task->zck_auto_chunk,
                                &tmp_err);
 
     if (tmp_err) {

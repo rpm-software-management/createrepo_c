@@ -112,6 +112,7 @@ cr_deltarpms_scan_targetdir(const char *path,
 gboolean
 cr_deltarpms_generate_prestodelta_file(const gchar *drpmdir,
                                        cr_XmlFile *f,
+                                       cr_XmlFile *zck_f,
                                        cr_ChecksumType checksum_type,
                                        gint workers,
                                        const gchar *prefix_to_strip,

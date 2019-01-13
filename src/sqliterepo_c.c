@@ -391,21 +391,21 @@ compress_sqlite_dbs(const gchar *tmp_out_repo,
                                          pri_db_name,
                                          compression_type,
                                          checksum_type,
-                                         1, NULL);
+                                         NULL, FALSE, 1, NULL);
     g_thread_pool_push(compress_pool, pri_db_task, NULL);
 
     fil_db_task = cr_compressiontask_new(fil_db_filename,
                                          fil_db_name,
                                          compression_type,
                                          checksum_type,
-                                         1, NULL);
+                                         NULL, FALSE, 1, NULL);
     g_thread_pool_push(compress_pool, fil_db_task, NULL);
 
     oth_db_task = cr_compressiontask_new(oth_db_filename,
                                          oth_db_name,
                                          compression_type,
                                          checksum_type,
-                                         1, NULL);
+                                         NULL, FALSE, 1, NULL);
     g_thread_pool_push(compress_pool, oth_db_task, NULL);
 
     // Wait till all tasks are complete and free the thread pool

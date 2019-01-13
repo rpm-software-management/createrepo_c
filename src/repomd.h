@@ -159,6 +159,7 @@ int cr_repomd_record_fill(cr_RepomdRecord *record,
  * @param compressed_record     empty cr_RepomdRecord object that will by filled
  * @param checksum_type         type of checksums
  * @param compression           type of compression
+ * @param zck_dict_dir          Location of zchunk dictionaries (NULL if unused)
  * @param err                   GError **
  * @return                      cr_Error code
  */
@@ -166,6 +167,7 @@ int cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
                                        cr_RepomdRecord *compressed_record,
                                        cr_ChecksumType checksum_type,
                                        cr_CompressionType compression,
+                                       const char *zck_dict_dir,
                                        GError **err);
 
 /** Add a hash as prefix to the filename.

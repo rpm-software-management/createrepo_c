@@ -182,6 +182,14 @@ int cr_puts(CR_FILE *cr_file, const char *str, GError **err);
  */
 int cr_end_chunk(CR_FILE *cr_file, GError **err);
 
+/** Set zchunk auto-chunk algorithm.  Must be done before first byte is written
+ * @param cr_file       CR_FILE pointer
+ * @param auto_chunk    Whether auto-chunking should be enabled
+ * @param err           GError **
+ * @return              CRE_OK or CR_CW_ERR
+ */
+int cr_set_autochunk(CR_FILE *cr_file, gboolean auto_chunk, GError **err);
+
 /** Writes a formatted string into the cr_file.
  * @param err           GError **
  * @param cr_file       CR_FILE pointer

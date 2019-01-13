@@ -168,11 +168,14 @@ gboolean cr_copy_file(const char *src,
  *                      compression suffix is used.
  *                      If dst is NULL, src + compression suffix is used)
  * @param COMTYPE       type of compression
+ * @param ZCK_DICT_DIR  Location of zchunk zdicts (if zchunk is enabled)
+ * @param ZCK_AUTO_CHUNK Whether zchunk file should be auto-chunked
  * @param ERR           GError **
  * @return              cr_Error return code
  */
-#define cr_compress_file(SRC, DST, COMTYPE, ERR) \
-                    cr_compress_file_with_stat(SRC, DST, COMTYPE, NULL, ERR)
+#define cr_compress_file(SRC, DST, COMTYPE, ZCK_DICT_DIR, ZCK_AUTO_CHUNK, ERR) \
+                    cr_compress_file_with_stat(SRC, DST, COMTYPE, NULL, ZCK_DICT_DIR, \
+                                               ZCK_AUTO_CHUNK, ERR)
 
 /** Compress file.
  * @param src           source filename
@@ -181,6 +184,8 @@ gboolean cr_copy_file(const char *src,
  *                      If dst is NULL, src + compression suffix is used)
  * @param comtype       type of compression
  * @param stat          pointer to cr_ContentStat or NULL
+ * @param zck_dict_dir  Location of zchunk zdicts (if zchunk is enabled)
+ * @param zck_auto_chunk Whether zchunk file should be auto-chunked
  * @param err           GError **
  * @return              cr_Error return code
  */
@@ -188,6 +193,8 @@ int cr_compress_file_with_stat(const char *src,
                                const char *dst,
                                cr_CompressionType comtype,
                                cr_ContentStat *stat,
+                               const char *zck_dict_dir,
+                               gboolean zck_auto_chunk,
                                GError **err);
 
 /** Decompress file.
@@ -541,7 +548,7 @@ cr_version_string_with_features(void);
  * exists or no dictionary directory is set, this function returns NULL
  *
  * The zchunk dictionary file must be the same as the passed filename with a
- * ".dict" extension
+ * ".zdict" extension
  *
  * @param dir           Zchunk dictionary directory
  * @param file          File being zchunked

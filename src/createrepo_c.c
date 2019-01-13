@@ -1073,8 +1073,11 @@ main(int argc, char **argv)
     cr_RepomdRecord *oth_zck_rec              = NULL;
     cr_RepomdRecord *groupfile_rec            = NULL;
     cr_RepomdRecord *compressed_groupfile_rec = NULL;
+    cr_RepomdRecord *compressed_groupfile_zck_rec = NULL;
     cr_RepomdRecord *updateinfo_rec           = NULL;
+    cr_RepomdRecord *updateinfo_zck_rec       = NULL;
     cr_RepomdRecord *prestodelta_rec          = NULL;
+    cr_RepomdRecord *prestodelta_zck_rec      = NULL;
 
     // XML
     cr_repomd_record_load_contentstat(pri_xml_rec, pri_stat);
@@ -1115,6 +1118,7 @@ main(int argc, char **argv)
                                           compressed_groupfile_rec,
                                           cmd_options->repomd_checksum_type,
                                           groupfile_compression,
+                                          NULL,
                                           &tmp_err);
         if (tmp_err) {
             g_critical("Cannot process groupfile %s: %s",
@@ -1177,21 +1181,21 @@ main(int argc, char **argv)
                                              pri_db_name,
                                              sqlite_compression,
                                              cmd_options->repomd_checksum_type,
-                                             1, NULL);
+                                             NULL, FALSE, 1, NULL);
         g_thread_pool_push(compress_pool, pri_db_task, NULL);
 
         fil_db_task = cr_compressiontask_new(fil_db_filename,
                                              fil_db_name,
                                              sqlite_compression,
                                              cmd_options->repomd_checksum_type,
-                                             1, NULL);
+                                             NULL, FALSE, 1, NULL);
         g_thread_pool_push(compress_pool, fil_db_task, NULL);
 
         oth_db_task = cr_compressiontask_new(oth_db_filename,
                                              oth_db_name,
                                              sqlite_compression,
                                              cmd_options->repomd_checksum_type,
-                                             1, NULL);
+                                             NULL, FALSE, 1, NULL);
         g_thread_pool_push(compress_pool, oth_db_task, NULL);
 
         g_thread_pool_free(compress_pool, FALSE, TRUE);
@@ -1286,6 +1290,50 @@ main(int argc, char **argv)
         cr_repomdrecordfilltask_free(pri_zck_fill_task, NULL);
         cr_repomdrecordfilltask_free(fil_zck_fill_task, NULL);
         cr_repomdrecordfilltask_free(oth_zck_fill_task, NULL);
+
+        // Group file
+        if (groupfile && groupfile_compression != CR_CW_ZCK_COMPRESSION) {
+            compressed_groupfile_zck_rec = cr_repomd_record_new("group_gz_zck", groupfile);
+            cr_repomd_record_compress_and_fill(groupfile_rec,
+                                          compressed_groupfile_zck_rec,
+                                          cmd_options->repomd_checksum_type,
+                                          CR_CW_ZCK_COMPRESSION,
+                                          cmd_options->zck_dict_dir,
+                                          &tmp_err);
+            if (tmp_err) {
+                g_critical("Cannot process groupfile %s: %s",
+                           groupfile, tmp_err->message);
+                g_clear_error(&tmp_err);
+                exit(EXIT_FAILURE);
+            }
+        }
+
+        // Updateinfo
+        if (updateinfo) {
+            cr_CompressionType com_type = cr_detect_compression(updateinfo, &tmp_err);
+            if (tmp_err) {
+                g_critical("Cannot detect compression type of %s: %s",
+                       updateinfo, tmp_err->message);
+                g_clear_error(&tmp_err);
+                exit(EXIT_FAILURE);
+            }
+            /* Only create updateinfo_zck if updateinfo isn't already zchunk */
+            if(com_type != CR_CW_ZCK_COMPRESSION) {
+                updateinfo_zck_rec = cr_repomd_record_new("updateinfo_zck", updateinfo);
+                cr_repomd_record_compress_and_fill(updateinfo_rec,
+                                      updateinfo_zck_rec,
+                                      cmd_options->repomd_checksum_type,
+                                      CR_CW_ZCK_COMPRESSION,
+                                      cmd_options->zck_dict_dir,
+                                      &tmp_err);
+                if (tmp_err) {
+                    g_critical("Cannot process updateinfo %s: %s",
+                               updateinfo, tmp_err->message);
+                    g_clear_error(&tmp_err);
+                    exit(EXIT_FAILURE);
+                }
+            }
+        }
     }
     cr_contentstat_free(pri_zck_stat, NULL);
     cr_contentstat_free(fil_zck_stat, NULL);
@@ -1296,9 +1344,13 @@ main(int argc, char **argv)
     if (cmd_options->deltas) {
         gchar *filename, *outdeltadir = NULL;
         gchar *prestodelta_xml_filename = NULL;
+        gchar *prestodelta_zck_filename = NULL;
+
         GHashTable *ht_oldpackagedirs = NULL;
         cr_XmlFile *prestodelta_cr_file = NULL;
+        cr_XmlFile *prestodelta_cr_zck_file = NULL;
         cr_ContentStat *prestodelta_stat = NULL;
+        cr_ContentStat *prestodelta_zck_stat = NULL;
 
         filename = g_strconcat("prestodelta.xml",
                                prestodelta_compression_suffix,
@@ -1357,10 +1409,31 @@ main(int argc, char **argv)
             g_clear_error(&tmp_err);
             goto deltaerror;
         }
+        if(cmd_options->zck_compression && prestodelta_compression != CR_CW_ZCK_COMPRESSION) {
+            filename = g_strconcat("prestodelta.xml",
+                                   cr_compression_suffix(CR_CW_ZCK_COMPRESSION),
+                                   NULL);
+            prestodelta_zck_filename = g_build_filename(tmp_out_repo,
+                                                        filename,
+                                                        NULL);
+            g_free(filename);
+
+            prestodelta_zck_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
+            prestodelta_cr_zck_file = cr_xmlfile_sopen_prestodelta(prestodelta_zck_filename,
+                                                                   CR_CW_ZCK_COMPRESSION,
+                                                                   prestodelta_zck_stat,
+                                                                   &tmp_err);
+            if (!prestodelta_cr_zck_file) {
+                g_critical("Cannot open %s: %s", prestodelta_zck_filename, tmp_err->message);
+                g_clear_error(&tmp_err);
+                goto deltaerror;
+            }
+        }
 
         ret = cr_deltarpms_generate_prestodelta_file(
                         outdeltadir,
                         prestodelta_cr_file,
+                        prestodelta_cr_zck_file,
                         //cmd_options->checksum_type,
                         CR_CHECKSUM_SHA256, // Createrepo always uses SHA256
                         cmd_options->workers,
@@ -1375,19 +1448,29 @@ main(int argc, char **argv)
 
         cr_xmlfile_close(prestodelta_cr_file, NULL);
         prestodelta_cr_file = NULL;
+        cr_xmlfile_close(prestodelta_cr_zck_file, NULL);
+        prestodelta_cr_zck_file = NULL;
 
         // 4) Prepare repomd record
         prestodelta_rec = cr_repomd_record_new("prestodelta", prestodelta_xml_filename);
         cr_repomd_record_load_contentstat(prestodelta_rec, prestodelta_stat);
         cr_repomd_record_fill(prestodelta_rec, cmd_options->repomd_checksum_type, NULL);
+        if(prestodelta_zck_stat) {
+            prestodelta_zck_rec = cr_repomd_record_new("prestodelta_zck", prestodelta_zck_filename);
+            cr_repomd_record_load_contentstat(prestodelta_zck_rec, prestodelta_zck_stat);
+            cr_repomd_record_fill(prestodelta_zck_rec, cmd_options->repomd_checksum_type, NULL);
+        }
 
 deltaerror:
         // 5) Cleanup
         g_hash_table_destroy(ht_oldpackagedirs);
         g_free(outdeltadir);
         g_free(prestodelta_xml_filename);
+        g_free(prestodelta_zck_filename);
         cr_xmlfile_close(prestodelta_cr_file, NULL);
+        cr_xmlfile_close(prestodelta_cr_zck_file, NULL);
         cr_contentstat_free(prestodelta_stat, NULL);
+        cr_contentstat_free(prestodelta_zck_stat, NULL);
         cr_slist_free_full(user_data.deltatargetpackages,
                        (GDestroyNotify) cr_deltatargetpackage_free);
     }
@@ -1406,8 +1489,11 @@ deltaerror:
         cr_repomd_record_rename_file(oth_zck_rec, NULL);
         cr_repomd_record_rename_file(groupfile_rec, NULL);
         cr_repomd_record_rename_file(compressed_groupfile_rec, NULL);
+        cr_repomd_record_rename_file(compressed_groupfile_zck_rec, NULL);
         cr_repomd_record_rename_file(updateinfo_rec, NULL);
+        cr_repomd_record_rename_file(updateinfo_zck_rec, NULL);
         cr_repomd_record_rename_file(prestodelta_rec, NULL);
+        cr_repomd_record_rename_file(prestodelta_zck_rec, NULL);
     }
 
     // Gen xml
@@ -1422,8 +1508,11 @@ deltaerror:
     cr_repomd_set_record(repomd_obj, oth_zck_rec);
     cr_repomd_set_record(repomd_obj, groupfile_rec);
     cr_repomd_set_record(repomd_obj, compressed_groupfile_rec);
+    cr_repomd_set_record(repomd_obj, compressed_groupfile_zck_rec);
     cr_repomd_set_record(repomd_obj, updateinfo_rec);
+    cr_repomd_set_record(repomd_obj, updateinfo_zck_rec);
     cr_repomd_set_record(repomd_obj, prestodelta_rec);
+    cr_repomd_set_record(repomd_obj, prestodelta_zck_rec);
 
     int i = 0;
     while (cmd_options->repo_tags && cmd_options->repo_tags[i])

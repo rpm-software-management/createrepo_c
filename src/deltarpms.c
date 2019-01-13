@@ -846,6 +846,7 @@ gen_newpackage_xml_chunk(const char *strnevra,
 gboolean
 cr_deltarpms_generate_prestodelta_file(const gchar *drpmsdir,
                                        cr_XmlFile *f,
+                                       cr_XmlFile *zck_f,
                                        cr_ChecksumType checksum_type,
                                        gint workers,
                                        const gchar *prefix_to_strip,
@@ -917,6 +918,19 @@ cr_deltarpms_generate_prestodelta_file(const gchar *drpmsdir,
 
         chunk = gen_newpackage_xml_chunk(nevra, (GSList *) value);
         cr_xmlfile_add_chunk(f, chunk, NULL);
+
+        /* Write out zchunk file */
+        if(zck_f) {
+            cr_xmlfile_add_chunk(zck_f, chunk, NULL);
+            cr_end_chunk(zck_f->f, &tmp_err);
+            if (tmp_err) {
+                g_free(chunk);
+                g_propagate_prefixed_error(err, tmp_err,
+                    "Cannot create pool for prestodelta file generation: ");
+                ret = FALSE;
+                goto exit;
+            }
+        }
         g_free(chunk);
     }
 

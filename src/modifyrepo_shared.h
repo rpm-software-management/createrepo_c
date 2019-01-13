@@ -47,9 +47,12 @@ typedef struct {
     gboolean unique_md_filenames;
     cr_ChecksumType checksum_type;
     gchar *new_name;
+    gboolean zck;
+    gchar *zck_dict_dir;
 
     // Internal use
     gchar *repopath;
+    gchar *zck_repopath;
     gchar *dst_fn;
     GStringChunk *chunk;
 

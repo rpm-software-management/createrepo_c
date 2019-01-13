@@ -54,6 +54,8 @@ typedef struct {
     gboolean verbose;
     gchar *batchfile;
     gchar *new_name;
+    gboolean zck;
+    gchar *zck_dict_dir;
 
 } RawCmdOptions;
 
@@ -92,6 +94,12 @@ parse_arguments(int *argc, char ***argv, RawCmdOptions *options, GError **err)
           "Batch file.", "BATCHFILE" },
         { "new-name", 0, 0, G_OPTION_ARG_STRING, &(options->new_name),
           "New filename for the file", "NEWFILENAME"},
+#ifdef WITH_ZCHUNK
+        { "zck", 0, 0, G_OPTION_ARG_NONE, &(options->zck),
+          "Generate zchunk files as well as the standard repodata.", NULL },
+        { "zck-dict-dir", 0, 0, G_OPTION_ARG_FILENAME, &(options->zck_dict_dir),
+          "Directory containing compression dictionaries for use by zchunk", "ZCK_DICT_DIR" },
+#endif
         { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL },
 
     };
@@ -109,6 +117,8 @@ parse_arguments(int *argc, char ***argv, RawCmdOptions *options, GError **err)
     options->verbose = FALSE;
     options->batchfile = NULL;
     options->new_name = NULL;
+    options->zck = FALSE;
+    options->zck_dict_dir = NULL;
 
     GOptionContext *context;
     context = g_option_context_new("<input metadata> <output repodata>\n"
@@ -165,6 +175,15 @@ check_arguments(RawCmdOptions *options, GError **err)
         return FALSE;
     }
 
+    // Zchunk options
+    if(options->zck_dict_dir && !options->zck) {
+        g_set_error(err, ERR_DOMAIN, CRE_ERROR,
+                    "Cannot use --zck-dict-dir without setting --zck");
+        return FALSE;
+    }
+    if (options->zck_dict_dir)
+        options->zck_dict_dir = cr_normalize_dir_path(options->zck_dict_dir);
+
     return TRUE;
 }
 
@@ -217,6 +236,8 @@ cmd_options_to_task(GSList **modifyrepotasks,
     task->checksum_type = cr_checksum_type(options->checksum);
     task->new_name = cr_safe_string_chunk_insert_null(task->chunk,
                                                       options->new_name);
+    task->zck = options->zck;
+    task->zck_dict_dir = options->zck_dict_dir;
 
     *modifyrepotasks = g_slist_append(*modifyrepotasks, task);
 

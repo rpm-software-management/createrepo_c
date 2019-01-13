@@ -432,6 +432,8 @@ cr_compress_file_with_stat(const char *src,
                            const char *in_dst,
                            cr_CompressionType compression,
                            cr_ContentStat *stat,
+                           const char *zck_dict_dir,
+                           gboolean zck_auto_chunk,
                            GError **err)
 {
     int ret = CRE_OK;
@@ -476,12 +478,52 @@ cr_compress_file_with_stat(const char *src,
         goto compress_file_cleanup;
     }
 
+    _cleanup_free_ gchar *dict = NULL;
+    size_t dict_size = 0;
+    if(compression == CR_CW_ZCK_COMPRESSION && zck_dict_dir) {
+        /* Find zdict */
+        _cleanup_free_ gchar *file_basename = NULL;
+        if(in_dst) {
+            _cleanup_free_ gchar *dict_base = NULL;
+            if(g_str_has_suffix(in_dst, ".zck"))
+                dict_base = g_strndup(in_dst, strlen(in_dst)-4);
+            else
+                dict_base = g_strdup(in_dst);
+            file_basename = g_path_get_basename(dict_base);
+        } else {
+            file_basename = g_path_get_basename(src);
+        }
+        _cleanup_free_ gchar *dict_file = cr_get_dict_file(zck_dict_dir, file_basename);
+
+        /* Read dictionary from file */
+        if(dict_file && !g_file_get_contents(dict_file, &dict,
+                                             &dict_size, &tmp_err)) {
+            g_set_error(err, ERR_DOMAIN, CRE_IO,
+                        "Error reading zchunk dict %s: %s",
+                        dict_file, tmp_err->message);
+            ret = CRE_IO;
+            goto compress_file_cleanup;
+        }
+    }
+
     new = cr_sopen(dst, CR_CW_MODE_WRITE, compression, stat, &tmp_err);
     if (tmp_err) {
         g_debug("%s: Cannot open destination file %s", __func__, dst);
         g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", dst);
         ret = CRE_IO;
         goto compress_file_cleanup;
+    }
+    if(compression == CR_CW_ZCK_COMPRESSION) {
+        if(dict && cr_set_dict(new, dict, dict_size, &tmp_err) != CRE_OK) {
+            ret = tmp_err->code;
+            g_propagate_prefixed_error(err, tmp_err, "Unable to set zdict for %s: ", dst);
+            return ret;
+        }
+        if(zck_auto_chunk && cr_set_autochunk(new, TRUE, &tmp_err) != CRE_OK) {
+            ret = tmp_err->code;
+            g_propagate_prefixed_error(err, tmp_err, "Unable to set auto-chunking for %s: ", dst);
+            return ret;
+        }
     }
 
     while ((readed = fread(buf, 1, BUFFER_SIZE, orig)) > 0) {

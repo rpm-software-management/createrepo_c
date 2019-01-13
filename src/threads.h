@@ -76,6 +76,10 @@ typedef struct {
         Type of compression to use */
     cr_ContentStat *stat; /*!<
         Stats of compressed file or NULL */
+    char *zck_dict_dir; /*!<
+        Location of zchunk dictionaries */
+    gboolean zck_auto_chunk; /*!<
+        Whether zchunk file should be auto-chunked */
     int delsrc; /*!<
         Indicate if delete source file after successful compression. */
     GError *err; /*!<
@@ -106,6 +110,8 @@ cr_compressiontask_new(const char *src,
                        const char *dst,
                        cr_CompressionType compression_type,
                        cr_ChecksumType checksum_type,
+                       const char *zck_dict_dir,
+                       gboolean zck_auto_chunk,
                        int delsrc,
                        GError **err);
 

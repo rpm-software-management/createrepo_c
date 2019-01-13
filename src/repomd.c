@@ -26,6 +26,7 @@
 #include <assert.h>
 #include <libxml/encoding.h>
 #include <libxml/xmlwriter.h>
+#include "cleanup.h"
 #include "error.h"
 #include "misc.h"
 #include "checksum.h"
@@ -340,6 +341,7 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
                                    cr_RepomdRecord *crecord,
                                    cr_ChecksumType checksum_type,
                                    cr_CompressionType record_compression,
+                                   const char *zck_dict_dir,
                                    GError **err)
 {
     int ret = CRE_OK;
@@ -409,6 +411,27 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
         return ret;
     }
 
+    _cleanup_free_ gchar *dict = NULL;
+    size_t dict_size = 0;
+    if(record_compression == CR_CW_ZCK_COMPRESSION && zck_dict_dir) {
+        /* Find zdict */
+        _cleanup_free_ gchar *file_basename = NULL;
+        _cleanup_free_ gchar *dict_base = NULL;
+        if(g_str_has_suffix(cpath, ".zck"))
+            dict_base = g_strndup(cpath, strlen(cpath)-4);
+        else
+            dict_base = g_strdup(cpath);
+        file_basename = g_path_get_basename(dict_base); 
+        _cleanup_free_ gchar *dict_file = cr_get_dict_file(zck_dict_dir, file_basename);
+        /* Read dictionary from file */
+        if(dict_file && !g_file_get_contents(dict_file, &dict,
+                                             &dict_size, &tmp_err)) {
+            ret = tmp_err->code;
+            g_propagate_prefixed_error(err, tmp_err, "Error reading zchunk dict %s:", dict_file);
+            return ret;
+        }
+    }
+
     cw_compressed = cr_open(cpath,
                             CR_CW_MODE_WRITE,
                             record_compression,
@@ -417,6 +440,19 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
         ret = tmp_err->code;
         g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", cpath);
         return ret;
+    }
+
+    if(record_compression == CR_CW_ZCK_COMPRESSION) {
+        if(dict && cr_set_dict(cw_compressed, dict, dict_size, &tmp_err) != CRE_OK) {
+            ret = tmp_err->code;
+            g_propagate_prefixed_error(err, tmp_err, "Unable to set zdict for %s: ", cpath);
+            return ret;
+        }
+        if(cr_set_autochunk(cw_compressed, TRUE, &tmp_err) != CRE_OK) {
+            ret = tmp_err->code;
+            g_propagate_prefixed_error(err, tmp_err, "Unable to set auto-chunking for %s: ", cpath);
+            return ret;
+        }
     }
 
     while ((readed = cr_read(cw_plain, buf, BUFFER_SIZE, &tmp_err)) > 0) {

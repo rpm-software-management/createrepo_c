@@ -50,6 +50,64 @@ cr_modifyrepotask_free(cr_ModifyRepoTask *task)
     g_free(task);
 }
 
+static gchar *
+write_file(gchar *repopath, cr_ModifyRepoTask *task,
+           cr_CompressionType compress_type, GError **err)
+{
+    const gchar *suffix = NULL;
+
+    if (task->compress)
+        suffix = cr_compression_suffix(compress_type);
+
+    gchar *src_fn = task->path;  // Shortcut
+    gchar *dst_fn = NULL;
+
+    // Prepare dst filename - Get basename
+    _cleanup_free_ gchar *filename = NULL;
+    if (task->new_name)
+        filename = g_path_get_basename(task->new_name);
+    else
+        filename = g_path_get_basename(src_fn);
+
+    // Prepare dst filename - Add suffix
+    if (suffix) {
+        gchar *tmp_fn = g_strconcat(filename, suffix, NULL);
+        g_free(filename);
+        filename = tmp_fn;
+    }
+
+    // Prepare dst filename - Full path
+    dst_fn = g_build_filename(repopath, filename, NULL);
+    task->dst_fn = g_string_chunk_insert(task->chunk, dst_fn);
+
+    // Check if the src and dst is the same file
+    gboolean identical = FALSE;
+    if (!cr_identical_files(src_fn, dst_fn, &identical, err))
+        return NULL;
+
+    if (identical) {
+        // Source and destination file is the same file
+        g_debug("Using already existing file: %s", dst_fn);
+    } else {
+        // Check if the file already exist
+        if (g_file_test(dst_fn, G_FILE_TEST_EXISTS)) {
+            g_warning("Destination file \"%s\" already exists and will be "
+                      "overwritten", dst_fn);
+        }
+
+        // Do the copy
+        g_debug("%s: Copy & compress operation %s -> %s",
+                 __func__, src_fn, dst_fn);
+
+        if (cr_compress_file(src_fn, dst_fn, compress_type,
+                             task->zck_dict_dir, TRUE, err) != CRE_OK) {
+            g_debug("%s: Copy & compress operation failed", __func__);
+            return NULL;
+        }
+    }
+    return dst_fn;
+}
+
 gboolean
 cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
 {
@@ -177,67 +235,37 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
     // Add (copy) new metadata to repodata/ directory
     for (GSList *elem = modifyrepotasks; elem; elem = g_slist_next(elem)) {
         cr_ModifyRepoTask *task = elem->data;
+        _cleanup_free_ gchar *dst_fn = NULL;
 
         if (task->remove)
             // Skip removing task
             continue;
 
-        gchar *src_fn = task->path;  // Shortcut
-        _cleanup_free_ gchar *dst_fn = NULL;
-        const gchar *suffix = NULL;
         cr_CompressionType compress_type = CR_CW_NO_COMPRESSION;
 
-        if (task->compress) {
+        if (task->compress)
             compress_type = task->compress_type;
-            suffix = cr_compression_suffix(compress_type);
-        }
 
-        // Prepare dst filename - Get basename
-        _cleanup_free_ gchar *filename = NULL;
-        if (task->new_name)
-            filename = g_path_get_basename(task->new_name);
-        else
-            filename = g_path_get_basename(src_fn);
-
-        // Prepare dst filename - Add suffix
-        if (suffix) {
-            gchar *tmp_fn = g_strconcat(filename, suffix, NULL);
-            g_free(filename);
-            filename = tmp_fn;
-        }
-
-        // Prepare dst filename - Full path
-        dst_fn = g_build_filename(repopath, filename, NULL);
-        task->dst_fn = g_string_chunk_insert(task->chunk, dst_fn);
-
-        // Check if the src and dst is the same file
-        gboolean identical = FALSE;
-        if (!cr_identical_files(src_fn, dst_fn, &identical, err))
+        dst_fn = write_file(repopath, task, compress_type, err);
+        if(dst_fn == NULL) {
+            cr_repomd_free(repomd);
+            g_free(repomd_path);
             return FALSE;
-
-        if (identical) {
-            // Source and destination file is the same file
-            g_debug("Using already existing file: %s", dst_fn);
-        } else {
-            // Check if the file already exist
-            if (g_file_test(dst_fn, G_FILE_TEST_EXISTS)) {
-                g_warning("Destination file \"%s\" already exists and will be "
-                          "overwritten", dst_fn);
-            }
-
-            // Do the copy
-            g_debug("%s: Copy & compress operation %s -> %s",
-                     __func__, src_fn, dst_fn);
-
-            if (cr_compress_file(src_fn, dst_fn, compress_type, err) != CRE_OK) {
-                g_debug("%s: Copy & compress operation failed", __func__);
+        }
+        
+        task->repopath = cr_safe_string_chunk_insert_null(task->chunk, dst_fn);
+#ifdef WITH_ZCHUNK
+        if(task->zck) {
+            free(dst_fn);
+            dst_fn = write_file(repopath, task, CR_CW_ZCK_COMPRESSION, err);
+            if(dst_fn == NULL) {
                 cr_repomd_free(repomd);
                 g_free(repomd_path);
                 return FALSE;
             }
+            task->zck_repopath = cr_safe_string_chunk_insert_null(task->chunk, dst_fn);
         }
-
-        task->repopath = cr_safe_string_chunk_insert_null(task->chunk, dst_fn);
+#endif
     }
 
     // Prepare new repomd records
@@ -260,11 +288,25 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
                                             task->checksum_type, NULL);
         g_thread_pool_push(fill_pool, filltask, NULL);
 
-        repomdrecords = g_slist_append(repomdrecords, rec);
+        repomdrecords = g_slist_append(repomdrecords, rec); 
+
         if (task->unique_md_filenames)
             repomdrecords_uniquefn = g_slist_prepend(repomdrecords_uniquefn, rec);
         repomdrecordfilltasks = g_slist_prepend(repomdrecordfilltasks,
                                                 filltask);
+        if(task->zck) {
+            _cleanup_free_ gchar *type = g_strconcat(task->type, "_zck", NULL);
+            rec = cr_repomd_record_new(type, task->zck_repopath);
+            filltask = cr_repomdrecordfilltask_new(rec, task->checksum_type, NULL);
+            g_thread_pool_push(fill_pool, filltask, NULL);
+
+            repomdrecords = g_slist_append(repomdrecords, rec);
+
+            if (task->unique_md_filenames)
+                repomdrecords_uniquefn = g_slist_prepend(repomdrecords_uniquefn, rec);
+            repomdrecordfilltasks = g_slist_prepend(repomdrecordfilltasks,
+                                                    filltask);
+        }
     }
 
     g_thread_pool_free(fill_pool, FALSE, TRUE); // Wait
@@ -289,6 +331,16 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
                     __func__, task->type);
             recordstoremove = g_slist_prepend(recordstoremove, rec);
             cr_repomd_detach_record(repomd, rec);
+            if(task->zck) {
+                _cleanup_free_ gchar *type = g_strconcat(task->type, "_zck", NULL);
+                cr_RepomdRecord *rec = cr_repomd_get_record(repomd, type);
+                if (rec) {
+                    g_debug("%s: Removing record \"%s\" from repomd.xml",
+                            __func__, type);
+                    recordstoremove = g_slist_prepend(recordstoremove, rec);
+                    cr_repomd_detach_record(repomd, rec);
+                }
+            }
         }
     }
 

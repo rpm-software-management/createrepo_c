@@ -1566,7 +1566,7 @@ cr_get_dict_file(const gchar *dir, const gchar *file)
     assert(dict_file);
 
     snprintf(dict_file, strlen(file) + 7, "%s.zdict", file);
-    gchar *full_path = g_build_path("/", dir, dict_file);
+    gchar *full_path = g_build_path("/", dir, dict_file, NULL);
     assert(full_path);
 
     free(dict_file);

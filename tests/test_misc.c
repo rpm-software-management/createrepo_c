@@ -531,8 +531,8 @@ compressfile_test_text_file(Copyfiletest *copyfiletest,
     GError *tmp_err = NULL;
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    ret = cr_compress_file(TEST_TEXT_FILE, copyfiletest->dst_file,
-                           CR_CW_GZ_COMPRESSION, &tmp_err);
+    ret = cr_compress_file(TEST_TEXT_FILE, &(copyfiletest->dst_file),
+                           CR_CW_GZ_COMPRESSION, NULL, FALSE, &tmp_err);
     g_assert(!tmp_err);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
@@ -556,8 +556,9 @@ compressfile_with_stat_test_text_file(Copyfiletest *copyfiletest,
     g_assert(!tmp_err);
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    ret = cr_compress_file_with_stat(TEST_TEXT_FILE, copyfiletest->dst_file,
-                                     CR_CW_GZ_COMPRESSION, stat, &tmp_err);
+    ret = cr_compress_file_with_stat(TEST_TEXT_FILE, &copyfiletest->dst_file,
+                                     CR_CW_GZ_COMPRESSION, stat, NULL, FALSE,
+                                     &tmp_err);
     g_assert(!tmp_err);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));

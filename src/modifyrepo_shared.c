@@ -90,7 +90,8 @@ write_file(gchar *repopath, cr_ModifyRepoTask *task,
         g_debug("Using already existing file: %s", dst_fn);
     } else {
         // Check if the file already exist
-        if (g_file_test(dst_fn, G_FILE_TEST_EXISTS)) {
+        if (g_file_test(dst_fn, G_FILE_TEST_EXISTS) &&
+            g_str_has_suffix(dst_fn, cr_compression_suffix(compress_type))) {
             g_warning("Destination file \"%s\" already exists and will be "
                       "overwritten", dst_fn);
         }
@@ -99,7 +100,7 @@ write_file(gchar *repopath, cr_ModifyRepoTask *task,
         g_debug("%s: Copy & compress operation %s -> %s",
                  __func__, src_fn, dst_fn);
 
-        if (cr_compress_file(src_fn, dst_fn, compress_type,
+        if (cr_compress_file(src_fn, &dst_fn, compress_type,
                              task->zck_dict_dir, TRUE, err) != CRE_OK) {
             g_debug("%s: Copy & compress operation failed", __func__);
             return NULL;

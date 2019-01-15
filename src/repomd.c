@@ -357,7 +357,7 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
     CR_FILE *cw_compressed;
     gint64 gf_size = G_GINT64_CONSTANT(-1), cgf_size = G_GINT64_CONSTANT(-1);
     gint64 gf_time = G_GINT64_CONSTANT(-1), cgf_time = G_GINT64_CONSTANT(-1);
-    gint64 gf_hdrsize = G_GINT64_CONSTANT(-1);
+    gint64 cgf_hdrsize = G_GINT64_CONSTANT(-1);
     struct stat gf_stat, cgf_stat;
     const char *checksum_str = cr_checksum_name_str(checksum_type);
     const char *hdr_checksum_str = NULL;
@@ -401,9 +401,13 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
 
     // Compress file + get size of non compressed file
 
+    int mode = CR_CW_NO_COMPRESSION;
+    if(record_compression == CR_CW_ZCK_COMPRESSION)
+        mode = CR_CW_AUTO_DETECT_COMPRESSION;
+
     cw_plain = cr_open(path,
                        CR_CW_MODE_READ,
-                       CR_CW_NO_COMPRESSION,
+                       mode,
                        &tmp_err);
     if (!cw_plain) {
         ret = tmp_err->code;
@@ -432,10 +436,12 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
         }
     }
 
-    cw_compressed = cr_open(cpath,
-                            CR_CW_MODE_WRITE,
-                            record_compression,
-                            &tmp_err);
+    _cleanup_free_ cr_ContentStat *out_stat = g_malloc0(sizeof(cr_ContentStat));
+    cw_compressed = cr_sopen(cpath,
+                             CR_CW_MODE_WRITE,
+                             record_compression,
+                             out_stat,
+                             &tmp_err);
     if (!cw_compressed) {
         ret = tmp_err->code;
         g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", cpath);
@@ -523,7 +529,11 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
 
     cgf_size = cgf_stat.st_size;
     cgf_time = cgf_stat.st_mtime;
-
+    if(out_stat->hdr_checksum) {
+        cgf_hdrsize = out_stat->hdr_size;
+        hdr_checksum_str = cr_checksum_name_str(out_stat->hdr_checksum_type);
+        hdrchecksum = out_stat->hdr_checksum;
+    }
 
     // Results
 
@@ -552,7 +562,7 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
     crecord->timestamp = cgf_time;
     crecord->size = cgf_size;
     crecord->size_open = gf_size;
-    crecord->size_header = gf_hdrsize;
+    crecord->size_header = cgf_hdrsize;
 
 end:
     g_free(checksum);

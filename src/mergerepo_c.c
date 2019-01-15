@@ -1509,8 +1509,11 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_RepomdRecord *oth_zck_rec              = NULL;
     cr_RepomdRecord *groupfile_rec            = NULL;
     cr_RepomdRecord *compressed_groupfile_rec = NULL;
+    cr_RepomdRecord *groupfile_zck_rec        = NULL;
     cr_RepomdRecord *update_info_rec          = NULL;
+    cr_RepomdRecord *update_info_zck_rec      = NULL;
     cr_RepomdRecord *pkgorigins_rec           = NULL;
+    cr_RepomdRecord *pkgorigins_zck_rec       = NULL;
 
 
     // XML
@@ -1555,6 +1558,14 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                                            CR_CHECKSUM_SHA256,
                                            cmd_options->groupfile_compression_type,
                                            NULL, NULL);
+        if(cmd_options->zck_compression) {
+            groupfile_zck_rec = cr_repomd_record_new("group_zck", groupfile);
+            cr_repomd_record_compress_and_fill(groupfile_rec,
+                                               groupfile_zck_rec,
+                                               CR_CHECKSUM_SHA256,
+                                               CR_CW_ZCK_COMPRESSION,
+                                               NULL, NULL);
+        }
     }
 
 
@@ -1563,6 +1574,14 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     if (!cmd_options->noupdateinfo) {
         update_info_rec = cr_repomd_record_new("updateinfo", update_info_filename);
         cr_repomd_record_fill(update_info_rec, CR_CHECKSUM_SHA256, NULL);
+        if(cmd_options->zck_compression) {
+            update_info_zck_rec = cr_repomd_record_new("updateinfo_zck", update_info_filename);
+            cr_repomd_record_compress_and_fill(update_info_rec,
+                                               update_info_zck_rec,
+                                               CR_CHECKSUM_SHA256,
+                                               CR_CW_ZCK_COMPRESSION,
+                                               NULL, NULL);
+        }
     }
 
 
@@ -1572,6 +1591,14 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         gchar *pkgorigins_path = g_strconcat(cmd_options->tmp_out_repo, "pkgorigins.gz", NULL);
         pkgorigins_rec = cr_repomd_record_new("origin", pkgorigins_path);
         cr_repomd_record_fill(pkgorigins_rec, CR_CHECKSUM_SHA256, NULL);
+        if(cmd_options->zck_compression) {
+            pkgorigins_zck_rec = cr_repomd_record_new("origin_zck", pkgorigins_path);
+            cr_repomd_record_compress_and_fill(pkgorigins_rec,
+                                               pkgorigins_zck_rec,
+                                               CR_CHECKSUM_SHA256,
+                                               CR_CW_ZCK_COMPRESSION,
+                                               NULL, NULL);
+        }
         g_free(pkgorigins_path);
     }
 
@@ -1752,8 +1779,11 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         cr_repomd_record_rename_file(oth_zck_rec, NULL);
         cr_repomd_record_rename_file(groupfile_rec, NULL);
         cr_repomd_record_rename_file(compressed_groupfile_rec, NULL);
+        cr_repomd_record_rename_file(groupfile_zck_rec, NULL);
         cr_repomd_record_rename_file(update_info_rec, NULL);
+        cr_repomd_record_rename_file(update_info_zck_rec, NULL);
         cr_repomd_record_rename_file(pkgorigins_rec, NULL);
+        cr_repomd_record_rename_file(pkgorigins_zck_rec, NULL);
     }
 
 
@@ -1771,8 +1801,11 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_repomd_set_record(repomd_obj, oth_zck_rec);
     cr_repomd_set_record(repomd_obj, groupfile_rec);
     cr_repomd_set_record(repomd_obj, compressed_groupfile_rec);
+    cr_repomd_set_record(repomd_obj, groupfile_zck_rec);
     cr_repomd_set_record(repomd_obj, update_info_rec);
+    cr_repomd_set_record(repomd_obj, update_info_zck_rec);
     cr_repomd_set_record(repomd_obj, pkgorigins_rec);
+    cr_repomd_set_record(repomd_obj, pkgorigins_zck_rec);
 
     char *repomd_xml = cr_xml_dump_repomd(repomd_obj, NULL);
 

@@ -837,28 +837,28 @@ main(int argc, char **argv)
     gchar *fil_dict_file = NULL;
     gchar *oth_dict_file = NULL;
 
-    if(cmd_options->zck_dict_dir) {
+    if (cmd_options->zck_dict_dir) {
         pri_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
                                          "primary.xml");
         fil_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
                                          "filelists.xml");
         oth_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
                                          "other.xml");
-        if(pri_dict_file && !g_file_get_contents(pri_dict_file, &pri_dict,
+        if (pri_dict_file && !g_file_get_contents(pri_dict_file, &pri_dict,
                                                  &pri_dict_size, &tmp_err)) {
             g_critical("Error reading zchunk primary dict %s: %s",
                        pri_dict_file, tmp_err->message);
             g_clear_error(&tmp_err);
             exit(EXIT_FAILURE);
         }
-        if(fil_dict_file && !g_file_get_contents(fil_dict_file, &fil_dict,
+        if (fil_dict_file && !g_file_get_contents(fil_dict_file, &fil_dict,
                                                  &fil_dict_size, &tmp_err)) {
             g_critical("Error reading zchunk filelists dict %s: %s",
                        fil_dict_file, tmp_err->message);
             g_clear_error(&tmp_err);
             exit(EXIT_FAILURE);
         }
-        if(oth_dict_file && !g_file_get_contents(oth_dict_file, &oth_dict,
+        if (oth_dict_file && !g_file_get_contents(oth_dict_file, &oth_dict,
                                                  &oth_dict_size, &tmp_err)) {
             g_critical("Error reading zchunk other dict %s: %s",
                        oth_dict_file, tmp_err->message);
@@ -866,7 +866,7 @@ main(int argc, char **argv)
             exit(EXIT_FAILURE);
         }
     }
-    if(cmd_options->zck_compression) {
+    if (cmd_options->zck_compression) {
         g_debug("Creating .xml.zck files");
 
         pri_zck_filename = g_strconcat(tmp_out_repo, "/primary.xml.zck", NULL);
@@ -1013,7 +1013,7 @@ main(int argc, char **argv)
     g_thread_pool_free(pool, FALSE, TRUE);
 
     // if there were any errors, exit nonzero
-    if( cmd_options->error_exit_val && user_data.had_errors ) {
+    if ( cmd_options->error_exit_val && user_data.had_errors ) {
 	exit_val = 2;
     }
 
@@ -1253,7 +1253,7 @@ main(int argc, char **argv)
     }
 
     // Zchunk
-    if(cmd_options->zck_compression) {
+    if (cmd_options->zck_compression) {
         // Prepare repomd records
         pri_zck_rec = cr_repomd_record_new("primary_zck", pri_zck_filename);
         fil_zck_rec = cr_repomd_record_new("filelists_zck", fil_zck_filename);
@@ -1318,7 +1318,7 @@ main(int argc, char **argv)
                 exit(EXIT_FAILURE);
             }
             /* Only create updateinfo_zck if updateinfo isn't already zchunk */
-            if(com_type != CR_CW_ZCK_COMPRESSION) {
+            if (com_type != CR_CW_ZCK_COMPRESSION) {
                 updateinfo_zck_rec = cr_repomd_record_new("updateinfo_zck", updateinfo);
                 cr_repomd_record_compress_and_fill(updateinfo_rec,
                                       updateinfo_zck_rec,
@@ -1409,7 +1409,7 @@ main(int argc, char **argv)
             g_clear_error(&tmp_err);
             goto deltaerror;
         }
-        if(cmd_options->zck_compression && prestodelta_compression != CR_CW_ZCK_COMPRESSION) {
+        if (cmd_options->zck_compression && prestodelta_compression != CR_CW_ZCK_COMPRESSION) {
             filename = g_strconcat("prestodelta.xml",
                                    cr_compression_suffix(CR_CW_ZCK_COMPRESSION),
                                    NULL);
@@ -1455,7 +1455,7 @@ main(int argc, char **argv)
         prestodelta_rec = cr_repomd_record_new("prestodelta", prestodelta_xml_filename);
         cr_repomd_record_load_contentstat(prestodelta_rec, prestodelta_stat);
         cr_repomd_record_fill(prestodelta_rec, cmd_options->repomd_checksum_type, NULL);
-        if(prestodelta_zck_stat) {
+        if (prestodelta_zck_stat) {
             prestodelta_zck_rec = cr_repomd_record_new("prestodelta_zck", prestodelta_zck_filename);
             cr_repomd_record_load_contentstat(prestodelta_zck_rec, prestodelta_zck_stat);
             cr_repomd_record_fill(prestodelta_zck_rec, cmd_options->repomd_checksum_type, NULL);

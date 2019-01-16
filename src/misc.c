@@ -470,10 +470,10 @@ cr_compress_file_with_stat(const char *src,
                               NULL);
     } else if (c_suffix && !g_str_has_suffix(dst, c_suffix)) {
         cr_CompressionType old_type = cr_detect_compression(src, &tmp_err);
-        if(tmp_err) {
+        if (tmp_err) {
             g_debug("%s: Unable to detect compression type of %s", __func__, src);
             g_clear_error(&tmp_err);
-        } else if(old_type != CR_CW_NO_COMPRESSION) {
+        } else if (old_type != CR_CW_NO_COMPRESSION) {
             _cleanup_free_ gchar *tmp_file = g_strndup(dst, strlen(dst) - strlen(cr_compression_suffix(old_type)));
             *in_dst = g_strconcat(tmp_file,
                                   c_suffix,
@@ -485,7 +485,7 @@ cr_compress_file_with_stat(const char *src,
     dst = (gchar *) *in_dst;
 
     int mode = CR_CW_NO_COMPRESSION;
-    if(compression == CR_CW_ZCK_COMPRESSION)
+    if (compression == CR_CW_ZCK_COMPRESSION)
         mode = CR_CW_AUTO_DETECT_COMPRESSION;
 
     orig = cr_open(src,
@@ -500,12 +500,12 @@ cr_compress_file_with_stat(const char *src,
 
     _cleanup_free_ gchar *dict = NULL;
     size_t dict_size = 0;
-    if(compression == CR_CW_ZCK_COMPRESSION && zck_dict_dir) {
+    if (compression == CR_CW_ZCK_COMPRESSION && zck_dict_dir) {
         /* Find zdict */
         _cleanup_free_ gchar *file_basename = NULL;
-        if(dst) {
+        if (dst) {
             _cleanup_free_ gchar *dict_base = NULL;
-            if(g_str_has_suffix(dst, ".zck"))
+            if (g_str_has_suffix(dst, ".zck"))
                 dict_base = g_strndup(dst, strlen(dst)-4);
             else
                 dict_base = g_strdup(dst);
@@ -516,7 +516,7 @@ cr_compress_file_with_stat(const char *src,
         _cleanup_free_ gchar *dict_file = cr_get_dict_file(zck_dict_dir, file_basename);
 
         /* Read dictionary from file */
-        if(dict_file && !g_file_get_contents(dict_file, &dict,
+        if (dict_file && !g_file_get_contents(dict_file, &dict,
                                              &dict_size, &tmp_err)) {
             g_set_error(err, ERR_DOMAIN, CRE_IO,
                         "Error reading zchunk dict %s: %s",
@@ -533,13 +533,13 @@ cr_compress_file_with_stat(const char *src,
         ret = CRE_IO;
         goto compress_file_cleanup;
     }
-    if(compression == CR_CW_ZCK_COMPRESSION) {
-        if(dict && cr_set_dict(new, dict, dict_size, &tmp_err) != CRE_OK) {
+    if (compression == CR_CW_ZCK_COMPRESSION) {
+        if (dict && cr_set_dict(new, dict, dict_size, &tmp_err) != CRE_OK) {
             ret = tmp_err->code;
             g_propagate_prefixed_error(err, tmp_err, "Unable to set zdict for %s: ", dst);
             goto compress_file_cleanup;
         }
-        if(zck_auto_chunk && cr_set_autochunk(new, TRUE, &tmp_err) != CRE_OK) {
+        if (zck_auto_chunk && cr_set_autochunk(new, TRUE, &tmp_err) != CRE_OK) {
             ret = tmp_err->code;
             g_propagate_prefixed_error(err, tmp_err, "Unable to set auto-chunking for %s: ", dst);
             goto compress_file_cleanup;
@@ -1570,7 +1570,7 @@ cr_get_dict_file(const gchar *dir, const gchar *file)
     assert(full_path);
 
     free(dict_file);
-    if(!g_file_test(full_path, G_FILE_TEST_EXISTS)) {
+    if (!g_file_test(full_path, G_FILE_TEST_EXISTS)) {
         g_warning("%s: Zchunk dict %s doesn't exist", __func__, full_path);
         free(full_path);
         return NULL;

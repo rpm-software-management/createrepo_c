@@ -920,7 +920,7 @@ cr_deltarpms_generate_prestodelta_file(const gchar *drpmsdir,
         cr_xmlfile_add_chunk(f, chunk, NULL);
 
         /* Write out zchunk file */
-        if(zck_f) {
+        if (zck_f) {
             cr_xmlfile_add_chunk(zck_f, chunk, NULL);
             cr_end_chunk(zck_f->f, &tmp_err);
             if (tmp_err) {

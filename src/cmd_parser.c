@@ -564,7 +564,7 @@ check_arguments(struct CmdOptions *options,
     }
 
     // Zchunk options
-    if(options->zck_dict_dir && !options->zck_compression) {
+    if (options->zck_dict_dir && !options->zck_compression) {
         g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "Cannot use --zck-dict-dir without setting --zck");
         return FALSE;

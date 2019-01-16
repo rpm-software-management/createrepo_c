@@ -110,10 +110,10 @@ cr_repomd_record_copy(const cr_RepomdRecord *orig)
     rec->size_open   = orig->size_open;
     rec->size_header = orig->size_header;
     rec->db_ver      = orig->db_ver;
-    if(orig->checksum_header)
+    if (orig->checksum_header)
         rec->checksum_header      = cr_safe_string_chunk_insert(rec->chunk,
                                                     orig->checksum_header);
-    if(orig->checksum_header_type)
+    if (orig->checksum_header_type)
         rec->checksum_header_type = cr_safe_string_chunk_insert(rec->chunk,
                                                     orig->checksum_header_type);
 
@@ -185,7 +185,7 @@ cr_get_compressed_content_stat(const char *filename,
 
     contentStat* result = g_malloc0(sizeof(contentStat));
     if (result) {
-        if(cwfile->stat) {
+        if (cwfile->stat) {
             result->hdr_checksum = cwfile->stat->hdr_checksum;
             result->hdr_checksum_type = cwfile->stat->hdr_checksum_type;
             result->hdr_size = cwfile->stat->hdr_size;
@@ -286,7 +286,7 @@ cr_repomd_record_fill(cr_RepomdRecord *md,
             md->checksum_open = g_string_chunk_insert(md->chunk, open_stat->checksum);
             if (md->size_open == G_GINT64_CONSTANT(-1))
                 md->size_open = open_stat->size;
-            if(open_stat->hdr_checksum != NULL) {
+            if (open_stat->hdr_checksum != NULL) {
                 const char *hdr_checksum_str = cr_checksum_name_str(open_stat->hdr_checksum_type);
 
                 md->checksum_header_type = g_string_chunk_insert(md->chunk, hdr_checksum_str);
@@ -402,7 +402,7 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
     // Compress file + get size of non compressed file
 
     int mode = CR_CW_NO_COMPRESSION;
-    if(record_compression == CR_CW_ZCK_COMPRESSION)
+    if (record_compression == CR_CW_ZCK_COMPRESSION)
         mode = CR_CW_AUTO_DETECT_COMPRESSION;
 
     cw_plain = cr_open(path,
@@ -417,18 +417,18 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
 
     _cleanup_free_ gchar *dict = NULL;
     size_t dict_size = 0;
-    if(record_compression == CR_CW_ZCK_COMPRESSION && zck_dict_dir) {
+    if (record_compression == CR_CW_ZCK_COMPRESSION && zck_dict_dir) {
         /* Find zdict */
         _cleanup_free_ gchar *file_basename = NULL;
         _cleanup_free_ gchar *dict_base = NULL;
-        if(g_str_has_suffix(cpath, ".zck"))
+        if (g_str_has_suffix(cpath, ".zck"))
             dict_base = g_strndup(cpath, strlen(cpath)-4);
         else
             dict_base = g_strdup(cpath);
         file_basename = g_path_get_basename(dict_base); 
         _cleanup_free_ gchar *dict_file = cr_get_dict_file(zck_dict_dir, file_basename);
         /* Read dictionary from file */
-        if(dict_file && !g_file_get_contents(dict_file, &dict,
+        if (dict_file && !g_file_get_contents(dict_file, &dict,
                                              &dict_size, &tmp_err)) {
             ret = tmp_err->code;
             g_propagate_prefixed_error(err, tmp_err, "Error reading zchunk dict %s:", dict_file);
@@ -448,13 +448,13 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
         return ret;
     }
 
-    if(record_compression == CR_CW_ZCK_COMPRESSION) {
-        if(dict && cr_set_dict(cw_compressed, dict, dict_size, &tmp_err) != CRE_OK) {
+    if (record_compression == CR_CW_ZCK_COMPRESSION) {
+        if (dict && cr_set_dict(cw_compressed, dict, dict_size, &tmp_err) != CRE_OK) {
             ret = tmp_err->code;
             g_propagate_prefixed_error(err, tmp_err, "Unable to set zdict for %s: ", cpath);
             return ret;
         }
-        if(cr_set_autochunk(cw_compressed, TRUE, &tmp_err) != CRE_OK) {
+        if (cr_set_autochunk(cw_compressed, TRUE, &tmp_err) != CRE_OK) {
             ret = tmp_err->code;
             g_propagate_prefixed_error(err, tmp_err, "Unable to set auto-chunking for %s: ", cpath);
             return ret;
@@ -529,7 +529,7 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
 
     cgf_size = cgf_stat.st_size;
     cgf_time = cgf_stat.st_mtime;
-    if(out_stat->hdr_checksum) {
+    if (out_stat->hdr_checksum) {
         cgf_hdrsize = out_stat->hdr_size;
         hdr_checksum_str = cr_checksum_name_str(out_stat->hdr_checksum_type);
         hdrchecksum = out_stat->hdr_checksum;
@@ -552,7 +552,7 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
     crecord->checksum_type = g_string_chunk_insert(crecord->chunk, checksum_str);
     crecord->checksum_open = g_string_chunk_insert(record->chunk, checksum);
     crecord->checksum_open_type = g_string_chunk_insert(record->chunk, checksum_str);
-    if(hdr_checksum_str) {
+    if (hdr_checksum_str) {
         crecord->checksum_header = g_string_chunk_insert(crecord->chunk, hdrchecksum);
         crecord->checksum_header_type = g_string_chunk_insert(crecord->chunk, hdr_checksum_str);
     } else {
@@ -798,7 +798,7 @@ cr_repomd_set_record(cr_Repomd *repomd,
 
     cr_RepomdRecord *delrec = NULL;
     // Remove all existing record of the same type
-    while((delrec = cr_repomd_get_record(repomd, record->type)) != NULL) {
+    while ((delrec = cr_repomd_get_record(repomd, record->type)) != NULL) {
 	cr_repomd_detach_record(repomd, delrec);
 	cr_repomd_record_free(delrec);
     }

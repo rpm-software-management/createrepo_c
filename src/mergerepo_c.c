@@ -425,7 +425,7 @@ check_arguments(struct CmdOptions *options)
     }
 
     // Zchunk options
-    if(options->zck_dict_dir && !options->zck_compression) {
+    if (options->zck_dict_dir && !options->zck_compression) {
         g_critical("Cannot use --zck-dict-dir without setting --zck");
         ret = FALSE;
     }
@@ -1173,28 +1173,28 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     gchar *fil_dict_file = NULL;
     gchar *oth_dict_file = NULL;
 
-    if(cmd_options->zck_dict_dir) {
+    if (cmd_options->zck_dict_dir) {
         pri_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
                                          "primary.xml");
         fil_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
                                          "filelists.xml");
         oth_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
                                          "other.xml");
-        if(pri_dict_file && !g_file_get_contents(pri_dict_file, &pri_dict,
+        if (pri_dict_file && !g_file_get_contents(pri_dict_file, &pri_dict,
                                                  &pri_dict_size, &tmp_err)) {
             g_critical("Error reading zchunk primary dict %s: %s",
                        pri_dict_file, tmp_err->message);
             g_clear_error(&tmp_err);
             exit(EXIT_FAILURE);
         }
-        if(fil_dict_file && !g_file_get_contents(fil_dict_file, &fil_dict,
+        if (fil_dict_file && !g_file_get_contents(fil_dict_file, &fil_dict,
                                                  &fil_dict_size, &tmp_err)) {
             g_critical("Error reading zchunk filelists dict %s: %s",
                        fil_dict_file, tmp_err->message);
             g_clear_error(&tmp_err);
             exit(EXIT_FAILURE);
         }
-        if(oth_dict_file && !g_file_get_contents(oth_dict_file, &oth_dict,
+        if (oth_dict_file && !g_file_get_contents(oth_dict_file, &oth_dict,
                                                  &oth_dict_size, &tmp_err)) {
             g_critical("Error reading zchunk other dict %s: %s",
                        oth_dict_file, tmp_err->message);
@@ -1278,7 +1278,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_xmlfile_set_num_of_pkgs(fil_f, packages, NULL);
     cr_xmlfile_set_num_of_pkgs(oth_f, packages, NULL);
 
-    if(cmd_options->zck_compression) {
+    if (cmd_options->zck_compression) {
         g_debug("Creating .xml.zck files");
 
         pri_zck_filename = g_strconcat(cmd_options->tmp_out_repo,
@@ -1423,7 +1423,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
             g_debug("Writing metadata for %s (%s-%s.%s)",
                     pkg->name, pkg->version, pkg->release, pkg->arch);
 
-            if(cmd_options->zck_compression &&
+            if (cmd_options->zck_compression &&
                (!prev_srpm || !pkg->rpm_sourcerpm ||
                 strlen(prev_srpm) != strlen(pkg->rpm_sourcerpm) ||
                 strncmp(pkg->rpm_sourcerpm, prev_srpm, strlen(prev_srpm)) != 0)) {
@@ -1431,7 +1431,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                 cr_end_chunk(fil_cr_zck->f, NULL);
                 cr_end_chunk(oth_cr_zck->f, NULL);
                 g_free(prev_srpm);
-                if(pkg->rpm_sourcerpm)
+                if (pkg->rpm_sourcerpm)
                     prev_srpm = g_strdup(pkg->rpm_sourcerpm);
                 else
                     prev_srpm = NULL;
@@ -1439,7 +1439,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
             cr_xmlfile_add_chunk(pri_f, (const char *) res.primary, NULL);
             cr_xmlfile_add_chunk(fil_f, (const char *) res.filelists, NULL);
             cr_xmlfile_add_chunk(oth_f, (const char *) res.other, NULL);
-            if(cmd_options->zck_compression) {
+            if (cmd_options->zck_compression) {
                 cr_xmlfile_add_chunk(pri_cr_zck, (const char *) res.primary, NULL);
                 cr_xmlfile_add_chunk(fil_cr_zck, (const char *) res.filelists, NULL);
                 cr_xmlfile_add_chunk(oth_cr_zck, (const char *) res.other, NULL);
@@ -1465,7 +1465,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_xmlfile_close(pri_f, NULL);
     cr_xmlfile_close(fil_f, NULL);
     cr_xmlfile_close(oth_f, NULL);
-    if(cmd_options->zck_compression) {
+    if (cmd_options->zck_compression) {
         cr_xmlfile_close(pri_cr_zck, NULL);
         cr_xmlfile_close(fil_cr_zck, NULL);
         cr_xmlfile_close(oth_cr_zck, NULL);
@@ -1558,7 +1558,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                                            CR_CHECKSUM_SHA256,
                                            cmd_options->groupfile_compression_type,
                                            NULL, NULL);
-        if(cmd_options->zck_compression) {
+        if (cmd_options->zck_compression) {
             groupfile_zck_rec = cr_repomd_record_new("group_zck", groupfile);
             cr_repomd_record_compress_and_fill(groupfile_rec,
                                                groupfile_zck_rec,
@@ -1574,7 +1574,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     if (!cmd_options->noupdateinfo) {
         update_info_rec = cr_repomd_record_new("updateinfo", update_info_filename);
         cr_repomd_record_fill(update_info_rec, CR_CHECKSUM_SHA256, NULL);
-        if(cmd_options->zck_compression) {
+        if (cmd_options->zck_compression) {
             update_info_zck_rec = cr_repomd_record_new("updateinfo_zck", update_info_filename);
             cr_repomd_record_compress_and_fill(update_info_rec,
                                                update_info_zck_rec,
@@ -1591,7 +1591,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         gchar *pkgorigins_path = g_strconcat(cmd_options->tmp_out_repo, "pkgorigins.gz", NULL);
         pkgorigins_rec = cr_repomd_record_new("origin", pkgorigins_path);
         cr_repomd_record_fill(pkgorigins_rec, CR_CHECKSUM_SHA256, NULL);
-        if(cmd_options->zck_compression) {
+        if (cmd_options->zck_compression) {
             pkgorigins_zck_rec = cr_repomd_record_new("origin_zck", pkgorigins_path);
             cr_repomd_record_compress_and_fill(pkgorigins_rec,
                                                pkgorigins_zck_rec,
@@ -1719,7 +1719,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     }
 
     // Zchunk
-    if(cmd_options->zck_compression) {
+    if (cmd_options->zck_compression) {
         // Prepare repomd records
         pri_zck_rec = cr_repomd_record_new("primary_zck", pri_zck_filename);
         fil_zck_rec = cr_repomd_record_new("filelists_zck", fil_zck_filename);

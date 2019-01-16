@@ -296,18 +296,18 @@ cr_ChecksumType
 cr_cktype_from_zck(zckCtx *zck, GError **err)
 {
     int cktype = zck_get_full_hash_type(zck);
-    if(cktype < 0) {
+    if (cktype < 0) {
         g_set_error(err, ERR_DOMAIN, CRE_ZCK,
                     "Unable to read hash from zchunk file");
         return CR_CHECKSUM_UNKNOWN;
     }
-    if(cktype == ZCK_HASH_SHA1)
+    if (cktype == ZCK_HASH_SHA1)
         return CR_CHECKSUM_SHA1;
-    else if(cktype == ZCK_HASH_SHA256)
+    else if (cktype == ZCK_HASH_SHA256)
         return CR_CHECKSUM_SHA256;
     else {
         const char *ckname = zck_hash_name_from_type(cktype);
-        if(ckname == NULL)
+        if (ckname == NULL)
             ckname = "Unknown";
         g_set_error(err, ERR_DOMAIN, CRE_ZCK,
                     "Unknown zchunk checksum type: %s", ckname);
@@ -600,7 +600,7 @@ cr_sopen(const char *filename,
             file->FILE = (void *) zck_create();
             zckCtx *zck = file->FILE;
             if (mode == CR_CW_MODE_WRITE) {
-                if(!file->FILE || !zck_init_write(zck, fd) ||
+                if (!file->FILE || !zck_init_write(zck, fd) ||
                    !zck_set_ioption(zck, ZCK_MANUAL_CHUNK, 1)) {
                     zck_set_log_fd(STDOUT_FILENO);
                     g_set_error(err, ERR_DOMAIN, CRE_IO, "%s",
@@ -654,10 +654,10 @@ cr_sopen(const char *filename,
 
 #ifdef WITH_ZCHUNK
         /* Fill zchunk header_stat with header information */
-        if(mode == CR_CW_MODE_READ && type == CR_CW_ZCK_COMPRESSION) {
+        if (mode == CR_CW_MODE_READ && type == CR_CW_ZCK_COMPRESSION) {
             zckCtx *zck = (zckCtx *)file->FILE;
             cr_ChecksumType cktype = cr_cktype_from_zck(zck, err);
-            if(cktype == CR_CHECKSUM_UNKNOWN) {
+            if (cktype == CR_CHECKSUM_UNKNOWN) {
                 /* Error is already set in cr_cktype_from_zck */
                 g_free(file);
                 return NULL;
@@ -665,7 +665,7 @@ cr_sopen(const char *filename,
             file->stat->hdr_checksum_type = cktype;
             file->stat->hdr_checksum = zck_get_header_digest(zck);
             file->stat->hdr_size = zck_get_header_length(zck);
-            if(*err != NULL || file->stat->hdr_checksum == NULL ||
+            if (*err != NULL || file->stat->hdr_checksum == NULL ||
                file->stat->hdr_size < 0) {
                 g_free(file);
                 return NULL;
@@ -685,7 +685,7 @@ cr_set_dict(CR_FILE *cr_file, const void *dict, unsigned int len, GError **err)
     int ret = CRE_OK;
     assert(!err || *err == NULL);
 
-    if(len == 0)
+    if (len == 0)
         return CRE_OK;
 
     switch (cr_file->type) {
@@ -694,7 +694,7 @@ cr_set_dict(CR_FILE *cr_file, const void *dict, unsigned int len, GError **err)
 #ifdef WITH_ZCHUNK
             zckCtx *zck = (zckCtx *)cr_file->FILE;
             size_t wlen = (size_t)len;
-            if(!zck_set_soption(zck, ZCK_COMP_DICT, dict, wlen)) {
+            if (!zck_set_soption(zck, ZCK_COMP_DICT, dict, wlen)) {
                 ret = CRE_ERROR;
                 g_set_error(err, ERR_DOMAIN, CRE_ZCK,
                             "Error setting dict");
@@ -815,7 +815,7 @@ cr_close(CR_FILE *cr_file, GError **err)
 
                     rc = lzma_code(stream, LZMA_FINISH);
 
-                    if(rc != LZMA_OK && rc != LZMA_STREAM_END) {
+                    if (rc != LZMA_OK && rc != LZMA_STREAM_END) {
                         // Error while coding
                         const char *err_msg;
 
@@ -860,7 +860,7 @@ cr_close(CR_FILE *cr_file, GError **err)
                         break;
                     }
 
-                    if(rc == LZMA_STREAM_END) {
+                    if (rc == LZMA_STREAM_END) {
                         // Everything all right
                         ret = CRE_OK;
                         break;
@@ -880,7 +880,7 @@ cr_close(CR_FILE *cr_file, GError **err)
             zckCtx *zck = (zckCtx *) cr_file->FILE;
             ret = CRE_OK;
             if (cr_file->mode == CR_CW_MODE_WRITE) {
-                if(zck_end_chunk(zck) < 0) {
+                if (zck_end_chunk(zck) < 0) {
                     ret = CRE_ZCK;
                     g_set_error(err, ERR_DOMAIN, CRE_ZCK,
                         "Unable to end final chunk: %s", zck_get_error(zck));
@@ -892,15 +892,15 @@ cr_close(CR_FILE *cr_file, GError **err)
                         "Unable to close zchunk file: %s", zck_get_error(zck));
             }
             cr_ChecksumType cktype = cr_cktype_from_zck(zck, err);
-            if(cktype == CR_CHECKSUM_UNKNOWN) {
+            if (cktype == CR_CHECKSUM_UNKNOWN) {
                 /* Error is already set in cr_cktype_from_zck */
                 break;
             }
-            if(cr_file->stat) {
+            if (cr_file->stat) {
                 cr_file->stat->hdr_checksum_type = cktype;
                 cr_file->stat->hdr_checksum = zck_get_header_digest(zck);
                 cr_file->stat->hdr_size = zck_get_header_length(zck);
-                if((err && *err) || cr_file->stat->hdr_checksum == NULL ||
+                if ((err && *err) || cr_file->stat->hdr_checksum == NULL ||
                    cr_file->stat->hdr_size < 0) {
                     ret = CRE_ZCK;
                     g_set_error(err, ERR_DOMAIN, CRE_ZCK,
@@ -1121,7 +1121,7 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
 #ifdef WITH_ZCHUNK
             zckCtx *zck = (zckCtx *) cr_file->FILE;
             ssize_t rb = zck_read(zck, buffer, len);
-            if(rb < 0) {
+            if (rb < 0) {
                 ret = CR_CW_ERR;
                 g_set_error(err, ERR_DOMAIN, CRE_ZCK, "ZCK: Unable to read: %s",
                             zck_get_error(zck));
@@ -1307,7 +1307,7 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
 #ifdef WITH_ZCHUNK
             zckCtx *zck = (zckCtx *) cr_file->FILE;
             ssize_t wb = zck_write(zck, buffer, len);
-            if(wb < 0) {
+            if (wb < 0) {
                 ret = CR_CW_ERR;
                 g_set_error(err, ERR_DOMAIN, CRE_ZCK,
                             "ZCK: Unable to write: %s", zck_get_error(zck));
@@ -1403,7 +1403,7 @@ cr_end_chunk(CR_FILE *cr_file, GError **err)
 #ifdef WITH_ZCHUNK
             zckCtx *zck = (zckCtx *) cr_file->FILE;
             ssize_t wb = zck_end_chunk(zck);
-            if(wb < 0) {
+            if (wb < 0) {
                 g_set_error(err, ERR_DOMAIN, CRE_ZCK,
                             "Error ending chunk: %s",
                             zck_get_error(zck));
@@ -1454,7 +1454,7 @@ cr_set_autochunk(CR_FILE *cr_file, gboolean auto_chunk, GError **err)
         case (CR_CW_ZCK_COMPRESSION): { // ------------------------------------
 #ifdef WITH_ZCHUNK
             zckCtx *zck = (zckCtx *) cr_file->FILE;
-            if(!zck_set_ioption(zck, ZCK_MANUAL_CHUNK, !auto_chunk)) {
+            if (!zck_set_ioption(zck, ZCK_MANUAL_CHUNK, !auto_chunk)) {
                 g_set_error(err, ERR_DOMAIN, CRE_ZCK,
                             "Error setting auto_chunk: %s",
                             zck_get_error(zck));

@@ -79,7 +79,7 @@ write_pkg(long id,
     udata->prev_srpm = udata->cur_srpm;
     udata->cur_srpm = g_strdup(pkg->rpm_sourcerpm);
     gboolean new_pkg = FALSE;
-    if(g_strcmp0(udata->prev_srpm, udata->cur_srpm) != 0)
+    if (g_strcmp0(udata->prev_srpm, udata->cur_srpm) != 0)
         new_pkg = TRUE;
 
     ++udata->id_pri;
@@ -100,8 +100,8 @@ write_pkg(long id,
             g_clear_error(&tmp_err);
         }
     }
-    if(udata->pri_zck) {
-        if(new_pkg) {
+    if (udata->pri_zck) {
+        if (new_pkg) {
             cr_end_chunk(udata->pri_zck->f, &tmp_err);
             if (tmp_err) {
                 g_critical("Unable to end primary zchunk: %s", tmp_err->message);
@@ -144,7 +144,7 @@ write_pkg(long id,
         }
     }
     if (udata->fil_zck) {
-        if(new_pkg) {
+        if (new_pkg) {
             cr_end_chunk(udata->fil_zck->f, &tmp_err);
             if (tmp_err) {
                 g_critical("Unable to end filelists zchunk: %s", tmp_err->message);
@@ -187,7 +187,7 @@ write_pkg(long id,
         }
     }
     if (udata->oth_zck) {
-        if(new_pkg) {
+        if (new_pkg) {
             cr_end_chunk(udata->oth_zck->f, &tmp_err);
             if (tmp_err) {
                 g_critical("Unable to end other zchunk: %s", tmp_err->message);

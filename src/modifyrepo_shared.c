@@ -248,7 +248,7 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
             compress_type = task->compress_type;
 
         dst_fn = write_file(repopath, task, compress_type, err);
-        if(dst_fn == NULL) {
+        if (dst_fn == NULL) {
             cr_repomd_free(repomd);
             g_free(repomd_path);
             return FALSE;
@@ -256,10 +256,10 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
         
         task->repopath = cr_safe_string_chunk_insert_null(task->chunk, dst_fn);
 #ifdef WITH_ZCHUNK
-        if(task->zck) {
+        if (task->zck) {
             free(dst_fn);
             dst_fn = write_file(repopath, task, CR_CW_ZCK_COMPRESSION, err);
-            if(dst_fn == NULL) {
+            if (dst_fn == NULL) {
                 cr_repomd_free(repomd);
                 g_free(repomd_path);
                 return FALSE;
@@ -295,7 +295,7 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
             repomdrecords_uniquefn = g_slist_prepend(repomdrecords_uniquefn, rec);
         repomdrecordfilltasks = g_slist_prepend(repomdrecordfilltasks,
                                                 filltask);
-        if(task->zck) {
+        if (task->zck) {
             _cleanup_free_ gchar *type = g_strconcat(task->type, "_zck", NULL);
             rec = cr_repomd_record_new(type, task->zck_repopath);
             filltask = cr_repomdrecordfilltask_new(rec, task->checksum_type, NULL);
@@ -332,7 +332,7 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
                     __func__, task->type);
             recordstoremove = g_slist_prepend(recordstoremove, rec);
             cr_repomd_detach_record(repomd, rec);
-            if(task->zck) {
+            if (task->zck) {
                 _cleanup_free_ gchar *type = g_strconcat(task->type, "_zck", NULL);
                 cr_RepomdRecord *rec = cr_repomd_get_record(repomd, type);
                 if (rec) {

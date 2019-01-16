@@ -176,7 +176,7 @@ check_arguments(RawCmdOptions *options, GError **err)
     }
 
     // Zchunk options
-    if(options->zck_dict_dir && !options->zck) {
+    if (options->zck_dict_dir && !options->zck) {
         g_set_error(err, ERR_DOMAIN, CRE_ERROR,
                     "Cannot use --zck-dict-dir without setting --zck");
         return FALSE;

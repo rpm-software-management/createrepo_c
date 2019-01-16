@@ -60,7 +60,7 @@ cr_compressiontask_new(const char *src,
     task->dst    = g_strdup(dst);
     task->type   = compression_type;
     task->stat   = stat;
-    if(zck_dict_dir != NULL)
+    if (zck_dict_dir != NULL)
         task->zck_dict_dir = g_strdup(zck_dict_dir);
     task->zck_auto_chunk = zck_auto_chunk;
     task->delsrc = delsrc;

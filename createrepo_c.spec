@@ -19,7 +19,7 @@
 %bcond_without python2
 %endif
 
-%if 0%{?rhel} || 0%{?fedora} <= 29
+%if 0%{?rhel} || 0%{?fedora} < 29
 %bcond_with zchunk
 %else
 %bcond_without zchunk
@@ -27,7 +27,7 @@
 
 Summary:        Creates a common metadata repository
 Name:           createrepo_c
-Version:        0.12.0
+Version:        0.12.1
 Release:        1%{?dist}
 License:        GPLv2+
 URL:            https://github.com/rpm-software-management/createrepo_c

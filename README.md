@@ -28,6 +28,8 @@ Package build requires - Pkg name in Fedora/Ubuntu:
 * *Documentation:* sphinx (http://sphinx-doc.org/) - python-sphinx/python-sphinx
 * **Test requires:** check (http://check.sourceforge.net/) - check-devel/check
 * **Test requires:** python-nose (https://nose.readthedocs.org/) - python-nose/python-nose
+* **Test requires:** xz (http://tukaani.org/xz/) - xz/
+* **Test requires:** zchunk (https://github.com/zchunk/zchunk) - zchunk/
 * **Experimental support:** drpm (https://github.com/rpm-software-management/drpm) - drpm-devel/
 
 From your checkout dir:

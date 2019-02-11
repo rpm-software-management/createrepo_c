@@ -91,7 +91,11 @@ Summary:        Python bindings for the createrepo_c library
 %{?python_provide:%python_provide python2-%{name}}
 BuildRequires:  python2-devel
 BuildRequires:  python2-nose
+%if 0%{?rhel} && 0%{?rhel} <= 7
+BuildRequires:  python-sphinx
+%else
 BuildRequires:  python2-sphinx
+%endif
 Requires:       %{name}-libs = %{version}-%{release}
 
 %description -n python2-%{name}
@@ -125,7 +129,7 @@ mkdir build-py3
 # Build createrepo_c with Python 2
 %if %{with python2}
 pushd build-py2
-  %cmake .. -DPYTHON_DESIRED:str=2 %{!?with_zchunk:-DWITH_ZCHUNK=OFF}
+  %cmake .. -DPYTHON_DESIRED:FILEPATH=%{__python2} %{!?with_zchunk:-DWITH_ZCHUNK=OFF}
   make %{?_smp_mflags} RPM_OPT_FLAGS="%{optflags}"
   %if %{without python3}
   # Build C documentation
@@ -137,7 +141,7 @@ popd
 # Build createrepo_c with Pyhon 3
 %if %{with python3}
 pushd build-py3
-  %cmake .. -DPYTHON_DESIRED:str=3 %{!?with_zchunk:-DWITH_ZCHUNK=OFF}
+  %cmake .. -DPYTHON_DESIRED:FILEPATH=%{__python3} %{!?with_zchunk:-DWITH_ZCHUNK=OFF}
   make %{?_smp_mflags} RPM_OPT_FLAGS="%{optflags}"
   # Build C documentation
   make doc-c

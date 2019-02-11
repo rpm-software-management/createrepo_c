@@ -290,7 +290,7 @@ cr_locate_metadata(const char *repopath, gboolean ignore_sqlite, GError **err)
         ret = cr_get_remote_metadata(repopath, ignore_sqlite);
     } else {
         // Local metadata
-        if (g_str_has_prefix(repopath, "file://"))
+        if (g_str_has_prefix(repopath, "file:///"))
             repopath += 7;
         ret = cr_get_local_metadata(repopath, ignore_sqlite);
     }

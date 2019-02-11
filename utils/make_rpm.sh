@@ -26,8 +26,8 @@ echo "Generating rpm for $GITREV"
 
 echo "Cleaning $BUILD_DIR"
 rm -rf "$BUILD_DIR"
-echo "Removing $RPMBUILD_DIR/$PACKAGE.spec"
-rm -f "$RPMBUILD_DIR/$PACKAGE.spec"
+echo "Removing $RPMBUILD_DIR/SPECS/$PACKAGE.spec"
+rm -f "$RPMBUILD_DIR/SPECS/$PACKAGE.spec"
 
 echo "> Making tarball .."
 "$MY_DIR/make_tarball.sh" "$GITREV"

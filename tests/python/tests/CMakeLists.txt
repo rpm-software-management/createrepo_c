@@ -3,7 +3,7 @@ EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} -c "import sys; sys.stdout.write('%
 SET(NOSETEST_VERSION_SUFFIX "-${PYTHON_MAJOR_DOT_MINOR_VERSION}")
 message("-- nosetests program is nosetests${NOSETEST_VERSION_SUFFIX}")
 
-execute_process(COMMAND which nosetests${NOSETEST_VERSION_SUFFIX}
+execute_process(COMMAND nosetests${NOSETEST_VERSION_SUFFIX} --help
                 OUTPUT_QUIET ERROR_QUIET
                 RESULT_VARIABLE NOSE_CHECK_RESULT)
 IF (NOT NOSE_CHECK_RESULT STREQUAL "0")

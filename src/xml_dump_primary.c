@@ -30,7 +30,6 @@
 
 #define ERR_DOMAIN      CREATEREPO_C_ERROR
 
-
 typedef enum {
     PCO_TYPE_PROVIDES,
     PCO_TYPE_CONFLICTS,
@@ -279,9 +278,12 @@ cr_xml_dump_primary_base_items(xmlNodePtr root, cr_Package *package)
 
     // Write location attribute base
     if (package->location_base && package->location_base[0] != '\0') {
+        gchar *location_base_with_protocol = NULL;
+        location_base_with_protocol = cr_prepend_protocol(package->location_base);
         cr_xmlNewProp(location,
                       BAD_CAST "xml:base",
-                      BAD_CAST package->location_base);
+                      BAD_CAST location_base_with_protocol);
+        g_free(location_base_with_protocol);
     }
 
     // Write location attribute href

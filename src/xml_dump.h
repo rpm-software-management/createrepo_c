@@ -167,6 +167,14 @@ void cr_latin1_to_utf8(const unsigned char *in,
  */
 gboolean cr_hascontrollchars(const unsigned char *str);
 
+/**
+ * Prepend protocol if necessary
+ *
+ * @param url           input url
+ * @return              output string, must be freed
+ */
+gchar *cr_prepend_protocol(const gchar *url);
+
 /** @} */
 
 #ifdef __cplusplus

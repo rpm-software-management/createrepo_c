@@ -53,6 +53,14 @@ gboolean cr_hascontrollchars(const unsigned char *str)
     return FALSE;
 }
 
+gchar *
+cr_prepend_protocol(const gchar *url)
+{
+    if (url && *url == '/')
+        return g_strconcat("file://", url, NULL);
+    return g_strdup(url);
+}
+
 void
 cr_latin1_to_utf8(const unsigned char *in, unsigned char *out)
 {

@@ -496,17 +496,6 @@ cr_srpm_val_destroy(gpointer data)
 }
 
 
-/** Prepend protocol if necessary
- */
-static gchar *
-prepend_protocol(const gchar *url)
-{
-    if (url && *url == '/')
-        return g_strconcat("file://", url, NULL);
-    return g_strdup(url);
-}
-
-
 int
 koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
                    struct CmdOptions *cmd_options,
@@ -820,9 +809,7 @@ add_package(cr_Package *pkg,
     if (!list) {
         list = g_slist_prepend(list, pkg);
         if ((!pkg->location_base || *pkg->location_base == '\0') && repopath) {
-            _cleanup_free_ gchar *repopath_with_protocol = NULL;
-            repopath_with_protocol = prepend_protocol(repopath);
-            pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, repopath_with_protocol);
+            pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, repopath);
         }
         g_hash_table_insert (merged, (gpointer) pkg->name, (gpointer) list);
         return 1;
@@ -1039,7 +1026,7 @@ merge_repos(GHashTable *merged,
                     // Koji-mergerepos specific behaviour -----------
                     if (koji_stuff && koji_stuff->pkgorigins) {
                         _cleanup_free_ gchar *nvra = cr_package_nvra(pkg);
-                        _cleanup_free_ gchar *url = prepend_protocol(ml->original_url);
+                        _cleanup_free_ gchar *url = cr_prepend_protocol(ml->original_url);
 
                         cr_printf(NULL,
                                   koji_stuff->pkgorigins,

@@ -27,7 +27,7 @@
 
 Summary:        Creates a common metadata repository
 Name:           createrepo_c
-Version:        0.12.1
+Version:        0.12.2
 Release:        1%{?dist}
 License:        GPLv2+
 URL:            https://github.com/rpm-software-management/createrepo_c

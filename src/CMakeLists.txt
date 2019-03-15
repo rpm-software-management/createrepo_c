@@ -30,12 +30,14 @@ SET (createrepo_c_SRCS
      xml_parser_other.c
      xml_parser_primary.c
      xml_parser_repomd.c
-     xml_parser_updateinfo.c)
+     xml_parser_updateinfo.c
+     koji.c)
 
 SET(headers
     checksum.h
     compression_wrapper.h
     constants.h
+    mergerepo_c.h
     createrepo_c.h
     deltarpms.h
     error.h
@@ -54,6 +56,7 @@ SET(headers
     version.h
     xml_dump.h
     xml_file.h
+    koji.h
     xml_parser.h)
 
 IF (BUILD_LIBCREATEREPO_C_SHARED)

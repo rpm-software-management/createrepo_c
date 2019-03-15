@@ -32,7 +32,6 @@
 #include "createrepo_shared.h"
 #include "version.h"
 #include "helpers.h"
-#include "compression_wrapper.h"
 #include "metadata_internal.h"
 #include "misc.h"
 #include "locate_metadata.h"
@@ -44,118 +43,11 @@
 #include "threads.h"
 #include "xml_file.h"
 #include "cleanup.h"
-
-
-// TODO:
-//  - rozvijet architekturu na listy tak jak to dela mergedrepo
-
+#include "koji.h"
 
 #define DEFAULT_OUTPUTDIR               "merged_repo/"
-#define DEFAULT_DB_COMPRESSION_TYPE             CR_CW_BZ2_COMPRESSION
-#define DEFAULT_GROUPFILE_COMPRESSION_TYPE      CR_CW_GZ_COMPRESSION
 
-// struct KojiMergedReposStuff
-// contains information needed to simulate sort_and_filter() method from
-// mergerepos script from Koji.
-//
-// sort_and_filter() method description:
-// ------------------------------------
-// For each package object, check if the srpm name has ever been seen before.
-// If is has not, keep the package.  If it has, check if the srpm name was first
-// seen in the same repo as the current package.  If so, keep the package from
-// the srpm with the highest NVR.  If not, keep the packages from the first
-// srpm we found, and delete packages from all other srpms.
-//
-// Packages with matching NVRs in multiple repos will be taken from the first
-// repo.
-//
-// If the srpm name appears in the blocked package list, any packages generated
-// from the srpm will be deleted from the package sack as well.
-//
-// This method will also generate a file called "pkgorigins" and add it to the
-// repo metadata. This is a tab-separated map of package E:N-V-R.A to repo URL
-// (as specified on the command-line). This allows a package to be tracked back
-// to its origin, even if the location field in the repodata does not match the
-// original repo location.
-
-struct srpm_val {
-    int repo_id;        // id of repository
-    char *sourcerpm;    // pkg->rpm_sourcerpm
-};
-
-struct KojiMergedReposStuff {
-    GHashTable *blocked_srpms;
-    // blocked_srpms:
-    // Names of sprms which will be skipped
-    //   Key: srpm name
-    //   Value: NULL (not important)
-    GHashTable *include_srpms;
-    // include_srpms:
-    // Only packages from srpms included in this table will be included
-    // in output merged metadata.
-    //   Key: srpm name
-    //   Value: struct srpm_val
-    GHashTable *seen_rpms;
-    // seen_rpms:
-    // List of packages already included into the output metadata.
-    // Purpose of this list is to avoid a duplicit packages in output.
-    //   Key: string with package n-v-r.a
-    //   Value: NULL (not important)
-    CR_FILE *pkgorigins;
-    // Every element has format: pkg_nvra\trepourl
-};
-
-typedef enum {
-    MM_DEFAULT,
-    MM_REPO = MM_DEFAULT,
-    MM_TIMESTAMP,
-    MM_NVR
-} MergeMethod;
-
-
-struct CmdOptions {
-
-    // Items filled by cmd option parser
-
-    gboolean version;
-    char **repos;
-    char *repo_prefix_search;
-    char *repo_prefix_replace;
-    char *archlist;
-    gboolean database;
-    gboolean no_database;
-    gboolean verbose;
-    char *outputdir;
-    char *outputrepo;
-    gboolean nogroups;
-    gboolean noupdateinfo;
-    char *compress_type;
-    gboolean zck_compression;
-    char *zck_dict_dir;
-    char *merge_method_str;
-    gboolean all;
-    char *noarch_repo_url;
-    gboolean unique_md_filenames;
-    gboolean simple_md_filenames;
-    gboolean omit_baseurl;
-
-    // Koji mergerepos specific options
-    gboolean koji;
-    char *groupfile;
-    char *blocked;
-
-    // Items filled by check_arguments()
-
-    char *out_dir;
-    char *out_repo;
-    char *tmp_out_repo;
-    GSList *repo_list;
-    GSList *arch_list;
-    cr_CompressionType db_compression_type;
-    cr_CompressionType groupfile_compression_type;
-    MergeMethod merge_method;
-};
-
+#include "mergerepo_c.h"
 
 struct CmdOptions _cmd_options = {
         .db_compression_type = DEFAULT_DB_COMPRESSION_TYPE,
@@ -168,6 +60,8 @@ struct CmdOptions _cmd_options = {
         .zck_dict_dir = NULL,
     };
 
+// TODO:
+//  - rozvijet architekturu na listy tak jak to dela mergedrepo
 
 static GOptionEntry cmd_entries[] =
 {
@@ -220,7 +114,10 @@ static GOptionEntry cmd_entries[] =
 
     // -- Options related to Koji-mergerepos behaviour
     { "koji", 'k', 0, G_OPTION_ARG_NONE, &(_cmd_options.koji),
-       "Enable koji mergerepos behaviour.", NULL},
+       "Enable koji mergerepos behaviour. (Optionally select simple mode with: --simple)", NULL},
+    { "simple", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.koji_simple),
+       "Enable koji specific simple merge mode where we keep even packages with "
+       "identical NEVRAs. Only works with combination with --koji/-k.", NULL},
     { "groupfile", 'g', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.groupfile),
       "Path to groupfile to include in metadata.", "GROUPFILE" },
     { "blocked", 'b', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.blocked),
@@ -382,11 +279,11 @@ check_arguments(struct CmdOptions *options)
         if (options->koji) {
             g_warning("With -k/--koji argument merge method is ignored (--all is implicitly used).");
         } else if (!g_strcmp0(options->merge_method_str, "repo")) {
-            options->merge_method = MM_REPO;
+            options->merge_method = MM_FIRST_FROM_IDENTICAL_NA;
         } else if (!g_strcmp0(options->merge_method_str, "ts")) {
-            options->merge_method = MM_TIMESTAMP;
+            options->merge_method = MM_NEWEST_FROM_IDENTICAL_NA;
         } else if (!g_strcmp0(options->merge_method_str, "nvr")) {
-            options->merge_method = MM_NVR;
+            options->merge_method = MM_WITH_HIGHEST_NEVRA;
         } else {
             g_critical("Unknown merge method %s", options->merge_method_str);
             ret = FALSE;
@@ -398,9 +295,18 @@ check_arguments(struct CmdOptions *options)
         options->unique_md_filenames = FALSE;
     }
 
+    if (options->all)
+        options->merge_method = MM_FIRST_FROM_IDENTICAL_NEVRA;
+
     // Koji arguments
-    if (options->koji)
+    if (options->koji) {
         options->all = TRUE;
+        if (options->koji_simple) {
+            options->merge_method = MM_ALL_WITH_IDENTICAL_NEVRA;
+        }else{
+            options->merge_method = MM_FIRST_FROM_IDENTICAL_NEVRA;
+        }
+    }
 
     if (options->blocked) {
         if (!options->koji) {
@@ -532,254 +438,25 @@ destroy_merged_metadata_hashtable(GHashTable *hashtable)
 }
 
 
-void
-cr_srpm_val_destroy(gpointer data)
-{
-    struct srpm_val *val = data;
-    g_free(val->sourcerpm);
-    g_free(val);
-}
-
-
-int
-koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
-                   struct CmdOptions *cmd_options,
-                   GSList *repos)
-{
-    struct KojiMergedReposStuff *koji_stuff;
-    gchar *pkgorigins_path = NULL;
-    GSList *element;
-    int repoid;
-    GError *tmp_err = NULL;
-
-    // Pointers to elements in the koji_stuff_ptr
-    GHashTable *blocked_srpms = NULL; // XXX
-    GHashTable *include_srpms = NULL; // XXX
-
-    koji_stuff = g_malloc0(sizeof(struct KojiMergedReposStuff));
-    *koji_stuff_ptr = koji_stuff;
-
-
-    // Prepare hashtables
-
-    koji_stuff->include_srpms = g_hash_table_new_full(g_str_hash,
-                                                      g_str_equal,
-                                                      g_free,
-                                                      cr_srpm_val_destroy);
-    koji_stuff->seen_rpms = g_hash_table_new_full(g_str_hash,
-                                                  g_str_equal,
-                                                  g_free,
-                                                  NULL);
-    include_srpms = koji_stuff->include_srpms;
-
-    // Load list of blocked srpm packages
-
-    if (cmd_options->blocked) {
-        int x = 0;
-        char *content = NULL;
-        char **names;
-        GError *err = NULL;
-
-        if (!g_file_get_contents(cmd_options->blocked, &content, NULL, &err)) {
-            g_critical("Error while reading blocked file: %s", err->message);
-            g_error_free(err);
-            g_free(content);
-            return 1;
-        }
-
-        koji_stuff->blocked_srpms = g_hash_table_new_full(g_str_hash,
-                                                          g_str_equal,
-                                                          g_free,
-                                                          NULL);
-        blocked_srpms = koji_stuff->blocked_srpms;
-
-        names = g_strsplit(content, "\n", 0);
-        while (names && names[x] != NULL) {
-            if (strlen(names[x]))
-                g_hash_table_replace(koji_stuff->blocked_srpms,
-                                     g_strdup(names[x]),
-                                     NULL);
-            x++;
-        }
-
-        g_strfreev(names);
-        g_free(content);
-    }
-
-
-    // Prepare pkgorigin file
-
-    pkgorigins_path = g_strconcat(cmd_options->tmp_out_repo, "pkgorigins.gz", NULL);
-    koji_stuff->pkgorigins = cr_open(pkgorigins_path,
-                                     CR_CW_MODE_WRITE,
-                                     CR_CW_GZ_COMPRESSION,
-                                     &tmp_err);
-    if (tmp_err) {
-        g_critical("Cannot open %s: %s", pkgorigins_path, tmp_err->message);
-        g_error_free(tmp_err);
-        g_free(pkgorigins_path);
-        return 1;
-    }
-    g_free(pkgorigins_path);
-
-
-    // Iterate over every repo and fill include_srpms hashtable
-
-    g_debug("Preparing list of allowed srpm builds");
-
-    repoid = 0;
-    for (element = repos; element; element = g_slist_next(element)) {
-        struct cr_MetadataLocation *ml;
-        cr_Metadata *metadata;
-        GHashTableIter iter;
-        gpointer key, void_pkg;
-
-        ml = (struct cr_MetadataLocation *) element->data;
-        if (!ml) {
-            g_critical("Bad repo location");
-            repoid++;
-            break;
-        }
-
-        metadata = cr_metadata_new(CR_HT_KEY_HASH, 0, NULL);
-
-        g_debug("Loading srpms from: %s", ml->original_url);
-        if (cr_metadata_load_xml(metadata, ml, NULL) != CRE_OK) {
-            cr_metadata_free(metadata);
-            g_critical("Cannot load repo: \"%s\"", ml->original_url);
-            repoid++;
-            break;
-        }
-
-        // Iterate over every package in repo and what "builds"
-        // we're allowing into the repo
-        g_hash_table_iter_init(&iter, cr_metadata_hashtable(metadata));
-        while (g_hash_table_iter_next(&iter, &key, &void_pkg)) {
-            cr_Package *pkg = (cr_Package *) void_pkg;
-            cr_NEVRA *nevra;
-            gpointer data;
-            gboolean blocked = FALSE;
-            struct srpm_val *srpm_value_new;
-
-            if (!pkg->rpm_sourcerpm) {
-                g_warning("Package '%s' from '%s' doesn't have specified source srpm",
-                          pkg->location_href, ml->original_url);
-                continue;
-            }
-
-            nevra = cr_split_rpm_filename(pkg->rpm_sourcerpm);
-
-            if (!nevra) {
-                g_debug("Srpm name is invalid: %s", pkg->rpm_sourcerpm);
-                continue;
-            }
-
-            if (blocked_srpms) {
-                // Check if srpm is blocked
-                blocked = g_hash_table_lookup_extended(blocked_srpms,
-                                                       nevra->name,
-                                                       NULL,
-                                                       NULL);
-            }
-
-            if (blocked) {
-                g_debug("Srpm is blocked: %s", pkg->rpm_sourcerpm);
-                cr_nevra_free(nevra);
-                continue;
-            }
-
-            data = g_hash_table_lookup(include_srpms, nevra->name);
-            if (data) {
-                // We have already seen build with the same name
-
-                int cmp;
-                cr_NEVRA *nevra_existing;
-                struct srpm_val *srpm_value_existing = data;
-
-                if (srpm_value_existing->repo_id != repoid) {
-                    // We found a rpm built from an srpm with the same name in
-                    // a previous repo. The previous repo takes precendence,
-                    // so ignore the srpm found here.
-                    cr_nevra_free(nevra);
-                    g_debug("Srpm already loaded from previous repo %s",
-                            pkg->rpm_sourcerpm);
-                    continue;
-                }
-
-                // We're in the same repo, so compare srpm NVRs
-                nevra_existing = cr_split_rpm_filename(srpm_value_existing->sourcerpm);
-                cmp = cr_cmp_nevra(nevra, nevra_existing);
-                cr_nevra_free(nevra_existing);
-                if (cmp < 1) {
-                    // Existing package is from the newer srpm
-                    cr_nevra_free(nevra);
-                    g_debug("Srpm already exists in newer version %s",
-                            pkg->rpm_sourcerpm);
-                    continue;
-                }
-            }
-
-            // The current package we're processing is from a newer srpm
-            // than the existing srpm in the dict, so update the dict
-            // OR
-            // We found a new build so we add it to the dict
-
-            g_debug("Adding srpm: %s", pkg->rpm_sourcerpm);
-            srpm_value_new = g_malloc0(sizeof(struct srpm_val));
-            srpm_value_new->repo_id = repoid;
-            srpm_value_new->sourcerpm = g_strdup(pkg->rpm_sourcerpm);
-            g_hash_table_replace(include_srpms,
-                                 g_strdup(nevra->name),
-                                 srpm_value_new);
-            cr_nevra_free(nevra);
-        }
-
-        cr_metadata_free(metadata);
-        repoid++;
-    }
-
-
-    return 0;  // All ok
-}
-
-
-void
-koji_stuff_destroy(struct KojiMergedReposStuff **koji_stuff_ptr)
-{
-    struct KojiMergedReposStuff *koji_stuff;
-
-    if (!koji_stuff_ptr || !*koji_stuff_ptr)
-        return;
-
-    koji_stuff = *koji_stuff_ptr;
-
-    if (koji_stuff->blocked_srpms)
-        g_hash_table_destroy(koji_stuff->blocked_srpms);
-    g_hash_table_destroy(koji_stuff->include_srpms);
-    g_hash_table_destroy(koji_stuff->seen_rpms);
-    cr_close(koji_stuff->pkgorigins, NULL);
-    g_free(koji_stuff);
-}
-
-
 
 // Merged table structure: {"package_name": [pkg, pkg, pkg, ...], ...}
 // Return codes:
 //  0 = Package was not added
 //  1 = Package was added
 //  2 = Package replaced old package
+//  3 = Package was added as a duplicate
 static int
 add_package(cr_Package *pkg,
             gchar *repopath,
             GHashTable *merged,
             GSList *arch_list,
             MergeMethod merge_method,
-            gboolean include_all,
             struct KojiMergedReposStuff *koji_stuff,
             gboolean omit_baseurl,
             int repoid)
 {
     GSList *list, *element;
+    int ret = 1;
 
 
     if (omit_baseurl)
@@ -804,63 +481,18 @@ add_package(cr_Package *pkg,
 
     // Koji-mergerepos specific behaviour -----------------------
     if (koji_stuff) {
-        gchar *nvra;
-        gboolean seen;
-
-        if (pkg->rpm_sourcerpm) {
-            // Sometimes, there are metadata that don't contain sourcerpm
-            // items for their packages.
-            // I don't know if better is to include or exclude such packages.
-            // Original mergerepos script doesn't expect such situation.
-            // So for now, include them. But it can be changed anytime
-            // in future.
-            struct srpm_val *value;
-            cr_NEVRA *nevra = cr_split_rpm_filename(pkg->rpm_sourcerpm);
-            if (!nevra) {
-                 g_debug("Package %s has invalid srpm %s", pkg->name,
-                                                           pkg->rpm_sourcerpm);
-                 return 0;
-            }
-            value = g_hash_table_lookup(koji_stuff->include_srpms, nevra->name);
-            cr_nevra_free(nevra);
-            if (!value || g_strcmp0(pkg->rpm_sourcerpm, value->sourcerpm)) {
-                // Srpm of the package is not allowed
-                g_debug("Package %s has forbidden srpm %s", pkg->name,
-                                                            pkg->rpm_sourcerpm);
-                return 0;
-            }
-        }
-
-        // Check if we have already seen this package before
-        nvra = cr_package_nvra(pkg);
-        seen = g_hash_table_lookup_extended(koji_stuff->seen_rpms,
-                                            nvra,
-                                            NULL,
-                                            NULL);
-        if (seen) {
-            // Similar package has been already added
-            g_debug("Package with same nvra (%s) has been already added",
-                    nvra);
-            g_free(nvra);
+        if (!koji_allowed(pkg, koji_stuff))
             return 0;
-        }
-
         // For first repo (with --koji) ignore baseURL (RhBug: 1220082)
         if (repoid == 0)
             repopath = NULL;
-
-        // Make a note that we have seen this package
-        g_hash_table_replace(koji_stuff->seen_rpms, nvra, NULL);
     }
     // Koji-mergerepos specific behaviour end --------------------
 
     // Lookup package in the merged
-
     list = (GSList *) g_hash_table_lookup(merged, pkg->name);
 
-
     // Key doesn't exist yet
-
     if (!list) {
         list = g_slist_prepend(list, pkg);
         if ((!pkg->location_base || *pkg->location_base == '\0') && repopath) {
@@ -870,28 +502,25 @@ add_package(cr_Package *pkg,
         return 1;
     }
 
-
     // Check if package with the architecture isn't in the list already
-
     for (element=list; element; element=g_slist_next(element)) {
         cr_Package *c_pkg = (cr_Package *) element->data;
         if (!g_strcmp0(pkg->arch, c_pkg->arch)) {
 
-            if (!include_all) {
+            // Two packages have same name and arch
+            // Use selected merge method to determine which package should
+            // be included
 
-                // Two packages has same name and arch
-                // Use selected merge method to determine which package should
-                // be included
-
+            switch(merge_method) {
                 // REPO merge method
-                if (merge_method == MM_REPO) {
+                case MM_FIRST_FROM_IDENTICAL_NA:
                     // Package with the same arch already exists
                     g_debug("Package %s (%s) already exists",
                             pkg->name, pkg->arch);
                     return 0;
 
                 // TS merge method
-                } else if (merge_method == MM_TIMESTAMP) {
+                case MM_NEWEST_FROM_IDENTICAL_NA:
                     if (pkg->time_file > c_pkg->time_file) {
                         // Remove older package
                         cr_package_free(c_pkg);
@@ -906,10 +535,10 @@ add_package(cr_Package *pkg,
                                 pkg->name, pkg->arch);
                         return 0;
                     }
+                    break;
 
                 // NVR merge method
-                } else if (merge_method == MM_NVR) {
-
+                case MM_WITH_HIGHEST_NEVRA: {
                     gboolean pkg_is_newer = FALSE;
 
                     int epoch_cmp   = cr_cmp_version_str(pkg->epoch, c_pkg->epoch);
@@ -941,36 +570,56 @@ add_package(cr_Package *pkg,
                                 pkg->release ? pkg->release : "N/A");
                         return 0;
                     }
+                    break;
                 }
-            } else {
-                // Two packages has same name and arch but all param is used
+                case MM_FIRST_FROM_IDENTICAL_NEVRA:
+                    // Two packages have same name and arch but all param is used
 
-                // We want to check if two packages are the same.
-                // We already know that name and arch matches.
-                // We need to check version and release
-                if ((cr_cmp_version_str(pkg->epoch, c_pkg->epoch) == 0)
+                    // We want to check if two packages are the same.
+                    // We already know that name and arch matches.
+                    // We need to check version and release and epoch
+                    if ((cr_cmp_version_str(pkg->epoch, c_pkg->epoch) == 0)
                         && (cr_cmp_version_str(pkg->version, c_pkg->version) == 0)
                         && (cr_cmp_version_str(pkg->release, c_pkg->release) == 0))
-                {
-                    // Both packages are the same (at least by NEVRA values)
-                    g_debug("Same version of package %s.%s "
-                            "(epoch: %s) (ver: %s) (rel: %s) already exists",
-                            pkg->name, pkg->arch,
-                            pkg->epoch   ? pkg->epoch   : "0",
-                            pkg->version ? pkg->version : "N/A",
-                            pkg->release ? pkg->release : "N/A");
-                    return 0;
-                }
+                    {
+                        // Both packages are the same (at least by NEVRA values)
+                        g_debug("Same version of package %s.%s "
+                                "(epoch: %s) (ver: %s) (rel: %s) already exists",
+                                pkg->name, pkg->arch,
+                                pkg->epoch   ? pkg->epoch   : "0",
+                                pkg->version ? pkg->version : "N/A",
+                                pkg->release ? pkg->release : "N/A");
+                        return 0;
+                    }
+                    break;
+                case MM_ALL_WITH_IDENTICAL_NEVRA:
+                    // We want even duplicates with exact NEVRAs
+                    if ((cr_cmp_version_str(pkg->epoch, c_pkg->epoch) == 0)
+                        && (cr_cmp_version_str(pkg->version, c_pkg->version) == 0)
+                        && (cr_cmp_version_str(pkg->release, c_pkg->release) == 0))
+                    {
+                        // Both packages are the same (at least by NEVRA values)
+                        // We warn, but do not omit it
+                        g_debug("Duplicate rpm %s.%s "
+                                "(epoch: %s) (ver: %s) (rel: %s)",
+                                pkg->name, pkg->arch,
+                                pkg->epoch   ? pkg->epoch   : "0",
+                                pkg->version ? pkg->version : "N/A",
+                                pkg->release ? pkg->release : "N/A");
+                        ret = 3;
+                        goto add_package;
+                    }
+                    break;
             }
         }
     }
 
-
-    // Add package
+add_package:
     if (!pkg->location_base) {
         pkg->location_base = cr_safe_string_chunk_insert(pkg->chunk, repopath);
     }
 
+    // Add package
     // XXX: The first list element (pointed from hashtable) must stay first!
     // g_slist_append() is suitable but non effective, insert a new element
     // right after first element is optimal (at least for now)
@@ -978,7 +627,7 @@ add_package(cr_Package *pkg,
         assert(0);
     }
 
-    return 1;
+    return ret;
 }
 
 
@@ -990,7 +639,6 @@ merge_repos(GHashTable *merged,
             GSList *repo_list,
             GSList *arch_list,
             MergeMethod merge_method,
-            gboolean include_all,
             GHashTable *noarch_hashtable,
             struct KojiMergedReposStuff *koji_stuff,
             gboolean omit_baseurl,
@@ -1087,7 +735,6 @@ merge_repos(GHashTable *merged,
                               merged,
                               arch_list,
                               merge_method,
-                              include_all,
                               koji_stuff,
                               omit_baseurl,
                               repoid);
@@ -2237,7 +1884,6 @@ main(int argc, char **argv)
                                   local_repos,
                                   cmd_options->arch_list,
                                   cmd_options->merge_method,
-                                  cmd_options->all,
                                   noarch_metadata ?
                                         cr_metadata_hashtable(noarch_metadata)
                                       : NULL,

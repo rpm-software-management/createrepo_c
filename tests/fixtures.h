@@ -31,6 +31,8 @@
 #define TEST_REPO_01                    TEST_DATA_PATH"repo_01/"
 #define TEST_REPO_02                    TEST_DATA_PATH"repo_02/"
 #define TEST_REPO_03                    TEST_DATA_PATH"repo_03/"
+#define TEST_REPO_KOJI_01               TEST_DATA_PATH"repo_koji_01/"
+#define TEST_REPO_KOJI_02               TEST_DATA_PATH"repo_koji_02/"
 #define TEST_FILES_PATH                 TEST_DATA_PATH"test_files/"
 #define TEST_UPDATEINFO_FILES_PATH      TEST_DATA_PATH"updateinfo_files/"
 

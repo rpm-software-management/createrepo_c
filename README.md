@@ -16,6 +16,7 @@ Package build requires - Pkg name in Fedora/Ubuntu:
 * file (http://www.darwinsys.com/file/) - file-devel/libmagic-dev
 * glib2 (http://developer.gnome.org/glib/) - glib2-devel/libglib2.0-dev
 * libcurl (http://curl.haxx.se/libcurl/) - libcurl-devel/libcurl4-openssl-dev
+* libmodulemd (https://github.com/fedora-modularity/libmodulemd/) - libmodulemd-devel/
 * libxml2 (http://xmlsoft.org/) - libxml2-devel/libxml2-dev
 * python (http://python.org/) - python3-devel/libpython3-dev
 * rpm (http://www.rpm.org/) - rpm-devel/librpm-dev
@@ -101,6 +102,13 @@ cause degradation of performance.
 ### ``-DWITH_ZCHUNK=ON``
 
 Build with zchunk support (Default: ON)
+
+### ``-DWITH_LIBMODULEMD=ON``
+
+Build with libmodulemd support (Default: ON)
+
+Adds support for working with repos containing
+[Fedora Modularity](https://docs.fedoraproject.org/en-US/modularity/) metadata.
 
 
 ## Build tarball

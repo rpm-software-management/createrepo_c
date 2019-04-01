@@ -96,6 +96,8 @@ typedef enum {
         (33) Cannot change blocked signals */
     CRE_ZCK, /*!<
         (34) ZCK library related error */
+    CRE_MODULEMD, /*!<
+        (35) modulemd related error */
     CRE_SENTINEL, /*!<
         (XX) Sentinel */
 } cr_Error;

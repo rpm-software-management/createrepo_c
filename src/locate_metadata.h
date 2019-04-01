@@ -43,6 +43,7 @@ struct cr_MetadataLocation {
     char *groupfile_href;       /*!< path to groupfile */
     char *cgroupfile_href;      /*!< path to compressed groupfile */
     char *updateinfo_href;      /*!< path to updateinfo */
+    char *modulemd_href;        /*!< path to modulemd */
     char *repomd;               /*!< path to repomd.xml */
     char *original_url;         /*!< original path of repo from commandline
                                      param */

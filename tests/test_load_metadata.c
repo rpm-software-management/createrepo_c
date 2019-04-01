@@ -25,6 +25,8 @@
 #include "createrepo/package.h"
 #include "createrepo/misc.h"
 #include "createrepo/load_metadata.h"
+#include "createrepo/locate_metadata.h"
+#include "createrepo/metadata_internal.h"
 
 #define REPO_SIZE_00    0
 static const char *REPO_HASH_KEYS_00[] = {};
@@ -43,6 +45,11 @@ static const char *REPO_NAME_KEYS_02[] = {"super_kernel",
                                           "fake_bash"};
 static const char *REPO_FILENAME_KEYS_02[] = {"super_kernel-6.0.1-2.x86_64.rpm",
                                               "fake_bash-1.1.1-1.x86_64.rpm"};
+
+#define REPO_SIZE_03    0
+static const char *REPO_HASH_KEYS_03[] = {};
+static const char *REPO_NAME_KEYS_03[] = {};
+static const char *REPO_FILENAME_KEYS_03[] = {};
 
 
 
@@ -101,6 +108,22 @@ static void test_cr_metadata_locate_and_load_xml(void)
     test_helper_check_keys(TEST_REPO_02, CR_HT_KEY_HASH, REPO_SIZE_02, REPO_HASH_KEYS_02);
     test_helper_check_keys(TEST_REPO_02, CR_HT_KEY_NAME, REPO_SIZE_02, REPO_NAME_KEYS_02);
     test_helper_check_keys(TEST_REPO_02, CR_HT_KEY_FILENAME, REPO_SIZE_02, REPO_FILENAME_KEYS_02);
+
+#ifdef WITH_LIBMODULEMD
+    test_helper_check_keys(TEST_REPO_03, CR_HT_KEY_HASH, REPO_SIZE_03, REPO_HASH_KEYS_03);
+    test_helper_check_keys(TEST_REPO_03, CR_HT_KEY_NAME, REPO_SIZE_03, REPO_NAME_KEYS_03);
+    test_helper_check_keys(TEST_REPO_03, CR_HT_KEY_FILENAME, REPO_SIZE_03, REPO_FILENAME_KEYS_03);
+#else
+    /* If we don't have libmodulemd support, this should fail to locate and
+     * return CRE_MODULEMD
+     */
+    struct cr_MetadataLocation *ml;
+    g_autoptr (GError) err = NULL;
+
+    ml = cr_locate_metadata(TEST_REPO_03, TRUE, &err);
+    g_assert_null (ml);
+    g_assert_error (err, CREATEREPO_C_ERROR, CRE_MODULEMD);
+#endif /* WITH_LIBMODULEMD */
 }
 
 
@@ -151,6 +174,31 @@ static void test_cr_metadata_locate_and_load_xml_detailed(void)
 }
 
 
+#ifdef WITH_LIBMODULEMD
+static void test_cr_metadata_locate_and_load_modulemd(void)
+{
+    int ret;
+    guint size;
+    cr_Package *pkg;
+    cr_Metadata *metadata;
+
+    metadata = cr_metadata_new(CR_HT_KEY_NAME, 0, NULL);
+    g_assert(metadata);
+    ret = cr_metadata_locate_and_load_xml(metadata, TEST_REPO_03, NULL);
+    g_assert_cmpint(ret, ==, CRE_OK);
+    size = g_hash_table_size(cr_metadata_hashtable(metadata));
+    g_assert_cmpuint(size, ==, REPO_SIZE_03);
+
+    /* If loaded successfully, the index should contain a module named
+     * testmodule
+     */
+    g_assert_nonnull (modulemd_module_index_get_module (
+                      cr_metadata_modulemd(metadata),
+                      "testmodule"));
+}
+#endif /* WITH_LIBMODULEMD */
+
+
 int main(int argc, char *argv[])
 {
     g_test_init(&argc, &argv, NULL);
@@ -158,6 +206,10 @@ int main(int argc, char *argv[])
     g_test_add_func("/load_metadata/test_cr_metadata_new", test_cr_metadata_new);
     g_test_add_func("/load_metadata/test_cr_metadata_locate_and_load_xml", test_cr_metadata_locate_and_load_xml);
     g_test_add_func("/load_metadata/test_cr_metadata_locate_and_load_xml_detailed", test_cr_metadata_locate_and_load_xml_detailed);
+
+#ifdef WITH_LIBMODULEMD
+    g_test_add_func("/load_metadata/test_cr_metadata_locate_and_load_modulemd", test_cr_metadata_locate_and_load_modulemd);
+#endif /* WITH_LIBMODULEMD */
 
     return g_test_run();
 }

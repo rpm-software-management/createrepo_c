@@ -30,6 +30,7 @@
 #define TEST_REPO_00                    TEST_DATA_PATH"repo_00/"
 #define TEST_REPO_01                    TEST_DATA_PATH"repo_01/"
 #define TEST_REPO_02                    TEST_DATA_PATH"repo_02/"
+#define TEST_REPO_03                    TEST_DATA_PATH"repo_03/"
 #define TEST_FILES_PATH                 TEST_DATA_PATH"test_files/"
 #define TEST_UPDATEINFO_FILES_PATH      TEST_DATA_PATH"updateinfo_files/"
 
@@ -49,6 +50,13 @@
 #define TEST_REPO_02_PRIMARY    TEST_REPO_02"repodata/bcde64b04916a2a72fdc257d61bc922c70b3d58e953499180585f7a360ce86cf-primary.xml.gz"
 #define TEST_REPO_02_FILELISTS  TEST_REPO_02"repodata/3b7e6ecd01af9cb674aff6458186911d7081bb5676d5562a21a963afc8a8bcc7-filelists.xml.gz"
 #define TEST_REPO_02_OTHER      TEST_REPO_02"repodata/ab5d3edeea50f9b4ec5ee13e4d25c147e318e3a433dbabc94d3461f58ac28255-other.xml.gz"
+
+// REPO_03 is a copy of REPO_01 with some module metadata
+#define TEST_REPO_03_REPOMD     TEST_REPO_03"repodata/repomd.xml"
+#define TEST_REPO_03_PRIMARY    TEST_REPO_03"repodata/1cb61ea996355add02b1426ed4c1780ea75ce0c04c5d1107c025c3fbd7d8bcae-primary.xml.gz"
+#define TEST_REPO_03_FILELISTS  TEST_REPO_03"repodata/95a4415d859d7120efb6b3cf964c07bebbff9a5275ca673e6e74a97bcbfb2a5f-filelists.xml.gz"
+#define TEST_REPO_03_OTHER      TEST_REPO_03"repodata/ef3e20691954c3d1318ec3071a982da339f4ed76967ded668b795c9e070aaab6-other.xml.gz"
+#define TEST_REPO_03_MODULEMD   TEST_REPO_03"repodata/a850093e240506c728d6ce26a6fc51d6a7fe10730c67988d13afa7dd82df82d5-modules.yaml.xz"
 
 // Modified repo files (MFR)
 

@@ -23,6 +23,11 @@
 #include <fcntl.h>
 #include <string.h>
 #include <assert.h>
+
+#ifdef WITH_LIBMODULEMD
+#include <modulemd.h>
+#endif /* WITH_LIBMODULEMD */
+
 #include "error.h"
 #include "package.h"
 #include "misc.h"
@@ -42,6 +47,10 @@ struct _cr_Metadata {
     GHashTable *pkglist_ht; /*!< list of allowed package basenames to load */
     cr_HashTableKeyDupAction dupaction; /*!<
         How to behave in case of duplicated items */
+
+#ifdef WITH_LIBMODULEMD
+    ModulemdModuleIndex *moduleindex; /*!< Module metadata */
+#endif /* WITH_LIBMODULEMD */
 };
 
 cr_HashTableKey
@@ -57,6 +66,15 @@ cr_metadata_hashtable(cr_Metadata *md)
     assert(md);
     return md->ht;
 }
+
+#ifdef WITH_LIBMODULEMD
+ModulemdModuleIndex *
+cr_metadata_modulemd(cr_Metadata *md)
+{
+    assert(md);
+    return md->moduleindex;
+}
+#endif /* WITH_LIBMODULEMD */
 
 void
 cr_free_values(gpointer data)
@@ -543,8 +561,92 @@ cr_metadata_load_xml(cr_Metadata *md,
     g_hash_table_destroy(ignored_keys);
     cr_destroy_metadata_hashtable(intern_hashtable);
 
-    return CRE_OK;
+    result = CRE_OK;
+
+#ifdef WITH_LIBMODULEMD
+    if (ml->modulemd_href) {
+      result = cr_metadata_load_modulemd(md, ml, err);
+    }
+#endif /* WITH_LIBMODULEMD */
+
+    return result;
 }
+
+
+static gint
+module_read_fn (void *data,
+                unsigned char *buffer,
+                size_t size,
+                size_t *size_read)
+{
+    int ret;
+    GError *tmp_err = NULL;
+    CR_FILE *cr_file = (CR_FILE *)data;
+
+    ret = cr_read (cr_file, buffer, size, &tmp_err);
+    if (ret == CR_CW_ERR) {
+        g_clear_pointer (&tmp_err, g_error_free);
+        return 0;
+    }
+
+    *size_read = ret;
+    return 1;
+}
+
+#ifdef WITH_LIBMODULEMD
+int
+cr_metadata_load_modulemd(cr_Metadata *md,
+                          struct cr_MetadataLocation *ml,
+                          GError **err)
+{
+    int ret;
+    gboolean result;
+    GError *tmp_err = NULL;
+    CR_FILE *modulemd = NULL;
+    g_autoptr (GPtrArray) failures = NULL;
+
+    md->moduleindex = modulemd_module_index_new();
+    if (!md->moduleindex) {
+        g_set_error (err, ERR_DOMAIN, CRE_MEMORY,
+                     "Could not allocate module index");
+        return CRE_MEMORY;
+    }
+
+    /* Open the metadata location */
+    modulemd = cr_open(ml->modulemd_href,
+                       CR_CW_MODE_READ,
+                       CR_CW_AUTO_DETECT_COMPRESSION,
+                       &tmp_err);
+    if (tmp_err) {
+        int code = tmp_err->code;
+        g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ",
+                                   ml->modulemd_href);
+        return code;
+    }
+
+    result = modulemd_module_index_update_from_custom (md->moduleindex,
+                                                       module_read_fn,
+                                                       modulemd,
+                                                       TRUE,
+                                                       &failures,
+                                                       &tmp_err);
+    if (!result) {
+        g_propagate_error (err, tmp_err);
+        return CRE_MODULEMD;
+    }
+
+    ret = CRE_OK;
+
+    cr_close(modulemd, &tmp_err);
+    if (tmp_err) {
+        ret = tmp_err->code;
+        g_propagate_prefixed_error(err, tmp_err, "Error while closing: ");
+
+    }
+
+    return ret;
+}
+#endif /* WITH_LIBMODULEMD */
 
 int
 cr_metadata_locate_and_load_xml(cr_Metadata *md,
@@ -566,6 +668,10 @@ cr_metadata_locate_and_load_xml(cr_Metadata *md,
     }
 
     ret = cr_metadata_load_xml(md, ml, err);
+    if (ret != CRE_OK) {
+        return ret;
+    }
+
     cr_metadatalocation_free(ml);
 
     return ret;

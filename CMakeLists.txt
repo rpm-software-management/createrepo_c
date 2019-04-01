@@ -120,6 +120,14 @@ IF (WITH_ZCHUNK)
     SET (CMAKE_C_FLAGS_DEBUG    "${CMAKE_C_FLAGS_DEBUG} -DWITH_ZCHUNK")
 ENDIF (WITH_ZCHUNK)
 
+OPTION (WITH_LIBMODULEMD "Build with libmodulemd support" ON)
+IF (WITH_LIBMODULEMD)
+	find_package(LIBMODULEMD REQUIRED)
+	include_directories(${LIBMODULEMD_INCLUDE_DIRS})
+	SET (CMAKE_C_FLAGS          "${CMAKE_C_FLAGS} -DWITH_LIBMODULEMD")
+    SET (CMAKE_C_FLAGS_DEBUG    "${CMAKE_C_FLAGS_DEBUG} -DWITH_LIBMODULEMD")
+ENDIF (WITH_LIBMODULEMD)
+
 # Threaded XZ Compression
 # Note: This option is disabled by default, because Createrepo_c
 # parallelize a lot of tasks (including compression) by default, this

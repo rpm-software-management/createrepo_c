@@ -116,6 +116,8 @@ cr_parse_repomd(const char *repomd_path,
             mdloc->cgroupfile_href = full_location_href;
         else if (!g_strcmp0(record->type, "updateinfo"))
             mdloc->updateinfo_href = full_location_href;
+        else if (!g_strcmp0(record->type, "modules"))
+            mdloc->modulemd_href = full_location_href;
         else
             g_free(full_location_href);
     }
@@ -304,6 +306,17 @@ cr_locate_metadata(const char *repopath, gboolean ignore_sqlite, GError **err)
                     "Cannot locate metadata");
         return NULL;
     }
+
+#ifndef WITH_LIBMODULEMD
+    if (ret->modulemd_href) {
+        g_set_error (err,
+                     ERR_DOMAIN,
+                     CRE_MODULEMD,
+                     "Module metadata found in repository, but createrepo_c "
+                     "was not compiled with libmodulemd support.");
+        g_clear_pointer (&ret, cr_metadatalocation_free);
+    }
+#endif /* ! WITH_LIBMODULEMD */
 
     return ret;
 }

@@ -200,9 +200,11 @@ pushd build-py3
 popd
 %endif
 
+%if 0%{?fedora} > 30 || 0%{?rhel} > 7
 ln -sr %{buildroot}%{_bindir}/createrepo_c %{buildroot}%{_bindir}/createrepo
 ln -sr %{buildroot}%{_bindir}/mergerepo_c %{buildroot}%{_bindir}/mergerepo
 ln -sr %{buildroot}%{_bindir}/modifyrepo_c %{buildroot}%{_bindir}/modifyrepo
+%endif
 
 %if 0%{?rhel} && 0%{?rhel} <= 7
 %post libs -p /sbin/ldconfig

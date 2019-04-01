@@ -61,8 +61,11 @@ Requires: rpm >= 4.9.0
 %if %{with drpm}
 BuildRequires:  drpm-devel >= 0.1.3
 %endif
+
+%if 0%{?fedora} > 30 || 0%{?rhel} > 7
 Obsoletes:      createrepo < 0.11.0
 Provides:       createrepo = %{version}-%{release}
+%endif
 
 %description
 C implementation of Createrepo.

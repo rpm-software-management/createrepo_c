@@ -158,7 +158,7 @@ xmlNodePtr cmp_package_pco_and_xml(GSList *pco_list, xmlNodePtr current, PcoType
     const char *elem_name;
 
     if (pcotype >= PCO_TYPE_SENTINEL)
-        return;
+        return NULL;
 
     elem_name = pco_info[pcotype].elemname;
     GSList  *elem;
@@ -178,40 +178,40 @@ xmlNodePtr cmp_package_pco_and_xml(GSList *pco_list, xmlNodePtr current, PcoType
                 current = current->next;
             }
             g_assert_cmpstr(current->name, ==, "rpm:entry");
-            current = current->properties;
-            g_assert_cmpstr(current->name, ==, "name");
-            g_assert_cmpstr(current->children->content, ==, item->name);
+            xmlAttrPtr current_attrs;
+            current_attrs = current->properties;
+            g_assert_cmpstr(current_attrs->name, ==, "name");
+            g_assert_cmpstr(current_attrs->children->content, ==, item->name);
 
             if (item->flags && item->flags[0] != '\0') {
-                current = current->next;
-                g_assert_cmpstr(current->name, ==, "flags");
-                g_assert_cmpstr(current->children->content, ==, IF_NULL_EMPTY(item->flags));
+                current_attrs = current_attrs->next;
+                g_assert_cmpstr(current_attrs->name, ==, "flags");
+                g_assert_cmpstr(current_attrs->children->content, ==, IF_NULL_EMPTY(item->flags));
 
                 if (item->epoch && item->epoch[0] != '\0') {
-                    current = current->next;
-                    g_assert_cmpstr(current->name, ==, "epoch");
-                    g_assert_cmpstr(current->children->content, ==, IF_NULL_EMPTY(item->epoch));
+                    current_attrs = current_attrs->next;
+                    g_assert_cmpstr(current_attrs->name, ==, "epoch");
+                    g_assert_cmpstr(current_attrs->children->content, ==, IF_NULL_EMPTY(item->epoch));
                 }
 
                 if (item->version && item->version[0] != '\0') {
-                    current = current->next;
-                    g_assert_cmpstr(current->name, ==, "ver");
-                    g_assert_cmpstr(current->children->content, ==, IF_NULL_EMPTY(item->version));
+                    current_attrs = current_attrs->next;
+                    g_assert_cmpstr(current_attrs->name, ==, "ver");
+                    g_assert_cmpstr(current_attrs->children->content, ==, IF_NULL_EMPTY(item->version));
                 }
 
                 if (item->release && item->release[0] != '\0') {
-                    current = current->next;
-                    g_assert_cmpstr(current->name, ==, "rel");
-                    g_assert_cmpstr(current->children->content, ==, IF_NULL_EMPTY(item->release));
+                    current_attrs = current_attrs->next;
+                    g_assert_cmpstr(current_attrs->name, ==, "rel");
+                    g_assert_cmpstr(current_attrs->children->content, ==, IF_NULL_EMPTY(item->release));
                 }
             }
 
             if (pcotype == PCO_TYPE_REQUIRES && item->pre) {
-                current = current->next;
-                g_assert_cmpstr(current->name, ==, "pre");
-                g_assert_cmpstr(current->children->content, ==, "1");
+                current_attrs = current_attrs->next;
+                g_assert_cmpstr(current_attrs->name, ==, "pre");
+                g_assert_cmpstr(current_attrs->children->content, ==, "1");
             }
-            current = current->parent;
         }
     }
     if (!is_first){
@@ -296,19 +296,18 @@ cmp_package_and_xml_node(cr_Package *pkg, xmlNodePtr node)
     current = current->next;
     g_assert_cmpstr(current->name, ==, "location");
 
-    current = current->properties;
+    xmlAttrPtr current_attrs = current->properties;
     if (pkg->location_base){
-        g_assert_cmpstr(current->name, ==, "xml:base");
+        g_assert_cmpstr(current_attrs->name, ==, "xml:base");
         gchar *location_base_with_protocol = NULL;
         location_base_with_protocol = cr_prepend_protocol(pkg->location_base);
-        g_assert_cmpstr(current->children->content, ==, IF_NULL_EMPTY(location_base_with_protocol));
+        g_assert_cmpstr(current_attrs->children->content, ==, IF_NULL_EMPTY(location_base_with_protocol));
         g_free(location_base_with_protocol);
-        current = current->next;
+        current_attrs = current_attrs->next;
     }
 
-    g_assert_cmpstr(current->name, ==, "href");
-    g_assert_cmpstr(current->children->content, ==, IF_NULL_EMPTY(pkg->location_href));
-    current = current->parent;
+    g_assert_cmpstr(current_attrs->name, ==, "href");
+    g_assert_cmpstr(current_attrs->children->content, ==, IF_NULL_EMPTY(pkg->location_href));
 
     current = current->next;
     g_assert_cmpstr(current->name, ==, "format");

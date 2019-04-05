@@ -399,6 +399,10 @@ check_arguments(struct CmdOptions *options,
             return FALSE;
         }
     }
+    //options --xz has priority over compress_type, but not over general_compress_type
+    if (options->xz_compression) {
+        options->compression_type = CR_CW_XZ_COMPRESSION;
+    }
 
     // Check and set general compression type
     if (options->general_compress_type) {

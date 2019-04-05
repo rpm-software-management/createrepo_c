@@ -649,12 +649,6 @@ main(int argc, char **argv)
         prestodelta_compression = cmd_options->compression_type;
     }
 
-    if (cmd_options->xz_compression) {
-        sqlite_compression      = CR_CW_XZ_COMPRESSION;
-        groupfile_compression   = CR_CW_XZ_COMPRESSION;
-        prestodelta_compression = CR_CW_GZ_COMPRESSION;
-    }
-
     if (cmd_options->general_compression_type != CR_CW_UNKNOWN_COMPRESSION) {
         xml_compression         = cmd_options->general_compression_type;
         sqlite_compression      = cmd_options->general_compression_type;

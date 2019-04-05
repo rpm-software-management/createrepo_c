@@ -96,7 +96,8 @@ ADD_EXECUTABLE(mergerepo_c mergerepo_c.c)
 TARGET_LINK_LIBRARIES(mergerepo_c
                         libcreaterepo_c
                         ${GLIB2_LIBRARIES}
-                        ${GTHREAD2_LIBRARIES})
+                        ${GTHREAD2_LIBRARIES}
+                        ${LIBMODULEMD_LIBRARIES})
 
 ADD_EXECUTABLE(modifyrepo_c modifyrepo_c.c)
 TARGET_LINK_LIBRARIES(modifyrepo_c

@@ -25,11 +25,15 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <string.h>
+#ifdef WITH_LIBMODULEMD
+#include <modulemd.h>
+#endif /* WITH_LIBMODULEMD */
 #include "error.h"
 #include "createrepo_shared.h"
 #include "version.h"
 #include "helpers.h"
 #include "compression_wrapper.h"
+#include "metadata_internal.h"
 #include "misc.h"
 #include "locate_metadata.h"
 #include "load_metadata.h"
@@ -980,6 +984,9 @@ add_package(cr_Package *pkg,
 
 long
 merge_repos(GHashTable *merged,
+#ifdef WITH_LIBMODULEMD
+            ModulemdModuleIndex **module_index,
+#endif
             GSList *repo_list,
             GSList *arch_list,
             MergeMethod merge_method,
@@ -992,6 +999,13 @@ merge_repos(GHashTable *merged,
 {
     long loaded_packages = 0;
     GSList *used_noarch_keys = NULL;
+
+#ifdef WITH_LIBMODULEMD
+    g_autoptr(ModulemdModuleIndexMerger) merger = NULL;
+    GError *err = NULL;
+
+    merger = modulemd_module_index_merger_new();
+#endif /* WITH_LIBMODULEMD */
 
     // Load all repos
 
@@ -1033,6 +1047,13 @@ merge_repos(GHashTable *merged,
             g_critical("Cannot load repo: \"%s\"", ml->repomd);
             break;
         }
+
+#ifdef WITH_LIBMODULEMD
+        if (cr_metadata_modulemd(metadata)) {
+            modulemd_module_index_merger_associate_index (
+                merger, cr_metadata_modulemd (metadata), 0);
+        }
+#endif /* WITH_LIBMODULEMD */
 
         GHashTableIter iter;
         gpointer key, value;
@@ -1109,6 +1130,22 @@ merge_repos(GHashTable *merged,
         g_free(repopath);
     }
 
+#ifdef WITH_LIBMODULEMD
+    g_autoptr(ModulemdModuleIndex) moduleindex =
+        modulemd_module_index_merger_resolve (merger, &err);
+    g_auto (GStrv) module_names =
+        modulemd_module_index_get_module_names_as_strv (moduleindex);
+
+    if (moduleindex && g_strv_length(module_names) == 0) {
+        /* If the final module index is empty, free it so it won't get
+         * output in dump_merged_metadata()
+         */
+        g_clear_pointer (&moduleindex, g_object_unref);
+    }
+
+    *module_index = g_steal_pointer(&moduleindex);
+#endif
+
 
     // Steal used keys from noarch_hashtable
 
@@ -1133,10 +1170,33 @@ package_cmp(gconstpointer a_p, gconstpointer b_p)
 }
 
 
+#ifdef WITH_LIBMODULEMD
+static gint
+modulemd_write_handler (void          *data,
+                        unsigned char *buffer,
+                        size_t         size)
+{
+    int ret;
+    CR_FILE *cr_file = (CR_FILE *)data;
+    g_autoptr (GError) err = NULL;
+
+    ret = cr_write (cr_file, buffer, size, &err);
+    if (ret < 1) {
+        g_warning ("Could not write modulemd: %s", err->message);
+        return 0;
+    }
+
+    return 1;
+}
+#endif /* WITH_LIBMODULEMD */
+
 int
 dump_merged_metadata(GHashTable *merged_hashtable,
                      long packages,
                      gchar *groupfile,
+#ifdef WITH_LIBMODULEMD
+                     ModulemdModuleIndex *module_index,
+#endif /* WITH_LIBMODULEMD */
                      struct CmdOptions *cmd_options)
 {
     GError *tmp_err = NULL;
@@ -1491,6 +1551,37 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     }
 
 
+#ifdef WITH_LIBMODULEMD
+    // Write modulemd
+    g_autofree gchar *modulemd_filename = NULL;
+
+    if (module_index) {
+        gboolean ret;
+        modulemd_filename =
+            g_strconcat(cmd_options->tmp_out_repo, "/modules.yaml.gz", NULL);
+        CR_FILE *modulemd = cr_open(modulemd_filename,
+                                    CR_CW_MODE_WRITE,
+                                    CR_CW_GZ_COMPRESSION,
+                                    &tmp_err);
+        if (modulemd) {
+            ret = modulemd_module_index_dump_to_custom(module_index,
+                                                       modulemd_write_handler,
+                                                       modulemd,
+                                                       &tmp_err);
+            if (!ret) {
+                g_warning("Could not write module metadata: %s",
+                          tmp_err->message);
+            }
+            cr_close(modulemd, NULL);
+        } else {
+            g_warning("Cannot open %s: %s",
+                      modulemd_filename,
+                      tmp_err->message);
+            g_error_free(tmp_err);
+        }
+    }
+#endif
+
 
 
     // Prepare repomd records
@@ -1511,6 +1602,15 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_RepomdRecord *update_info_zck_rec      = NULL;
     cr_RepomdRecord *pkgorigins_rec           = NULL;
     cr_RepomdRecord *pkgorigins_zck_rec       = NULL;
+
+#ifdef WITH_LIBMODULEMD
+    cr_RepomdRecord *modulemd_rec = NULL;
+
+    if (module_index) {
+        modulemd_rec =
+          cr_repomd_record_new("modules", modulemd_filename);
+    }
+#endif /* WITH_LIBMODULEMD */
 
 
     // XML
@@ -1544,6 +1644,16 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                                                 CR_CHECKSUM_SHA256,
                                                 NULL);
     g_thread_pool_push(fill_pool, oth_fill_task, NULL);
+
+#ifdef WITH_LIBMODULEMD
+    cr_RepomdRecordFillTask *mmd_fill_task;
+    if (module_index) {
+        mmd_fill_task = cr_repomdrecordfilltask_new(modulemd_rec,
+                                                    CR_CHECKSUM_SHA256,
+                                                    NULL);
+        g_thread_pool_push(fill_pool, mmd_fill_task, NULL);
+    }
+#endif /* WITH_LIBMODULEMD */
 
     // Groupfile
 
@@ -1606,6 +1716,11 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_repomdrecordfilltask_free(pri_fill_task, NULL);
     cr_repomdrecordfilltask_free(fil_fill_task, NULL);
     cr_repomdrecordfilltask_free(oth_fill_task, NULL);
+#ifdef WITH_LIBMODULEMD
+    if (module_index) {
+      cr_repomdrecordfilltask_free(mmd_fill_task, NULL);
+    }
+#endif
 
 
     // Sqlite db
@@ -1781,6 +1896,10 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         cr_repomd_record_rename_file(update_info_zck_rec, NULL);
         cr_repomd_record_rename_file(pkgorigins_rec, NULL);
         cr_repomd_record_rename_file(pkgorigins_zck_rec, NULL);
+
+#ifdef WITH_LIBMODULEMD
+        cr_repomd_record_rename_file(modulemd_rec, NULL);
+#endif /* WITH_LIBMODULEMD */
     }
 
 
@@ -1803,6 +1922,10 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_repomd_set_record(repomd_obj, update_info_zck_rec);
     cr_repomd_set_record(repomd_obj, pkgorigins_rec);
     cr_repomd_set_record(repomd_obj, pkgorigins_zck_rec);
+
+#ifdef WITH_LIBMODULEMD
+    cr_repomd_set_record(repomd_obj, modulemd_rec);
+#endif /* WITH_LIBMODULEMD */
 
     char *repomd_xml = cr_xml_dump_repomd(repomd_obj, NULL);
 
@@ -2090,8 +2213,14 @@ main(int argc, char **argv)
     // merged_hashtable:
     //   Key: pkg->name
     //   Value: GSList with packages with the same name
+#ifdef WITH_LIBMODULEMD
+    g_autoptr(ModulemdModuleIndex) merged_index = NULL;
+#endif
 
     loaded_packages = merge_repos(merged_hashtable,
+#ifdef WITH_LIBMODULEMD
+                                  &merged_index,
+#endif /* WITH_LIBMODULEMD */
                                   local_repos,
                                   cmd_options->arch_list,
                                   cmd_options->merge_method,
@@ -2105,6 +2234,7 @@ main(int argc, char **argv)
                                   cmd_options->repo_prefix_replace
                                  );
 
+
     // Destroy koji stuff - we have to close pkgorigins file before dump
 
     if (cmd_options->koji)
@@ -2112,8 +2242,13 @@ main(int argc, char **argv)
 
 
     // Dump metadata
-
-    dump_merged_metadata(merged_hashtable, loaded_packages, groupfile, cmd_options);
+    dump_merged_metadata(merged_hashtable,
+                         loaded_packages,
+                         groupfile,
+#ifdef WITH_LIBMODULEMD
+                         merged_index,
+#endif
+                         cmd_options);
 
 
     // Remove downloaded repos and free repo location structures

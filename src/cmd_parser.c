@@ -163,7 +163,8 @@ static GOptionEntry cmd_entries[] =
       "Directory containing compression dictionaries for use by zchunk", "ZCK_DICT_DIR" },
 #endif
     { "keep-all-metadata", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.keep_all_metadata),
-      "Keep groupfile and updateinfo from source repo during update.", NULL },
+      "Keep all additional metadata (not primary, filelists and other xml or sqlite files, "
+      "nor their compressed variants) from source repository during update.", NULL },
     { "compatibility", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.compatibility),
       "Enforce maximal compatibility with classical createrepo.", NULL },
     { "retain-old-md-by-age", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.retain_old_md_by_age),

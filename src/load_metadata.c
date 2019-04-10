@@ -564,7 +564,7 @@ cr_metadata_load_xml(cr_Metadata *md,
     result = CRE_OK;
 
 #ifdef WITH_LIBMODULEMD
-    if (ml->modulemd_href) {
+    if (g_slist_find_custom(ml->additional_metadata, "modules", cr_cmp_metadatum_type)){
       result = cr_metadata_load_modulemd(md, ml, err);
     }
 #endif /* WITH_LIBMODULEMD */
@@ -612,15 +612,16 @@ cr_metadata_load_modulemd(cr_Metadata *md,
         return CRE_MEMORY;
     }
 
+    cr_Metadatum *modulemd_metadatum = g_slist_find_custom(ml->additional_metadata, "modules", cr_cmp_metadatum_type)->data;
     /* Open the metadata location */
-    modulemd = cr_open(ml->modulemd_href,
+    modulemd = cr_open(modulemd_metadatum->name,
                        CR_CW_MODE_READ,
                        CR_CW_AUTO_DETECT_COMPRESSION,
                        &tmp_err);
     if (tmp_err) {
         int code = tmp_err->code;
         g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ",
-                                   ml->modulemd_href);
+                                   modulemd_metadatum->name);
         return code;
     }
 

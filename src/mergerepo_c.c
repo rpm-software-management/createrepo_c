@@ -1310,7 +1310,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
         if (cmd_options->zck_compression) {
             modulemd_zck_rec = cr_repomd_record_new("modules_zck",
-                                                    modulemd_filename);
+                                                    NULL);
             cr_repomd_record_compress_and_fill(modulemd_rec,
                                                modulemd_zck_rec,
                                                CR_CHECKSUM_SHA256,
@@ -1324,14 +1324,14 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     if (groupfile) {
         groupfile_rec = cr_repomd_record_new("group", groupfile);
-        compressed_groupfile_rec = cr_repomd_record_new("group_gz", groupfile);
+        compressed_groupfile_rec = cr_repomd_record_new("group_gz", NULL);
         cr_repomd_record_compress_and_fill(groupfile_rec,
                                            compressed_groupfile_rec,
                                            CR_CHECKSUM_SHA256,
                                            cmd_options->groupfile_compression_type,
                                            NULL, NULL);
         if (cmd_options->zck_compression) {
-            groupfile_zck_rec = cr_repomd_record_new("group_zck", groupfile);
+            groupfile_zck_rec = cr_repomd_record_new("group_zck", NULL);
             cr_repomd_record_compress_and_fill(groupfile_rec,
                                                groupfile_zck_rec,
                                                CR_CHECKSUM_SHA256,
@@ -1347,7 +1347,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         update_info_rec = cr_repomd_record_new("updateinfo", update_info_filename);
         cr_repomd_record_fill(update_info_rec, CR_CHECKSUM_SHA256, NULL);
         if (cmd_options->zck_compression) {
-            update_info_zck_rec = cr_repomd_record_new("updateinfo_zck", update_info_filename);
+            update_info_zck_rec = cr_repomd_record_new("updateinfo_zck", NULL);
             cr_repomd_record_compress_and_fill(update_info_rec,
                                                update_info_zck_rec,
                                                CR_CHECKSUM_SHA256,
@@ -1364,7 +1364,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         pkgorigins_rec = cr_repomd_record_new("origin", pkgorigins_path);
         cr_repomd_record_fill(pkgorigins_rec, CR_CHECKSUM_SHA256, NULL);
         if (cmd_options->zck_compression) {
-            pkgorigins_zck_rec = cr_repomd_record_new("origin_zck", pkgorigins_path);
+            pkgorigins_zck_rec = cr_repomd_record_new("origin_zck", NULL);
             cr_repomd_record_compress_and_fill(pkgorigins_rec,
                                                pkgorigins_zck_rec,
                                                CR_CHECKSUM_SHA256,
@@ -1781,23 +1781,28 @@ main(int argc, char **argv)
 
     // Groupfile
     // XXX: There must be a better logic
-
     if (!cmd_options->groupfile) {
         // Use first groupfile you find
         for (element = local_repos; element; element = g_slist_next(element)) {
             struct cr_MetadataLocation *loc;
             loc = (struct cr_MetadataLocation  *) element->data;
-            if (!groupfile && loc->groupfile_href) {
-                if (cr_copy_file(loc->groupfile_href, cmd_options->tmp_out_repo, &tmp_err)) {
-                    groupfile = g_strconcat(cmd_options->tmp_out_repo,
-                                            cr_get_filename(loc->groupfile_href),
-                                            NULL);
-                    g_debug("Using groupfile: %s", groupfile);
-                    break;
-                } else {
-                    g_warning("Groupfile %s from repo: %s cannot be used: %s\n",
-                              loc->groupfile_href, loc->original_url, tmp_err->message);
-                    g_clear_error(&tmp_err);
+            if (!groupfile){
+                if (loc->additional_metadata){
+                    GSList *loc_groupfile = (g_slist_find_custom(loc->additional_metadata, "group", cr_cmp_metadatum_type));
+                    if (loc_groupfile) {
+                        cr_Metadatum *g = loc_groupfile->data;
+                        if (cr_copy_file(g->name, cmd_options->tmp_out_repo, &tmp_err)) {
+                            groupfile = g_strconcat(cmd_options->tmp_out_repo,
+                                    cr_get_filename(g->name),
+                                    NULL);
+                            g_debug("Using groupfile: %s", groupfile);
+                            break;
+                      } else {
+                            g_warning("Groupfile %s from repo: %s cannot be used: %s\n",
+                                    g->name, loc->original_url, tmp_err->message);
+                            g_clear_error(&tmp_err);
+                        }
+                    }
                 }
             }
         }

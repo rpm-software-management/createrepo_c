@@ -388,18 +388,22 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
 
     suffix = cr_compression_suffix(record_compression);
 
-    clocation_real = g_strconcat(record->location_real, suffix, NULL);
-    clocation_href = g_strconcat(record->location_href, suffix, NULL);
-    crecord->location_real = g_string_chunk_insert(crecord->chunk,
-                                                   clocation_real);
-    crecord->location_href = g_string_chunk_insert(crecord->chunk,
-                                                   clocation_href);
-    g_free(clocation_real);
-    g_free(clocation_href);
+    // Only update locations, if they are not set yet
+    if (!crecord->location_real){
+        clocation_real = g_strconcat(record->location_real, suffix, NULL);
+        crecord->location_real = g_string_chunk_insert(crecord->chunk,
+                                                       clocation_real);
+        g_free(clocation_real);
+    }
+    if (!crecord->location_href){
+        clocation_href = g_strconcat(record->location_href, suffix, NULL);
+        crecord->location_href = g_string_chunk_insert(crecord->chunk,
+                                                       clocation_href);
+        g_free(clocation_href);
+    }
 
     path  = record->location_real;
     cpath = crecord->location_real;
-
 
     // Compress file + get size of non compressed file
 

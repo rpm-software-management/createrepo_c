@@ -161,12 +161,32 @@ getitem(_MetadataLocationObject *self, PyObject *pykey)
         value = self->ml->fil_sqlite_href;
     } else if (!strcmp(key, "other_db")) {
         value = self->ml->oth_sqlite_href;
-    } else if (!strcmp(key, "group")) {
-        value = self->ml->groupfile_href;
+    } else if (!strcmp(key, "group")) {   //NOTE(amatej): Preserve old API for these specific files (group, group_gz, updateinfo)
+        if (self->ml->additional_metadata){
+            GSList *m = g_slist_find_custom(self->ml->additional_metadata, "group", cr_cmp_metadatum_type);
+            if (m)
+                value = ((cr_Metadatum *)(m->data))->name;
+        }
     } else if (!strcmp(key, "group_gz")) {
-        value = self->ml->cgroupfile_href;
+        if (self->ml->additional_metadata){
+            GSList *m = g_slist_find_custom(self->ml->additional_metadata, "group_gz", cr_cmp_metadatum_type);
+            if (m)
+                value = ((cr_Metadatum *)(m->data))->name;
+        }
     } else if (!strcmp(key, "updateinfo")) {
-        value = self->ml->updateinfo_href;
+        if (self->ml->additional_metadata){
+            GSList *m = g_slist_find_custom(self->ml->additional_metadata, "updateinfo", cr_cmp_metadatum_type);
+            if (m)
+                value = ((cr_Metadatum *)(m->data))->name;
+        }
+    } else if (!strcmp(key, "additional_metadata")){
+        if (self->ml->additional_metadata){
+            PyObject *list = PyList_New(0);
+            for (GSList *elem = self->ml->additional_metadata; elem; elem=g_slist_next(elem)){
+                PyList_Append(list, PyUnicode_FromString(((cr_Metadatum *)(elem->data))->name));
+            }
+            return list;
+        }
     }
 
     if (value)

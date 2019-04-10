@@ -40,10 +40,9 @@ struct cr_MetadataLocation {
     char *pri_sqlite_href;      /*!< path to primary.sqlite */
     char *fil_sqlite_href;      /*!< path to filelists.sqlite */
     char *oth_sqlite_href;      /*!< path to other.sqlite */
-    char *groupfile_href;       /*!< path to groupfile */
-    char *cgroupfile_href;      /*!< path to compressed groupfile */
-    char *updateinfo_href;      /*!< path to updateinfo */
-    char *modulemd_href;        /*!< path to modulemd */
+    GSList *additional_metadata; /*!< list of cr_Metadatum: paths 
+                                      to additional metadata such 
+                                      as updateinfo, modulemd, .. */
     char *repomd;               /*!< path to repomd.xml */
     char *original_url;         /*!< original path of repo from commandline
                                      param */
@@ -52,6 +51,52 @@ struct cr_MetadataLocation {
                                      will be removed during
                                      cr_metadata_location_free*/
 };
+
+/** Structure representing additional metadata location and type.
+ *  It is used to first hold old and later new location while keeping
+ *  type information.
+ */
+typedef struct {
+    gchar *name;
+    gchar *type;
+} cr_Metadatum;
+
+struct cr_MetadataLocation *
+cr_parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite);
+
+/** Inserts additional metadatum to list of
+ *  additional metadata if this type is already
+ *  present it gets overridden
+ *
+ * @param path                  Path to metadatum
+ * @param type                  Type of metadatum
+ * @param additional_metadata   List of additional metadata
+ * @return                      Original list with new element
+ */
+GSList*
+cr_insert_additional_metadatum(const gchar *path,
+                               const gchar *type,
+                               GSList *additional_metadata);
+
+/** Compares type (string) of specified metadatum 
+ *  with second parameter string (type)
+ *
+ * @param metadatum             Cmp type of this metadatum
+ * @param type                  String value
+ * @return                      an integer less than, equal to, or greater than zero,
+ *                              if metadatum type is <, == or > than type (string cmp)
+ */
+gint cr_cmp_metadatum_type(gconstpointer metadatum, gconstpointer type);
+
+/** Compares type (string) of specified cr_RepomdRecord 
+ *  with second parameter string (type)
+ *
+ * @param cr_RepomdRecord       Cmp type of this cr_RepomdRecord
+ * @param type                  String value
+ * @return                      an integer less than, equal to, or greater than zero,
+ *                              if repomdRecord type is <, == or > than type (string cmp)
+ */
+gint cr_cmp_repomd_record_type(gconstpointer repomd_record, gconstpointer type);
 
 /** Parses repomd.xml and returns a filled cr_MetadataLocation structure.
  * Remote repodata (repopath with prefix "ftp://" or "http://") are dowloaded
@@ -71,6 +116,24 @@ struct cr_MetadataLocation *cr_locate_metadata(const char *repopath,
  * @param ml            MeatadaLocation
  */
 void cr_metadatalocation_free(struct cr_MetadataLocation *ml);
+
+/** Free cr_Metadatum. 
+ * @param m            Meatadatum
+ */
+void cr_metadatum_free(cr_Metadatum *m);
+
+/** Copies metadata files, exactly, even hashed name
+ *  It first constructs target path (location + name),
+ *  Then it copies file to that location
+ *
+ *  Metadatum as in singular of metadata, it is eg. groupfile, updateinfo..
+ *
+ * @param src               From where are we copying
+ * @param tmp_out_repo      Copying destination dir
+ * @param err               GError **
+ * @return                  Path to copied file
+ */
+gchar* cr_copy_metadatum(const gchar *src, const gchar *tmp_out_repo, GError **err);
 
 /** @} */
 

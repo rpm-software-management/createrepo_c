@@ -326,6 +326,102 @@ prepare_cache_dir(struct CmdOptions *cmd_options,
     return TRUE;
 }
 
+/** Adds groupfile cr_RepomdRecords to additional_metadata_rec list.
+ *  Groupfile is a special case, because it's the only metadatum
+ *  that can be inputed to createrepo_c via command line option.
+ *
+ * @param group_metadatum           Cr_Metadatum for used groupfile
+ * @param additional_metadata_rec   GSList of cr_RepomdRecords
+ * @param comp_type                 Groupfile compression type
+ * @param repomd_checksum_type
+ *
+ * @return                          GSList with added cr_RepomdRecords for
+ *                                  groupfile
+ */
+GSList*
+cr_create_repomd_records_for_groupfile_metadata(const cr_Metadatum *group_metadatum,
+                                                GSList *additional_metadata_rec,
+                                                cr_CompressionType comp_type,
+                                                cr_ChecksumType repomd_checksum_type)
+{
+    GError *tmp_err = NULL;
+    char *compression_suffix = g_strdup(cr_compression_suffix(comp_type));
+    compression_suffix[0] = '_'; //replace '.'
+    additional_metadata_rec = g_slist_prepend(additional_metadata_rec,
+                                              cr_repomd_record_new(
+                                                  group_metadatum->type,
+                                                  group_metadatum->name
+                                              ));
+
+    gchar *compressed_record_type = g_strconcat(group_metadatum->type, compression_suffix, NULL);
+    additional_metadata_rec = g_slist_prepend(additional_metadata_rec,
+                                              cr_repomd_record_new(
+                                                  compressed_record_type,
+                                                  NULL
+                                              ));
+    //TODO(amatej): replace nth_data with ->next->data
+    cr_repomd_record_compress_and_fill(g_slist_nth_data(additional_metadata_rec, 1),
+                                       additional_metadata_rec->data,
+                                       repomd_checksum_type,
+                                       comp_type,
+                                       NULL,
+                                       &tmp_err);
+
+    if (tmp_err) {
+        g_critical("Cannot process %s %s: %s",
+                   group_metadatum->type,
+                   group_metadatum->name,
+                   tmp_err->message);
+        g_free(compression_suffix);
+        g_free(compressed_record_type);
+        g_clear_error(&tmp_err);
+        exit(EXIT_FAILURE);
+    }
+
+    g_free(compressed_record_type);
+    g_free(compression_suffix);
+
+    return additional_metadata_rec;
+}
+
+/** Creates list of cr_RepomdRecords from list
+ *  of additional metadata (cr_Metadatum) 
+ *
+ * @param additional_metadata       List of cr_Metadatum
+ * @param repomd_checksum_type      
+ *
+ * @return                          New GSList of cr_RepomdRecords
+ */
+static GSList*
+cr_create_repomd_records_for_additional_metadata(GSList *additional_metadata,
+                                                 cr_ChecksumType repomd_checksum_type)
+{
+    GError *tmp_err = NULL;
+    GSList *additional_metadata_rec = NULL; 
+    GSList *element = additional_metadata;
+    for (; element; element=g_slist_next(element)) {
+        additional_metadata_rec = g_slist_prepend(additional_metadata_rec,
+                                                  cr_repomd_record_new(
+                                                      ((cr_Metadatum *) element->data)->type,
+                                                      ((cr_Metadatum *) element->data)->name
+                                                  ));
+        cr_repomd_record_fill(additional_metadata_rec->data,
+                              repomd_checksum_type,
+                              &tmp_err);
+
+        if (tmp_err) {
+            g_critical("Cannot process %s %s: %s",
+                       ((cr_Metadatum *) element->data)->type,
+                       ((cr_Metadatum *) element->data)->name,
+                       tmp_err->message);
+            g_clear_error(&tmp_err);
+            exit(EXIT_FAILURE);
+        }
+    }
+
+    return additional_metadata_rec;
+}
+
 
 int
 main(int argc, char **argv)
@@ -564,69 +660,41 @@ main(int argc, char **argv)
 
     g_slist_free(current_pkglist);
     current_pkglist = NULL;
+    GSList *additional_metadata = NULL;
+    cr_Metadatum *new_groupfile_metadatum = NULL;
 
-
-    // Copy groupfile
-    gchar *groupfile = NULL;
-
+    // Groupfile specified as argument 
     if (cmd_options->groupfile_fullpath) {
-        // Groupfile specified as argument
-
-        groupfile = g_strconcat(tmp_out_repo,
-                              cr_get_filename(cmd_options->groupfile_fullpath),
-                              NULL);
-        g_debug("Copy groupfile %s -> %s",
-                cmd_options->groupfile_fullpath, groupfile);
-
-        ret = cr_better_copy_file(cmd_options->groupfile_fullpath,
-                                  groupfile,
-                                  &tmp_err);
-        if (!ret) {
-            g_critical("Error while copy %s -> %s: %s",
-                       cmd_options->groupfile_fullpath,
-                       groupfile,
-                       tmp_err->message);
-            g_clear_error(&tmp_err);
-        }
-    } else if (cmd_options->update && cmd_options->keep_all_metadata &&
-               old_metadata_location && old_metadata_location->groupfile_href)
-    {
-        // Old groupfile exists
-
-        g_message("Using groupfile from target repo");
-
-        gchar *src_groupfile = old_metadata_location->groupfile_href;
-        groupfile = g_strconcat(tmp_out_repo,
-                                cr_get_filename(src_groupfile),
-                                NULL);
-
-        g_debug("Copy groupfile %s -> %s", src_groupfile, groupfile);
-
-        if (!cr_better_copy_file(src_groupfile, groupfile, &tmp_err)){
-            g_critical("Error while copy %s -> %s: %s",
-                       src_groupfile, groupfile, tmp_err->message);
-            g_clear_error(&tmp_err);
+        new_groupfile_metadatum = g_malloc0(sizeof(cr_Metadatum));
+        new_groupfile_metadatum->name = cr_copy_metadatum(cmd_options->groupfile_fullpath, tmp_out_repo, &tmp_err);
+        new_groupfile_metadatum->type = g_strdup("group");
+        //remove old groupfile(s) (every [compressed] variant)
+        if (old_metadata_location){
+            GSList *node_iter = old_metadata_location->additional_metadata;
+            while (node_iter != NULL){
+                cr_Metadatum *m = node_iter->data;
+                GSList *next = g_slist_next(node_iter);
+                if(g_str_has_prefix(m->type, "group")){
+                    old_metadata_location->additional_metadata = g_slist_delete_link(old_metadata_location->additional_metadata,
+                                                                                     node_iter);
+                    cr_metadatum_free(m);
+                }
+                node_iter = next;
+            }
         }
     }
 
 
-    // Copy update info
-    char *updateinfo = NULL;
-
     if (cmd_options->update && cmd_options->keep_all_metadata &&
-        old_metadata_location && old_metadata_location->updateinfo_href)
+        old_metadata_location && old_metadata_location->additional_metadata)
     {
-        gchar *src_updateinfo = old_metadata_location->updateinfo_href;
-        updateinfo = g_strconcat(tmp_out_repo,
-                                 cr_get_filename(src_updateinfo),
-                                 NULL);
-
-        g_debug("Copy updateinfo %s -> %s", src_updateinfo, updateinfo);
-
-        if (!cr_better_copy_file(src_updateinfo, updateinfo, &tmp_err)) {
-            g_critical("Error while copy %s -> %s: %s",
-                       src_updateinfo, updateinfo, tmp_err->message);
-            g_clear_error(&tmp_err);
+        GSList *element = old_metadata_location->additional_metadata;
+        cr_Metadatum *m;
+        for (; element; element=g_slist_next(element)) {
+            m = g_malloc0(sizeof(cr_Metadatum));
+            m->name = cr_copy_metadatum(((cr_Metadatum *) element->data)->name, tmp_out_repo, &tmp_err);
+            m->type = g_strdup(((cr_Metadatum *) element->data)->type);
+            additional_metadata = g_slist_prepend(additional_metadata, m);
         }
     }
 
@@ -1072,13 +1140,11 @@ main(int argc, char **argv)
     cr_RepomdRecord *pri_zck_rec              = NULL;
     cr_RepomdRecord *fil_zck_rec              = NULL;
     cr_RepomdRecord *oth_zck_rec              = NULL;
-    cr_RepomdRecord *groupfile_rec            = NULL;
-    cr_RepomdRecord *compressed_groupfile_rec = NULL;
-    cr_RepomdRecord *compressed_groupfile_zck_rec = NULL;
-    cr_RepomdRecord *updateinfo_rec           = NULL;
-    cr_RepomdRecord *updateinfo_zck_rec       = NULL;
     cr_RepomdRecord *prestodelta_rec          = NULL;
     cr_RepomdRecord *prestodelta_zck_rec      = NULL;
+
+    // List of cr_RepomdRecords
+    GSList *additional_metadata_rec           = NULL; 
 
     // XML
     cr_repomd_record_load_contentstat(pri_xml_rec, pri_stat);
@@ -1111,37 +1177,22 @@ main(int argc, char **argv)
                                                 NULL);
     g_thread_pool_push(fill_pool, oth_fill_task, NULL);
 
-    // Groupfile
-    if (groupfile) {
-        groupfile_rec = cr_repomd_record_new("group", groupfile);
-        compressed_groupfile_rec = cr_repomd_record_new("group_gz", groupfile);
-        cr_repomd_record_compress_and_fill(groupfile_rec,
-                                          compressed_groupfile_rec,
-                                          cmd_options->repomd_checksum_type,
-                                          groupfile_compression,
-                                          NULL,
-                                          &tmp_err);
-        if (tmp_err) {
-            g_critical("Cannot process groupfile %s: %s",
-                       groupfile, tmp_err->message);
-            g_clear_error(&tmp_err);
-            exit(EXIT_FAILURE);
-        }
-    }
 
+    additional_metadata_rec = cr_create_repomd_records_for_additional_metadata(additional_metadata,
+                                                                               cmd_options->repomd_checksum_type);
 
-    // Updateinfo
-    if (updateinfo) {
-        updateinfo_rec = cr_repomd_record_new("updateinfo", updateinfo);
-        cr_repomd_record_fill(updateinfo_rec,
-                              cmd_options->repomd_checksum_type,
-                              &tmp_err);
-        if (tmp_err) {
-            g_critical("Cannot process updateinfo %s: %s",
-                       updateinfo, tmp_err->message);
-            g_clear_error(&tmp_err);
-            exit(EXIT_FAILURE);
-        }
+    if (new_groupfile_metadatum) {
+        additional_metadata_rec = cr_create_repomd_records_for_groupfile_metadata(new_groupfile_metadatum,
+                                                                                  additional_metadata_rec,
+                                                                                  groupfile_compression, 
+                                                                                  cmd_options->repomd_checksum_type);
+
+        //NOTE(amatej): Now we can add groupfile metadata to the additional_metadata list, for unified handlig while zck compressing
+        additional_metadata = g_slist_prepend(additional_metadata, new_groupfile_metadatum);
+        cr_Metadatum *compressed_new_groupfile_metadatum = g_malloc0(sizeof(cr_Metadatum));
+        compressed_new_groupfile_metadatum->name = g_strdup(((cr_RepomdRecord *) additional_metadata_rec->data)->location_real);
+        compressed_new_groupfile_metadatum->type = g_strdup(((cr_RepomdRecord *) additional_metadata_rec->data)->type);
+        additional_metadata = g_slist_prepend(additional_metadata, compressed_new_groupfile_metadatum);
     }
 
     // Wait till repomd record fill task of xml files ends.
@@ -1292,50 +1343,73 @@ main(int argc, char **argv)
         cr_repomdrecordfilltask_free(fil_zck_fill_task, NULL);
         cr_repomdrecordfilltask_free(oth_zck_fill_task, NULL);
 
-        // Group file
-        if (groupfile && groupfile_compression != CR_CW_ZCK_COMPRESSION) {
-            compressed_groupfile_zck_rec = cr_repomd_record_new("group_gz_zck", groupfile);
-            cr_repomd_record_compress_and_fill(groupfile_rec,
-                                          compressed_groupfile_zck_rec,
-                                          cmd_options->repomd_checksum_type,
-                                          CR_CW_ZCK_COMPRESSION,
-                                          cmd_options->zck_dict_dir,
-                                          &tmp_err);
-            if (tmp_err) {
-                g_critical("Cannot process groupfile %s: %s",
-                           groupfile, tmp_err->message);
-                g_clear_error(&tmp_err);
-                exit(EXIT_FAILURE);
+        //ZCK for additional metadata
+        GSList *element = additional_metadata;
+        for (; element; element=g_slist_next(element)) {
+            cr_CompressionType com_type = cr_detect_compression(((cr_Metadatum *) element->data)->name, &tmp_err);
+            gchar *elem_type = g_strdup(((cr_Metadatum *) element->data)->type);
+            gchar *elem_name = g_strdup(((cr_Metadatum *) element->data)->name);
+            if (com_type != CR_CW_NO_COMPRESSION){
+                const gchar *compression_suffix = cr_compression_suffix(com_type);
+                //remove suffixes if present
+                if (g_str_has_suffix(elem_name, compression_suffix)){
+                    gchar *tmp = elem_name;
+                    elem_name = g_strndup(elem_name, (strlen(elem_name) - strlen(compression_suffix)));
+                    g_free(tmp);
+                }
+                gchar *type_compression_suffix = g_strdup(compression_suffix);
+                type_compression_suffix[0] = '_'; //replace '.'
+                if (g_str_has_suffix(elem_type, type_compression_suffix)){
+                    gchar *tmp = elem_type;
+                    elem_type = g_strndup(elem_type, (strlen(elem_type) - strlen(type_compression_suffix)));
+                    g_free(tmp);
+                }
+                g_free(type_compression_suffix);
             }
-        }
-
-        // Updateinfo
-        if (updateinfo) {
-            cr_CompressionType com_type = cr_detect_compression(updateinfo, &tmp_err);
+            gchar *additional_metadatum_rec_zck_type = g_strconcat(elem_type, "_zck", NULL);
+            gchar *additional_metadatum_rec_zck_name = g_strconcat(elem_name, ".zck", NULL);
+            g_free(elem_name);
+            g_free(elem_type);
             if (tmp_err) {
                 g_critical("Cannot detect compression type of %s: %s",
-                       updateinfo, tmp_err->message);
+                       ((cr_Metadatum *) element->data)->name, tmp_err->message);
                 g_clear_error(&tmp_err);
                 exit(EXIT_FAILURE);
             }
-            /* Only create updateinfo_zck if updateinfo isn't already zchunk */
-            if (com_type != CR_CW_ZCK_COMPRESSION) {
-                updateinfo_zck_rec = cr_repomd_record_new("updateinfo_zck", updateinfo);
-                cr_repomd_record_compress_and_fill(updateinfo_rec,
-                                      updateinfo_zck_rec,
-                                      cmd_options->repomd_checksum_type,
-                                      CR_CW_ZCK_COMPRESSION,
-                                      cmd_options->zck_dict_dir,
-                                      &tmp_err);
+            /* Only create additional_metadata_zck if additional_metadata isn't already zchunk 
+             * and its zck version doesn't yet exists */
+            if (com_type != CR_CW_ZCK_COMPRESSION && 
+                !g_slist_find_custom(additional_metadata_rec, additional_metadatum_rec_zck_type, cr_cmp_repomd_record_type)) {
+                GSList *additional_metadatum_rec_elem = g_slist_find_custom(additional_metadata_rec,
+                                                                            ((cr_Metadatum *) element->data)->type,
+                                                                            cr_cmp_repomd_record_type);
+
+                additional_metadata_rec = g_slist_prepend(additional_metadata_rec,
+                                                          cr_repomd_record_new(
+                                                              additional_metadatum_rec_zck_type,
+                                                              additional_metadatum_rec_zck_name
+                                                          ));
+
+                cr_repomd_record_compress_and_fill(additional_metadatum_rec_elem->data,
+                                                   additional_metadata_rec->data,
+                                                   cmd_options->repomd_checksum_type,
+                                                   CR_CW_ZCK_COMPRESSION,
+                                                   cmd_options->zck_dict_dir,
+                                                   &tmp_err);
                 if (tmp_err) {
-                    g_critical("Cannot process updateinfo %s: %s",
-                               updateinfo, tmp_err->message);
+                    g_critical("Cannot process %s %s: %s",
+                            ((cr_Metadatum *) element->data)->type,
+                            ((cr_Metadatum *) element->data)->name,
+                            tmp_err->message);
                     g_clear_error(&tmp_err);
                     exit(EXIT_FAILURE);
                 }
             }
+            g_free(additional_metadatum_rec_zck_type);
+            g_free(additional_metadatum_rec_zck_name);
         }
     }
+
     cr_contentstat_free(pri_zck_stat, NULL);
     cr_contentstat_free(fil_zck_stat, NULL);
     cr_contentstat_free(oth_zck_stat, NULL);
@@ -1488,13 +1562,12 @@ deltaerror:
         cr_repomd_record_rename_file(pri_zck_rec, NULL);
         cr_repomd_record_rename_file(fil_zck_rec, NULL);
         cr_repomd_record_rename_file(oth_zck_rec, NULL);
-        cr_repomd_record_rename_file(groupfile_rec, NULL);
-        cr_repomd_record_rename_file(compressed_groupfile_rec, NULL);
-        cr_repomd_record_rename_file(compressed_groupfile_zck_rec, NULL);
-        cr_repomd_record_rename_file(updateinfo_rec, NULL);
-        cr_repomd_record_rename_file(updateinfo_zck_rec, NULL);
         cr_repomd_record_rename_file(prestodelta_rec, NULL);
         cr_repomd_record_rename_file(prestodelta_zck_rec, NULL);
+        GSList *element = additional_metadata_rec;
+        for (; element; element=g_slist_next(element)) {
+            cr_repomd_record_rename_file(element->data, NULL);
+        }
     }
 
     if (cmd_options->set_timestamp_to_revision) {
@@ -1506,10 +1579,11 @@ deltaerror:
         cr_repomd_record_set_timestamp(pri_db_rec, revision);
         cr_repomd_record_set_timestamp(fil_db_rec, revision);
         cr_repomd_record_set_timestamp(oth_db_rec, revision);
-        cr_repomd_record_set_timestamp(groupfile_rec, revision);
-        cr_repomd_record_set_timestamp(compressed_groupfile_rec, revision);
-        cr_repomd_record_set_timestamp(updateinfo_rec, revision);
         cr_repomd_record_set_timestamp(prestodelta_rec, revision);
+        GSList *element = additional_metadata_rec;
+        for (; element; element=g_slist_next(element)) {
+            cr_repomd_record_set_timestamp(element->data, revision);
+        }
     }
 
     // Gen xml
@@ -1522,13 +1596,12 @@ deltaerror:
     cr_repomd_set_record(repomd_obj, pri_zck_rec);
     cr_repomd_set_record(repomd_obj, fil_zck_rec);
     cr_repomd_set_record(repomd_obj, oth_zck_rec);
-    cr_repomd_set_record(repomd_obj, groupfile_rec);
-    cr_repomd_set_record(repomd_obj, compressed_groupfile_rec);
-    cr_repomd_set_record(repomd_obj, compressed_groupfile_zck_rec);
-    cr_repomd_set_record(repomd_obj, updateinfo_rec);
-    cr_repomd_set_record(repomd_obj, updateinfo_zck_rec);
     cr_repomd_set_record(repomd_obj, prestodelta_rec);
     cr_repomd_set_record(repomd_obj, prestodelta_zck_rec);
+    GSList *elem = additional_metadata_rec;
+    for (; elem; elem=g_slist_next(elem)) {
+        cr_repomd_set_record(repomd_obj, elem->data);
+    }
 
     int i = 0;
     while (cmd_options->repo_tags && cmd_options->repo_tags[i])
@@ -1680,8 +1753,8 @@ deltaerror:
     g_free(pri_zck_filename);
     g_free(fil_zck_filename);
     g_free(oth_zck_filename);
-    g_free(groupfile);
-    g_free(updateinfo);
+    g_slist_free_full(additional_metadata, (GDestroyNotify) cr_metadatum_free);
+    g_slist_free(additional_metadata_rec);
 
     free_options(cmd_options);
     cr_package_parser_cleanup();

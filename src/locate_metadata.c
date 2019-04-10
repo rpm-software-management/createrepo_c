@@ -38,7 +38,16 @@
 #define FORMAT_XML      1
 #define FORMAT_LEVEL    0
 
+void
+cr_metadatum_free(cr_Metadatum *m)
+{
+    if (!m)
+        return;
 
+    g_free(m->name);
+    g_free(m->type);
+    g_free(m);
+}
 
 void
 cr_metadatalocation_free(struct cr_MetadataLocation *ml)
@@ -57,16 +66,64 @@ cr_metadatalocation_free(struct cr_MetadataLocation *ml)
     g_free(ml->pri_sqlite_href);
     g_free(ml->fil_sqlite_href);
     g_free(ml->oth_sqlite_href);
-    g_free(ml->groupfile_href);
-    g_free(ml->cgroupfile_href);
-    g_free(ml->updateinfo_href);
     g_free(ml->repomd);
     g_free(ml->original_url);
     g_free(ml->local_path);
+    g_slist_free_full(ml->additional_metadata, (GDestroyNotify) cr_metadatum_free);
     g_free(ml);
 }
 
-static struct cr_MetadataLocation *
+gint cr_cmp_metadatum_type(gconstpointer metadatum, gconstpointer type){
+    return g_strcmp0(((cr_Metadatum *) metadatum)->type, type);
+}
+
+gint cr_cmp_repomd_record_type(gconstpointer repomd_record, gconstpointer type){
+    return g_strcmp0(((cr_RepomdRecord *) repomd_record)->type, type);
+}
+
+gchar*
+cr_copy_metadatum(const gchar *src,
+               const gchar *tmp_out_repo,
+               GError **err)
+{
+    g_message("Using %s from target repo", cr_get_filename(src));
+
+    gchar *metadatum = g_strconcat(tmp_out_repo,
+                                   cr_get_filename(src),
+                                   NULL);
+
+    g_debug("Copy metadatum %s -> %s", src, metadatum);
+
+    if (!cr_better_copy_file(src, metadatum, err)) {
+        g_critical("Error while copy %s -> %s: %s",
+                src, metadatum, (*err)->message);
+        g_clear_error(err);
+        return 0;
+    }
+    return metadatum;
+}
+
+GSList*
+cr_insert_additional_metadatum(const gchar *path,
+                               const gchar *type,
+                               GSList *additional_metadata)
+{
+    GSList *elem = g_slist_find_custom(additional_metadata, type, cr_cmp_metadatum_type);
+    if (elem){
+        g_free(((cr_Metadatum *) elem->data)->name);
+        ((cr_Metadatum *) elem->data)->name = g_strdup(path);
+        return additional_metadata;
+    }
+
+    cr_Metadatum *m = g_malloc0(sizeof(cr_Metadatum));
+    m->name = g_strdup(path);
+    m->type = g_strdup(type);
+    additional_metadata = g_slist_prepend(additional_metadata, m);
+    g_message("type %s added to list from path: %s ", type, path); 
+    return additional_metadata;
+}
+
+struct cr_MetadataLocation *
 cr_parse_repomd(const char *repomd_path,
                 const char *repopath,
                 int ignore_sqlite)
@@ -110,15 +167,15 @@ cr_parse_repomd(const char *repomd_path,
             mdloc->oth_xml_href = full_location_href;
         else if (!g_strcmp0(record->type, "other_db") && !ignore_sqlite)
             mdloc->oth_sqlite_href = full_location_href;
-        else if (!g_strcmp0(record->type, "group"))
-            mdloc->groupfile_href = full_location_href;
-        else if (!g_strcmp0(record->type, "group_gz"))
-            mdloc->cgroupfile_href = full_location_href;
-        else if (!g_strcmp0(record->type, "updateinfo"))
-            mdloc->updateinfo_href = full_location_href;
-        else if (!g_strcmp0(record->type, "modules"))
-            mdloc->modulemd_href = full_location_href;
-        else
+        else if ( !g_str_has_prefix(record->type, "primary_"   ) &&
+                  !g_str_has_prefix(record->type, "filelists_" ) && 
+                  !g_str_has_prefix(record->type, "other_"     ) ) 
+        {
+            mdloc->additional_metadata = cr_insert_additional_metadatum(full_location_href,
+                                                                        record->type,
+                                                                        mdloc->additional_metadata);
+            g_free(full_location_href);
+        } else
             g_free(full_location_href);
     }
 
@@ -243,12 +300,14 @@ cr_get_remote_metadata(const char *repopath, gboolean ignore_sqlite)
         cr_download(handle, r_location->fil_sqlite_href, tmp_repodata, &tmp_err);
     if (!tmp_err && r_location->oth_sqlite_href)
         cr_download(handle, r_location->oth_sqlite_href, tmp_repodata, &tmp_err);
-    if (!tmp_err && r_location->groupfile_href)
-        cr_download(handle, r_location->groupfile_href, tmp_repodata, &tmp_err);
-    if (!tmp_err && r_location->cgroupfile_href)
-        cr_download(handle, r_location->cgroupfile_href, tmp_repodata, &tmp_err);
-    if (!tmp_err && r_location->updateinfo_href)
-        cr_download(handle, r_location->updateinfo_href, tmp_repodata, &tmp_err);
+
+    if (!tmp_err && r_location->additional_metadata){
+        GSList *element = r_location->additional_metadata;
+        for (; element; element=g_slist_next(element)) {
+            cr_download(handle, ((cr_Metadatum *)element->data)->name, tmp_repodata, &tmp_err);
+            if (tmp_err) break;
+        }
+    }
 
     cr_metadatalocation_free(r_location);
 
@@ -308,7 +367,7 @@ cr_locate_metadata(const char *repopath, gboolean ignore_sqlite, GError **err)
     }
 
 #ifndef WITH_LIBMODULEMD
-    if (ret->modulemd_href) {
+    if (g_slist_find_custom(ret->additional_metadata, "modules", cr_cmp_metadatum_type)) {
         g_set_error (err,
                      ERR_DOMAIN,
                      CRE_MODULEMD,

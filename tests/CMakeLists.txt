@@ -10,6 +10,10 @@ ADD_EXECUTABLE(test_load_metadata test_load_metadata.c)
 TARGET_LINK_LIBRARIES(test_load_metadata libcreaterepo_c ${GLIB2_LIBRARIES})
 ADD_DEPENDENCIES(tests test_load_metadata)
 
+ADD_EXECUTABLE(test_locate_metadata test_locate_metadata.c)
+TARGET_LINK_LIBRARIES(test_locate_metadata libcreaterepo_c ${GLIB2_LIBRARIES})
+ADD_DEPENDENCIES(tests test_locate_metadata)
+
 ADD_EXECUTABLE(test_misc test_misc.c)
 TARGET_LINK_LIBRARIES(test_misc libcreaterepo_c ${GLIB2_LIBRARIES})
 ADD_DEPENDENCIES(tests test_misc)

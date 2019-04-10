@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE comps PUBLIC "-//Red Hat, Inc.//DTD Comps info//EN" "comps.dtd">
+<comps>
+  <group>
+    <id>20d-printing</id>
+    <name>20D Printing</name>
+    <description>3D printing software</description>
+    <default>false</default>
+    <uservisible>true</uservisible>
+    <packagelist>
+      <packagereq type="default">blender</packagereq>
+      <packagereq type="default">cura</packagereq>
+    </packagelist>
+  </group>
+  <environment>
+    <id>gnome-desktop-environment</id>
+    <name>GNOME Desktop</name>
+    <name xml:lang="cs">Pracovní prostředí GNOME</name>
+    <name xml:lang="de">GNOME-Desktop</name>
+    <description>GNOME is a highly intuitive and user friendly desktop environment.</description>
+    <description xml:lang="cs">GNOME je velmi intuitivní a uživatelsky přívětivé pracovní prostředí.</description>
+    <description xml:lang="de">GNOME ist eine hoch-intuitive und benutzerfreundliche Benutzeroberfläche</description>
+    <display_order>5</display_order>
+    <grouplist>
+      <groupid>base-x</groupid>
+    </grouplist>
+    <optionlist>
+      <groupid>3d-printing</groupid>
+    </optionlist>
+  </environment>
+  <category>
+    <id>gnome-desktop-environment</id>
+    <name>GNOME Desktop</name>
+    <name xml:lang="cs">Pracovní prostředí GNOME</name>
+    <name xml:lang="de">GNOME-Desktop</name>
+    <description>GNOME is a highly intuitive and user friendly desktop environment.</description>
+    <description xml:lang="cs">GNOME je velmi intuitivní a uživatelsky přívětivé pracovní prostředí.</description>
+    <description xml:lang="de">GNOME ist eine hoch-intuitive und benutzerfreundliche Benutzeroberfläche</description>
+    <display_order>5</display_order>
+    <grouplist>
+      <groupid>firefox</groupid>
+      <groupid>gnome-desktop</groupid>
+      <groupid>gnome-games</groupid>
+      <groupid>epiphany</groupid>
+      <groupid>libreoffice</groupid>
+    </grouplist>
+  </category>
+  <langpacks>
+    <match name="LabPlot-doc" install="LabPlot-doc-%s"/>
+    <match name="aspell" install="aspell-%s"/>
+  </langpacks>
+  <blacklist>
+    <package name="dev"/>
+    <package name="NetworkManager" arch="i386"/>
+  </blacklist>
+  <whiteout>
+    <ignoredep requires="Mesa" package="XFree86"/>
+    <ignoredep requires="XFree86-Mesa-libGL" package="XFree86-libs"/>
+  </whiteout>
+</comps>

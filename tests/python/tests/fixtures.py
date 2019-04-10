@@ -86,6 +86,8 @@ REPO_02_FILXML = os.path.join(REPO_02_PATH, "repodata/",
 REPO_02_OTHXML = os.path.join(REPO_02_PATH, "repodata/",
     "ab5d3edeea50f9b4ec5ee13e4d25c147e318e3a433dbabc94d3461f58ac28255-other.xml.gz")
 
+REPO_WITH_ADDITIONAL_METADATA = os.path.join(REPOS_PATH, "repo_with_additional_metadata")
+
 # Test files
 
 FILE_BINARY = "binary_file"

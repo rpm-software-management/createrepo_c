@@ -1605,6 +1605,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
 #ifdef WITH_LIBMODULEMD
     cr_RepomdRecord *modulemd_rec = NULL;
+    cr_RepomdRecord *modulemd_zck_rec = NULL;
 
     if (module_index) {
         modulemd_rec =
@@ -1652,6 +1653,16 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                                                     CR_CHECKSUM_SHA256,
                                                     NULL);
         g_thread_pool_push(fill_pool, mmd_fill_task, NULL);
+
+        if (cmd_options->zck_compression) {
+            modulemd_zck_rec = cr_repomd_record_new("modules_zck",
+                                                    modulemd_filename);
+            cr_repomd_record_compress_and_fill(modulemd_rec,
+                                               modulemd_zck_rec,
+                                               CR_CHECKSUM_SHA256,
+                                               CR_CW_ZCK_COMPRESSION,
+                                               NULL, NULL);
+        }
     }
 #endif /* WITH_LIBMODULEMD */
 
@@ -1899,6 +1910,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
 #ifdef WITH_LIBMODULEMD
         cr_repomd_record_rename_file(modulemd_rec, NULL);
+        cr_repomd_record_rename_file(modulemd_zck_rec, NULL);
 #endif /* WITH_LIBMODULEMD */
     }
 
@@ -1925,6 +1937,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
 #ifdef WITH_LIBMODULEMD
     cr_repomd_set_record(repomd_obj, modulemd_rec);
+        cr_repomd_set_record(repomd_obj, modulemd_zck_rec);
 #endif /* WITH_LIBMODULEMD */
 
     char *repomd_xml = cr_xml_dump_repomd(repomd_obj, NULL);

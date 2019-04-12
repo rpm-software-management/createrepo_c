@@ -1,5 +1,6 @@
 import os
 import os.path
+import glob
 
 from .fixtures import PACKAGES
 from .base import BaseTestCase
@@ -290,3 +291,57 @@ class TestCaseCreaterepo_emptyrepo(BaseTestCase):
                                 "[a-z0-9]+-comps.xml.xz$",
                                 ],
                                additional_files_allowed=False)
+
+class TestCaseCreaterepo_packagedirstructure(BaseTestCase):
+    """Use case with various directory structure of packages"""
+    def test_01_createrepo_check_directories_recursively(self):
+        self.indir_makedirs("a")
+        self.indir_makedirs("a/b")
+        self.indir_makedirs("a/b/c")
+        self.copy_pkg(PACKAGES[0], self.indir + "/a")
+        self.copy_pkg(PACKAGES[1], self.indir + "/a/b")
+        self.copy_pkg(PACKAGES[2], self.indir + "/a/b/c")
+
+        res = self.assert_run_cr(self.indir, "", c=True)
+        self.assert_repo_sanity(res.outdir)
+        self.assert_repo_files(res.outdir,
+                               ["repomd.xml$",
+                                "[a-z0-9]+-primary.xml.gz$",
+                                "[a-z0-9]+-filelists.xml.gz$",
+                                "[a-z0-9]+-other.xml.gz$",
+                                "[a-z0-9]+-primary.sqlite.bz2$",
+                                "[a-z0-9]+-filelists.sqlite.bz2$",
+                                "[a-z0-9]+-other.sqlite.bz2$",
+                                ],
+                               additional_files_allowed=False)
+
+        primary_path = glob.glob(os.path.join(res.outdir, "repodata/*-primary.xml.gz"))[0]
+        self.assert_file_contains_line(primary_path, "<name>Archer</name>")
+        self.assert_file_contains_line(primary_path, "<name>super_kernel</name>")
+        self.assert_file_contains_line(primary_path, "<name>fake_bash</name>")
+        
+    def test_02_createrepo_check_directories_recursively_with_rpm_suffix(self):
+        self.indir_makedirs("a")
+        self.indir_makedirs('a/b.rpm')
+        self.indir_makedirs("a/b.rpm/c")
+        self.copy_pkg(PACKAGES[0], self.indir + "/a")
+        self.copy_pkg(PACKAGES[1], self.indir + "/a/b.rpm")
+        self.copy_pkg(PACKAGES[2], self.indir + "/a/b.rpm/c")
+
+        res = self.assert_run_cr(self.indir, "", c=True)
+        self.assert_repo_sanity(res.outdir)
+        self.assert_repo_files(res.outdir,
+                               ["repomd.xml$",
+                                "[a-z0-9]+-primary.xml.gz$",
+                                "[a-z0-9]+-filelists.xml.gz$",
+                                "[a-z0-9]+-other.xml.gz$",
+                                "[a-z0-9]+-primary.sqlite.bz2$",
+                                "[a-z0-9]+-filelists.sqlite.bz2$",
+                                "[a-z0-9]+-other.sqlite.bz2$",
+                                ],
+                               additional_files_allowed=False)
+
+        primary_path = glob.glob(os.path.join(res.outdir, "repodata/*-primary.xml.gz"))[0]
+        self.assert_file_contains_line(primary_path, "<name>Archer</name>")
+        self.assert_file_contains_line(primary_path, "<name>super_kernel</name>")
+        self.assert_file_contains_line(primary_path, "<name>fake_bash</name>")

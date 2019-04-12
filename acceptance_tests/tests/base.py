@@ -3,6 +3,7 @@ import re
 import time
 import shutil
 import pprint
+import gzip
 import filecmp
 import os.path
 import tempfile
@@ -367,3 +368,22 @@ class BaseTestCase(unittest.TestCase):
             self.assertTrue(False)
         logfile.write("OK\n")
         logfile.close()
+
+    def assert_file_contains_line(self, path_to_file, line):
+        contents = ""
+        found = False
+
+        if path_to_file.endswith(".gz"):
+            with gzip.open(path_to_file, 'rb') as f:
+                for l in f.readlines():
+                    if (l.strip() == line.strip()):
+                        found = True
+                self.assertTrue(found, "Line: " + line + " not found in file: " + path_to_file)
+                return
+
+        with open(path_to_file) as f:
+            for l in f.readlines():
+                if (l.strip() == line.strip()):
+                    found = True
+
+        self.assertTrue(found, "Line: " + line + " not found in file: " + path_to_file)

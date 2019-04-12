@@ -167,8 +167,7 @@ fill_pool(GThreadPool *pool,
 
                 gchar *full_path = g_strconcat(dirname, "/", filename, NULL);
 
-                // Non .rpm files
-                if (!g_str_has_suffix (filename, ".rpm")) {
+                if (!g_file_test(full_path, G_FILE_TEST_IS_REGULAR)) {
                     if (g_file_test(full_path, G_FILE_TEST_IS_DIR)) {
                         // Directory
                         gchar *sub_dir_in_chunk;
@@ -177,6 +176,12 @@ fill_pool(GThreadPool *pool,
                         g_queue_push_head(sub_dirs, sub_dir_in_chunk);
                         g_debug("Dir to scan: %s", sub_dir_in_chunk);
                     }
+                    g_free(full_path);
+                    continue;
+                }
+
+                // Non .rpm files are ignored
+                if (!g_str_has_suffix (filename, ".rpm")) {
                     g_free(full_path);
                     continue;
                 }

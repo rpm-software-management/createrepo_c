@@ -358,13 +358,20 @@ parse_arguments(int *argc, char ***argv)
     g_option_context_add_main_entries(context, cmd_entries, NULL);
 
     gboolean ret = g_option_context_parse(context, argc, argv, &error);
-    g_option_context_free(context);
     if (!ret) {
         g_print("Option parsing failed: %s\n", error->message);
+        g_option_context_free(context);
         g_error_free(error);
         return NULL;
     }
 
+    if (*argc > 1) {
+        g_printerr("Argument parsing failed.\n");
+        g_print("%s", g_option_context_get_help(context, TRUE, NULL));
+        return NULL;
+    }
+
+    g_option_context_free(context);
     return &(_cmd_options);
 }
 

@@ -71,6 +71,7 @@ struct UserData {
     // Update stuff
     gboolean skip_stat;             // Skip stat() while updating
     cr_Metadata *old_metadata;      // Loaded metadata
+    GMutex *mutex_old_md;           // Mutex for accessing old metadata
 
     // Thread serialization
     GMutex *mutex_pri;              // Mutex for primary metadata

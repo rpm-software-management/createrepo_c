@@ -436,9 +436,15 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     // Update stuff
     if (udata->old_metadata) {
         // We have old metadata
+        g_mutex_lock(udata->mutex_old_md);
         md = (cr_Package *) g_hash_table_lookup(
                                 cr_metadata_hashtable(udata->old_metadata),
                                 task->filename);
+        // Remove the pkg from the hash table of old metadata, so that no other
+        // thread can use it as CACHE, because later we modify it destructively
+        g_hash_table_steal(cr_metadata_hashtable(udata->old_metadata),
+                                                 task->filename);
+        g_mutex_unlock(udata->mutex_old_md);
 
         if (md) {
             g_debug("CACHE HIT %s", task->filename);
@@ -576,8 +582,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     write_pkg(task->id, res, pkg, udata);
 
     // Clean up
-    if (pkg != md)
-        cr_package_free(pkg);
+    cr_package_free(pkg);
     g_free(res.primary);
     g_free(res.filelists);
     g_free(res.other);
@@ -623,8 +628,7 @@ task_cleanup:
             // Dump XML and SQLite
             write_pkg(buf_task->id, buf_task->res, buf_task->pkg, udata);
             // Clean up
-            if (!buf_task->pkg_from_md)
-                cr_package_free(buf_task->pkg);
+            cr_package_free(buf_task->pkg);
             g_free(buf_task->res.primary);
             g_free(buf_task->res.filelists);
             g_free(buf_task->res.other);

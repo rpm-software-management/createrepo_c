@@ -1000,6 +1000,7 @@ main(int argc, char **argv)
     user_data.id_oth            = 0;
     user_data.buffer            = g_queue_new();
     user_data.mutex_buffer      = g_mutex_new();
+    user_data.mutex_old_md      = g_mutex_new();
     user_data.deltas            = cmd_options->deltas;
     user_data.max_delta_rpm_size= cmd_options->max_delta_rpm_size;
     user_data.mutex_deltatargetpackages = g_mutex_new();
@@ -1054,6 +1055,7 @@ main(int argc, char **argv)
 
     g_queue_free(user_data.buffer);
     g_mutex_free(user_data.mutex_buffer);
+    g_mutex_free(user_data.mutex_old_md);
     g_cond_free(user_data.cond_pri);
     g_cond_free(user_data.cond_fil);
     g_cond_free(user_data.cond_oth);

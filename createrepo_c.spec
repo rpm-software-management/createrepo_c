@@ -25,6 +25,12 @@
 %bcond_without zchunk
 %endif
 
+%if 0%{?rhel} || 0%{?fedora} < 29
+%bcond_with libmodulemd
+%else
+%bcond_without libmodulemd
+%endif
+
 Summary:        Creates a common metadata repository
 Name:           createrepo_c
 Version:        0.12.2
@@ -50,6 +56,10 @@ BuildRequires:  zlib-devel
 %if %{with zchunk}
 BuildRequires:  pkgconfig(zck) >= 0.9.11
 BuildRequires:  zchunk
+%endif
+%if %{with libmodulemd}
+BuildRequires:  pkgconfig(modulemd-2.0) >= 2.3.0
+BuildRequires:  libmodulemd
 %endif
 Requires:       %{name}-libs =  %{version}-%{release}
 %if 0%{?rhel} == 6
@@ -132,7 +142,7 @@ mkdir build-py3
 # Build createrepo_c with Python 2
 %if %{with python2}
 pushd build-py2
-  %cmake .. -DPYTHON_DESIRED:FILEPATH=%{__python2} %{!?with_zchunk:-DWITH_ZCHUNK=OFF}
+  %cmake .. -DPYTHON_DESIRED:FILEPATH=%{__python2} %{!?with_zchunk:-DWITH_ZCHUNK=OFF} %{!?with_libmodulemd:-DWITH_LIBMODULEMD=OFF}
   make %{?_smp_mflags} RPM_OPT_FLAGS="%{optflags}"
   %if %{without python3}
   # Build C documentation
@@ -144,7 +154,7 @@ popd
 # Build createrepo_c with Pyhon 3
 %if %{with python3}
 pushd build-py3
-  %cmake .. -DPYTHON_DESIRED:FILEPATH=%{__python3} %{!?with_zchunk:-DWITH_ZCHUNK=OFF}
+  %cmake .. -DPYTHON_DESIRED:FILEPATH=%{__python3} %{!?with_zchunk:-DWITH_ZCHUNK=OFF} %{!?with_libmodulemd:-DWITH_LIBMODULEMD=OFF}
   make %{?_smp_mflags} RPM_OPT_FLAGS="%{optflags}"
   # Build C documentation
   make doc-c

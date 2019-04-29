@@ -39,7 +39,6 @@
 #define URL_FILENAME_01 "index.html"
 #define INVALID_URL     "htp://foo.bar"
 
-
 static void
 test_cr_str_to_evr(void)
 {
@@ -388,6 +387,24 @@ test_cr_get_filename(void)
     g_assert_cmpstr(filename, ==, NULL);
 }
 
+static int
+read_file(char *f, cr_CompressionType compression, char* buffer, int amount)
+{
+    int ret = CRE_OK;
+    GError *tmp_err = NULL;
+    CR_FILE *orig = NULL;
+    orig = cr_open(f, CR_CW_MODE_READ, compression, &tmp_err);
+    if (!orig) {
+        ret = tmp_err->code;
+        return ret;
+    }
+    int readed;
+    readed = cr_read(orig, buffer, amount, &tmp_err);
+    if (orig)
+        cr_close(orig, NULL);
+    return ret;
+}
+
 
 #define DST_FILE        "b"
 
@@ -567,6 +584,101 @@ compressfile_with_stat_test_text_file(Copyfiletest *copyfiletest,
     cr_contentstat_free(stat, &tmp_err);
     g_assert(!tmp_err);
 }
+
+static void
+compressfile_with_stat_test_gz_file_gz_output(Copyfiletest *copyfiletest,
+                                      G_GNUC_UNUSED gconstpointer test_data)
+{
+    int ret;
+    char *checksum;
+    cr_ContentStat *stat;
+    GError *tmp_err = NULL;
+
+    stat = cr_contentstat_new(CR_CHECKSUM_SHA256, &tmp_err);
+    g_assert(stat);
+    g_assert(!tmp_err);
+
+    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
+    ret = cr_compress_file_with_stat(TEST_TEXT_FILE_GZ, &copyfiletest->dst_file,
+                                     CR_CW_GZ_COMPRESSION, stat, NULL, FALSE,
+                                     &tmp_err);
+    g_assert(!tmp_err);
+    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
+    checksum = cr_checksum_file(TEST_TEXT_FILE, CR_CHECKSUM_SHA256, NULL);
+    g_assert_cmpstr(stat->checksum, ==, checksum);
+
+    //assert content is readable after decompression and recompression
+    char buf[26];
+    read_file(copyfiletest->dst_file, CR_CW_GZ_COMPRESSION, buf, 26);
+    g_assert_cmpstr(buf, ==, "Lorem ipsum dolor sit amet");
+
+    cr_contentstat_free(stat, &tmp_err);
+    g_assert(!tmp_err);
+}
+
+static void
+compressfile_test_gz_file_xz_output(Copyfiletest *copyfiletest,
+                                      G_GNUC_UNUSED gconstpointer test_data)
+{
+    int ret;
+    GError *tmp_err = NULL;
+    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
+    ret = cr_compress_file(TEST_TEXT_FILE_GZ, &copyfiletest->dst_file,
+                                     CR_CW_XZ_COMPRESSION, NULL, FALSE,
+                                     &tmp_err);
+    g_assert(!tmp_err);
+    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
+
+    //assert content is readable after decompression and recompression
+    char buf[26];
+    read_file(copyfiletest->dst_file, CR_CW_XZ_COMPRESSION, buf, 27);
+    g_assert_cmpstr(buf, ==, "Lorem ipsum dolor sit amet,");
+
+    g_assert(!tmp_err);
+}
+
+static void
+compressfile_test_xz_file_gz_output(Copyfiletest *copyfiletest,
+                                      G_GNUC_UNUSED gconstpointer test_data)
+{
+    int ret;
+    GError *tmp_err = NULL;
+    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
+    ret = cr_compress_file(TEST_TEXT_FILE_XZ, &copyfiletest->dst_file,
+                                     CR_CW_GZ_COMPRESSION, NULL, FALSE,
+                                     &tmp_err);
+    g_assert(!tmp_err);
+    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
+
+    //assert content is readable after decompression and recompression
+    char buf[26];
+    read_file(copyfiletest->dst_file, CR_CW_GZ_COMPRESSION, buf, 27);
+    g_assert_cmpstr(buf, ==, "Lorem ipsum dolor sit amet,");
+
+    g_assert(!tmp_err);
+}
+
+
+static void
+compressfile_test_sqlite_file_gz_output(Copyfiletest *copyfiletest,
+                                        G_GNUC_UNUSED gconstpointer test_data)
+{
+    int ret;
+    GError *tmp_err = NULL;
+    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
+    ret = cr_compress_file(TEST_SQLITE_FILE, &copyfiletest->dst_file,
+                                     CR_CW_GZ_COMPRESSION, NULL, FALSE,
+                                     &tmp_err);
+    g_assert(!tmp_err);
+    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
+
+    g_assert(!tmp_err);
+}
+
 
 static void
 decompressfile_with_stat_test_text_file(Copyfiletest *copyfiletest,
@@ -1267,6 +1379,18 @@ main(int argc, char *argv[])
     g_test_add("/misc/compressfile_with_stat_test_text_file",
             Copyfiletest, NULL, copyfiletest_setup,
             compressfile_with_stat_test_text_file, copyfiletest_teardown);
+    g_test_add("/misc/compressfile_with_stat_test_gz_file_gz_output",
+            Copyfiletest, NULL, copyfiletest_setup,
+            compressfile_with_stat_test_gz_file_gz_output, copyfiletest_teardown);
+    g_test_add("/misc/compressfile_test_gz_file_xz_output",
+            Copyfiletest, NULL, copyfiletest_setup,
+            compressfile_test_gz_file_xz_output, copyfiletest_teardown);
+    g_test_add("/misc/compressfile_test_xz_file_gz_output",
+            Copyfiletest, NULL, copyfiletest_setup,
+            compressfile_test_xz_file_gz_output, copyfiletest_teardown);
+    g_test_add("/misc/compressfile_test_sqlite_file_gz_output",
+            Copyfiletest, NULL, copyfiletest_setup,
+            compressfile_test_sqlite_file_gz_output, copyfiletest_teardown);
     g_test_add("/misc/decompressfile_with_stat_test_text_file",
             Copyfiletest, NULL, copyfiletest_setup,
             decompressfile_with_stat_test_text_file, copyfiletest_teardown);

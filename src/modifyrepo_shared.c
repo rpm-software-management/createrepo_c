@@ -50,8 +50,25 @@ cr_modifyrepotask_free(cr_ModifyRepoTask *task)
     g_free(task);
 }
 
-static gchar *
-write_file(gchar *repopath, cr_ModifyRepoTask *task,
+gchar *
+cr_remove_compression_suffix_if_present(gchar* name, GError **err)
+{
+    cr_CompressionType src_fn_com_type = cr_detect_compression(name, err);
+    if (src_fn_com_type != CR_CW_NO_COMPRESSION && src_fn_com_type != CR_CW_UNKNOWN_COMPRESSION){
+        const gchar *src_suffix = cr_compression_suffix(src_fn_com_type);
+        if (src_suffix){
+            if (g_str_has_suffix(name, src_suffix)){
+                int name_len = strlen(name);
+                int suffix_len = strlen(src_suffix);
+                return g_strndup(name, name_len - suffix_len);
+            }
+        }
+    }
+    return g_strdup(name);
+}
+
+gchar *
+cr_write_file(gchar *repopath, cr_ModifyRepoTask *task,
            cr_CompressionType compress_type, GError **err)
 {
     const gchar *suffix = NULL;
@@ -62,12 +79,15 @@ write_file(gchar *repopath, cr_ModifyRepoTask *task,
     gchar *src_fn = task->path;  // Shortcut
     gchar *dst_fn = NULL;
 
+    char* sufixless_src_fn = cr_remove_compression_suffix_if_present(task->path, err);
+
     // Prepare dst filename - Get basename
     _cleanup_free_ gchar *filename = NULL;
     if (task->new_name)
         filename = g_path_get_basename(task->new_name);
     else
-        filename = g_path_get_basename(src_fn);
+        filename = g_path_get_basename(sufixless_src_fn);
+    g_free(sufixless_src_fn);
 
     // Prepare dst filename - Add suffix
     if (suffix) {
@@ -247,7 +267,7 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
         if (task->compress)
             compress_type = task->compress_type;
 
-        dst_fn = write_file(repopath, task, compress_type, err);
+        dst_fn = cr_write_file(repopath, task, compress_type, err);
         if (dst_fn == NULL) {
             cr_repomd_free(repomd);
             g_free(repomd_path);
@@ -258,7 +278,7 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
 #ifdef WITH_ZCHUNK
         if (task->zck) {
             free(dst_fn);
-            dst_fn = write_file(repopath, task, CR_CW_ZCK_COMPRESSION, err);
+            dst_fn = cr_write_file(repopath, task, CR_CW_ZCK_COMPRESSION, err);
             if (dst_fn == NULL) {
                 cr_repomd_free(repomd);
                 g_free(repomd_path);

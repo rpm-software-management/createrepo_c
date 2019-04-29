@@ -64,6 +64,10 @@ cr_modifyrepotask_new(void);
 void
 cr_modifyrepotask_free(cr_ModifyRepoTask *task);
 
+gchar *
+cr_write_file(gchar *repopath, cr_ModifyRepoTask *task,
+           cr_CompressionType compress_type, GError **err);
+
 gboolean
 cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err);
 
@@ -72,6 +76,8 @@ cr_modifyrepo_parse_batchfile(const gchar *path,
                               GSList **modifyrepotasks,
                               GError **err);
 
+gchar *
+cr_remove_compression_suffix_if_present(gchar* name, GError **err);
 /** @} */
 
 #ifdef __cplusplus

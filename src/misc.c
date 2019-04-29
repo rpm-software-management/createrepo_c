@@ -484,9 +484,7 @@ cr_compress_file_with_stat(const char *src,
         g_free(dst);
     dst = (gchar *) *in_dst;
 
-    int mode = CR_CW_NO_COMPRESSION;
-    if (compression == CR_CW_ZCK_COMPRESSION)
-        mode = CR_CW_AUTO_DETECT_COMPRESSION;
+    int mode = CR_CW_AUTO_DETECT_COMPRESSION;
 
     orig = cr_open(src,
                    CR_CW_MODE_READ,

@@ -334,7 +334,6 @@ get_remote_metadata_cleanup:
 }
 
 
-// XXX: err is not really used in this function yet
 struct cr_MetadataLocation *
 cr_locate_metadata(const char *repopath, gboolean ignore_sqlite, GError **err)
 {
@@ -359,21 +358,15 @@ cr_locate_metadata(const char *repopath, gboolean ignore_sqlite, GError **err)
     if (ret)
         ret->original_url = g_strdup(repopath);
 
-    // XXX
-    if (!ret) {
-        g_set_error(err, ERR_DOMAIN, CRE_NODIR,
-                    "Cannot locate metadata");
-        return NULL;
-    }
-
 #ifndef WITH_LIBMODULEMD
-    if (g_slist_find_custom(ret->additional_metadata, "modules", cr_cmp_metadatum_type)) {
-        g_set_error (err,
-                     ERR_DOMAIN,
-                     CRE_MODULEMD,
-                     "Module metadata found in repository, but createrepo_c "
-                     "was not compiled with libmodulemd support.");
-        g_clear_pointer (&ret, cr_metadatalocation_free);
+    if (ret) {
+        if (g_slist_find_custom(ret->additional_metadata, "modules", cr_cmp_metadatum_type)) {
+            g_set_error (err,
+                    ERR_DOMAIN,
+                    CRE_MODULEMD,
+                    "Module metadata found in repository, but createrepo_c "
+                    "was not compiled with libmodulemd support.");
+        }
     }
 #endif /* ! WITH_LIBMODULEMD */
 

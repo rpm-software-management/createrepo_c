@@ -92,6 +92,7 @@ metadatalocation_init(_MetadataLocationObject *self,
     /* Init */
     self->ml = cr_locate_metadata(repopath, PyObject_IsTrue(py_ignore_db), &tmp_err);
     if (tmp_err) {
+        g_clear_pointer(&(self->ml), cr_metadatalocation_free);
         nice_exception(&tmp_err, NULL);
         return -1;
     }

@@ -616,9 +616,18 @@ main(int argc, char **argv)
         cr_metadata_set_dupaction(old_metadata, CR_HT_DUPACT_REMOVEALL);
 
         if (cmd_options->outputdir)
-            old_metadata_location = cr_locate_metadata(out_dir, TRUE, NULL);
+            old_metadata_location = cr_locate_metadata(out_dir, TRUE, &tmp_err);
         else
-            old_metadata_location = cr_locate_metadata(in_dir, TRUE, NULL);
+            old_metadata_location = cr_locate_metadata(in_dir, TRUE, &tmp_err);
+
+        if (tmp_err){
+            if (tmp_err->domain == CRE_MODULEMD){
+                g_thread_pool_free(pool, FALSE, FALSE);
+                g_clear_pointer(&old_metadata_location, cr_metadatalocation_free);
+                g_critical("%s\n",tmp_err->message);
+                exit(tmp_err->code);
+            }
+        }
 
         if (old_metadata_location) {
             ret = cr_metadata_load_xml(old_metadata,

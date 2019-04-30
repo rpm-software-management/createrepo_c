@@ -139,6 +139,10 @@ cr_metadata_free(cr_Metadata *md)
     if (!md)
         return;
 
+#ifdef WITH_LIBMODULEMD
+    g_clear_pointer (&(md->moduleindex), g_object_unref);
+#endif /* WITH_LIBMODULEMD */
+
     cr_destroy_metadata_hashtable(md->ht);
     if (md->chunk)
         g_string_chunk_free(md->chunk);
@@ -431,6 +435,88 @@ cr_load_xml_files(GHashTable *hashtable,
     return CRE_OK;
 }
 
+static gint
+module_read_fn (void *data,
+                unsigned char *buffer,
+                size_t size,
+                size_t *size_read)
+{
+    int ret;
+    GError *tmp_err = NULL;
+    CR_FILE *cr_file = (CR_FILE *)data;
+
+    ret = cr_read (cr_file, buffer, size, &tmp_err);
+    if (ret == CR_CW_ERR) {
+        g_clear_pointer (&tmp_err, g_error_free);
+        return 0;
+    }
+
+    *size_read = ret;
+    return 1;
+}
+
+#ifdef WITH_LIBMODULEMD
+int
+cr_metadata_load_modulemd(cr_Metadata *md,
+                          struct cr_MetadataLocation *ml,
+                          GError **err)
+{
+    int ret;
+    gboolean result;
+    GError *tmp_err = NULL;
+    CR_FILE *modulemd = NULL;
+    g_autoptr (GPtrArray) failures = NULL;
+
+    md->moduleindex = modulemd_module_index_new();
+    if (!md->moduleindex) {
+        g_set_error (err, ERR_DOMAIN, CRE_MEMORY,
+                     "Could not allocate module index");
+        return CRE_MEMORY;
+    }
+
+    cr_Metadatum *modulemd_metadatum = g_slist_find_custom(ml->additional_metadata, "modules", cr_cmp_metadatum_type)->data;
+    /* Open the metadata location */
+    modulemd = cr_open(modulemd_metadatum->name,
+                       CR_CW_MODE_READ,
+                       CR_CW_AUTO_DETECT_COMPRESSION,
+                       &tmp_err);
+    if (tmp_err) {
+        int code = tmp_err->code;
+        g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ",
+                                   modulemd_metadatum->name);
+        return code;
+    }
+
+    result = modulemd_module_index_update_from_custom (md->moduleindex,
+                                                       module_read_fn,
+                                                       modulemd,
+                                                       TRUE,
+                                                       &failures,
+                                                       &tmp_err);
+    if (!result) {
+        if (!tmp_err){
+            g_set_error(err, CRE_MODULEMD, CREATEREPO_C_ERROR,   
+                        "Unknown error in libmodulemd with %s",
+                        modulemd_metadatum->name);
+        }else{
+            g_propagate_error (err, tmp_err);
+        }
+        return CRE_MODULEMD;
+    }
+
+    ret = CRE_OK;
+
+    cr_close(modulemd, &tmp_err);
+    if (tmp_err) {
+        ret = tmp_err->code;
+        g_propagate_prefixed_error(err, tmp_err, "Error while closing: ");
+
+    }
+
+    return ret;
+}
+#endif /* WITH_LIBMODULEMD */
+
 int
 cr_metadata_load_xml(cr_Metadata *md,
                      struct cr_MetadataLocation *ml,
@@ -572,83 +658,6 @@ cr_metadata_load_xml(cr_Metadata *md,
     return result;
 }
 
-
-static gint
-module_read_fn (void *data,
-                unsigned char *buffer,
-                size_t size,
-                size_t *size_read)
-{
-    int ret;
-    GError *tmp_err = NULL;
-    CR_FILE *cr_file = (CR_FILE *)data;
-
-    ret = cr_read (cr_file, buffer, size, &tmp_err);
-    if (ret == CR_CW_ERR) {
-        g_clear_pointer (&tmp_err, g_error_free);
-        return 0;
-    }
-
-    *size_read = ret;
-    return 1;
-}
-
-#ifdef WITH_LIBMODULEMD
-int
-cr_metadata_load_modulemd(cr_Metadata *md,
-                          struct cr_MetadataLocation *ml,
-                          GError **err)
-{
-    int ret;
-    gboolean result;
-    GError *tmp_err = NULL;
-    CR_FILE *modulemd = NULL;
-    g_autoptr (GPtrArray) failures = NULL;
-
-    md->moduleindex = modulemd_module_index_new();
-    if (!md->moduleindex) {
-        g_set_error (err, ERR_DOMAIN, CRE_MEMORY,
-                     "Could not allocate module index");
-        return CRE_MEMORY;
-    }
-
-    cr_Metadatum *modulemd_metadatum = g_slist_find_custom(ml->additional_metadata, "modules", cr_cmp_metadatum_type)->data;
-    /* Open the metadata location */
-    modulemd = cr_open(modulemd_metadatum->name,
-                       CR_CW_MODE_READ,
-                       CR_CW_AUTO_DETECT_COMPRESSION,
-                       &tmp_err);
-    if (tmp_err) {
-        int code = tmp_err->code;
-        g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ",
-                                   modulemd_metadatum->name);
-        return code;
-    }
-
-    result = modulemd_module_index_update_from_custom (md->moduleindex,
-                                                       module_read_fn,
-                                                       modulemd,
-                                                       TRUE,
-                                                       &failures,
-                                                       &tmp_err);
-    if (!result) {
-        g_propagate_error (err, tmp_err);
-        return CRE_MODULEMD;
-    }
-
-    ret = CRE_OK;
-
-    cr_close(modulemd, &tmp_err);
-    if (tmp_err) {
-        ret = tmp_err->code;
-        g_propagate_prefixed_error(err, tmp_err, "Error while closing: ");
-
-    }
-
-    return ret;
-}
-#endif /* WITH_LIBMODULEMD */
-
 int
 cr_metadata_locate_and_load_xml(cr_Metadata *md,
                                 const char *repopath,
@@ -662,7 +671,8 @@ cr_metadata_locate_and_load_xml(cr_Metadata *md,
     assert(repopath);
 
     ml = cr_locate_metadata(repopath, TRUE, &tmp_err);
-    if (!ml) {
+    if (tmp_err) {
+        g_clear_pointer(&ml, cr_metadatalocation_free);
         int code = tmp_err->code;
         g_propagate_error(err, tmp_err);
         return code;

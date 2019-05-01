@@ -609,9 +609,9 @@ compressfile_with_stat_test_gz_file_gz_output(Copyfiletest *copyfiletest,
     g_assert_cmpstr(stat->checksum, ==, checksum);
 
     //assert content is readable after decompression and recompression
-    char buf[26];
-    read_file(copyfiletest->dst_file, CR_CW_GZ_COMPRESSION, buf, 26);
-    g_assert_cmpstr(buf, ==, "Lorem ipsum dolor sit amet");
+    char buf[30];
+    read_file(copyfiletest->dst_file, CR_CW_GZ_COMPRESSION, buf, 30);
+    g_assert(g_strrstr(buf, "Lorem ipsum dolor sit amet"));
 
     cr_contentstat_free(stat, &tmp_err);
     g_assert(!tmp_err);
@@ -632,9 +632,9 @@ compressfile_test_gz_file_xz_output(Copyfiletest *copyfiletest,
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
 
     //assert content is readable after decompression and recompression
-    char buf[26];
-    read_file(copyfiletest->dst_file, CR_CW_XZ_COMPRESSION, buf, 27);
-    g_assert_cmpstr(buf, ==, "Lorem ipsum dolor sit amet,");
+    char buf[30];
+    read_file(copyfiletest->dst_file, CR_CW_XZ_COMPRESSION, buf, 30);
+    g_assert(g_strrstr(buf, "Lorem ipsum dolor sit amet"));
 
     g_assert(!tmp_err);
 }
@@ -654,9 +654,9 @@ compressfile_test_xz_file_gz_output(Copyfiletest *copyfiletest,
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
 
     //assert content is readable after decompression and recompression
-    char buf[26];
-    read_file(copyfiletest->dst_file, CR_CW_GZ_COMPRESSION, buf, 27);
-    g_assert_cmpstr(buf, ==, "Lorem ipsum dolor sit amet,");
+    char buf[30];
+    read_file(copyfiletest->dst_file, CR_CW_GZ_COMPRESSION, buf, 30);
+    g_assert(g_strrstr(buf, "Lorem ipsum dolor sit amet"));
 
     g_assert(!tmp_err);
 }

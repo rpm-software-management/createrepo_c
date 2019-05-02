@@ -41,14 +41,6 @@
 #define DEFAULT_DATABASE_VERSION    10
 #define BUFFER_SIZE                 8192
 
-typedef struct _contentStat {
-    char *checksum;
-    gint64 size;
-    cr_ChecksumType hdr_checksum_type;
-    char *hdr_checksum;
-    gint64 hdr_size;
-} contentStat;
-
 cr_DistroTag *
 cr_distrotag_new()
 {
@@ -122,7 +114,7 @@ cr_repomd_record_copy(const cr_RepomdRecord *orig)
     return rec;
 }
 
-contentStat *
+cr_ContentStat *
 cr_get_compressed_content_stat(const char *filename,
                                cr_ChecksumType checksum_type,
                                GError **err)
@@ -185,7 +177,7 @@ cr_get_compressed_content_stat(const char *filename,
 
     // Create result structure
 
-    contentStat* result = g_malloc0(sizeof(contentStat));
+    cr_ContentStat* result = g_malloc0(sizeof(cr_ContentStat));
     if (result) {
         if (cwfile->stat) {
             result->hdr_checksum = cwfile->stat->hdr_checksum;
@@ -204,6 +196,7 @@ cr_get_compressed_content_stat(const char *filename,
     }
 
     cr_close(cwfile, NULL);
+    g_free(read_stat);
 
     return result;
 }
@@ -274,7 +267,7 @@ cr_repomd_record_fill(cr_RepomdRecord *md,
             com_type != CR_CW_NO_COMPRESSION)
         {
             // File compressed by supported algorithm
-            contentStat *open_stat = NULL;
+            cr_ContentStat *open_stat = NULL;
 
             open_stat = cr_get_compressed_content_stat(path, checksum_t, &tmp_err);
             if (tmp_err) {

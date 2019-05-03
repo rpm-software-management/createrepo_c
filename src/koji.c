@@ -42,10 +42,10 @@ koji_stuff_destroy(struct KojiMergedReposStuff **koji_stuff_ptr)
 
     koji_stuff = *koji_stuff_ptr;
 
-    if (koji_stuff->blocked_srpms)
-        g_hash_table_destroy(koji_stuff->blocked_srpms);
-    g_hash_table_destroy(koji_stuff->include_srpms);
-    g_hash_table_destroy(koji_stuff->seen_rpms);
+    g_clear_pointer (&koji_stuff->blocked_srpms, g_hash_table_destroy);
+    g_clear_pointer (&koji_stuff->include_srpms, g_hash_table_destroy);
+    g_clear_pointer (&koji_stuff->seen_rpms, g_hash_table_destroy);
+
     cr_close(koji_stuff->pkgorigins, NULL);
     g_free(koji_stuff);
 }

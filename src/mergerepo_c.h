@@ -69,6 +69,7 @@ struct CmdOptions {
     // Koji mergerepos specific options
     gboolean koji;
     gboolean koji_simple;
+    gboolean pkgorigins;
     char *groupfile;
     char *blocked;
 

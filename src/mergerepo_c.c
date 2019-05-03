@@ -118,6 +118,10 @@ static GOptionEntry cmd_entries[] =
     { "simple", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.koji_simple),
        "Enable koji specific simple merge mode where we keep even packages with "
        "identical NEVRAs. Only works with combination with --koji/-k.", NULL},
+    { "pkgorigins", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.pkgorigins),
+        "Enable standard mergerepos behavior while also providing the "
+        "pkgorigins file for koji.",
+        NULL},
     { "groupfile", 'g', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.groupfile),
       "Path to groupfile to include in metadata.", "GROUPFILE" },
     { "blocked", 'b', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.blocked),
@@ -1359,7 +1363,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     // Pkgorigins
 
-    if (cmd_options->koji) {
+    if (cmd_options->koji || cmd_options->pkgorigins) {
         gchar *pkgorigins_path = g_strconcat(cmd_options->tmp_out_repo, "pkgorigins.gz", NULL);
         pkgorigins_rec = cr_repomd_record_new("origin", pkgorigins_path);
         cr_repomd_record_fill(pkgorigins_rec, CR_CHECKSUM_SHA256, NULL);
@@ -1876,6 +1880,8 @@ main(int argc, char **argv)
     struct KojiMergedReposStuff *koji_stuff = NULL;
     if (cmd_options->koji)
         koji_stuff_prepare(&koji_stuff, cmd_options, local_repos);
+    else if (cmd_options->pkgorigins)
+        pkgorigins_prepare(&koji_stuff, cmd_options->tmp_out_repo);
 
 
     // Load metadata
@@ -1908,7 +1914,7 @@ main(int argc, char **argv)
 
     // Destroy koji stuff - we have to close pkgorigins file before dump
 
-    if (cmd_options->koji)
+    if (cmd_options->koji || cmd_options->pkgorigins)
         koji_stuff_destroy(&koji_stuff);
 
 

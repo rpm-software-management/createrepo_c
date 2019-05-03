@@ -51,15 +51,59 @@ koji_stuff_destroy(struct KojiMergedReposStuff **koji_stuff_ptr)
 }
 
 
+static int
+pkgorigins_prepare_file (const gchar *tmpdir, CR_FILE **pkgorigins_file)
+{
+    gchar *pkgorigins_path = NULL;
+    GError *tmp_err = NULL;
+
+    pkgorigins_path = g_strconcat(tmpdir, "pkgorigins.gz", NULL);
+    *pkgorigins_file = cr_open(pkgorigins_path,
+                                     CR_CW_MODE_WRITE,
+                                     CR_CW_GZ_COMPRESSION,
+                                     &tmp_err);
+    if (tmp_err) {
+        g_critical("Cannot open %s: %s", pkgorigins_path, tmp_err->message);
+        g_error_free(tmp_err);
+        g_free(pkgorigins_path);
+        return 1;
+    }
+    g_free(pkgorigins_path);
+
+    return 0;
+}
+
+
+/* Limited version of koji_stuff_prepare() that sets up only pkgorigins */
+int
+pkgorigins_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
+                   const gchar *tmpdir)
+{
+   int result;
+    struct KojiMergedReposStuff *koji_stuff =
+        g_malloc0(sizeof(struct KojiMergedReposStuff));
+
+    // Prepare pkgorigin file
+    result = pkgorigins_prepare_file (tmpdir, &koji_stuff->pkgorigins);
+    if (result != 0) {
+        g_free (koji_stuff);
+        return result;
+    }
+
+    *koji_stuff_ptr = koji_stuff;
+    return 0;  // All ok
+}
+
+
 int
 koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
                    struct CmdOptions *cmd_options,
                    GSList *repos)
 {
     struct KojiMergedReposStuff *koji_stuff;
-    gchar *pkgorigins_path = NULL;
     GSList *element;
     int repoid;
+    int result;
     GError *tmp_err = NULL;
 
     // Pointers to elements in the koji_stuff_ptr
@@ -117,18 +161,11 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
     koji_stuff->simple = cmd_options->koji_simple;
 
     // Prepare pkgorigin file
-    pkgorigins_path = g_strconcat(cmd_options->tmp_out_repo, "pkgorigins.gz", NULL);
-    koji_stuff->pkgorigins = cr_open(pkgorigins_path,
-                                     CR_CW_MODE_WRITE,
-                                     CR_CW_GZ_COMPRESSION,
-                                     &tmp_err);
-    if (tmp_err) {
-        g_critical("Cannot open %s: %s", pkgorigins_path, tmp_err->message);
-        g_error_free(tmp_err);
-        g_free(pkgorigins_path);
-        return 1;
+    result = pkgorigins_prepare_file (cmd_options->tmp_out_repo,
+                                      &koji_stuff->pkgorigins);
+    if (result != 0) {
+        return result;
     }
-    g_free(pkgorigins_path);
 
 
     // Iterate over every repo and fill include_srpms hashtable
@@ -267,7 +304,7 @@ koji_allowed(cr_Package *pkg, struct KojiMergedReposStuff *koji_stuff)
             }
         }
 
-        if (!koji_stuff->simple) {
+        if (!koji_stuff->simple && koji_stuff->include_srpms) {
             struct srpm_val *value;
             value = g_hash_table_lookup(koji_stuff->include_srpms, nevra->name);
             if ((!value || g_strcmp0(pkg->rpm_sourcerpm, value->sourcerpm)) ) {
@@ -281,7 +318,7 @@ koji_allowed(cr_Package *pkg, struct KojiMergedReposStuff *koji_stuff)
         cr_nevra_free(nevra);
     }
 
-    if (!koji_stuff->simple) {
+    if (!koji_stuff->simple && koji_stuff->seen_rpms) {
         // Check if we have already seen this package before
         nvra = cr_package_nvra(pkg);
         seen = g_hash_table_lookup_extended(koji_stuff->seen_rpms,

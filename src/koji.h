@@ -80,6 +80,11 @@ struct KojiMergedReposStuff {
     gboolean simple;
 };
 
+/* Limited version of koji_stuff_prepare() that sets up only pkgorigins */
+int
+pkgorigins_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
+                   const gchar *tmpdir);
+
 int
 koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
                    struct CmdOptions *cmd_options,

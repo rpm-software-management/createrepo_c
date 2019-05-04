@@ -164,7 +164,7 @@ Note: For a verbose output of testing use: ``make ARGS="-V" test``
 
     build/tests/run_gtester.sh
 
-Note: The C tests have to be builded by ``make tests``)!
+Note: The C tests have to be built by ``make tests``)!
 
 ### Run only Python unittests (from your checkout dir):
 
@@ -173,6 +173,8 @@ Note: The C tests have to be builded by ``make tests``)!
 Or, for an alternative python version, specify the appropriate nosetests executable:
 
     PYTHONPATH=`readlink -f ./build/src/python/` nosetests-3.4 -s tests/python/tests/
+
+Note: When compiling createrepo_c without libmodulemd support add ``WITH_LIBMODULEMD=OFF``
 
 ### Links
 

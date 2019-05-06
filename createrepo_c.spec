@@ -223,10 +223,13 @@ ln -sr %{buildroot}%{_bindir}/modifyrepo_c %{buildroot}%{_bindir}/modifyrepo
 %{_bindir}/createrepo_c
 %{_bindir}/mergerepo_c
 %{_bindir}/modifyrepo_c
+%{_bindir}/sqliterepo_c
+
+%if 0%{?fedora} > 30 || 0%{?rhel} > 7
 %{_bindir}/createrepo
 %{_bindir}/mergerepo
 %{_bindir}/modifyrepo
-%{_bindir}/sqliterepo_c
+%endif
 
 %files libs
 %license COPYING

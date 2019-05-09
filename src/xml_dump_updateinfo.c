@@ -68,16 +68,19 @@ cr_xml_dump_updatecollectionpackages(xmlNodePtr collection, GSList *packages)
 void
 cr_xml_dump_updatecollectionmodule(xmlNodePtr collection, cr_UpdateCollectionModule *module)
 {
-        xmlNodePtr xml_module;
-        xml_module = xmlNewChild(collection, NULL, BAD_CAST "module", NULL);
+    if (!module)
+        return;
 
-        cr_xmlNewProp_c(xml_module, BAD_CAST "name", BAD_CAST module->name);
-        cr_xmlNewProp_c(xml_module, BAD_CAST "stream", BAD_CAST module->stream);
-        gchar buf[21]; //20 + '\0' is max number of chars of guint64: G_MAXUINT64 (= 18,446,744,073,709,551,615)
-        snprintf(buf, 21, "%" G_GUINT64_FORMAT, module->version);
-        cr_xmlNewProp_c(xml_module, BAD_CAST "version", BAD_CAST buf);
-        cr_xmlNewProp_c(xml_module, BAD_CAST "context", BAD_CAST module->context);
-        cr_xmlNewProp_c(xml_module, BAD_CAST "arch", BAD_CAST module->arch);
+    xmlNodePtr xml_module;
+    xml_module = xmlNewChild(collection, NULL, BAD_CAST "module", NULL);
+
+    cr_xmlNewProp_c(xml_module, BAD_CAST "name", BAD_CAST module->name);
+    cr_xmlNewProp_c(xml_module, BAD_CAST "stream", BAD_CAST module->stream);
+    gchar buf[21]; //20 + '\0' is max number of chars of guint64: G_MAXUINT64 (= 18,446,744,073,709,551,615)
+    snprintf(buf, 21, "%" G_GUINT64_FORMAT, module->version);
+    cr_xmlNewProp_c(xml_module, BAD_CAST "version", BAD_CAST buf);
+    cr_xmlNewProp_c(xml_module, BAD_CAST "context", BAD_CAST module->context);
+    cr_xmlNewProp_c(xml_module, BAD_CAST "arch", BAD_CAST module->arch);
 }
 
 void

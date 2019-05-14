@@ -21,6 +21,7 @@
 #include "threads.h"
 #include "error.h"
 #include "misc.h"
+#include "dumper_thread.h"
 
 #define ERR_DOMAIN      CREATEREPO_C_ERROR
 
@@ -114,6 +115,29 @@ cr_compressing_thread(gpointer data, G_GNUC_UNUSED gpointer user_data)
         // Compression was successful
         if (task->delsrc)
             remove(task->src);
+    }
+}
+
+void
+cr_rewrite_pkg_count_thread(gpointer data, gpointer user_data)
+{
+    cr_CompressionTask *task = data;
+    struct UserData *ud = user_data;
+    GError *tmp_err = NULL;
+
+    assert(task);
+
+    cr_rewrite_header_package_count(task->src,
+                                    task->type,
+                                    ud->package_count,
+                                    ud->task_count,
+                                    task->stat,
+                                    task->zck_dict_dir,
+                                    &tmp_err);
+
+    if (tmp_err) {
+        // Error encountered
+        g_propagate_error(&task->err, tmp_err);
     }
 }
 

@@ -156,6 +156,11 @@ cr_repomdrecordfilltask_free(cr_RepomdRecordFillTask *task, GError **err);
 void
 cr_repomd_record_fill_thread(gpointer data, gpointer user_data);
 
+/** Function for GThread Pool.
+ */
+void
+cr_rewrite_pkg_count_thread(gpointer data, gpointer user_data);
+
 /** @} */
 
 #ifdef __cplusplus

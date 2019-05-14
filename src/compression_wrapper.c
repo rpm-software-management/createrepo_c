@@ -1543,3 +1543,33 @@ cr_printf(GError **err, CR_FILE *cr_file, const char *format, ...)
 
     return ret;
 }
+
+ssize_t 
+cr_get_zchunk_with_index(CR_FILE *cr_file, ssize_t zchunk_index, char **copy_buf, GError **err)
+{
+    assert(cr_file);
+    assert(!err || *err == NULL);
+    if (cr_file->mode != CR_CW_MODE_READ) {
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
+                    "File is not opened in read mode");
+        return 0;
+    }
+    if (cr_file->type != CR_CW_ZCK_COMPRESSION){
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
+                    "Bad compressed file type");
+        return 0;
+    }
+#ifdef WITH_ZCHUNK
+    zckCtx *zck = (zckCtx *) cr_file->FILE;
+    zckChunk *idx = zck_get_chunk(zck, zchunk_index);
+    ssize_t chunk_size = zck_get_chunk_size(idx);
+    if (chunk_size <= 0)
+        return 0;
+    *copy_buf = g_malloc(chunk_size);
+    return zck_get_chunk_data(idx, *copy_buf, chunk_size);
+#else
+    g_set_error(err, ERR_DOMAIN, CRE_IO, "createrepo_c wasn't compiled "
+                        "with zchunk support");
+    return 0;
+#endif // WITH_ZCHUNK
+}

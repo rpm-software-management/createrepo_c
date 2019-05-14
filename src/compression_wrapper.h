@@ -190,6 +190,15 @@ int cr_end_chunk(CR_FILE *cr_file, GError **err);
  */
 int cr_set_autochunk(CR_FILE *cr_file, gboolean auto_chunk, GError **err);
 
+/** Get specific zchunks data indentified by index
+ * @param cr_file       CR_FILE pointer
+ * @param zchunk_index  Index of wanted zchunk
+ * @param copy_buf      Output pointer, upon return contains wanted zchunk data
+ * @param err           GError **
+ * @return              Size of data from zchunk indexed by zchunk_index
+ */
+ssize_t cr_get_zchunk_with_index(CR_FILE *f, ssize_t zchunk_index, char **copy_buf, GError **err);
+
 /** Writes a formatted string into the cr_file.
  * @param err           GError **
  * @param cr_file       CR_FILE pointer

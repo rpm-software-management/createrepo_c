@@ -221,6 +221,24 @@ int cr_xmlfile_add_chunk(cr_XmlFile *f, const char *chunk, GError **err);
  */
 int cr_xmlfile_close(cr_XmlFile *f, GError **err);
 
+/** Rewrite package count field in repodata header in xml file.
+ * In order to do this we have to decompress and after the change
+ * compress the whole file again, so entirely new file is created.
+ * @param original_filename     Current file with wrong value in header
+ * @param package_count         Actual package count (desired value in header)
+ * @param task_count            Task count (current value in header)
+ * @param file_stat             cr_ContentStat for stats of the new file, it will be modified
+ * @param zck_dict_file         Optional path to zck dictionary
+ * @param err                   **GError
+ */
+void cr_rewrite_header_package_count(gchar *original_filename,
+                                     cr_CompressionType xml_compression,
+                                     int package_count,
+                                     int task_count,
+                                     cr_ContentStat *file_stat,
+                                     gchar *zck_dict_file,
+                                     GError **err);
+ 
 
 /** @} */
 

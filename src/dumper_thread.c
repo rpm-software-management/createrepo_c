@@ -75,6 +75,7 @@ write_pkg(long id,
     while (udata->id_pri != id)
         g_cond_wait (udata->cond_pri, udata->mutex_pri);
 
+    udata->package_count++;
     g_free(udata->prev_srpm);
     udata->prev_srpm = udata->cur_srpm;
     udata->cur_srpm = g_strdup(pkg->rpm_sourcerpm);
@@ -540,7 +541,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
 
     if (g_queue_get_length(udata->buffer) < MAX_TASK_BUFFER_LEN
         && udata->id_pri != task->id
-        && udata->package_count > (task->id + 1))
+        && udata->task_count > (task->id + 1))
     {
         // If:
         //  * this isn't our turn

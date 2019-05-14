@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH MERGEREPO_C  "2017-02-23" "" ""
+.TH MERGEREPO_C  "2019-05-03" "" ""
 .SH NAME
 mergerepo_c \- Merge multiple rpm-md format repositories together
 .
@@ -81,6 +81,9 @@ Don\(aqt add a baseurl to packages that don\(aqt have one before.
 .SS \-k \-\-koji
 .sp
 Enable koji mergerepos behaviour.
+.SS \-\-pkgorigins
+.sp
+Enable standard mergerepos behavior while also providing the pkgorigins file for koji.
 .SS \-g \-\-groupfile GROUPFILE
 .sp
 Path to groupfile to include in metadata.

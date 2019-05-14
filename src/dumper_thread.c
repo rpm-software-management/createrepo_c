@@ -74,6 +74,8 @@ write_pkg(long id,
     g_mutex_lock(udata->mutex_pri);
     while (udata->id_pri != id)
         g_cond_wait (udata->cond_pri, udata->mutex_pri);
+
+    udata->package_count++;
     ++udata->id_pri;
     cr_xmlfile_add_chunk(udata->pri_f, (const char *) res.primary, &tmp_err);
     if (tmp_err) {
@@ -476,7 +478,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
 
     if (g_queue_get_length(udata->buffer) < MAX_TASK_BUFFER_LEN
         && udata->id_pri != task->id
-        && udata->package_count > (task->id + 1))
+        && udata->task_count > (task->id + 1))
     {
         // If:
         //  * this isn't our turn

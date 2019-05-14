@@ -124,7 +124,7 @@ fill_pool(GThreadPool *pool,
           struct CmdOptions *cmd_options,
           GSList **current_pkglist,
           FILE *output_pkg_list,
-          long *package_count,
+          long *task_count,
           int  media_id)
 {
     GQueue queue = G_QUEUE_INIT;
@@ -259,13 +259,13 @@ fill_pool(GThreadPool *pool,
 
     // Push sorted tasks into the thread pool
     while ((task = g_queue_pop_head(&queue)) != NULL) {
-        task->id = *package_count;
+        task->id = *task_count;
         task->media_id = media_id;
         g_thread_pool_push(pool, task, NULL);
-        ++*package_count;
+        ++*task_count;
     }
 
-    return *package_count;
+    return *task_count;
 }
 
 
@@ -321,6 +321,27 @@ prepare_cache_dir(struct CmdOptions *cmd_options,
     return TRUE;
 }
 
+/** Check if task finished without error, if yes
+ *  use content stats of the new file
+ *
+ * @param task          Rewrite pkg count task
+ * @param filename      Name of file with wrong package count
+ * @param exit_val      If errors occured set createrepo_c exit value
+ * @param content_stat  Content stats for filename
+ *
+ */
+static void
+error_check_and_set_content_stat(cr_CompressionTask *task, char *filename, int *exit_val, cr_ContentStat **content_stat){
+    if (task->err) {
+        g_critical("Cannot rewrite pkg count in %s: %s",
+                   filename, task->err->message);
+        *exit_val = 2;
+    }else{
+        cr_contentstat_free(*content_stat, NULL);
+        *content_stat = task->stat;
+        task->stat = NULL;
+    }
+}
 
 int
 main(int argc, char **argv)
@@ -478,7 +499,7 @@ main(int argc, char **argv)
                                           NULL);
     g_debug("Thread pool ready");
 
-    long package_count = 0;
+    long task_count = 0;
     GSList *current_pkglist = NULL;
     /* ^^^ List with basenames of files which will be processed */
 
@@ -490,13 +511,13 @@ main(int argc, char **argv)
                   cmd_options,
                   &current_pkglist,
                   output_pkg_list,
-                  &package_count,
+                  &task_count,
                   media_id);
         g_free(tmp_in_dir);
     }
 
-    g_debug("Package count: %ld", package_count);
-    g_message("Directory walk done - %ld packages", package_count);
+    g_debug("Package count: %ld", task_count);
+    g_message("Directory walk done - %ld packages", task_count);
 
     if (output_pkg_list)
         fclose(output_pkg_list);
@@ -506,10 +527,10 @@ main(int argc, char **argv)
     cr_Metadata *old_metadata = NULL;
     struct cr_MetadataLocation *old_metadata_location = NULL;
 
-    if (!package_count)
+    if (!task_count)
         g_debug("No packages found - skipping metadata loading");
 
-    if (package_count && cmd_options->update) {
+    if (task_count && cmd_options->update) {
         int ret;
         old_metadata = cr_metadata_new(CR_HT_KEY_FILENAME, 1, current_pkglist);
         cr_metadata_set_dupaction(old_metadata, CR_HT_DUPACT_REMOVEALL);
@@ -741,9 +762,9 @@ main(int argc, char **argv)
 
     // Set number of packages
     g_debug("Setting number of packages");
-    cr_xmlfile_set_num_of_pkgs(pri_cr_file, package_count, NULL);
-    cr_xmlfile_set_num_of_pkgs(fil_cr_file, package_count, NULL);
-    cr_xmlfile_set_num_of_pkgs(oth_cr_file, package_count, NULL);
+    cr_xmlfile_set_num_of_pkgs(pri_cr_file, task_count, NULL);
+    cr_xmlfile_set_num_of_pkgs(fil_cr_file, task_count, NULL);
+    cr_xmlfile_set_num_of_pkgs(oth_cr_file, task_count, NULL);
 
     // Open sqlite databases
     gchar *pri_db_filename = NULL;
@@ -832,7 +853,8 @@ main(int argc, char **argv)
     user_data.checksum_cachedir = cmd_options->checksum_cachedir;
     user_data.skip_symlinks     = cmd_options->skip_symlinks;
     user_data.repodir_name_len  = strlen(in_dir);
-    user_data.package_count     = package_count;
+    user_data.task_count        = task_count;
+    user_data.package_count     = 0;
     user_data.skip_stat         = cmd_options->skip_stat;
     user_data.old_metadata      = old_metadata;
     user_data.mutex_pri         = g_mutex_new();
@@ -875,6 +897,59 @@ main(int argc, char **argv)
     cr_xmlfile_close(pri_cr_file, NULL);
     cr_xmlfile_close(fil_cr_file, NULL);
     cr_xmlfile_close(oth_cr_file, NULL);
+
+
+    /* At the time of writing xml metadata headers we haven't yet parsed all
+     * the packages and we don't know whether there were some invalid ones,
+     * therefore we write the task count into the headers instead of the actual package count.
+     * If there actually were some invalid packages we have to correct this value
+     * that unfortunately means we have to decompress metadata files change package
+     * count value and compress them again.
+     */
+    if (user_data.package_count != user_data.task_count){
+        g_message("Warning: There were some invalid packages: we have to recompress other, filelists and primary xml metadata files in order to have correct package counts");
+
+        GThreadPool *rewrite_pkg_count_pool = g_thread_pool_new(cr_rewrite_pkg_count_thread,
+                                                                &user_data, 3, FALSE, NULL);
+
+        cr_CompressionTask *pri_rewrite_pkg_count_task;
+        cr_CompressionTask *fil_rewrite_pkg_count_task;
+        cr_CompressionTask *oth_rewrite_pkg_count_task;
+
+        pri_rewrite_pkg_count_task = cr_compressiontask_new(pri_xml_filename,
+                                                            NULL,
+                                                            xml_compression,
+                                                            cmd_options->repomd_checksum_type,
+                                                            1,
+                                                            &tmp_err);
+        g_thread_pool_push(rewrite_pkg_count_pool, pri_rewrite_pkg_count_task, NULL);
+
+        fil_rewrite_pkg_count_task = cr_compressiontask_new(fil_xml_filename,
+                                                            NULL,
+                                                            xml_compression,
+                                                            cmd_options->repomd_checksum_type,
+                                                            1,
+                                                            &tmp_err);
+        g_thread_pool_push(rewrite_pkg_count_pool, fil_rewrite_pkg_count_task, NULL);
+
+        oth_rewrite_pkg_count_task = cr_compressiontask_new(oth_xml_filename,
+                                                            NULL,
+                                                            xml_compression,
+                                                            cmd_options->repomd_checksum_type,
+                                                            1,
+                                                            &tmp_err);
+        g_thread_pool_push(rewrite_pkg_count_pool, oth_rewrite_pkg_count_task, NULL);
+
+        g_thread_pool_free(rewrite_pkg_count_pool, FALSE, TRUE);
+
+        error_check_and_set_content_stat(pri_rewrite_pkg_count_task, pri_xml_filename, &exit_val, &pri_stat);
+        error_check_and_set_content_stat(fil_rewrite_pkg_count_task, fil_xml_filename, &exit_val, &fil_stat);
+        error_check_and_set_content_stat(oth_rewrite_pkg_count_task, oth_xml_filename, &exit_val, &oth_stat);
+
+        cr_compressiontask_free(pri_rewrite_pkg_count_task, NULL);
+        cr_compressiontask_free(fil_rewrite_pkg_count_task, NULL);
+        cr_compressiontask_free(oth_rewrite_pkg_count_task, NULL);
+    }
 
     g_queue_free(user_data.buffer);
     g_mutex_free(user_data.mutex_buffer);

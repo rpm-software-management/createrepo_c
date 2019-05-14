@@ -18,8 +18,10 @@
  */
 
 #include <glib.h>
+#include <glib/gstdio.h>
 #include <assert.h>
 #include "xml_file.h"
+#include <errno.h>
 #include "error.h"
 #include "xml_dump.h"
 #include "compression_wrapper.h"
@@ -39,6 +41,9 @@
                                 CR_XML_OTHER_NS"\" packages=\"%d\">\n"
 #define XML_PRESTODELTA_HEADER  XML_HEADER"<prestodelta>\n"
 #define XML_UPDATEINFO_HEADER   XML_HEADER"<updates>\n"
+
+#define XML_MAX_HEADER_SIZE     300
+#define XML_RECOMPRESS_BUFFER_SIZE   8192
 
 #define XML_PRIMARY_FOOTER      "</metadata>"
 #define XML_FILELISTS_FOOTER    "</filelists>"
@@ -316,4 +321,122 @@ cr_xmlfile_close(cr_XmlFile *f, GError **err)
     g_free(f);
 
     return CRE_OK;
+}
+
+static int
+write_modified_header(int task_count,
+                      int package_count,
+                      cr_XmlFile *cr_file,
+                      gchar *header_buf,
+                      int header_len,
+                      GError **err)
+{
+    GError *tmp_err = NULL;
+    gchar *package_count_string;
+    gchar *task_count_string;
+    int bytes_written = 0;
+    int package_count_string_len = rasprintf(&package_count_string, "packages=\"%i\"", package_count);
+    int task_count_string_len = rasprintf(&task_count_string, "packages=\"%i\"", task_count);
+
+    gchar *pointer_to_pkgs = strstr(header_buf, task_count_string);
+    if (!pointer_to_pkgs){
+        g_free(package_count_string);
+        g_free(task_count_string);
+        return 0;
+    }
+    gchar *pointer_to_pkgs_end = pointer_to_pkgs + task_count_string_len;
+
+    bytes_written += cr_write(cr_file->f, header_buf, pointer_to_pkgs - header_buf, &tmp_err);
+    if (!tmp_err)
+        bytes_written += cr_write(cr_file->f, package_count_string, package_count_string_len, &tmp_err);
+    if (!tmp_err)
+        bytes_written += cr_write(cr_file->f, pointer_to_pkgs_end, header_len - (pointer_to_pkgs_end - header_buf), &tmp_err);
+    if (tmp_err) {
+        g_propagate_prefixed_error(err, tmp_err, "Error encountered while writing header part:");
+        g_free(package_count_string);
+        g_free(task_count_string);
+        return 0;
+    }
+    g_free(package_count_string);
+    g_free(task_count_string);
+    return bytes_written;
+}
+
+void
+cr_rewrite_header_package_count(gchar *original_filename,
+                                cr_CompressionType xml_compression,
+                                int package_count,
+                                int task_count,
+                                cr_ContentStat *file_stat,
+                                GError **err)
+{
+    GError *tmp_err = NULL;
+    CR_FILE *original_file = cr_open(original_filename, CR_CW_MODE_READ, CR_CW_AUTO_DETECT_COMPRESSION, &tmp_err);
+    if (tmp_err) {
+        g_propagate_prefixed_error(err, tmp_err, "Error encountered while reopening for reading:");
+        return;
+    }
+
+    gchar *tmp_xml_filename = g_strconcat(original_filename, ".tmp", NULL);
+    cr_XmlFile *new_file = cr_xmlfile_sopen_primary(tmp_xml_filename,
+                                                    xml_compression,
+                                                    file_stat,
+                                                    &tmp_err);
+    if (tmp_err) {
+        g_propagate_prefixed_error(err, tmp_err, "Error encountered while opening for writing:");
+        cr_close(original_file, NULL);
+        g_free(tmp_xml_filename);
+        return;
+    }
+
+    gchar header_buf[XML_MAX_HEADER_SIZE];
+    int len_read = cr_read(original_file, header_buf, XML_MAX_HEADER_SIZE, &tmp_err);
+    if (!tmp_err)
+        write_modified_header(task_count, package_count, new_file, header_buf, len_read, &tmp_err);
+    if (tmp_err) {
+        g_propagate_prefixed_error(err, tmp_err, "Error encountered while recompressing:");
+        cr_xmlfile_close(new_file, NULL);
+        cr_close(original_file, NULL);
+        g_free(tmp_xml_filename);
+        return;
+    }
+    //Copy the rest of the file
+    gchar copy_buf[XML_RECOMPRESS_BUFFER_SIZE];
+    while(len_read)
+    {
+        len_read = cr_read(original_file, copy_buf, XML_RECOMPRESS_BUFFER_SIZE, &tmp_err);
+        if (!tmp_err)
+            cr_write(new_file->f, copy_buf, len_read, &tmp_err);
+        if (tmp_err) {
+            g_propagate_prefixed_error(err, tmp_err, "Error encountered while recompressing:");
+            cr_xmlfile_close(new_file, NULL);
+            cr_close(original_file, NULL);
+            g_free(tmp_xml_filename);
+            return;
+        }
+    }
+
+    new_file->header = 1;
+    new_file->footer = 1;
+
+    cr_xmlfile_close(new_file, &tmp_err);
+    if (tmp_err) {
+        g_propagate_prefixed_error(err, tmp_err, "Error encountered while writing:");
+        cr_close(original_file, NULL);
+        g_free(tmp_xml_filename);
+        return;
+    }
+    cr_close(original_file, &tmp_err);
+    if (tmp_err) {
+        g_propagate_prefixed_error(err, tmp_err, "Error encountered while writing:");
+        g_free(tmp_xml_filename);
+        return;
+    }
+
+    if (g_rename(tmp_xml_filename, original_filename) == -1) {
+        g_propagate_prefixed_error(err, tmp_err, "Error encountered while renaming:");
+        g_free(tmp_xml_filename);
+        return;
+    }
+    g_free(tmp_xml_filename);
 }

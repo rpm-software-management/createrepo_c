@@ -72,28 +72,28 @@ struct UserData {
     // Update stuff
     gboolean skip_stat;             // Skip stat() while updating
     cr_Metadata *old_metadata;      // Loaded metadata
-    GMutex *mutex_old_md;           // Mutex for accessing old metadata
+    GMutex mutex_old_md;           // Mutex for accessing old metadata
 
     // Thread serialization
-    GMutex *mutex_pri;              // Mutex for primary metadata
-    GMutex *mutex_fil;              // Mutex for filelists metadata
-    GMutex *mutex_oth;              // Mutex for other metadata
-    GCond *cond_pri;                // Condition for primary metadata
-    GCond *cond_fil;                // Condition for filelists metadata
-    GCond *cond_oth;                // Condition for other metadata
+    GMutex mutex_pri;              // Mutex for primary metadata
+    GMutex mutex_fil;              // Mutex for filelists metadata
+    GMutex mutex_oth;              // Mutex for other metadata
+    GCond cond_pri;                // Condition for primary metadata
+    GCond cond_fil;                // Condition for filelists metadata
+    GCond cond_oth;                // Condition for other metadata
     volatile long id_pri;           // ID of task on turn (write primary metadata)
     volatile long id_fil;           // ID of task on turn (write filelists metadata)
     volatile long id_oth;           // ID of task on turn (write other metadata)
 
     // Buffering
     GQueue *buffer;                 // Buffer for done tasks
-    GMutex *mutex_buffer;           // Mutex for accessing the buffer
+    GMutex mutex_buffer;           // Mutex for accessing the buffer
 
     // Delta generation
     gboolean deltas;                // Are deltas enabled?
     gint64 max_delta_rpm_size;      // Max size of an rpm that to run
                                     // deltarpm against
-    GMutex *mutex_deltatargetpackages; // Mutex
+    GMutex mutex_deltatargetpackages; // Mutex
     GSList *deltatargetpackages;    // List of cr_DeltaTargetPackages
 
     // Location href modifiers

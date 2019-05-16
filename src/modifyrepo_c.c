@@ -291,8 +291,6 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    g_thread_init(NULL); // Initialize threading
-
     // Emit debug message with version
 
     g_debug("Version: %s", cr_version_string_with_features());

@@ -71,9 +71,9 @@ write_pkg(long id,
     GError *tmp_err = NULL;
 
     // Write primary data
-    g_mutex_lock(udata->mutex_pri);
+    g_mutex_lock(&(udata->mutex_pri));
     while (udata->id_pri != id)
-        g_cond_wait (udata->cond_pri, udata->mutex_pri);
+        g_cond_wait (&(udata->cond_pri), &(udata->mutex_pri));
 
     udata->package_count++;
     g_free(udata->prev_srpm);
@@ -119,13 +119,13 @@ write_pkg(long id,
         }
     }
 
-    g_cond_broadcast(udata->cond_pri);
-    g_mutex_unlock(udata->mutex_pri);
+    g_cond_broadcast(&(udata->cond_pri));
+    g_mutex_unlock(&(udata->mutex_pri));
 
     // Write fielists data
-    g_mutex_lock(udata->mutex_fil);
+    g_mutex_lock(&(udata->mutex_fil));
     while (udata->id_fil != id)
-        g_cond_wait (udata->cond_fil, udata->mutex_fil);
+        g_cond_wait (&(udata->cond_fil), &(udata->mutex_fil));
     ++udata->id_fil;
     cr_xmlfile_add_chunk(udata->fil_f, (const char *) res.filelists, &tmp_err);
     if (tmp_err) {
@@ -162,13 +162,13 @@ write_pkg(long id,
         }
     }
 
-    g_cond_broadcast(udata->cond_fil);
-    g_mutex_unlock(udata->mutex_fil);
+    g_cond_broadcast(&(udata->cond_fil));
+    g_mutex_unlock(&(udata->mutex_fil));
 
     // Write other data
-    g_mutex_lock(udata->mutex_oth);
+    g_mutex_lock(&(udata->mutex_oth));
     while (udata->id_oth != id)
-        g_cond_wait (udata->cond_oth, udata->mutex_oth);
+        g_cond_wait (&(udata->cond_oth), &(udata->mutex_oth));
     ++udata->id_oth;
     cr_xmlfile_add_chunk(udata->oth_f, (const char *) res.other, &tmp_err);
     if (tmp_err) {
@@ -204,8 +204,8 @@ write_pkg(long id,
             g_clear_error(&tmp_err);
         }
     }
-    g_cond_broadcast(udata->cond_oth);
-    g_mutex_unlock(udata->mutex_oth);
+    g_cond_broadcast(&(udata->cond_oth));
+    g_mutex_unlock(&(udata->mutex_oth));
 }
 
 static char *
@@ -437,7 +437,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     // Update stuff
     if (udata->old_metadata) {
         // We have old metadata
-        g_mutex_lock(udata->mutex_old_md);
+        g_mutex_lock(&(udata->mutex_old_md));
         md = (cr_Package *) g_hash_table_lookup(
                                 cr_metadata_hashtable(udata->old_metadata),
                                 task->filename);
@@ -445,7 +445,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         // thread can use it as CACHE, because later we modify it destructively
         g_hash_table_steal(cr_metadata_hashtable(udata->old_metadata),
                                                  task->filename);
-        g_mutex_unlock(udata->mutex_old_md);
+        g_mutex_unlock(&(udata->mutex_old_md));
 
         if (md) {
             g_debug("CACHE HIT %s", task->filename);
@@ -524,11 +524,11 @@ cr_dumper_thread(gpointer data, gpointer user_data)
                                                   task->full_path,
                                                   NULL);
         if (tpkg) {
-            g_mutex_lock(udata->mutex_deltatargetpackages);
+            g_mutex_lock(&(udata->mutex_deltatargetpackages));
             udata->deltatargetpackages = g_slist_prepend(
                                                 udata->deltatargetpackages,
                                                 tpkg);
-            g_mutex_unlock(udata->mutex_deltatargetpackages);
+            g_mutex_unlock(&(udata->mutex_deltatargetpackages));
         } else {
             g_warning("Cannot create deltatargetpackage for: %s-%s-%s",
                       pkg->name, pkg->version, pkg->release);
@@ -537,7 +537,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
 #endif
 
     // Buffering stuff
-    g_mutex_lock(udata->mutex_buffer);
+    g_mutex_lock(&(udata->mutex_buffer));
 
     if (g_queue_get_length(udata->buffer) < MAX_TASK_BUFFER_LEN
         && udata->id_pri != task->id
@@ -567,7 +567,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         }
 
         g_queue_insert_sorted(udata->buffer, buf_task, buf_task_sort_func, NULL);
-        g_mutex_unlock(udata->mutex_buffer);
+        g_mutex_unlock(&(udata->mutex_buffer));
 
         g_free(task->full_path);
         g_free(task->filename);
@@ -577,7 +577,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         return;
     }
 
-    g_mutex_unlock(udata->mutex_buffer);
+    g_mutex_unlock(&(udata->mutex_buffer));
 
     // Dump XML and SQLite
     write_pkg(task->id, res, pkg, udata);
@@ -591,26 +591,26 @@ cr_dumper_thread(gpointer data, gpointer user_data)
 task_cleanup:
     if (udata->id_pri <= task->id) {
         // An error was encountered and we have to wait to increment counters
-        g_mutex_lock(udata->mutex_pri);
+        g_mutex_lock(&(udata->mutex_pri));
         while (udata->id_pri != task->id)
-            g_cond_wait (udata->cond_pri, udata->mutex_pri);
+            g_cond_wait (&(udata->cond_pri), &(udata->mutex_pri));
         ++udata->id_pri;
-        g_cond_broadcast(udata->cond_pri);
-        g_mutex_unlock(udata->mutex_pri);
+        g_cond_broadcast(&(udata->cond_pri));
+        g_mutex_unlock(&(udata->mutex_pri));
 
-        g_mutex_lock(udata->mutex_fil);
+        g_mutex_lock(&(udata->mutex_fil));
         while (udata->id_fil != task->id)
-            g_cond_wait (udata->cond_fil, udata->mutex_fil);
+            g_cond_wait (&(udata->cond_fil), &(udata->mutex_fil));
         ++udata->id_fil;
-        g_cond_broadcast(udata->cond_fil);
-        g_mutex_unlock(udata->mutex_fil);
+        g_cond_broadcast(&(udata->cond_fil));
+        g_mutex_unlock(&(udata->mutex_fil));
 
-        g_mutex_lock(udata->mutex_oth);
+        g_mutex_lock(&(udata->mutex_oth));
         while (udata->id_oth != task->id)
-            g_cond_wait (udata->cond_oth, udata->mutex_oth);
+            g_cond_wait (&(udata->cond_oth), &(udata->mutex_oth));
         ++udata->id_oth;
-        g_cond_broadcast(udata->cond_oth);
-        g_mutex_unlock(udata->mutex_oth);
+        g_cond_broadcast(&(udata->cond_oth));
+        g_mutex_unlock(&(udata->mutex_oth));
     }
 
     g_free(task->full_path);
@@ -621,11 +621,11 @@ task_cleanup:
     // Try to write all results from buffer which was waiting for us
     while (1) {
         struct BufferedTask *buf_task;
-        g_mutex_lock(udata->mutex_buffer);
+        g_mutex_lock(&(udata->mutex_buffer));
         buf_task = g_queue_peek_head(udata->buffer);
         if (buf_task && buf_task->id == udata->id_pri) {
             buf_task = g_queue_pop_head (udata->buffer);
-            g_mutex_unlock(udata->mutex_buffer);
+            g_mutex_unlock(&(udata->mutex_buffer));
             // Dump XML and SQLite
             write_pkg(buf_task->id, buf_task->res, buf_task->pkg, udata);
             // Clean up
@@ -637,7 +637,7 @@ task_cleanup:
             g_free(buf_task->location_base);
             g_free(buf_task);
         } else {
-            g_mutex_unlock(udata->mutex_buffer);
+            g_mutex_unlock(&(udata->mutex_buffer));
             break;
         }
     }

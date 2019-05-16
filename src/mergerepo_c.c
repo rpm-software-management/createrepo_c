@@ -1736,8 +1736,6 @@ main(int argc, char **argv)
 
     g_debug("Version: %s", cr_version_string_with_features());
 
-    g_thread_init(NULL); // Initialize threading
-
     // Prepare out_repo
 
     if (g_file_test(cmd_options->tmp_out_repo, G_FILE_TEST_EXISTS)) {

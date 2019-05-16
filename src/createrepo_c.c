@@ -592,7 +592,6 @@ main(int argc, char **argv)
 
     // Thread pool - Creation
     struct UserData user_data = {0};
-    g_thread_init(NULL);
     GThreadPool *pool = g_thread_pool_new(cr_dumper_thread,
                                           &user_data,
                                           0,
@@ -1079,21 +1078,12 @@ main(int argc, char **argv)
     user_data.package_count     = 0;
     user_data.skip_stat         = cmd_options->skip_stat;
     user_data.old_metadata      = old_metadata;
-    user_data.mutex_pri         = g_mutex_new();
-    user_data.mutex_fil         = g_mutex_new();
-    user_data.mutex_oth         = g_mutex_new();
-    user_data.cond_pri          = g_cond_new();
-    user_data.cond_fil          = g_cond_new();
-    user_data.cond_oth          = g_cond_new();
     user_data.id_pri            = 0;
     user_data.id_fil            = 0;
     user_data.id_oth            = 0;
     user_data.buffer            = g_queue_new();
-    user_data.mutex_buffer      = g_mutex_new();
-    user_data.mutex_old_md      = g_mutex_new();
     user_data.deltas            = cmd_options->deltas;
     user_data.max_delta_rpm_size= cmd_options->max_delta_rpm_size;
-    user_data.mutex_deltatargetpackages = g_mutex_new();
     user_data.deltatargetpackages = NULL;
     user_data.cut_dirs          = cmd_options->cut_dirs;
     user_data.location_prefix   = cmd_options->location_prefix;
@@ -1241,15 +1231,6 @@ main(int argc, char **argv)
     }
 
     g_queue_free(user_data.buffer);
-    g_mutex_free(user_data.mutex_buffer);
-    g_mutex_free(user_data.mutex_old_md);
-    g_cond_free(user_data.cond_pri);
-    g_cond_free(user_data.cond_fil);
-    g_cond_free(user_data.cond_oth);
-    g_mutex_free(user_data.mutex_pri);
-    g_mutex_free(user_data.mutex_fil);
-    g_mutex_free(user_data.mutex_oth);
-    g_mutex_free(user_data.mutex_deltatargetpackages);
 
     // Create repomd records for each file
     g_debug("Generating repomd.xml");

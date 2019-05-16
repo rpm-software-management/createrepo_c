@@ -1017,8 +1017,6 @@ main(int argc, char **argv)
     // Emit debug message with version
     g_debug("Version: %s", cr_version_string_with_features());
 
-    g_thread_init(NULL); // Initialize threading
-
     // Gen the databases
     ret = generate_sqlite_from_xml(argv[1],
                                    options->compression_type,

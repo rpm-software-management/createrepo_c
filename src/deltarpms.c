@@ -280,10 +280,10 @@ typedef struct {
     const char *outdeltadir;
     gint num_deltas;
     GHashTable *oldpackages;
-    GMutex *mutex;
+    GMutex mutex;
     gint64 active_work_size;
     gint active_tasks;
-    GCond *cond_task_finished;
+    GCond cond_task_finished;
 } cr_DeltaThreadUserData;
 
 
@@ -376,11 +376,11 @@ cr_delta_thread(gpointer data, gpointer udata)
     g_debug("Deltas for \"%s\" (%"G_GINT64_FORMAT") generated",
             tpkg->name, tpkg->size_installed);
 
-    g_mutex_lock(user_data->mutex);
+    g_mutex_lock(&(user_data->mutex));
     user_data->active_work_size -= tpkg->size_installed;
     user_data->active_tasks--;
-    g_cond_signal(user_data->cond_task_finished);
-    g_mutex_unlock(user_data->mutex);
+    g_cond_signal(&(user_data->cond_task_finished));
+    g_mutex_unlock(&(user_data->mutex));
     g_free(task);
 }
 
@@ -430,10 +430,8 @@ cr_deltarpms_parallel_deltas(GSList *targetpackages,
     user_data.outdeltadir           = outdeltadir;
     user_data.num_deltas            = num_deltas;
     user_data.oldpackages           = oldpackages;
-    user_data.mutex                 = g_mutex_new();
     user_data.active_work_size      = G_GINT64_CONSTANT(0);
     user_data.active_tasks          = 0;
-    user_data.cond_task_finished    = g_cond_new();
 
     // Make sorted list of targets without packages
     // that are bigger then max_delta_rpm_size
@@ -461,13 +459,13 @@ cr_deltarpms_parallel_deltas(GSList *targetpackages,
         gint64 active_work_size;
         gint64 active_tasks;
 
-        g_mutex_lock(user_data.mutex);
+        g_mutex_lock(&(user_data.mutex));
         while (user_data.active_tasks == workers)
             // Wait if all available threads are busy
-            g_cond_wait(user_data.cond_task_finished, user_data.mutex);
+            g_cond_wait(&(user_data.cond_task_finished), &(user_data.mutex));
         active_work_size = user_data.active_work_size;
         active_tasks = user_data.active_tasks;
-        g_mutex_unlock(user_data.mutex);
+        g_mutex_unlock(&(user_data.mutex));
 
         for (GList *elem = targets; elem; elem = g_list_next(elem)) {
             cr_DeltaTargetPackage *tpkg = elem->data;
@@ -475,10 +473,10 @@ cr_deltarpms_parallel_deltas(GSList *targetpackages,
                 cr_DeltaTask *task = g_new0(cr_DeltaTask, 1);
                 task->tpkg = tpkg;
 
-                g_mutex_lock(user_data.mutex);
+                g_mutex_lock(&(user_data.mutex));
                 user_data.active_work_size += tpkg->size_installed;
                 user_data.active_tasks++;
-                g_mutex_unlock(user_data.mutex);
+                g_mutex_unlock(&(user_data.mutex));
 
                 g_thread_pool_push(pool, task, NULL);
                 targets = g_list_delete_link(targets, elem);
@@ -489,18 +487,16 @@ cr_deltarpms_parallel_deltas(GSList *targetpackages,
 
         if (!inserted) {
             // In this iteration, no task was pushed to the pool
-            g_mutex_lock(user_data.mutex);
+            g_mutex_lock(&(user_data.mutex));
             while (user_data.active_tasks == active_tasks)
                 // Wait until any of running tasks finishes
-                g_cond_wait(user_data.cond_task_finished, user_data.mutex);
-            g_mutex_unlock(user_data.mutex);
+                g_cond_wait(&(user_data.cond_task_finished), &(user_data.mutex));
+            g_mutex_unlock(&(user_data.mutex));
         }
     }
 
     g_thread_pool_free(pool, FALSE, TRUE);
     g_list_free(targets);
-    g_mutex_free(user_data.mutex);
-    g_cond_free(user_data.cond_task_finished);
 
     return TRUE;
 }
@@ -643,7 +639,7 @@ typedef struct {
 } cr_PrestoDeltaTask;
 
 typedef struct {
-    GMutex *mutex;
+    GMutex mutex;
     GHashTable *ht;
     cr_ChecksumType checksum_type;
     const gchar *prefix_to_strip;
@@ -790,7 +786,7 @@ cr_prestodelta_thread(gpointer data, gpointer udata)
     gpointer pkey = NULL;
     gpointer pval = NULL;
     key = cr_package_nevra(dpkg->package);
-    g_mutex_lock(user_data->mutex);
+    g_mutex_lock(&(user_data->mutex));
     if (g_hash_table_lookup_extended(user_data->ht, key, &pkey, &pval)) {
         // Key exists in the table
         // 1. Remove the key and value from the table without freeing them
@@ -805,7 +801,7 @@ cr_prestodelta_thread(gpointer data, gpointer udata)
         GSList *list = g_slist_prepend(NULL, xml_chunk);
         g_hash_table_insert(user_data->ht, g_strdup(key), list);
     }
-    g_mutex_unlock(user_data->mutex);
+    g_mutex_unlock(&(user_data->mutex));
 
 exit:
     g_free(checksum);
@@ -880,7 +876,6 @@ cr_deltarpms_generate_prestodelta_file(const gchar *drpmsdir,
                                (GDestroyNotify) g_free,
                                (GDestroyNotify) cr_free_gslist_of_strings);
 
-    user_data.mutex             = g_mutex_new();
     user_data.ht                = ht;
     user_data.checksum_type     = checksum_type;
     user_data.prefix_to_strip   = prefix_to_strip,
@@ -936,7 +931,6 @@ cr_deltarpms_generate_prestodelta_file(const gchar *drpmsdir,
 
 exit:
     g_slist_free_full(candidates, (GDestroyNotify) cr_prestodeltatask_free);
-    g_mutex_free(user_data.mutex);
     g_hash_table_destroy(ht);
 
     return ret;

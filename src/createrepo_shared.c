@@ -28,6 +28,7 @@
 #include "misc.h"
 #include "cleanup.h"
 
+int *global_exit_status = NULL;  // pointer to exit_value used in failure_exit_cleanup
 
 char *global_lock_dir     = NULL;  // Path to .repodata/ dir that is used as a lock
 char *global_tmp_out_repo = NULL;  // Path to temporary repodata directory,
@@ -40,13 +41,11 @@ char *global_tmp_out_repo = NULL;  // Path to temporary repodata directory,
  * for other createrepo[_c] processes.
  * This functions acts only if exit status != EXIST_SUCCESS.
  *
- * @param exit_status       Status
- * @param data              User data (unused)
  */
 static void
-failure_exit_cleanup(int exit_status, G_GNUC_UNUSED void *data)
+failure_exit_cleanup()
 {
-    if (exit_status != EXIT_SUCCESS) {
+    if (global_exit_status && *global_exit_status != EXIT_SUCCESS) {
         if (global_lock_dir) {
             g_debug("Removing %s", global_lock_dir);
             cr_remove_dir(global_lock_dir, NULL);
@@ -67,6 +66,12 @@ sigint_catcher(int sig)
 {
     g_message("%s catched: Terminating...", strsignal(sig));
     exit(1);
+}
+
+void
+cr_set_global_exit_value(int *exit_val)
+{
+    global_exit_status = exit_val;
 }
 
 gboolean

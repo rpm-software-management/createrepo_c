@@ -562,6 +562,9 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+    // Set exit_value pointer used in cleanup handlers
+    cr_set_global_exit_value(&exit_val);
+
     // Setup cleanup handlers
     if (!cr_set_cleanup_handler(lock_dir, tmp_out_repo, &tmp_err)) {
         g_printerr("%s\n", tmp_err->message);

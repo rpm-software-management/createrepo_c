@@ -40,13 +40,12 @@ extern "C" {
 
 /**
  * This function does:
- * 1) Sets atexit cleanup function that removes temporary directories
- * 2) Sets a signal handler for signals that lead to process temination.
- *    (List obtained from the "man 7 signal")
- *    Signals that are ignored (SIGCHILD) or lead just to stop (SIGSTOP, ...)
- *    don't get this handler - these signals do not terminate the process!
- *    This handler assures that the cleanup function that is hooked on exit
- *    gets called.
+ * Sets a signal handler for signals that lead to process temination.
+ * (List obtained from the "man 7 signal")
+ * Signals that are ignored (SIGCHILD) or lead just to stop (SIGSTOP, ...)
+ * don't get this handler - these signals do not terminate the process!
+ * This handler assures that the cleanup function that is hooked on exit
+ * gets called.
  *
  * @param lock_dir      Dir that serves as lock (".repodata/")
  * @param tmp_out_repo  Dir that is really used for repodata generation
@@ -120,6 +119,13 @@ cr_unset_cleanup_handler(GError **err);
  */
 void
 cr_setup_logging(gboolean quiet, gboolean verbose);
+
+/**
+ * Set global pointer to exit value that is used in function set by atexit
+ * @param exit_val          Pointer to exit_value int
+ */
+void
+cr_set_global_exit_value(int *exit_val);
 
 /** @} */
 

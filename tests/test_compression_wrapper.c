@@ -48,6 +48,7 @@
 #define FILE_COMPRESSED_1_GZ                    TEST_COMPRESSED_FILES_PATH"/01_plain.txt.gz"
 #define FILE_COMPRESSED_1_BZ2                   TEST_COMPRESSED_FILES_PATH"/01_plain.txt.bz2"
 #define FILE_COMPRESSED_1_XZ                    TEST_COMPRESSED_FILES_PATH"/01_plain.txt.xz"
+#define FILE_COMPRESSED_1_ZCK                   TEST_COMPRESSED_FILES_PATH"/01_plain.txt.zck"
 #define FILE_COMPRESSED_1_PLAIN_BAD_SUFFIX      TEST_COMPRESSED_FILES_PATH"/01_plain.foo0"
 #define FILE_COMPRESSED_1_GZ_BAD_SUFFIX         TEST_COMPRESSED_FILES_PATH"/01_plain.foo1"
 #define FILE_COMPRESSED_1_BZ2_BAD_SUFFIX        TEST_COMPRESSED_FILES_PATH"/01_plain.foo2"
@@ -716,6 +717,47 @@ test_contentstating_multiwrite(Outputtest *outputtest,
     g_assert(!tmp_err);
 }
 
+static void
+test_cr_get_zchunk_with_index(void)
+{
+    gchar *output;
+    CR_FILE *f;
+    GError *tmp_err = NULL;
+
+    f = cr_sopen(FILE_COMPRESSED_1_ZCK,
+                 CR_CW_MODE_READ,
+                 CR_CW_ZCK_COMPRESSION,
+                 NULL,
+                 &tmp_err);
+
+#ifdef WITH_ZCHUNK
+    g_assert(f);
+    g_assert(!tmp_err);
+
+    // First zchunk is for dictionary
+    g_assert_cmpint(cr_get_zchunk_with_index(f, 0, &output, &tmp_err), ==, 0);
+    g_assert(!tmp_err);
+
+    g_assert_cmpint(cr_get_zchunk_with_index(f, 1, &output, &tmp_err), ==, 56);
+    g_assert(g_str_has_prefix(output, "foobar foobar foobar"));
+    g_free(output);
+    g_assert(!tmp_err);
+
+    // There are no additional zchunks
+    g_assert_cmpint(cr_get_zchunk_with_index(f, 2, &output, &tmp_err), ==, 0);
+    g_assert(!tmp_err);
+    g_assert_cmpint(cr_get_zchunk_with_index(f, 3, &output, &tmp_err), ==, 0);
+    g_assert(!tmp_err);
+
+    cr_close(f, &tmp_err);
+    g_assert(!tmp_err);
+#else
+    g_assert(!f);
+    g_assert(tmp_err);
+    g_assert_cmpint(tmp_err->code, ==, CRE_IO);
+#endif // WITH_ZCHUNK
+
+}
 
 int
 main(int argc, char *argv[])
@@ -744,6 +786,8 @@ main(int argc, char *argv[])
     g_test_add("/compression_wrapper/test_contentstating_multiwrite",
             Outputtest, NULL, outputtest_setup,
             test_contentstating_multiwrite, outputtest_teardown);
+    g_test_add_func("/compression_wrapper/test_cr_get_zchunk_with_index",
+            test_cr_get_zchunk_with_index);
 
     return g_test_run();
 }

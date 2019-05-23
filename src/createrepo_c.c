@@ -1110,9 +1110,16 @@ main(int argc, char **argv)
 
     cr_xml_dump_cleanup();
 
-    cr_xmlfile_close(pri_cr_file, NULL);
-    cr_xmlfile_close(fil_cr_file, NULL);
-    cr_xmlfile_close(oth_cr_file, NULL);
+    cr_xmlfile_close(pri_cr_file, &tmp_err);
+    if (!tmp_err)
+        cr_xmlfile_close(fil_cr_file, &tmp_err);
+    if (!tmp_err)
+        cr_xmlfile_close(oth_cr_file, &tmp_err);
+    if (tmp_err) {
+        g_critical("Error while closing xml files: %s", tmp_err->message);
+        g_clear_error(&tmp_err);
+        exit(EXIT_FAILURE);
+    }
 
     cr_xmlfile_close(pri_cr_zck, &tmp_err);
     if (tmp_err) {
@@ -1321,13 +1328,27 @@ main(int argc, char **argv)
         gchar *oth_db_name = g_strconcat(tmp_out_repo, "/other.sqlite",
                                          sqlite_compression_suffix, NULL);
 
-        cr_db_dbinfo_update(pri_db, pri_xml_rec->checksum, NULL);
-        cr_db_dbinfo_update(fil_db, fil_xml_rec->checksum, NULL);
-        cr_db_dbinfo_update(oth_db, oth_xml_rec->checksum, NULL);
+        cr_db_dbinfo_update(pri_db, pri_xml_rec->checksum, &tmp_err);
+        if (!tmp_err)
+            cr_db_dbinfo_update(fil_db, fil_xml_rec->checksum, &tmp_err);
+        if (!tmp_err)
+            cr_db_dbinfo_update(oth_db, oth_xml_rec->checksum, &tmp_err);
+        if (tmp_err) {
+            g_critical("Error updating dbinfo: %s", tmp_err->message);
+            g_clear_error(&tmp_err);
+            exit(EXIT_FAILURE);
+        }
 
-        cr_db_close(pri_db, NULL);
-        cr_db_close(fil_db, NULL);
-        cr_db_close(oth_db, NULL);
+        cr_db_close(pri_db, &tmp_err);
+        if (!tmp_err)
+            cr_db_close(fil_db, &tmp_err);
+        if (!tmp_err)
+            cr_db_close(oth_db, &tmp_err);
+        if (tmp_err) {
+            g_critical("Error while closing db: %s", tmp_err->message);
+            g_clear_error(&tmp_err);
+            exit(EXIT_FAILURE);
+        }
 
 
         // Compress dbs

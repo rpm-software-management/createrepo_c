@@ -72,7 +72,7 @@ Requires: rpm >= 4.9.0
 BuildRequires:  drpm-devel >= 0.1.3
 %endif
 
-%if 0%{?fedora} > 30 || 0%{?rhel} > 7
+%if 0%{?fedora} || 0%{?rhel} > 7
 Obsoletes:      createrepo < 0.11.0
 Provides:       createrepo = %{version}-%{release}
 %endif
@@ -200,7 +200,7 @@ pushd build-py3
 popd
 %endif
 
-%if 0%{?fedora} > 30 || 0%{?rhel} > 7
+%if 0%{?fedora} || 0%{?rhel} > 7
 ln -sr %{buildroot}%{_bindir}/createrepo_c %{buildroot}%{_bindir}/createrepo
 ln -sr %{buildroot}%{_bindir}/mergerepo_c %{buildroot}%{_bindir}/mergerepo
 ln -sr %{buildroot}%{_bindir}/modifyrepo_c %{buildroot}%{_bindir}/modifyrepo
@@ -225,7 +225,7 @@ ln -sr %{buildroot}%{_bindir}/modifyrepo_c %{buildroot}%{_bindir}/modifyrepo
 %{_bindir}/modifyrepo_c
 %{_bindir}/sqliterepo_c
 
-%if 0%{?fedora} > 30 || 0%{?rhel} > 7
+%if 0%{?fedora} || 0%{?rhel} > 7
 %{_bindir}/createrepo
 %{_bindir}/mergerepo
 %{_bindir}/modifyrepo

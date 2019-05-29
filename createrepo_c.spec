@@ -1,3 +1,5 @@
+%global libmodulemd_version 2.3.0
+
 # Bash completion (we need different approach for RHEL-6)
 %if 0%{?rhel} == 6
 %global bash_completion %config%{_sysconfdir}/bash_completion.d/createrepo_c.bash
@@ -58,8 +60,9 @@ BuildRequires:  pkgconfig(zck) >= 0.9.11
 BuildRequires:  zchunk
 %endif
 %if %{with libmodulemd}
-BuildRequires:  pkgconfig(modulemd-2.0) >= 2.3.0
+BuildRequires:  pkgconfig(modulemd-2.0) >= %{libmodulemd_version}
 BuildRequires:  libmodulemd
+Requires:       libmodulemd%{?_isa} >= %{libmodulemd_version}
 %endif
 Requires:       %{name}-libs =  %{version}-%{release}
 %if 0%{?rhel} == 6

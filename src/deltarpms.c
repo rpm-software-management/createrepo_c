@@ -433,6 +433,9 @@ cr_deltarpms_parallel_deltas(GSList *targetpackages,
     user_data.active_work_size      = G_GINT64_CONSTANT(0);
     user_data.active_tasks          = 0;
 
+    g_mutex_init(&(user_data.mutex));
+    g_cond_init(&(user_data.cond_task_finished));
+
     // Make sorted list of targets without packages
     // that are bigger then max_delta_rpm_size
     for (GSList *elem = targetpackages; elem; elem = g_slist_next(elem)) {
@@ -497,6 +500,8 @@ cr_deltarpms_parallel_deltas(GSList *targetpackages,
 
     g_thread_pool_free(pool, FALSE, TRUE);
     g_list_free(targets);
+    g_mutex_clear(&(user_data.mutex));
+    g_cond_clear(&(user_data.cond_task_finished));
 
     return TRUE;
 }
@@ -880,6 +885,7 @@ cr_deltarpms_generate_prestodelta_file(const gchar *drpmsdir,
     user_data.checksum_type     = checksum_type;
     user_data.prefix_to_strip   = prefix_to_strip,
     user_data.prefix_len        = prefix_to_strip ? strlen(prefix_to_strip) : 0;
+    g_mutex_init(&(user_data.mutex));
 
     pool = g_thread_pool_new(cr_prestodelta_thread,
                              &user_data,
@@ -931,6 +937,7 @@ cr_deltarpms_generate_prestodelta_file(const gchar *drpmsdir,
 
 exit:
     g_slist_free_full(candidates, (GDestroyNotify) cr_prestodeltatask_free);
+    g_mutex_clear(&(user_data.mutex));
     g_hash_table_destroy(ht);
 
     return ret;

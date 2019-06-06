@@ -1092,6 +1092,16 @@ main(int argc, char **argv)
     user_data.location_prefix   = cmd_options->location_prefix;
     user_data.had_errors        = 0;
 
+    g_mutex_init(&(user_data.mutex_pri));
+    g_mutex_init(&(user_data.mutex_fil));
+    g_mutex_init(&(user_data.mutex_oth));
+    g_cond_init(&(user_data.cond_pri));
+    g_cond_init(&(user_data.cond_fil));
+    g_cond_init(&(user_data.cond_oth));
+    g_mutex_init(&(user_data.mutex_buffer));
+    g_mutex_init(&(user_data.mutex_old_md));
+    g_mutex_init(&(user_data.mutex_deltatargetpackages));
+
     g_debug("Thread pool user data ready");
 
     // Start pool
@@ -1241,6 +1251,15 @@ main(int argc, char **argv)
     }
 
     g_queue_free(user_data.buffer);
+    g_mutex_clear(&(user_data.mutex_pri));
+    g_mutex_clear(&(user_data.mutex_fil));
+    g_mutex_clear(&(user_data.mutex_oth));
+    g_cond_clear(&(user_data.cond_pri));
+    g_cond_clear(&(user_data.cond_fil));
+    g_cond_clear(&(user_data.cond_oth));
+    g_mutex_clear(&(user_data.mutex_buffer));
+    g_mutex_clear(&(user_data.mutex_old_md));
+    g_mutex_clear(&(user_data.mutex_deltatargetpackages));
 
     // Create repomd records for each file
     g_debug("Generating repomd.xml");

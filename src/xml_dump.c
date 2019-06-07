@@ -99,7 +99,7 @@ cr_xmlNewTextChild(xmlNodePtr parent,
 
     if (!orig_content) {
         content = BAD_CAST "";
-    } else if (xmlCheckUTF8(orig_content) && !cr_hascontrollchars(orig_content)) {
+    } else if (xmlCheckUTF8(orig_content)) {
         content = (xmlChar *) orig_content;
     } else {
         size_t len = strlen((const char *) orig_content);
@@ -198,6 +198,80 @@ cr_xml_dump_files(xmlNodePtr node, cr_Package *package, int primary)
     }
 }
 
+gboolean
+cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(GSList *dep)
+{
+    GSList *element;
+    for (element = dep; element; element=g_slist_next(element)) {
+        cr_Dependency *d = element->data;
+        if ((d->name    && cr_hascontrollchars((unsigned char *) d->name))    ||
+            (d->epoch   && cr_hascontrollchars((unsigned char *) d->epoch))   ||
+            (d->version && cr_hascontrollchars((unsigned char *) d->version)) ||
+            (d->release && cr_hascontrollchars((unsigned char *) d->release)))
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+gboolean
+cr_Package_contains_forbidden_control_chars(cr_Package *pkg)
+{
+    if ((pkg->name          && cr_hascontrollchars((unsigned char *) pkg->name))          ||
+        (pkg->arch          && cr_hascontrollchars((unsigned char *) pkg->arch))          ||
+        (pkg->version       && cr_hascontrollchars((unsigned char *) pkg->version))       ||
+        (pkg->epoch         && cr_hascontrollchars((unsigned char *) pkg->epoch))         ||
+        (pkg->release       && cr_hascontrollchars((unsigned char *) pkg->release))       ||
+        (pkg->summary       && cr_hascontrollchars((unsigned char *) pkg->summary))       ||
+        (pkg->description   && cr_hascontrollchars((unsigned char *) pkg->description))   ||
+        (pkg->url           && cr_hascontrollchars((unsigned char *) pkg->url))           ||
+        (pkg->rpm_license   && cr_hascontrollchars((unsigned char *) pkg->rpm_license))   ||
+        (pkg->rpm_vendor    && cr_hascontrollchars((unsigned char *) pkg->rpm_vendor))    ||
+        (pkg->rpm_group     && cr_hascontrollchars((unsigned char *) pkg->rpm_group))     ||
+        (pkg->rpm_buildhost && cr_hascontrollchars((unsigned char *) pkg->rpm_buildhost)) ||
+        (pkg->rpm_sourcerpm && cr_hascontrollchars((unsigned char *) pkg->rpm_sourcerpm)) ||
+        (pkg->rpm_packager  && cr_hascontrollchars((unsigned char *) pkg->rpm_packager))  ||
+        (pkg->location_href && cr_hascontrollchars((unsigned char *) pkg->location_href)) ||
+        (pkg->location_base && cr_hascontrollchars((unsigned char *) pkg->location_base)))
+    {
+        return 1;
+    }
+
+    if (cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->requires)    ||
+        cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->provides)    ||
+        cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->conflicts)   ||
+        cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->obsoletes)   ||
+        cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->suggests)    ||
+        cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->enhances)    ||
+        cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->recommends)  ||
+        cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->supplements))
+    {
+        return 1;
+    }
+
+    GSList *element;
+
+    for (element = pkg->files; element; element=g_slist_next(element)) {
+        cr_PackageFile *f = element->data;
+        if ((f->name && cr_hascontrollchars((unsigned char *) f->name)) ||
+            (f->path && cr_hascontrollchars((unsigned char *) f->path)))
+        {
+            return 1;
+        }
+    }
+
+    for (element = pkg->changelogs; element; element=g_slist_next(element)) {
+        cr_ChangelogEntry *ch = element->data;
+        if ((ch->author    && cr_hascontrollchars((unsigned char *) ch->author)) ||
+            (ch->changelog && cr_hascontrollchars((unsigned char *) ch->changelog)))
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+}
 
 struct cr_XmlStruct
 cr_xml_dump(cr_Package *pkg, GError **err)
@@ -210,6 +284,12 @@ cr_xml_dump(cr_Package *pkg, GError **err)
     result.primary   = NULL;
     result.filelists = NULL;
     result.other     = NULL;
+
+    if (cr_Package_contains_forbidden_control_chars(pkg)) {
+        g_set_error(err, CREATEREPO_C_ERROR, CRE_XMLDATA,
+                    "Forbidden control chars found (ASCII values <32 except 9, 10 and 13).");
+        return result;
+    }
 
     if (!pkg)
         return result;

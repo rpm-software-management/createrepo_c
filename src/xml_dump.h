@@ -175,6 +175,22 @@ gboolean cr_hascontrollchars(const unsigned char *str);
  */
 gchar *cr_prepend_protocol(const gchar *url);
 
+/** Check if package contains any strings with chars
+ * with value <32 (except 9, 10 and 13), using cr_hascontrollchars
+ *
+ * @param pkg           the cr_Package in question
+ * @return              boolean value
+ */
+gboolean cr_Package_contains_forbidden_control_chars(cr_Package *pkg);
+
+/** Check if list of cr_Dependency stucts contains any strings with chars
+ * with value <32 (except 9, 10 and 13), using cr_hascontrollchars
+ *
+ * @param deps          the GSList of cr_Dependencies in question
+ * @return              boolean value
+ */
+gboolean cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(GSList *deps);
+
 /** @} */
 
 #ifdef __cplusplus

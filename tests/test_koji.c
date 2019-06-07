@@ -23,26 +23,6 @@
 #include "createrepo/koji.h"
 #include "createrepo/load_metadata.h"
 
-cr_Package *
-get_package()
-{
-    cr_Package *p;
-    cr_Dependency *dep;
-    cr_PackageFile *file;
-
-    p = cr_package_new();
-    p->pkgId = "123456";
-    p->name = "foo";
-    p->arch = "x86_64";
-    p->version = "1.2.3";
-    p->epoch = "1";
-    p->release = "2";
-    p->summary = "foo package";
-    p->rpm_sourcerpm = "foo.src.rpm";
-
-    return p;
-}
-
 // Tests
 
 static void

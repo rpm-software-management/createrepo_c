@@ -106,4 +106,111 @@
 #define TEST_UPDATEINFO_02      TEST_UPDATEINFO_FILES_PATH"updateinfo_02.xml.xz"
 #define TEST_UPDATEINFO_03      TEST_UPDATEINFO_FILES_PATH"updateinfo_03.xml"
 
+#include "createrepo/package.h"
+
+cr_Package *
+get_package()
+{
+    cr_Package *p;
+    cr_Dependency *dep;
+    cr_PackageFile *file;
+
+    p = cr_package_new();
+    p->pkgId = "123456";
+    p->name = "foo";
+    p->arch = "x86_64";
+    p->version = "1.2.3";
+    p->epoch = "1";
+    p->release = "2";
+    p->summary = "foo package";
+    p->description = "super cool package";
+    p->url = "http://package.com";
+    p->time_file = 123456;
+    p->time_build = 234567;
+    p->rpm_license = "GPL";
+    p->rpm_vendor = NULL;
+    p->rpm_group = NULL;
+    p->rpm_buildhost = NULL;
+    p->rpm_sourcerpm = "foo.src.rpm";
+    p->rpm_header_start = 20;
+    p->rpm_header_end = 120;
+    p->rpm_packager = NULL;
+    p->size_package = 123;
+    p->size_installed = 20;
+    p->size_archive = 30;
+    p->location_href = "foo.rpm";
+    p->location_base = "/test/";
+    p->checksum_type = "sha256";
+
+    dep = cr_dependency_new();
+    dep->name = "foobar_provide";
+    dep->flags = NULL;
+    dep->pre = FALSE;
+    p->provides = (g_slist_prepend(p->provides, dep));
+
+    dep = cr_dependency_new();
+    dep->name = "foobar_dep";
+    dep->flags = NULL;
+    dep->pre = FALSE;
+    dep->epoch = "3";
+    p->requires = (g_slist_prepend(p->requires, dep));
+
+    dep = cr_dependency_new();
+    dep->name = "foobar_pre_dep";
+    dep->flags = "LE";
+    dep->epoch = "3";
+    dep->pre = TRUE;
+    p->requires = g_slist_prepend(p->requires, dep);
+
+    file = cr_package_file_new();
+    file->type = "";
+    file->path = "/bin/";
+    file->name = "foo";
+    p->files = g_slist_prepend(p->files, file);
+
+    file = cr_package_file_new();
+    file->type = "dir";
+    file->path = "/var/foo/";
+    file->name = NULL;
+    p->files = g_slist_prepend(p->files, file);
+
+    file = cr_package_file_new();
+    file->type = "dir";
+    file->path = "/var/foo/";
+    file->name = "baz";
+    p->files = g_slist_prepend(p->files, file);
+    return p;
+}
+
+cr_Package *
+get_empty_package()
+{
+    cr_Package *p;
+    cr_Dependency *dep;
+    cr_PackageFile *file;
+
+    p = cr_package_new();
+    p->name = "foo";
+
+    dep = cr_dependency_new();
+    dep->name   = NULL;
+    dep->flags  = NULL;
+    dep->pre    = FALSE;
+    p->requires = (g_slist_prepend(p->requires, dep));
+
+    dep = cr_dependency_new();
+    dep->name   = NULL;
+    dep->flags  = NULL;
+    dep->pre    = TRUE;
+    p->requires = g_slist_prepend(p->requires, dep);
+
+    file = cr_package_file_new();
+    file->type = NULL;
+    file->path = NULL;
+    file->name = NULL;
+    p->files   = g_slist_prepend(p->files, file);
+
+    return p;
+}
+
 #endif

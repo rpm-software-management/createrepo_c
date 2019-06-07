@@ -92,53 +92,43 @@ cr_package_free(cr_Package *package)
  */
 
     if (package->requires) {
-        g_slist_foreach (package->requires, (GFunc) g_free, NULL);
-        g_slist_free (package->requires);
+        g_slist_free_full(package->requires, g_free);
     }
 
     if (package->provides) {
-        g_slist_foreach (package->provides, (GFunc) g_free, NULL);
-        g_slist_free (package->provides);
+        g_slist_free_full(package->provides, g_free);
     }
 
     if (package->conflicts) {
-        g_slist_foreach (package->conflicts, (GFunc) g_free, NULL);
-        g_slist_free (package->conflicts);
+        g_slist_free_full(package->conflicts, g_free);
     }
 
     if (package->obsoletes) {
-        g_slist_foreach (package->obsoletes, (GFunc) g_free, NULL);
-        g_slist_free (package->obsoletes);
+        g_slist_free_full(package->obsoletes, g_free);
     }
 
     if (package->suggests) {
-        g_slist_foreach (package->suggests, (GFunc) g_free, NULL);
-        g_slist_free (package->suggests);
+        g_slist_free_full(package->suggests, g_free);
     }
 
     if (package->enhances) {
-        g_slist_foreach (package->enhances, (GFunc) g_free, NULL);
-        g_slist_free (package->enhances);
+        g_slist_free_full(package->enhances, g_free);
     }
 
     if (package->recommends) {
-        g_slist_foreach (package->recommends, (GFunc) g_free, NULL);
-        g_slist_free (package->recommends);
+        g_slist_free_full(package->recommends, g_free);
     }
 
     if (package->supplements) {
-        g_slist_foreach (package->supplements, (GFunc) g_free, NULL);
-        g_slist_free (package->supplements);
+        g_slist_free_full(package->supplements, g_free);
     }
 
     if (package->files) {
-        g_slist_foreach (package->files, (GFunc) g_free, NULL);
-        g_slist_free (package->files);
+        g_slist_free_full(package->files, g_free);
     }
 
     if (package->changelogs) {
-        g_slist_foreach (package->changelogs, (GFunc) g_free, NULL);
-        g_slist_free (package->changelogs);
+        g_slist_free_full(package->changelogs, g_free);
     }
 
     g_free(package->siggpg);

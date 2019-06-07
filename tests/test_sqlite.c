@@ -111,15 +111,12 @@ test_cr_db_add_primary_pkg(TestData *testdata,
     cr_Package *pkg;
 
     GTimer *timer = g_timer_new();
-    gdouble topen, tadd, tclean, tmp;
 
     // Create new db
 
     path = g_strconcat(testdata->tmp_dir, "/", TMP_PRIMARY_NAME, NULL);
 
-    g_timer_start(timer);
     db = cr_db_open_primary(path, &err);
-    topen = g_timer_elapsed(timer, NULL);
     g_assert(db);
     g_assert(!err);
     g_assert(g_file_test(path, G_FILE_TEST_EXISTS));
@@ -130,17 +127,10 @@ test_cr_db_add_primary_pkg(TestData *testdata,
 
     // Add package
 
-    tmp = g_timer_elapsed(timer, NULL);
     cr_db_add_pkg(db, pkg, &err);
-    tadd = g_timer_elapsed(timer, NULL) - tmp;
     g_assert(!err);
 
-    tmp = g_timer_elapsed(timer, NULL);
     cr_db_close(db, &err);
-    tclean = g_timer_elapsed(timer, NULL) - tmp;
-
-    //printf("Stats:\nOpen:    %f\nAdd:     %f\nCleanup: %f\nSum:     %f\n",
-    //       topen, tadd, tclean, (tadd + tclean));
 
     // Cleanup
 

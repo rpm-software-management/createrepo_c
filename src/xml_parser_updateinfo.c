@@ -354,7 +354,6 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         assert(pd->updateinfo);
         assert(pd->updaterecord);
         assert(pd->updatecollection);
-        assert(pd->updatecollectionmodule);
         assert(pd->updatecollectionpackage);
         val = cr_find_attr("type", attr);
         if (val)
@@ -365,7 +364,6 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         assert(pd->updateinfo);
         assert(pd->updaterecord);
         assert(pd->updatecollection);
-        assert(pd->updatecollectionmodule);
         assert(pd->updatecollectionpackage);
         package->reboot_suggested = TRUE;
         break;

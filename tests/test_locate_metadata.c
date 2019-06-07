@@ -146,7 +146,7 @@ static void test_cr_copy_metadatum(void)
 static void test_cr_insert_additional_metadatum(void)
 {
     //add to not allocated GSList
-    GSList *d;
+    GSList *d = NULL;
     cr_Metadatum *m;
 
     d = cr_insert_additional_metadatum("./test_path.xml", "group", d);

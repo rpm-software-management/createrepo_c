@@ -104,7 +104,6 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
     GSList *element;
     int repoid;
     int result;
-    GError *tmp_err = NULL;
 
     // Pointers to elements in the koji_stuff_ptr
     GHashTable *include_srpms = NULL; // XXX

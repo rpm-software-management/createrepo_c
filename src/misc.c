@@ -999,15 +999,13 @@ cr_log_fn(const gchar *log_domain,
 void
 cr_slist_free_full(GSList *list, GDestroyNotify free_f)
 {
-    g_slist_foreach(list, (GFunc) free_f, NULL);
-    g_slist_free(list);
+    g_slist_free_full(list, free_f);
 }
 
 
 void cr_queue_free_full(GQueue *queue, GDestroyNotify free_f)
 {
-    g_queue_foreach(queue, (GFunc) free_f, NULL);
-    g_queue_free(queue);
+    g_queue_free_full(queue, free_f);
 }
 
 

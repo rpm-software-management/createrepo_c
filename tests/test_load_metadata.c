@@ -178,7 +178,6 @@ static void test_cr_metadata_locate_and_load_modulemd(void)
 {
     int ret;
     guint size;
-    cr_Package *pkg;
     cr_Metadata *metadata;
 
     metadata = cr_metadata_new(CR_HT_KEY_NAME, 0, NULL);

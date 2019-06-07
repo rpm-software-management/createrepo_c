@@ -175,7 +175,6 @@ test_cr_xml_parse_updateinfo_03(void)
     GError *tmp_err = NULL;
     cr_UpdateInfo *ui = cr_updateinfo_new();
     cr_UpdateRecord *update;
-    cr_UpdateReference *ref;
     cr_UpdateCollection *col;
     cr_UpdateCollectionModule *module;
     cr_UpdateCollectionPackage *pkg;

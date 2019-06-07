@@ -35,11 +35,11 @@ xmlNodePtr cmp_package_files_and_xml(GSList *files, xmlNodePtr current, int only
             g_free(fullname);
             continue;
         }
-        g_assert_cmpstr(current->name, ==, "file");
-        g_assert_cmpstr(current->children->content, ==, fullname);
+        g_assert_cmpstr((char *) current->name, ==, "file");
+        g_assert_cmpstr((char *) current->children->content, ==, fullname);
         if (entry->type && entry->type[0] != '\0' && strcmp(entry->type, "file")) {
-            g_assert_cmpstr(current->properties->name, ==, "type");
-            g_assert_cmpstr(current->properties->children->content, ==, IF_NULL_EMPTY(entry->type));
+            g_assert_cmpstr((char *) current->properties->name, ==, "type");
+            g_assert_cmpstr((char *) current->properties->children->content, ==, IF_NULL_EMPTY(entry->type));
         }
     }
 
@@ -64,46 +64,46 @@ xmlNodePtr cmp_package_pco_and_xml(GSList *pco_list, xmlNodePtr current, PcoType
                 continue;
             }
             if (is_first){
-                g_assert_cmpstr(current->name, ==, elem_name);
+                g_assert_cmpstr((char *) current->name, ==, elem_name);
                 current = current->children;
                 is_first = 0;
             }else{
                 current = current->next;
             }
-            g_assert_cmpstr(current->name, ==, "rpm:entry");
+            g_assert_cmpstr((char *) current->name, ==, "rpm:entry");
             xmlAttrPtr current_attrs;
             current_attrs = current->properties;
-            g_assert_cmpstr(current_attrs->name, ==, "name");
-            g_assert_cmpstr(current_attrs->children->content, ==, item->name);
+            g_assert_cmpstr((char *) current_attrs->name, ==, "name");
+            g_assert_cmpstr((char *) current_attrs->children->content, ==, item->name);
 
             if (item->flags && item->flags[0] != '\0') {
                 current_attrs = current_attrs->next;
-                g_assert_cmpstr(current_attrs->name, ==, "flags");
-                g_assert_cmpstr(current_attrs->children->content, ==, IF_NULL_EMPTY(item->flags));
+                g_assert_cmpstr((char *) current_attrs->name, ==, "flags");
+                g_assert_cmpstr((char *) current_attrs->children->content, ==, IF_NULL_EMPTY(item->flags));
 
                 if (item->epoch && item->epoch[0] != '\0') {
                     current_attrs = current_attrs->next;
-                    g_assert_cmpstr(current_attrs->name, ==, "epoch");
-                    g_assert_cmpstr(current_attrs->children->content, ==, IF_NULL_EMPTY(item->epoch));
+                    g_assert_cmpstr((char *) current_attrs->name, ==, "epoch");
+                    g_assert_cmpstr((char *) current_attrs->children->content, ==, IF_NULL_EMPTY(item->epoch));
                 }
 
                 if (item->version && item->version[0] != '\0') {
                     current_attrs = current_attrs->next;
-                    g_assert_cmpstr(current_attrs->name, ==, "ver");
-                    g_assert_cmpstr(current_attrs->children->content, ==, IF_NULL_EMPTY(item->version));
+                    g_assert_cmpstr((char *) current_attrs->name, ==, "ver");
+                    g_assert_cmpstr((char *) current_attrs->children->content, ==, IF_NULL_EMPTY(item->version));
                 }
 
                 if (item->release && item->release[0] != '\0') {
                     current_attrs = current_attrs->next;
-                    g_assert_cmpstr(current_attrs->name, ==, "rel");
-                    g_assert_cmpstr(current_attrs->children->content, ==, IF_NULL_EMPTY(item->release));
+                    g_assert_cmpstr((char *) current_attrs->name, ==, "rel");
+                    g_assert_cmpstr((char *) current_attrs->children->content, ==, IF_NULL_EMPTY(item->release));
                 }
             }
 
             if (pcotype == PCO_TYPE_REQUIRES && item->pre) {
                 current_attrs = current_attrs->next;
-                g_assert_cmpstr(current_attrs->name, ==, "pre");
-                g_assert_cmpstr(current_attrs->children->content, ==, "1");
+                g_assert_cmpstr((char *) current_attrs->name, ==, "pre");
+                g_assert_cmpstr((char *) current_attrs->children->content, ==, "1");
             }
         }
     }
@@ -120,115 +120,115 @@ cmp_package_and_xml_node(cr_Package *pkg, xmlNodePtr node)
     xmlNodePtr current;
 
     current = node->children;
-    g_assert_cmpstr(current->name, ==, "name");
-    g_assert_cmpstr(current->children->content, ==, IF_NULL_EMPTY(pkg->name));
+    g_assert_cmpstr((char *) current->name, ==, "name");
+    g_assert_cmpstr((char *) current->children->content, ==, IF_NULL_EMPTY(pkg->name));
 
     current = current->next;
-    g_assert_cmpstr(current->name, ==, "arch");
-    g_assert_cmpstr(current->children->content, ==, IF_NULL_EMPTY(pkg->arch));
+    g_assert_cmpstr((char *) current->name, ==, "arch");
+    g_assert_cmpstr((char *) current->children->content, ==, IF_NULL_EMPTY(pkg->arch));
 
     current = current->next;
-    g_assert_cmpstr(current->name, ==, "version");
-    g_assert_cmpstr(current->properties->name, ==, "epoch");
-    g_assert_cmpstr(current->properties->children->content, ==, IF_NULL_EMPTY(pkg->epoch));
-    g_assert_cmpstr(current->properties->next->name, ==, "ver");
-    g_assert_cmpstr(current->properties->next->children->content, ==, IF_NULL_EMPTY(pkg->version));
-    g_assert_cmpstr(current->properties->next->next->name, ==, "rel");
-    g_assert_cmpstr(current->properties->next->next->children->content, ==, IF_NULL_EMPTY(pkg->release));
+    g_assert_cmpstr((char *) current->name, ==, "version");
+    g_assert_cmpstr((char *) current->properties->name, ==, "epoch");
+    g_assert_cmpstr((char *) current->properties->children->content, ==, IF_NULL_EMPTY(pkg->epoch));
+    g_assert_cmpstr((char *) current->properties->next->name, ==, "ver");
+    g_assert_cmpstr((char *) current->properties->next->children->content, ==, IF_NULL_EMPTY(pkg->version));
+    g_assert_cmpstr((char *) current->properties->next->next->name, ==, "rel");
+    g_assert_cmpstr((char *) current->properties->next->next->children->content, ==, IF_NULL_EMPTY(pkg->release));
 
     current = current->next;
-    g_assert_cmpstr(current->name, ==, "checksum");
-    g_assert_cmpstr(current->children->content, ==, IF_NULL_EMPTY(pkg->pkgId));
-    g_assert_cmpstr(current->properties->name, ==, "type");
-    g_assert_cmpstr(current->properties->children->content, ==, IF_NULL_EMPTY(pkg->checksum_type));
-    g_assert_cmpstr(current->properties->next->name, ==, "pkgid");
-    g_assert_cmpstr(current->properties->next->children->content, ==, "YES" );
+    g_assert_cmpstr((char *) current->name, ==, "checksum");
+    g_assert_cmpstr((char *) current->children->content, ==, IF_NULL_EMPTY(pkg->pkgId));
+    g_assert_cmpstr((char *) current->properties->name, ==, "type");
+    g_assert_cmpstr((char *) current->properties->children->content, ==, IF_NULL_EMPTY(pkg->checksum_type));
+    g_assert_cmpstr((char *) current->properties->next->name, ==, "pkgid");
+    g_assert_cmpstr((char *) current->properties->next->children->content, ==, "YES" );
 
     current = current->next;
-    g_assert_cmpstr(current->name, ==, "summary");
-    g_assert_cmpstr(current->children->content, ==, IF_NULL_EMPTY(pkg->summary));
+    g_assert_cmpstr((char *) current->name, ==, "summary");
+    g_assert_cmpstr((char *) current->children->content, ==, IF_NULL_EMPTY(pkg->summary));
 
     current = current->next;
-    g_assert_cmpstr(current->name, ==, "description");
-    g_assert_cmpstr(current->children->content, ==, IF_NULL_EMPTY(pkg->description));
+    g_assert_cmpstr((char *) current->name, ==, "description");
+    g_assert_cmpstr((char *) current->children->content, ==, IF_NULL_EMPTY(pkg->description));
 
     current = current->next;
-    g_assert_cmpstr(current->name, ==, "packager");
-    g_assert_cmpstr(current->children->content, ==, IF_NULL_EMPTY(pkg->rpm_packager));
+    g_assert_cmpstr((char *) current->name, ==, "packager");
+    g_assert_cmpstr((char *) current->children->content, ==, IF_NULL_EMPTY(pkg->rpm_packager));
 
     current = current->next;
-    g_assert_cmpstr(current->name, ==, "url");
-    g_assert_cmpstr(current->children->content, ==, IF_NULL_EMPTY(pkg->url));
+    g_assert_cmpstr((char *) current->name, ==, "url");
+    g_assert_cmpstr((char *) current->children->content, ==, IF_NULL_EMPTY(pkg->url));
 
     current = current->next;
-    g_assert_cmpstr(current->name, ==, "time");
-    g_assert_cmpstr(current->properties->name, ==, "file");
+    g_assert_cmpstr((char *) current->name, ==, "time");
+    g_assert_cmpstr((char *) current->properties->name, ==, "file");
     gchar *tmp = g_strdup_printf("%i", (gint32) pkg->time_file);
-    g_assert_cmpstr(current->properties->children->content, ==, tmp);
+    g_assert_cmpstr((char *) current->properties->children->content, ==, tmp);
     g_free(tmp);
-    g_assert_cmpstr(current->properties->next->name, ==, "build");
+    g_assert_cmpstr((char *) current->properties->next->name, ==, "build");
     tmp = g_strdup_printf("%i", (gint32) pkg->time_build);
-    g_assert_cmpstr(current->properties->next->children->content, ==, tmp);
+    g_assert_cmpstr((char *) current->properties->next->children->content, ==, tmp);
     g_free(tmp);
 
     current = current->next;
-    g_assert_cmpstr(current->name, ==, "size");
-    g_assert_cmpstr(current->properties->name, ==, "package");
+    g_assert_cmpstr((char *) current->name, ==, "size");
+    g_assert_cmpstr((char *) current->properties->name, ==, "package");
     tmp = g_strdup_printf("%i", (gint32) pkg->size_package);
-    g_assert_cmpstr(current->properties->children->content, ==, tmp);
+    g_assert_cmpstr((char *) current->properties->children->content, ==, tmp);
     g_free(tmp);
-    g_assert_cmpstr(current->properties->next->name, ==, "installed");
+    g_assert_cmpstr((char *) current->properties->next->name, ==, "installed");
     tmp = g_strdup_printf("%i", (gint32) pkg->size_installed);
-    g_assert_cmpstr(current->properties->next->children->content, ==, tmp);
+    g_assert_cmpstr((char *) current->properties->next->children->content, ==, tmp);
     g_free(tmp);
-    g_assert_cmpstr(current->properties->next->next->name, ==, "archive");
+    g_assert_cmpstr((char *) current->properties->next->next->name, ==, "archive");
     tmp = g_strdup_printf("%i", (gint32) pkg->size_archive);
-    g_assert_cmpstr(current->properties->next->next->children->content, ==, tmp);
+    g_assert_cmpstr((char *) current->properties->next->next->children->content, ==, tmp);
     g_free(tmp);
 
     current = current->next;
-    g_assert_cmpstr(current->name, ==, "location");
+    g_assert_cmpstr((char *) current->name, ==, "location");
 
     xmlAttrPtr current_attrs = current->properties;
     if (pkg->location_base){
-        g_assert_cmpstr(current_attrs->name, ==, "xml:base");
+        g_assert_cmpstr((char *) current_attrs->name, ==, "xml:base");
         gchar *location_base_with_protocol = NULL;
         location_base_with_protocol = cr_prepend_protocol(pkg->location_base);
-        g_assert_cmpstr(current_attrs->children->content, ==, IF_NULL_EMPTY(location_base_with_protocol));
+        g_assert_cmpstr((char *) current_attrs->children->content, ==, IF_NULL_EMPTY(location_base_with_protocol));
         g_free(location_base_with_protocol);
         current_attrs = current_attrs->next;
     }
 
-    g_assert_cmpstr(current_attrs->name, ==, "href");
-    g_assert_cmpstr(current_attrs->children->content, ==, IF_NULL_EMPTY(pkg->location_href));
+    g_assert_cmpstr((char *) current_attrs->name, ==, "href");
+    g_assert_cmpstr((char *) current_attrs->children->content, ==, IF_NULL_EMPTY(pkg->location_href));
 
     current = current->next;
-    g_assert_cmpstr(current->name, ==, "format");
+    g_assert_cmpstr((char *) current->name, ==, "format");
 
     current = current->children;
-    g_assert_cmpstr(current->name, ==, "rpm:license");
-    g_assert_cmpstr(current->children->content, ==, IF_NULL_EMPTY(pkg->rpm_license));
+    g_assert_cmpstr((char *) current->name, ==, "rpm:license");
+    g_assert_cmpstr((char *) current->children->content, ==, IF_NULL_EMPTY(pkg->rpm_license));
     current = current->next;
-    g_assert_cmpstr(current->name, ==, "rpm:vendor");
-    g_assert_cmpstr(current->children->content, ==, IF_NULL_EMPTY(pkg->rpm_vendor));
+    g_assert_cmpstr((char *) current->name, ==, "rpm:vendor");
+    g_assert_cmpstr((char *) current->children->content, ==, IF_NULL_EMPTY(pkg->rpm_vendor));
     current = current->next;
-    g_assert_cmpstr(current->name, ==, "rpm:group");
-    g_assert_cmpstr(current->children->content, ==, IF_NULL_EMPTY(pkg->rpm_group));
+    g_assert_cmpstr((char *) current->name, ==, "rpm:group");
+    g_assert_cmpstr((char *) current->children->content, ==, IF_NULL_EMPTY(pkg->rpm_group));
     current = current->next;
-    g_assert_cmpstr(current->name, ==, "rpm:buildhost");
-    g_assert_cmpstr(current->children->content, ==, IF_NULL_EMPTY(pkg->rpm_buildhost));
+    g_assert_cmpstr((char *) current->name, ==, "rpm:buildhost");
+    g_assert_cmpstr((char *) current->children->content, ==, IF_NULL_EMPTY(pkg->rpm_buildhost));
     current = current->next;
-    g_assert_cmpstr(current->name, ==, "rpm:sourcerpm");
-    g_assert_cmpstr(current->children->content, ==, IF_NULL_EMPTY(pkg->rpm_sourcerpm));
+    g_assert_cmpstr((char *) current->name, ==, "rpm:sourcerpm");
+    g_assert_cmpstr((char *) current->children->content, ==, IF_NULL_EMPTY(pkg->rpm_sourcerpm));
     current = current->next;
-    g_assert_cmpstr(current->name, ==, "rpm:header-range");
-    g_assert_cmpstr(current->properties->name, ==, "start");
+    g_assert_cmpstr((char *) current->name, ==, "rpm:header-range");
+    g_assert_cmpstr((char *) current->properties->name, ==, "start");
     tmp = g_strdup_printf("%i", (gint32) pkg->rpm_header_start);
-    g_assert_cmpstr(current->properties->children->content, ==, tmp);
+    g_assert_cmpstr((char *) current->properties->children->content, ==, tmp);
     g_free(tmp);
-    g_assert_cmpstr(current->properties->next->name, ==, "end");
+    g_assert_cmpstr((char *) current->properties->next->name, ==, "end");
     tmp = g_strdup_printf("%i", (gint32) pkg->rpm_header_end);
-    g_assert_cmpstr(current->properties->next->children->content, ==, tmp);
+    g_assert_cmpstr((char *) current->properties->next->children->content, ==, tmp);
     g_free(tmp);
 
     current = current->next;
@@ -255,7 +255,6 @@ test_cr_xml_dump_primary_dump_pco_00(void)
     cr_Package *p;
     p = cr_package_new();
     cr_Dependency *dep;
-    GSList *dep_list = NULL;
 
     dep = cr_dependency_new();
     dep->name = "foobar_provide";
@@ -284,7 +283,6 @@ test_cr_xml_dump_primary_dump_pco_01(void)
     cr_Package *p;
     p = cr_package_new();
     cr_Dependency *dep;
-    GSList *dep_list = NULL;
 
     dep = cr_dependency_new();
     dep->name = "foobar_provide";

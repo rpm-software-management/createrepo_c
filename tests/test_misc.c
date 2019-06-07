@@ -387,6 +387,7 @@ test_cr_get_filename(void)
     g_assert_cmpstr(filename, ==, NULL);
 }
 
+
 static int
 read_file(char *f, cr_CompressionType compression, char* buffer, int amount)
 {
@@ -398,8 +399,7 @@ read_file(char *f, cr_CompressionType compression, char* buffer, int amount)
         ret = tmp_err->code;
         return ret;
     }
-    int readed;
-    readed = cr_read(orig, buffer, amount, &tmp_err);
+    cr_read(orig, buffer, amount, &tmp_err);
     if (orig)
         cr_close(orig, NULL);
     return ret;
@@ -559,6 +559,7 @@ compressfile_test_text_file(Copyfiletest *copyfiletest,
     g_free(checksum);
 }
 
+
 static void
 compressfile_with_stat_test_text_file(Copyfiletest *copyfiletest,
                                       G_GNUC_UNUSED gconstpointer test_data)
@@ -584,6 +585,7 @@ compressfile_with_stat_test_text_file(Copyfiletest *copyfiletest,
     cr_contentstat_free(stat, &tmp_err);
     g_assert(!tmp_err);
 }
+
 
 static void
 compressfile_with_stat_test_gz_file_gz_output(Copyfiletest *copyfiletest,
@@ -617,6 +619,7 @@ compressfile_with_stat_test_gz_file_gz_output(Copyfiletest *copyfiletest,
     g_assert(!tmp_err);
 }
 
+
 static void
 compressfile_test_gz_file_xz_output(Copyfiletest *copyfiletest,
                                       G_GNUC_UNUSED gconstpointer test_data)
@@ -638,6 +641,7 @@ compressfile_test_gz_file_xz_output(Copyfiletest *copyfiletest,
 
     g_assert(!tmp_err);
 }
+
 
 static void
 compressfile_test_xz_file_gz_output(Copyfiletest *copyfiletest,
@@ -704,55 +708,6 @@ decompressfile_with_stat_test_text_file(Copyfiletest *copyfiletest,
 }
 
 
-
-static void
-test_cr_download_valid_url_1(Copyfiletest *copyfiletest,
-                             G_GNUC_UNUSED gconstpointer test_data)
-{
-    CURL *handle = curl_easy_init();
-
-    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    cr_download(handle, VALID_URL_01, copyfiletest->dst_file, NULL);
-    curl_easy_cleanup(handle);
-    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-}
-
-
-
-static void
-test_cr_download_valid_url_2(Copyfiletest *copyfiletest,
-                             G_GNUC_UNUSED gconstpointer test_data)
-{
-    CURL *handle = curl_easy_init();
-    GError *tmp_err = NULL;
-
-    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    cr_download(handle, VALID_URL_01, copyfiletest->tmp_dir, &tmp_err);
-    curl_easy_cleanup(handle);
-    g_assert(!tmp_err);
-    char *dst = g_strconcat(copyfiletest->tmp_dir, "/", URL_FILENAME_01, NULL);
-    g_assert(g_file_test(dst, G_FILE_TEST_EXISTS));
-    g_free(dst);
-}
-
-
-static void
-test_cr_download_invalid_url(Copyfiletest *copyfiletest,
-                             G_GNUC_UNUSED gconstpointer test_data)
-{
-    CURL *handle = curl_easy_init();
-    GError *tmp_err = NULL;
-
-    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    cr_download(handle, INVALID_URL, copyfiletest->dst_file, &tmp_err);
-    curl_easy_cleanup(handle);
-    g_assert(tmp_err);
-    g_error_free(tmp_err);
-    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-}
-
-
-
 static void
 test_cr_better_copy_file_local(Copyfiletest *copyfiletest,
                                G_GNUC_UNUSED gconstpointer test_data)
@@ -770,23 +725,6 @@ test_cr_better_copy_file_local(Copyfiletest *copyfiletest,
     g_assert_cmpstr(checksum, ==, "bf68e32ad78cea8287be0f35b74fa3fecd0eaa91770b48f1a7282b015d6d883e");
     g_free(checksum);
 }
-
-
-
-static void
-test_cr_better_copy_file_url(Copyfiletest *copyfiletest,
-                             G_GNUC_UNUSED gconstpointer test_data)
-{
-    gboolean ret;
-    GError *tmp_err = NULL;
-
-    g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    ret = cr_better_copy_file(VALID_URL_01, copyfiletest->dst_file, &tmp_err);
-    g_assert(!tmp_err);
-    g_assert(ret);
-    g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
-}
-
 
 
 static void
@@ -1061,6 +999,7 @@ test_cr_cmp_version_str(void)
     g_assert_cmpint(ret, ==, 2);
 }
 
+
 static void
 test_cr_split_rpm_filename(void)
 {
@@ -1191,6 +1130,7 @@ test_cr_str_to_nevr(void)
     cr_nevr_free(res);
 }
 
+
 static void
 test_cr_str_to_nevra(void)
 {
@@ -1254,6 +1194,7 @@ test_cr_str_to_nevra(void)
     cr_nevra_free(res);
 }
 
+
 static void
 test_cr_cmp_evr(void)
 {
@@ -1291,6 +1232,7 @@ test_cr_cmp_evr(void)
                      "0", NULL, "3");
     g_assert_cmpint(res, ==, 1);
 }
+
 
 static void
 test_cr_cut_dirs(void)
@@ -1343,6 +1285,7 @@ test_cr_cut_dirs(void)
     g_assert_cmpstr(res, ==, "foo.rpm");
 }
 
+
 int
 main(int argc, char *argv[])
 {
@@ -1394,21 +1337,9 @@ main(int argc, char *argv[])
     g_test_add("/misc/decompressfile_with_stat_test_text_file",
             Copyfiletest, NULL, copyfiletest_setup,
             decompressfile_with_stat_test_text_file, copyfiletest_teardown);
-//    g_test_add("/misc/test_cr_download_valid_url_1",
-//          Copyfiletest, NULL, copyfiletest_setup,
-//          test_cr_download_valid_url_1, copyfiletest_teardown);
-//    g_test_add("/misc/test_cr_download_valid_url_2",
-//          Copyfiletest, NULL, copyfiletest_setup,
-//          test_cr_download_valid_url_2, copyfiletest_teardown);
-//    g_test_add("/misc/test_cr_download_invalid_url",
-//          Copyfiletest, NULL, copyfiletest_setup,
-//          test_cr_download_invalid_url, copyfiletest_teardown);
     g_test_add("/misc/test_cr_better_copy_file_local",
             Copyfiletest, NULL, copyfiletest_setup,
             test_cr_better_copy_file_local, copyfiletest_teardown);
-//    g_test_add("/misc/test_cr_better_copy_file_url",
-//          Copyfiletest, NULL, copyfiletest_setup,
-//          test_cr_better_copy_file_url, copyfiletest_teardown);
     g_test_add_func("/misc/test_cr_normalize_dir_path",
             test_cr_normalize_dir_path);
     g_test_add_func("/misc/test_cr_remove_dir",

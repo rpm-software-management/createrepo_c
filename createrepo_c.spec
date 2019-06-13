@@ -251,11 +251,13 @@ ln -sr %{buildroot}%{_bindir}/modifyrepo_c %{buildroot}%{_bindir}/modifyrepo
 %if %{with python2}
 %files -n python2-%{name}
 %{python2_sitearch}/%{name}/
+%{python2_sitearch}/%{name}-%{version}-py%{python2_version}.egg-info
 %endif
 
 %if %{with python3}
 %files -n python3-%{name}
 %{python3_sitearch}/%{name}/
+%{python3_sitearch}/%{name}-%{version}-py%{python3_version}.egg-info
 %endif
 
 %changelog

@@ -437,7 +437,7 @@ cr_compress_file_with_stat(const char *src,
     int ret = CRE_OK;
     int readed;
     char buf[BUFFER_SIZE];
-    FILE *orig = NULL;
+    CR_FILE *orig = NULL;
     CR_FILE *new = NULL;
     gchar *dst = (gchar *) in_dst;
     GError *tmp_err = NULL;
@@ -466,7 +466,7 @@ cr_compress_file_with_stat(const char *src,
                           NULL);
     }
 
-    orig = fopen(src, "rb");
+    orig = cr_open(src, CR_CW_MODE_READ, CR_CW_AUTO_DETECT_COMPRESSION, &tmp_err);
     if (orig == NULL) {
         g_debug("%s: Cannot open source file %s (%s)", __func__, src,
                 g_strerror(errno));
@@ -484,21 +484,13 @@ cr_compress_file_with_stat(const char *src,
         goto compress_file_cleanup;
     }
 
-    while ((readed = fread(buf, 1, BUFFER_SIZE, orig)) > 0) {
-        if (readed != BUFFER_SIZE && ferror(orig)) {
-            g_debug("%s: Error while copy %s -> %s (%s)", __func__, src,
-                    dst, g_strerror(errno));
-            g_set_error(err, ERR_DOMAIN, CRE_IO,
-                        "Error while read %s: %s", src, g_strerror(errno));
-            ret = CRE_IO;
-            goto compress_file_cleanup;
-        }
-
-        cr_write(new, buf, readed, &tmp_err);
+    while ((readed = cr_read(orig, buf, BUFFER_SIZE, &tmp_err)) > 0) {
+        if (!tmp_err)
+            cr_write(new, buf, readed, &tmp_err);
         if (tmp_err) {
             g_debug("%s: Error while copy %s -> %s", __func__, src, dst);
             g_propagate_prefixed_error(err, tmp_err,
-                    "Error while read %s: ", dst);
+                    "Error while copy to %s: ", dst);
             ret = CRE_IO;
             goto compress_file_cleanup;
         }
@@ -510,7 +502,7 @@ compress_file_cleanup:
         g_free(dst);
 
     if (orig)
-        fclose(orig);
+        cr_close(orig, NULL);
 
     if (new)
         cr_close(new, NULL);

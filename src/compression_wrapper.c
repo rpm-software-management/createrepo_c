@@ -148,7 +148,8 @@ cr_detect_compression(const char *filename, GError **err)
     } else if (g_str_has_suffix(filename, ".xz"))
     {
         return CR_CW_XZ_COMPRESSION;
-    } else if (g_str_has_suffix(filename, ".xml"))
+    } else if (g_str_has_suffix(filename, ".xml") ||
+               g_str_has_suffix(filename, ".sqlite"))
     {
         return CR_CW_NO_COMPRESSION;
     }

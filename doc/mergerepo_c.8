@@ -62,7 +62,24 @@ Do not merge updateinfo metadata
 Which compression type to use
 .SS \-\-method MERGE_METHOD
 .sp
-Specify merge method for packages with the same name and arch (available merge methods: repo (default), ts, nvr)
+Specify merge method for packages with the same name and arch.
+.sp
+Available merge methods:
+.P
+.B repo
+.RS 3
+(default) select package from the first specified repository.
+.RE
+.sp
+.B nvr
+.RS 3
+select package with the higher version and release.
+.RE
+.sp
+.B ts
+.RS 3
+select package with the newest timestamp.
+.RE
 .SS \-\-all
 .sp
 Include all packages with the same name and arch if version or release is different. If used \-\-method argument is ignored!
@@ -81,6 +98,9 @@ Don\(aqt add a baseurl to packages that don\(aqt have one before.
 .SS \-k \-\-koji
 .sp
 Enable koji mergerepos behaviour.
+.SS \-\-simple
+.sp
+Enable koji specific simple merge mode where we keep even packages with identical NEVRAs. Only works with combination with --koji/-k.
 .SS \-\-pkgorigins
 .sp
 Enable standard mergerepos behavior while also providing the pkgorigins file for koji.

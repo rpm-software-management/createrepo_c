@@ -267,6 +267,12 @@ Createrepo_c mimics this behaviour.
 - There are old metadata without checksum in the name too
 - (https://bugzilla.redhat.com/show_bug.cgi?id=836917)
 
+## Mergerepo_c
+### Default merge method
+- Original mergerepo included even packages with the same NVR by default
+- Mergerepo_c can be configured by --method option to specify how repositories should be merged. 
+- Additionally its possible to use --all option to replicate original mergerepo behavior.
+
 ## Modifyrepo_c
 
 Modifyrepo_c is compatible with classical Modifyrepo except some misbehaviour:

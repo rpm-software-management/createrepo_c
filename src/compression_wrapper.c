@@ -157,6 +157,7 @@ cr_detect_compression(const char *filename, GError **err)
     {
         return CR_CW_ZCK_COMPRESSION;
     } else if (g_str_has_suffix(filename, ".xml") ||
+               g_str_has_suffix(filename, ".tar") ||
                g_str_has_suffix(filename, ".sqlite"))
     {
         return CR_CW_NO_COMPRESSION;
@@ -215,6 +216,7 @@ cr_detect_compression(const char *filename, GError **err)
                  g_str_has_prefix(mime_type, "application/xml") ||
                  g_str_has_prefix(mime_type, "application/x-xml") ||
                  g_str_has_prefix(mime_type, "application/x-empty") ||
+                 g_str_has_prefix(mime_type, "application/x-tar") ||
                  g_str_has_prefix(mime_type, "inode/x-empty"))
         {
             type = CR_CW_NO_COMPRESSION;

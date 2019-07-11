@@ -102,6 +102,9 @@ struct UserData {
     gchar *location_prefix;         // Append this prefix into location_href
                                     // during repodata generation
     gboolean had_errors;            // Any errors encountered?
+
+    FILE *output_pkg_list;          // File where a list of read packages is written
+    GMutex mutex_output_pkg_list;   // Mutex for output_pkg_list file
 };
 
 

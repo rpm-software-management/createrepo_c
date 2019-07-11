@@ -114,8 +114,6 @@ task_cmp(gconstpointer a_p, gconstpointer b_p, G_GNUC_UNUSED gpointer user_data)
  * @param cmd_options       Options specified on command line
  * @param current_pkglist   Pointer to a list where basenames of files that
  *                          will be processed will be appended to.
- * @param output_pkg_list   File where relative paths of processed packages
- *                          will be writen to.
  * @return                  Number of packages that are going to be processed
  */
 static long
@@ -123,7 +121,6 @@ fill_pool(GThreadPool *pool,
           gchar *in_dir,
           struct CmdOptions *cmd_options,
           GSList **current_pkglist,
-          FILE *output_pkg_list,
           long *task_count,
           int  media_id)
 {
@@ -208,8 +205,6 @@ fill_pool(GThreadPool *pool,
                     task->full_path = full_path;
                     task->filename = g_strdup(filename);
                     task->path = g_strdup(dirname);
-                    if (output_pkg_list)
-                        fprintf(output_pkg_list, "%s\n", repo_relative_path);
                     *current_pkglist = g_slist_prepend(*current_pkglist, task->filename);
                     // TODO: One common path for all tasks with the same path?
                     g_queue_insert_sorted(&queue, task, task_cmp, NULL);
@@ -254,8 +249,6 @@ fill_pool(GThreadPool *pool,
                 task->full_path = full_path;
                 task->filename  = g_strdup(filename);         // foobar.rpm
                 task->path      = strndup(relative_path, x);  // packages/i386/
-                if (output_pkg_list)
-                    fprintf(output_pkg_list, "%s\n", relative_path);
                 *current_pkglist = g_slist_prepend(*current_pkglist, task->filename);
                 g_queue_insert_sorted(&queue, task, task_cmp, NULL);
             }
@@ -613,7 +606,6 @@ main(int argc, char **argv)
                   tmp_in_dir,
                   cmd_options,
                   &current_pkglist,
-                  output_pkg_list,
                   &task_count,
                   media_id);
         g_free(tmp_in_dir);
@@ -621,9 +613,6 @@ main(int argc, char **argv)
 
     g_debug("Package count: %ld", task_count);
     g_message("Directory walk done - %ld packages", task_count);
-
-    if (output_pkg_list)
-        fclose(output_pkg_list);
 
 
     // Load old metadata if --update
@@ -1091,7 +1080,9 @@ main(int argc, char **argv)
     user_data.cut_dirs          = cmd_options->cut_dirs;
     user_data.location_prefix   = cmd_options->location_prefix;
     user_data.had_errors        = 0;
+    user_data.output_pkg_list   = output_pkg_list;
 
+    g_mutex_init(&(user_data.mutex_output_pkg_list));
     g_mutex_init(&(user_data.mutex_pri));
     g_mutex_init(&(user_data.mutex_fil));
     g_mutex_init(&(user_data.mutex_oth));
@@ -1119,6 +1110,9 @@ main(int argc, char **argv)
     g_message("Pool finished%s", (user_data.had_errors ? " with errors" : ""));
 
     cr_xml_dump_cleanup();
+
+    if (output_pkg_list)
+        fclose(output_pkg_list);
 
     cr_xmlfile_close(pri_cr_file, &tmp_err);
     if (!tmp_err)
@@ -1251,6 +1245,7 @@ main(int argc, char **argv)
     }
 
     g_queue_free(user_data.buffer);
+    g_mutex_clear(&(user_data.mutex_output_pkg_list));
     g_mutex_clear(&(user_data.mutex_pri));
     g_mutex_clear(&(user_data.mutex_fil));
     g_mutex_clear(&(user_data.mutex_oth));

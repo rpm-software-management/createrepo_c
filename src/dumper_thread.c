@@ -500,6 +500,12 @@ cr_dumper_thread(gpointer data, gpointer user_data)
             g_clear_error(&tmp_err);
             goto task_cleanup;
         }
+
+        if (udata->output_pkg_list){
+            g_mutex_lock(&(udata->mutex_output_pkg_list));
+            fprintf(udata->output_pkg_list, "%s\n", pkg->location_href);
+            g_mutex_unlock(&(udata->mutex_output_pkg_list));
+        }
     } else {
         // Just gen XML from old loaded metadata
         pkg = md;

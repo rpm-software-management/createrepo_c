@@ -133,7 +133,9 @@ static GOptionEntry cmd_entries[] =
     { "simple-md-filenames", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.simple_md_filenames),
       "Do not include the file's checksum in the metadata filename.", NULL },
     { "retain-old-md", 0, 0, G_OPTION_ARG_INT, &(_cmd_options.retain_old),
-      "Keep around the latest (by timestamp) N copies of the old repodata.", "NUM" },
+      "Specify NUM to 0 to remove all repodata present in old repomd.xml or any other positive number to keep all old repodata. "
+      "Use --compatibility flag to get the behavior of original createrepo: "
+      "Keep around the latest (by timestamp) NUM copies of the old repodata (works only for primary, filelists, other and their DB variants).", "NUM" },
     { "distro", 0, 0, G_OPTION_ARG_STRING_ARRAY, &(_cmd_options.distro_tags),
       "Distro tag and optional cpeid: --distro'cpeid,textname'.", "DISTRO" },
     { "content", 0, 0, G_OPTION_ARG_STRING_ARRAY, &(_cmd_options.content_tags),
@@ -166,7 +168,7 @@ static GOptionEntry cmd_entries[] =
       "Keep all additional metadata (not primary, filelists and other xml or sqlite files, "
       "nor their compressed variants) from source repository during update.", NULL },
     { "compatibility", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.compatibility),
-      "Enforce maximal compatibility with classical createrepo.", NULL },
+      "Enforce maximal compatibility with classical createrepo (Affects only: --retain-old-md).", NULL },
     { "retain-old-md-by-age", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.retain_old_md_by_age),
       "During --update, remove all files in repodata/ which are older "
       "then the specified period of time. (e.g. '2h', '30d', ...). "

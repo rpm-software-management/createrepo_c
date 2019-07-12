@@ -104,7 +104,10 @@ Include the file\(aqs checksum in the metadata filename, helps HTTP caching (def
 Do not include the file\(aqs checksum in the metadata filename.
 .SS \-\-retain\-old\-md NUM
 .sp
-Keep around the latest (by timestamp) N copies of the old repodata.
+Specify NUM to 0 to remove all repodata present in old repomd.xml or any other positive number to keep all old repodata.
+.sp
+Use --compatibility flag to get the behavior of original createrepo:
+Keep around the latest (by timestamp) NUM copies of the old repodata (works only for primary, filelists, other and their DB variants).
 .SS \-\-distro DISTRO
 .sp
 Distro tag and optional cpeid: \-\-distro\(aqcpeid,textname\(aq.
@@ -148,7 +151,7 @@ Which compression type to use (even for primary, filelists and other xml).
 Keep all additional metadata (not primary, filelists and other xml or sqlite files, nor their compressed variants) from source repository during update.
 .SS \-\-compatibility
 .sp
-Enforce maximal compatibility with classical createrepo.
+Enforce maximal compatibility with classical createrepo (Affects only: --retain-old-md).
 .SS \-\-retain\-old\-md\-by\-age AGE
 .sp
 During \-\-update, remove all files in repodata/ which are older then the specified period of time. (e.g. \(aq2h\(aq, \(aq30d\(aq, ...). Available units (m \- minutes, h \- hours, d \- days)

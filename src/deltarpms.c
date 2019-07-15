@@ -37,15 +37,11 @@
 
 
 #define ERR_DOMAIN      CREATEREPO_C_ERROR
-#define MAKEDELTARPM    "/usr/bin/makedeltarpm"
-
 
 gboolean
 cr_drpm_support(void)
 {
 #ifdef    CR_DELTA_RPM_SUPPORT
-    if (g_file_test(MAKEDELTARPM, G_FILE_TEST_IS_REGULAR
-                                   | G_FILE_TEST_IS_EXECUTABLE))
         return TRUE;
 #endif
     return FALSE;
@@ -59,12 +55,7 @@ cr_drpm_create(cr_DeltaTargetPackage *old,
                const char *destdir,
                GError **err)
 {
-    gchar *drpmfn, *drpmpath, *error_str = NULL;
-    GPtrArray *cmd_array;
-    int spawn_flags = G_SPAWN_SEARCH_PATH | G_SPAWN_STDOUT_TO_DEV_NULL;
-    GError *tmp_err = NULL;
-    gint status = 0;
-    gboolean ret;
+    gchar *drpmfn, *drpmpath;
 
     drpmfn = g_strdup_printf("%s-%s-%s_%s-%s.%s.drpm",
                              old->name, old->version, old->release,
@@ -72,44 +63,20 @@ cr_drpm_create(cr_DeltaTargetPackage *old,
     drpmpath = g_build_filename(destdir, drpmfn, NULL);
     g_free(drpmfn);
 
-    cmd_array = g_ptr_array_new();
-    g_ptr_array_add(cmd_array, MAKEDELTARPM);
-    g_ptr_array_add(cmd_array, (gpointer) old->path);
-    g_ptr_array_add(cmd_array, (gpointer) new->path);
-    g_ptr_array_add(cmd_array, (gpointer) drpmpath);
-    g_ptr_array_add(cmd_array, (gpointer) NULL);
+    drpm_make_options *opts;
+    drpm_make_options_init(&opts);
+    drpm_make_options_defaults(opts);
 
-    g_spawn_sync(NULL,              // working directory
-                 (char **) cmd_array->pdata,  // argv
-                 NULL,              // envp
-                 spawn_flags,       // spawn flags
-                 NULL,              // child setup function
-                 NULL,              // user data for child setup
-                 NULL,              // stdout
-                 &error_str,        // stderr
-                 &status,           // status
-                 &tmp_err           // err
-                );
-
-    g_ptr_array_free(cmd_array, TRUE);
-
-    if (tmp_err) {
-        g_free(error_str);
+    int ret = drpm_make(old->path, new->path, drpmpath, opts);
+    if (ret != DRPM_ERR_OK) {
+        g_set_error(err, ERR_DOMAIN, CRE_DELTARPM,
+                    "Deltarpm cannot make %s (%d) from old: %s and new: %s", drpmpath, ret, old->path, new->path);
         free(drpmpath);
-        g_propagate_error(err, tmp_err);
+        drpm_make_options_destroy(&opts);
         return NULL;
     }
 
-    ret = cr_spawn_check_exit_status(status, &tmp_err);
-    if (!ret) {
-        g_propagate_prefixed_error(err, tmp_err, "%s: ", error_str);
-        free(drpmpath);
-        g_free(error_str);
-        return NULL;
-    }
-
-    g_free(error_str);
-
+    drpm_make_options_destroy(&opts);
     return drpmpath;
 }
 

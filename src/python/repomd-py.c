@@ -275,7 +275,7 @@ static struct PyMethodDef repomd_methods[] = {
         sort_records__doc__},
     {"xml_dump", (PyCFunction)xml_dump, METH_NOARGS,
         xml_dump__doc__},
-    {NULL} /* sentinel */
+    {NULL, NULL, 0, NULL} /* sentinel */
 };
 
 /* Convertors for getsetters */
@@ -510,4 +510,12 @@ PyTypeObject Repomd_Type = {
     repomd_new,                     /* tp_new */
     0,                              /* tp_free */
     0,                              /* tp_is_gc */
+    0,                              /* tp_bases */
+    0,                              /* tp_mro */
+    0,                              /* tp_cache */
+    0,                              /* tp_subclasses */
+    0,                              /* tp_weaklist */
+    0,                              /* tp_del */
+    0,                              /* tp_version_tag */
+    0,                              /* tp_finalize */
 };

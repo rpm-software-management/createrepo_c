@@ -202,7 +202,7 @@ static struct PyMethodDef sqlite_methods[] = {
         dbinfo_update__doc__},
     {"close", (PyCFunction)close_db, METH_NOARGS,
         close__doc__},
-    {NULL} /* sentinel */
+    {NULL, NULL, 0, NULL} /* sentinel */
 };
 
 PyTypeObject Sqlite_Type = {
@@ -246,4 +246,12 @@ PyTypeObject Sqlite_Type = {
     sqlite_new,                     /* tp_new */
     0,                              /* tp_free */
     0,                              /* tp_is_gc */
+    0,                              /* tp_bases */
+    0,                              /* tp_mro */
+    0,                              /* tp_cache */
+    0,                              /* tp_subclasses */
+    0,                              /* tp_weaklist */
+    0,                              /* tp_del */
+    0,                              /* tp_version_tag */
+    0,                              /* tp_finalize */
 };

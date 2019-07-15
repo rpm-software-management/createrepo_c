@@ -345,7 +345,7 @@ static struct PyMethodDef metadata_methods[] = {
     {"remove",  (PyCFunction)ht_remove, METH_VARARGS, remove__doc__},
     {"get",     (PyCFunction)ht_get, METH_VARARGS, get__doc__},
     {"dupaction",(PyCFunction)metadata_dupaction, METH_VARARGS, metadata_dupaction__doc__},
-    {NULL} /* sentinel */
+    {NULL, NULL, 0, NULL} /* sentinel */
 };
 
 /* Object */
@@ -391,4 +391,12 @@ PyTypeObject Metadata_Type = {
     metadata_new,                   /* tp_new */
     0,                              /* tp_free */
     0,                              /* tp_is_gc */
+    0,                              /* tp_bases */
+    0,                              /* tp_mro */
+    0,                              /* tp_cache */
+    0,                              /* tp_subclasses */
+    0,                              /* tp_weaklist */
+    0,                              /* tp_del */
+    0,                              /* tp_version_tag */
+    0,                              /* tp_finalize */
 };

@@ -259,4 +259,12 @@ PyTypeObject ContentStat_Type = {
     contentstat_new,                /* tp_new */
     0,                              /* tp_free */
     0,                              /* tp_is_gc */
+    0,                              /* tp_bases */
+    0,                              /* tp_mro */
+    0,                              /* tp_cache */
+    0,                              /* tp_subclasses */
+    0,                              /* tp_weaklist */
+    0,                              /* tp_del */
+    0,                              /* tp_version_tag */
+    0,                              /* tp_finalize */
 };

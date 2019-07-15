@@ -116,7 +116,7 @@ metadatalocation_repr(G_GNUC_UNUSED _MetadataLocationObject *self)
 /* MetadataLocation methods */
 
 static struct PyMethodDef metadatalocation_methods[] = {
-    {NULL} /* sentinel */
+    {NULL, NULL, 0, NULL} /* sentinel */
 };
 
 /* Mapping interface */
@@ -245,4 +245,12 @@ PyTypeObject MetadataLocation_Type = {
     metadatalocation_new,           /* tp_new */
     0,                              /* tp_free */
     0,                              /* tp_is_gc */
+    0,                              /* tp_bases */
+    0,                              /* tp_mro */
+    0,                              /* tp_cache */
+    0,                              /* tp_subclasses */
+    0,                              /* tp_weaklist */
+    0,                              /* tp_del */
+    0,                              /* tp_version_tag */
+    0,                              /* tp_finalize */
 };

@@ -136,7 +136,7 @@ parse_sqliterepo_arguments(int *argc,
           "This option could lead to a higher memory consumption "
           "if TMPDIR is set to /tmp or not set at all, because then the /tmp is "
           "used and /tmp dir is often a ramdisk.", NULL },
-        { NULL },
+        { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL },
     };
 
     // Parse cmd arguments
@@ -362,8 +362,7 @@ compress_sqlite_dbs(const gchar *tmp_out_repo,
                     const gchar *oth_db_filename,
                     cr_RepomdRecord **in_oth_db_rec,
                     cr_CompressionType compression_type,
-                    cr_ChecksumType checksum_type,
-                    GError **err)
+                    cr_ChecksumType checksum_type)
 {
     cr_CompressionTask *pri_db_task;
     cr_CompressionTask *fil_db_task;
@@ -924,8 +923,7 @@ generate_sqlite_from_xml(const gchar *path,
                               oth_db_filename,
                               &oth_db_rec,
                               compression_type,
-                              checksum_type,
-                              err);
+                              checksum_type);
     if (!ret)
         return FALSE;
 

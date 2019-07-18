@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH MERGEREPO_C  "2019-05-03" "" ""
+.TH MERGEREPO_C  "2019-07-18" "" ""
 .SH NAME
 mergerepo_c \- Merge multiple rpm-md format repositories together
 .
@@ -42,6 +42,12 @@ Show program\(aqs version number and exit
 .SS \-r \-\-repo REPOS
 .sp
 Repo url
+.SS \-\-repo\-prefix\-search OLD_PREFIX
+.sp
+Repository prefix to be replaced by NEW_PREFIX.
+.SS \-\-repo\-prefix\-replace NEW_PREFIX
+.sp
+Repository prefix URL by which the OLD_PREFIX is replaced.
 .SS \-a \-\-archlist ARCHLIST
 .sp
 Defaults to all arches \- otherwise specify arches
@@ -60,6 +66,12 @@ Do not merge updateinfo metadata
 .SS \-\-compress\-type COMPRESS_TYPE
 .sp
 Which compression type to use
+.SS \-\-zck
+.sp
+Generate zchunk files as well as the standard repodata.
+.SS \-\-zck\-dict\-dir ZCK_DICT_DIR
+.sp
+Directory containing compression dictionaries for use by zchunk
 .SS \-\-method MERGE_METHOD
 .sp
 Specify merge method for packages with the same name and arch.
@@ -97,10 +109,10 @@ Do not include the file\(aqs checksum in the metadata filename.
 Don\(aqt add a baseurl to packages that don\(aqt have one before.
 .SS \-k \-\-koji
 .sp
-Enable koji mergerepos behaviour.
+Enable koji mergerepos behaviour. (Optionally select simple mode with: \-\-simple)
 .SS \-\-simple
 .sp
-Enable koji specific simple merge mode where we keep even packages with identical NEVRAs. Only works with combination with --koji/-k.
+Enable koji specific simple merge mode where we keep even packages with identical NEVRAs. Only works with combination with \-\-koji/\-k.
 .SS \-\-pkgorigins
 .sp
 Enable standard mergerepos behavior while also providing the pkgorigins file for koji.

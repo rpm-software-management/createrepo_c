@@ -145,7 +145,8 @@ static GOptionEntry cmd_entries[] =
     { "revision", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.revision),
       "User-specified revision for this repository.", "REVISION" },
     { "set-timestamp-to-revision", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.set_timestamp_to_revision),
-      "Set timestamps in metadata and mtime of files to --revision value (date +%s format)", NULL },
+      "Set timestamp fields in repomd.xml and last modification times of created repodata to a value given with --revision. "
+      "This requires --revision to be a timestamp formated in 'date +%s' format.", NULL },
     { "read-pkgs-list", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.read_pkgs_list),
       "Output the paths to the pkgs actually read useful with --update.",
       "READ_PKGS_LIST" },

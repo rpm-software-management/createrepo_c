@@ -274,6 +274,13 @@ get_checksum(const char *filename,
             g_free(template);
             goto exit;
         }
+
+        // Rewrite default permissions of tempfiles, RhBug:1686812
+        mode_t mask = umask(0777);
+        umask(mask);
+        // Files should not be executable so use only 0666
+        fchmod(fd, 0666 ^ mask);
+
         write(fd, checksum, strlen(checksum));
         close(fd);
         if (g_rename(template, cachefn) == -1)

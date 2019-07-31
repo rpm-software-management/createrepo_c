@@ -72,7 +72,7 @@ BuildRequires:  bash-completion
 Requires: rpm >= 4.9.0
 %endif
 %if %{with drpm}
-BuildRequires:  drpm-devel >= 0.1.3
+BuildRequires:  drpm-devel >= 0.3.0
 %endif
 
 %if 0%{?fedora} || 0%{?rhel} > 7

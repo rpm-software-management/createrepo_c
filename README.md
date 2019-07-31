@@ -12,6 +12,7 @@ Package build requires - Pkg name in Fedora/Ubuntu:
 
 * bzip2 (http://bzip.org/) - bzip2-devel/libbz2-dev
 * cmake (http://www.cmake.org/) - cmake/cmake
+* drpm (https://github.com/rpm-software-management/drpm) - drpm-devel/
 * expat (http://expat.sourceforge.net/) - expat-devel/libexpat1-dev
 * file (http://www.darwinsys.com/file/) - file-devel/libmagic-dev
 * glib2 (http://developer.gnome.org/glib/) - glib2-devel/libglib2.0-dev
@@ -31,7 +32,6 @@ Package build requires - Pkg name in Fedora/Ubuntu:
 * **Test requires:** python-nose (https://nose.readthedocs.org/) - python-nose/python-nose
 * **Test requires:** xz (http://tukaani.org/xz/) - xz/
 * **Test requires:** zchunk (https://github.com/zchunk/zchunk) - zchunk/
-* **Experimental support:** drpm (https://github.com/rpm-software-management/drpm) - drpm-devel/
 
 From your checkout dir:
 
@@ -52,7 +52,7 @@ To build the documentation, from the build/ directory:
 
 E.g. when you want to try weak and rich dependencies.
 
-    cmake -DRPM_PATH="/home/tmlcoch/git/rpm" .. && make
+    cmake .. && make
 
 **Note:** The RPM must be built in that directory
 
@@ -61,20 +61,6 @@ Commands I am using for building the RPM:
     cd /home/tmlcoch/git/rpm
     CPPFLAGS='-I/usr/include/nss3/ -I/usr/include/nspr4/' ./autogen.sh --rpmconfigure --with-vendor=redhat --with-external-db --with-lua --with-selinux --with-cap --with-acl --enable-python
     make clean && make
-
-## Building with delta rpm support (drpm)
-
-At first, you have to checkout the drpm library from
-https://github.com/rpm-software-management/drpm.git and build it.
-
-    git clone https://github.com/rpm-software-management/drpm.git
-    cd drpm/
-    make
-
-Then run ``cmake`` for createrepo_c with param ``-DDRPM_PATH="/home/tmlcoch/git/drpm"``
-where the path is path to your build of drpm library.
-
-    cmake -DDRPM_PATH="/home/tmlcoch/git/drpm" .. && make
 
 ## Building for a different Python version
 
@@ -98,6 +84,13 @@ only adds extra threads on XZ library level which causes thread bloat
 and for most usecases doesn't bring any performance boost.
 On regular hardware (e.g. less-or-equal 4 cores) this option may even
 cause degradation of performance.
+
+### ``-DENABLE_DRPM=ON``
+
+Enable DeltaRPM support using drpm library (Default: ON)
+
+Adds support for creating DeltaRPMs and incorporating them
+into the repository.
 
 ### ``-DWITH_ZCHUNK=ON``
 

@@ -355,8 +355,10 @@ load_rpm(const char *fullpath,
     // Compute checksum
     char *checksum = get_checksum(fullpath, checksum_type, pkg,
                                   checksum_cachedir, &tmp_err);
-    if (!checksum)
+    if (!checksum) {
+        g_propagate_error(err, tmp_err);
         goto errexit;
+    }
     pkg->pkgId = cr_safe_string_chunk_insert(pkg->chunk, checksum);
     free(checksum);
 
@@ -365,7 +367,7 @@ load_rpm(const char *fullpath,
                                                                  &tmp_err);
     if (tmp_err) {
         g_propagate_prefixed_error(err, tmp_err,
-                                   "Error while determinig header range: ");
+                                   "Error while determining header range: ");
         goto errexit;
     }
 

@@ -286,9 +286,13 @@ cr_xml_dump(cr_Package *pkg, GError **err)
     result.other     = NULL;
 
     if (cr_Package_contains_forbidden_control_chars(pkg)) {
+#ifdef WARN_ON_FORBIDDEN_CHAR
+        g_warning("Forbidden control chars found (ASCII values <32 except 9, 10 and 13) in package %s.", pkg->name);
+#else
         g_set_error(err, CREATEREPO_C_ERROR, CRE_XMLDATA,
                     "Forbidden control chars found (ASCII values <32 except 9, 10 and 13).");
         return result;
+#endif
     }
 
     if (!pkg)

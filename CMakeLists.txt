@@ -156,6 +156,10 @@ IF (ENABLE_BASHCOMP)
     ENDIF (BASHCOMP_FOUND)
 ENDIF (ENABLE_BASHCOMP)
 
+OPTION(WARN_ON_FORBIDDEN_CHAR "Do not exclude rpm's containing forbidden characters from the repo. Print warning instead" OFF)
+IF (WARN_ON_FORBIDDEN_CHAR)
+    ADD_DEFINITIONS("-DWARN_ON_FORBIDDEN_CHAR=1")
+ENDIF (WARN_ON_FORBIDDEN_CHAR)
 
 # Gen manpage
 

@@ -89,7 +89,7 @@ ENDIF (ENABLE_LEGACY_WEAKDEPS)
 # drpm
 OPTION (ENABLE_DRPM "Enable delta RPM support?" ON)
 IF (ENABLE_DRPM)
-    pkg_check_modules(DRPM REQUIRED drpm>=0.3.0)
+    pkg_check_modules(DRPM REQUIRED drpm>=0.4.0)
     include_directories (${DRPM_INCLUDE_DIRS})
     ADD_DEFINITIONS("-DCR_DELTA_RPM_SUPPORT")
 ENDIF (ENABLE_DRPM)

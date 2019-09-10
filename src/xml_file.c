@@ -338,7 +338,7 @@ write_modified_header(int task_count,
     int package_count_string_len = rasprintf(&package_count_string, "packages=\"%i\"", package_count);
     int task_count_string_len = rasprintf(&task_count_string, "packages=\"%i\"", task_count);
 
-    gchar *pointer_to_pkgs = strstr(header_buf, task_count_string);
+    gchar *pointer_to_pkgs = g_strstr_len(header_buf, header_len, task_count_string);
     if (!pointer_to_pkgs){
         g_free(package_count_string);
         g_free(task_count_string);

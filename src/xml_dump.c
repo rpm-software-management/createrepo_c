@@ -45,8 +45,10 @@ cr_xml_dump_cleanup()
 gboolean cr_hascontrollchars(const unsigned char *str)
 {
     while (*str) {
-        if (*str < 32 && (*str != 9 && *str != 10 && *str != 13))
+        if (*str < 32 && (*str != 9 && *str != 10 && *str != 13)) {
+            g_debug("Found control char in string '%s'", str);
             return TRUE;
+        }
         ++str;
     }
 

@@ -31,7 +31,6 @@
 
 
 #define ERR_DOMAIN                      CREATEREPO_C_ERROR
-#define DEFAULT_CHANGELOG_LIMIT         10
 #define DEFAULT_CHECKSUM                "sha256"
 #define DEFAULT_WORKERS                 5
 #define DEFAULT_UNIQUE_MD_FILENAMES     TRUE

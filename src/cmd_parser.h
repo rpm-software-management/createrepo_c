@@ -24,6 +24,8 @@
 #include "checksum.h"
 #include "compression_wrapper.h"
 
+#define DEFAULT_CHANGELOG_LIMIT         10
+
 
 /**
  * Command line options

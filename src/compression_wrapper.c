@@ -166,7 +166,7 @@ cr_detect_compression(const char *filename, GError **err)
 
     // No success? Let's get hardcore... (Use magic bytes)
 
-    magic_t myt = magic_open(MAGIC_MIME);
+    magic_t myt = magic_open(MAGIC_MIME | MAGIC_SYMLINK);
     if (myt == NULL) {
         g_set_error(err, ERR_DOMAIN, CRE_MAGIC,
                     "magic_open() failed: Cannot allocate the magic cookie");

@@ -161,6 +161,9 @@ fill_pool(GThreadPool *pool,
 
             const gchar *filename;
             while ((filename = g_dir_read_name(dirp))) {
+                if (!allowed_file(filename, cmd_options->exclude_masks)) {
+                    continue;
+                }
 
                 gchar *full_path = g_strconcat(dirname, "/", filename, NULL);
 

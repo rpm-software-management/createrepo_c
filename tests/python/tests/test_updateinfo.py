@@ -36,6 +36,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
         rec.summary = "summary"
         rec.description = "description"
         rec.solution = "solution"
+        rec.reboot_suggested = True
 
         ui.append(rec)
 
@@ -57,6 +58,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
         self.assertEqual(rec.summary, "summary")
         self.assertEqual(rec.description, "description")
         self.assertEqual(rec.solution, "solution")
+        self.assertEqual(rec.reboot_suggested, True)
         self.assertEqual(len(rec.references), 0)
         self.assertEqual(len(rec.collections), 0)
 
@@ -92,6 +94,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
         rec.summary = "summary"
         rec.description = "description"
         rec.solution = "solution"
+        rec.reboot_suggested = True
 
         ui.append(rec)
         xml = ui.xml_dump()
@@ -111,6 +114,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
     <summary>summary</summary>
     <description>description</description>
     <solution>solution</solution>
+    <reboot_suggested/>
     <references/>
     <pkglist/>
   </update>
@@ -349,6 +353,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
         rec.summary = "summary"
         rec.description = "description"
         rec.solution = "solution"
+        rec.reboot_suggested = True
         rec.append_collection(col)
         rec.append_reference(ref)
 
@@ -372,6 +377,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
     <summary>summary</summary>
     <description>description</description>
     <solution>solution</solution>
+    <reboot_suggested/>
     <references>
       <reference href="href" id="id" type="type" title="title"/>
     </references>

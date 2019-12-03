@@ -32,6 +32,7 @@ class TestCaseUpdateRecord(unittest.TestCase):
         self.assertEqual(rec.severity, None)
         self.assertEqual(rec.summary, None)
         self.assertEqual(rec.description, None)
+        self.assertEqual(rec.reboot_suggested, 0)
         self.assertEqual(rec.solution, None)
         self.assertEqual(rec.references, [])
         self.assertEqual(rec.collections, [])
@@ -60,6 +61,7 @@ class TestCaseUpdateRecord(unittest.TestCase):
         rec.severity = "severity"
         rec.summary = "summary"
         rec.description = "description"
+        rec.reboot_suggested = True
         rec.solution = "solution"
         rec.append_reference(ref)
         rec.append_collection(col)
@@ -77,6 +79,7 @@ class TestCaseUpdateRecord(unittest.TestCase):
         self.assertEqual(rec.pushcount, "pushcount")
         self.assertEqual(rec.severity, "severity")
         self.assertEqual(rec.summary, "summary")
+        self.assertEqual(rec.reboot_suggested, True)
         self.assertEqual(rec.description, "description")
         self.assertEqual(rec.solution, "solution")
         self.assertEqual(len(rec.references), 1)
@@ -115,6 +118,7 @@ class TestCaseUpdateRecord(unittest.TestCase):
         rec.summary = "summary"
         rec.description = "description"
         rec.solution = "solution"
+        rec.reboot_suggested = True
 
         xml = cr.xml_dump_updaterecord(rec)
         self.assertEqual(xml,
@@ -130,6 +134,7 @@ class TestCaseUpdateRecord(unittest.TestCase):
     <summary>summary</summary>
     <description>description</description>
     <solution>solution</solution>
+    <reboot_suggested/>
     <references/>
     <pkglist/>
   </update>

@@ -165,6 +165,9 @@ cr_xml_dump_updateinforecord_internal(xmlNodePtr root, cr_UpdateRecord *rec)
     cr_xmlNewTextChild_c(update, NULL, BAD_CAST "description", BAD_CAST rec->description);
     cr_xmlNewTextChild_c(update, NULL, BAD_CAST "solution", BAD_CAST rec->solution);
 
+    if (rec->reboot_suggested)
+        xmlNewChild(update, NULL, BAD_CAST "reboot_suggested", NULL);
+
     // References
     cr_xml_dump_updateinforecord_references(update, rec->references);
 

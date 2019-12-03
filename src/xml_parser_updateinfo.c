@@ -58,6 +58,7 @@ typedef enum {
     STATE_PACKAGE,
     STATE_FILENAME,
     STATE_SUM,
+    STATE_UPDATERECORD_REBOOTSUGGESTED,
     STATE_REBOOTSUGGESTED,
     STATE_RESTARTSUGGESTED, // Not implemented
     STATE_RELOGINSUGGESTED, // Not implemented
@@ -86,6 +87,7 @@ static cr_StatesSwitch stateswitches[] = {
     { STATE_UPDATE,     "message",           STATE_MESSAGE,           1 }, // NI
     { STATE_UPDATE,     "references",        STATE_REFERENCES,        0 },
     { STATE_UPDATE,     "pkglist",           STATE_PKGLIST,           0 },
+    { STATE_UPDATE,     "reboot_suggested",  STATE_UPDATERECORD_REBOOTSUGGESTED,0 },
     { STATE_REFERENCES, "reference",         STATE_REFERENCE,         0 },
     { STATE_PKGLIST,    "collection",        STATE_COLLECTION,        0 },
     { STATE_COLLECTION, "package",           STATE_PACKAGE,           0 },
@@ -360,6 +362,12 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
             package->sum_type = cr_checksum_type(val);
         break;
 
+    case STATE_UPDATERECORD_REBOOTSUGGESTED:
+        assert(pd->updateinfo);
+        assert(pd->updaterecord);
+        rec->reboot_suggested = TRUE;
+        break;
+
     case STATE_REBOOTSUGGESTED:
         assert(pd->updateinfo);
         assert(pd->updaterecord);
@@ -406,6 +414,7 @@ cr_end_handler(void *pdata, G_GNUC_UNUSED const char *element)
     case STATE_MODULE:
     case STATE_PKGLIST:
     case STATE_REBOOTSUGGESTED:
+    case STATE_UPDATERECORD_REBOOTSUGGESTED:
         // All elements with no text data and without need of any
         // post processing should go here
         break;

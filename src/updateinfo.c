@@ -249,6 +249,7 @@ cr_updaterecord_copy(const cr_UpdateRecord *orig)
     rec->summary = cr_safe_string_chunk_insert(rec->chunk, orig->summary);
     rec->description = cr_safe_string_chunk_insert(rec->chunk, orig->description);
     rec->solution = cr_safe_string_chunk_insert(rec->chunk, orig->solution);
+    rec->reboot_suggested = orig->reboot_suggested;
 
     if (orig->references) {
         GSList *newlist = NULL;

@@ -249,6 +249,16 @@ static ListConvertor list_convertors[] = {
 #define OFFSET(member) (void *) offsetof(cr_UpdateRecord, member)
 
 static PyObject *
+get_int(_UpdateRecordObject *self, void *member_offset)
+{
+    if (check_UpdateRecordStatus(self))
+        return NULL;
+    cr_UpdateRecord *rec = self->record;
+    gint64 val = *((int *) ((size_t) rec + (size_t) member_offset));
+    return PyLong_FromLongLong((long long) val);
+}
+
+static PyObject *
 get_str(_UpdateRecordObject *self, void *member_offset)
 {
     if (check_UpdateRecordStatus(self))
@@ -309,6 +319,29 @@ get_list(_UpdateRecordObject *self, void *conv)
     }
 
     return list;
+}
+
+static int
+set_int(_UpdateRecordObject *self, PyObject *value, void *member_offset)
+{
+    long val;
+    if (check_UpdateRecordStatus(self))
+        return -1;
+    if (PyLong_Check(value)) {
+        val = PyLong_AsLong(value);
+    } else if (PyFloat_Check(value)) {
+        val = (long long) PyFloat_AS_DOUBLE(value);
+#if PY_MAJOR_VERSION < 3
+    } else if (PyInt_Check(value)) {
+        val = PyInt_AS_LONG(value);
+#endif
+    } else {
+        PyErr_SetString(PyExc_TypeError, "Number expected!");
+        return -1;
+    }
+    cr_UpdateRecord *rec = self->record;
+    *((int *) ((size_t) rec + (size_t) member_offset)) = (int) val;
+    return 0;
 }
 
 static int
@@ -388,6 +421,8 @@ static PyGetSetDef updaterecord_getsetters[] = {
         "List of UpdateReferences", &(list_convertors[0])},
     {"collections",                 (getter)get_list, (setter)NULL,
         "List of UpdateCollections", &(list_convertors[1])},
+    {"reboot_suggested",            (getter)get_int, (setter)set_int,
+        "Suggested reboot",         OFFSET(reboot_suggested)},
     {NULL, NULL, NULL, NULL, NULL} /* sentinel */
 };
 

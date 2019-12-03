@@ -226,7 +226,7 @@ static PyGetSetDef updatecollectionpackage_getsetters[] = {
     {"sum_type",            (getter)get_int, (setter)set_int,
         "Type of checksum", OFFSET(sum_type)},
     {"reboot_suggested",    (getter)get_int, (setter)set_int,
-        "Size of the file", OFFSET(reboot_suggested)},
+        "Suggested reboot", OFFSET(reboot_suggested)},
     {NULL, NULL, NULL, NULL, NULL} /* sentinel */
 };
 

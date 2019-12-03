@@ -92,6 +92,7 @@ typedef struct {
     gchar *summary;     /*!< Short summary */
     gchar *description; /*!< Update description */
     gchar *solution;    /*!< Solution */
+    gboolean reboot_suggested; /*!< Reboot suggested */
 
     GSList *references; /*!< List of cr_UpdateReference */
     GSList *collections;/*!< List of cr_UpdateCollection */

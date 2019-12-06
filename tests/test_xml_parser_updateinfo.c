@@ -102,6 +102,7 @@ test_cr_xml_parse_updateinfo_01(void)
     g_assert_cmpstr(pkg->sum, ==, "29be985e1f652cd0a29ceed6a1c49964d3618bddd22f0be3292421c8777d26c8");
     g_assert_cmpint(pkg->sum_type, ==, CR_CHECKSUM_SHA256);
     g_assert(pkg->reboot_suggested);
+    g_assert(pkg->restart_suggested);
 
     cr_updateinfo_free(ui);
 }
@@ -166,6 +167,7 @@ test_cr_xml_parse_updateinfo_02(void)
     g_assert(!pkg->sum);
     g_assert_cmpint(pkg->sum_type, ==, CR_CHECKSUM_UNKNOWN);
     g_assert(!pkg->reboot_suggested);
+    g_assert(!pkg->restart_suggested);
 
     cr_updateinfo_free(ui);
 }

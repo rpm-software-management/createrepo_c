@@ -145,6 +145,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
         pkg.sum = "abcdef"
         pkg.sum_type = cr.SHA1
         pkg.reboot_suggested = True
+        pkg.restart_suggested = True
 
         col = cr.UpdateCollection()
         col.shortname = "short name"
@@ -208,6 +209,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
           <filename>foo.rpm</filename>
           <sum type="sha1">abcdef</sum>
           <reboot_suggested/>
+          <restart_suggested/>
         </package>
       </collection>
     </pkglist>
@@ -324,6 +326,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
         pkg.sum = "abcdef"
         pkg.sum_type = cr.SHA1
         pkg.reboot_suggested = True
+        pkg.restart_suggested = True
 
         col = cr.UpdateCollection()
         col.shortname = "short name"
@@ -389,6 +392,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
           <filename>foo.rpm</filename>
           <sum type="sha1">abcdef</sum>
           <reboot_suggested/>
+          <restart_suggested/>
         </package>
       </collection>
     </pkglist>

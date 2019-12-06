@@ -59,6 +59,7 @@ cr_updatecollectionpackage_copy(const cr_UpdateCollectionPackage *orig)
 
     pkg->sum_type = orig->sum_type;
     pkg->reboot_suggested = orig->reboot_suggested;
+    pkg->restart_suggested = orig->restart_suggested;
 
     return pkg;
 }

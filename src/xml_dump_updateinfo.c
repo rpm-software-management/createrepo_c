@@ -62,6 +62,8 @@ cr_xml_dump_updatecollectionpackages(xmlNodePtr collection, GSList *packages)
 
         if (pkg->reboot_suggested)
             xmlNewChild(package, NULL, BAD_CAST "reboot_suggested", NULL);
+        if (pkg->restart_suggested)
+            xmlNewChild(package, NULL, BAD_CAST "restart_suggested", NULL);
     }
 }
 

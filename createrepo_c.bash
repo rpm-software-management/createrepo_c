@@ -70,7 +70,7 @@ _cr_createrepo()
             --retain-old-md-by-age --cachedir --local-sqlite
             --cut-dirs --location-prefix
             --deltas --oldpackagedirs
-            --num-deltas --max-delta-rpm-size' -- "$2" ) )
+            --num-deltas --max-delta-rpm-size --recycle-pkglist' -- "$2" ) )
     else
         COMPREPLY=( $( compgen -d -- "$2" ) )
     fi

@@ -135,7 +135,8 @@ fill_pool(GThreadPool *pool,
     if (cmd_options->pkglist && !cmd_options->include_pkgs) {
         g_warning("Used pkglist doesn't contain any useful items");
     } else if (!(cmd_options->include_pkgs)) {
-        // --pkglist (or --includepkg) is not supplied -> do dir walk
+        // --pkglist (or --includepkg, or --recycle-pkglist) is not supplied
+        //  --> do dir walk
 
         g_message("Directory walk started");
 
@@ -440,6 +441,66 @@ error_check_and_set_content_stat(cr_CompressionTask *task, char *filename, int *
     }
 }
 
+static void
+load_old_metadata(cr_Metadata **md,
+                  struct cr_MetadataLocation **md_location,
+                  GSList *current_pkglist,
+                  struct CmdOptions *cmd_options,
+                  gchar *dir,
+                  GThreadPool *pool,
+                  GError *tmp_err)
+{
+    *md_location = cr_locate_metadata(dir, TRUE, &tmp_err);
+    if (tmp_err) {
+        if (tmp_err->domain == CRE_MODULEMD) {
+            g_thread_pool_free(pool, FALSE, FALSE);
+            g_clear_pointer(md_location, cr_metadatalocation_free);
+            g_critical("%s\n",tmp_err->message);
+            exit(tmp_err->code);
+        }
+    }
+
+    *md = cr_metadata_new(CR_HT_KEY_HREF, 1, current_pkglist);
+    cr_metadata_set_dupaction(*md, CR_HT_DUPACT_REMOVEALL);
+
+    int ret;
+
+    if (*md_location) {
+        ret = cr_metadata_load_xml(*md, *md_location, &tmp_err);
+        assert(ret == CRE_OK || tmp_err);
+
+        if (ret == CRE_OK) {
+            g_debug("Old metadata from: %s - loaded",
+                    (*md_location)->original_url);
+        } else {
+            g_debug("Old metadata from %s - loading failed: %s",
+                    (*md_location)->original_url, tmp_err->message);
+            g_clear_error(&tmp_err);
+        }
+    }
+
+    // Load repodata from --update-md-path
+    GSList *element = cmd_options->l_update_md_paths;
+    for (; element; element = g_slist_next(element)) {
+        char *path = (char *) element->data;
+        g_message("Loading metadata from md-path: %s", path);
+
+        ret = cr_metadata_locate_and_load_xml(*md, path, &tmp_err);
+        assert(ret == CRE_OK || tmp_err);
+
+        if (ret == CRE_OK) {
+            g_debug("Metadata from md-path %s - loaded", path);
+        } else {
+            g_warning("Metadata from md-path %s - loading failed: %s",
+                      path, tmp_err->message);
+            g_clear_error(&tmp_err);
+        }
+    }
+
+    g_message("Loaded information about %d packages",
+              g_hash_table_size(cr_metadata_hashtable(*md)));
+}
+
 int
 main(int argc, char **argv)
 {
@@ -602,6 +663,33 @@ main(int argc, char **argv)
     GSList *current_pkglist = NULL;
     /* ^^^ List with basenames of files which will be processed */
 
+    // Load old metadata if --update
+    struct cr_MetadataLocation *old_metadata_location = NULL;
+    cr_Metadata *old_metadata = NULL;
+
+    gchar *old_metadata_dir = cmd_options->outputdir ? out_dir : in_dir;
+
+    if (cmd_options->recycle_pkglist) {
+        // load the old metadata early, so we can read the list of RPMs
+        load_old_metadata(&old_metadata,
+                          &old_metadata_location,
+                          NULL /* no filter wanted in this case */,
+                          cmd_options,
+                          old_metadata_dir,
+                          pool,
+                          tmp_err);
+
+        GHashTableIter iter;
+        g_hash_table_iter_init(&iter, cr_metadata_hashtable(old_metadata));
+        gpointer pkg_pointer;
+        while (g_hash_table_iter_next(&iter, NULL, &pkg_pointer)) {
+            cr_Package *pkg = (cr_Package *)pkg_pointer;
+            cmd_options->include_pkgs = g_slist_prepend(
+                    cmd_options->include_pkgs,
+                    (gpointer) g_strdup(pkg->location_href));
+        }
+    }
+
     for (int media_id = 1; media_id < argc; media_id++ ) {
         gchar *tmp_in_dir = cr_normalize_dir_path(argv[media_id]);
         // Thread pool - Fill with tasks
@@ -617,69 +705,19 @@ main(int argc, char **argv)
     g_debug("Package count: %ld", task_count);
     g_message("Directory walk done - %ld packages", task_count);
 
-
-    // Load old metadata if --update
-    cr_Metadata *old_metadata = NULL;
-    struct cr_MetadataLocation *old_metadata_location = NULL;
-
-    if (!task_count)
-        g_debug("No packages found - skipping metadata loading");
-
-    if (task_count && cmd_options->update) {
-        int ret;
-        old_metadata = cr_metadata_new(CR_HT_KEY_HREF, 1, current_pkglist);
-        cr_metadata_set_dupaction(old_metadata, CR_HT_DUPACT_REMOVEALL);
-
-        if (cmd_options->outputdir)
-            old_metadata_location = cr_locate_metadata(out_dir, TRUE, &tmp_err);
+    if (cmd_options->update) {
+        if (old_metadata)
+            g_debug("Old metadata already loaded.");
+        else if (!task_count)
+            g_debug("No packages found - skipping metadata loading");
         else
-            old_metadata_location = cr_locate_metadata(in_dir, TRUE, &tmp_err);
-
-        if (tmp_err){
-            if (tmp_err->domain == CRE_MODULEMD){
-                g_thread_pool_free(pool, FALSE, FALSE);
-                g_clear_pointer(&old_metadata_location, cr_metadatalocation_free);
-                g_critical("%s\n",tmp_err->message);
-                exit(tmp_err->code);
-            }
-        }
-
-        if (old_metadata_location) {
-            ret = cr_metadata_load_xml(old_metadata,
-                                       old_metadata_location,
-                                       &tmp_err);
-            assert(ret == CRE_OK || tmp_err);
-
-            if (ret == CRE_OK) {
-                g_debug("Old metadata from: %s - loaded",
-                        old_metadata_location->original_url);
-            } else {
-                g_debug("Old metadata from %s - loading failed: %s",
-                        old_metadata_location->original_url, tmp_err->message);
-                g_clear_error(&tmp_err);
-            }
-        }
-
-        // Load repodata from --update-md-path
-        GSList *element = cmd_options->l_update_md_paths;
-        for (; element; element = g_slist_next(element)) {
-            char *path = (char *) element->data;
-            g_message("Loading metadata from md-path: %s", path);
-
-            ret = cr_metadata_locate_and_load_xml(old_metadata, path, &tmp_err);
-            assert(ret == CRE_OK || tmp_err);
-
-            if (ret == CRE_OK) {
-                g_debug("Metadata from md-path %s - loaded", path);
-            } else {
-                g_warning("Metadata from md-path %s - loading failed: %s",
-                          path, tmp_err->message);
-                g_clear_error(&tmp_err);
-            }
-        }
-
-        g_message("Loaded information about %d packages",
-                  g_hash_table_size(cr_metadata_hashtable(old_metadata)));
+            load_old_metadata(&old_metadata,
+                              &old_metadata_location,
+                              current_pkglist,
+                              cmd_options,
+                              old_metadata_dir,
+                              pool,
+                              tmp_err);
     }
 
     g_slist_free(current_pkglist);

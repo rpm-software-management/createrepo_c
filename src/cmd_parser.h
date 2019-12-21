@@ -136,6 +136,7 @@ struct CmdOptions {
     char *checksum_cachedir;    /*!< Path to cachedir */
     GSList *oldpackagedirs_paths; /*!< paths to look for older pkgs to delta against */
 
+    gboolean recycle_pkglist;
 };
 
 /**

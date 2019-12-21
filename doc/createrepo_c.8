@@ -90,6 +90,14 @@ Specify a text file which contains the complete list of files to include in the 
 .SS \-n \-\-includepkg PACKAGE
 .sp
 Specify pkgs to include on the command line. Takes urls as well as local paths.
+.SS \-\-recycle\-pkglist
+.sp
+Useful only with \fB\-\-update\fR.  Read the list of packages from old metadata,
+and reuse it instead of (perhaps expensive) directory traversal.  This doesn't
+collide with explicitly selected packages by \fB\-\-pkglist\fR or
+\fB\-\-includepkg\fR, such packages are appended to the recycled list.
+This option is useful for I/O optimal repo modifications (package removal by
+\fB\-\-exclude\fR, and additions with \fB\-\-pkglist\fR).
 .SS \-o \-\-outputdir URL
 .sp
 Optional output directory.

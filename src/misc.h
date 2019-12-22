@@ -139,6 +139,13 @@ struct cr_HeaderRangeStruct cr_get_header_byte_range(const char *filename,
  */
 char *cr_get_filename(const char *filepath);
 
+/** Return pointer to the rest of string after './' prefix.
+ * (e.g. for "././foo/bar" returns "foo/bar")
+ * @param filepath      path
+ * @return              pointer into the path
+ */
+char *cr_get_cleaned_href(const char *filepath);
+
 /** Download a file from the URL into the in_dst via curl handle.
  * @param handle        CURL handle
  * @param url           source url

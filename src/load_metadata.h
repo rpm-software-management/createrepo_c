@@ -62,6 +62,7 @@ typedef enum {
     CR_HT_KEY_NAME,                     /*!< pkg name (cr_Package ->name) */
     CR_HT_KEY_FILENAME,                 /*!< pkg filename (cr_Package
                                              ->location_href) */
+    CR_HT_KEY_HREF,                     /*!< pkg location */
     CR_HT_KEY_SENTINEL,                 /*!< last element, terminator, .. */
 } cr_HashTableKey;
 

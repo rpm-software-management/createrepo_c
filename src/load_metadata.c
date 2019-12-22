@@ -575,6 +575,9 @@ cr_metadata_load_xml(cr_Metadata *md,
             case CR_HT_KEY_FILENAME:
                 new_key = cr_get_filename(pkg->location_href);
                 break;
+            case CR_HT_KEY_HREF:
+                new_key = cr_get_cleaned_href(pkg->location_href);
+                break;
             case CR_HT_KEY_HASH:
                 new_key = pkg->pkgId;
                 break;

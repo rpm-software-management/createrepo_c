@@ -367,6 +367,21 @@ cr_get_filename(const char *filepath)
     return filename;
 }
 
+char *
+cr_get_cleaned_href(const char *filepath)
+{
+    char *filename;
+
+    if (!filepath)
+        return NULL;
+
+    filename = (char *) filepath;
+
+    while (filename[0] == '.' && filename[1] == '/')
+        filename += 2;
+
+    return filename;
+}
 
 gboolean
 cr_copy_file(const char *src, const char *in_dst, GError **err)

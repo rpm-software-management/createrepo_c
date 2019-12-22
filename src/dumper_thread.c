@@ -441,15 +441,17 @@ cr_dumper_thread(gpointer data, gpointer user_data)
 
     // Update stuff
     if (udata->old_metadata) {
+        char *cache_key = cr_get_cleaned_href(location_href);
+
         // We have old metadata
         g_mutex_lock(&(udata->mutex_old_md));
         md = (cr_Package *) g_hash_table_lookup(
                                 cr_metadata_hashtable(udata->old_metadata),
-                                task->filename);
+                                cache_key);
         // Remove the pkg from the hash table of old metadata, so that no other
         // thread can use it as CACHE, because later we modify it destructively
         g_hash_table_steal(cr_metadata_hashtable(udata->old_metadata),
-                                                 task->filename);
+                                                 cache_key);
         g_mutex_unlock(&(udata->mutex_old_md));
 
         if (md) {

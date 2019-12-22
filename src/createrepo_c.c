@@ -627,7 +627,7 @@ main(int argc, char **argv)
 
     if (task_count && cmd_options->update) {
         int ret;
-        old_metadata = cr_metadata_new(CR_HT_KEY_FILENAME, 1, current_pkglist);
+        old_metadata = cr_metadata_new(CR_HT_KEY_HREF, 1, current_pkglist);
         cr_metadata_set_dupaction(old_metadata, CR_HT_DUPACT_REMOVEALL);
 
         if (cmd_options->outputdir)

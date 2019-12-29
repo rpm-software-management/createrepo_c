@@ -243,7 +243,7 @@ fill_pool(GThreadPool *pool,
             else    // Use only a last part of the path
                 filename = relative_path + x + 1;
 
-            if (allowed_file(filename, cmd_options->exclude_masks)) {
+            if (allowed_file(relative_path, cmd_options->exclude_masks)) {
                 // Check filename against exclude glob masks
                 gchar *full_path = g_strconcat(in_dir, relative_path, NULL);
                 //     ^^^ /path/to/in_repo/packages/i386/foobar.rpm

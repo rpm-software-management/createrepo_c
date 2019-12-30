@@ -79,7 +79,7 @@ static GOptionEntry cmd_entries[] =
     { "verbose", 'v', 0, G_OPTION_ARG_NONE, &(_cmd_options.verbose),
       "Run verbosely.", NULL },
     { "excludes", 'x', 0, G_OPTION_ARG_FILENAME_ARRAY, &(_cmd_options.excludes),
-      "File globs to exclude, can be specified multiple times.", "PACKAGE_NAME_GLOB" },
+      "Path patterns to exclude, can be specified multiple times.", "PACKAGE_NAME_GLOB" },
     { "basedir", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.basedir),
       "Basedir for path to directories.", "BASEDIR" },
     { "baseurl", 'u', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.location_base),

@@ -47,7 +47,10 @@ Run quietly.
 Run verbosely.
 .SS \-x \-\-excludes PACKAGE_NAME_GLOB
 .sp
-File globs to exclude, can be specified multiple times.
+Path patterns to exclude, can be specified multiple times.  The patterns are
+matched against relative paths to RPMs.  Note that the feature uses
+\fBg\_pattern\_match()\fR function, not \fBglob()\fR, for semantic differences
+see https://developer.gnome.org/glib/stable/glib-Glob-style-pattern-matching.html
 .SS \-\-basedir BASEDIR
 .sp
 Basedir for path to directories.

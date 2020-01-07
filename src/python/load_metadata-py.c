@@ -148,8 +148,7 @@ load_xml(_MetadataObject *self, PyObject *args)
     if (check_MetadataStatus(self))
         return NULL;
 
-    cr_metadata_load_xml(self->md, MetadataLocation_FromPyObject(ml), &tmp_err);
-    if (tmp_err) {
+    if (cr_metadata_load_xml(self->md, MetadataLocation_FromPyObject(ml), &tmp_err) != CRE_OK) {
         nice_exception(&tmp_err, NULL);
         return NULL;
     }

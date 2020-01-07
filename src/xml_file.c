@@ -395,13 +395,12 @@ cr_rewrite_header_package_count(gchar *original_filename,
         if (zck_dict_file){
             gchar *zck_dict = NULL;
             size_t zck_dict_size = 0;
-            g_file_get_contents(zck_dict_file, &zck_dict, &zck_dict_size, &tmp_err);
-            if (!tmp_err)
+            if (g_file_get_contents(zck_dict_file, &zck_dict, &zck_dict_size, &tmp_err)){
                 cr_set_dict(new_file->f, zck_dict, zck_dict_size, &tmp_err);
-            if (tmp_err) {
+            } else {
                 g_propagate_prefixed_error(err, tmp_err, "Error encountered setting zck dict:");
                 cr_xmlfile_close(new_file, NULL);
-                cr_close(original_file, NULL); 
+                cr_close(original_file, NULL);
                 g_free(tmp_xml_filename);
                 return;
             }

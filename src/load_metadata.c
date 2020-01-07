@@ -682,9 +682,6 @@ cr_metadata_locate_and_load_xml(cr_Metadata *md,
     }
 
     ret = cr_metadata_load_xml(md, ml, err);
-    if (ret != CRE_OK) {
-        return ret;
-    }
 
     cr_metadatalocation_free(ml);
 

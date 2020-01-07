@@ -951,7 +951,7 @@ int
 cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
 {
     int bzerror;
-    int ret;
+    int ret = CR_CW_ERR;
 
     assert(cr_file);
     assert(buffer);

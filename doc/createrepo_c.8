@@ -77,7 +77,7 @@ Do not generate sqlite databases in the repository.
 If metadata already exists in the outputdir and an rpm is unchanged (based on file size and mtime) since the metadata was generated, reuse the existing metadata rather than recalculating it. In the case of a large repository with only a few new or modified rpms this can significantly reduce I/O and processing time.
 .SS \-\-update\-md\-path
 .sp
-Use the existing repodata for \-\-update from this path.
+Existing metadata from this path are loaded and reused in addition to those present in the outputdir (works only with \-\-update). Can be specified multiple times.
 .SS \-\-skip\-stat
 .sp
 Skip the stat() call on a \-\-update, assumes if the filename is the same then the file is still the same (only use this if you\(aqre fairly trusting or gullible).

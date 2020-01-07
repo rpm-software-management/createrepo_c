@@ -104,7 +104,8 @@ static GOptionEntry cmd_entries[] =
       "large repository with only a few new or modified rpms "
       "this can significantly reduce I/O and processing time.", NULL },
     { "update-md-path", 0, 0, G_OPTION_ARG_FILENAME_ARRAY, &(_cmd_options.update_md_paths),
-      "Use the existing repodata for --update from this path.", NULL },
+      "Existing metadata from this path are loaded and reused in addition to those "
+      "present in the outputdir (works only with --update). Can be specified multiple times.", NULL },
     { "skip-stat", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.skip_stat),
       "Skip the stat() call on a --update, assumes if the filename is the same "
       "then the file is still the same (only use this if you're fairly "

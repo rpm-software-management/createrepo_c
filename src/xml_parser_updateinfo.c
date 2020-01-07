@@ -281,6 +281,8 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         assert(!pd->updatecollectionpackage);
 
         module = cr_updatecollectionmodule_new();
+        assert(module);
+
         if (module)
             collection->module = module;
 
@@ -323,6 +325,8 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         assert(!pd->updatecollectionpackage);
 
         package = cr_updatecollectionpackage_new();
+        assert(package);
+
         cr_updatecollection_append_package(collection, package);
         pd->updatecollectionpackage = package;
 

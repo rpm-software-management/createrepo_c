@@ -943,6 +943,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         cr_contentstat_free(pri_stat, NULL);
         cr_contentstat_free(fil_stat, NULL);
         cr_contentstat_free(oth_stat, NULL);
+        cr_contentstat_free(pri_zck_stat, NULL);
+        cr_contentstat_free(fil_zck_stat, NULL);
+        cr_contentstat_free(oth_zck_stat, NULL);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
@@ -960,6 +963,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         cr_contentstat_free(pri_stat, NULL);
         cr_contentstat_free(fil_stat, NULL);
         cr_contentstat_free(oth_stat, NULL);
+        cr_contentstat_free(pri_zck_stat, NULL);
+        cr_contentstat_free(fil_zck_stat, NULL);
+        cr_contentstat_free(oth_zck_stat, NULL);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
@@ -978,6 +984,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         cr_contentstat_free(pri_stat, NULL);
         cr_contentstat_free(fil_stat, NULL);
         cr_contentstat_free(oth_stat, NULL);
+        cr_contentstat_free(pri_zck_stat, NULL);
+        cr_contentstat_free(fil_zck_stat, NULL);
+        cr_contentstat_free(oth_zck_stat, NULL);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);

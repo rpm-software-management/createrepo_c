@@ -355,8 +355,11 @@ cr_locate_metadata(const char *repopath, gboolean ignore_sqlite, GError **err)
         ret = cr_get_local_metadata(repopath, ignore_sqlite);
     }
 
-    if (ret)
+    if (ret) {
         ret->original_url = g_strdup(repopath);
+    } else {
+        g_set_error(err, ERR_DOMAIN, CRE_IO, "Metadata not found at %s.", repopath);
+    }
 
 #ifndef WITH_LIBMODULEMD
     if (ret) {

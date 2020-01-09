@@ -457,6 +457,9 @@ load_old_metadata(cr_Metadata **md,
             g_clear_pointer(md_location, cr_metadatalocation_free);
             g_critical("%s\n",tmp_err->message);
             exit(tmp_err->code);
+        } else {
+            g_debug("Old metadata from default outputdir not found: %s",tmp_err->message);
+            g_clear_error(&tmp_err);
         }
     }
 

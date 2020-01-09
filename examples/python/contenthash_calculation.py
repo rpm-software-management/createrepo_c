@@ -41,11 +41,11 @@ def calculate_contenthash(path):
 
     contenthash = hashlib.new("sha256")
     for pkgid in sorted(pkgids):
-        contenthash.update(pkgid)
+        contenthash.update(pkgid.encode('utf-8'))
     return contenthash.hexdigest()
 
 if __name__ == "__main__":
     path = REPO_PATH
     if len(sys.argv) == 2:
         path = sys.argv[1]
-    print calculate_contenthash(path)
+    print(calculate_contenthash(path))

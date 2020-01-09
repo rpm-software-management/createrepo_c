@@ -21,12 +21,12 @@ def modifyrepo(filename, repodata):
     repomd_xml = os.path.join(repodata, 'repomd.xml')
     repomd = cr.Repomd(repomd_xml)
     repomd.set_record(uinfo_rec)
-    with file(repomd_xml, 'w') as repomd_file:
+    with open(repomd_xml, 'w') as repomd_file:
         repomd_file.write(repomd.xml_dump())
 
 
 if __name__ == '__main__':
     # Generate the updateinfo.xml
-    execfile('updateinfo_gen_02.py')
+    exec(open("./updateinfo_gen_02.py").read())
 
     modifyrepo(OUT_FILE, REPO_PATH)

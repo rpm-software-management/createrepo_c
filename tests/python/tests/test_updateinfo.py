@@ -114,7 +114,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
     <summary>summary</summary>
     <description>description</description>
     <solution>solution</solution>
-    <reboot_suggested/>
+    <reboot_suggested>True</reboot_suggested>
     <references/>
     <pkglist/>
   </update>
@@ -208,8 +208,8 @@ class TestCaseUpdateInfo(unittest.TestCase):
         <package name="foo" version="1.2" release="3" epoch="0" arch="x86" src="foo.src.rpm">
           <filename>foo.rpm</filename>
           <sum type="sha1">abcdef</sum>
-          <reboot_suggested/>
-          <restart_suggested/>
+          <reboot_suggested>True</reboot_suggested>
+          <restart_suggested>True</restart_suggested>
         </package>
       </collection>
     </pkglist>
@@ -295,7 +295,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
         <package name="foo" version="1.2" release="3" epoch="0" arch="x86" src="foo.src.rpm">
           <filename>foo.rpm</filename>
           <sum type="sha1">abcdef</sum>
-          <reboot_suggested/>
+          <reboot_suggested>True</reboot_suggested>
         </package>
       </collection>
     </pkglist>
@@ -380,7 +380,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
     <summary>summary</summary>
     <description>description</description>
     <solution>solution</solution>
-    <reboot_suggested/>
+    <reboot_suggested>True</reboot_suggested>
     <references>
       <reference href="href" id="id" type="type" title="title"/>
     </references>
@@ -391,8 +391,8 @@ class TestCaseUpdateInfo(unittest.TestCase):
         <package name="foo" version="1.2" release="3" epoch="0" arch="x86" src="foo.src.rpm">
           <filename>foo.rpm</filename>
           <sum type="sha1">abcdef</sum>
-          <reboot_suggested/>
-          <restart_suggested/>
+          <reboot_suggested>True</reboot_suggested>
+          <restart_suggested>True</restart_suggested>
         </package>
       </collection>
     </pkglist>

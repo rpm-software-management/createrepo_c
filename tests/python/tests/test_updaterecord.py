@@ -134,7 +134,7 @@ class TestCaseUpdateRecord(unittest.TestCase):
     <summary>summary</summary>
     <description>description</description>
     <solution>solution</solution>
-    <reboot_suggested/>
+    <reboot_suggested>True</reboot_suggested>
     <references/>
     <pkglist/>
   </update>

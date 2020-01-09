@@ -61,9 +61,9 @@ cr_xml_dump_updatecollectionpackages(xmlNodePtr collection, GSList *packages)
         }
 
         if (pkg->reboot_suggested)
-            xmlNewChild(package, NULL, BAD_CAST "reboot_suggested", NULL);
+            xmlNewChild(package, NULL, BAD_CAST "reboot_suggested", "True");
         if (pkg->restart_suggested)
-            xmlNewChild(package, NULL, BAD_CAST "restart_suggested", NULL);
+            xmlNewChild(package, NULL, BAD_CAST "restart_suggested", "True");
     }
 }
 
@@ -168,7 +168,7 @@ cr_xml_dump_updateinforecord_internal(xmlNodePtr root, cr_UpdateRecord *rec)
     cr_xmlNewTextChild_c(update, NULL, BAD_CAST "solution", BAD_CAST rec->solution);
 
     if (rec->reboot_suggested)
-        xmlNewChild(update, NULL, BAD_CAST "reboot_suggested", NULL);
+        xmlNewChild(update, NULL, BAD_CAST "reboot_suggested", "True");
 
     // References
     cr_xml_dump_updateinforecord_references(update, rec->references);

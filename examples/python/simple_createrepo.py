@@ -50,7 +50,7 @@ def do_repodata(path):
     for filename in pkg_list:
         pkg = cr.package_from_rpm(filename)
         pkg.location_href = os.path.basename(filename)
-        print "Processing: %s" % pkg.nevra()
+        print("Processing: %s" % pkg.nevra())
         pri_xml.add_pkg(pkg)
         fil_xml.add_pkg(pkg)
         oth_xml.add_pkg(pkg)
@@ -90,9 +90,9 @@ def do_repodata(path):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2 or not os.path.isdir(sys.argv[1]):
-        print "Usage: %s <directory>" % (sys.argv[0])
+        print("Usage: %s <directory>" % (sys.argv[0]))
         sys.exit(1)
 
     do_repodata(sys.argv[1])
 
-    print "Repository created in %s" % sys.argv[1]
+    print("Repository created in %s" % sys.argv[1])

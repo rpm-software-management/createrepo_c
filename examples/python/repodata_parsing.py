@@ -11,70 +11,70 @@ REPO_PATH = "repo/"
 def print_package_info(pkg):
     def print_pcors(lst, requires=False):
         for item in lst:
-            print "    Name: %s" % item[cr.PCOR_ENTRY_NAME]
-            print "    Flags: %s" % item[cr.PCOR_ENTRY_FLAGS]
-            print "    Epoch: %s" % item[cr.PCOR_ENTRY_EPOCH]
-            print "    Version: %s" % item[cr.PCOR_ENTRY_VERSION]
-            print "    Release: %s" % item[cr.PCOR_ENTRY_RELEASE]
+            print("    Name: %s" % item[cr.PCOR_ENTRY_NAME])
+            print("    Flags: %s" % item[cr.PCOR_ENTRY_FLAGS])
+            print("    Epoch: %s" % item[cr.PCOR_ENTRY_EPOCH])
+            print("    Version: %s" % item[cr.PCOR_ENTRY_VERSION])
+            print("    Release: %s" % item[cr.PCOR_ENTRY_RELEASE])
             if requires:
-                print "    Pre: %s" % item[cr.PCOR_ENTRY_PRE]
-            print "    +-----------------------------------+"
+                print("    Pre: %s" % item[cr.PCOR_ENTRY_PRE])
+            print("    +-----------------------------------+")
 
     def print_files(lst):
         for item in lst:
-            print "    Name: %s" % item[cr.FILE_ENTRY_NAME]
-            print "    Path: %s" % item[cr.FILE_ENTRY_PATH]
-            print "    Type: %s" % item[cr.FILE_ENTRY_TYPE]
-            print "    +-----------------------------------+"
+            print("    Name: %s" % item[cr.FILE_ENTRY_NAME])
+            print("    Path: %s" % item[cr.FILE_ENTRY_PATH])
+            print("    Type: %s" % item[cr.FILE_ENTRY_TYPE])
+            print("    +-----------------------------------+")
 
     def print_changelogs(lst):
         for item in lst:
-            print "    Author: %s" % item[cr.CHANGELOG_ENTRY_AUTHOR]
-            print "    Date: %s" % item[cr.CHANGELOG_ENTRY_DATE]
-            print "    Changelog: %s" % item[cr.CHANGELOG_ENTRY_CHANGELOG]
-            print "    +-----------------------------------+"
+            print("    Author: %s" % item[cr.CHANGELOG_ENTRY_AUTHOR])
+            print("    Date: %s" % item[cr.CHANGELOG_ENTRY_DATE])
+            print("    Changelog: %s" % item[cr.CHANGELOG_ENTRY_CHANGELOG])
+            print("    +-----------------------------------+")
 
-    print "+=======================================+"
-    print "  %s" % pkg.name
-    print "+=======================================+"
-    print "NEVRA: %s" % pkg.nevra()
-    print "NVRA: %s" % pkg.nvra()
-    print "Name: %s" % pkg.name
-    print "Checksum (pkgId): %s" % pkg.pkgId
-    print "Checksum type: %s" % pkg.checksum_type
-    print "Arch: %s" % pkg.arch
-    print "Version: %s" % pkg.version
-    print "Epoch: %s" % pkg.epoch
-    print "Release: %s" % pkg.release
-    print "Summary: %s" % pkg.summary
-    print "Description: %s" % pkg.description
-    print "URL: %s" % pkg.url
-    print "Time file: %s" % pkg.time_file
-    print "Time build: %s" % pkg.time_build
-    print "License: %s" % pkg.rpm_license
-    print "Vendor: %s" % pkg.rpm_vendor
-    print "Group: %s" % pkg.rpm_group
-    print "Buildhost: %s" % pkg.rpm_buildhost
-    print "Source RPM: %s" % pkg.rpm_sourcerpm
-    print "Header start: %s" % pkg.rpm_header_start
-    print "Header end: %s" % pkg.rpm_header_end
-    print "Packager: %s" % pkg.rpm_packager
-    print "Size package: %s" % pkg.size_package
-    print "Size installed: %s" % pkg.size_installed
-    print "Size archive: %s" % pkg.size_archive
-    print "Location href: %s" % pkg.location_href
-    print "Location base: %s" % pkg.location_base
-    print "Requires:"
+    print("+=======================================+")
+    print("  %s" % pkg.name)
+    print("+=======================================+")
+    print("NEVRA: %s" % pkg.nevra())
+    print("NVRA: %s" % pkg.nvra())
+    print("Name: %s" % pkg.name)
+    print("Checksum (pkgId): %s" % pkg.pkgId)
+    print("Checksum type: %s" % pkg.checksum_type)
+    print("Arch: %s" % pkg.arch)
+    print("Version: %s" % pkg.version)
+    print("Epoch: %s" % pkg.epoch)
+    print("Release: %s" % pkg.release)
+    print("Summary: %s" % pkg.summary)
+    print("Description: %s" % pkg.description)
+    print("URL: %s" % pkg.url)
+    print("Time file: %s" % pkg.time_file)
+    print("Time build: %s" % pkg.time_build)
+    print("License: %s" % pkg.rpm_license)
+    print("Vendor: %s" % pkg.rpm_vendor)
+    print("Group: %s" % pkg.rpm_group)
+    print("Buildhost: %s" % pkg.rpm_buildhost)
+    print("Source RPM: %s" % pkg.rpm_sourcerpm)
+    print("Header start: %s" % pkg.rpm_header_start)
+    print("Header end: %s" % pkg.rpm_header_end)
+    print("Packager: %s" % pkg.rpm_packager)
+    print("Size package: %s" % pkg.size_package)
+    print("Size installed: %s" % pkg.size_installed)
+    print("Size archive: %s" % pkg.size_archive)
+    print("Location href: %s" % pkg.location_href)
+    print("Location base: %s" % pkg.location_base)
+    print("Requires:")
     print_pcors(pkg.requires, requires=True)
-    print "Provides:"
+    print("Provides:")
     print_pcors(pkg.provides)
-    print "Conflicts:"
+    print("Conflicts:")
     print_pcors(pkg.conflicts)
-    print "Obsoletes:"
+    print("Obsoletes:")
     print_pcors(pkg.obsoletes)
-    print "Files:"
+    print("Files:")
     print_files(pkg.files)
-    print "Changelogs:"
+    print("Changelogs:")
     print_changelogs(pkg.changelogs)
 
 def first_method():
@@ -156,7 +156,7 @@ def second_method():
                              the XML_WARNING_* constants.
         :param message: String message.
         """
-        print "PARSER WARNING: %s" % message
+        print("PARSER WARNING: %s" % message)
         return True
 
     repomd2 = cr.Repomd()
@@ -208,16 +208,16 @@ def second_method():
                        newpkgcb=newpkgcb,
                        warningcb=warningcb)
 
-    for pkg in packages.itervalues():
+    for pkg in packages.values():
         print_package_info(pkg)
 
 
 if __name__ == "__main__":
-    print '"All in one shot" method:'
+    print('"All in one shot" method:')
     first_method()
 
-    print
+    print()
 
-    print "Callback based method:"
+    print("Callback based method:")
     second_method()
 

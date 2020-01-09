@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import datetime
 import createrepo_c as cr
@@ -46,7 +46,7 @@ def generate():
     ui = cr.UpdateInfo()
     ui.append(rec)
 
-    print ui.xml_dump(),
+    print(ui.xml_dump())
 
 if __name__ == "__main__":
     generate()

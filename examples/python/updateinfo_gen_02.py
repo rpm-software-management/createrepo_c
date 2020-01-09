@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import datetime
 import createrepo_c as cr
@@ -50,7 +50,7 @@ def generate():
     f.add_chunk(chunk)
     f.close()
 
-    print "See the %s" % OUT_FILE
+    print("See the %s" % OUT_FILE)
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import sys
 import re
@@ -70,13 +70,13 @@ def parse_arguments_from_c_file(filename):
     try:
         content = open(filename, "r").read()
     except IOError:
-        print "Error: Cannot open file %s" % filename
+        print("Error: Cannot open file %s" % filename)
         return args
 
     re_cmd_entries = re.compile(r"\s*(static|const)[ ]+GOptionEntry[^{]*{(?P<entries>.*)\s*NULL\s*}[,]?\s*};", re.MULTILINE|re.DOTALL)
     match = re_cmd_entries.search(content)
     if not match:
-        print "Warning: Cannot find GOptionEntry section in %s" % filename
+        print("Warning: Cannot find GOptionEntry section in %s" % filename)
         return args
 
     re_single_entry = re.compile(r"""{\s*"(?P<long_name>[^"]*)"\s*,        # long name
@@ -134,7 +134,7 @@ def parse_arguments_from_c_file(filename):
         entry_match = re_single_entry.search(raw_entries_str[start:])
     # End while
 
-    print >> sys.stderr, "Loaded %2d arguments" % (i,)
+    print("Loaded %2d arguments" % (i,), file=sys.stderr)
     return args
 
 
@@ -147,7 +147,7 @@ if __name__ == "__main__":
     options, args = parser.parse_args()
 
     if len(args) < 1:
-        print >> sys.stderr, "Error: Must specify a input filename. (Example: ../src/cmd_parser.c)"
+        print("Error: Must specify a input filename. (Example: ../src/cmd_parser.c)", file=sys.stderr)
         sys.exit(1)
 
     args = parse_arguments_from_c_file(args[0])
@@ -181,7 +181,7 @@ if __name__ == "__main__":
 
     ret = info.gen_rst()
     if not ret:
-        print >> sys.stderr, "Error: Rst has not been generated"
+        print("Error: Rst has not been generated", file=sys.stderr)
         sys.exit(1)
 
-    print ret
+    print(ret)

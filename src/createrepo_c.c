@@ -1208,12 +1208,12 @@ main(int argc, char **argv)
         GThreadPool *rewrite_pkg_count_pool = g_thread_pool_new(cr_rewrite_pkg_count_thread,
                                                                 &user_data, 3, FALSE, NULL);
 
-        cr_CompressionTask *pri_rewrite_pkg_count_task;
-        cr_CompressionTask *fil_rewrite_pkg_count_task;
-        cr_CompressionTask *oth_rewrite_pkg_count_task;
-        cr_CompressionTask *pri_zck_rewrite_pkg_count_task;
-        cr_CompressionTask *fil_zck_rewrite_pkg_count_task;
-        cr_CompressionTask *oth_zck_rewrite_pkg_count_task;
+        cr_CompressionTask *pri_rewrite_pkg_count_task     = NULL;
+        cr_CompressionTask *fil_rewrite_pkg_count_task     = NULL;
+        cr_CompressionTask *oth_rewrite_pkg_count_task     = NULL;
+        cr_CompressionTask *pri_zck_rewrite_pkg_count_task = NULL;
+        cr_CompressionTask *fil_zck_rewrite_pkg_count_task = NULL;
+        cr_CompressionTask *oth_zck_rewrite_pkg_count_task = NULL;
 
         pri_rewrite_pkg_count_task = cr_compressiontask_new(pri_xml_filename,
                                                             NULL,

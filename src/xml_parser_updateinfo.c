@@ -145,7 +145,6 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
     // Shortcuts
     cr_UpdateRecord *rec = pd->updaterecord;
     cr_UpdateCollection *collection = pd->updatecollection;
-    cr_UpdateCollectionModule *module = pd->updatecollectionmodule;
     cr_UpdateCollectionPackage *package = pd->updatecollectionpackage;
 
     switch(pd->state) {
@@ -280,7 +279,7 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
         assert(!pd->updatecollectionmodule);
         assert(!pd->updatecollectionpackage);
 
-        module = cr_updatecollectionmodule_new();
+        cr_UpdateCollectionModule *module = cr_updatecollectionmodule_new();
         assert(module);
 
         if (module)

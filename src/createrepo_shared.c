@@ -65,6 +65,7 @@ static void
 sigint_catcher(int sig)
 {
     g_message("%s catched: Terminating...", strsignal(sig));
+    *global_exit_status = 1;
     exit(1);
 }
 

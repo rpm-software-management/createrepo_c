@@ -287,8 +287,16 @@ get_datetime(_UpdateRecordObject *self, void *member_offset)
     if (res == NULL) {
         memset(dt, 0, sizeof(struct tm));
         res = strptime(str, "%Y-%m-%d", dt);
-        if (res == NULL)
-           PyErr_SetString(CrErr_Exception, "Invalid date");
+        if (res == NULL) {
+            // Try to convert the whole string to a number if it passes it's likely in epoch format
+            char *t;
+            long long int epoch = strtoll(str, &t, 10);
+            if(*t == '\0') {
+                return PyLong_FromLongLong(epoch);
+            } else {
+                PyErr_SetString(CrErr_Exception, "Invalid date");
+            }
+        }
     }
     PyObject *py_dt = PyDateTime_FromDateAndTime(dt->tm_year + 1900,
                                       dt->tm_mon + 1, dt->tm_mday,
@@ -367,11 +375,29 @@ set_datetime(_UpdateRecordObject *self, PyObject *value, void *member_offset)
 
     if (check_UpdateRecordStatus(self))
         return -1;
+
+    cr_UpdateRecord *rec = self->record;
+
+    if (PyLong_Check(value)) {
+        size_t epoch = PyLong_AsSize_t(value);
+        /* Length 13 is plenty of space for epoch. */
+        char *date = malloc(13 * sizeof(char));
+
+        int ret = snprintf(date, 13, "%zu", epoch);
+        if (ret < 0 && ret > 12){
+            PyErr_SetString(PyExc_TypeError, "Invalid epoch value!");
+            return -1;
+        }
+        char *str = cr_safe_string_chunk_insert(rec->chunk, date);
+        free(date);
+        *((char **) ((size_t) rec + (size_t) member_offset)) = str;
+        return 0;
+    }
+
     if (!PyDateTime_Check(value) && value != Py_None) {
-        PyErr_SetString(PyExc_TypeError, "DateTime or None expected!");
+        PyErr_SetString(PyExc_TypeError, "DateTime, integer epoch or None expected!");
         return -1;
     }
-    cr_UpdateRecord *rec = self->record;
 
     /* Length is 20: yyyy-mm-dd HH:MM:SS */
     char *date = malloc(20 * sizeof(char));

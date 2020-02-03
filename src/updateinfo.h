@@ -47,6 +47,7 @@ typedef struct {
     cr_ChecksumType sum_type;
     gboolean reboot_suggested;
     gboolean restart_suggested;
+    gboolean relogin_suggested;
 
     GStringChunk *chunk;
 } cr_UpdateCollectionPackage;

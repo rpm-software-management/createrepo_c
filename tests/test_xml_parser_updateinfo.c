@@ -103,6 +103,7 @@ test_cr_xml_parse_updateinfo_01(void)
     g_assert_cmpint(pkg->sum_type, ==, CR_CHECKSUM_SHA256);
     g_assert(pkg->reboot_suggested);
     g_assert(pkg->restart_suggested);
+    g_assert(pkg->relogin_suggested);
 
     cr_updateinfo_free(ui);
 }
@@ -168,6 +169,7 @@ test_cr_xml_parse_updateinfo_02(void)
     g_assert_cmpint(pkg->sum_type, ==, CR_CHECKSUM_UNKNOWN);
     g_assert(!pkg->reboot_suggested);
     g_assert(!pkg->restart_suggested);
+    g_assert(!pkg->relogin_suggested);
 
     cr_updateinfo_free(ui);
 }

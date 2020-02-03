@@ -24,6 +24,7 @@
           <sum type="sha256">29be985e1f652cd0a29ceed6a1c49964d3618bddd22f0be3292421c8777d26c8</sum>
           <reboot_suggested/>
           <restart_suggested/>
+          <relogin_suggested/>
         </package>
       </collection>
     </pkglist>

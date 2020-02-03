@@ -146,6 +146,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
         pkg.sum_type = cr.SHA1
         pkg.reboot_suggested = True
         pkg.restart_suggested = True
+        pkg.relogin_suggested = True
 
         col = cr.UpdateCollection()
         col.shortname = "short name"
@@ -210,6 +211,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
           <sum type="sha1">abcdef</sum>
           <reboot_suggested>True</reboot_suggested>
           <restart_suggested>True</restart_suggested>
+          <relogin_suggested>True</relogin_suggested>
         </package>
       </collection>
     </pkglist>
@@ -327,6 +329,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
         pkg.sum_type = cr.SHA1
         pkg.reboot_suggested = True
         pkg.restart_suggested = True
+        pkg.relogin_suggested = True
 
         col = cr.UpdateCollection()
         col.shortname = "short name"
@@ -393,6 +396,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
           <sum type="sha1">abcdef</sum>
           <reboot_suggested>True</reboot_suggested>
           <restart_suggested>True</restart_suggested>
+          <relogin_suggested>True</relogin_suggested>
         </package>
       </collection>
     </pkglist>

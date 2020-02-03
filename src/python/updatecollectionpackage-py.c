@@ -229,6 +229,8 @@ static PyGetSetDef updatecollectionpackage_getsetters[] = {
         "Suggested reboot", OFFSET(reboot_suggested)},
     {"restart_suggested",   (getter)get_int, (setter)set_int,
         "Suggested restart",OFFSET(restart_suggested)},
+    {"relogin_suggested",   (getter)get_int, (setter)set_int,
+        "Suggested relogin",OFFSET(relogin_suggested)},
     {NULL, NULL, NULL, NULL, NULL} /* sentinel */
 };
 

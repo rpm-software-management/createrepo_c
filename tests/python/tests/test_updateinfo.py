@@ -62,6 +62,14 @@ class TestCaseUpdateInfo(unittest.TestCase):
         self.assertEqual(len(rec.references), 0)
         self.assertEqual(len(rec.collections), 0)
 
+        rec = cr.UpdateRecord()
+        rec.issued_date = int(now.timestamp())
+        ui.append(rec)
+
+        self.assertEqual(len(ui.updates), 2)
+        rec = ui.updates[1]
+        self.assertEqual(rec.issued_date, int(now.timestamp()))
+
     def test_updateinfo_xml_dump_01(self):
         ui = cr.UpdateInfo()
         xml = ui.xml_dump()
@@ -350,7 +358,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
         rec.version = "version"
         rec.id = "id"
         rec.title = "title"
-        rec.issued_date = now
+        rec.issued_date = int(now.timestamp())
         rec.updated_date = now
         rec.rights = "rights"
         rec.release = "release"
@@ -374,7 +382,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
   <update from="from" status="status" type="type" version="version">
     <id>id</id>
     <title>title</title>
-    <issued date="%(now)s"/>
+    <issued date="%(now_epoch)s"/>
     <updated date="%(now)s"/>
     <rights>rights</rights>
     <release>release</release>
@@ -402,4 +410,4 @@ class TestCaseUpdateInfo(unittest.TestCase):
     </pkglist>
   </update>
 </updates>
-""" % {"now": now.strftime("%Y-%m-%d %H:%M:%S")})
+""" % {"now": now.strftime("%Y-%m-%d %H:%M:%S"), "now_epoch": now.strftime('%s')})

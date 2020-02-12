@@ -260,6 +260,12 @@ test_cr_xml_parse_updateinfo_03(void)
     g_assert_cmpstr(pkg->version, ==, "0.7");
     g_assert_cmpstr(pkg->filename, ==, "duck-0.7-1.noarch.rpm");
 
+    update = g_slist_nth_data(ui->updates, 5);
+
+    g_assert_cmpstr(update->id, ==, "RHEA-2012:0060");
+    g_assert_cmpstr(update->issued_date, ==, "1555429284");
+    g_assert_cmpstr(update->updated_date, ==, "2018-07-29 06:00:01 UTC");
+
     cr_updateinfo_free(ui);
 }
 

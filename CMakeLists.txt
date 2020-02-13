@@ -47,9 +47,13 @@ find_package(ZLIB REQUIRED)
 
 # Add include dirs
 
+include_directories(${BZIP2_INCLUDE_DIRS})
+include_directories(${CURL_INCLUDE_DIRS})
+include_directories(${EXPAT_INCLUDE_DIRS})
 include_directories(${GLIB2_INCLUDE_DIRS})
 include_directories(${LIBXML2_INCLUDE_DIR})
 include_directories(${OPENSSL_INCLUDE_DIR})
+include_directories(${ZLIB_INCLUDE_DIR})
 
 
 IF (RPM_PATH)

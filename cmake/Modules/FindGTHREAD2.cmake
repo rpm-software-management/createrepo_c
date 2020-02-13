@@ -1,58 +1,78 @@
-# - Try to find GThread2 
-# Find GThread headers, libraries and the answer to all questions.
+#.rst:
+# FindGTHREAD2
+# ---------
 #
-#  GTHREAD2_FOUND               True if GTHREAD2 got found
-#  GTHREAD2_INCLUDE_DIRS        Location of GTHREAD2 headers 
-#  GTHREAD2_LIBRARIES           List of libraries to use GTHREAD2 
+# Try to locate the GThread2 library.
+# If found, this will define the following variables:
 #
-#  Copyright (c) 2008 Bjoern Ricks <bjoern.ricks@googlemail.com>
+# ``GTHREAD2_FOUND``
+#     True if the GThread2 library is available
+# ``GTHREAD2_INCLUDE_DIRS``
+#     The GThread2 include directories
+# ``GTHREAD2_LIBRARIES``
+#     The GThread2 libraries for linking
+# ``GTHREAD2_INCLUDE_DIR``
+#     Deprecated, use ``GTHREAD2_INCLUDE_DIRS``
+# ``GTHREAD2_LIBRARY``
+#     Deprecated, use ``GTHREAD2_LIBRARIES``
 #
-#  Redistribution and use is allowed according to the terms of the New
-#  BSD license.
-#  For details see the accompanying COPYING-CMAKE-SCRIPTS file.
+# If ``GTHREAD2_FOUND`` is TRUE, it will also define the following
+# imported target:
 #
+# ``GTHREAD2::GTHREAD2``
+#     The GTHREAD2 library
 
-INCLUDE( FindPkgConfig )
+#=============================================================================
+# Copyright (c) 2008 Laurent Montel, <montel@kde.org>
+# Copyright (c) 2020 Dmitry Mikhirev, <dmitry@mikhirev.ru>
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+# 3. The name of the author may not be used to endorse or promote products
+#    derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+# IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+# OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+# IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+# NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+# DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+# THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+# THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#=============================================================================
 
-IF ( GTHREAD2_FIND_REQUIRED )
-	SET( _pkgconfig_REQUIRED "REQUIRED" )
-ELSE( GTHREAD2_FIND_REQUIRED )
-	SET( _pkgconfig_REQUIRED "" )	
-ENDIF ( GTHREAD2_FIND_REQUIRED )
+find_package(PkgConfig)
+pkg_check_modules(PC_GTHREAD2 QUIET gthread-2.0)
 
-IF ( GTHREAD2_MIN_VERSION )
-	PKG_SEARCH_MODULE( GTHREAD2 ${_pkgconfig_REQUIRED} gthread-2.0>=${GTHREAD2_MIN_VERSION} )
-ELSE ( GTHREAD2_MIN_VERSION )
-	PKG_SEARCH_MODULE( GTHREAD2 ${_pkgconfig_REQUIRED} gthread-2.0 )
-ENDIF ( GTHREAD2_MIN_VERSION )
+find_path(GTHREAD2_INCLUDE_DIRS
+          NAMES gthread.h
+          HINTS ${PC_GTHREAD2_INCLUDEDIR}
+          PATH_SUFFIXES glib-2.0 glib-2.0/glib)
 
+find_library(GTHREAD2_LIBRARIES
+             NAMES gthread-2.0
+             HINTS ${PC_GTHREAD2_LIBDIR}
+)
 
-IF( NOT GTHREAD2_FOUND AND NOT PKG_CONFIG_FOUND )
-	FIND_PATH( GTHREAD2_INCLUDE_DIRS gthread.h PATH_SUFFIXES glib-2.0/glib GLib.framework/Headers/glib )
-	IF ( APPLE ) 
-		FIND_LIBRARY( GTHREAD2_LIBRARIES glib )
-	ELSE ( APPLE )
-		FIND_LIBRARY( GTHREAD2_LIBRARIES gthread-2.0 )
-	ENDIF ( APPLE )
-	
-	#MESSAGE( STATUS "Gthread headers: ${GTHREAD2_INCLUDE_DIRS}" )
-	#MESSAGE( STATUS "Gthread libs: ${GTHREAD2_LIBRARIES}" )
-	
-	# Report results
-	IF ( GTHREAD2_LIBRARIES AND GTHREAD2_INCLUDE_DIRS )	
-		SET( GTHREAD2_FOUND 1 )
-		IF ( NOT GTHREAD2_FIND_QUIETLY )
-			MESSAGE( STATUS "Found GTHREAD2: ${GTHREAD2_LIBRARIES} ${GTHREAD2_INCLUDE_DIRS}" )
-		ENDIF ( NOT GTHREAD2_FIND_QUIETLY )
-	ELSE ( GTHREAD2_LIBRARIES AND GTHREAD2_INCLUDE_DIRS )	
-		IF ( GTHREAD2_FIND_REQUIRED )
-			MESSAGE( SEND_ERROR "Could NOT find GTHREAD2" )
-		ELSE ( GTHREAD2_FIND_REQUIRED )
-			IF ( NOT GTHREAD2_FIND_QUIETLY )
-				MESSAGE( STATUS "Could NOT find GTHREAD2" )	
-			ENDIF ( NOT GTHREAD2_FIND_QUIETLY )
-		ENDIF ( GTHREAD2_FIND_REQUIRED )
-	ENDIF ( GTHREAD2_LIBRARIES AND GTHREAD2_INCLUDE_DIRS )
-ENDIF( NOT GTHREAD2_FOUND AND NOT PKG_CONFIG_FOUND )
+get_filename_component(gthread2LibDir "${GTHREAD2_LIBRARIES}" PATH)
 
-MARK_AS_ADVANCED( GTHREAD2_LIBRARIES GTHREAD2_INCLUDE_DIRS )
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(GTHREAD2 DEFAULT_MSG GTHREAD2_LIBRARIES GTHREAD2_INCLUDE_DIRS)
+
+if(GTHREAD2_FOUND AND NOT TARGET GTHREAD2::GTHREAD2)
+  add_library(GTHREAD2::GTHREAD2 UNKNOWN IMPORTED)
+  set_target_properties(GTHREAD2::GTHREAD2 PROPERTIES
+                        IMPORTED_LOCATION "${GTHREAD2_LIBRARIES}"
+			INTERFACE_INCLUDE_DIRECTORIES "${GTHREAD2_INCLUDE_DIRS}")
+endif()
+
+mark_as_advanced(GTHREAD2_INCLUDE_DIRS GTHREAD2_LIBRARIES)

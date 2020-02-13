@@ -110,7 +110,9 @@ cr_set_cleanup_handler(const char *lock_dir,
     sigaction(SIGUSR2, &sigact, NULL);
 
     // Handle signals that terminate (from the POSIX.1-2001)
+#ifdef SIGPOLL
     sigaction(SIGPOLL, &sigact, NULL);
+#endif
     sigaction(SIGPROF, &sigact, NULL);
     sigaction(SIGVTALRM, &sigact, NULL);
 
@@ -143,7 +145,9 @@ cr_block_terminating_signals(GError **err)
     sigaddset(&intmask, SIGTERM);
     sigaddset(&intmask, SIGUSR1);
     sigaddset(&intmask, SIGUSR2);
+#ifdef SIGPOLL
     sigaddset(&intmask, SIGPOLL);
+#endif
     sigaddset(&intmask, SIGPROF);
     sigaddset(&intmask, SIGVTALRM);
 
@@ -171,7 +175,9 @@ cr_unblock_terminating_signals(GError **err)
     sigaddset(&intmask, SIGTERM);
     sigaddset(&intmask, SIGUSR1);
     sigaddset(&intmask, SIGUSR2);
+#ifdef SIGPOLL
     sigaddset(&intmask, SIGPOLL);
+#endif
     sigaddset(&intmask, SIGPROF);
     sigaddset(&intmask, SIGVTALRM);
 

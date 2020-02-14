@@ -28,6 +28,7 @@ if (NOT SKBUILD)
 endif (NOT SKBUILD)
 
 EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} -c "from sys import stdout; from distutils import sysconfig; stdout.write(sysconfig.get_python_lib(True))" OUTPUT_VARIABLE PYTHON_INSTALL_DIR)
+INCLUDE_DIRECTORIES (${PYTHON_INCLUDE_DIR})
 INCLUDE_DIRECTORIES (${PYTHON_INCLUDE_PATH})
 
 MESSAGE(STATUS "Python install dir is ${PYTHON_INSTALL_DIR}")
@@ -70,14 +71,8 @@ TARGET_LINK_LIBRARIES(_createrepo_c
                         ${CURL_LIBRARY}
                      )
 
-IF (SKBUILD)
-    find_package(PythonExtensions REQUIRED)
-    python_extension_module(_createrepo_c)
-ELSE ()
-    TARGET_LINK_LIBRARIES(_createrepo_c ${PYTHON_LIBRARY})
-ENDIF ()
-
 IF (NOT SKBUILD)
+    TARGET_LINK_LIBRARIES(_createrepo_c ${PYTHON_LIBRARY})
     FILE(COPY createrepo_c/__init__.py DESTINATION createrepo_c)
 ENDIF()
 

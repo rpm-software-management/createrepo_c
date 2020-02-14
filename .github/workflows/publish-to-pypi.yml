@@ -1,0 +1,36 @@
+name: Publish package to PyPI
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        python3 -m pip install --upgrade pip
+        pip3 install scikit-build twine
+
+    - name: Build Python sdist
+      run: python3 setup.py sdist
+    # - name: Build manylinux Python wheels
+    #   uses: RalfG/python-wheels-manylinux-build@v0.2.2-manylinux2014_x86_64
+    #   with:
+    #     python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38'
+    #     build-requirements: 'scikit-build'
+    #     system-packages: 'make cmake bzip2-devel file-devel glib2-devel libcurl-devel libmodulemd2-devel libxml2-devel openssl-devel sqlite-devel zchunk-devel zlib-devel xz-devel rpm-devel'
+    - name: Publish wheels to PyPI
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        twine upload dist/*.tar.gz

@@ -379,11 +379,11 @@ set_datetime(_UpdateRecordObject *self, PyObject *value, void *member_offset)
     cr_UpdateRecord *rec = self->record;
 
     if (PyLong_Check(value)) {
-        size_t epoch = PyLong_AsSize_t(value);
+        unsigned long long epoch = PyLong_AsUnsignedLongLong(value);
         /* Length 13 is plenty of space for epoch. */
         char *date = malloc(13 * sizeof(char));
 
-        int ret = snprintf(date, 13, "%zu", epoch);
+        int ret = snprintf(date, 13, "%llu", epoch);
         if (ret < 0 && ret > 12){
             PyErr_SetString(PyExc_TypeError, "Invalid epoch value!");
             return -1;

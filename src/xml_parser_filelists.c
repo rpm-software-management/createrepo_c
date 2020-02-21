@@ -280,21 +280,22 @@ cr_end_handler(void *pdata, G_GNUC_UNUSED const char *element)
 }
 
 int
-cr_xml_parse_filelists(const char *path,
-                       cr_XmlParserNewPkgCb newpkgcb,
-                       void *newpkgcb_data,
-                       cr_XmlParserPkgCb pkgcb,
-                       void *pkgcb_data,
-                       cr_XmlParserWarningCb warningcb,
-                       void *warningcb_data,
-                       GError **err)
+cr_xml_parse_filelists_internal(const char *target,
+                                cr_XmlParserNewPkgCb newpkgcb,
+                                void *newpkgcb_data,
+                                cr_XmlParserPkgCb pkgcb,
+                                void *pkgcb_data,
+                                cr_XmlParserWarningCb warningcb,
+                                void *warningcb_data,
+                                int (*parser_func)(XML_Parser, cr_ParserData *, const char *, GError**),
+                                GError **err)
 {
     int ret = CRE_OK;
     cr_ParserData *pd;
     XML_Parser parser;
     GError *tmp_err = NULL;
 
-    assert(path);
+    assert(target);
     assert(newpkgcb || pkgcb);
     assert(!err || *err == NULL);
 
@@ -326,7 +327,8 @@ cr_xml_parse_filelists(const char *path,
 
     // Parsing
 
-    ret = cr_xml_parser_generic(parser, pd, path, &tmp_err);
+    ret = parser_func(parser, pd, target, &tmp_err);
+
     if (tmp_err)
         g_propagate_error(err, tmp_err);
 
@@ -334,9 +336,9 @@ cr_xml_parse_filelists(const char *path,
 
     if (!pd->main_tag_found && ret == CRE_OK)
         cr_xml_parser_warning(pd, CR_XML_WARNING_BADMDTYPE,
-                          "The file don't contain the expected element "
-                          "\"<filelists>\" - The file probably isn't "
-                          "a valid filelists.xml");
+                          "The target doesn't contain the expected element "
+                          "\"<filelists>\" - The target probably isn't "
+                          "a valid filelists xml");
 
     // Clean up
 
@@ -354,4 +356,34 @@ cr_xml_parse_filelists(const char *path,
     XML_ParserFree(parser);
 
     return ret;
+}
+
+int
+cr_xml_parse_filelists(const char *path,
+                       cr_XmlParserNewPkgCb newpkgcb,
+                       void *newpkgcb_data,
+                       cr_XmlParserPkgCb pkgcb,
+                       void *pkgcb_data,
+                       cr_XmlParserWarningCb warningcb,
+                       void *warningcb_data,
+                       GError **err)
+{
+    return cr_xml_parse_filelists_internal(path, newpkgcb, newpkgcb_data, pkgcb, pkgcb_data,
+                                           warningcb, warningcb_data, &cr_xml_parser_generic, err);
+}
+
+int
+cr_xml_parse_filelists_snippet(const char *xml_string,
+                               cr_XmlParserNewPkgCb newpkgcb,
+                               void *newpkgcb_data,
+                               cr_XmlParserPkgCb pkgcb,
+                               void *pkgcb_data,
+                               cr_XmlParserWarningCb warningcb,
+                               void *warningcb_data,
+                               GError **err)
+{
+    char* wrapped_xml_string = g_strconcat("<filelists>", xml_string, "</filelists>", NULL);
+    return cr_xml_parse_filelists_internal(wrapped_xml_string, newpkgcb, newpkgcb_data, pkgcb, pkgcb_data,
+                                           warningcb, warningcb_data, &cr_xml_parser_generic_from_string, err);
+    free(wrapped_xml_string);
 }

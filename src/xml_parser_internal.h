@@ -218,6 +218,11 @@ cr_xml_parser_generic(XML_Parser parser,
                       cr_ParserData *pd,
                       const char *path,
                       GError **err);
+int
+cr_xml_parser_generic_from_string(XML_Parser parser,
+                                  cr_ParserData *pd,
+                                  const char *xml_string,
+                                  GError **err);
 
 #ifdef __cplusplus
 }

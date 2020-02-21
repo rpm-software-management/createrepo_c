@@ -36,6 +36,7 @@
 #define TEST_FILES_PATH                 TEST_DATA_PATH"test_files/"
 #define TEST_UPDATEINFO_FILES_PATH      TEST_DATA_PATH"updateinfo_files/"
 #define TEST_REPO_WITH_ADDITIONAL_METADATA    TEST_DATA_PATH"repo_with_additional_metadata/"
+#define TEST_REPODATA_SNIPPETS          TEST_DATA_PATH"repodata_snippets/"
 
 // Repo files
 
@@ -94,6 +95,11 @@
 #define TEST_TEXT_FILE_XZ        TEST_FILES_PATH"text_file.xz"
 #define TEST_SQLITE_FILE         TEST_FILES_PATH"sqlite_file.sqlite"
 #define TEST_BINARY_FILE         TEST_FILES_PATH"binary_file"
+
+// Repodata snippets
+
+#define TEST_FILELISTS_SNIPPET_01   TEST_REPODATA_SNIPPETS"filelists_snippet_01.xml"
+#define TEST_FILELISTS_SNIPPET_02   TEST_REPODATA_SNIPPETS"filelists_snippet_02.xml"
 
 // Other
 

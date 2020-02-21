@@ -25,6 +25,24 @@
 #include "createrepo/package.h"
 #include "createrepo/misc.h"
 #include "createrepo/xml_parser.h"
+#include "createrepo/xml_parser_internal.h"
+
+static int
+read_file(char *f, cr_CompressionType compression, char* buffer, int amount)
+{
+    int ret = CRE_OK;
+    GError *tmp_err = NULL;
+    CR_FILE *orig = NULL;
+    orig = cr_open(f, CR_CW_MODE_READ, compression, &tmp_err);
+    if (!orig) {
+        ret = tmp_err->code;
+        return ret;
+    }
+    cr_read(orig, buffer, amount, &tmp_err);
+    if (orig)
+        cr_close(orig, NULL);
+    return ret;
+}
 
 // Callbacks
 
@@ -313,9 +331,35 @@ test_cr_xml_parse_different_md_type(void)
     g_assert_cmpint(parsed, ==, 0);
     warnmsgs = g_string_free(warn_strings, FALSE);
     g_assert_cmpstr(warnmsgs, ==, "Unknown element \"otherdata\";"
-            "The file don't contain the expected element \"<filelists>\" - "
-            "The file probably isn't a valid filelists.xml;");
+            "The target doesn't contain the expected element \"<filelists>\" - "
+            "The target probably isn't a valid filelists xml;");
     g_free(warnmsgs);
+}
+
+static void
+test_cr_xml_parse_filelists_snippet_snippet_01(void)
+{
+    int parsed = 0;
+    GError *tmp_err = NULL;
+    char buf[400];
+    read_file(TEST_FILELISTS_SNIPPET_01, CR_CW_AUTO_DETECT_COMPRESSION, buf, 400);
+    int ret = cr_xml_parse_filelists_snippet(buf, NULL, NULL, pkgcb, &parsed, NULL, NULL, &tmp_err);
+    g_assert(tmp_err == NULL);
+    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert_cmpint(parsed, ==, 1);
+}
+
+static void
+test_cr_xml_parse_filelists_snippet_snippet_02(void)
+{
+    int parsed = 0;
+    GError *tmp_err = NULL;
+    char buf[600];
+    read_file(TEST_FILELISTS_SNIPPET_02, CR_CW_AUTO_DETECT_COMPRESSION, buf, 600);
+    int ret = cr_xml_parse_filelists_snippet(buf, NULL, NULL, pkgcb, &parsed, NULL, NULL, &tmp_err);
+    g_assert(tmp_err == NULL);
+    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert_cmpint(parsed, ==, 2);
 }
 
 int
@@ -353,6 +397,9 @@ main(int argc, char *argv[])
                     test_cr_xml_parse_filelists_bad_file_type_01);
     g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_different_md_type",
                     test_cr_xml_parse_different_md_type);
-
+    g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_filelists_snippet_snippet_01",
+                    test_cr_xml_parse_filelists_snippet_snippet_01);
+    g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_filelists_snippet_snippet_02",
+                    test_cr_xml_parse_filelists_snippet_snippet_02);
     return g_test_run();
 }

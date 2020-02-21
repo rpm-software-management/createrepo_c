@@ -123,6 +123,33 @@ int cr_xml_parse_primary(const char *path,
                          int do_files,
                          GError **err);
 
+/** Parse string snippet of primary xml repodata. Snippet cannot contain
+ * root xml element <metadata>. It contains only <package> elemetns.
+ * @param xml_string     String containg primary xml data
+ * @param newpkgcb       Callback for new package (Called when new package
+ *                       xml chunk is found and package object to store
+ *                       the data is needed). If NULL cr_newpkgcb is used.
+ * @param newpkgcb_data  User data for the newpkgcb.
+ * @param pkgcb          Package callback. (Called when complete package
+ *                       xml chunk is parsed.). Could be NULL if newpkgcb is
+ *                       not NULL.
+ * @param pkgcb_data     User data for the pkgcb.
+ * @param warningcb      Callback for warning messages.
+ * @param warningcb_data User data for the warningcb.
+ * @param do_files       0 - Ignore file tags in primary.xml.
+ * @param err            GError **
+ * @return               cr_Error code.
+ */
+int cr_xml_parse_primary_snippet(const char *xml_string,
+                                 cr_XmlParserNewPkgCb newpkgcb,
+                                 void *newpkgcb_data,
+                                 cr_XmlParserPkgCb pkgcb,
+                                 void *pkgcb_data,
+                                 cr_XmlParserWarningCb warningcb,
+                                 void *warningcb_data,
+                                 int do_files,
+                                 GError **err);
+
 /** Parse filelists.xml. File could be compressed.
  * @param path           Path to filelists.xml
  * @param newpkgcb       Callback for new package (Called when new package
@@ -147,6 +174,31 @@ int cr_xml_parse_filelists(const char *path,
                            void *warningcb_data,
                            GError **err);
 
+/** Parse string snippet of filelists xml repodata. Snippet cannot contain
+ * root xml element <filelists>. It contains only <package> elemetns.
+ * @param xml_string     String containg filelists xml data
+ * @param newpkgcb       Callback for new package (Called when new package
+ *                       xml chunk is found and package object to store
+ *                       the data is needed). If NULL cr_newpkgcb is used.
+ * @param newpkgcb_data  User data for the newpkgcb.
+ * @param pkgcb          Package callback. (Called when complete package
+ *                       xml chunk is parsed.). Could be NULL if newpkgcb is
+ *                       not NULL.
+ * @param pkgcb_data     User data for the pkgcb.
+ * @param warningcb      Callback for warning messages.
+ * @param warningcb_data User data for the warningcb.
+ * @param err            GError **
+ * @return               cr_Error code.
+ */
+int cr_xml_parse_filelists_snippet(const char *xml_string,
+                                   cr_XmlParserNewPkgCb newpkgcb,
+                                   void *newpkgcb_data,
+                                   cr_XmlParserPkgCb pkgcb,
+                                   void *pkgcb_data,
+                                   cr_XmlParserWarningCb warningcb,
+                                   void *warningcb_data,
+                                   GError **err);
+
 /** Parse other.xml. File could be compressed.
  * @param path           Path to other.xml
  * @param newpkgcb       Callback for new package (Called when new package
@@ -170,6 +222,31 @@ int cr_xml_parse_other(const char *path,
                        cr_XmlParserWarningCb warningcb,
                        void *warningcb_data,
                        GError **err);
+
+/** Parse string snippet of other xml repodata. Snippet cannot contain
+ * root xml element <otherdata>. It contains only <package> elemetns.
+ * @param xml_string     String containg other xml data
+ * @param newpkgcb       Callback for new package (Called when new package
+ *                       xml chunk is found and package object to store
+ *                       the data is needed). If NULL cr_newpkgcb is used.
+ * @param newpkgcb_data  User data for the newpkgcb.
+ * @param pkgcb          Package callback. (Called when complete package
+ *                       xml chunk is parsed.). Could be NULL if newpkgcb is
+ *                       not NULL.
+ * @param pkgcb_data     User data for the pkgcb.
+ * @param warningcb      Callback for warning messages.
+ * @param warningcb_data User data for the warningcb.
+ * @param err            GError **
+ * @return               cr_Error code.
+ */
+int cr_xml_parse_other_snippet(const char *xml_string,
+                               cr_XmlParserNewPkgCb newpkgcb,
+                               void *newpkgcb_data,
+                               cr_XmlParserPkgCb pkgcb,
+                               void *pkgcb_data,
+                               cr_XmlParserWarningCb warningcb,
+                               void *warningcb_data,
+                               GError **err);
 
 /** Parse repomd.xml. File could be compressed.
  * @param path           Path to repomd.xml

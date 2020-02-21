@@ -240,3 +240,39 @@ cr_xml_parser_generic(XML_Parser parser,
 
     return ret;
 }
+
+int
+cr_xml_parser_generic_from_string(XML_Parser parser,
+                      cr_ParserData *pd,
+                      const char *xml_string,
+                      GError **err)
+{
+    /* Note: This function uses .err members of cr_ParserData! */
+
+    int ret = CRE_OK;
+
+    assert(parser);
+    assert(pd);
+    assert(xml_string);
+    assert(!err || *err == NULL);
+
+    if (!XML_Parse(parser, xml_string, strlen(xml_string), 1)) {
+        ret = CRE_XMLPARSER;
+        g_critical("%s: parsing error '%s': %s",
+                   __func__,
+                   xml_string,
+                   XML_ErrorString(XML_GetErrorCode(parser)));
+        g_set_error(err, ERR_DOMAIN, CRE_XMLPARSER,
+                    "Parse error '%s' at line: %d (%s)",
+                    xml_string,
+                    (int) XML_GetCurrentLineNumber(parser),
+                    (char *) XML_ErrorString(XML_GetErrorCode(parser)));
+    }
+
+    if (pd->err) {
+        ret = pd->err->code;
+        g_propagate_error(err, pd->err);
+    }
+
+    return ret;
+}

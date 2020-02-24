@@ -25,20 +25,32 @@
 PyDoc_STRVAR(xml_parse_primary__doc__,
 "xml_parse_primary(filename, newpkgcb, pkgcb, warningcb, do_files) -> None\n\n"
 "Parse primary.xml");
+PyDoc_STRVAR(xml_parse_primary_snippet__doc__,
+"xml_parse_primary_snippet(snippet, newpkgcb, pkgcb, warningcb, do_files) -> None\n\n"
+"Parse primary xml snippet");
 
 PyObject *py_xml_parse_primary(PyObject *self, PyObject *args);
+PyObject *py_xml_parse_primary_snippet(PyObject *self, PyObject *args);
 
 PyDoc_STRVAR(xml_parse_filelists__doc__,
 "xml_parse_filelists(filename, newpkgcb, pkgcb, warningcb) -> None\n\n"
 "Parse filelists.xml");
+PyDoc_STRVAR(xml_parse_filelists_snippet__doc__,
+"xml_parse_filelists_snippet(snippet, newpkgcb, pkgcb, warningcb) -> None\n\n"
+"Parse filelists xml snippet");
 
 PyObject *py_xml_parse_filelists(PyObject *self, PyObject *args);
+PyObject *py_xml_parse_filelists_snippet(PyObject *self, PyObject *args);
 
 PyDoc_STRVAR(xml_parse_other__doc__,
 "xml_parse_other(filename, newpkgcb, pkgcb, warningcb) -> None\n\n"
 "Parse other.xml");
+PyDoc_STRVAR(xml_parse_other_snippet__doc__,
+"xml_parse_other_snippet(snippet, newpkgcb, pkgcb, warningcb) -> None\n\n"
+"Parse other xml snippet");
 
 PyObject *py_xml_parse_other(PyObject *self, PyObject *args);
+PyObject *py_xml_parse_other_snippet(PyObject *self, PyObject *args);
 
 PyDoc_STRVAR(xml_parse_repomd__doc__,
 "xml_parse_repomd(filename, repomd_object, warningcb) -> None\n\n"

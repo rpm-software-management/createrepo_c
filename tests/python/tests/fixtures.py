@@ -7,6 +7,7 @@ MODIFIED_REPO_FILES_PATH = os.path.join(TEST_DATA_PATH, "modified_repo_files")
 PACKAGES_PATH = os.path.join(TEST_DATA_PATH, "packages")
 REPOS_PATH = TEST_DATA_PATH
 TEST_FILES_PATH = os.path.join(TEST_DATA_PATH, "test_files")
+REPODATA_SNIPPETS = os.path.join(TEST_DATA_PATH, "repodata_snippets")
 
 # Modified repo files
 
@@ -99,3 +100,11 @@ FILE_TEXT_GZ = FILE_TEXT+".gz"
 FILE_EMPTY = "empty_file"
 FILE_EMPTY = os.path.join(TEST_FILES_PATH, FILE_EMPTY)
 
+# Test snippets
+
+PRIMARY_SNIPPET_01 = os.path.join(REPODATA_SNIPPETS, "primary_snippet_01.xml")
+PRIMARY_SNIPPET_02 = os.path.join(REPODATA_SNIPPETS, "primary_snippet_02.xml")
+FILELISTS_SNIPPET_01 = os.path.join(REPODATA_SNIPPETS, "filelists_snippet_01.xml")
+FILELISTS_SNIPPET_02 = os.path.join(REPODATA_SNIPPETS, "filelists_snippet_02.xml")
+OTHER_SNIPPET_01 = os.path.join(REPODATA_SNIPPETS, "other_snippet_01.xml")
+OTHER_SNIPPET_02 = os.path.join(REPODATA_SNIPPETS, "other_snippet_02.xml")

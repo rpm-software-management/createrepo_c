@@ -1,0 +1,14 @@
+<package pkgid="90f61e546938a11449b710160ad294618a5bd3062e46f8cf851fd0088af184b7" name="fake_bash" arch="x86_64">
+    <version epoch="0" ver="1.1.1" rel="1"/>
+
+<changelog author="Tomas Mlcoch &lt;tmlcoch@redhat.com&gt; - 1.1.1-1" date="1334664000">- First release</changelog>
+
+</package>
+
+<package pkgid="6d43a638af70ef899933b1fd86a866f18f65b0e0e17dcbf2e42bfd0cdd7c63c3" name="super_kernel" arch="x86_64">
+    <version epoch="0" ver="6.0.1" rel="2"/>
+
+<changelog author="Tomas Mlcoch &lt;tmlcoch@redhat.com&gt; - 6.0.1-1" date="1334664000">- First release</changelog>
+<changelog author="Tomas Mlcoch &lt;tmlcoch@redhat.com&gt; - 6.0.1-2" date="1334664001">- Second release</changelog>
+
+</package>

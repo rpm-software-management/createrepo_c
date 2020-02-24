@@ -1,0 +1,7 @@
+<package pkgid="152824bff2aa6d54f429d43e87a3ff3a0286505c6d93ec87692b5e3a9e3b97bf" name="super_kernel" arch="x86_64">
+    <version epoch="0" ver="6.0.1" rel="2"/>
+
+<changelog author="Tomas Mlcoch &lt;tmlcoch@redhat.com&gt; - 6.0.1-1" date="1334664000">- First release</changelog>
+<changelog author="Tomas Mlcoch &lt;tmlcoch@redhat.com&gt; - 6.0.1-2" date="1334664001">- Second release</changelog>
+
+</package>

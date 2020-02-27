@@ -191,7 +191,6 @@ cr_detect_compression(const char *filename, GError **err)
             g_str_has_prefix(mime_type, "application/gzipped") ||
             g_str_has_prefix(mime_type, "application/x-gzip-compressed") ||
             g_str_has_prefix(mime_type, "application/x-compress") ||
-            g_str_has_prefix(mime_type, "application/x-gzip") ||
             g_str_has_prefix(mime_type, "application/x-gunzip") ||
             g_str_has_prefix(mime_type, "multipart/x-gzip"))
         {

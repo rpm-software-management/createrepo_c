@@ -402,9 +402,9 @@ set_datetime(_UpdateRecordObject *self, PyObject *value, void *member_offset)
     /* Length is 20: yyyy-mm-dd HH:MM:SS */
     char *date = malloc(20 * sizeof(char));
     snprintf(date, 20, "%04d-%02d-%02d %02d:%02d:%02d",
-             PyDateTime_GET_YEAR(value), PyDateTime_GET_MONTH(value),
-             PyDateTime_GET_DAY(value), PyDateTime_DATE_GET_HOUR(value),
-             PyDateTime_DATE_GET_MINUTE(value), PyDateTime_DATE_GET_SECOND(value));
+             PyDateTime_GET_YEAR(value) % 9999, PyDateTime_GET_MONTH(value) % 13,
+             PyDateTime_GET_DAY(value) % 32, PyDateTime_DATE_GET_HOUR(value) % 24,
+             (PyDateTime_DATE_GET_MINUTE(value) % 60), PyDateTime_DATE_GET_SECOND(value) % 60);
 
     char *str = cr_safe_string_chunk_insert(rec->chunk, date);
     free(date);

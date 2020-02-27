@@ -301,7 +301,7 @@ get_datetime(_UpdateRecordObject *self, void *member_offset)
     PyObject *py_dt = PyDateTime_FromDateAndTime(dt->tm_year + 1900,
                                       dt->tm_mon + 1, dt->tm_mday,
                                       dt->tm_hour, dt->tm_min, dt->tm_sec, 0);
-    free(dt);
+    g_free(dt);
     return py_dt;
 }
 

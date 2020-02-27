@@ -395,7 +395,7 @@ cr_package_from_header(Header hdr,
                     if (g_hash_table_lookup_extended(ap_hashtable, filename, NULL, &value)) {
                         struct ap_value_struct *ap_value = value;
                         if (!g_strcmp0(ap_value->flags, flags) &&
-                            !strcmp(ap_value->version, full_version) &&
+                            !strcmp(ap_value->version, (full_version ? full_version : "")) &&
                             (ap_value->pre == pre))
                         {
                             continue;

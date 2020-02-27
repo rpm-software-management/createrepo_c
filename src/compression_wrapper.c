@@ -590,14 +590,15 @@ cr_sopen(const char *filename,
         case (CR_CW_ZCK_COMPRESSION): { // -------------------------------------
 #ifdef WITH_ZCHUNK
             FILE *f = fopen(filename, mode_str);
-            file->INNERFILE = f;
-            int fd = fileno(f);
 
             if (!f) {
                 g_set_error(err, ERR_DOMAIN, CRE_IO,
                             "fopen(): %s", g_strerror(errno));
                 break;
             }
+
+            file->INNERFILE = f;
+            int fd = fileno(f);
 
             file->FILE = (void *) zck_create();
             zckCtx *zck = file->FILE;

@@ -548,6 +548,7 @@ cr_deltarpms_scan_targetdir(const char *path,
         GDir *dirp = g_dir_open(dirname, 0, NULL);
         if (!dirp) {
             g_warning("Cannot open directory %s", dirname);
+            g_string_chunk_free(sub_dirs_chunk);
             return NULL;
         }
 

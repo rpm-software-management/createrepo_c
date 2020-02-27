@@ -306,7 +306,7 @@ koji_allowed(cr_Package *pkg, struct KojiMergedReposStuff *koji_stuff)
         if (!koji_stuff->simple && koji_stuff->include_srpms) {
             struct srpm_val *value;
             value = g_hash_table_lookup(koji_stuff->include_srpms, nevra->name);
-            if ((!value || g_strcmp0(pkg->rpm_sourcerpm, value->sourcerpm)) ) {
+            if (!value || g_strcmp0(pkg->rpm_sourcerpm, value->sourcerpm)) {
                 // Srpm of the package is not allowed
                 g_debug("Package %s has forbidden srpm %s", pkg->name,
                         pkg->rpm_sourcerpm);

@@ -13,7 +13,6 @@ Package build requires - Pkg name in Fedora/Ubuntu:
 * bzip2 (http://bzip.org/) - bzip2-devel/libbz2-dev
 * cmake (http://www.cmake.org/) - cmake/cmake
 * drpm (https://github.com/rpm-software-management/drpm) - drpm-devel/
-* expat (http://expat.sourceforge.net/) - expat-devel/libexpat1-dev
 * file (http://www.darwinsys.com/file/) - file-devel/libmagic-dev
 * glib2 (http://developer.gnome.org/glib/) - glib2-devel/libglib2.0-dev
 * libcurl (http://curl.haxx.se/libcurl/) - libcurl-devel/libcurl4-openssl-dev

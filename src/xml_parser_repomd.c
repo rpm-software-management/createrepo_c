@@ -23,7 +23,6 @@
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
-#include <expat.h>
 #include "xml_parser_internal.h"
 #include "xml_parser.h"
 #include "error.h"
@@ -83,8 +82,8 @@ static cr_StatesSwitch stateswitches[] = {
     { NUMSTATES,        NULL, NUMSTATES, 0 }
 };
 
-static void XMLCALL
-cr_start_handler(void *pdata, const char *element, const char **attr)
+static void
+cr_start_handler(void *pdata, const xmlChar *element, const xmlChar **attr)
 {
     cr_ParserData *pd = pdata;
     cr_StatesSwitch *sw;
@@ -106,7 +105,7 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
 
     // Find current state by its name
     for (sw = pd->swtab[pd->state]; sw->from == pd->state; sw++)
-        if (!strcmp(element, sw->ename))
+        if (!strcmp((char *) element, sw->ename))
             break;
     if (sw->from != pd->state) {
         // No state for current element (unknown element)
@@ -123,6 +122,11 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
     pd->content[0] = '\0';
 
     const char *val;
+
+    if (!attr){
+        static const char *nullattr;
+        attr = (const xmlChar **) &nullattr;
+    }
 
     switch(pd->state) {
     case STATE_START:
@@ -261,8 +265,8 @@ cr_start_handler(void *pdata, const char *element, const char **attr)
     }
 }
 
-static void XMLCALL
-cr_end_handler(void *pdata, G_GNUC_UNUSED const char *element)
+static void
+cr_end_handler(void *pdata, G_GNUC_UNUSED const xmlChar *element)
 {
     cr_ParserData *pd = pdata;
     unsigned int state = pd->state;
@@ -431,7 +435,6 @@ cr_xml_parse_repomd(const char *path,
 {
     int ret = CRE_OK;
     cr_ParserData *pd;
-    XML_Parser parser;
     GError *tmp_err = NULL;
 
     assert(path);
@@ -439,13 +442,18 @@ cr_xml_parse_repomd(const char *path,
     assert(!err || *err == NULL);
 
     // Init
-
-    parser = XML_ParserCreate(NULL);
-    XML_SetElementHandler(parser, cr_start_handler, cr_end_handler);
-    XML_SetCharacterDataHandler(parser, cr_char_handler);
+    xmlSAXHandler sax;
+    memset(&sax, 0, sizeof(sax));
+    sax.startElement = cr_start_handler;
+    sax.endElement = cr_end_handler;
+    sax.characters = cr_char_handler;
 
     pd = cr_xml_parser_data(NUMSTATES);
-    pd->parser = &parser;
+
+    xmlParserCtxtPtr parser;
+    parser = xmlCreatePushParserCtxt(&sax, pd, NULL, 0, NULL);
+
+    pd->parser = parser;
     pd->state = STATE_START;
     pd->repomd = repomd;
     pd->warningcb = warningcb;
@@ -455,8 +463,6 @@ cr_xml_parse_repomd(const char *path,
             pd->swtab[sw->from] = sw;
         pd->sbtab[sw->to] = sw->from;
     }
-
-    XML_SetUserData(parser, pd);
 
     // Parsing
 
@@ -475,7 +481,7 @@ cr_xml_parse_repomd(const char *path,
     // Clean up
 
     cr_xml_parser_data_free(pd);
-    XML_ParserFree(parser);
+    xmlFreeParserCtxt(parser);
 
     return ret;
 }

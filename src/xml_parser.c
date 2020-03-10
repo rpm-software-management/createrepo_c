@@ -50,8 +50,8 @@ cr_xml_parser_data_free(cr_ParserData *pd)
     g_free(pd);
 }
 
-void XMLCALL
-cr_char_handler(void *pdata, const XML_Char *s, int len)
+void
+cr_char_handler(void *pdata, const xmlChar *s, int len)
 {
     int l;
     char *c;
@@ -158,7 +158,7 @@ cr_newpkgcb(cr_Package **pkg,
 }
 
 int
-cr_xml_parser_generic(XML_Parser parser,
+cr_xml_parser_generic(xmlParserCtxtPtr parser,
                       cr_ParserData *pd,
                       const char *path,
                       GError **err)
@@ -168,6 +168,7 @@ cr_xml_parser_generic(XML_Parser parser,
     int ret = CRE_OK;
     CR_FILE *f;
     GError *tmp_err = NULL;
+    char buf[XML_BUFFER_SIZE];
 
     assert(parser);
     assert(pd);
@@ -183,15 +184,6 @@ cr_xml_parser_generic(XML_Parser parser,
 
     while (1) {
         int len;
-        void *buf = XML_GetBuffer(parser, XML_BUFFER_SIZE);
-        if (!buf) {
-            ret = CRE_MEMORY;
-            g_set_error(err, ERR_DOMAIN, CRE_MEMORY,
-                        "Out of memory: Cannot allocate buffer for xml parser '%s'",
-                        path);
-            break;
-        }
-
         len = cr_read(f, buf, XML_BUFFER_SIZE, &tmp_err);
         if (tmp_err) {
             ret = tmp_err->code;
@@ -201,17 +193,18 @@ cr_xml_parser_generic(XML_Parser parser,
             break;
         }
 
-        if (!XML_ParseBuffer(parser, len, len == 0)) {
+        if (xmlParseChunk(parser, buf, len, len == 0)) {
             ret = CRE_XMLPARSER;
+            xmlErrorPtr xml_err = xmlCtxtGetLastError(parser);
             g_critical("%s: parsing error '%s': %s",
                        __func__,
                        path,
-                       XML_ErrorString(XML_GetErrorCode(parser)));
+                       xml_err->message);
             g_set_error(err, ERR_DOMAIN, CRE_XMLPARSER,
                         "Parse error '%s' at line: %d (%s)",
                         path,
-                        (int) XML_GetCurrentLineNumber(parser),
-                        (char *) XML_ErrorString(XML_GetErrorCode(parser)));
+                        (int) xml_err->line,
+                        (char *) xml_err->message);
             break;
         }
 
@@ -242,10 +235,10 @@ cr_xml_parser_generic(XML_Parser parser,
 }
 
 int
-cr_xml_parser_generic_from_string(XML_Parser parser,
-                      cr_ParserData *pd,
-                      const char *xml_string,
-                      GError **err)
+cr_xml_parser_generic_from_string(xmlParserCtxtPtr parser,
+                                  cr_ParserData *pd,
+                                  const char *xml_string,
+                                  GError **err)
 {
     /* Note: This function uses .err members of cr_ParserData! */
 
@@ -256,17 +249,18 @@ cr_xml_parser_generic_from_string(XML_Parser parser,
     assert(xml_string);
     assert(!err || *err == NULL);
 
-    if (!XML_Parse(parser, xml_string, strlen(xml_string), 1)) {
+    if (xmlParseChunk(parser, xml_string, strlen(xml_string), 1)) {
         ret = CRE_XMLPARSER;
+        xmlErrorPtr xml_err = xmlCtxtGetLastError(parser);
         g_critical("%s: parsing error '%s': %s",
                    __func__,
                    xml_string,
-                   XML_ErrorString(XML_GetErrorCode(parser)));
+                   xml_err->message);
         g_set_error(err, ERR_DOMAIN, CRE_XMLPARSER,
                     "Parse error '%s' at line: %d (%s)",
                     xml_string,
-                    (int) XML_GetCurrentLineNumber(parser),
-                    (char *) XML_ErrorString(XML_GetErrorCode(parser)));
+                    (int) xml_err->line,
+                    (char *) xml_err->message);
     }
 
     if (pd->err) {

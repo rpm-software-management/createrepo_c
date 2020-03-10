@@ -25,7 +25,7 @@ extern "C" {
 #endif
 
 #include <string.h>
-#include <expat.h>
+#include <libxml/parser.h>
 #include "xml_parser.h"
 #include "error.h"
 #include "package.h"
@@ -78,7 +78,7 @@ typedef struct _cr_ParserData {
     int     lcontent;   /*!< The content lenght */
     int     acontent;   /*!< Available bytes in the content */
 
-    XML_Parser      *parser;    /*!< The parser */
+    xmlParserCtxtPtr parser;    /*!< The parser */
     cr_StatesSwitch **swtab;    /*!< Pointers to statesswitches table */
     unsigned int    *sbtab;     /*!< stab[to_state] = from_state */
 
@@ -172,11 +172,11 @@ void cr_xml_parser_data_free(cr_ParserData *pd);
  * @return          Value or NULL
  */
 static inline const char *
-cr_find_attr(const char *name, const char **attr)
+cr_find_attr(const char *name, const xmlChar **attr)
 {
     while (*attr) {
-        if (!strcmp(name, *attr))
-            return attr[1];
+        if (!strcmp(name, (char *) *attr))
+            return (const char *) attr[1];
         attr += 2;
     }
 
@@ -185,7 +185,7 @@ cr_find_attr(const char *name, const char **attr)
 
 /** XML character handler
  */
-void XMLCALL cr_char_handler(void *pdata, const XML_Char *s, int len);
+void cr_char_handler(void *pdata, const xmlChar *s, int len);
 
 /** Wrapper for user warning cb.
  * It checks if warningcb is defined, if defined, it build warning msg from
@@ -214,12 +214,12 @@ int cr_newpkgcb(cr_Package **pkg,
 /** Generic parser.
  */
 int
-cr_xml_parser_generic(XML_Parser parser,
+cr_xml_parser_generic(xmlParserCtxtPtr parser,
                       cr_ParserData *pd,
                       const char *path,
                       GError **err);
 int
-cr_xml_parser_generic_from_string(XML_Parser parser,
+cr_xml_parser_generic_from_string(xmlParserCtxtPtr parser,
                                   cr_ParserData *pd,
                                   const char *xml_string,
                                   GError **err);

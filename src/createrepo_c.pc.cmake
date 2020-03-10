@@ -8,5 +8,5 @@ Version: @VERSION@
 Requires: glib-2.0 rpm libcurl sqlite3
 Requires.private: zlib libxml-2.0
 Libs: -L${libdir} -lcreaterepo_c
-Libs.private: -lmagic -lexpat -lbz2 -lzma
+Libs.private: -lmagic -lbz2 -lzma
 Cflags: -I${includedir}

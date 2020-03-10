@@ -45,7 +45,6 @@ BuildRequires:  cmake
 BuildRequires:  gcc
 BuildRequires:  bzip2-devel
 BuildRequires:  doxygen
-BuildRequires:  expat-devel
 BuildRequires:  file-devel
 BuildRequires:  glib2-devel >= 2.22.0
 BuildRequires:  libcurl-devel

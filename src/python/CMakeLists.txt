@@ -67,7 +67,6 @@ SET_TARGET_PROPERTIES(_createrepo_c PROPERTIES PREFIX "")
 SET_TARGET_PROPERTIES(_createrepo_c PROPERTIES LIBRARY_OUTPUT_DIRECTORY "./createrepo_c")
 TARGET_LINK_LIBRARIES(_createrepo_c libcreaterepo_c)
 TARGET_LINK_LIBRARIES(_createrepo_c
-                        ${EXPAT_LIBRARIES}
                         ${CURL_LIBRARY}
                      )
 

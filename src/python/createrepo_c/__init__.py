@@ -319,6 +319,24 @@ def xml_parse_other(path, newpkgcb=None, pkgcb=None, warningcb=None):
     """Parse other.xml"""
     return _createrepo_c.xml_parse_other(path, newpkgcb, pkgcb, warningcb)
 
+def xml_parse_primary_snippet(xml_string, newpkgcb=None, pkgcb=None,
+                      warningcb=None, do_files=1):
+    """Parse the contents of primary.xml from a string"""
+    return _createrepo_c.xml_parse_primary_snippet(xml_string, newpkgcb, pkgcb,
+                                           warningcb, do_files)
+
+def xml_parse_filelists_snippet(xml_string, newpkgcb=None, pkgcb=None,
+                                warningcb=None):
+    """Parse the contents of filelists.xml from a string"""
+    return _createrepo_c.xml_parse_filelists_snippet(xml_string, newpkgcb, pkgcb,
+                                             warningcb)
+
+def xml_parse_other_snippet(xml_string, newpkgcb=None, pkgcb=None,
+                            warningcb=None):
+    """Parse the contents of other.xml from a string"""
+    return _createrepo_c.xml_parse_other_snippet(xml_string, newpkgcb, pkgcb,
+                                         warningcb)
+
 def xml_parse_updateinfo(path, updateinfoobj, warningcb=None):
     """Parse updateinfo.xml"""
     return _createrepo_c.xml_parse_updateinfo(path, updateinfoobj, warningcb)

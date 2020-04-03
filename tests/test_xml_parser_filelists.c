@@ -27,6 +27,7 @@
 #include "createrepo/xml_parser.h"
 #include "createrepo/xml_parser_internal.h"
 
+//This functions assumes there is enough space in the buffer for the read file plus a terminating NULL
 static int
 read_file(char *f, cr_CompressionType compression, char* buffer, int amount)
 {
@@ -38,7 +39,8 @@ read_file(char *f, cr_CompressionType compression, char* buffer, int amount)
         ret = tmp_err->code;
         return ret;
     }
-    cr_read(orig, buffer, amount, &tmp_err);
+    int read = cr_read(orig, buffer, amount, &tmp_err);
+    buffer[read] = 0;
     if (orig)
         cr_close(orig, NULL);
     return ret;

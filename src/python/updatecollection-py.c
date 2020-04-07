@@ -293,15 +293,19 @@ set_str(_UpdateCollectionObject *self, PyObject *value, void *member_offset)
 static int
 set_module(_UpdateCollectionObject *self, PyObject *value, void *member_offset)
 {
+    cr_UpdateCollectionModule *orig, *new;
+
     if (check_UpdateCollectionStatus(self))
         return -1;
     if (!UpdateCollectionModuleObject_Check(value) && value != Py_None) {
         PyErr_SetString(PyExc_TypeError, "Module or None expected!");
         return -1;
     }
-    cr_UpdateCollectionModule *module = UpdateCollectionModule_FromPyObject(value);
+    orig = UpdateCollectionModule_FromPyObject(value);
+    new = cr_updatecollectionmodule_copy(orig);
+
     cr_UpdateCollection *collection = self->collection;
-    *((cr_UpdateCollectionModule **) ((size_t) collection + (size_t) member_offset)) = module;
+    *((cr_UpdateCollectionModule **) ((size_t) collection + (size_t) member_offset)) = new;
 
     return 0;
 }

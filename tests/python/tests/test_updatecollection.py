@@ -64,3 +64,33 @@ class TestCaseUpdateCollection(unittest.TestCase):
         self.assertEqual(pkg.sum, "abcdef")
         self.assertEqual(pkg.sum_type, cr.SHA1)
         self.assertEqual(pkg.reboot_suggested, True)
+
+    def test_updatecollection_setters_when_module_going_out_of_scope(self):
+        def create_collection_scope():
+            col = cr.UpdateCollection()
+            col.name = "name"
+
+            module = cr.UpdateCollectionModule()
+            module.name = "kangaroo"
+            module.stream = "0"
+            module.version = 20180730223407
+            module.context = "deadbeef"
+            module.arch = "noarch"
+
+            col.module = module
+
+            return col
+
+        col = create_collection_scope()
+        self.assertTrue(col)
+
+        self.assertEqual(col.name, "name")
+
+        # Check if the appended module was appended properly
+        module = col.module
+        self.assertEqual(module.name, "kangaroo")
+        self.assertEqual(module.stream, "0")
+        self.assertEqual(module.version, 20180730223407)
+        self.assertEqual(module.context, "deadbeef")
+        self.assertEqual(module.arch, "noarch")
+

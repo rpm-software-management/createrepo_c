@@ -122,6 +122,10 @@ static GOptionEntry cmd_entries[] =
         "Enable standard mergerepos behavior while also providing the "
         "pkgorigins file for koji.",
         NULL},
+    { "arch-expand", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.arch_expand),
+        "Add multilib architectures for specified archlist and expand all of them. "
+        "Only works with combination with --archlist.",
+        NULL},
     { "groupfile", 'g', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.groupfile),
       "Path to groupfile to include in metadata.", "GROUPFILE" },
     { "blocked", 'b', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.blocked),
@@ -248,9 +252,9 @@ check_arguments(struct CmdOptions *options)
                 // Append (and expand) the arch
                 options->arch_list = append_arch(options->arch_list,
                                                  arch,
-                                                 options->koji);
+                                                 options->koji || options->arch_expand);
                 // Support multilib repos
-                if (options->koji)
+                if (options->koji || options->arch_expand)
                     options->arch_list = append_multilib_arch(options->arch_list,
                                                               arch);
             }
@@ -260,6 +264,11 @@ check_arguments(struct CmdOptions *options)
     } else if (options->koji) {
         // Work only with noarch packages if --koji and no archlist specified
         options->arch_list = append_arch(options->arch_list, "noarch", TRUE);
+    }
+
+    if (!options->archlist && options->arch_expand){
+        g_critical("--arch-expand cannot be used without -a/--archlist argument");
+        ret = FALSE;
     }
 
     // Compress type

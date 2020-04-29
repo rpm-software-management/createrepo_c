@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH MERGEREPO_C  "2019-07-18" "" ""
+.TH MERGEREPO_C  "2020-04-29" "" ""
 .SH NAME
 mergerepo_c \- Merge multiple rpm-md format repositories together
 .
@@ -116,6 +116,9 @@ Enable koji specific simple merge mode where we keep even packages with identica
 .SS \-\-pkgorigins
 .sp
 Enable standard mergerepos behavior while also providing the pkgorigins file for koji.
+.SS \-\-arch\-expand
+.sp
+Add multilib architectures for specified archlist and expand all of them. Only works with combination with \-\-archlist.
 .SS \-g \-\-groupfile GROUPFILE
 .sp
 Path to groupfile to include in metadata.

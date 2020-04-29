@@ -70,6 +70,7 @@ struct CmdOptions {
     gboolean koji;
     gboolean koji_simple;
     gboolean pkgorigins;
+    gboolean arch_expand;
     char *groupfile;
     char *blocked;
 

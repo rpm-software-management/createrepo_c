@@ -57,8 +57,8 @@ class TestCaseSqlite(unittest.TestCase):
         self.assertRaises(cr.CreaterepoCError, db.add_pkg, pkg)
         self.assertRaises(cr.CreaterepoCError, db.dbinfo_update, "somechecksum")
 
-        db.close()  # No error shoud be raised
-        del db      # No error shoud be raised
+        db.close()  # No error should be raised
+        del db      # No error should be raised
 
     def test_sqlite_primary_schema(self):
         path = os.path.join(self.tmpdir, "primary.db")

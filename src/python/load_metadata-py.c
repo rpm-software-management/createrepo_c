@@ -63,7 +63,7 @@ metadata_new(PyTypeObject *type,
 
 PyDoc_STRVAR(metadata_init__doc__,
 ".. method:: __init__(key=HT_KEY_DEFAULT, use_single_chunk=False, pkglist=[])\n\n"
-"    :arg key: Which value shoud be used as a key. One of HT_KEY_* constants.\n"
+"    :arg key: Which value should be used as a key. One of HT_KEY_* constants.\n"
 "    :arg use_single_chunk: Specify if all package strings should be stored\n"
 "        in metadata object instead of package iself. This save some\n"
 "        space if you need to have a all packages loaded into a memory.\n"

@@ -221,7 +221,7 @@ class TestCasePackage(unittest.TestCase):
         self.assertFalse(id(pkg_a) == id(pkg_d))
         self.assertFalse(id(pkg_c) == id(pkg_d))
 
-        # Next lines shoud not fail (if copy really works)
+        # Next lines should not fail (if copy really works)
         del(pkg_a)
         del(pkg_b)
         self.assertEqual(pkg_c.name, "FooPackage")

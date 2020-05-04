@@ -86,14 +86,14 @@ def first_method():
         print_package_info(pkg)
 
 def second_method():
-    """Prefered method for repodata parsing.
+    """Preferred method for repodata parsing.
 
     Important callbacks for repodata parsing:
 
     newpkgcb
     --------
     Via newpkgcb (Package callback) you could directly
-    affect if the current package element shoud be parsed
+    affect if the current package element should be parsed
     or not. This decision could be based on
     three values that are available as attributtes
     in the <package> element. This values are:

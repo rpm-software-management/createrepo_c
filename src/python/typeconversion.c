@@ -70,7 +70,7 @@ PyUnicodeOrNone_FromString(const char *str)
 char *
 PyObject_ToStrOrNull(PyObject *pyobj)
 {
-    // String returned by this function shoud not be freed or modified
+    // String returned by this function should not be freed or modified
     if (PyUnicode_Check(pyobj)) {
         pyobj = PyUnicode_AsUTF8String(pyobj);
     }

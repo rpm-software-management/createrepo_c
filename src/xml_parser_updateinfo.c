@@ -65,7 +65,7 @@ typedef enum {
 } cr_UpdateinfoState;
 
 /* NOTE: Same states in the first column must be together!!!
- * Performance tip: More frequent elements shoud be listed
+ * Performance tip: More frequent elements should be listed
  * first in its group (eg: element "package" (STATE_PACKAGE)
  * has a "file" element listed first, because it is more frequent
  * than a "version" element). */

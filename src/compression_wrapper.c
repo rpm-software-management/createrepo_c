@@ -790,7 +790,7 @@ cr_close(CR_FILE *cr_file, GError **err)
 
                 switch (rc) {
                     case BZ_SEQUENCE_ERROR:
-                        // This really shoud not happen
+                        // This really should not happen
                         err_msg = "file was opened with BZ2_bzReadOpen";
                         break;
                     case BZ_IO_ERROR:
@@ -995,11 +995,11 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
 
                 switch (bzerror) {
                     case BZ_PARAM_ERROR:
-                        // This shoud not happend
+                        // This should not happend
                         err_msg = "bad function params!";
                         break;
                     case BZ_SEQUENCE_ERROR:
-                        // This shoud not happend
+                        // This should not happend
                         err_msg = "file was opened with BZ2_bzWriteOpen";
                         break;
                     case BZ_IO_ERROR:
@@ -1227,11 +1227,11 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
 
                 switch (bzerror) {
                     case BZ_PARAM_ERROR:
-                        // This shoud not happend
+                        // This should not happend
                         err_msg = "bad function params!";
                         break;
                     case BZ_SEQUENCE_ERROR:
-                        // This shoud not happend
+                        // This should not happend
                         err_msg = "file was opened with BZ2_bzReadOpen";
                         break;
                     case BZ_IO_ERROR:

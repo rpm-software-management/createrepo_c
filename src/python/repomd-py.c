@@ -228,7 +228,7 @@ add_content_tag(_RepomdObject *self, PyObject *args)
 
 PyDoc_STRVAR(sort_records__doc__,
 "sort_records() -> str\n\n"
-"Sort repomd records to the createrepo_c prefered order");
+"Sort repomd records to the createrepo_c preferred order");
 
 static PyObject *
 sort_records(_RepomdObject *self, G_GNUC_UNUSED void *nothing)

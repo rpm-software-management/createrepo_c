@@ -106,7 +106,7 @@ class TestCaseRepomdRecord(unittest.TestCase):
 
         zrc.rename_file()
 
-        # Filename shoud contain a (valid) checksum
+        # Filename should contain a (valid) checksum
         filelist = os.listdir(self.tmpdir)
         filelist.sort()
         self.assertEqual(filelist,
@@ -169,14 +169,14 @@ class TestCaseRepomdRecord(unittest.TestCase):
         self.assertTrue(rec)
         rec_compressed = rec.compress_and_fill(cr.SHA256, cr.GZ_COMPRESSION)
 
-        # A new compressed file shoud be created
+        # A new compressed file should be created
         self.assertEqual(sorted(os.listdir(self.tmpdir)),
             sorted(['primary.xml.gz', 'primary.xml']))
 
         rec.rename_file()
         rec_compressed.rename_file()
 
-        # Filename shoud contain a (valid) checksum
+        # Filename should contain a (valid) checksum
         self.assertEqual(sorted(os.listdir(self.tmpdir)),
             sorted(['10091f8e2e235ae875cb18c91c443891c7f1a599d41f44d518e8af759a6c8109-primary.xml.gz',
                     'b33fc63178d852333a826385bc15d9b72cb6658be7fb927ec28c4e40b5d426fb-primary.xml']))

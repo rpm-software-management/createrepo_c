@@ -75,7 +75,7 @@ typedef enum {
 } cr_PriState;
 
 /* NOTE: Same states in the first column must be together!!!
- * Performance tip: More frequent elements shoud be listed
+ * Performance tip: More frequent elements should be listed
  * first in its group (eg: element "package" (STATE_PACKAGE)
  * has a "file" element listed first, because it is more frequent
  * than other elements). */
@@ -188,7 +188,7 @@ cr_start_handler(void *pdata, const xmlChar *element, const xmlChar **attr)
                            "Missing attribute \"type\" of a package element");
 
         // Get package object to store current package or NULL if
-        // current XML package element shoud be skipped/ignored.
+        // current XML package element should be skipped/ignored.
         if (pd->newpkgcb(&pd->pkg,
                          val,
                          NULL,

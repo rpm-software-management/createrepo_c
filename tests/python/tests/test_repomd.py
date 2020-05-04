@@ -28,7 +28,7 @@ class TestCaseRepomd(unittest.TestCase):
         rec.fill(cr.SHA256)
         rec.rename_file()
 
-        # Filename shoud contain a (valid) checksum
+        # Filename should contain a (valid) checksum
         self.assertEqual(os.listdir(self.tmpdir),
             ['1cb61ea996355add02b1426ed4c1780ea75ce0c04c5d1107c025c3fbd7d8bcae-primary.xml.gz'])
 
@@ -40,7 +40,7 @@ class TestCaseRepomd(unittest.TestCase):
         self.assertTrue(md)
 
         xml = md.xml_dump()
-        # Revision shoud be current Unix time
+        # Revision should be current Unix time
         self.assertTrue(re.search(r"<revision>[0-9]+</revision>", xml))
 
         self.assertEqual(md.revision, None)

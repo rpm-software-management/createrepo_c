@@ -201,7 +201,7 @@ int cr_xmlfile_set_num_of_pkgs(cr_XmlFile *f, long num, GError **err);
 int cr_xmlfile_add_pkg(cr_XmlFile *f, cr_Package *pkg, GError **err);
 
 /** Add (write) string with XML chunk into the file.
- * Note: Because of writing, in case of multithreaded program, shoud be
+ * Note: Because of writing, in case of multithreaded program, should be
  * guarded by locks, this function could be much more effective than
  * cr_xml_file_add_pkg(). In case of _add_pkg() function, creating of
  * string with xml chunk is done in a critical section. In _add_chunk()

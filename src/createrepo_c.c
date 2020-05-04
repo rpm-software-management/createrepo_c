@@ -105,7 +105,7 @@ task_cmp(gconstpointer a_p, gconstpointer b_p, G_GNUC_UNUSED gpointer user_data)
  * rpms to the thread pool (create a PoolTask and push it to the pool).
  * If the filelists is supplied then no recursive walk is done and only
  * files from filelists are pushed into the pool.
- * This function also filters out files that shoudn't be processed
+ * This function also filters out files that shouldn't be processed
  * (e.g. directories with .rpm suffix, files that match one of
  * the exclude masks, etc.).
  *

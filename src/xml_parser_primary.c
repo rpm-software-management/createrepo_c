@@ -768,7 +768,8 @@ cr_xml_parse_primary_snippet(const char *xml_string,
                              GError **err)
 {
     char* wrapped_xml_string = g_strconcat("<metadata>", xml_string, "</metadata>", NULL);
-    return cr_xml_parse_primary_internal(wrapped_xml_string, newpkgcb, newpkgcb_data, pkgcb, pkgcb_data,
-                                         warningcb, warningcb_data, do_files, &cr_xml_parser_generic_from_string, err);
+    int ret =  cr_xml_parse_primary_internal(wrapped_xml_string, newpkgcb, newpkgcb_data, pkgcb, pkgcb_data,
+                                             warningcb, warningcb_data, do_files, &cr_xml_parser_generic_from_string, err);
     free(wrapped_xml_string);
+    return ret;
 }

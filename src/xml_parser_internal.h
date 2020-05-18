@@ -174,7 +174,7 @@ void cr_xml_parser_data_free(cr_ParserData *pd);
 static inline const char *
 cr_find_attr(const char *name, const xmlChar **attr)
 {
-    while (*attr) {
+    while (attr && *attr) {
         if (!strcmp(name, (char *) *attr))
             return (const char *) attr[1];
         attr += 2;

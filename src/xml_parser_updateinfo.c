@@ -146,11 +146,6 @@ cr_start_handler(void *pdata, const xmlChar *element, const xmlChar **attr)
     cr_UpdateCollection *collection = pd->updatecollection;
     cr_UpdateCollectionPackage *package = pd->updatecollectionpackage;
 
-    if (!attr){
-        static const char *nullattr;
-        attr = (const xmlChar **) &nullattr;
-    }
-
     switch(pd->state) {
     case STATE_START:
         break;

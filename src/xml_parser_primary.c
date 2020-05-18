@@ -165,11 +165,6 @@ cr_start_handler(void *pdata, const xmlChar *element, const xmlChar **attr)
 
     const char *val;
 
-    if (!attr){
-        static const char *nullattr;
-        attr = (const xmlChar **) &nullattr;
-    }
-
     switch(pd->state) {
     case STATE_START:
         break;

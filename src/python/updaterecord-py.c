@@ -288,13 +288,17 @@ get_datetime(_UpdateRecordObject *self, void *member_offset)
         memset(dt, 0, sizeof(struct tm));
         res = strptime(str, "%Y-%m-%d", dt);
         if (res == NULL) {
+            g_free(dt);
             // Try to convert the whole string to a number if it passes it's likely in epoch format
             char *t;
             long long int epoch = strtoll(str, &t, 10);
             if(*t == '\0') {
                 return PyLong_FromLongLong(epoch);
             } else {
-                PyErr_SetString(CrErr_Exception, "Invalid date");
+                char err[55];
+                snprintf(err, 55, "Unable to parse updateinfo record date: %s", str);
+                PyErr_SetString(CrErr_Exception, err);
+                return NULL;
             }
         }
     }
@@ -384,8 +388,9 @@ set_datetime(_UpdateRecordObject *self, PyObject *value, void *member_offset)
         char *date = malloc(13 * sizeof(char));
 
         int ret = snprintf(date, 13, "%llu", epoch);
-        if (ret < 0 && ret > 12){
+        if (ret < 0 || ret > 12){
             PyErr_SetString(PyExc_TypeError, "Invalid epoch value!");
+            free(date);
             return -1;
         }
         char *str = cr_safe_string_chunk_insert(rec->chunk, date);

@@ -70,6 +70,16 @@ class TestCaseUpdateInfo(unittest.TestCase):
         rec = ui.updates[1]
         self.assertEqual(rec.issued_date, int(now.timestamp()))
 
+    def test_updateinfo_getter(self):
+        ui = cr.UpdateInfo(TEST_UPDATEINFO_03)
+        self.assertTrue(ui)
+
+        self.assertEqual(len(ui.updates), 6)
+
+        rec = ui.updates[2]
+        self.assertRaisesRegex(cr.CreaterepoCError, "Unable to parse updateinfo record date: 15mangled2",
+                               rec.__getattribute__, "issued_date")
+
     def test_updateinfo_xml_dump_01(self):
         ui = cr.UpdateInfo()
         xml = ui.xml_dump()

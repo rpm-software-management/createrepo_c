@@ -8,6 +8,7 @@ PACKAGES_PATH = os.path.join(TEST_DATA_PATH, "packages")
 REPOS_PATH = TEST_DATA_PATH
 TEST_FILES_PATH = os.path.join(TEST_DATA_PATH, "test_files")
 REPODATA_SNIPPETS = os.path.join(TEST_DATA_PATH, "repodata_snippets")
+TEST_UPDATEINFO_FILES_PATH = os.path.join(TEST_DATA_PATH, "updateinfo_files/")
 
 # Modified repo files
 
@@ -108,3 +109,7 @@ FILELISTS_SNIPPET_01 = os.path.join(REPODATA_SNIPPETS, "filelists_snippet_01.xml
 FILELISTS_SNIPPET_02 = os.path.join(REPODATA_SNIPPETS, "filelists_snippet_02.xml")
 OTHER_SNIPPET_01 = os.path.join(REPODATA_SNIPPETS, "other_snippet_01.xml")
 OTHER_SNIPPET_02 = os.path.join(REPODATA_SNIPPETS, "other_snippet_02.xml")
+
+# Test updateinfo files
+
+TEST_UPDATEINFO_03 = os.path.join(TEST_UPDATEINFO_FILES_PATH, "updateinfo_03.xml")

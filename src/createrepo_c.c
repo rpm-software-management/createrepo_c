@@ -132,7 +132,7 @@ fill_pool(GThreadPool *pool,
     }
 
 
-    if (cmd_options->pkglist && !cmd_options->include_pkgs) {
+    if ((cmd_options->pkglist || cmd_options->recycle_pkglist) && !cmd_options->include_pkgs) {
         g_warning("Used pkglist doesn't contain any useful items");
     } else if (!(cmd_options->include_pkgs)) {
         // --pkglist (or --includepkg, or --recycle-pkglist) is not supplied

@@ -726,6 +726,30 @@ main(int argc, char **argv)
     g_slist_free(current_pkglist);
     current_pkglist = NULL;
     GSList *additional_metadata = NULL;
+
+    // Setup compression types
+    const char *xml_compression_suffix = NULL;
+    const char *sqlite_compression_suffix = NULL;
+    const char *compression_suffix = NULL;
+    cr_CompressionType xml_compression = CR_CW_GZ_COMPRESSION;
+    cr_CompressionType sqlite_compression = CR_CW_BZ2_COMPRESSION;
+    cr_CompressionType compression = CR_CW_GZ_COMPRESSION;
+
+    if (cmd_options->compression_type != CR_CW_UNKNOWN_COMPRESSION) {
+        sqlite_compression = cmd_options->compression_type;
+        compression        = cmd_options->compression_type;
+    }
+
+    if (cmd_options->general_compression_type != CR_CW_UNKNOWN_COMPRESSION) {
+        xml_compression    = cmd_options->general_compression_type;
+        sqlite_compression = cmd_options->general_compression_type;
+        compression        = cmd_options->general_compression_type;
+    }
+
+    xml_compression_suffix = cr_compression_suffix(xml_compression);
+    sqlite_compression_suffix = cr_compression_suffix(sqlite_compression);
+    compression_suffix = cr_compression_suffix(compression);
+
     cr_Metadatum *new_groupfile_metadatum = NULL;
 
     // Groupfile specified as argument 
@@ -765,31 +789,6 @@ main(int argc, char **argv)
 
     cr_metadatalocation_free(old_metadata_location);
     old_metadata_location = NULL;
-
-
-    // Setup compression types
-    const char *xml_compression_suffix = NULL;
-    const char *sqlite_compression_suffix = NULL;
-    const char *compression_suffix = NULL;
-    cr_CompressionType xml_compression = CR_CW_GZ_COMPRESSION;
-    cr_CompressionType sqlite_compression = CR_CW_BZ2_COMPRESSION;
-    cr_CompressionType compression = CR_CW_GZ_COMPRESSION;
-
-    if (cmd_options->compression_type != CR_CW_UNKNOWN_COMPRESSION) {
-        sqlite_compression = cmd_options->compression_type;
-        compression        = cmd_options->compression_type;
-    }
-
-    if (cmd_options->general_compression_type != CR_CW_UNKNOWN_COMPRESSION) {
-        xml_compression    = cmd_options->general_compression_type;
-        sqlite_compression = cmd_options->general_compression_type;
-        compression        = cmd_options->general_compression_type;
-    }
-
-    xml_compression_suffix = cr_compression_suffix(xml_compression);
-    sqlite_compression_suffix = cr_compression_suffix(sqlite_compression);
-    compression_suffix = cr_compression_suffix(compression);
-
 
     // Create and open new compressed files
     cr_XmlFile *pri_cr_file;

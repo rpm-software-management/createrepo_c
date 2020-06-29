@@ -637,5 +637,6 @@ free_options(struct CmdOptions *options)
     cr_slist_free_full(options->l_update_md_paths, g_free);
     cr_slist_free_full(options->distro_cpeids, g_free);
     cr_slist_free_full(options->distro_values, g_free);
+    cr_slist_free_full(options->modulemd_metadata, g_free);
     g_slist_free(options->oldpackagedirs_paths);
 }

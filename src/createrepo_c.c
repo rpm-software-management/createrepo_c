@@ -770,28 +770,25 @@ main(int argc, char **argv)
     // Setup compression types
     const char *xml_compression_suffix = NULL;
     const char *sqlite_compression_suffix = NULL;
-    const char *prestodelta_compression_suffix = NULL;
+    const char *compression_suffix = NULL;
     cr_CompressionType xml_compression = CR_CW_GZ_COMPRESSION;
     cr_CompressionType sqlite_compression = CR_CW_BZ2_COMPRESSION;
-    cr_CompressionType groupfile_compression = CR_CW_GZ_COMPRESSION;
-    cr_CompressionType prestodelta_compression = CR_CW_GZ_COMPRESSION;
+    cr_CompressionType compression = CR_CW_GZ_COMPRESSION;
 
     if (cmd_options->compression_type != CR_CW_UNKNOWN_COMPRESSION) {
-        sqlite_compression      = cmd_options->compression_type;
-        groupfile_compression   = cmd_options->compression_type;
-        prestodelta_compression = cmd_options->compression_type;
+        sqlite_compression = cmd_options->compression_type;
+        compression        = cmd_options->compression_type;
     }
 
     if (cmd_options->general_compression_type != CR_CW_UNKNOWN_COMPRESSION) {
-        xml_compression         = cmd_options->general_compression_type;
-        sqlite_compression      = cmd_options->general_compression_type;
-        groupfile_compression   = cmd_options->general_compression_type;
-        prestodelta_compression = cmd_options->general_compression_type;
+        xml_compression    = cmd_options->general_compression_type;
+        sqlite_compression = cmd_options->general_compression_type;
+        compression        = cmd_options->general_compression_type;
     }
 
     xml_compression_suffix = cr_compression_suffix(xml_compression);
     sqlite_compression_suffix = cr_compression_suffix(sqlite_compression);
-    prestodelta_compression_suffix = cr_compression_suffix(prestodelta_compression);
+    compression_suffix = cr_compression_suffix(compression);
 
 
     // Create and open new compressed files
@@ -1362,7 +1359,7 @@ main(int argc, char **argv)
     if (new_groupfile_metadatum) {
         additional_metadata_rec = cr_create_repomd_records_for_groupfile_metadata(new_groupfile_metadatum,
                                                                                   additional_metadata_rec,
-                                                                                  groupfile_compression, 
+                                                                                  compression,
                                                                                   cmd_options->repomd_checksum_type);
 
         //NOTE(amatej): Now we can add groupfile metadata to the additional_metadata list, for unified handlig while zck compressing
@@ -1620,7 +1617,7 @@ main(int argc, char **argv)
         cr_ContentStat *prestodelta_zck_stat = NULL;
 
         filename = g_strconcat("prestodelta.xml",
-                               prestodelta_compression_suffix,
+                               compression_suffix,
                                NULL);
         outdeltadir = g_build_filename(out_dir, OUTDELTADIR, NULL);
         prestodelta_xml_filename = g_build_filename(tmp_out_repo,
@@ -1668,7 +1665,7 @@ main(int argc, char **argv)
         // 3) Generate prestodelta.xml file
         prestodelta_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
         prestodelta_cr_file = cr_xmlfile_sopen_prestodelta(prestodelta_xml_filename,
-                                                           prestodelta_compression,
+                                                           compression,
                                                            prestodelta_stat,
                                                            &tmp_err);
         if (!prestodelta_cr_file) {
@@ -1676,7 +1673,7 @@ main(int argc, char **argv)
             g_clear_error(&tmp_err);
             goto deltaerror;
         }
-        if (cmd_options->zck_compression && prestodelta_compression != CR_CW_ZCK_COMPRESSION) {
+        if (cmd_options->zck_compression && compression != CR_CW_ZCK_COMPRESSION) {
             filename = g_strconcat("prestodelta.xml",
                                    cr_compression_suffix(CR_CW_ZCK_COMPRESSION),
                                    NULL);

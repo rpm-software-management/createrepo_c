@@ -40,6 +40,7 @@
 #include "error.h"
 #include "helpers.h"
 #include "load_metadata.h"
+#include "metadata_internal.h"
 #include "locate_metadata.h"
 #include "misc.h"
 #include "parsepkg.h"
@@ -49,6 +50,10 @@
 #include "version.h"
 #include "xml_dump.h"
 #include "xml_file.h"
+
+#ifdef WITH_LIBMODULEMD
+#include <modulemd.h>
+#endif /* WITH_LIBMODULEMD */
 
 #define OUTDELTADIR "drpms/"
 
@@ -79,6 +84,18 @@ allowed_file(const gchar *filename, GSList *exclude_masks)
         g_free(reversed_filename);
     }
     return TRUE;
+}
+
+static gboolean
+allowed_modulemd_module_metadata_file(const gchar *filename)
+{
+    if (g_str_has_suffix (filename, ".modulemd.yaml") ||
+        g_str_has_suffix (filename, ".modulemd-defaults.yaml") ||
+        g_str_has_suffix (filename, "modules.yaml"))
+    {
+        return TRUE;
+    }
+    return FALSE;
 }
 
 
@@ -181,17 +198,30 @@ fill_pool(GThreadPool *pool,
                     continue;
                 }
 
-                // Non .rpm files are ignored
-                if (!g_str_has_suffix (filename, ".rpm")) {
-                    g_free(full_path);
-                    continue;
-                }
-
                 // Skip symbolic links if --skip-symlinks arg is used
                 if (cmd_options->skip_symlinks
                     && g_file_test(full_path, G_FILE_TEST_IS_SYMLINK))
                 {
                     g_debug("Skipped symlink: %s", full_path);
+                    g_free(full_path);
+                    continue;
+                }
+
+                if (allowed_modulemd_module_metadata_file(full_path)) {
+#ifdef WITH_LIBMODULEMD
+                    cmd_options->modulemd_metadata = g_slist_prepend(
+                        cmd_options->modulemd_metadata,
+                        (gpointer) full_path);
+#else
+                    g_warning("createrepo_c not compiled with libmodulemd support, "
+                              "ignoring found module metadata: %s", full_path);
+                    g_free(full_path);
+#endif /* WITH_LIBMODULEMD */
+                    continue;
+                }
+
+                // Non .rpm files are ignored
+                if (!g_str_has_suffix (filename, ".rpm")) {
                     g_free(full_path);
                     continue;
                 }
@@ -232,6 +262,19 @@ fill_pool(GThreadPool *pool,
         for (; element; element=g_slist_next(element)) {
             gchar *relative_path = (gchar *) element->data;
             //     ^^^ path from pkglist e.g. packages/i386/foobar.rpm
+
+            if (allowed_modulemd_module_metadata_file(relative_path)) {
+#ifdef WITH_LIBMODULEMD
+                cmd_options->modulemd_metadata = g_slist_prepend(
+                    cmd_options->modulemd_metadata,
+                    (gpointer) g_strdup(relative_path));
+#else
+            g_warning("createrepo_c not compiled with libmodulemd support, "
+                      "ignoring found module metadata: %s", relative_path);
+#endif /* WITH_LIBMODULEMD */
+                continue;
+            }
+
             gchar *filename; // foobar.rpm
 
             // Get index of last '/'
@@ -773,6 +816,108 @@ main(int argc, char **argv)
         }
     }
 
+#ifdef WITH_LIBMODULEMD
+    // module metadata found in repo
+    if (cmd_options->modulemd_metadata) {
+        ModulemdModuleIndexMerger *merger = modulemd_module_index_merger_new();
+        if (!merger) {
+            g_critical("Could not allocate module merger");
+            exit(EXIT_FAILURE);
+        }
+        ModulemdModuleIndex *moduleindex;
+
+        //load all found module metatada and associate it with merger
+        GSList *element = cmd_options->modulemd_metadata;
+        for (; element; element=g_slist_next(element)) {
+            moduleindex = modulemd_module_index_new();
+            if (!moduleindex) {
+                g_critical("Could not allocate new module index");
+                g_clear_pointer(&merger, g_object_unref);
+                exit(EXIT_FAILURE);
+            }
+            g_autoptr (GPtrArray) failures = NULL;
+            gboolean result = modulemd_module_index_update_from_file(moduleindex,
+                                                                     ((char *) element->data),
+                                                                     TRUE,
+                                                                     &failures,
+                                                                     &tmp_err);
+            if (!result) {
+                g_critical("Could not update module index from file %s: %s", element->data, tmp_err->message);
+                g_clear_error(&tmp_err);
+                g_clear_pointer(&moduleindex, g_object_unref);
+                g_clear_pointer(&merger, g_object_unref);
+                exit(EXIT_FAILURE);
+            }
+            modulemd_module_index_merger_associate_index(merger, moduleindex, 0);
+            g_clear_pointer(&moduleindex, g_object_unref);
+        }
+
+        if (cmd_options->update && cmd_options->keep_all_metadata &&
+        old_metadata_location && old_metadata_location->additional_metadata){
+            //associate old metadata into the merger
+            if (cr_metadata_modulemd(old_metadata)){
+                modulemd_module_index_merger_associate_index(merger, cr_metadata_modulemd(old_metadata), 0);
+                if (tmp_err) {
+                    g_critical("%s: Cannot merge old module index with new: %s", __func__, tmp_err->message);
+                    g_clear_error(&tmp_err);
+                    g_clear_pointer(&merger, g_object_unref);
+                    exit(EXIT_FAILURE);
+                }
+            }
+            //remove old modules (every [compressed] variant)
+            GSList *node_iter = old_metadata_location->additional_metadata;
+            while (node_iter != NULL){
+                GSList *next = g_slist_next(node_iter);
+                cr_Metadatum *m = node_iter->data;
+                if(g_str_has_prefix(m->type, "modules")){
+                    old_metadata_location->additional_metadata = g_slist_delete_link(
+                        old_metadata_location->additional_metadata, node_iter);
+                    cr_metadatum_free(m);
+                }
+                node_iter = next;
+            }
+        }
+
+        //merge module metadata and dump it to string
+        moduleindex = modulemd_module_index_merger_resolve (merger, &tmp_err);
+        g_clear_pointer(&merger, g_object_unref);
+        char *moduleindex_str = modulemd_module_index_dump_to_string (moduleindex, &tmp_err);
+        g_clear_pointer(&moduleindex, g_object_unref);
+        if (tmp_err) {
+            g_critical("%s: Cannot cannot dump module index: %s", __func__, tmp_err->message);
+            free(moduleindex_str);
+            g_clear_error(&tmp_err);
+            exit(EXIT_FAILURE);
+        }
+
+        //compress new module metadata string to a file in temporary .repodata
+        gchar *modules_metadata_path = g_strconcat(tmp_out_repo, "modules.yaml", compression_suffix, NULL);
+        CR_FILE *modules_file = NULL;
+        modules_file = cr_open(modules_metadata_path, CR_CW_MODE_WRITE, compression, &tmp_err);
+        if (modules_file == NULL) {
+            g_critical("%s: Cannot open source file %s: %s", __func__, modules_metadata_path, tmp_err->message);
+            g_clear_error(&tmp_err);
+            free(moduleindex_str);
+            free(modules_metadata_path);
+            exit(EXIT_FAILURE);
+        }
+        cr_puts(modules_file, moduleindex_str, &tmp_err);
+        free(moduleindex_str);
+        cr_close(modules_file, &tmp_err);
+        if (tmp_err) {
+            g_critical("%s: Error while closing: : %s", __func__, tmp_err->message);
+            g_clear_error(&tmp_err);
+            free(modules_metadata_path);
+            exit(EXIT_FAILURE);
+        }
+
+        //create additional metadatum for new module metadata file
+        cr_Metadatum *new_modules_metadatum = g_malloc0(sizeof(cr_Metadatum));
+        new_modules_metadatum->name = modules_metadata_path;
+        new_modules_metadatum->type = g_strdup("modules");
+        additional_metadata = g_slist_prepend(additional_metadata, new_modules_metadatum);
+    }
+#endif /* WITH_LIBMODULEMD */
 
     if (cmd_options->update && cmd_options->keep_all_metadata &&
         old_metadata_location && old_metadata_location->additional_metadata)

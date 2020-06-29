@@ -135,6 +135,7 @@ struct CmdOptions {
                                      is used */
     char *checksum_cachedir;    /*!< Path to cachedir */
     GSList *oldpackagedirs_paths; /*!< paths to look for older pkgs to delta against */
+    GSList *modulemd_metadata;  /*!< paths to all modulemd metadata */
 
     gboolean recycle_pkglist;
 };

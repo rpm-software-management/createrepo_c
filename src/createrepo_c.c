@@ -356,8 +356,8 @@ cr_create_repomd_records_for_groupfile_metadata(const cr_Metadatum *group_metada
                                                   compressed_record_type,
                                                   NULL
                                               ));
-    //TODO(amatej): replace nth_data with ->next->data
-    cr_repomd_record_compress_and_fill(g_slist_nth_data(additional_metadata_rec, 1),
+
+    cr_repomd_record_compress_and_fill(additional_metadata_rec->next->data,
                                        additional_metadata_rec->data,
                                        repomd_checksum_type,
                                        comp_type,

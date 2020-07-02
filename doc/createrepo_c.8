@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH CREATEREPO_C  "2019-07-19" "" ""
+.TH CREATEREPO_C  "2020-07-02" "" ""
 .SH NAME
 createrepo_c \- Create rpm-md format (xml-rpm-metadata) repository
 .
@@ -35,6 +35,25 @@ level margin: \\n[rst2man-indent\\n[rst2man-indent-level]]
 .SH SYNOPSIS
 .sp
 createrepo_c [options] <directory>
+.SH DESCRIPTION
+.sp
+Uses rpm packages from <directory> to create repodata.
+.sp
+If compiled with libmodulemd support modular metadata inside <directory> identified by the patterns below are automatically collected, merged and added to the repodata.
+.sp
+The patterns are:
+.INDENT 0.0
+.INDENT 3.5
+.INDENT 0.0
+.IP \(bu 2
+*.modulemd.yaml (recommended file name: N:S:V:C:A.modulemd.yaml)
+.IP \(bu 2
+*.modulemd\-defaults.yaml (recommended file name: N.modulemd\-defaults.yaml)
+.IP \(bu 2
+modules.yaml (recommended way of importing multiple documents at once)
+.UNINDENT
+.UNINDENT
+.UNINDENT
 .SH OPTIONS
 .SS \-V \-\-version
 .sp

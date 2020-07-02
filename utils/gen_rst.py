@@ -43,6 +43,14 @@ class Info(object):
                 rst += "%s\n\n" % line
             rst += "\n"
 
+        # Add description
+        if self.description:
+            rst += "DESCRIPTION\n"
+            rst += "===========\n\n"
+            for line in self.description:
+                rst += "%s\n\n" % line
+            rst += "\n"
+
         # Add options
         rst += "OPTIONS\n"
         rst += "=======\n"
@@ -177,7 +185,14 @@ if __name__ == "__main__":
         info = Info(NAME,
                 summary="Create rpm-md format (xml-rpm-metadata) repository",
                 synopsis=["%s [options] <directory>" % (NAME,)],
+                description=["Uses rpm packages from <directory> to create repodata.",
+                             "If compiled with libmodulemd support modular metadata inside <directory> identified by the patterns below are automatically collected, merged and added to the repodata.",
+                             "The patterns are:",
+                             " - \*.modulemd.yaml (recommended file name: N:S:V:C:A.modulemd.yaml)",
+                             " - \*.modulemd-defaults.yaml (recommended file name: N.modulemd-defaults.yaml)",
+                             " - modules.yaml (recommended way of importing multiple documents at once)"],
                 options=args)
+
 
     ret = info.gen_rst()
     if not ret:

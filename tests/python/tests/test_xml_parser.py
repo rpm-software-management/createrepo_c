@@ -476,6 +476,42 @@ class TestCaseXmlParserFilelists(unittest.TestCase):
         self.assertEqual(userdata["pkgcb_calls"], 2)
         self.assertEqual(userdata["warnings"], [])
 
+    def test_xml_parser_filelists_snippet_huge(self):
+
+        userdata = {
+                "pkgs": [],
+                "pkgcb_calls": 0,
+                "warnings": []
+            }
+
+        def newpkgcb(pkgId, name, arch):
+            pkg = cr.Package()
+            userdata["pkgs"].append(pkg)
+            return pkg
+
+        def pkgcb(pkg):
+            userdata["pkgcb_calls"] += 1
+
+        def warningcb(warn_type, msg):
+            userdata["warnings"].append((warn_type, msg))
+
+        # generete huge filelists snippet
+        content = """
+                  <package pkgid="68743563000b2a85e7d9d7ce318719217f3bfee6167cd862efd201ff96c1ecbb" name="flat-remix-icon-theme" arch="noarch">
+                  <version epoch="0" ver="0.0.20200511" rel="1.fc33"/>
+                  """
+        for i in range(145951):
+            content += "<file>/usr/share/icons/Flat-Remix-Yellow/status/symbolic/user-available-symbolic.svg</file>"
+        content += "</package>"
+
+        cr.xml_parse_filelists_snippet(content, newpkgcb, pkgcb, warningcb)
+
+        self.assertEqual([pkg.name for pkg in userdata["pkgs"]],
+            ['flat-remix-icon-theme'])
+        self.assertEqual(userdata["pkgcb_calls"], 1)
+        self.assertEqual(userdata["warnings"], [])
+
+
 
     def test_xml_parser_filelists_repo02_only_pkgcb(self):
 

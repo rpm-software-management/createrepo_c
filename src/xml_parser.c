@@ -243,29 +243,45 @@ cr_xml_parser_generic_from_string(xmlParserCtxtPtr parser,
     /* Note: This function uses .err members of cr_ParserData! */
 
     int ret = CRE_OK;
+    int block_size = XML_BUFFER_SIZE;
+    const char *next_data = xml_string;
+    const char *end_of_string = xml_string + strlen(xml_string);
+    int finished = 0;
 
     assert(parser);
     assert(pd);
     assert(xml_string);
     assert(!err || *err == NULL);
 
-    if (xmlParseChunk(parser, xml_string, strlen(xml_string), 1)) {
-        ret = CRE_XMLPARSER;
-        xmlErrorPtr xml_err = xmlCtxtGetLastError(parser);
-        g_critical("%s: parsing error '%s': %s",
-                   __func__,
-                   xml_string,
-                   xml_err->message);
-        g_set_error(err, ERR_DOMAIN, CRE_XMLPARSER,
-                    "Parse error '%s' at line: %d (%s)",
-                    xml_string,
-                    (int) xml_err->line,
-                    (char *) xml_err->message);
-    }
+    const char *data;
+    while (!finished) {
+        data = next_data;
 
-    if (pd->err) {
-        ret = pd->err->code;
-        g_propagate_error(err, pd->err);
+        // Check if we are in the last loop
+        next_data = data + block_size;
+        if (next_data > end_of_string) {
+            block_size = strlen(data);
+            finished = 1;
+        }
+
+        if (xmlParseChunk(parser, data, block_size, finished)) {
+            ret = CRE_XMLPARSER;
+            xmlErrorPtr xml_err = xmlCtxtGetLastError(parser);
+            g_critical("%s: parsing error '%s': %s",
+                       __func__,
+                       data,
+                       xml_err->message);
+            g_set_error(err, ERR_DOMAIN, CRE_XMLPARSER,
+                        "Parse error '%s' at line: %d (%s)",
+                        data,
+                        (int) xml_err->line,
+                        (char *) xml_err->message);
+        }
+
+        if (pd->err) {
+            ret = pd->err->code;
+            g_propagate_error(err, pd->err);
+        }
     }
 
     return ret;

@@ -32,6 +32,9 @@ class Info(object):
         if self.copyright:
             rst += ":Copyright: %s\n" % self.copyright
 
+        # Add manual page section
+        rst += ":Manual section: 8\n"
+
         # Add date
         rst += ":Date: $Date: %s $\n\n" % datetime.datetime.strftime(datetime.datetime.utcnow(), format="%F %X")
 

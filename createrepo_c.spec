@@ -1,5 +1,7 @@
 %global libmodulemd_version 2.3.0
 
+%define __cmake_in_source_build 1
+
 # Bash completion (we need different approach for RHEL-6)
 %if 0%{?rhel} == 6
 %global bash_completion %config%{_sysconfdir}/bash_completion.d/createrepo_c.bash

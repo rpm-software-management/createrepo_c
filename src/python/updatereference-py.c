@@ -170,14 +170,8 @@ set_str(_UpdateReferenceObject *self, PyObject *value, void *member_offset)
         return -1;
     }
 
-    if (PyUnicode_Check(value)) {
-        value = PyUnicode_AsUTF8String(value);
-    }
-
     cr_UpdateReference *ref = self->reference;
-    char *str = cr_safe_string_chunk_insert(ref->chunk,
-                                            PyObject_ToStrOrNull(value));
-
+    char *str = PyObject_ToChunkedString(value, ref->chunk);
     *((char **) ((size_t) ref + (size_t) member_offset)) = str;
     return 0;
 }

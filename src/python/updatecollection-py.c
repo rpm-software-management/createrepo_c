@@ -284,8 +284,7 @@ set_str(_UpdateCollectionObject *self, PyObject *value, void *member_offset)
         return -1;
     }
     cr_UpdateCollection *rec = self->collection;
-    char *str = cr_safe_string_chunk_insert(rec->chunk,
-                                            PyObject_ToStrOrNull(value));
+    char *str = PyObject_ToChunkedString(value, rec->chunk);
     *((char **) ((size_t) rec + (size_t) member_offset)) = str;
     return 0;
 }

@@ -366,8 +366,7 @@ set_str(_UpdateRecordObject *self, PyObject *value, void *member_offset)
         return -1;
     }
     cr_UpdateRecord *rec = self->record;
-    char *str = cr_safe_string_chunk_insert(rec->chunk,
-                                            PyObject_ToStrOrNull(value));
+    char *str = PyObject_ToChunkedString(value, rec->chunk);
     *((char **) ((size_t) rec + (size_t) member_offset)) = str;
     return 0;
 }

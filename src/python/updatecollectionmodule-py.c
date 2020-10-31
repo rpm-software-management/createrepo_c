@@ -177,14 +177,8 @@ set_str(_UpdateCollectionModuleObject *self, PyObject *value, void *member_offse
         return -1;
     }
 
-    if (PyUnicode_Check(value)) {
-        value = PyUnicode_AsUTF8String(value);
-    }
-
     cr_UpdateCollectionModule *module = self->module;
-    char *str = cr_safe_string_chunk_insert(module->chunk,
-                                            PyObject_ToStrOrNull(value));
-
+    char *str = PyObject_ToChunkedString(value, module->chunk);
     *((char **) ((size_t) module + (size_t) member_offset)) = str;
     return 0;
 }

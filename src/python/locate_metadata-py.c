@@ -142,12 +142,8 @@ getitem(_MetadataLocationObject *self, PyObject *pykey)
         return NULL;
     }
 
-    if (PyUnicode_Check(pykey)) {
-        pykey = PyUnicode_AsUTF8String(pykey);
-    }
-
+    pykey = PyObject_ToPyBytesOrNull(pykey);
     key = PyBytes_AsString(pykey);
-
     value = NULL;
 
     if (!strcmp(key, "primary")) {
@@ -186,14 +182,18 @@ getitem(_MetadataLocationObject *self, PyObject *pykey)
             for (GSList *elem = self->ml->additional_metadata; elem; elem=g_slist_next(elem)){
                 PyList_Append(list, PyUnicode_FromString(((cr_Metadatum *)(elem->data))->name));
             }
+            Py_XDECREF(pykey);
             return list;
         }
     }
 
-    if (value)
+    Py_XDECREF(pykey);
+
+    if (value) {
         return PyUnicode_FromString(value);
-    else
+    } else {
         Py_RETURN_NONE;
+    }
 }
 
 static PyMappingMethods mapping_methods = {

@@ -67,26 +67,35 @@ PyUnicodeOrNone_FromString(const char *str)
     return PyUnicode_FromString(str);
 }
 
-char *
-PyObject_ToStrOrNull(PyObject *pyobj)
+PyObject *
+PyObject_ToPyBytesOrNull(PyObject *pyobj)
 {
-    // String returned by this function should not be freed or modified
     if (PyUnicode_Check(pyobj)) {
         pyobj = PyUnicode_AsUTF8String(pyobj);
+        if (!pyobj) {
+            return NULL;
+        }
+    } else {
+        Py_XINCREF(pyobj);
     }
 
     if (PyBytes_Check(pyobj)) {
-        return PyBytes_AsString(pyobj);
+        return pyobj;
     }
 
-    // TODO: ? Add support for pyobj like: ("xxx",) and ["xxx"]
     return NULL;
 }
 
 char *
 PyObject_ToChunkedString(PyObject *pyobj, GStringChunk *chunk)
 {
-    return cr_safe_string_chunk_insert(chunk, PyObject_ToStrOrNull(pyobj));
+    char *ret = NULL;
+    PyObject *pybytes = PyObject_ToPyBytesOrNull(pyobj);
+    if (pybytes) {
+        ret = cr_safe_string_chunk_insert(chunk, PyBytes_AsString(pybytes));
+        Py_DECREF(pybytes);
+    }
+    return ret;
 }
 
 long long
@@ -130,19 +139,19 @@ PyObject_ToDependency(PyObject *tuple, GStringChunk *chunk)
     cr_Dependency *dep = cr_dependency_new();
 
     pyobj = PyTuple_GetItem(tuple, 0);
-    dep->name = cr_safe_string_chunk_insert(chunk, PyObject_ToStrOrNull(pyobj));
+    dep->name = PyObject_ToChunkedString(pyobj, chunk);
 
     pyobj = PyTuple_GetItem(tuple, 1);
-    dep->flags = cr_safe_string_chunk_insert(chunk, PyObject_ToStrOrNull(pyobj));
+    dep->flags = PyObject_ToChunkedString(pyobj, chunk);
 
     pyobj = PyTuple_GetItem(tuple, 2);
-    dep->epoch = cr_safe_string_chunk_insert(chunk, PyObject_ToStrOrNull(pyobj));
+    dep->epoch = PyObject_ToChunkedString(pyobj, chunk);
 
     pyobj = PyTuple_GetItem(tuple, 3);
-    dep->version = cr_safe_string_chunk_insert(chunk, PyObject_ToStrOrNull(pyobj));
+    dep->version = PyObject_ToChunkedString(pyobj, chunk);
 
     pyobj = PyTuple_GetItem(tuple, 4);
-    dep->release = cr_safe_string_chunk_insert(chunk, PyObject_ToStrOrNull(pyobj));
+    dep->release = PyObject_ToChunkedString(pyobj, chunk);
 
     pyobj = PyTuple_GetItem(tuple, 5);
     dep->pre = (PyObject_IsTrue(pyobj)) ? TRUE : FALSE;
@@ -172,13 +181,13 @@ PyObject_ToPackageFile(PyObject *tuple, GStringChunk *chunk)
     cr_PackageFile *file = cr_package_file_new();
 
     pyobj = PyTuple_GetItem(tuple, 0);
-    file->type = cr_safe_string_chunk_insert(chunk, PyObject_ToStrOrNull(pyobj));
+    file->type = PyObject_ToChunkedString(pyobj, chunk);
 
     pyobj = PyTuple_GetItem(tuple, 1);
-    file->path = cr_safe_string_chunk_insert(chunk, PyObject_ToStrOrNull(pyobj));
+    file->path = PyObject_ToChunkedString(pyobj, chunk);
 
     pyobj = PyTuple_GetItem(tuple, 2);
-    file->name = cr_safe_string_chunk_insert(chunk, PyObject_ToStrOrNull(pyobj));
+    file->name = PyObject_ToChunkedString(pyobj, chunk);
 
     return file;
 }
@@ -205,13 +214,13 @@ PyObject_ToChangelogEntry(PyObject *tuple, GStringChunk *chunk)
     cr_ChangelogEntry *log = cr_changelog_entry_new();
 
     pyobj = PyTuple_GetItem(tuple, 0);
-    log->author = cr_safe_string_chunk_insert(chunk, PyObject_ToStrOrNull(pyobj));
+    log->author = PyObject_ToChunkedString(pyobj, chunk);
 
     pyobj = PyTuple_GetItem(tuple, 1);
     log->date = PyObject_ToLongLongOrZero(pyobj);
 
     pyobj = PyTuple_GetItem(tuple, 2);
-    log->changelog = cr_safe_string_chunk_insert(chunk, PyObject_ToStrOrNull(pyobj));
+    log->changelog = PyObject_ToChunkedString(pyobj, chunk);
 
     return log;
 }
@@ -237,10 +246,10 @@ PyObject_ToDistroTag(PyObject *tuple, GStringChunk *chunk)
     cr_DistroTag *tag = cr_distrotag_new();
 
     pyobj = PyTuple_GetItem(tuple, 0);
-    tag->cpeid = cr_safe_string_chunk_insert(chunk, PyObject_ToStrOrNull(pyobj));
+    tag->cpeid = PyObject_ToChunkedString(pyobj, chunk);
 
     pyobj = PyTuple_GetItem(tuple, 2);
-    tag->val = cr_safe_string_chunk_insert(chunk, PyObject_ToStrOrNull(pyobj));
+    tag->val = PyObject_ToChunkedString(pyobj, chunk);
 
     return tag;
 }

@@ -27,7 +27,7 @@
 void PyErr_ToGError(GError **err);
 
 PyObject *PyUnicodeOrNone_FromString(const char *str);
-char *PyObject_ToStrOrNull(PyObject *pyobj);
+PyObject *PyObject_ToPyBytesOrNull(PyObject *pyobj);
 char *PyObject_ToChunkedString(PyObject *pyobj, GStringChunk *chunk);
 
 PyObject *PyObject_FromDependency(cr_Dependency *dep);

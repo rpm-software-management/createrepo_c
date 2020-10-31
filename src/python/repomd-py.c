@@ -402,8 +402,7 @@ set_str(_RepomdObject *self, PyObject *value, void *member_offset)
     }
     cr_Repomd *repomd = self->repomd;
 
-    char *str = cr_safe_string_chunk_insert(repomd->chunk,
-                                            PyObject_ToStrOrNull(value));
+    char *str = PyObject_ToChunkedString(value, repomd->chunk);
     *((char **) ((size_t) repomd + (size_t) member_offset)) = str;
     return 0;
 }

@@ -200,8 +200,7 @@ set_str(_UpdateCollectionPackageObject *self, PyObject *value, void *member_offs
         return -1;
     }
     cr_UpdateCollectionPackage *pkg = self->pkg;
-    char *str = cr_safe_string_chunk_insert(pkg->chunk,
-                                            PyObject_ToStrOrNull(value));
+    char *str = PyObject_ToChunkedString(value, pkg->chunk);
     *((char **) ((size_t) pkg + (size_t) member_offset)) = str;
     return 0;
 }

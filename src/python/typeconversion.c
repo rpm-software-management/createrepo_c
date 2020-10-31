@@ -50,7 +50,16 @@ PyErr_ToGError(GError **err)
                     "Error while error handling");
     } else {
         if (PyUnicode_Check(pystr)) {
-            pystr = PyUnicode_AsUTF8String(pystr);
+            PyObject *pybytes = PyUnicode_AsUTF8String(pystr);
+            Py_DECREF(pystr);
+
+            if (!pybytes) {
+                PyErr_Clear();
+                g_set_error(err, ERR_DOMAIN, CRE_XMLPARSER,
+                            "Error while error handling");
+                return;
+            }
+            pystr = pybytes;
         }
         g_set_error(err, ERR_DOMAIN, CRE_XMLPARSER,
                     "%s", PyBytes_AsString(pystr));

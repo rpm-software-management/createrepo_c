@@ -196,7 +196,7 @@ cr_get_compressed_content_stat(const char *filename,
     }
 
     cr_close(cwfile, NULL);
-    g_free(read_stat);
+    cr_contentstat_free(read_stat, NULL);
 
     return result;
 }

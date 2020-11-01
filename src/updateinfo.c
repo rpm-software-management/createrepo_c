@@ -161,6 +161,7 @@ cr_updatecollection_free(cr_UpdateCollection *collection)
 {
     if (!collection)
         return;
+    cr_updatecollectionmodule_free(collection->module);
     cr_slist_free_full(collection->packages,
                        (GDestroyNotify) cr_updatecollectionpackage_free);
     g_string_chunk_free(collection->chunk);

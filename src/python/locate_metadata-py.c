@@ -143,6 +143,9 @@ getitem(_MetadataLocationObject *self, PyObject *pykey)
     }
 
     pykey = PyObject_ToPyBytesOrNull(pykey);
+    if (!pykey) {
+        return NULL;
+    }
     key = PyBytes_AsString(pykey);
     value = NULL;
 
@@ -179,8 +182,19 @@ getitem(_MetadataLocationObject *self, PyObject *pykey)
     } else if (!strcmp(key, "additional_metadata")){
         if (self->ml->additional_metadata){
             PyObject *list = PyList_New(0);
+            if (!list) {
+                Py_XDECREF(pykey);
+                return NULL;
+            }
             for (GSList *elem = self->ml->additional_metadata; elem; elem=g_slist_next(elem)){
-                PyList_Append(list, PyUnicode_FromString(((cr_Metadatum *)(elem->data))->name));
+                PyObject *namestr = PyUnicode_FromString(((cr_Metadatum *)(elem->data))->name);
+                if (!namestr || PyList_Append(list, namestr)) {
+                    Py_DECREF(list);
+                    Py_XDECREF(pykey);
+                    return NULL;
+                } else {
+                    Py_DECREF(namestr);
+                }
             }
             Py_XDECREF(pykey);
             return list;

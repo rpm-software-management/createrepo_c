@@ -49,7 +49,7 @@ py_compress_file_with_stat(G_GNUC_UNUSED PyObject *self, PyObject *args)
             return NULL;
     }
 
-    cr_compress_file_with_stat(src, &dst, type, contentstat, NULL, FALSE, &tmp_err);
+    cr_compress_file_with_stat(src, dst, type, contentstat, NULL, FALSE, &tmp_err);
     if (tmp_err) {
         nice_exception(&tmp_err, NULL);
         return NULL;

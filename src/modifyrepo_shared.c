@@ -120,7 +120,7 @@ cr_write_file(gchar *repopath, cr_ModifyRepoTask *task,
         g_debug("%s: Copy & compress operation %s -> %s",
                  __func__, src_fn, dst_fn);
 
-        if (cr_compress_file(src_fn, &dst_fn, compress_type,
+        if (cr_compress_file(src_fn, dst_fn, compress_type,
                              task->zck_dict_dir, TRUE, err) != CRE_OK) {
             g_debug("%s: Copy & compress operation failed", __func__);
             return NULL;

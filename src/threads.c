@@ -101,7 +101,7 @@ cr_compressing_thread(gpointer data, G_GNUC_UNUSED gpointer user_data)
                                 NULL);
 
     cr_compress_file_with_stat(task->src,
-                               &(task->dst),
+                               task->dst,
                                task->type,
                                task->stat,
                                task->zck_dict_dir,

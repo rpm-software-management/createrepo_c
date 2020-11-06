@@ -186,7 +186,7 @@ gboolean cr_copy_file(const char *src,
 
 /** Compress file.
  * @param src           source filename
- * @param dst           pointer to destination (If dst is dir, filename of src +
+ * @param dst           destination (If dst is dir, filename of src +
  *                      compression suffix is used.
  *                      If dst is NULL, src + compression suffix is used)
  * @param comtype       type of compression
@@ -197,7 +197,7 @@ gboolean cr_copy_file(const char *src,
  * @return              cr_Error return code
  */
 int cr_compress_file_with_stat(const char *src,
-                               char **dst,
+                               const char *dst,
                                cr_CompressionType comtype,
                                cr_ContentStat *stat,
                                const char *zck_dict_dir,

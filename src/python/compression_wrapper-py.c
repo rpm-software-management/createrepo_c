@@ -17,6 +17,7 @@
  * USA.
  */
 
+#define PY_SSIZE_T_CLEAN
 #include <Python.h>
 #include <assert.h>
 #include <stddef.h>
@@ -205,7 +206,7 @@ static PyObject *
 py_write(_CrFileObject *self, PyObject *args)
 {
     char *str;
-    int len;
+    Py_ssize_t len;
     GError *tmp_err = NULL;
 
     if (!PyArg_ParseTuple(args, "s#:set_num_of_pkgs", &str, &len))

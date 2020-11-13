@@ -1,0 +1,33 @@
+name: Build package and run Python unit tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    container:
+      image: fedora:latest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install test dependencies
+        run: |
+          sudo dnf install -y python-pip
+          sudo dnf install -y xz zchunk
+
+      - name: Install createrepo_c dependencies
+        run: |
+          sudo dnf install -y gcc make cairo-devel cairo-gobject-devel cmake bzip2-devel expat-devel file-devel glib2-devel gobject-introspection-devel libcurl-devel libmodulemd-devel libxml2-devel openssl-devel python3-devel rpm-devel sqlite-devel xz-devel zchunk-devel zlib-devel
+
+      - name: Compile
+        run: |
+          pip install scikit-build
+          python3 setup.py bdist_wheel
+
+      - name: Install
+        run: pip install dist/*.whl
+
+      - name: Test
+        run: |
+          pip install pytest
+          pytest --verbose --color=yes tests/python/tests/

@@ -842,7 +842,7 @@ main(int argc, char **argv)
                                                                      &failures,
                                                                      &tmp_err);
             if (!result) {
-                g_critical("Could not update module index from file %s: %s", element->data,
+                g_critical("Could not update module index from file %s: %s", (char *) element->data,
                            (tmp_err ? tmp_err->message : "Unknown error"));
                 g_clear_error(&tmp_err);
                 g_clear_pointer(&moduleindex, g_object_unref);

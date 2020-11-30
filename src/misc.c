@@ -481,15 +481,16 @@ cr_compress_file_with_stat(const char *src,
         // If destination is dir use filename from src + compression suffix
         dst = g_strconcat(dst, cr_get_filename(src), c_suffix, NULL);
     } else if (c_suffix && !g_str_has_suffix(dst, c_suffix)) {
-        cr_CompressionType old_type = cr_detect_compression(src, &tmp_err);
+        // If destination is missing compression suffix or has a different one, use specified compression suffix
+        cr_CompressionType old_type = cr_detect_compression(dst, &tmp_err);
         if (tmp_err) {
-            g_debug("%s: Unable to detect compression type of %s", __func__, src);
+            g_debug("%s: Unable to detect compression type of %s, using the filename as is.", __func__, dst);
             g_clear_error(&tmp_err);
-        } else if (old_type != CR_CW_NO_COMPRESSION) {
+        } else if (old_type == CR_CW_NO_COMPRESSION) {
+            dst = g_strconcat(dst, c_suffix, NULL);
+        } else {
             _cleanup_free_ gchar *tmp_file = g_strndup(dst, strlen(dst) - strlen(cr_compression_suffix(old_type)));
-            dst = g_strconcat(tmp_file,
-                              c_suffix,
-                              NULL);
+            dst = g_strconcat(tmp_file, c_suffix, NULL);
         }
     }
 

@@ -665,9 +665,6 @@ main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    // Set exit_value pointer used in cleanup handlers
-    cr_set_global_exit_value(&exit_val);
-
     // Setup cleanup handlers
     if (!cr_set_cleanup_handler(lock_dir, tmp_out_repo, &tmp_err)) {
         g_printerr("%s\n", tmp_err->message);
@@ -885,7 +882,7 @@ main(int argc, char **argv)
         char *moduleindex_str = modulemd_module_index_dump_to_string (moduleindex, &tmp_err);
         g_clear_pointer(&moduleindex, g_object_unref);
         if (tmp_err) {
-            g_critical("%s: Cannot cannot dump module index: %s", __func__, tmp_err->message);
+            g_critical("%s: Cannot dump module index: %s", __func__, tmp_err->message);
             free(moduleindex_str);
             g_clear_error(&tmp_err);
             exit(EXIT_FAILURE);

@@ -194,10 +194,6 @@ set_uint(_UpdateCollectionModuleObject *self, PyObject *value, void *member_offs
         val = PyLong_AsUnsignedLongLong(value);
     } else if (PyFloat_Check(value)) {
         val = (guint64) PyFloat_AS_DOUBLE(value);
-#if PY_MAJOR_VERSION < 3
-    } else if (PyInt_Check(value)) {
-        val = PyInt_AS_LONG(value);
-#endif
     } else {
         PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;

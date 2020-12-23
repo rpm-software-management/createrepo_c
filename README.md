@@ -26,9 +26,9 @@ Package build requires - Pkg name in Fedora/Ubuntu:
 * zchunk (https://github.com/zchunk/zchunk) - zchunk-devel/
 * zlib (http://www.zlib.net/) - zlib-devel/zlib1g-dev
 * *Documentation:* doxygen (http://doxygen.org/) - doxygen/doxygen
-* *Documentation:* sphinx (http://sphinx-doc.org/) - python-sphinx/python-sphinx
+* *Documentation:* sphinx (http://sphinx-doc.org/) - python3-sphinx/python3-sphinx
 * **Test requires:** check (http://check.sourceforge.net/) - check-devel/check
-* **Test requires:** python-nose (https://nose.readthedocs.org/) - python-nose/python-nose
+* **Test requires:** python3-nose (https://nose.readthedocs.org/) - python3-nose/python3-nose
 * **Test requires:** xz (http://tukaani.org/xz/) - xz/
 * **Test requires:** zchunk (https://github.com/zchunk/zchunk) - zchunk/
 
@@ -60,13 +60,6 @@ Commands I am using for building the RPM:
     cd /home/tmlcoch/git/rpm
     CPPFLAGS='-I/usr/include/nss3/ -I/usr/include/nspr4/' ./autogen.sh --rpmconfigure --with-vendor=redhat --with-external-db --with-lua --with-selinux --with-cap --with-acl --enable-python
     make clean && make
-
-## Building for a different Python version
-
-By default, cmake should set up things to build for Python 3, but you can do a build for Python 2 like this::
-
-    cmake -DPYTHON_DESIRED=2 .
-
 ## Other build options
 
 ### ``-DENABLE_LEGACY_WEAKDEPS=ON``
@@ -162,10 +155,6 @@ Note: The C tests have to be built by ``make tests``)!
 
     PYTHONPATH=`readlink -f ./build/src/python/` nosetests -s tests/python/tests/
 
-Or, for an alternative python version, specify the appropriate nosetests executable:
-
-    PYTHONPATH=`readlink -f ./build/src/python/` nosetests-3.4 -s tests/python/tests/
-
 Note: When compiling createrepo_c without libmodulemd support add ``WITH_LIBMODULEMD=OFF``
 
 ### Links
@@ -185,7 +174,7 @@ Here's the most direct way to get your work merged into the project.
 1. Clone down your fork
 1. Implement your feature or bug fix and commit changes
 1. If the change fixes a bug at [Red Hat bugzilla](https://bugzilla.redhat.com/), or if it is important to the end user, add the following block to the commit message:
-    
+
        = changelog =
        msg:           message to be included in the changelog
        type:          one of: bugfix/enhancement/security (this field is required when message is present)
@@ -292,7 +281,7 @@ Here's the most direct way to get your work merged into the project.
 ## Mergerepo_c
 ### Default merge method
 - Original mergerepo included even packages with the same NVR by default
-- Mergerepo_c can be configured by --method option to specify how repositories should be merged. 
+- Mergerepo_c can be configured by --method option to specify how repositories should be merged.
 - Additionally its possible to use --all option to replicate original mergerepo behavior.
 
 ## Modifyrepo_c

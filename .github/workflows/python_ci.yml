@@ -1,0 +1,26 @@
+---
+name: Python CI
+on: [push, pull_request]
+
+jobs:
+  python-build:
+    name: Python Build
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install dependencies
+        run: |
+          sudo dnf -y install dnf-plugins-core
+          sudo dnf -y builddep createrepo_c.spec
+          pip install pytest scikit-build
+
+      - name: Compile
+        run: python3 setup.py bdist_wheel
+
+      - name: Install
+        run: pip install dist/*.whl
+
+      - name: Test
+        run: pytest --verbose --color=yes tests/python/tests/

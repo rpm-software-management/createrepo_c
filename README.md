@@ -132,7 +132,7 @@ Modify createrepo_c.spec and run:
 
     utils/make_rpm.sh
 
-Note: [Current .spec for Fedora rawhide](http://pkgs.fedoraproject.org/cgit/createrepo_c.git/plain/createrepo_c.spec)
+Note: [Current .spec for Fedora rawhide](https://src.fedoraproject.org/rpms/createrepo_c/blob/master/f/createrepo_c.spec)
 
 ## Testing
 

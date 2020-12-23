@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 
 import re
 import sys
@@ -11,14 +11,14 @@ VERSION_FILE_PATH = "VERSION.cmake"
 def parse(root_dir):
     path = os.path.join(root_dir, VERSION_FILE_PATH)
     if not os.path.exists(path):
-        print "File %s doesn't exists" % path
+        print("File {path} doesn't exist".format(path=path))
         return None
 
     content = open(path, "r").read()
     ver = {}
-    ver['major'] = re.search('SET\s*\(CR_MAJOR\s+"(\d+)"', content).group(1)
-    ver['minor'] = re.search('SET\s*\(CR_MINOR\s+"(\d+)"', content).group(1)
-    ver['patch'] = re.search('SET\s*\(CR_PATCH\s+"(\d+)"', content).group(1)
+    ver['major'] = re.search(r'SET\s*\(CR_MAJOR\s+"(\d+)"', content).group(1)
+    ver['minor'] = re.search(r'SET\s*\(CR_MINOR\s+"(\d+)"', content).group(1)
+    ver['patch'] = re.search(r'SET\s*\(CR_PATCH\s+"(\d+)"', content).group(1)
     return ver
 
 
@@ -35,19 +35,19 @@ if __name__ == "__main__":
     path = args[0]
 
     if not os.path.isdir(path):
-        parser.error("Directory %s doesn't exists" % path)
+        parser.error("Directory {path} doesn't exist".format(path=path))
 
     ver = parse(path)
     if ver is None:
         sys.exit(1)
 
     if options.major:
-        print ver['major']
+        print(ver['major'])
     elif options.minor:
-        print ver['minor']
+        print(ver['minor'])
     elif options.patch:
-        print ver['patch']
+        print(ver['patch'])
     else:
-        print "%(major)s.%(minor)s.%(patch)s" % ver
+        print("{major}.{minor}.{patch}".format(**ver))
 
     sys.exit(0)

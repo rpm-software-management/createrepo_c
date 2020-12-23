@@ -132,12 +132,6 @@ INCLUDE (${CMAKE_SOURCE_DIR}/VERSION.cmake)
 SET (VERSION "${CR_MAJOR}.${CR_MINOR}.${CR_PATCH}")
 message("Package version: ${VERSION}")
 
-
-# Default python version
-if (NOT PYTHON_DESIRED)
-    set (PYTHON_DESIRED "3")
-endif()
-
 # Other files
 
 OPTION(ENABLE_BASHCOMP "Install Bash autocompletions?" ON)

@@ -1,0 +1,42 @@
+name: Build with CMake and run tests
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    container:
+      image: fedora:latest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Install createrepo_c dependencies
+        run: |
+          sudo dnf install -y gcc make cmake bzip2-devel cairo-devel cairo-gobject-devel drpm-devel expat-devel file-devel glib2-devel gobject-introspection-devel libcurl-devel libmodulemd-devel libxml2-devel openssl-devel python3-devel rpm-devel sqlite-devel xz-devel zchunk-devel zlib-devel
+
+      - name: Install documentation dependencies
+        run: |
+          sudo dnf install -y python3-sphinx doxygen
+
+      - name: Install test dependencies
+          sudo dnf install -y xz zchunk python3-nose
+
+      - name: Compile
+        run: |
+          mkdir build
+          cd build/
+          cmake ..
+          make
+
+      - name: Build documentation
+        run: |
+          cd build/
+          make doc
+
+      - name: Test
+        run: |
+          cd build/
+          make tests
+          make ARGS="-V" test
+
+

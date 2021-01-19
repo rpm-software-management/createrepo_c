@@ -150,7 +150,11 @@ mkdir build-py3
 # Build createrepo_c with Python 2
 %if %{with python2}
 pushd build-py2
-  %cmake .. -DPYTHON_DESIRED:FILEPATH=%{__python2} %{!?with_zchunk:-DWITH_ZCHUNK=OFF} %{!?with_libmodulemd:-DWITH_LIBMODULEMD=OFF}
+  %cmake .. \
+      -DPYTHON_DESIRED:FILEPATH=%{__python2} \
+      -DWITH_ZCHUNK=%{?with_zchunk:ON}%{!?with_zchunk:OFF} \
+      -DWITH_LIBMODULEMD=%{?with_libmodulemd:ON}%{!?with_libmodulemd:OFF} \
+      -DENABLE_DRPM=%{?with_drpm:ON}%{!?with_drpm:OFF}
   make %{?_smp_mflags} RPM_OPT_FLAGS="%{optflags}"
   %if %{without python3}
   # Build C documentation
@@ -162,7 +166,11 @@ popd
 # Build createrepo_c with Pyhon 3
 %if %{with python3}
 pushd build-py3
-  %cmake .. -DPYTHON_DESIRED:FILEPATH=%{__python3} %{!?with_zchunk:-DWITH_ZCHUNK=OFF} %{!?with_libmodulemd:-DWITH_LIBMODULEMD=OFF}
+  %cmake .. \
+      -DPYTHON_DESIRED:FILEPATH=%{__python3} \
+      -DWITH_ZCHUNK=%{?with_zchunk:ON}%{!?with_zchunk:OFF} \
+      -DWITH_LIBMODULEMD=%{?with_libmodulemd:ON}%{!?with_libmodulemd:OFF} \
+      -DENABLE_DRPM=%{?with_drpm:ON}%{!?with_drpm:OFF}
   make %{?_smp_mflags} RPM_OPT_FLAGS="%{optflags}"
   # Build C documentation
   make doc-c

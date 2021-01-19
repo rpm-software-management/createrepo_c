@@ -11,9 +11,13 @@
 
 %if 0%{?rhel} && 0%{?rhel} <= 7
 %bcond_with python3
-%bcond_with drpm
 %else
 %bcond_without python3
+%endif
+
+%if 0%{?rhel} && ( 0%{?rhel} <= 7 || 0%{?rhel} >= 9 )
+%bcond_with drpm
+%else
 %bcond_without drpm
 %endif
 

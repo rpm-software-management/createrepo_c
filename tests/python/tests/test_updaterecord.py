@@ -139,3 +139,52 @@ class TestCaseUpdateRecord(unittest.TestCase):
     <pkglist/>
   </update>
 """ % {"now": now.strftime("%Y-%m-%d %H:%M:%S")})
+
+    def test_xml_dump_updaterecord_no_updated_date(self):
+        now = datetime.now()
+        # Microseconds are always 0 in updateinfo
+        now = datetime(now.year, now.month, now.day, now.hour, now.minute, now.second, 0)
+
+        rec = cr.UpdateRecord()
+        rec.fromstr = "from"
+        rec.status = "status"
+        rec.type = "type"
+        rec.version = "version"
+        rec.id = "id"
+        rec.title = "title"
+        rec.issued_date = now
+        rec.rights = "rights"
+        rec.release = "release"
+        rec.pushcount = "pushcount"
+        rec.severity = "severity"
+        rec.summary = "summary"
+        rec.description = "description"
+        rec.solution = "solution"
+        rec.reboot_suggested = True
+
+        target_xml = \
+  """  <update from="from" status="status" type="type" version="version">
+    <id>id</id>
+    <title>title</title>
+    <issued date="%(now)s"/>
+    <rights>rights</rights>
+    <release>release</release>
+    <pushcount>pushcount</pushcount>
+    <severity>severity</severity>
+    <summary>summary</summary>
+    <description>description</description>
+    <solution>solution</solution>
+    <reboot_suggested>True</reboot_suggested>
+    <references/>
+    <pkglist/>
+  </update>
+""" % {"now": now.strftime("%Y-%m-%d %H:%M:%S")}
+
+        xml = cr.xml_dump_updaterecord(rec)
+        self.assertEqual(xml, target_xml)
+
+        # Setting it to None is the same as not setting it at all
+        rec.updated_date = None
+
+        xml = cr.xml_dump_updaterecord(rec)
+        self.assertEqual(xml, target_xml)

@@ -375,6 +375,10 @@ set_datetime(_UpdateRecordObject *self, PyObject *value, void *member_offset)
     if (check_UpdateRecordStatus(self))
         return -1;
 
+    if (value == Py_None) {
+        return 0;
+    }
+
     cr_UpdateRecord *rec = self->record;
 
     if (PyLong_Check(value)) {
@@ -394,7 +398,7 @@ set_datetime(_UpdateRecordObject *self, PyObject *value, void *member_offset)
         return 0;
     }
 
-    if (!PyDateTime_Check(value) && value != Py_None) {
+    if (!PyDateTime_Check(value)) {
         PyErr_SetString(PyExc_TypeError, "DateTime, integer epoch or None expected!");
         return -1;
     }

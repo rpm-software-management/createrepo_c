@@ -28,7 +28,6 @@ Package build requires - Pkg name in Fedora/Ubuntu:
 * *Documentation:* doxygen (http://doxygen.org/) - doxygen/doxygen
 * *Documentation:* sphinx (http://sphinx-doc.org/) - python3-sphinx/python3-sphinx
 * **Test requires:** check (http://check.sourceforge.net/) - check-devel/check
-* **Test requires:** python3-nose (https://nose.readthedocs.org/) - python3-nose/python3-nose
 * **Test requires:** xz (http://tukaani.org/xz/) - xz/
 * **Test requires:** zchunk (https://github.com/zchunk/zchunk) - zchunk/
 
@@ -153,7 +152,7 @@ Note: The C tests have to be built by ``make tests``)!
 
 ### Run only Python unittests (from your checkout dir):
 
-    PYTHONPATH=`readlink -f ./build/src/python/` nosetests -s tests/python/tests/
+    PYTHONPATH=`readlink -f ./build/src/python/` python3 -m unittest discover -bs tests/python/
 
 Note: When compiling createrepo_c without libmodulemd support add ``WITH_LIBMODULEMD=OFF``
 

@@ -89,7 +89,6 @@ These development files are for easy manipulation with a repodata.
 Summary:        Python 3 bindings for the createrepo_c library
 %{?python_provide:%python_provide python3-%{name}}
 BuildRequires:  python3-devel
-BuildRequires:  python3-nose
 BuildRequires:  python3-sphinx
 Requires:       %{name}-libs = %{version}-%{release}
 

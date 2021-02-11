@@ -43,6 +43,7 @@ pkg_check_modules(GLIB2 REQUIRED glib-2.0)
 pkg_check_modules(GTHREAD2 REQUIRED gthread-2.0)
 pkg_check_modules(LZMA REQUIRED liblzma)
 pkg_check_modules(SQLITE3 REQUIRED sqlite3)
+pkg_check_modules(RPM REQUIRED rpm)
 
 pkg_check_modules(LIBMAGIC libmagic)
 # the pkg-config was only added in F33
@@ -59,34 +60,6 @@ include_directories(${GLIB2_INCLUDE_DIRS})
 include_directories(${LIBXML2_INCLUDE_DIR})
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIR})
-
-IF (RPM_PATH)
-    SET (RPM_PATH "/home/tmlcoch/git/rpm")
-    include_directories("${RPM_PATH}/include/")
-    SET(RPMDB_LIBRARY "${RPM_PATH}/rpmio/.libs/librpmio.so"
-                      "${RPM_PATH}/lib/.libs/librpm.so")
-    message("Using custom RPM: ${RPMDB_LIBRARY}")
-ELSE (RPM_PATH)
-    # rpm:
-    FIND_LIBRARY (RPMDB_LIBRARY NAMES rpmdb)
-    IF (NOT RPMDB_LIBRARY)
-        FIND_LIBRARY (RPMDB_LIBRARY NAMES rpm)
-        IF (NOT RPMDB_LIBRARY)
-            MESSAGE(FATAL_ERROR "No Rpm library installed")
-        ENDIF (NOT RPMDB_LIBRARY)
-    ENDIF (NOT RPMDB_LIBRARY)
-
-
-    # rpmio:
-    FIND_LIBRARY (RPMIO_LIBRARY NAMES rpmio)
-    IF (RPMIO_LIBRARY)
-        SET(RPMDB_LIBRARY ${RPMIO_LIBRARY} ${RPMDB_LIBRARY})
-    ELSE (RPMIO_LIBRARY)
-        MESSAGE(FATAL_ERROR "No Rpmio library installed")
-    ENDIF (RPMIO_LIBRARY)
-
-    message("Using system RPM: ${RPMDB_LIBRARY}")
-ENDIF (RPM_PATH)
 
 # SuSE/Mageia/Mandriva legacy weak deps support
 OPTION (ENABLE_LEGACY_WEAKDEPS "Enable legacy SUSE/Mageia/Mandriva weakdeps support?" ON)

@@ -35,14 +35,21 @@ SET(G_LOG_DOMAIN "C_CREATEREPOLIB")
 
 find_package(BZip2 REQUIRED)
 find_package(CURL REQUIRED)
-find_package(GLIB2 REQUIRED)
-find_package(GTHREAD2 REQUIRED)
-find_package(Libmagic REQUIRED)
 find_package(LibXml2 REQUIRED)
-find_package(LZMA REQUIRED)
 find_package(OpenSSL REQUIRED)
-find_package(Sqlite3 REQUIRED)
 find_package(ZLIB REQUIRED)
+
+pkg_check_modules(GLIB2 REQUIRED glib-2.0)
+pkg_check_modules(GTHREAD2 REQUIRED gthread-2.0)
+pkg_check_modules(LZMA REQUIRED liblzma)
+pkg_check_modules(SQLITE3 REQUIRED sqlite3)
+
+pkg_check_modules(LIBMAGIC libmagic)
+# the pkg-config was only added in F33
+IF (NOT LIBMAGIC_FOUND)
+    find_path(LIBMAGIC_INCLUDE_DIRS NAMES magic.h PATHS ${CMAKE_INCLUDE_PATH})
+    find_library(LIBMAGIC_LIBRARIES NAMES magic PATHS ${CMAKE_LIBRARY_PATH})
+ENDIF()
 
 # Add include dirs
 
@@ -52,7 +59,6 @@ include_directories(${GLIB2_INCLUDE_DIRS})
 include_directories(${LIBXML2_INCLUDE_DIR})
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIR})
-
 
 IF (RPM_PATH)
     SET (RPM_PATH "/home/tmlcoch/git/rpm")
@@ -109,9 +115,9 @@ ENDIF (WITH_ZCHUNK)
 
 OPTION (WITH_LIBMODULEMD "Build with libmodulemd support" ON)
 IF (WITH_LIBMODULEMD)
-	find_package(LIBMODULEMD REQUIRED)
-	include_directories(${LIBMODULEMD_INCLUDE_DIRS})
-	SET (CMAKE_C_FLAGS          "${CMAKE_C_FLAGS} -DWITH_LIBMODULEMD")
+    pkg_check_modules(LIBMODULEMD REQUIRED modulemd-2.0)
+    include_directories(${LIBMODULEMD_INCLUDE_DIRS})
+    SET (CMAKE_C_FLAGS          "${CMAKE_C_FLAGS} -DWITH_LIBMODULEMD")
     SET (CMAKE_C_FLAGS_DEBUG    "${CMAKE_C_FLAGS_DEBUG} -DWITH_LIBMODULEMD")
 ENDIF (WITH_LIBMODULEMD)
 

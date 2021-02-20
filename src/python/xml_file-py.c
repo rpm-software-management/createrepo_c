@@ -139,6 +139,10 @@ xmlfile_dealloc(_XmlFileObject *self)
 static PyObject *
 xmlfile_repr(_XmlFileObject *self)
 {
+    if (check_XmlFileStatus(self)) {
+        return NULL;
+    }
+
     char *type;
 
     switch (self->xmlfile->type) {

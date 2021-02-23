@@ -29,9 +29,6 @@
 #include "createrepo/metadata_internal.h"
 
 #define REPO_SIZE_00    0
-static const char *REPO_HASH_KEYS_00[] = {};
-static const char *REPO_NAME_KEYS_00[] = {};
-static const char *REPO_FILENAME_KEYS_00[] = {};
 
 #define REPO_SIZE_01    1
 static const char *REPO_HASH_KEYS_01[] = {"152824bff2aa6d54f429d43e87a3ff3a0286505c6d93ec87692b5e3a9e3b97bf"};
@@ -47,9 +44,6 @@ static const char *REPO_FILENAME_KEYS_02[] = {"super_kernel-6.0.1-2.x86_64.rpm",
                                               "fake_bash-1.1.1-1.x86_64.rpm"};
 
 #define REPO_SIZE_03    0
-static const char *REPO_HASH_KEYS_03[] = {};
-static const char *REPO_NAME_KEYS_03[] = {};
-static const char *REPO_FILENAME_KEYS_03[] = {};
 
 
 
@@ -97,9 +91,9 @@ void test_helper_check_keys(const char *repopath, cr_HashTableKey key, guint rep
 
 static void test_cr_metadata_locate_and_load_xml(void)
 {
-    test_helper_check_keys(TEST_REPO_00, CR_HT_KEY_HASH, REPO_SIZE_00, REPO_HASH_KEYS_00);
-    test_helper_check_keys(TEST_REPO_00, CR_HT_KEY_NAME, REPO_SIZE_00, REPO_NAME_KEYS_00);
-    test_helper_check_keys(TEST_REPO_00, CR_HT_KEY_FILENAME, REPO_SIZE_00, REPO_FILENAME_KEYS_00);
+    test_helper_check_keys(TEST_REPO_00, CR_HT_KEY_HASH, REPO_SIZE_00, NULL);
+    test_helper_check_keys(TEST_REPO_00, CR_HT_KEY_NAME, REPO_SIZE_00, NULL);
+    test_helper_check_keys(TEST_REPO_00, CR_HT_KEY_FILENAME, REPO_SIZE_00, NULL);
 
     test_helper_check_keys(TEST_REPO_01, CR_HT_KEY_HASH, REPO_SIZE_01, REPO_HASH_KEYS_01);
     test_helper_check_keys(TEST_REPO_01, CR_HT_KEY_NAME, REPO_SIZE_01, REPO_NAME_KEYS_01);
@@ -110,9 +104,9 @@ static void test_cr_metadata_locate_and_load_xml(void)
     test_helper_check_keys(TEST_REPO_02, CR_HT_KEY_FILENAME, REPO_SIZE_02, REPO_FILENAME_KEYS_02);
 
 #ifdef WITH_LIBMODULEMD
-    test_helper_check_keys(TEST_REPO_03, CR_HT_KEY_HASH, REPO_SIZE_03, REPO_HASH_KEYS_03);
-    test_helper_check_keys(TEST_REPO_03, CR_HT_KEY_NAME, REPO_SIZE_03, REPO_NAME_KEYS_03);
-    test_helper_check_keys(TEST_REPO_03, CR_HT_KEY_FILENAME, REPO_SIZE_03, REPO_FILENAME_KEYS_03);
+    test_helper_check_keys(TEST_REPO_03, CR_HT_KEY_HASH, REPO_SIZE_03, NULL);
+    test_helper_check_keys(TEST_REPO_03, CR_HT_KEY_NAME, REPO_SIZE_03, NULL);
+    test_helper_check_keys(TEST_REPO_03, CR_HT_KEY_FILENAME, REPO_SIZE_03, NULL);
 #else
     /* If we don't have libmodulemd support, this should fail to locate and
      * return CRE_MODULEMD

@@ -146,7 +146,7 @@ Note: For a verbose output of testing use: ``make ARGS="-V" test``
 
 ### Run only C unittests (from your checkout dir):
 
-    build/tests/run_gtester.sh
+    build/tests/run_tests.sh
 
 Note: The C tests have to be built by ``make tests``)!
 

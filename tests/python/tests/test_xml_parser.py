@@ -101,8 +101,8 @@ class TestCaseXmlParserPrimary(unittest.TestCase):
         def warningcb(warn_type, msg):
             userdata["warnings"].append((warn_type, msg))
 
-        content = open(PRIMARY_SNIPPET_01).read()
-        cr.xml_parse_primary_snippet(content, newpkgcb, pkgcb, warningcb, 1)
+        with open(PRIMARY_SNIPPET_01) as primary_snip:
+            cr.xml_parse_primary_snippet(primary_snip.read(), newpkgcb, pkgcb, warningcb, 1)
 
         self.assertEqual([pkg.name for pkg in userdata["pkgs"]],
             ['super_kernel'])
@@ -175,8 +175,8 @@ class TestCaseXmlParserPrimary(unittest.TestCase):
         def warningcb(warn_type, msg):
             userdata["warnings"].append((warn_type, msg))
 
-        content = open(PRIMARY_SNIPPET_02).read()
-        cr.xml_parse_primary_snippet(content, newpkgcb, pkgcb, warningcb, 1)
+        with open(PRIMARY_SNIPPET_02) as primary_snip:
+            cr.xml_parse_primary_snippet(primary_snip.read(), newpkgcb, pkgcb, warningcb, 1)
 
         self.assertEqual([pkg.name for pkg in userdata["pkgs"]],
             ['fake_bash', 'super_kernel'])
@@ -380,8 +380,8 @@ class TestCaseXmlParserFilelists(unittest.TestCase):
         def warningcb(warn_type, msg):
             userdata["warnings"].append((warn_type, msg))
 
-        content = open(FILELISTS_SNIPPET_01).read()
-        cr.xml_parse_filelists_snippet(content, newpkgcb, pkgcb, warningcb)
+        with open(FILELISTS_SNIPPET_01) as filelists_snip:
+            cr.xml_parse_filelists_snippet(filelists_snip.read(), newpkgcb, pkgcb, warningcb)
 
         self.assertEqual([pkg.name for pkg in userdata["pkgs"]],
             ['super_kernel'])
@@ -468,8 +468,8 @@ class TestCaseXmlParserFilelists(unittest.TestCase):
         def warningcb(warn_type, msg):
             userdata["warnings"].append((warn_type, msg))
 
-        content = open(FILELISTS_SNIPPET_02).read()
-        cr.xml_parse_filelists_snippet(content, newpkgcb, pkgcb, warningcb)
+        with open(FILELISTS_SNIPPET_02) as filelists_snip:
+            cr.xml_parse_filelists_snippet(filelists_snip.read(), newpkgcb, pkgcb, warningcb)
 
         self.assertEqual([pkg.name for pkg in userdata["pkgs"]],
             ['fake_bash', 'super_kernel'])
@@ -684,8 +684,8 @@ class TestCaseXmlParserOther(unittest.TestCase):
         def warningcb(warn_type, msg):
             userdata["warnings"].append((warn_type, msg))
 
-        content = open(OTHER_SNIPPET_01).read()
-        cr.xml_parse_other_snippet(content, newpkgcb, pkgcb, warningcb)
+        with open(OTHER_SNIPPET_01) as other_snip:
+            cr.xml_parse_other_snippet(other_snip.read(), newpkgcb, pkgcb, warningcb)
 
         self.assertEqual(userdata["warnings"], [])
         self.assertEqual([pkg.name for pkg in userdata["pkgs"]],
@@ -750,8 +750,8 @@ class TestCaseXmlParserOther(unittest.TestCase):
         def warningcb(warn_type, msg):
             userdata["warnings"].append((warn_type, msg))
 
-        content = open(OTHER_SNIPPET_02).read()
-        cr.xml_parse_other_snippet(content, newpkgcb, pkgcb, warningcb)
+        with open(OTHER_SNIPPET_02) as other_snip:
+            cr.xml_parse_other_snippet(other_snip.read(), newpkgcb, pkgcb, warningcb)
 
         self.assertEqual([pkg.name for pkg in userdata["pkgs"]],
             ['fake_bash', 'super_kernel'])

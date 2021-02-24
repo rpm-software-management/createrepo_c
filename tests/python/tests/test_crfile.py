@@ -65,8 +65,8 @@ class TestCaseCrFile(unittest.TestCase):
         f.write("foobar")
         f.close()
 
-        content = open(path).read()
-        self.assertEqual(content, "foobar")
+        with open(path) as foo:
+            self.assertEqual(foo.read(), "foobar")
 
     def test_crfile_gz_compression(self):
         path = os.path.join(self.tmpdir, "foo.gz")
@@ -77,8 +77,8 @@ class TestCaseCrFile(unittest.TestCase):
         f.close()
 
         import gzip
-        content = gzip.open(path).read().decode('utf-8')
-        self.assertEqual(content, "foobar")
+        with gzip.open(path) as foo_gz:
+            self.assertEqual(foo_gz.read().decode('utf-8'), "foobar")
 
     def test_crfile_bz2_compression(self):
         path = os.path.join(self.tmpdir, "foo.bz2")
@@ -89,8 +89,9 @@ class TestCaseCrFile(unittest.TestCase):
         f.close()
 
         import bz2
-        content = bz2.decompress(open(path, 'rb').read()).decode('utf-8')
-        self.assertEqual(content, "foobar")
+        with open(path, 'rb') as foo_bz2:
+            content = bz2.decompress(foo_bz2.read()).decode('utf-8')
+            self.assertEqual(content, "foobar")
 
     def test_crfile_xz_compression(self):
         path = os.path.join(self.tmpdir, "foo.xz")
@@ -101,9 +102,9 @@ class TestCaseCrFile(unittest.TestCase):
         f.close()
 
         import subprocess
-        p = subprocess.Popen(["unxz", "--stdout", path], stdout=subprocess.PIPE)
-        content = p.stdout.read().decode('utf-8')
-        self.assertEqual(content, "foobar")
+        with subprocess.Popen(["unxz", "--stdout", path], stdout=subprocess.PIPE) as p:
+            content = p.stdout.read().decode('utf-8')
+            self.assertEqual(content, "foobar")
 
     def test_crfile_zck_compression(self):
         if cr.HAS_ZCK == 0:
@@ -117,6 +118,6 @@ class TestCaseCrFile(unittest.TestCase):
         f.close()
 
         import subprocess
-        p = subprocess.Popen(["unzck", "--stdout", path], stdout=subprocess.PIPE)
-        content = p.stdout.read().decode('utf-8')
-        self.assertEqual(content, "foobar")
+        with subprocess.Popen(["unzck", "--stdout", path], stdout=subprocess.PIPE) as p:
+            content = p.stdout.read().decode('utf-8')
+            self.assertEqual(content, "foobar")

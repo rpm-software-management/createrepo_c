@@ -13,7 +13,8 @@ class TestCaseMisc(unittest.TestCase):
         self.nofile = os.path.join(self.tmpdir, "this_file_should_not_exists")
         self.tmpfile = os.path.join(self.tmpdir, "file")
         self.content = "some\nfoo\ncontent\n"
-        open(self.tmpfile, "w").write(self.content)
+        with open(self.tmpfile, "w") as tmp_file:
+            tmp_file.write(self.content)
 
     def tearDown(self):
         shutil.rmtree(self.tmpdir)

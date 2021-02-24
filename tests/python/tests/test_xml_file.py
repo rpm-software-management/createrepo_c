@@ -76,7 +76,8 @@ class TestCaseXmlFile(unittest.TestCase):
                           "foobar/foo/xxx/cvydmaticxuiowe")
 
         # Already existing file
-        open(path, "w").write("foobar")
+        with open(path, "w") as foofile:
+            foofile.write("foobar")
         self.assertRaises(IOError, cr.PrimaryXmlFile, path)
 
     def test_xmlfile_no_compression(self):
@@ -86,8 +87,8 @@ class TestCaseXmlFile(unittest.TestCase):
         self.assertTrue(os.path.isfile(path))
         f.close()
 
-        content = open(path).read()
-        self.assertEqual(content,
+        with open(path) as primary:
+            self.assertEqual(primary.read(),
 """<?xml version="1.0" encoding="UTF-8"?>
 <metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="0">
 </metadata>""")
@@ -100,8 +101,8 @@ class TestCaseXmlFile(unittest.TestCase):
         f.close()
 
         import gzip
-        content = gzip.open(path).read().decode('utf-8')
-        self.assertEqual(content,
+        with gzip.open(path) as primary:
+            self.assertEqual(primary.read().decode('utf-8'),
 """<?xml version="1.0" encoding="UTF-8"?>
 <metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="0">
 </metadata>""")
@@ -114,8 +115,9 @@ class TestCaseXmlFile(unittest.TestCase):
         f.close()
 
         import bz2
-        content = bz2.decompress(open(path, 'rb').read()).decode('utf-8')
-        self.assertEqual(content,
+        with open(path, 'rb') as primary_bz2:
+            content = bz2.decompress(primary_bz2.read()).decode('utf-8')
+            self.assertEqual(content,
 """<?xml version="1.0" encoding="UTF-8"?>
 <metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="0">
 </metadata>""")
@@ -128,9 +130,9 @@ class TestCaseXmlFile(unittest.TestCase):
         f.close()
 
         import subprocess
-        p = subprocess.Popen(["unxz", "--stdout", path], stdout=subprocess.PIPE)
-        content = p.stdout.read().decode('utf-8')
-        self.assertEqual(content,
+        with subprocess.Popen(["unxz", "--stdout", path], stdout=subprocess.PIPE) as p:
+            content = p.stdout.read().decode('utf-8')
+            self.assertEqual(content,
 """<?xml version="1.0" encoding="UTF-8"?>
 <metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="0">
 </metadata>""")
@@ -146,9 +148,9 @@ class TestCaseXmlFile(unittest.TestCase):
         f.close()
 
         import subprocess
-        p = subprocess.Popen(["unzck", "--stdout", path], stdout=subprocess.PIPE)
-        content = p.stdout.read().decode('utf-8')
-        self.assertEqual(content,
+        with subprocess.Popen(["unzck", "--stdout", path], stdout=subprocess.PIPE) as p:
+            content = p.stdout.read().decode('utf-8')
+            self.assertEqual(content,
 """<?xml version="1.0" encoding="UTF-8"?>
 <metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="0">
 </metadata>""")
@@ -161,8 +163,8 @@ class TestCaseXmlFile(unittest.TestCase):
         f.set_num_of_pkgs(22)
         f.close()
 
-        content = open(path).read()
-        self.assertEqual(content,
+        with open(path) as primary:
+            self.assertEqual(primary.read(),
 """<?xml version="1.0" encoding="UTF-8"?>
 <metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="22">
 </metadata>""")
@@ -185,7 +187,8 @@ class TestCaseXmlFile(unittest.TestCase):
         f.close()
 
         self.assertTrue(os.path.isfile(path))
-        self.assertEqual(open(path).read(),
+        with open(path) as primary:
+            self.assertEqual(primary.read(),
 """<?xml version="1.0" encoding="UTF-8"?>
 <metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="0">
 <package type="rpm">
@@ -256,7 +259,8 @@ class TestCaseXmlFile(unittest.TestCase):
         f.close()
 
         self.assertTrue(os.path.isfile(path))
-        self.assertEqual(open(path).read(),
+        with open(path) as filelists:
+            self.assertEqual(filelists.read(),
 """<?xml version="1.0" encoding="UTF-8"?>
 <filelists xmlns="http://linux.duke.edu/metadata/filelists" packages="0">
 <package pkgid="4e0b775220c67f0f2c1fd2177e626b9c863a098130224ff09778ede25cea9a9e" name="Archer" arch="x86_64">
@@ -280,7 +284,8 @@ class TestCaseXmlFile(unittest.TestCase):
         f.close()
 
         self.assertTrue(os.path.isfile(path))
-        self.assertEqual(open(path).read(),
+        with open(path) as other:
+            self.assertEqual(other.read(),
 """<?xml version="1.0" encoding="UTF-8"?>
 <otherdata xmlns="http://linux.duke.edu/metadata/other" packages="0">
 <package pkgid="4e0b775220c67f0f2c1fd2177e626b9c863a098130224ff09778ede25cea9a9e" name="Archer" arch="x86_64">
@@ -307,7 +312,8 @@ class TestCaseXmlFile(unittest.TestCase):
         f.close()
 
         self.assertTrue(os.path.isfile(path))
-        self.assertEqual(open(path).read(),
+        with open(path) as primary:
+            self.assertEqual(primary.read(),
 """<?xml version="1.0" encoding="UTF-8"?>
 <metadata xmlns="http://linux.duke.edu/metadata/common" xmlns:rpm="http://linux.duke.edu/metadata/rpm" packages="0">
   <chunk>Some XML chunk</chunk>
@@ -326,7 +332,8 @@ class TestCaseXmlFile(unittest.TestCase):
         f.close()
 
         self.assertTrue(os.path.isfile(path))
-        self.assertEqual(open(path).read(),
+        with open(path) as filelists:
+            self.assertEqual(filelists.read(),
 """<?xml version="1.0" encoding="UTF-8"?>
 <filelists xmlns="http://linux.duke.edu/metadata/filelists" packages="0">
   <chunk>Some XML chunk</chunk>
@@ -345,7 +352,8 @@ class TestCaseXmlFile(unittest.TestCase):
         f.close()
 
         self.assertTrue(os.path.isfile(path))
-        self.assertEqual(open(path).read(),
+        with open(path) as other:
+            self.assertEqual(other.read(),
 """<?xml version="1.0" encoding="UTF-8"?>
 <otherdata xmlns="http://linux.duke.edu/metadata/other" packages="0">
   <chunk>Some XML chunk</chunk>

@@ -162,7 +162,8 @@ class TestCaseRepomdRecord(unittest.TestCase):
         self.assertEqual(rec.db_ver, 11)
 
     def test_repomdrecord_compress_and_fill(self):
-        open(self.path01, "w").write("foobar\ncontent\nhh\n")
+        with open(self.path01, "w") as path01_file:
+            path01_file.write("foobar\ncontent\nhh\n")
         self.assertTrue(os.path.exists(self.path01))
 
         rec = cr.RepomdRecord("primary", self.path01)

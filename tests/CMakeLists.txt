@@ -54,8 +54,8 @@ ADD_EXECUTABLE(test_modifyrepo_shared test_modifyrepo_shared.c)
 TARGET_LINK_LIBRARIES(test_modifyrepo_shared libcreaterepo_c ${GLIB2_LIBRARIES})
 ADD_DEPENDENCIES(tests test_modifyrepo_shared)
 
-CONFIGURE_FILE("run_gtester.sh.in"  "${CMAKE_BINARY_DIR}/tests/run_gtester.sh")
-ADD_TEST(test_main run_gtester.sh)
+CONFIGURE_FILE("run_tests.sh.in"  "${CMAKE_BINARY_DIR}/tests/run_tests.sh")
+ADD_TEST(test_main run_tests.sh)
 
 IF (ENABLE_PYTHON)
 ADD_SUBDIRECTORY(python)

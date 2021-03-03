@@ -75,7 +75,7 @@ typedef struct _cr_ParserData {
 
     int     docontent;  /*!< Store text content of the current element? */
     char    *content;   /*!< Text content of the element */
-    int     lcontent;   /*!< The content lenght */
+    int     lcontent;   /*!< The content length */
     int     acontent;   /*!< Available bytes in the content */
 
     xmlParserCtxtPtr parser;    /*!< The parser */
@@ -105,7 +105,7 @@ typedef struct _cr_ParserData {
     void                    *pkgcb_data;        /*!<
         User data for the pkgcb. */
     cr_XmlParserPkgCb       pkgcb;              /*!<
-        Callback called when a signel pkg data are completly parsed. */
+        Callback called when a single pkg data is completely parsed. */
     void                    *warningcb_data;    /*!<
         User data fot he warningcb. */
     cr_XmlParserWarningCb   warningcb;          /*!<

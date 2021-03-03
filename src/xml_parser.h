@@ -49,7 +49,7 @@ typedef enum {
     CR_XML_WARNING_SENTINEL,
 } cr_XmlParserWarningType;
 
-/** Callback for XML parser wich is called when a new package object parsing
+/** Callback for XML parser which is called when a new package object parsing
  * is started. This function has to set *pkg to package object which will
  * be populated by parser. The object could be empty, or already partially
  * filled (by other XML parsers) package object.
@@ -72,7 +72,7 @@ typedef int (*cr_XmlParserNewPkgCb)(cr_Package **pkg,
                                     void *cbdata,
                                     GError **err);
 
-/** Callback for XML parser wich is called when a package element is parsed.
+/** Callback for XML parser which is called when a package element is parsed.
  * @param pkg       Currently parsed package.
  * @param cbdata    User data.
  * @param err       GError **
@@ -87,7 +87,7 @@ typedef int (*cr_XmlParserPkgCb)(cr_Package *pkg,
  * CR_CB_RET_OK then parsing is immediately interrupted.
  * @param type      Type of warning
  * @param msg       Warning msg. The message is destroyed after the call.
- *                  If you want touse the message later, you have to copy it.
+ *                  If you want to use the message later, you have to copy it.
  * @param cbdata    User data.
  * @param err       GError **
  * @return          CR_CB_RET_OK (0) or CR_CB_RET_ERR (1) - stops the parsing

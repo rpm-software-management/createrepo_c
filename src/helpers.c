@@ -78,9 +78,9 @@ cr_stat_and_insert(const gchar *dirname, const gchar *filename, GSList **list)
  * to the new repo. (except the repomd.xml)
  */
 static gboolean
-cr_repodata_blacklist_classic(const char *repodata_path,
+cr_repodata_excludelist_classic(const char *repodata_path,
                               int retain,
-                              GSList **blacklist,
+                              GSList **excludelist,
                               GError **err)
 {
     /* This piece of code implement the retain_old functionality in
@@ -114,13 +114,13 @@ cr_repodata_blacklist_classic(const char *repodata_path,
     const gchar *filename;
     GError *tmp_err = NULL;
 
-    assert(blacklist);
+    assert(excludelist);
     assert(!err || *err == NULL);
 
-    *blacklist = NULL;
+    *excludelist = NULL;
 
     if (retain == -1) {
-        // -1 means retain all - nothing to be blacklisted
+        // -1 means retain all - nothing to be excluded
         return TRUE;
     } else if (retain < 0) {
         // other negative values are error
@@ -171,11 +171,11 @@ cr_repodata_blacklist_classic(const char *repodata_path,
     g_dir_close(dirp);
     dirp = NULL;
 
-    // Append files to the blacklist
+    // Append files to the excludelist
     for (int x = 0; x < num_of_lists; x++) {
         for (GSList *el = g_slist_nth(*(lists[x]), retain); el; el = g_slist_next(el)) {
             OldFile *of = (OldFile *) el->data;
-            *blacklist = g_slist_prepend(*blacklist,
+            *excludelist = g_slist_prepend(*excludelist,
                                          g_path_get_basename(of->path));
         }
         // Free the list
@@ -187,26 +187,26 @@ cr_repodata_blacklist_classic(const char *repodata_path,
 
 /* List files that should be removed from the repo or not copied
  * to the new repo. (except the repomd.xml)
- * This function blacklist all metadata files listed in repomd.xml
- * if retain == 0, otherwise it don't blacklist any file
+ * This function excludes all metadata files listed in repomd.xml
+ * if retain == 0, otherwise it don't exclude any file
  */
 static gboolean
-cr_repodata_blacklist(const char *repodata_path,
+cr_repodata_excludelist(const char *repodata_path,
                       int retain,
-                      GSList **blacklist,
+                      GSList **excludelist,
                       GError **err)
 {
     gchar *old_repomd_path = NULL;
     cr_Repomd *repomd = NULL;
     GError *tmp_err = NULL;
 
-    assert(blacklist);
+    assert(excludelist);
     assert(!err || *err == NULL);
 
-    *blacklist = NULL;
+    *excludelist = NULL;
 
     if (retain == -1 || retain > 0) {
-        // retain all - nothing to be blacklisted
+        // retain all - nothing to be excluded
         return TRUE;
     } else if (retain < 0) {
         // other negative values are error
@@ -246,7 +246,7 @@ cr_repodata_blacklist(const char *repodata_path,
             continue;
         }
 
-        *blacklist = g_slist_prepend(*blacklist,
+        *excludelist = g_slist_prepend(*excludelist,
                                      g_path_get_basename(rec->location_href));
     }
 
@@ -255,9 +255,9 @@ cr_repodata_blacklist(const char *repodata_path,
 }
 
 static gboolean
-cr_repodata_blacklist_by_age(const char *repodata_path,
+cr_repodata_excludelist_by_age(const char *repodata_path,
                              gint64 md_max_age,
-                             GSList **blacklist,
+                             GSList **excludelist,
                              GError **err)
 {
     GDir *dirp = NULL;
@@ -265,13 +265,13 @@ cr_repodata_blacklist_by_age(const char *repodata_path,
     time_t current_time;
     GError *tmp_err = NULL;
 
-    assert(blacklist);
+    assert(excludelist);
     assert(!err || *err == NULL);
 
-    *blacklist = NULL;
+    *excludelist = NULL;
 
     if (md_max_age < 0) {
-        // A negative value means retain all - nothing to be blacklisted
+        // A negative value means retain all - nothing to be excluded
         return TRUE;
     }
 
@@ -309,8 +309,8 @@ cr_repodata_blacklist_by_age(const char *repodata_path,
         g_debug("File is too old (%"G_GINT64_FORMAT" > %"G_GINT64_FORMAT") %s",
                 age, md_max_age, filename);
 
-        // Add the file to the blacklist
-        *blacklist = g_slist_prepend(*blacklist, g_strdup(filename));
+        // Add the file to the excludelist
+        *excludelist = g_slist_prepend(*excludelist, g_strdup(filename));
     }
 
     g_dir_close(dirp);
@@ -323,7 +323,7 @@ cr_remove_metadata_classic(const char *repopath, int retain, GError **err)
     int rc = CRE_OK;
     gboolean ret = TRUE;
     gchar *full_repopath = NULL;
-    GSList *blacklist = NULL;
+    GSList *excludelist = NULL;
     GDir *dirp = NULL;
     const gchar *filename;
     GError *tmp_err = NULL;
@@ -334,12 +334,12 @@ cr_remove_metadata_classic(const char *repopath, int retain, GError **err)
     full_repopath = g_strconcat(repopath, "/repodata/", NULL);
 
     // Get list of files that should be deleted
-    ret = cr_repodata_blacklist_classic(full_repopath, retain, &blacklist, err);
+    ret = cr_repodata_excludelist_classic(full_repopath, retain, &excludelist, err);
     if (!ret)
         return FALSE;
 
     // Always remove repomd.xml
-    blacklist = g_slist_prepend(blacklist, g_strdup("repomd.xml"));
+    excludelist = g_slist_prepend(excludelist, g_strdup("repomd.xml"));
 
     // Open the repodata/ directory
     dirp = g_dir_open(full_repopath, 0, &tmp_err);
@@ -351,12 +351,12 @@ cr_remove_metadata_classic(const char *repopath, int retain, GError **err)
     }
 
     // Iterate over the files in the repository and remove all files
-    // that are listed on blacklist
+    // that are listed on excludelist
     while ((filename = g_dir_read_name(dirp))) {
         gchar *full_path;
 
-        if (!g_slist_find_custom(blacklist, filename, (GCompareFunc) g_strcmp0))
-            // The filename is not blacklisted, skip it
+        if (!g_slist_find_custom(excludelist, filename, (GCompareFunc) g_strcmp0))
+            // The filename is not excluded, skip it
             continue;
 
         full_path = g_strconcat(full_repopath, filename, NULL);
@@ -373,7 +373,7 @@ cr_remove_metadata_classic(const char *repopath, int retain, GError **err)
 
 cleanup:
 
-    cr_slist_free_full(blacklist, g_free);
+    cr_slist_free_full(excludelist, g_free);
     g_free(full_repopath);
     if (dirp)
         g_dir_close(dirp);
@@ -389,7 +389,7 @@ cr_old_metadata_retention(const char *old_repo,
                           GError **err)
 {
     gboolean ret = TRUE;
-    GSList *blacklist = NULL;
+    GSList *excludelist = NULL;
     GDir *dirp = NULL;
     const gchar *filename;
     GError *tmp_err = NULL;
@@ -404,17 +404,17 @@ cr_old_metadata_retention(const char *old_repo,
     // Get list of file that should be skiped during copying
     g_debug("Retention type: %d (%"G_GINT64_FORMAT")", type, val);
     if (type == CR_RETENTION_BYAGE)
-        ret = cr_repodata_blacklist_by_age(old_repo, val, &blacklist, err);
+        ret = cr_repodata_excludelist_by_age(old_repo, val, &excludelist, err);
     else if (type == CR_RETENTION_COMPATIBILITY)
-        ret = cr_repodata_blacklist_classic(old_repo, (int) val, &blacklist, err);
+        ret = cr_repodata_excludelist_classic(old_repo, (int) val, &excludelist, err);
     else // CR_RETENTION_DEFAULT
-        ret = cr_repodata_blacklist(old_repo, (int) val, &blacklist, err);
+        ret = cr_repodata_excludelist(old_repo, (int) val, &excludelist, err);
 
     if (!ret)
         return FALSE;
 
     // Never copy old repomd.xml to the new repository
-    blacklist = g_slist_prepend(blacklist, g_strdup("repomd.xml"));
+    excludelist = g_slist_prepend(excludelist, g_strdup("repomd.xml"));
 
     // Open directory with old repo
     dirp = g_dir_open (old_repo, 0, &tmp_err);
@@ -429,10 +429,10 @@ cr_old_metadata_retention(const char *old_repo,
     }
 
     // Iterate over the files in the old repository and copy all
-    // that are not listed on blacklist
+    // that are not listed on excludelist
     while ((filename = g_dir_read_name(dirp))) {
-        if (g_slist_find_custom(blacklist, filename, (GCompareFunc) g_strcmp0)) {
-            g_debug("Blacklisted: %s", filename);
+        if (g_slist_find_custom(excludelist, filename, (GCompareFunc) g_strcmp0)) {
+            g_debug("Excluded: %s", filename);
             continue;
         }
 
@@ -470,7 +470,7 @@ cr_old_metadata_retention(const char *old_repo,
 exit:
 
     // Cleanup
-    cr_slist_free_full(blacklist, g_free);
+    cr_slist_free_full(excludelist, g_free);
     if (dirp)
         g_dir_close(dirp);
 

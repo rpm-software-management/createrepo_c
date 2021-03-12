@@ -1,6 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <repomd xmlns="http://linux.duke.edu/metadata/repo" xmlns:rpm="http://linux.duke.edu/metadata/rpm">
   <revision>1554795405</revision>
+  <contenthash type="sha256">09e1ee2ecaca3e43382e8db290922fd7c6533d56c397978893bb946f392f759d</contenthash>
+  <tags>
+    <repo>Fedora</repo>
+    <content>binary-x86_64</content>
+    <distro cpeid="cpe:/o:fedoraproject:fedora:33">Fedora 33</distro>
+  </tags>
   <data type="primary">
     <checksum type="sha256">490a2a494a3827b8a356f728ac36bc02fb009b0eaea173c890e727bb54219037</checksum>
     <open-checksum type="sha256">6b17727c89bb6fe4737038ab35eef884442760a3a93adea506486a753f6bff48</open-checksum>

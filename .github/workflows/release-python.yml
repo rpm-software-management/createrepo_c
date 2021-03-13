@@ -1,0 +1,36 @@
+---
+name: Python Release
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  release:
+    name: PyPI Release
+    runs-on: ubuntu-latest
+    container: fedora:latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        sudo dnf -y install dnf-plugins-core
+        sudo dnf -y builddep createrepo_c.spec
+        pip install --upgrade pip
+        pip install twine pytest scikit-build
+
+    - name: Build Python sdist
+      run: python3 setup.py sdist
+
+    - name: Install and Test Python source package
+      run: |
+        pip install dist/*.tar.gz
+        pytest --verbose --color=yes tests/python/tests/
+
+    - name: Publish packages to PyPI
+      env:
+        TWINE_USERNAME: __TOKEN__
+        TWINE_PASSWORD: ${{secrets.PYPI_API_TOKEN}}
+      run: |
+        twine upload dist/*.tar.gz

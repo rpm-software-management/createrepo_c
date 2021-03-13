@@ -14,13 +14,11 @@ jobs:
         run: |
           sudo dnf -y install dnf-plugins-core
           sudo dnf -y builddep createrepo_c.spec
-          pip install pytest scikit-build
+          pip install --upgrade pip
+          pip install pytest
 
-      - name: Compile
-        run: python3 setup.py bdist_wheel
-
-      - name: Install
-        run: pip install dist/*.whl
+      - name: Compile and Install
+        run: pip install .
 
       - name: Test
         run: pytest --verbose --color=yes tests/python/tests/

@@ -56,6 +56,7 @@ class TestCaseSqlite(unittest.TestCase):
 
         self.assertRaises(cr.CreaterepoCError, db.add_pkg, pkg)
         self.assertRaises(cr.CreaterepoCError, db.dbinfo_update, "somechecksum")
+        self.assertEqual("<createrepo_c.Sqlite Closed object>", db.__str__())
 
         db.close()  # No error should be raised
         del db      # No error should be raised

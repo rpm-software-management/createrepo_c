@@ -49,6 +49,7 @@ class TestCaseXmlFile(unittest.TestCase):
         self.assertRaises(cr.CreaterepoCError, f.set_num_of_pkgs, 1)
         self.assertRaises(cr.CreaterepoCError, f.add_pkg, pkg)
         self.assertRaises(cr.CreaterepoCError, f.add_chunk, "<chunk>text</chunk>")
+        self.assertEqual("<createrepo_c.XmlFile Closed object>", f.__str__())
         f.close() # No error should be raised
         del(f)    # No error should be raised
 

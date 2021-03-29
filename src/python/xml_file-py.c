@@ -139,24 +139,24 @@ xmlfile_dealloc(_XmlFileObject *self)
 static PyObject *
 xmlfile_repr(_XmlFileObject *self)
 {
-    if (check_XmlFileStatus(self)) {
-        return NULL;
-    }
-
     char *type;
 
-    switch (self->xmlfile->type) {
-        case CR_XMLFILE_PRIMARY:
-            type = "Primary";
-            break;
-        case CR_XMLFILE_FILELISTS:
-            type = "Filelists";
-            break;
-        case CR_XMLFILE_OTHER:
-            type = "Other";
-            break;
-        default:
-            type = "Unknown";
+    if (self->xmlfile) {
+        switch (self->xmlfile->type) {
+            case CR_XMLFILE_PRIMARY:
+                type = "Primary";
+                break;
+            case CR_XMLFILE_FILELISTS:
+                type = "Filelists";
+                break;
+            case CR_XMLFILE_OTHER:
+                type = "Other";
+                break;
+            default:
+                type = "Unknown";
+        }
+    } else {
+        type = "Closed";
     }
 
     return PyUnicode_FromFormat("<createrepo_c.XmlFile %s object>", type);

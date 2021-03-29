@@ -115,10 +115,16 @@ static PyObject *
 sqlite_repr(_SqliteObject *self)
 {
     char *type;
-    if (self->db->type == CR_DB_PRIMARY)        type = "PrimaryDb";
-    else if (self->db->type == CR_DB_FILELISTS) type = "FilelistsDb";
-    else if (self->db->type == CR_DB_OTHER)     type = "OtherDb";
-    else                                        type = "UnknownDb";
+
+    if (self->db) {
+        if (self->db->type == CR_DB_PRIMARY)        type = "PrimaryDb";
+        else if (self->db->type == CR_DB_FILELISTS) type = "FilelistsDb";
+        else if (self->db->type == CR_DB_OTHER)     type = "OtherDb";
+        else                                        type = "UnknownDb";
+    } else {
+        type = "Closed";
+    }
+
     return PyUnicode_FromFormat("<createrepo_c.Sqlite %s object>", type);
 }
 

@@ -102,7 +102,7 @@ class TestCaseCrFile(unittest.TestCase):
         f.close()
 
         import subprocess
-        with subprocess.Popen(["unxz", "--stdout", path], stdout=subprocess.PIPE) as p:
+        with subprocess.Popen(["unxz", "--stdout", path], stdout=subprocess.PIPE, close_fds=False) as p:
             content = p.stdout.read().decode('utf-8')
             self.assertEqual(content, "foobar")
 
@@ -118,6 +118,6 @@ class TestCaseCrFile(unittest.TestCase):
         f.close()
 
         import subprocess
-        with subprocess.Popen(["unzck", "--stdout", path], stdout=subprocess.PIPE) as p:
+        with subprocess.Popen(["unzck", "--stdout", path], stdout=subprocess.PIPE, close_fds=False) as p:
             content = p.stdout.read().decode('utf-8')
             self.assertEqual(content, "foobar")

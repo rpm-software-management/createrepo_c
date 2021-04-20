@@ -1,4 +1,4 @@
-from distutils.core import setup
+from setuptools import setup
 import sys
 
 # This is a simple and fragile way of passing the current version

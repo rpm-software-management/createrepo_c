@@ -32,7 +32,7 @@ class TestCaseUpdateCollection(unittest.TestCase):
         pkg.src = "foo.src.rpm"
         pkg.filename = "foo.rpm"
         pkg.sum = "abcdef"
-        pkg.sum_type = cr.SHA1
+        pkg.sum_type = cr.SHA256
         pkg.reboot_suggested = True
 
         col.shortname = "short name"
@@ -62,7 +62,7 @@ class TestCaseUpdateCollection(unittest.TestCase):
         self.assertEqual(pkg.src, "foo.src.rpm")
         self.assertEqual(pkg.filename, "foo.rpm")
         self.assertEqual(pkg.sum, "abcdef")
-        self.assertEqual(pkg.sum_type, cr.SHA1)
+        self.assertEqual(pkg.sum_type, cr.SHA256)
         self.assertEqual(pkg.reboot_suggested, True)
 
     def test_updatecollection_setters_when_module_going_out_of_scope(self):

@@ -31,12 +31,14 @@ test_cr_checksum_file(void)
     char *checksum;
     GError *tmp_err = NULL;
 
+#ifdef WITH_LEGACY_HASHES
     checksum = cr_checksum_file(TEST_EMPTY_FILE, CR_CHECKSUM_MD5, NULL);
     g_assert_cmpstr(checksum, ==, "d41d8cd98f00b204e9800998ecf8427e");
     g_free(checksum);
     checksum = cr_checksum_file(TEST_EMPTY_FILE, CR_CHECKSUM_SHA1, NULL);
     g_assert_cmpstr(checksum, ==, "da39a3ee5e6b4b0d3255bfef95601890afd80709");
     g_free(checksum);
+#endif
     checksum = cr_checksum_file(TEST_EMPTY_FILE, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649"
             "b934ca495991b7852b855");
@@ -47,6 +49,7 @@ test_cr_checksum_file(void)
             "7a81a538327af927da3e");
     g_free(checksum);
 
+#ifdef WITH_LEGACY_HASHES
     checksum = cr_checksum_file(TEST_TEXT_FILE, CR_CHECKSUM_MD5, &tmp_err);
     g_assert_cmpstr(checksum, ==, "d6d4da5c15f8fe7570ce6ab6b3503916");
     g_assert(!tmp_err);
@@ -55,6 +58,7 @@ test_cr_checksum_file(void)
     g_assert_cmpstr(checksum, ==, "da048ee8fabfbef1b3d6d3f5a4be20029eecec77");
     g_assert(!tmp_err);
     g_free(checksum);
+#endif
     checksum = cr_checksum_file(TEST_TEXT_FILE, CR_CHECKSUM_SHA256, &tmp_err);
     g_assert_cmpstr(checksum, ==, "2f395bdfa2750978965e4781ddf224c89646c7d7a15"
             "69b7ebb023b170f7bd8bb");
@@ -67,12 +71,14 @@ test_cr_checksum_file(void)
     g_assert(!tmp_err);
     g_free(checksum);
 
+#ifdef WITH_LEGACY_HASHES
     checksum = cr_checksum_file(TEST_BINARY_FILE, CR_CHECKSUM_MD5, NULL);
     g_assert_cmpstr(checksum, ==, "4f8b033d7a402927a20c9328fc0e0f46");
     g_free(checksum);
     checksum = cr_checksum_file(TEST_BINARY_FILE, CR_CHECKSUM_SHA1, NULL);
     g_assert_cmpstr(checksum, ==, "3539fb660a41846352ac4fa9076d168a3c77070b");
     g_free(checksum);
+#endif
     checksum = cr_checksum_file(TEST_BINARY_FILE, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(checksum, ==, "bf68e32ad78cea8287be0f35b74fa3fecd0eaa91770"
             "b48f1a7282b015d6d883e");
@@ -91,11 +97,13 @@ test_cr_checksum_file(void)
     g_error_free(tmp_err);
     tmp_err = NULL;
 
+#ifdef WITH_LEGACY_HASHES
     checksum = cr_checksum_file(NON_EXIST_FILE, CR_CHECKSUM_MD5, &tmp_err);
     g_assert(!checksum);
     g_assert(tmp_err);
     g_error_free(tmp_err);
     tmp_err = NULL;
+#endif
 }
 
 
@@ -104,6 +112,7 @@ test_cr_checksum_name_str(void)
 {
     const char *checksum_name;
 
+#ifdef WITH_LEGACY_HASHES
     checksum_name = cr_checksum_name_str(CR_CHECKSUM_MD5);
     g_assert_cmpstr(checksum_name, ==, "md5");
 
@@ -112,6 +121,7 @@ test_cr_checksum_name_str(void)
 
     checksum_name = cr_checksum_name_str(CR_CHECKSUM_SHA1);
     g_assert_cmpstr(checksum_name, ==, "sha1");
+#endif
 
     checksum_name = cr_checksum_name_str(CR_CHECKSUM_SHA224);
     g_assert_cmpstr(checksum_name, ==, "sha224");

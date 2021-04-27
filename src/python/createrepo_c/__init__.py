@@ -15,15 +15,13 @@ VERSION_PATCH = _createrepo_c.VERSION_PATCH  #: Patch version
 #: Version string
 VERSION = u"%d.%d.%d" % (VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
 
-UNKNOWN_CHECKSUM    = _createrepo_c.CHECKSUM_UNKNOWN #: Checksum unknown
-CHECKSUM_UNKNOWN    = _createrepo_c.CHECKSUM_UNKNOWN #: Checksum unknown
-MD5                 = _createrepo_c.MD5              #: MD5 checksum
-SHA                 = _createrepo_c.SHA              #: SHA1 checksum alias
-SHA1                = _createrepo_c.SHA1             #: SHA1 checksum
-SHA224              = _createrepo_c.SHA224           #: SHA224 checksum
-SHA256              = _createrepo_c.SHA256           #: SHA256 checksum
-SHA384              = _createrepo_c.SHA384           #: SHA384 checksum
-SHA512              = _createrepo_c.SHA512           #: SHA512 checksum
+UNKNOWN_CHECKSUM = _createrepo_c.CHECKSUM_UNKNOWN #: Checksum unknown
+CHECKSUM_UNKNOWN = _createrepo_c.CHECKSUM_UNKNOWN #: Checksum unknown
+
+for hash_name in ('MD5', 'SHA', 'SHA1', 'SHA224', 'SHA256', 'SHA384', 'SHA512'):
+    hash_attr = getattr(_createrepo_c, hash_name, None)
+    if hash_attr:
+        globals()[hash_name] = hash_attr
 
 MODE_READ   = _createrepo_c.MODE_READ  #: Read open mode
 MODE_WRITE  = _createrepo_c.MODE_WRITE #: Write open mode

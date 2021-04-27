@@ -303,10 +303,12 @@ cr_cktype_from_zck(zckCtx *zck, GError **err)
                     "Unable to read hash from zchunk file");
         return CR_CHECKSUM_UNKNOWN;
     }
-    if (cktype == ZCK_HASH_SHA1)
-        return CR_CHECKSUM_SHA1;
-    else if (cktype == ZCK_HASH_SHA256)
+    if (cktype == ZCK_HASH_SHA256)
         return CR_CHECKSUM_SHA256;
+#ifdef WITH_LEGACY_HASHES
+    else if (cktype == ZCK_HASH_SHA1)
+        return CR_CHECKSUM_SHA1;
+#endif
     else {
         const char *ckname = zck_hash_name_from_type(cktype);
         if (ckname == NULL)

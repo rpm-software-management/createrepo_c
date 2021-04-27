@@ -42,7 +42,6 @@ typedef struct _cr_ChecksumCtx cr_ChecksumCtx;
  */
 typedef enum {
     CR_CHECKSUM_UNKNOWN,    /*!< Unknown checksum */
-//    CR_CHECKSUM_MD2,        /*!< MD2 checksum */
     CR_CHECKSUM_MD5,        /*!< MD5 checksum */
     CR_CHECKSUM_SHA,        /*!< SHA checksum */
     CR_CHECKSUM_SHA1,       /*!< SHA1 checksum */

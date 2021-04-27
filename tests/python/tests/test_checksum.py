@@ -9,9 +9,6 @@ from .fixtures import *
 class TestCaseChecksum(unittest.TestCase):
 
     def test_checksum_name_str(self):
-        self.assertEqual(cr.checksum_name_str(cr.MD5), "md5")
-        self.assertEqual(cr.checksum_name_str(cr.SHA), "sha")
-        self.assertEqual(cr.checksum_name_str(cr.SHA1), "sha1")
         self.assertEqual(cr.checksum_name_str(cr.SHA224), "sha224")
         self.assertEqual(cr.checksum_name_str(cr.SHA256), "sha256")
         self.assertEqual(cr.checksum_name_str(cr.SHA384), "sha384")
@@ -25,9 +22,6 @@ class TestCaseChecksum(unittest.TestCase):
         self.assertEqual(cr.checksum_type("sHa256"), cr.SHA256)
         self.assertEqual(cr.checksum_type("ShA256"), cr.SHA256)
 
-        self.assertEqual(cr.checksum_type("md5"), cr.MD5)
-        self.assertEqual(cr.checksum_type("sha"), cr.SHA)
-        self.assertEqual(cr.checksum_type("sha1"), cr.SHA1)
         self.assertEqual(cr.checksum_type("sha224"), cr.SHA224)
         self.assertEqual(cr.checksum_type("sha256"), cr.SHA256)
         self.assertEqual(cr.checksum_type("sha384"), cr.SHA384)

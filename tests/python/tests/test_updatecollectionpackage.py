@@ -33,7 +33,7 @@ class TestCaseUpdateCollectionPackage(unittest.TestCase):
         pkg.src = "foo.src.rpm"
         pkg.filename = "foo.rpm"
         pkg.sum = "abcdef"
-        pkg.sum_type = cr.SHA1
+        pkg.sum_type = cr.SHA256
         pkg.reboot_suggested = True
         pkg.restart_suggested = True
         pkg.relogin_suggested = True
@@ -46,7 +46,7 @@ class TestCaseUpdateCollectionPackage(unittest.TestCase):
         self.assertEqual(pkg.src, "foo.src.rpm")
         self.assertEqual(pkg.filename, "foo.rpm")
         self.assertEqual(pkg.sum, "abcdef")
-        self.assertEqual(pkg.sum_type, cr.SHA1)
+        self.assertEqual(pkg.sum_type, cr.SHA256)
         self.assertEqual(pkg.reboot_suggested, True)
         self.assertEqual(pkg.restart_suggested, True)
         self.assertEqual(pkg.relogin_suggested, True)

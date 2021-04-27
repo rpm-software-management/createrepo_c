@@ -161,7 +161,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
         pkg.src = "foo.src.rpm"
         pkg.filename = "foo.rpm"
         pkg.sum = "abcdef"
-        pkg.sum_type = cr.SHA1
+        pkg.sum_type = cr.SHA256
         pkg.reboot_suggested = True
         pkg.restart_suggested = True
         pkg.relogin_suggested = True
@@ -226,7 +226,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
         <module name="kangaroo" stream="0" version="18446744073709551615" context="deadbeef" arch="x86"/>
         <package name="foo" version="1.2" release="3" epoch="0" arch="x86" src="foo.src.rpm">
           <filename>foo.rpm</filename>
-          <sum type="sha1">abcdef</sum>
+          <sum type="sha256">abcdef</sum>
           <reboot_suggested>True</reboot_suggested>
           <restart_suggested>True</restart_suggested>
           <relogin_suggested>True</relogin_suggested>
@@ -252,7 +252,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
         pkg.src = "foo.src.rpm"
         pkg.filename = "foo.rpm"
         pkg.sum = "abcdef"
-        pkg.sum_type = cr.SHA1
+        pkg.sum_type = cr.SHA256
         pkg.reboot_suggested = True
 
         # Collection without module
@@ -314,7 +314,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
         <name>long name</name>
         <package name="foo" version="1.2" release="3" epoch="0" arch="x86" src="foo.src.rpm">
           <filename>foo.rpm</filename>
-          <sum type="sha1">abcdef</sum>
+          <sum type="sha256">abcdef</sum>
           <reboot_suggested>True</reboot_suggested>
         </package>
       </collection>
@@ -344,7 +344,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
         pkg.src = "foo.src.rpm"
         pkg.filename = "foo.rpm"
         pkg.sum = "abcdef"
-        pkg.sum_type = cr.SHA1
+        pkg.sum_type = cr.SHA256
         pkg.reboot_suggested = True
         pkg.restart_suggested = True
         pkg.relogin_suggested = True
@@ -411,7 +411,7 @@ class TestCaseUpdateInfo(unittest.TestCase):
         <module version="18446744073709551615" context="deadbeef" arch="x86"/>
         <package name="foo" version="1.2" release="3" epoch="0" arch="x86" src="foo.src.rpm">
           <filename>foo.rpm</filename>
-          <sum type="sha1">abcdef</sum>
+          <sum type="sha256">abcdef</sum>
           <reboot_suggested>True</reboot_suggested>
           <restart_suggested>True</restart_suggested>
           <relogin_suggested>True</relogin_suggested>

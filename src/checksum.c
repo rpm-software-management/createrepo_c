@@ -52,25 +52,27 @@ cr_checksum_type(const char *name)
     for (size_t x = 0; x <= len; x++)
         name_lower[x] = tolower(name[x]);
 
-    if (!strncmp(name_lower, "md", 2)) {
-        // MD* family
-        if (name_lower[2] == '5')
-            return CR_CHECKSUM_MD5;
-    } else if (!strncmp(name_lower, "sha", 3)) {
+    if (!strncmp(name_lower, "sha", 3)) {
         // SHA* family
         char *sha_type = name_lower + 3;
-        if (!strcmp(sha_type, ""))
+        if (!strcmp(sha_type, "512"))
+            return CR_CHECKSUM_SHA512;
+        else if (!strcmp(sha_type, "384"))
+            return CR_CHECKSUM_SHA384;
+        else if (!strcmp(sha_type, "256"))
+            return CR_CHECKSUM_SHA256;
+        else if (!strcmp(sha_type, "224"))
+            return CR_CHECKSUM_SHA224;
+#ifdef WITH_LEGACY_HASHES
+        else if (!strcmp(sha_type, ""))
             return CR_CHECKSUM_SHA;
         else if (!strcmp(sha_type, "1"))
             return CR_CHECKSUM_SHA1;
-        else if (!strcmp(sha_type, "224"))
-            return CR_CHECKSUM_SHA224;
-        else if (!strcmp(sha_type, "256"))
-            return CR_CHECKSUM_SHA256;
-        else if (!strcmp(sha_type, "384"))
-            return CR_CHECKSUM_SHA384;
-        else if (!strcmp(sha_type, "512"))
-            return CR_CHECKSUM_SHA512;
+    } else if (!strncmp(name_lower, "md", 2)) {
+        // MD* family
+        if (name_lower[2] == '5')
+            return CR_CHECKSUM_MD5;
+#endif
     }
 
     return CR_CHECKSUM_UNKNOWN;
@@ -82,12 +84,14 @@ cr_checksum_name_str(cr_ChecksumType type)
     switch (type) {
     case CR_CHECKSUM_UNKNOWN:
         return "Unknown checksum";
+#ifdef WITH_LEGACY_HASHES
     case CR_CHECKSUM_MD5:
         return "md5";
     case CR_CHECKSUM_SHA:
         return "sha";
     case CR_CHECKSUM_SHA1:
         return "sha1";
+#endif
     case CR_CHECKSUM_SHA224:
         return "sha224";
     case CR_CHECKSUM_SHA256:
@@ -117,9 +121,11 @@ cr_checksum_file(const char *filename,
     const EVP_MD *ctx_type;
 
     switch (type) {
+#ifdef WITH_LEGACY_HASHES
         case CR_CHECKSUM_MD5:    ctx_type = EVP_md5();    break;
         case CR_CHECKSUM_SHA:    ctx_type = EVP_sha1();   break;
         case CR_CHECKSUM_SHA1:   ctx_type = EVP_sha1();   break;
+#endif
         case CR_CHECKSUM_SHA224: ctx_type = EVP_sha224(); break;
         case CR_CHECKSUM_SHA256: ctx_type = EVP_sha256(); break;
         case CR_CHECKSUM_SHA384: ctx_type = EVP_sha384(); break;
@@ -182,9 +188,11 @@ cr_checksum_new(cr_ChecksumType type, GError **err)
     assert(!err || *err == NULL);
 
     switch (type) {
+#ifdef WITH_LEGACY_HASHES
         case CR_CHECKSUM_MD5:    ctx_type = EVP_md5();    break;
         case CR_CHECKSUM_SHA:    ctx_type = EVP_sha1();   break;
         case CR_CHECKSUM_SHA1:   ctx_type = EVP_sha1();   break;
+#endif
         case CR_CHECKSUM_SHA224: ctx_type = EVP_sha224(); break;
         case CR_CHECKSUM_SHA256: ctx_type = EVP_sha256(); break;
         case CR_CHECKSUM_SHA384: ctx_type = EVP_sha384(); break;

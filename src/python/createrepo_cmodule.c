@@ -236,9 +236,11 @@ PyInit__createrepo_c(void)
 
     /* Checksum types */
     PyModule_AddIntConstant(m, "CHECKSUM_UNKNOWN", CR_CHECKSUM_UNKNOWN);
+#ifdef WITH_LEGACY_HASHES
     PyModule_AddIntConstant(m, "MD5", CR_CHECKSUM_MD5);
     PyModule_AddIntConstant(m, "SHA", CR_CHECKSUM_SHA);
     PyModule_AddIntConstant(m, "SHA1", CR_CHECKSUM_SHA1);
+#endif
     PyModule_AddIntConstant(m, "SHA224", CR_CHECKSUM_SHA224);
     PyModule_AddIntConstant(m, "SHA256", CR_CHECKSUM_SHA256);
     PyModule_AddIntConstant(m, "SHA384", CR_CHECKSUM_SHA384);

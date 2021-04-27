@@ -41,15 +41,17 @@ typedef struct _cr_ChecksumCtx cr_ChecksumCtx;
  * is for the compatibility with original createrepo.
  */
 typedef enum {
-    CR_CHECKSUM_UNKNOWN,    /*!< Unknown checksum */
-    CR_CHECKSUM_MD5,        /*!< MD5 checksum */
-    CR_CHECKSUM_SHA,        /*!< SHA checksum */
-    CR_CHECKSUM_SHA1,       /*!< SHA1 checksum */
-    CR_CHECKSUM_SHA224,     /*!< SHA224 checksum */
-    CR_CHECKSUM_SHA256,     /*!< SHA256 checksum */
-    CR_CHECKSUM_SHA384,     /*!< SHA384 checksum */
-    CR_CHECKSUM_SHA512,     /*!< SHA512 checksum */
-    CR_CHECKSUM_SENTINEL,   /*!< sentinel of the list */
+    CR_CHECKSUM_UNKNOWN  = 0,   /*!< Unknown checksum */
+#ifdef WITH_LEGACY_HASHES
+    CR_CHECKSUM_MD5      = 1,   /*!< MD5 checksum */
+    CR_CHECKSUM_SHA      = 2,   /*!< SHA checksum */
+    CR_CHECKSUM_SHA1     = 3,   /*!< SHA1 checksum */
+#endif
+    CR_CHECKSUM_SHA224   = 4,   /*!< SHA224 checksum */
+    CR_CHECKSUM_SHA256   = 5,   /*!< SHA256 checksum */
+    CR_CHECKSUM_SHA384   = 6,   /*!< SHA384 checksum */
+    CR_CHECKSUM_SHA512   = 7,   /*!< SHA512 checksum */
+    CR_CHECKSUM_SENTINEL = 8,   /*!< sentinel of the list */
 } cr_ChecksumType;
 
 /** Return checksum name.

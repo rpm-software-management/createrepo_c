@@ -10,13 +10,13 @@
 %bcond_without drpm
 %endif
 
-%if 0%{?rhel} || 0%{?fedora} < 29
+%if 0%{?rhel}
 %bcond_with zchunk
 %else
 %bcond_without zchunk
 %endif
 
-%if 0%{?rhel} || 0%{?fedora} < 29
+%if 0%{?rhel} && 0%{?rhel} < 8
 %bcond_with libmodulemd
 %else
 %bcond_without libmodulemd

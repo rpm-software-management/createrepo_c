@@ -503,6 +503,8 @@ cr_compress_file_with_stat(const char *src,
     if (!orig) {
         ret = tmp_err->code;
         g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", src);
+        if (dst != in_dst)
+            g_free(dst);
         return ret;
     }
 

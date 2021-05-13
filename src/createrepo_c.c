@@ -88,12 +88,31 @@ allowed_file(const gchar *filename, GSList *exclude_masks)
 static gboolean
 allowed_modulemd_module_metadata_file(const gchar *filename)
 {
-    if (g_str_has_suffix (filename, ".modulemd.yaml") ||
-        g_str_has_suffix (filename, ".modulemd-defaults.yaml") ||
-        g_str_has_suffix (filename, "modules.yaml"))
-    {
-        return TRUE;
+    GError *tmp_err = NULL;
+    cr_CompressionType com_type = cr_detect_compression(filename, &tmp_err);
+    if (tmp_err) {
+        g_critical("Failed to detect compression for file %s: %s", filename, tmp_err->message);
+        g_clear_error(&tmp_err);
+        exit(EXIT_FAILURE);
     }
+    const char *compression_suffix = cr_compression_suffix(com_type);
+    const char *allowed_arr[] = {".modulemd.yaml" , ".modulemd-defaults.yaml", "modules.yaml", '\0'};
+
+    for (const char **allowed = allowed_arr; allowed && *allowed; allowed++) {
+        if (compression_suffix) {
+            char allowed_with_suffix[40];
+            snprintf(allowed_with_suffix, sizeof allowed_with_suffix, "%s%s", *allowed, compression_suffix);
+            if (g_strrstr(filename, allowed_with_suffix)) {
+                return TRUE;
+            }
+        } else {
+            if (g_strrstr(filename, *allowed)) {
+                return TRUE;
+            }
+        }
+
+    }
+
     return FALSE;
 }
 
@@ -821,10 +840,9 @@ main(int argc, char **argv)
             exit(EXIT_FAILURE);
         }
 
-        if (cmd_options->update && cmd_options->keep_all_metadata &&
-        old_metadata_location && old_metadata_location->additional_metadata){
-            //associate old metadata into the merger
-            if (cr_metadata_modulemd(old_metadata)){
+        if (cmd_options->update && old_metadata_location && old_metadata_location->additional_metadata){
+            //associate old metadata into the merger if we want to keep them (--keep-all-metadata)
+            if (cr_metadata_modulemd(old_metadata) && cmd_options->keep_all_metadata){
                 modulemd_module_index_merger_associate_index(merger, cr_metadata_modulemd(old_metadata), 0);
                 if (tmp_err) {
                     g_critical("%s: Cannot merge old module index with new: %s", __func__, tmp_err->message);
@@ -838,6 +856,23 @@ main(int argc, char **argv)
             while (node_iter != NULL){
                 GSList *next = g_slist_next(node_iter);
                 cr_Metadatum *m = node_iter->data;
+
+                /* If we are updating some existing repodata that have modular metadata
+                 * remove those from found cmd_options->modulemd_metadata.
+                 * If --keel-all-metadata is not specified we don't want them and if it is they
+                 * were already added from old_metadata module index above.
+                 */
+                GSList *element_iter = cmd_options->modulemd_metadata;
+                while (element_iter != NULL){
+                    GSList *next_inner = g_slist_next(element_iter);
+                    gchar *path_to_found_md = (gchar *) element_iter->data;
+                    if (!g_strcmp0(path_to_found_md, m->name)) {
+                        cmd_options->modulemd_metadata = g_slist_delete_link(
+                            cmd_options->modulemd_metadata, element_iter);
+                    }
+                    element_iter = next_inner;
+                }
+
                 if(g_str_has_prefix(m->type, "modules")){
                     old_metadata_location->additional_metadata = g_slist_delete_link(
                         old_metadata_location->additional_metadata, node_iter);

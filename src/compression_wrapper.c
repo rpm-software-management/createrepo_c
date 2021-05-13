@@ -608,14 +608,12 @@ cr_sopen(const char *filename,
                     zck_set_log_fd(STDOUT_FILENO);
                     g_set_error(err, ERR_DOMAIN, CRE_IO, "%s",
                                 zck_get_error(zck));
-                    g_free(file);
                     break;
                 }
             } else {
                 if (!file->FILE || !zck_init_read(zck, fd)) {
                     g_set_error(err, ERR_DOMAIN, CRE_IO,
                                 "%s", zck_get_error(zck));
-                    g_free(file);
                     break;
                 }
             }

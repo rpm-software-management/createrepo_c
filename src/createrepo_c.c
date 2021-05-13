@@ -57,10 +57,9 @@
 
 #define OUTDELTADIR "drpms/"
 
-// TODO: Pass only exlude_masks list here
-/** Check if the filename is excluded by any exlude mask.
+/** Check if the filename is excluded by any exclude mask.
  * @param filename      Filename (basename).
- * @param options       Command line options.
+ * @param exclude_masks List of exclude masks
  * @return              TRUE if file should be included, FALSE otherwise
  */
 static gboolean

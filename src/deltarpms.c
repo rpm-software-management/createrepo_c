@@ -420,6 +420,7 @@ cr_deltarpms_parallel_deltas(GSList *targetpackages,
                              &tmp_err);
     if (tmp_err) {
         g_propagate_prefixed_error(err, tmp_err, "Cannot create delta pool: ");
+        g_list_free_full(targets, (GDestroyNotify) cr_deltapackage_free);
         return FALSE;
     }
 

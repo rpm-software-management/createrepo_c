@@ -713,6 +713,7 @@ merge_repos(GHashTable *merged,
         if (cr_metadata_load_xml(metadata, ml, NULL) != CRE_OK) {
             cr_metadata_free(metadata);
             g_critical("Cannot load repo: \"%s\"", ml->repomd);
+            g_free(repopath);
             break;
         }
 
@@ -960,6 +961,10 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         g_free(oth_xml_filename);
         g_free(update_info_filename);
         g_error_free(tmp_err);
+        g_free(pri_dict);
+        g_free(fil_dict);
+        g_free(oth_dict);
+        cr_xmlfile_close(pri_f, NULL);
         return 0;
     }
 
@@ -981,6 +986,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         g_free(update_info_filename);
         cr_xmlfile_close(pri_f, NULL);
         g_error_free(tmp_err);
+        g_free(pri_dict);
+        g_free(fil_dict);
+        g_free(oth_dict);
         return 0;
     }
 
@@ -1003,6 +1011,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         cr_xmlfile_close(fil_f, NULL);
         cr_xmlfile_close(pri_f, NULL);
         g_error_free(tmp_err);
+        g_free(pri_dict);
+        g_free(fil_dict);
+        g_free(oth_dict);
         return 0;
     }
 

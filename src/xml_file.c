@@ -234,6 +234,8 @@ cr_xmlfile_add_pkg(cr_XmlFile *f, cr_Package *pkg, GError **err)
     if (tmp_err) {
         int code = tmp_err->code;
         g_propagate_error(err, tmp_err);
+        if (xml)
+            g_free(xml);
         return code;
     }
 

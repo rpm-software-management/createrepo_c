@@ -140,6 +140,7 @@ cr_get_compressed_content_stat(const char *filename,
                                read_stat,
                                &tmp_err);
     if (!cwfile) {
+        cr_contentstat_free(read_stat, NULL);
         g_propagate_prefixed_error(err, tmp_err,
                                    "Cannot open a file %s: ", filename);
         return NULL;
@@ -151,6 +152,7 @@ cr_get_compressed_content_stat(const char *filename,
         g_critical("%s: g_checksum_new() failed", __func__);
         g_propagate_prefixed_error(err, tmp_err,
                 "Error while checksum calculation: ");
+        cr_close(cwfile, NULL);
         return NULL;
     }
 
@@ -172,8 +174,10 @@ cr_get_compressed_content_stat(const char *filename,
         size += readed;
     } while (readed == BUFFER_SIZE);
 
-    if (readed == CR_CW_ERR)
+    if (readed == CR_CW_ERR) {
+        cr_close(cwfile, NULL);
         return NULL;
+    }
 
     // Create result structure
 

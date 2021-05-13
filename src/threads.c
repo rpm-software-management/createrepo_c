@@ -54,6 +54,7 @@ cr_compressiontask_new(const char *src,
     if (!task) {
         g_set_error(err, ERR_DOMAIN, CRE_MEMORY,
                    "Cannot allocate memory");
+        cr_contentstat_free(stat, NULL);
         return NULL;
     }
 

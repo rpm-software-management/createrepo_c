@@ -528,12 +528,12 @@ gen_new_repomd(const gchar *tmp_out_repo,
     cr_RepomdRecord *oth_db_rec = NULL;
     gboolean simple_md_filename = FALSE;
 
-    // Create copy of repomd
-    repomd = cr_repomd_copy(in_repomd);
-
     // Check if a unique md filename should be used or not
     if (!uses_simple_md_filename(in_repomd, &simple_md_filename, err))
         return FALSE;
+
+    // Create copy of repomd
+    repomd = cr_repomd_copy(in_repomd);
 
     // Prepend checksum if unique md filename should be used
     if (!simple_md_filename) {
@@ -572,8 +572,10 @@ gen_new_repomd(const gchar *tmp_out_repo,
     // Dump the repomd.xml content
     _cleanup_free_ gchar *repomd_content = NULL;
     repomd_content = cr_xml_dump_repomd(repomd, err);
-    if (!repomd_content)
+    if (!repomd_content) {
+        cr_repomd_free(repomd);
         return FALSE;
+    }
 
     // Prepare output repomd.xml path
     _cleanup_free_ gchar *repomd_path = NULL;
@@ -584,6 +586,7 @@ gen_new_repomd(const gchar *tmp_out_repo,
     if (!(f_repomd = fopen(repomd_path, "w"))) {
         g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
                     "Cannot open %s: %s", repomd_path, g_strerror(errno));
+        cr_repomd_free(repomd);
         return FALSE;
     }
 
@@ -876,13 +879,18 @@ generate_sqlite_from_xml(const gchar *path,
 
     fil_db = cr_db_open_filelists(fil_db_filename, err);
     assert(fil_db || tmp_err);
-    if (!fil_db)
+    if (!fil_db) {
+        cr_db_close(pri_db, NULL);
         return FALSE;
+    }
 
     oth_db = cr_db_open_other(oth_db_filename, err);
     assert(oth_db || tmp_err);
-    if (!oth_db)
+    if (!oth_db) {
+        cr_db_close(pri_db, NULL);
+        cr_db_close(fil_db, NULL);
         return FALSE;
+    }
 
     // XML to Sqlite
     ret = xml_to_sqlite(pri_xml_path,

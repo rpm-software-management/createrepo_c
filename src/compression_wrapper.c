@@ -1510,6 +1510,7 @@ cr_printf(GError **err, CR_FILE *cr_file, const char *format, ...)
         g_debug("%s: vasprintf() call failed", __func__);
         g_set_error(err, ERR_DOMAIN, CRE_MEMORY,
                     "vasprintf() call failed");
+        g_free(buf);
         return CR_CW_ERR;
     }
 

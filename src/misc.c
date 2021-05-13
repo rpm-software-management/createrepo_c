@@ -529,6 +529,7 @@ cr_compress_file_with_stat(const char *src,
             g_set_error(err, ERR_DOMAIN, CRE_IO,
                         "Error reading zchunk dict %s: %s",
                         dict_file, tmp_err->message);
+            g_clear_error(&tmp_err);
             ret = CRE_IO;
             goto compress_file_cleanup;
         }
@@ -732,6 +733,7 @@ cr_download(CURL *in_handle,
     errorbuf[0] = '\0';
     rcode = curl_easy_setopt(handle, CURLOPT_ERRORBUFFER, errorbuf);
     if (rcode != CURLE_OK) {
+        curl_easy_cleanup(handle);
         g_set_error(err, ERR_DOMAIN, CRE_CURL,
                     "curl_easy_setopt failed(CURLOPT_ERRORBUFFER): %s",
                     curl_easy_strerror(rcode));
@@ -741,6 +743,7 @@ cr_download(CURL *in_handle,
     // Set URL
     rcode = curl_easy_setopt(handle, CURLOPT_URL, url);
     if (rcode != CURLE_OK) {
+        curl_easy_cleanup(handle);
         g_set_error(err, ERR_DOMAIN, CRE_CURL,
                     "curl_easy_setopt failed(CURLOPT_URL): %s",
                     curl_easy_strerror(rcode));
@@ -751,6 +754,7 @@ cr_download(CURL *in_handle,
     // Set output file descriptor
     rcode = curl_easy_setopt(handle, CURLOPT_WRITEDATA, file);
     if (rcode != CURLE_OK) {
+        curl_easy_cleanup(handle);
         g_set_error(err, ERR_DOMAIN, CRE_CURL,
                     "curl_easy_setopt(CURLOPT_WRITEDATA) failed: %s",
                     curl_easy_strerror(rcode));
@@ -761,12 +765,15 @@ cr_download(CURL *in_handle,
     // Download the file
     rcode = curl_easy_perform(handle);
     if (rcode != CURLE_OK) {
+        curl_easy_cleanup(handle);
         g_set_error(err, ERR_DOMAIN, CRE_CURL,
                     "curl_easy_perform failed: %s: %s",
                     curl_easy_strerror(rcode), errorbuf);
         remove(dst);
         return CRE_CURL;
     }
+
+    curl_easy_cleanup(handle);
 
     g_debug("%s: Successfully downloaded: %s", __func__, dst);
 
@@ -1197,6 +1204,7 @@ cr_str_to_nevra(const char *instr)
         {
             // Strip epoch from the very end
             epoch = epoch_candidate;
+            g_free(str);
             str = nvra_epoch[0];
         } else {
             g_strfreev(nvra_epoch);

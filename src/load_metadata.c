@@ -457,8 +457,8 @@ module_read_fn (void *data,
 
 #ifdef WITH_LIBMODULEMD
 int
-cr_metadata_load_modulemd(cr_Metadata *md,
-                          struct cr_MetadataLocation *ml,
+cr_metadata_load_modulemd(ModulemdModuleIndex **moduleindex,
+                          gchar *path_to_md,
                           GError **err)
 {
     int ret;
@@ -467,27 +467,26 @@ cr_metadata_load_modulemd(cr_Metadata *md,
     CR_FILE *modulemd = NULL;
     g_autoptr (GPtrArray) failures = NULL;
 
-    md->moduleindex = modulemd_module_index_new();
-    if (!md->moduleindex) {
+    *moduleindex = modulemd_module_index_new();
+    if (!*moduleindex) {
         g_set_error (err, ERR_DOMAIN, CRE_MEMORY,
                      "Could not allocate module index");
         return CRE_MEMORY;
     }
 
-    cr_Metadatum *modulemd_metadatum = g_slist_find_custom(ml->additional_metadata, "modules", cr_cmp_metadatum_type)->data;
     /* Open the metadata location */
-    modulemd = cr_open(modulemd_metadatum->name,
+    modulemd = cr_open(path_to_md,
                        CR_CW_MODE_READ,
                        CR_CW_AUTO_DETECT_COMPRESSION,
                        &tmp_err);
     if (tmp_err) {
         int code = tmp_err->code;
         g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ",
-                                   modulemd_metadatum->name);
+                                   path_to_md);
         return code;
     }
 
-    result = modulemd_module_index_update_from_custom (md->moduleindex,
+    result = modulemd_module_index_update_from_custom (*moduleindex,
                                                        module_read_fn,
                                                        modulemd,
                                                        TRUE,
@@ -495,9 +494,9 @@ cr_metadata_load_modulemd(cr_Metadata *md,
                                                        &tmp_err);
     if (!result) {
         if (!tmp_err){
-            g_set_error(err, CRE_MODULEMD, CREATEREPO_C_ERROR,   
+            g_set_error(err, CRE_MODULEMD, CREATEREPO_C_ERROR,
                         "Unknown error in libmodulemd with %s",
-                        modulemd_metadatum->name);
+                        path_to_md);
         }else{
             g_propagate_error (err, tmp_err);
         }
@@ -654,7 +653,8 @@ cr_metadata_load_xml(cr_Metadata *md,
 
 #ifdef WITH_LIBMODULEMD
     if (g_slist_find_custom(ml->additional_metadata, "modules", cr_cmp_metadatum_type)){
-      result = cr_metadata_load_modulemd(md, ml, err);
+      cr_Metadatum *modulemd_metadatum = g_slist_find_custom(ml->additional_metadata, "modules", cr_cmp_metadatum_type)->data;
+      result = cr_metadata_load_modulemd(&(md->moduleindex), modulemd_metadatum->name, err);
     }
 #endif /* WITH_LIBMODULEMD */
 

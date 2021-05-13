@@ -34,6 +34,19 @@ extern "C" {
  */
 ModulemdModuleIndex *cr_metadata_modulemd(cr_Metadata *md);
 
+/** Load (compressed) module metadata file into moduleindex,
+ * compression is autodetected.
+ * @param moduleindex   memory adress where to store the
+ *                      created pointer to ModulemdModuleIndex
+ * @param path_to_md    path to module metadata
+ * @return              cr_Error code
+ */
+int
+cr_metadata_load_modulemd(ModulemdModuleIndex **moduleindex,
+                          gchar *path_to_md,
+                          GError **err);
+
+
 #endif /* WITH_LIBMODULEMD */
 
 #ifdef __cplusplus

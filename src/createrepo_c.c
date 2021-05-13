@@ -820,34 +820,6 @@ main(int argc, char **argv)
             g_critical("Could not allocate module merger");
             exit(EXIT_FAILURE);
         }
-        ModulemdModuleIndex *moduleindex;
-
-        //load all found module metatada and associate it with merger
-        GSList *element = cmd_options->modulemd_metadata;
-        for (; element; element=g_slist_next(element)) {
-            moduleindex = modulemd_module_index_new();
-            if (!moduleindex) {
-                g_critical("Could not allocate new module index");
-                g_clear_pointer(&merger, g_object_unref);
-                exit(EXIT_FAILURE);
-            }
-            g_autoptr (GPtrArray) failures = NULL;
-            gboolean result = modulemd_module_index_update_from_file(moduleindex,
-                                                                     ((char *) element->data),
-                                                                     TRUE,
-                                                                     &failures,
-                                                                     &tmp_err);
-            if (!result) {
-                g_critical("Could not update module index from file %s: %s", (char *) element->data,
-                           (tmp_err ? tmp_err->message : "Unknown error"));
-                g_clear_error(&tmp_err);
-                g_clear_pointer(&moduleindex, g_object_unref);
-                g_clear_pointer(&merger, g_object_unref);
-                exit(EXIT_FAILURE);
-            }
-            modulemd_module_index_merger_associate_index(merger, moduleindex, 0);
-            g_clear_pointer(&moduleindex, g_object_unref);
-        }
 
         if (cmd_options->update && cmd_options->keep_all_metadata &&
         old_metadata_location && old_metadata_location->additional_metadata){
@@ -873,6 +845,25 @@ main(int argc, char **argv)
                 }
                 node_iter = next;
             }
+        }
+
+        ModulemdModuleIndex *moduleindex;
+
+        //load all found module metatada and associate it with merger
+        GSList *element = cmd_options->modulemd_metadata;
+        for (; element; element=g_slist_next(element)) {
+            int result = cr_metadata_load_modulemd(&moduleindex, (char *) element->data, &tmp_err);
+            if (result != CRE_OK) {
+                g_critical("Could not load module index file %s: %s", (char *) element->data,
+                           (tmp_err ? tmp_err->message : "Unknown error"));
+                g_clear_error(&tmp_err);
+                g_clear_pointer(&moduleindex, g_object_unref);
+                g_clear_pointer(&merger, g_object_unref);
+                exit(EXIT_FAILURE);
+            }
+
+            modulemd_module_index_merger_associate_index(merger, moduleindex, 0);
+            g_clear_pointer(&moduleindex, g_object_unref);
         }
 
         //merge module metadata and dump it to string

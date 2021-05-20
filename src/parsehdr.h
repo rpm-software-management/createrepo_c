@@ -39,6 +39,7 @@ typedef enum {
     CR_HDRR_NONE            = (1 << 0),
     CR_HDRR_LOADHDRID       = (1 << 1), /*!< Load hdrid */
     CR_HDRR_LOADSIGNATURES  = (1 << 2), /*!< Load siggpg and siggpg */
+    CR_HDRR_SKIPFILES       = (1 << 3), /*!< Skip filelists */
 } cr_HeaderReadingFlags;
 
 /** Read data from header and return filled cr_Package structure.

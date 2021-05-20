@@ -253,7 +253,8 @@ cr_package_from_header(Header hdr,
         assert(x == dir_count);
     }
 
-    if (headerGet(hdr, RPMTAG_FILENAMES,  full_filenames,  flags) &&
+    if (!(hdrrflags & CR_HDRR_SKIPFILES) &&
+        headerGet(hdr, RPMTAG_FILENAMES,  full_filenames,  flags) &&
         headerGet(hdr, RPMTAG_DIRINDEXES, indexes,  flags) &&
         headerGet(hdr, RPMTAG_BASENAMES,  filenames, flags) &&
         headerGet(hdr, RPMTAG_FILEFLAGS,  fileflags, flags) &&

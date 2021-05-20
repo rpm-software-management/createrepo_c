@@ -1253,6 +1253,7 @@ main(int argc, char **argv)
     user_data.checksum_type     = cmd_options->checksum_type;
     user_data.checksum_cachedir = cmd_options->checksum_cachedir;
     user_data.skip_symlinks     = cmd_options->skip_symlinks;
+    user_data.skip_filelists    = cmd_options->skip_filelists;
     user_data.repodir_name_len  = strlen(in_dir);
     user_data.task_count        = task_count;
     user_data.package_count     = 0;

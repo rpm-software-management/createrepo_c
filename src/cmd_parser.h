@@ -57,6 +57,7 @@ struct CmdOptions {
     char *general_compress_type;/*!< which compression type to use (even for
                                      primary, filelists and other xml) */
     gboolean skip_symlinks;     /*!< ignore symlinks of packages */
+    gboolean skip_filelists;    /*!< Skip creating filelists */
     gint changelog_limit;       /*!< number of changelog messages in
                                      other.(xml|sqlite) */
     gboolean unique_md_filenames;       /*!< include the file checksums in

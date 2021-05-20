@@ -224,6 +224,8 @@ static GOptionEntry expert_entries[] =
       "own risk! If two createrepos run simultaneously, then the state of the "
       "generated metadata is not guaranteed - it can be inconsistent and wrong.",
       NULL },
+    { "skip-filelists", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.skip_filelists),
+      "Expert (risky) option: Skip filelist generation.", NULL},
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL },
 };
 

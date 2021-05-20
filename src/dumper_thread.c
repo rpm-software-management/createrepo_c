@@ -431,6 +431,11 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     if (udata->checksum_cachedir)
         hdrrflags = CR_HDRR_LOADHDRID | CR_HDRR_LOADSIGNATURES;
 
+
+    // Load filelists, unless --skip-filelists is passed.
+    if (udata->skip_filelists)
+        hdrrflags |= CR_HDRR_SKIPFILES;
+
     // Get stat info about file
     if (udata->old_metadata && !(udata->skip_stat)) {
         if (stat(task->full_path, &stat_buf) == -1) {

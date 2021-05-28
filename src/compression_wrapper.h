@@ -54,7 +54,7 @@ typedef enum {
     CR_CW_MODE_SENTINEL,        /*!< Sentinel of the list */
 } cr_OpenMode;
 
-/** Stat build about open content during compression (writting).
+/** Stat build about open content during compression (writing).
  */
 typedef struct {
     gint64          size;               /*!< Size of content */
@@ -87,7 +87,7 @@ typedef struct {
     void                *INNERFILE;     /*!< Pointer to underlying FILE */
     cr_OpenMode         mode;           /*!< Mode */
     cr_ContentStat      *stat;          /*!< Content stats */
-    cr_ChecksumCtx      *checksum_ctx;  /*!< Checksum contenxt */
+    cr_ChecksumCtx      *checksum_ctx;  /*!< Checksum context */
 } CR_FILE;
 
 #define CR_CW_ERR       -1      /*!< Return value - Error */

@@ -1165,7 +1165,7 @@ main(int argc, char **argv)
                 fex_db_filename = g_strconcat(tmp_out_repo, "/filelists-ext.sqlite", NULL);
             oth_db_filename = g_strconcat(tmp_out_repo, "/other.sqlite", NULL);
         } else {
-            g_debug("Creating databases localy");
+            g_debug("Creating databases locally");
             const gchar *tmpdir = g_get_tmp_dir();
             pri_db_filename = g_build_filename(tmpdir, "primary.XXXXXX.sqlite", NULL);
             fil_db_filename = g_build_filename(tmpdir, "filelists.XXXXXX.sqlite", NULL);

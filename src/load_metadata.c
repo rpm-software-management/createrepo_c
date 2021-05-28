@@ -173,7 +173,7 @@ typedef struct {
     GStringChunk    *chunk;
     GHashTable      *pkglist_ht;
     GHashTable      *ignored_pkgIds; /*!< If there are multiple packages
-        wich have the same checksum (pkgId) but they are in fact different
+        which have the same checksum (pkgId) but they are in fact different
         (they have different basenames, mtimes or sizes),
         then we want to ignore these packages during
         loading. It's because the pkgId is used to pair metadata from
@@ -495,7 +495,7 @@ cr_metadata_load_modulemd(cr_Metadata *md,
                                                        &tmp_err);
     if (!result) {
         if (!tmp_err){
-            g_set_error(err, CRE_MODULEMD, CREATEREPO_C_ERROR,   
+            g_set_error(err, CRE_MODULEMD, CREATEREPO_C_ERROR,
                         "Unknown error in libmodulemd with %s",
                         modulemd_metadatum->name);
         }else{
@@ -586,7 +586,7 @@ cr_metadata_load_xml(cr_Metadata *md,
                 break;
             default:
                 // Well, this SHOULD never happend!
-                // (md->key SHOULD be setted only by cr_metadata_new()
+                // (md->key SHOULD be set only by cr_metadata_new()
                 // and it SHOULD set only valid key values)
                 g_critical("%s: Unknown hash table key selected", __func__);
                 assert(0);
@@ -610,7 +610,7 @@ cr_metadata_load_xml(cr_Metadata *md,
                     )
                 {
                     // We got a key (checksum, filename, pkg name, ..)
-                    // which has a multiple occurences which are different.
+                    // which has a multiple occurrences which are different.
                     // Ignore such key
                     g_debug("%s: Key \"%s\" is present multiple times and with "
                             "different values. Ignoring all occurrences. "

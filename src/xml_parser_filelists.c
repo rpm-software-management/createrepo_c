@@ -116,7 +116,7 @@ cr_start_handler(void *pdata, const xmlChar *element, const xmlChar **attr)
         if (!pkgId) {
             // Package without a pkgid attr is error
             g_set_error(&pd->err, ERR_DOMAIN, ERR_CODE_XML,
-                        "Package pkgid attributte is missing!");
+                        "Package pkgid attribute is missing!");
             break;
         }
 

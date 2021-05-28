@@ -117,9 +117,9 @@ typedef struct _cr_ParserData {
 
     int do_files;   /*!<
         If == 0 then parser will ignore files elements in the primary.xml.
-        This is useful when you are inteding parse primary.xml as well as
+        This is useful when you are intending to parse primary.xml as well as
         filelists.xml. In this case files will be filled from filelists.xml.
-        If you are inteding parse only the primary.xml then it coud be useful
+        If you are intending to parse only the primary.xml then it could be useful
         to parse files in primary.
         If you parse files from both a primary.xml and a filelists.xml
         then some files in package object will be duplicated! */

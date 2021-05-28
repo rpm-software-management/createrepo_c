@@ -6,7 +6,7 @@ import shutil
 import os.path
 import createrepo_c as cr
 
-def do_repodata(path):
+def manual_method(path):
     # Prepare repodata/ directory
     repodata_path = os.path.join(path, "repodata")
     if os.path.exists(repodata_path):
@@ -37,10 +37,10 @@ def do_repodata(path):
 
     # List directory and prepare list of files to process
     pkg_list = []
-    for filename in os.listdir(path):
-        filename = os.path.join(path, filename)
-        if os.path.isfile(filename) and filename.endswith(".rpm"):
-            pkg_list.append(filename)
+    with os.scandir(path) as entries:
+        for entry in entries:
+            if entry.is_file() and entry.path.endswith(".rpm"):
+                pkg_list.append(entry.path)
 
     pri_xml.set_num_of_pkgs(len(pkg_list))
     fil_xml.set_num_of_pkgs(len(pkg_list))
@@ -93,6 +93,6 @@ if __name__ == "__main__":
         print("Usage: %s <directory>" % (sys.argv[0]))
         sys.exit(1)
 
-    do_repodata(sys.argv[1])
+    manual_method(sys.argv[1])
 
     print("Repository created in %s" % sys.argv[1])

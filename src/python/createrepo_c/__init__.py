@@ -3,8 +3,11 @@
 
 import collections
 import os
+from pathlib import Path
+import shutil
 import subprocess
 import sys
+import tempfile
 
 from . import _createrepo_c
 from ._createrepo_c import *
@@ -196,7 +199,7 @@ class RepomdRecord(_createrepo_c.RepomdRecord):
         _createrepo_c.RepomdRecord.__init__(self, type, path)
 
     def compress_and_fill(self, hashtype, compresstype):
-        rec = RepomdRecord(self.type + "_gz", None)
+        rec = RepomdRecord(self.type, None)
         _createrepo_c.RepomdRecord.compress_and_fill(self,
                                                      rec,
                                                      hashtype,
@@ -446,7 +449,7 @@ class RepositoryReader:
         # But there's no way to do that. This gets fuzzy around the topic of duplicates.
         # If the same package is listed more than once, is that counted as more than one package?
         # Currently, no.
-        return len(self.parse_packages(only_primary=True))
+        return len(self.parse_packages(only_primary=True)[0])
 
     def iter_packages(self, warningcb=None):
         """
@@ -543,6 +546,202 @@ class RepositoryReader:
             xml_parse_filelists(self._filelists_xml_path, newpkgcb=newpkgcb, warningcb=warningcb)
             xml_parse_other(self._other_xml_path, newpkgcb=newpkgcb, warningcb=warningcb)
         return packages, warnings
+
+
+# both the path and the *XmlFile objects need to be tracked together because there's no way to get the path
+# back from the *XmlFile objects
+MetadataInfoHolder = collections.namedtuple("MetadataInfoHolder", ["path", "writer"])
+
+class RepositoryWriter:
+
+    _FINISHED_ERR_MSG = "Cannot perform action after the repository has already finished being written"
+
+    def __init__(self,
+                 destination,
+                 num_packages=None,
+                 unique_md_filenames=True,
+                 changelog_limit=10,
+                 compression=ZSTD_COMPRESSION,
+                 checksum_type=SHA256):
+
+        if changelog_limit:
+            assert isinstance(changelog_limit, int) and changelog_limit >= 0, "changelog_limit must be an integer >= 0"
+
+        self.repomd = Repomd()
+        self._destination_repo_path = Path(destination)
+
+        self._unique_md_filenames = unique_md_filenames
+        self._changelog_limit = changelog_limit
+        self._checksum_type = checksum_type
+
+        self._has_set_num_pkgs = False
+        self._finished = False
+
+        os.makedirs(self.path, exist_ok=True)
+        os.makedirs(self.repodata_dir, exist_ok=True)
+
+        def _compression_suffix(compressiontype):
+            suffix = compression_suffix(compressiontype)
+            return suffix if suffix else ""
+
+        self._compression = compression
+        self._compression_suffix = _compression_suffix(compression)
+
+        pri_xml_path = self.repodata_dir / ("primary.xml" + self._compression_suffix)
+        fil_xml_path = self.repodata_dir / ("filelists.xml" + self._compression_suffix)
+        oth_xml_path = self.repodata_dir / ("other.xml" + self._compression_suffix)
+
+        self.working_metadata_files = {
+            "primary": MetadataInfoHolder(
+                pri_xml_path, PrimaryXmlFile(str(pri_xml_path), compressiontype=compression)
+            ),
+            "filelists": MetadataInfoHolder(
+                fil_xml_path, FilelistsXmlFile(str(fil_xml_path), compressiontype=compression)
+            ),
+            "other": MetadataInfoHolder(
+                oth_xml_path, OtherXmlFile(str(oth_xml_path), compressiontype=compression)
+            ),
+        }
+        self.additional_metadata_files = {}
+
+        if num_packages is not None:
+            self.set_num_of_pkgs(num_packages)
+
+        self._updaterecords = []
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_tb):
+        if exc_type:
+            pass
+        else:
+            self.finish()
+
+    @property
+    def path(self):
+        return self._destination_repo_path
+
+    @property
+    def repodata_dir(self):
+        return self.path / "repodata"
+
+    def set_num_of_pkgs(self, num):
+        """Set the number of packages that will be added - this has to be done before adding any packages."""
+        assert not self._has_set_num_pkgs, "The number of packages has already been set"
+        self._has_set_num_pkgs = True
+
+        self.working_metadata_files["primary"].writer.set_num_of_pkgs(num)
+        self.working_metadata_files["filelists"].writer.set_num_of_pkgs(num)
+        self.working_metadata_files["other"].writer.set_num_of_pkgs(num)
+
+    def add_pkg_from_file(self, path, output_dir=None):
+        """Add a package to the repo from a provided path."""
+        assert self._has_set_num_pkgs, "Must set the number of packages before adding packages"
+        assert not self._finished, self._FINISHED_ERR_MSG
+
+        filename = os.path.basename(path)
+        try:
+            relative_path = Path(path).relative_to(self.path)  # raises a ValueError if path is not relative
+        except ValueError:
+            if output_dir:
+                relative_path = os.path.join(output_dir, filename)
+                os.makedirs(self.path / output_dir, exist_ok=True)
+            else:
+                relative_path = filename
+            new_path = shutil.copy2(path, self.path / relative_path)
+
+        pkg = package_from_rpm(
+            path,
+            checksum_type=self._checksum_type,
+            location_href=str(relative_path),
+            location_base=None,
+            changelog_limit=self._changelog_limit
+        )
+
+        self.add_pkg(pkg)
+        return pkg
+
+    def add_pkg(self, pkg):
+        """Add a package to the repo from a pre-created Package object."""
+        assert self._has_set_num_pkgs, "Must set the number of packages before adding packages"
+        assert not self._finished, self._FINISHED_ERR_MSG
+
+        self.working_metadata_files["primary"].writer.add_pkg(pkg)
+        self.working_metadata_files["filelists"].writer.add_pkg(pkg)
+        self.working_metadata_files["other"].writer.add_pkg(pkg)
+
+    def add_repomd_metadata(self, name, path, use_compression=True):
+        """Add an additional metadata file to the final repomd."""
+        assert not self._finished, self._FINISHED_ERR_MSG
+
+        if use_compression:
+            dst = self.repodata_dir / (os.path.basename(path) + self._compression_suffix)
+            compress_file(path, str(dst), self._compression)
+            self.additional_metadata_files[name] = dst
+        else:
+            path = shutil.copy2(path, self.repodata_dir)
+            self.additional_metadata_files[name] = path
+
+    def add_update_record(self, rec):
+        """Add an advisory (update record) to the repository."""
+        assert not self._finished, self._FINISHED_ERR_MSG
+
+        self._updaterecords.append(rec)
+
+    def finish(self):
+        """Finish writing metadata."""
+        assert not self._finished, self._FINISHED_ERR_MSG
+        self._finished = True
+
+        # if the user hasn't added any packages we can let them skip this step
+        if not self._has_set_num_pkgs:
+            self.set_num_of_pkgs(0)
+
+        records = {}
+
+        # fail if the user used add_repomd_metadata() for one of "primary", "filelists", "other",
+        # "updateinfo" (if updaterecords added also), etc.
+        created_record_names = set(self.working_metadata_files.keys())
+        added_record_names = set(self.additional_metadata_files.keys())
+        overlapping_records = created_record_names.intersection(added_record_names)
+        assert not overlapping_records, "Added repomd metadata {} conflicts with created metadata".format(overlapping_records)
+
+        # there's no good way to write this data out incrementally, unfortunately
+        if self._updaterecords:
+            upd_xml_path = self.repodata_dir / ("updateinfo.xml" + self._compression_suffix)
+            writer = UpdateInfoXmlFile(str(upd_xml_path), compressiontype=self._compression)
+            updateinfo = UpdateInfo()
+            for rec in self._updaterecords:
+                updateinfo.append(rec)
+            writer.add_chunk(updateinfo.xml_dump())
+            self.working_metadata_files["updateinfo"] = MetadataInfoHolder(upd_xml_path, writer)
+
+        # Create all the repomdrecords for the standard metadata
+        for record_name, metadata_info in self.working_metadata_files.items():
+            # Close all of the metadata files being actively edited
+            metadata_info.writer.close()
+            record = RepomdRecord(record_name, str(metadata_info.path))
+            record.fill(self._checksum_type)
+            records[record_name] = record
+
+        # Create all the repomdrecords for the externally-added metadata
+        for record_name, path in self.additional_metadata_files.items():
+            # if the user tried to add the same record twice, last one wins I guess?
+            record = RepomdRecord(record_name, str(path))
+            record.fill(self._checksum_type)
+            records[record_name] = record
+
+        # Rename the files (if requested) and then add all the repomdrecords to the repomd.xml
+        for record in records.values():
+            if self._unique_md_filenames:
+                record.rename_file()
+            self.repomd.set_record(record)
+
+        # Write repomd.xml
+        repomd_path = self.repodata_dir / "repomd.xml"
+        with open(repomd_path, "w") as repomd_xml_file:
+            repomd_xml_file.write(self.repomd.xml_dump())
 
 
 # If we have been built as a Python package, e.g. "setup.py", this is where the binaries

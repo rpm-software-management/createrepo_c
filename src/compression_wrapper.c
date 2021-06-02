@@ -885,12 +885,14 @@ cr_close(CR_FILE *cr_file, GError **err)
                     ret = CRE_ZCK;
                     g_set_error(err, ERR_DOMAIN, CRE_ZCK,
                         "Unable to end final chunk: %s", zck_get_error(zck));
+                    break;
                 }
             }
             if (!zck_close(zck)) {
                 ret = CRE_ZCK;
                 g_set_error(err, ERR_DOMAIN, CRE_ZCK,
                         "Unable to close zchunk file: %s", zck_get_error(zck));
+                break;
             }
             cr_ChecksumType cktype = cr_cktype_from_zck(zck, err);
             if (cktype == CR_CHECKSUM_UNKNOWN) {

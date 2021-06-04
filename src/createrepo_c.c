@@ -1282,6 +1282,10 @@ main(int argc, char **argv)
     g_mutex_init(&(user_data.mutex_old_md));
     g_mutex_init(&(user_data.mutex_deltatargetpackages));
 
+    if (cmd_options->skip_filelists) {
+      g_warning("Expert option: --skip-filelists for site-local optimization active");
+    }
+
     g_debug("Thread pool user data ready");
 
     // Start pool

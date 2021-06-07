@@ -225,14 +225,14 @@ static GOptionEntry expert_entries[] =
       "generated metadata is not guaranteed - it can be inconsistent and wrong.",
       NULL },
     { "skip-filelists", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.skip_filelists),
-      "Expert (risky) option: Skip filelist generation, potentially saving "
-      "significant bandwidth for repos with large numbers of files in "
+      "Expert (dangerous) option: Skip filelist generation, potentially "
+      "saving significant bandwidth for repos with large numbers of files in "
       "packages. NOTE: Use this option on your own risk! This is a site-local "
-      "optimization and should not be used for public repos. The site "
-      "operator warrants the filenames in the packages in the repo are not "
-      "named as required in other packages. The site operator also warrants "
-      "that all clients do not need to use repoquery -l and -f to list or "
-      "find packages that own a given file.", NULL},
+      "optimization and should not be used for public repos. This option is "
+      "known to break dependency resolution for any packages which depend on "
+      "files provided by packages within this repository, e.g. /bin/bash). It "
+      "will also prevent using repoquery -l and -f from listing files owned "
+      "by a package or discover which package owns a particular file.", NULL},
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL },
 };
 

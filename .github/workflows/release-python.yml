@@ -30,7 +30,7 @@ jobs:
 
     - name: Publish packages to PyPI
       env:
-        TWINE_USERNAME: __TOKEN__
+        TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{secrets.PYPI_API_TOKEN}}
       run: |
         twine upload dist/*.tar.gz

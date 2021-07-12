@@ -224,6 +224,31 @@ cr_xml_parser_generic_from_string(xmlParserCtxtPtr parser,
                                   const char *xml_string,
                                   GError **err);
 
+cr_ParserData *
+primary_parser_data_new(cr_XmlParserNewPkgCb newpkgcb,
+                        void *newpkgcb_data,
+                        cr_XmlParserPkgCb pkgcb,
+                        void *pkgcb_data,
+                        cr_XmlParserWarningCb warningcb,
+                        void *warningcb_data,
+                        int do_files);
+
+cr_ParserData *
+filelists_parser_data_new(cr_XmlParserNewPkgCb newpkgcb,
+                          void *newpkgcb_data,
+                          cr_XmlParserPkgCb pkgcb,
+                          void *pkgcb_data,
+                          cr_XmlParserWarningCb warningcb,
+                          void *warningcb_data);
+
+cr_ParserData *
+other_parser_data_new(cr_XmlParserNewPkgCb newpkgcb,
+                      void *newpkgcb_data,
+                      cr_XmlParserPkgCb pkgcb,
+                      void *pkgcb_data,
+                      cr_XmlParserWarningCb warningcb,
+                      void *warningcb_data);
+
 #ifdef __cplusplus
 }
 #endif

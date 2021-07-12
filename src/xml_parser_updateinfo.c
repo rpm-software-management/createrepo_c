@@ -620,7 +620,6 @@ cr_xml_parse_updateinfo(const char *path,
     // Clean up
 
     cr_xml_parser_data_free(pd);
-    xmlFreeParserCtxt(parser);
 
     return ret;
 }

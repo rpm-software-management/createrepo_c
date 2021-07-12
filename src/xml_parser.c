@@ -160,7 +160,7 @@ cr_newpkgcb(cr_Package **pkg,
 
     *pkg = cr_package_new();
 
-    return CRE_OK;
+    return CR_CB_RET_OK;
 }
 
 int

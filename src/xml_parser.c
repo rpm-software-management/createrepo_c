@@ -44,6 +44,12 @@ cr_xml_parser_data(unsigned int numstates)
 void
 cr_xml_parser_data_free(cr_ParserData *pd)
 {
+    if (!pd) {
+        return;
+    }
+    if (pd->parser) {
+        xmlFreeParserCtxt(pd->parser);
+    }
     g_free(pd->content);
     g_free(pd->swtab);
     g_free(pd->sbtab);

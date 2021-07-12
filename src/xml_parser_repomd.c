@@ -476,7 +476,6 @@ cr_xml_parse_repomd(const char *path,
     // Clean up
 
     cr_xml_parser_data_free(pd);
-    xmlFreeParserCtxt(parser);
 
     return ret;
 }

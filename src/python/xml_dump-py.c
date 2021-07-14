@@ -62,6 +62,7 @@ py_xml_dump_filelists(G_GNUC_UNUSED PyObject *self, PyObject *args)
     xml = cr_xml_dump_filelists(Package_FromPyObject(py_pkg), &err);
     if (err) {
         nice_exception(&err, NULL);
+        free(xml);
         return NULL;
     }
 
@@ -83,6 +84,7 @@ py_xml_dump_other(G_GNUC_UNUSED PyObject *self, PyObject *args)
     xml = cr_xml_dump_other(Package_FromPyObject(py_pkg), &err);
     if (err) {
         nice_exception(&err, NULL);
+        free(xml);
         return NULL;
     }
 

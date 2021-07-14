@@ -389,6 +389,7 @@ cr_rewrite_header_package_count(gchar *original_filename,
         g_propagate_prefixed_error(err, tmp_err, "Error encountered while opening for writing:");
         cr_close(original_file, NULL); 
         g_free(tmp_xml_filename);
+        cr_xmlfile_close(new_file, NULL);
         return;
     }
 

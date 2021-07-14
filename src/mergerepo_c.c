@@ -984,6 +984,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
         g_free(update_info_filename);
+        cr_xmlfile_close(fil_f, NULL);
         cr_xmlfile_close(pri_f, NULL);
         g_error_free(tmp_err);
         g_free(pri_dict);
@@ -1008,6 +1009,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         g_free(fil_xml_filename);
         g_free(oth_xml_filename);
         g_free(update_info_filename);
+        cr_xmlfile_close(oth_f, NULL);
         cr_xmlfile_close(fil_f, NULL);
         cr_xmlfile_close(pri_f, NULL);
         g_error_free(tmp_err);

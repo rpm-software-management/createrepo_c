@@ -279,6 +279,7 @@ cr_repomd_record_fill(cr_RepomdRecord *md,
                 g_propagate_prefixed_error(err, tmp_err,
                     "Error while computing stat of compressed content of %s:",
                     path);
+                cr_contentstat_free(open_stat, NULL);
                 return code;
             }
             md->checksum_open_type = g_string_chunk_insert(md->chunk, checksum_str);

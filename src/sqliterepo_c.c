@@ -762,6 +762,7 @@ generate_sqlite_from_xml(const gchar *path,
     if (!md_loc || !md_loc->repomd) {
         g_set_error(err, CREATEREPO_C_ERROR, CRE_NOFILE,
                     "repomd.xml doesn't exist");
+        cr_metadatalocation_free(md_loc);
         return FALSE;
     }
 

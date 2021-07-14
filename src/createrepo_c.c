@@ -88,30 +88,12 @@ allowed_file(const gchar *filename, GSList *exclude_masks)
 static gboolean
 allowed_modulemd_module_metadata_file(const gchar *filename)
 {
-    GError *tmp_err = NULL;
-    cr_CompressionType com_type = cr_detect_compression(filename, &tmp_err);
-    if (tmp_err) {
-        g_critical("Failed to detect compression for file %s: %s", filename, tmp_err->message);
-        g_clear_error(&tmp_err);
-        exit(EXIT_FAILURE);
-    }
-    const char *compression_suffix = cr_compression_suffix(com_type);
-    const char *allowed_arr[] = {".modulemd.yaml" , ".modulemd-defaults.yaml", "modules.yaml", '\0'};
-
-    for (const char **allowed = allowed_arr; allowed && *allowed; allowed++) {
-        if (compression_suffix) {
-            char allowed_with_suffix[40];
-            snprintf(allowed_with_suffix, sizeof allowed_with_suffix, "%s%s", *allowed, compression_suffix);
-            if (g_strrstr(filename, allowed_with_suffix)) {
-                return TRUE;
-            }
-        } else {
-            if (g_strrstr(filename, *allowed)) {
-                return TRUE;
-            }
-        }
-
-    }
+    if (g_strrstr(filename, "modules.yaml"))
+        return TRUE;
+    if (g_strrstr(filename, ".modulemd.yaml"))
+        return TRUE;
+    if (g_strrstr(filename, ".modulemd-defaults.yaml"))
+        return TRUE;
 
     return FALSE;
 }

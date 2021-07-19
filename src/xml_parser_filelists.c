@@ -259,6 +259,11 @@ cr_end_handler(void *pdata, G_GNUC_UNUSED const xmlChar *element)
         cr_PackageFile *pkg_file = cr_package_file_new();
         pkg_file->name = cr_safe_string_chunk_insert(pd->pkg->chunk,
                                                 cr_get_filename(pd->content));
+        if (!pkg_file->name) {
+            g_set_error(&pd->err, ERR_DOMAIN, ERR_CODE_XML,
+                        "Invalid <file> element: %s", pd->content);
+            break;
+        }
         pd->content[pd->lcontent - strlen(pkg_file->name)] = '\0';
         pkg_file->path = cr_safe_string_chunk_insert_const(pd->pkg->chunk,
                                                            pd->content);

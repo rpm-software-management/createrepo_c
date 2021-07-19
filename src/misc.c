@@ -622,6 +622,12 @@ cr_decompress_file_with_stat(const char *src,
 
     if (!in_dst || g_str_has_suffix(in_dst, "/")) {
         char *filename = cr_get_filename(src);
+        if (!filename) {
+            g_debug("%s: Cannot get filename from: %s", __func__, src);
+            g_set_error(err, ERR_DOMAIN, CRE_NOFILE,
+                        "Cannot get filename from: %s", src);
+            return CRE_NOFILE;
+        }
         if (g_str_has_suffix(filename, c_suffix)) {
             filename = g_strndup(filename, strlen(filename) - strlen(c_suffix));
         } else {

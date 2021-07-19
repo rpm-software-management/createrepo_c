@@ -562,7 +562,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         //  * this isn't the last task
         // Then: save the task to the buffer
 
-        struct BufferedTask *buf_task = malloc(sizeof(struct BufferedTask));
+        struct BufferedTask *buf_task = g_malloc0(sizeof(struct BufferedTask));
         buf_task->id  = task->id;
         buf_task->res = res;
         buf_task->pkg = pkg;

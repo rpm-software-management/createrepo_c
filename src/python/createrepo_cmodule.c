@@ -79,6 +79,8 @@ static struct PyMethodDef createrepo_c_methods[] = {
         METH_VARARGS, xml_parse_repomd__doc__},
     {"xml_parse_updateinfo",    (PyCFunction)py_xml_parse_updateinfo,
         METH_VARARGS, xml_parse_updateinfo__doc__},
+    {"xml_parse_main_metadata_together",(PyCFunctionWithKeywords)py_xml_parse_main_metadata_together,
+        METH_VARARGS | METH_KEYWORDS, xml_parse_main_metadata_together__doc__},
     {"checksum_name_str",       (PyCFunction)py_checksum_name_str,
         METH_VARARGS, checksum_name_str__doc__},
     {"checksum_type",           (PyCFunction)py_checksum_type,

@@ -85,6 +85,8 @@
 #define TEST_MRF_UE_OTH_00      TEST_MODIFIED_REPO_FILES_PATH"unknown_element_00-other.xml"
 #define TEST_MRF_UE_OTH_01      TEST_MODIFIED_REPO_FILES_PATH"unknown_element_01-other.xml"
 #define TEST_MRF_UE_OTH_02      TEST_MODIFIED_REPO_FILES_PATH"unknown_element_02-other.xml"
+#define TEST_LONG_PRIMARY       TEST_MODIFIED_REPO_FILES_PATH"long_primary.xml"
+#define TEST_DIFF_ORDER_FILELISTS TEST_MODIFIED_REPO_FILES_PATH"repo_02_different_order_filelists.xml"
 
 // Test files
 

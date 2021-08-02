@@ -38,6 +38,10 @@ ADD_EXECUTABLE(test_xml_parser_updateinfo test_xml_parser_updateinfo.c)
 TARGET_LINK_LIBRARIES(test_xml_parser_updateinfo libcreaterepo_c ${GLIB2_LIBRARIES})
 ADD_DEPENDENCIES(tests test_xml_parser_updateinfo)
 
+ADD_EXECUTABLE(test_xml_parser_main_metadata_together test_xml_parser_main_metadata_together.c)
+TARGET_LINK_LIBRARIES(test_xml_parser_main_metadata_together libcreaterepo_c ${GLIB2_LIBRARIES})
+ADD_DEPENDENCIES(tests test_xml_parser_main_metadata_together)
+
 ADD_EXECUTABLE(test_xml_dump test_xml_dump.c)
 TARGET_LINK_LIBRARIES(test_xml_dump libcreaterepo_c ${GLIB2_LIBRARIES})
 ADD_DEPENDENCIES(tests test_xml_dump)

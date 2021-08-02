@@ -34,7 +34,7 @@ typedef struct {
     PyObject *py_newpkgcb;
     PyObject *py_pkgcb;
     PyObject *py_warningcb;
-    PyObject *py_pkg;       /*!< Current processed package */
+    PyObject *py_pkgs;       /*!< Current processed package */
 } CbData;
 
 static int
@@ -47,12 +47,6 @@ c_newpkgcb(cr_Package **pkg,
 {
     PyObject *arglist, *result;
     CbData *data = cbdata;
-
-    if (data->py_pkg) {
-        // Decref ref count on previous processed package
-        Py_DECREF(data->py_pkg);
-        data->py_pkg = NULL;
-    }
 
     arglist = Py_BuildValue("(sss)", pkgId, name, arch);
     result = PyObject_CallObject(data->py_newpkgcb, arglist);
@@ -73,12 +67,17 @@ c_newpkgcb(cr_Package **pkg,
 
     if (result == Py_None) {
         *pkg = NULL;
-        data->py_pkg = NULL;
-        Py_DECREF(result);
     } else {
         *pkg = Package_FromPyObject(result);
-        data->py_pkg = result; // Store reference to current package
+        if (data->py_pkgcb != Py_None) {
+            // Store reference to the python pkg (result) only if we will need it later
+            PyObject *keyFromPtr = PyLong_FromVoidPtr(*pkg);
+            PyDict_SetItem(data->py_pkgs, keyFromPtr, result);
+            Py_DECREF(keyFromPtr);
+        }
     }
+
+    Py_DECREF(result);
 
     return CR_CB_RET_OK;
 }
@@ -91,16 +90,23 @@ c_pkgcb(cr_Package *pkg,
     PyObject *arglist, *result, *py_pkg;
     CbData *data = cbdata;
 
-    if (data->py_pkg)
-        py_pkg = data->py_pkg;
-    else
-        py_pkg = Object_FromPackage(pkg, 1);
+    PyObject *keyFromPtr = PyLong_FromVoidPtr(pkg);
+    py_pkg = PyDict_GetItem(data->py_pkgs, keyFromPtr);
+    if (py_pkg) {
+        arglist = Py_BuildValue("(O)", py_pkg);
+        result = PyObject_CallObject(data->py_pkgcb, arglist);
+        PyDict_DelItem(data->py_pkgs, keyFromPtr);
+    } else {
+        // The package was not provided by user in c_newpkgcb,
+        // create new python package object
+        PyObject *new_py_pkg = Object_FromPackage(pkg, 1);
+        arglist = Py_BuildValue("(O)", new_py_pkg);
+        result = PyObject_CallObject(data->py_pkgcb, arglist);
+        Py_DECREF(new_py_pkg);
+    }
 
-    arglist = Py_BuildValue("(O)", py_pkg);
-    result = PyObject_CallObject(data->py_pkgcb, arglist);
     Py_DECREF(arglist);
-    Py_DECREF(py_pkg);
-    data->py_pkg = NULL;
+    Py_DECREF(keyFromPtr);
 
     if (result == NULL) {
         // Exception raised
@@ -191,7 +197,7 @@ py_xml_parse_primary(G_GNUC_UNUSED PyObject *self, PyObject *args)
     cbdata.py_newpkgcb  = py_newpkgcb;
     cbdata.py_pkgcb     = py_pkgcb;
     cbdata.py_warningcb = py_warningcb;
-    cbdata.py_pkg       = NULL;
+    cbdata.py_pkgs      = PyDict_New();
 
     cr_xml_parse_primary(filename,
                          ptr_c_newpkgcb,
@@ -206,7 +212,8 @@ py_xml_parse_primary(G_GNUC_UNUSED PyObject *self, PyObject *args)
     Py_XDECREF(py_newpkgcb);
     Py_XDECREF(py_pkgcb);
     Py_XDECREF(py_warningcb);
-    Py_XDECREF(cbdata.py_pkg);
+
+    Py_XDECREF(cbdata.py_pkgs);
 
     if (tmp_err) {
         nice_exception(&tmp_err, NULL);
@@ -272,7 +279,7 @@ py_xml_parse_primary_snippet(G_GNUC_UNUSED PyObject *self, PyObject *args)
     cbdata.py_newpkgcb  = py_newpkgcb;
     cbdata.py_pkgcb     = py_pkgcb;
     cbdata.py_warningcb = py_warningcb;
-    cbdata.py_pkg       = NULL;
+    cbdata.py_pkgs      = PyDict_New();
 
     cr_xml_parse_primary_snippet(target, ptr_c_newpkgcb, &cbdata, ptr_c_pkgcb, &cbdata,
                                  ptr_c_warningcb, &cbdata, do_files, &tmp_err);
@@ -280,7 +287,7 @@ py_xml_parse_primary_snippet(G_GNUC_UNUSED PyObject *self, PyObject *args)
     Py_XDECREF(py_newpkgcb);
     Py_XDECREF(py_pkgcb);
     Py_XDECREF(py_warningcb);
-    Py_XDECREF(cbdata.py_pkg);
+    Py_XDECREF(cbdata.py_pkgs);
 
     if (tmp_err) {
         nice_exception(&tmp_err, NULL);
@@ -344,7 +351,7 @@ py_xml_parse_filelists(G_GNUC_UNUSED PyObject *self, PyObject *args)
     cbdata.py_newpkgcb  = py_newpkgcb;
     cbdata.py_pkgcb     = py_pkgcb;
     cbdata.py_warningcb = py_warningcb;
-    cbdata.py_pkg       = NULL;
+    cbdata.py_pkgs      = PyDict_New();
 
     cr_xml_parse_filelists(filename,
                            ptr_c_newpkgcb,
@@ -358,7 +365,7 @@ py_xml_parse_filelists(G_GNUC_UNUSED PyObject *self, PyObject *args)
     Py_XDECREF(py_newpkgcb);
     Py_XDECREF(py_pkgcb);
     Py_XDECREF(py_warningcb);
-    Py_XDECREF(cbdata.py_pkg);
+    Py_XDECREF(cbdata.py_pkgs);
 
     if (tmp_err) {
         nice_exception(&tmp_err, NULL);
@@ -422,7 +429,7 @@ py_xml_parse_filelists_snippet(G_GNUC_UNUSED PyObject *self, PyObject *args)
     cbdata.py_newpkgcb  = py_newpkgcb;
     cbdata.py_pkgcb     = py_pkgcb;
     cbdata.py_warningcb = py_warningcb;
-    cbdata.py_pkg       = NULL;
+    cbdata.py_pkgs      = PyDict_New();
 
     cr_xml_parse_filelists_snippet(target, ptr_c_newpkgcb, &cbdata, ptr_c_pkgcb,
                                    &cbdata, ptr_c_warningcb, &cbdata, &tmp_err);
@@ -430,7 +437,7 @@ py_xml_parse_filelists_snippet(G_GNUC_UNUSED PyObject *self, PyObject *args)
     Py_XDECREF(py_newpkgcb);
     Py_XDECREF(py_pkgcb);
     Py_XDECREF(py_warningcb);
-    Py_XDECREF(cbdata.py_pkg);
+    Py_XDECREF(cbdata.py_pkgs);
 
     if (tmp_err) {
         nice_exception(&tmp_err, NULL);
@@ -494,7 +501,7 @@ py_xml_parse_other(G_GNUC_UNUSED PyObject *self, PyObject *args)
     cbdata.py_newpkgcb  = py_newpkgcb;
     cbdata.py_pkgcb     = py_pkgcb;
     cbdata.py_warningcb = py_warningcb;
-    cbdata.py_pkg       = NULL;
+    cbdata.py_pkgs      = PyDict_New();
 
     cr_xml_parse_other(filename,
                        ptr_c_newpkgcb,
@@ -508,7 +515,7 @@ py_xml_parse_other(G_GNUC_UNUSED PyObject *self, PyObject *args)
     Py_XDECREF(py_newpkgcb);
     Py_XDECREF(py_pkgcb);
     Py_XDECREF(py_warningcb);
-    Py_XDECREF(cbdata.py_pkg);
+    Py_XDECREF(cbdata.py_pkgs);
 
     if (tmp_err) {
         nice_exception(&tmp_err, NULL);
@@ -572,7 +579,7 @@ py_xml_parse_other_snippet(G_GNUC_UNUSED PyObject *self, PyObject *args)
     cbdata.py_newpkgcb  = py_newpkgcb;
     cbdata.py_pkgcb     = py_pkgcb;
     cbdata.py_warningcb = py_warningcb;
-    cbdata.py_pkg       = NULL;
+    cbdata.py_pkgs      = PyDict_New();
 
     cr_xml_parse_other_snippet(target, ptr_c_newpkgcb, &cbdata, ptr_c_pkgcb, &cbdata,
                                ptr_c_warningcb, &cbdata, &tmp_err);
@@ -580,7 +587,7 @@ py_xml_parse_other_snippet(G_GNUC_UNUSED PyObject *self, PyObject *args)
     Py_XDECREF(py_newpkgcb);
     Py_XDECREF(py_pkgcb);
     Py_XDECREF(py_warningcb);
-    Py_XDECREF(cbdata.py_pkg);
+    Py_XDECREF(cbdata.py_pkgs);
 
     if (tmp_err) {
         nice_exception(&tmp_err, NULL);
@@ -623,7 +630,7 @@ py_xml_parse_repomd(G_GNUC_UNUSED PyObject *self, PyObject *args)
     cbdata.py_newpkgcb  = NULL;
     cbdata.py_pkgcb     = NULL;
     cbdata.py_warningcb = py_warningcb;
-    cbdata.py_pkg       = NULL;
+    cbdata.py_pkgs      = NULL;
 
     repomd = Repomd_FromPyObject(py_repomd);
 
@@ -677,7 +684,7 @@ py_xml_parse_updateinfo(G_GNUC_UNUSED PyObject *self, PyObject *args)
     cbdata.py_newpkgcb  = NULL;
     cbdata.py_pkgcb     = NULL;
     cbdata.py_warningcb = py_warningcb;
-    cbdata.py_pkg       = NULL;
+    cbdata.py_pkgs      = NULL;
 
     updateinfo = UpdateInfo_FromPyObject(py_updateinfo);
 
@@ -689,6 +696,91 @@ py_xml_parse_updateinfo(G_GNUC_UNUSED PyObject *self, PyObject *args)
 
     Py_XDECREF(py_updateinfo);
     Py_XDECREF(py_warningcb);
+
+    if (tmp_err) {
+        nice_exception(&tmp_err, NULL);
+        return NULL;
+    }
+
+    Py_RETURN_NONE;
+}
+
+
+PyObject *
+py_xml_parse_main_metadata_together(G_GNUC_UNUSED PyObject *self, PyObject *args, PyObject *kwargs)
+{
+    char *primary_filename;
+    char *filelists_filename;
+    char *other_filename;
+    int allow_out_of_order = 1;
+    PyObject *py_newpkgcb, *py_pkgcb, *py_warningcb;
+    CbData cbdata;
+    GError *tmp_err = NULL;
+    static char *kwlist[] = { "primary", "filelists", "other", "newpkgcb", "pkgcb",
+                              "warningcb", "allow_out_of_order", NULL };
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sssOOO|p:py_xml_parse_main_metadata_together", kwlist,
+                                     &primary_filename, &filelists_filename, &other_filename, &py_newpkgcb,
+                                     &py_pkgcb, &py_warningcb, &allow_out_of_order)) {
+        return NULL;
+    }
+
+    if (!PyCallable_Check(py_newpkgcb) && py_newpkgcb != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "newpkgcb must be callable or None");
+        return NULL;
+    }
+
+    if (!PyCallable_Check(py_pkgcb) && py_pkgcb != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "pkgcb must be callable or None");
+        return NULL;
+    }
+
+    if (!PyCallable_Check(py_warningcb) && py_warningcb != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "warningcb must be callable or None");
+        return NULL;
+    }
+
+    if (py_newpkgcb == Py_None && py_pkgcb == Py_None) {
+        PyErr_SetString(PyExc_ValueError, "both pkgcb and newpkgcb cannot be None");
+        return NULL;
+    }
+
+    Py_XINCREF(py_newpkgcb);
+    Py_XINCREF(py_pkgcb);
+    Py_XINCREF(py_warningcb);
+
+    cr_XmlParserNewPkgCb    ptr_c_newpkgcb  = NULL;
+    cr_XmlParserPkgCb       ptr_c_pkgcb     = NULL;
+    cr_XmlParserWarningCb   ptr_c_warningcb = NULL;
+
+    if (py_newpkgcb != Py_None)
+        ptr_c_newpkgcb = c_newpkgcb;
+    if (py_pkgcb != Py_None)
+        ptr_c_pkgcb = c_pkgcb;
+    if (py_warningcb != Py_None)
+        ptr_c_warningcb = c_warningcb;
+
+    cbdata.py_newpkgcb  = py_newpkgcb;
+    cbdata.py_pkgcb     = py_pkgcb;
+    cbdata.py_warningcb = py_warningcb;
+    cbdata.py_pkgs      = PyDict_New();
+
+    cr_xml_parse_main_metadata_together(primary_filename,
+                                        filelists_filename,
+                                        other_filename,
+                                        ptr_c_newpkgcb,
+                                        &cbdata,
+                                        ptr_c_pkgcb,
+                                        &cbdata,
+                                        ptr_c_warningcb,
+                                        &cbdata,
+                                        allow_out_of_order,
+                                        &tmp_err);
+
+    Py_XDECREF(py_newpkgcb);
+    Py_XDECREF(py_pkgcb);
+    Py_XDECREF(py_warningcb);
+    Py_XDECREF(cbdata.py_pkgs);
 
     if (tmp_err) {
         nice_exception(&tmp_err, NULL);

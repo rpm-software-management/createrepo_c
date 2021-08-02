@@ -31,6 +31,7 @@ SET (createrepo_c_SRCS
      xml_parser_primary.c
      xml_parser_repomd.c
      xml_parser_updateinfo.c
+     xml_parser_main_metadata_together.c
      koji.c)
 
 SET(headers

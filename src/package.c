@@ -19,6 +19,7 @@
  */
 
 #include <string.h>
+#include "package_internal.h"
 #include "package.h"
 #include "misc.h"
 
@@ -181,7 +182,13 @@ cr_Package *
 cr_package_copy(cr_Package *orig)
 {
     cr_Package *pkg = cr_package_new();
+    cr_package_copy_into(orig, pkg);
+    return pkg;
+}
 
+void
+cr_package_copy_into(cr_Package *orig, cr_Package *pkg)
+{
     pkg->pkgKey           = orig->pkgKey;
     pkg->pkgId            = cr_safe_string_chunk_insert(pkg->chunk, orig->pkgId);
     pkg->name             = cr_safe_string_chunk_insert(pkg->chunk, orig->name);
@@ -235,6 +242,4 @@ cr_package_copy(cr_Package *orig)
         log->changelog = cr_safe_string_chunk_insert(pkg->chunk, orig_log->changelog);
         pkg->changelogs = g_slist_prepend(pkg->changelogs, log);
     }
-
-    return pkg;
 }

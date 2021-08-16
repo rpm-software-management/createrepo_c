@@ -816,6 +816,7 @@ main(int argc, char **argv)
 #ifdef WITH_LIBMODULEMD
     // module metadata found in repo
     if (cmd_options->modulemd_metadata) {
+        gboolean merger_is_empty = TRUE;
         ModulemdModuleIndexMerger *merger = modulemd_module_index_merger_new();
         if (!merger) {
             g_critical("Could not allocate module merger");
@@ -826,6 +827,7 @@ main(int argc, char **argv)
             //associate old metadata into the merger if we want to keep them (--keep-all-metadata)
             if (cr_metadata_modulemd(old_metadata) && cmd_options->keep_all_metadata){
                 modulemd_module_index_merger_associate_index(merger, cr_metadata_modulemd(old_metadata), 0);
+                merger_is_empty = FALSE;
                 if (tmp_err) {
                     g_critical("%s: Cannot merge old module index with new: %s", __func__, tmp_err->message);
                     g_clear_error(&tmp_err);
@@ -880,48 +882,56 @@ main(int argc, char **argv)
             }
 
             modulemd_module_index_merger_associate_index(merger, moduleindex, 0);
+            merger_is_empty = FALSE;
             g_clear_pointer(&moduleindex, g_object_unref);
         }
 
-        //merge module metadata and dump it to string
-        moduleindex = modulemd_module_index_merger_resolve (merger, &tmp_err);
+        if (!merger_is_empty) {
+            //merge module metadata and dump it to string
+            moduleindex = modulemd_module_index_merger_resolve (merger, &tmp_err);
+            char *moduleindex_str = modulemd_module_index_dump_to_string (moduleindex, &tmp_err);
+            g_clear_pointer(&moduleindex, g_object_unref);
+            if (tmp_err) {
+                g_critical("%s: Cannot dump module index: %s", __func__, tmp_err->message);
+                free(moduleindex_str);
+                g_clear_error(&tmp_err);
+                g_clear_pointer(&merger, g_object_unref);
+                exit(EXIT_FAILURE);
+            }
+
+            //compress new module metadata string to a file in temporary .repodata
+            gchar *modules_metadata_path = g_strconcat(tmp_out_repo, "modules.yaml", compression_suffix, NULL);
+            CR_FILE *modules_file = NULL;
+            modules_file = cr_open(modules_metadata_path, CR_CW_MODE_WRITE, compression, &tmp_err);
+            if (modules_file == NULL) {
+                g_critical("%s: Cannot open source file %s: %s", __func__, modules_metadata_path,
+                           (tmp_err ? tmp_err->message : "Unknown error"));
+                g_clear_error(&tmp_err);
+                free(moduleindex_str);
+                free(modules_metadata_path);
+                g_clear_pointer(&merger, g_object_unref);
+                exit(EXIT_FAILURE);
+            }
+            cr_puts(modules_file, moduleindex_str, &tmp_err);
+            free(moduleindex_str);
+            cr_close(modules_file, &tmp_err);
+            if (tmp_err) {
+                g_critical("%s: Error while closing: : %s", __func__, tmp_err->message);
+                g_clear_error(&tmp_err);
+                free(modules_metadata_path);
+                g_clear_pointer(&merger, g_object_unref);
+                exit(EXIT_FAILURE);
+            }
+
+            //create additional metadatum for new module metadata file
+            cr_Metadatum *new_modules_metadatum = g_malloc0(sizeof(cr_Metadatum));
+            new_modules_metadatum->name = modules_metadata_path;
+            new_modules_metadatum->type = g_strdup("modules");
+            additional_metadata = g_slist_prepend(additional_metadata, new_modules_metadatum);
+        }
+
         g_clear_pointer(&merger, g_object_unref);
-        char *moduleindex_str = modulemd_module_index_dump_to_string (moduleindex, &tmp_err);
-        g_clear_pointer(&moduleindex, g_object_unref);
-        if (tmp_err) {
-            g_critical("%s: Cannot dump module index: %s", __func__, tmp_err->message);
-            free(moduleindex_str);
-            g_clear_error(&tmp_err);
-            exit(EXIT_FAILURE);
-        }
 
-        //compress new module metadata string to a file in temporary .repodata
-        gchar *modules_metadata_path = g_strconcat(tmp_out_repo, "modules.yaml", compression_suffix, NULL);
-        CR_FILE *modules_file = NULL;
-        modules_file = cr_open(modules_metadata_path, CR_CW_MODE_WRITE, compression, &tmp_err);
-        if (modules_file == NULL) {
-            g_critical("%s: Cannot open source file %s: %s", __func__, modules_metadata_path,
-                       (tmp_err ? tmp_err->message : "Unknown error"));
-            g_clear_error(&tmp_err);
-            free(moduleindex_str);
-            free(modules_metadata_path);
-            exit(EXIT_FAILURE);
-        }
-        cr_puts(modules_file, moduleindex_str, &tmp_err);
-        free(moduleindex_str);
-        cr_close(modules_file, &tmp_err);
-        if (tmp_err) {
-            g_critical("%s: Error while closing: : %s", __func__, tmp_err->message);
-            g_clear_error(&tmp_err);
-            free(modules_metadata_path);
-            exit(EXIT_FAILURE);
-        }
-
-        //create additional metadatum for new module metadata file
-        cr_Metadatum *new_modules_metadatum = g_malloc0(sizeof(cr_Metadatum));
-        new_modules_metadatum->name = modules_metadata_path;
-        new_modules_metadatum->type = g_strdup("modules");
-        additional_metadata = g_slist_prepend(additional_metadata, new_modules_metadatum);
     }
 #endif /* WITH_LIBMODULEMD */
 

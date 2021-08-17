@@ -37,10 +37,12 @@
 #define FILE_COMPRESSED_0_GZ                    TEST_COMPRESSED_FILES_PATH"/00_plain.txt.gz"
 #define FILE_COMPRESSED_0_BZ2                   TEST_COMPRESSED_FILES_PATH"/00_plain.txt.bz2"
 #define FILE_COMPRESSED_0_XZ                    TEST_COMPRESSED_FILES_PATH"/00_plain.txt.xz"
+#define FILE_COMPRESSED_0_ZSTD                  TEST_COMPRESSED_FILES_PATH"/00_plain.txt.zst"
 #define FILE_COMPRESSED_0_PLAIN_BAD_SUFFIX      TEST_COMPRESSED_FILES_PATH"/00_plain.foo0"
 #define FILE_COMPRESSED_0_GZ_BAD_SUFFIX         TEST_COMPRESSED_FILES_PATH"/00_plain.foo1"
 #define FILE_COMPRESSED_0_BZ2_BAD_SUFFIX        TEST_COMPRESSED_FILES_PATH"/00_plain.foo2"
 #define FILE_COMPRESSED_0_XZ_BAD_SUFFIX         TEST_COMPRESSED_FILES_PATH"/00_plain.foo3"
+#define FILE_COMPRESSED_0_ZSTD_BAD_SUFFIX       TEST_COMPRESSED_FILES_PATH"/00_plain.foo5"
 
 #define FILE_COMPRESSED_1_CONTENT               "foobar foobar foobar foobar test test\nfolkjsaflkjsadokf\n"
 #define FILE_COMPRESSED_1_CONTENT_LEN           56
@@ -48,11 +50,13 @@
 #define FILE_COMPRESSED_1_GZ                    TEST_COMPRESSED_FILES_PATH"/01_plain.txt.gz"
 #define FILE_COMPRESSED_1_BZ2                   TEST_COMPRESSED_FILES_PATH"/01_plain.txt.bz2"
 #define FILE_COMPRESSED_1_XZ                    TEST_COMPRESSED_FILES_PATH"/01_plain.txt.xz"
+#define FILE_COMPRESSED_1_ZSTD                  TEST_COMPRESSED_FILES_PATH"/01_plain.txt.zst"
 #define FILE_COMPRESSED_1_ZCK                   TEST_COMPRESSED_FILES_PATH"/01_plain.txt.zck"
 #define FILE_COMPRESSED_1_PLAIN_BAD_SUFFIX      TEST_COMPRESSED_FILES_PATH"/01_plain.foo0"
 #define FILE_COMPRESSED_1_GZ_BAD_SUFFIX         TEST_COMPRESSED_FILES_PATH"/01_plain.foo1"
 #define FILE_COMPRESSED_1_BZ2_BAD_SUFFIX        TEST_COMPRESSED_FILES_PATH"/01_plain.foo2"
 #define FILE_COMPRESSED_1_XZ_BAD_SUFFIX         TEST_COMPRESSED_FILES_PATH"/01_plain.foo3"
+#define FILE_COMPRESSED_1_ZSTD_BAD_SUFFIX       TEST_COMPRESSED_FILES_PATH"/01_plain.foo5"
 
 
 static void
@@ -98,6 +102,9 @@ test_cr_compression_suffix(void)
 
     suffix = cr_compression_suffix(CR_CW_XZ_COMPRESSION);
     g_assert_cmpstr(suffix, ==, ".xz");
+
+    suffix = cr_compression_suffix(CR_CW_ZSTD_COMPRESSION);
+    g_assert_cmpstr(suffix, ==, ".zst");
 }
 
 static void
@@ -134,6 +141,12 @@ test_cr_compression_type(void)
 
     type = cr_compression_type("xz");
     g_assert_cmpint(type, ==, CR_CW_XZ_COMPRESSION);
+
+    type = cr_compression_type("zst");
+    g_assert_cmpint(type, ==, CR_CW_ZSTD_COMPRESSION);
+
+    type = cr_compression_type("zstd");
+    g_assert_cmpint(type, ==, CR_CW_ZSTD_COMPRESSION);
 }
 
 static void
@@ -176,6 +189,24 @@ test_cr_detect_compression(void)
     g_assert(!tmp_err);
     ret = cr_detect_compression(FILE_COMPRESSED_1_XZ, &tmp_err);
     g_assert_cmpint(ret, ==, CR_CW_XZ_COMPRESSION);
+    g_assert(!tmp_err);
+
+    // Zstd
+
+    ret = cr_detect_compression(FILE_COMPRESSED_0_ZSTD, &tmp_err);
+    g_assert_cmpint(ret, ==, CR_CW_ZSTD_COMPRESSION);
+    g_assert(!tmp_err);
+    ret = cr_detect_compression(FILE_COMPRESSED_1_ZSTD, &tmp_err);
+    g_assert_cmpint(ret, ==, CR_CW_ZSTD_COMPRESSION);
+    g_assert(!tmp_err);
+
+    // Zstd
+
+    ret = cr_detect_compression(FILE_COMPRESSED_0_ZSTD, &tmp_err);
+    g_assert_cmpint(ret, ==, CR_CW_ZSTD_COMPRESSION);
+    g_assert(!tmp_err);
+    ret = cr_detect_compression(FILE_COMPRESSED_1_ZSTD, &tmp_err);
+    g_assert_cmpint(ret, ==, CR_CW_ZSTD_COMPRESSION);
     g_assert(!tmp_err);
 }
 
@@ -221,6 +252,15 @@ test_cr_detect_compression_bad_suffix(void)
     ret = cr_detect_compression(FILE_COMPRESSED_1_XZ_BAD_SUFFIX, &tmp_err);
     g_assert_cmpint(ret, ==, CR_CW_XZ_COMPRESSION);
     g_assert(!tmp_err);
+
+    // Zstd
+
+    ret = cr_detect_compression(FILE_COMPRESSED_0_ZSTD_BAD_SUFFIX, &tmp_err);
+    g_assert_cmpint(ret, ==, CR_CW_ZSTD_COMPRESSION);
+    g_assert(!tmp_err);
+    ret = cr_detect_compression(FILE_COMPRESSED_1_ZSTD_BAD_SUFFIX, &tmp_err);
+    g_assert_cmpint(ret, ==, CR_CW_ZSTD_COMPRESSION);
+    g_assert(!tmp_err);
 }
 
 
@@ -234,6 +274,16 @@ test_helper_cw_input(const char *filename,
     CR_FILE *file;
     char buffer[COMPRESSED_BUFFER_LEN+1];
     GError *tmp_err = NULL;
+
+    if (ctype != CR_CW_AUTO_DETECT_COMPRESSION) {
+        cr_CompressionType detected_type = cr_detect_compression(filename, &tmp_err);
+        g_assert(!tmp_err);
+        if (ctype != detected_type) {
+            printf("detected_type: %i does not match passed type: %i for filename: %s\n",
+                   detected_type, ctype, filename);
+            g_assert(0);
+        }
+    }
 
     file = cr_open(filename, CR_CW_MODE_READ, ctype, &tmp_err);
     g_assert(file);
@@ -280,6 +330,12 @@ test_cr_read_with_autodetection(void)
     test_helper_cw_input(FILE_COMPRESSED_0_XZ, CR_CW_AUTO_DETECT_COMPRESSION,
             FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
     test_helper_cw_input(FILE_COMPRESSED_1_XZ, CR_CW_AUTO_DETECT_COMPRESSION,
+            FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
+    // Zstd
+
+    test_helper_cw_input(FILE_COMPRESSED_0_ZSTD, CR_CW_AUTO_DETECT_COMPRESSION,
+            FILE_COMPRESSED_0_CONTENT, FILE_COMPRESSED_0_CONTENT_LEN);
+    test_helper_cw_input(FILE_COMPRESSED_1_ZSTD, CR_CW_AUTO_DETECT_COMPRESSION,
             FILE_COMPRESSED_1_CONTENT, FILE_COMPRESSED_1_CONTENT_LEN);
 }
 
@@ -447,6 +503,27 @@ outputtest_cw_output(Outputtest *outputtest,
     test_helper_cw_output(OUTPUT_TYPE_PRINTF, outputtest->tmp_filename,
                           CR_CW_XZ_COMPRESSION, FILE_COMPRESSED_1_CONTENT,
                           FILE_COMPRESSED_1_CONTENT_LEN);
+
+    // Zstd
+
+    test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename,
+                          CR_CW_ZSTD_COMPRESSION, FILE_COMPRESSED_0_CONTENT,
+                          FILE_COMPRESSED_0_CONTENT_LEN);
+    test_helper_cw_output(OUTPUT_TYPE_WRITE,  outputtest->tmp_filename,
+                          CR_CW_ZSTD_COMPRESSION, FILE_COMPRESSED_1_CONTENT,
+                          FILE_COMPRESSED_1_CONTENT_LEN);
+    test_helper_cw_output(OUTPUT_TYPE_PUTS,   outputtest->tmp_filename,
+                          CR_CW_ZSTD_COMPRESSION, FILE_COMPRESSED_0_CONTENT,
+                          FILE_COMPRESSED_0_CONTENT_LEN);
+    test_helper_cw_output(OUTPUT_TYPE_PUTS,   outputtest->tmp_filename,
+                          CR_CW_ZSTD_COMPRESSION, FILE_COMPRESSED_1_CONTENT,
+                          FILE_COMPRESSED_1_CONTENT_LEN);
+    test_helper_cw_output(OUTPUT_TYPE_PRINTF, outputtest->tmp_filename,
+                          CR_CW_ZSTD_COMPRESSION, FILE_COMPRESSED_0_CONTENT,
+                          FILE_COMPRESSED_0_CONTENT_LEN);
+    test_helper_cw_output(OUTPUT_TYPE_PRINTF, outputtest->tmp_filename,
+                          CR_CW_ZSTD_COMPRESSION, FILE_COMPRESSED_1_CONTENT,
+                          FILE_COMPRESSED_1_CONTENT_LEN);
 }
 
 
@@ -508,6 +585,13 @@ test_cr_error_handling(void)
     g_error_free(tmp_err);
     tmp_err = NULL;
 
+    f = cr_open("/", CR_CW_MODE_WRITE, CR_CW_ZSTD_COMPRESSION, &tmp_err);
+    g_assert(!f);
+    g_assert(tmp_err);
+    g_assert_cmpint(tmp_err->code, ==, CRE_ZSTD);
+    g_error_free(tmp_err);
+    tmp_err = NULL;
+
     // Opening plain text file as compressed
 
     char buf[256];
@@ -545,6 +629,19 @@ test_cr_error_handling(void)
     g_assert_cmpint(ret, ==, -1);
     g_assert(tmp_err);
     g_assert_cmpint(tmp_err->code, ==, CRE_XZ);
+    g_error_free(tmp_err);
+    tmp_err = NULL;
+    ret = cr_close(f, &tmp_err);
+    g_assert_cmpint(ret, ==, CRE_OK);
+    g_assert(!tmp_err);
+
+    f = cr_open(FILE_COMPRESSED_1_PLAIN, CR_CW_MODE_READ,
+                CR_CW_ZSTD_COMPRESSION, &tmp_err);
+    g_assert(f);
+    ret = cr_read(f, buf, 256, &tmp_err);
+    g_assert_cmpint(ret, ==, -1);
+    g_assert(tmp_err);
+    g_assert_cmpint(tmp_err->code, ==, CRE_ZSTD);
     g_error_free(tmp_err);
     tmp_err = NULL;
     ret = cr_close(f, &tmp_err);
@@ -670,6 +767,31 @@ test_contentstating_singlewrite(Outputtest *outputtest,
     g_assert_cmpstr(stat->checksum, ==, content_sha256);
     cr_contentstat_free(stat, &tmp_err);
     g_assert(!tmp_err);
+
+    // zstd compression
+    stat = cr_contentstat_new(CR_CHECKSUM_SHA256, &tmp_err);
+    g_assert(stat);
+    g_assert(!tmp_err);
+
+    f = cr_sopen(outputtest->tmp_filename,
+                 CR_CW_MODE_WRITE,
+                 CR_CW_ZSTD_COMPRESSION,
+                 stat,
+                 &tmp_err);
+    g_assert(f);
+    g_assert(!tmp_err);
+
+    ret = cr_write(f, content, content_len, &tmp_err);
+    g_assert_cmpint(ret, ==, content_len);
+    g_assert(!tmp_err);
+
+    cr_close(f, &tmp_err);
+    g_assert(!tmp_err);
+
+    g_assert_cmpint(stat->size, ==, content_len);
+    g_assert_cmpstr(stat->checksum, ==, content_sha256);
+    cr_contentstat_free(stat, &tmp_err);
+    g_assert(!tmp_err);
 }
 
 static void
@@ -695,6 +817,36 @@ test_contentstating_multiwrite(Outputtest *outputtest,
     f = cr_sopen(outputtest->tmp_filename,
                  CR_CW_MODE_WRITE,
                  CR_CW_GZ_COMPRESSION,
+                 stat,
+                 &tmp_err);
+    g_assert(f);
+    g_assert(!tmp_err);
+
+    ret = cr_write(f, content, 10, &tmp_err);
+    g_assert_cmpint(ret, ==, 10);
+    g_assert(!tmp_err);
+
+    ret = cr_write(f, content+10, 29, &tmp_err);
+    g_assert_cmpint(ret, ==, 29);
+    g_assert(!tmp_err);
+
+    cr_close(f, &tmp_err);
+    g_assert(!tmp_err);
+
+    g_assert_cmpint(stat->size, ==, content_len);
+    g_assert_cmpstr(stat->checksum, ==, content_sha256);
+    cr_contentstat_free(stat, &tmp_err);
+    g_assert(!tmp_err);
+
+    // Zstd compression
+
+    stat = cr_contentstat_new(CR_CHECKSUM_SHA256, &tmp_err);
+    g_assert(stat);
+    g_assert(!tmp_err);
+
+    f = cr_sopen(outputtest->tmp_filename,
+                 CR_CW_MODE_WRITE,
+                 CR_CW_ZSTD_COMPRESSION,
                  stat,
                  &tmp_err);
     g_assert(f);

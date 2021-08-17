@@ -15,6 +15,7 @@ class TestCaseCompressionWrapper(unittest.TestCase):
         self.assertEqual(cr.compression_suffix(cr.BZ2), ".bz2")
         self.assertEqual(cr.compression_suffix(cr.XZ), ".xz")
         self.assertEqual(cr.compression_suffix(cr.ZCK), ".zck")
+        self.assertEqual(cr.compression_suffix(cr.ZSTD), ".zst")
 
     def test_detect_compression(self):
 
@@ -69,6 +70,11 @@ class TestCaseCompressionWrapper(unittest.TestCase):
         #comtype = cr.detect_compression(path)
         #self.assertEqual(comtype, cr.ZCK)
 
+        # Bad suffix - zstd compression
+        path = os.path.join(COMPRESSED_FILES_PATH, "01_plain.foo5")
+        comtype = cr.detect_compression(path)
+        self.assertEqual(comtype, cr.ZSTD)
+
     def test_compression_type(self):
         self.assertEqual(cr.compression_type(None), cr.UNKNOWN_COMPRESSION)
         self.assertEqual(cr.compression_type(""), cr.UNKNOWN_COMPRESSION)
@@ -77,4 +83,6 @@ class TestCaseCompressionWrapper(unittest.TestCase):
         self.assertEqual(cr.compression_type("xz"), cr.XZ)
         self.assertEqual(cr.compression_type("XZ"), cr.XZ)
         self.assertEqual(cr.compression_type("zck"), cr.ZCK)
+        self.assertEqual(cr.compression_type("zstd"), cr.ZSTD)
+        self.assertEqual(cr.compression_type("zst"), cr.ZSTD)
 

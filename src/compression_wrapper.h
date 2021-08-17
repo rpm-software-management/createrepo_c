@@ -42,6 +42,7 @@ typedef enum {
     CR_CW_BZ2_COMPRESSION,            /*!< BZip2 compression */
     CR_CW_XZ_COMPRESSION,             /*!< XZ compression */
     CR_CW_ZCK_COMPRESSION,            /*!< ZCK compression */
+    CR_CW_ZSTD_COMPRESSION,           /*!< ZSTD compression */
     CR_CW_COMPRESSION_SENTINEL,       /*!< Sentinel of the list */
 } cr_CompressionType;
 

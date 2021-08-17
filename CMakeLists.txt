@@ -21,6 +21,8 @@ if(NOT BUILD_LIBCREATEREPO_C_SHARED)
   set(CMAKE_POSITION_INDEPENDENT_CODE 1)
 endif()
 
+option(WITH_ZSTD "Build with zstd support" ON)
+
 option(CREATEREPO_C_INSTALL_DEVELOPMENT "Install createrepo_c development files." ON)
 option(CREATEREPO_C_INSTALL_MANPAGES "Install createrepo_c man-pages." ON)
 
@@ -99,6 +101,13 @@ IF (WITH_LIBMODULEMD)
     SET (CMAKE_C_FLAGS          "${CMAKE_C_FLAGS} -DWITH_LIBMODULEMD")
     SET (CMAKE_C_FLAGS_DEBUG    "${CMAKE_C_FLAGS_DEBUG} -DWITH_LIBMODULEMD")
 ENDIF (WITH_LIBMODULEMD)
+
+if (WITH_ZSTD)
+    pkg_check_modules(ZSTD REQUIRED libzstd)
+    include_directories(${ZSTD_INCLUDE_DIRS})
+    SET (CMAKE_C_FLAGS          "${CMAKE_C_FLAGS} -DWITH_ZSTD")
+    SET (CMAKE_C_FLAGS_DEBUG    "${CMAKE_C_FLAGS_DEBUG} -DWITH_ZSTD")
+endif()
 
 # Threaded XZ Compression
 # Note: This option is disabled by default, because Createrepo_c

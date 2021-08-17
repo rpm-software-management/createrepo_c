@@ -264,6 +264,7 @@ PyInit__createrepo_c(void)
     PyModule_AddIntConstant(m, "BZ2_COMPRESSION", CR_CW_BZ2_COMPRESSION);
     PyModule_AddIntConstant(m, "XZ_COMPRESSION", CR_CW_XZ_COMPRESSION);
     PyModule_AddIntConstant(m, "ZCK_COMPRESSION", CR_CW_ZCK_COMPRESSION);
+    PyModule_AddIntConstant(m, "ZSTD_COMPRESSION", CR_CW_ZSTD_COMPRESSION);
 
     /* Zchunk support */
 #ifdef WITH_ZCHUNK

@@ -25,6 +25,7 @@ Package build requires - Pkg name in Fedora/Ubuntu:
 * xz (http://tukaani.org/xz/) - xz-devel/liblzma-dev
 * zchunk (https://github.com/zchunk/zchunk) - zchunk-devel/
 * zlib (http://www.zlib.net/) - zlib-devel/zlib1g-dev
+* libzstd (http://facebook.github.io/zstd/) - libzstd-devel/libzstd-dev
 * *Documentation:* doxygen (http://doxygen.org/) - doxygen/doxygen
 * *Documentation:* sphinx (http://sphinx-doc.org/) - python3-sphinx/python3-sphinx
 * **Test requires:** check (http://check.sourceforge.net/) - check-devel/check

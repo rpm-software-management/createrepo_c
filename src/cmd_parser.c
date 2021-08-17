@@ -156,7 +156,7 @@ static GOptionEntry cmd_entries[] =
     { "xz", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.xz_compression),
       "Use xz for repodata compression.", NULL },
     { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type),
-      "Which compression type to use.", "COMPRESSION_TYPE" },
+      "Which compression type to use. Supported compressions are: bzip2, gzip, zck, zstd, xz.", "COMPRESSION_TYPE" },
     { "general-compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.general_compress_type),
       "Which compression type to use (even for primary, filelists and other xml).",
       "COMPRESSION_TYPE" },
@@ -279,6 +279,8 @@ check_and_set_compression_type(const char *type_str,
         *type = CR_CW_BZ2_COMPRESSION;
     } else if (!strcmp(compress_str->str, "xz")) {
         *type = CR_CW_XZ_COMPRESSION;
+    } else if (!strcmp(compress_str->str, "zstd") || !strcmp(compress_str->str, "zst")) {
+        *type = CR_CW_ZSTD_COMPRESSION;
     } else {
         g_set_error(err, ERR_DOMAIN, CRE_BADARG,
                     "Unknown/Unsupported compression type \"%s\"", type_str);

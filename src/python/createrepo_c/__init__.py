@@ -61,6 +61,9 @@ XZ                      = _createrepo_c.XZ_COMPRESSION
 #: Zchunk compression alias
 ZCK                     = _createrepo_c.ZCK_COMPRESSION
 
+#: Zstd compression alias
+ZSTD                     = _createrepo_c.ZSTD_COMPRESSION
+
 HT_KEY_DEFAULT  = _createrepo_c.HT_KEY_DEFAULT  #: Default key (hash)
 HT_KEY_HASH     = _createrepo_c.HT_KEY_HASH     #: Package hash as a key
 HT_KEY_NAME     = _createrepo_c.HT_KEY_NAME     #: Package name as a key

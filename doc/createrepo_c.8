@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH CREATEREPO_C 8 "2020-07-02" "" ""
+.TH CREATEREPO_C 8 "2021-08-18" "" ""
 .SH NAME
 createrepo_c \- Create rpm-md format (xml-rpm-metadata) repository
 .
@@ -161,7 +161,7 @@ Number of workers to spawn to read rpms.
 Use xz for repodata compression.
 .SS \-\-compress\-type COMPRESSION_TYPE
 .sp
-Which compression type to use.
+Which compression type to use. Supported compressions are: bzip2, gzip, zck, zstd, xz.
 .SS \-\-general\-compress\-type COMPRESSION_TYPE
 .sp
 Which compression type to use (even for primary, filelists and other xml).

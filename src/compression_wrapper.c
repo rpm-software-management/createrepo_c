@@ -35,6 +35,7 @@
 #endif  // WITH_ZCHUNK
 #include "error.h"
 #include "compression_wrapper.h"
+#include <rpm/rpmio.h>
 
 
 #define ERR_DOMAIN                      CREATEREPO_C_ERROR
@@ -156,6 +157,9 @@ cr_detect_compression(const char *filename, GError **err)
     } else if (g_str_has_suffix(filename, ".zck"))
     {
         return CR_CW_ZCK_COMPRESSION;
+    } else if (g_str_has_suffix(filename, ".zst"))
+    {
+        return CR_CW_ZSTD_COMPRESSION;
     } else if (g_str_has_suffix(filename, ".xml") ||
                g_str_has_suffix(filename, ".tar") ||
                g_str_has_suffix(filename, ".yaml") ||
@@ -195,6 +199,11 @@ cr_detect_compression(const char *filename, GError **err)
             g_str_has_prefix(mime_type, "multipart/x-gzip"))
         {
             type = CR_CW_GZ_COMPRESSION;
+        }
+
+        else if (g_str_has_prefix(mime_type, "application/zstd"))
+        {
+            type = CR_CW_ZSTD_COMPRESSION;
         }
 
         else if (g_str_has_prefix(mime_type, "application/x-bzip2") ||
@@ -260,6 +269,8 @@ cr_compression_type(const char *name)
         type = CR_CW_XZ_COMPRESSION;
     if (!g_strcmp0(name_lower, "zck"))
         type = CR_CW_ZCK_COMPRESSION;
+    if (!g_strcmp0(name_lower, "zst") || !g_strcmp0(name_lower, "zstd"))
+        type = CR_CW_ZSTD_COMPRESSION;
     g_free(name_lower);
 
     return type;
@@ -277,6 +288,8 @@ cr_compression_suffix(cr_CompressionType comtype)
             return ".xz";
         case CR_CW_ZCK_COMPRESSION:
             return ".zck";
+        case CR_CW_ZSTD_COMPRESSION:
+            return ".zst";
         default:
             return NULL;
     }
@@ -415,6 +428,16 @@ cr_sopen(const char *filename,
                             "gzbuffer() call failed");
             }
             break;
+
+        case (CR_CW_ZSTD_COMPRESSION): { // ------------------------------------
+            mode_str = (mode == CR_CW_MODE_WRITE) ? "wb.zstdio" : "rb.zstdio";
+            file->FILE = (void *) Fopen(filename, mode_str);
+            if (!file->FILE || Ferror((FD_t) file->FILE))
+                g_set_error(err, ERR_DOMAIN, CRE_ZSTD,
+                            "Fopen() from rpmio for zstd failed: %s",
+                            Fstrerror((FD_t) file->FILE));
+            break;
+        }
 
         case (CR_CW_BZ2_COMPRESSION): { // ------------------------------------
             FILE *f = fopen(filename, mode_str);
@@ -772,6 +795,17 @@ cr_close(CR_FILE *cr_file, GError **err)
             }
             break;
 
+        case (CR_CW_ZSTD_COMPRESSION): // --------------------------------------
+            if (Fclose((FD_t) cr_file->FILE) == 0) {
+                ret = CRE_OK;
+            } else {
+                ret = CRE_ZSTD;
+                g_set_error(err, ERR_DOMAIN, CRE_ZSTD,
+                            "Fclose() from rpmio for zstd failed: %s",
+                            Fstrerror((FD_t) cr_file->FILE));
+            }
+            break;
+
         case (CR_CW_BZ2_COMPRESSION): // --------------------------------------
             if (cr_file->mode == CR_CW_MODE_READ)
                 BZ2_bzReadClose(&rc, (BZFILE *) cr_file->FILE);
@@ -980,6 +1014,15 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
                 ret = CR_CW_ERR;
                 g_set_error(err, ERR_DOMAIN, CRE_GZ,
                     "fread(): %s", cr_gz_strerror((gzFile) cr_file->FILE));
+            }
+            break;
+
+        case (CR_CW_ZSTD_COMPRESSION): // ---------------------------------------
+            ret = Fread(buffer, sizeof(*buffer), len, (FD_t) cr_file->FILE);
+            if (ret < 0) {
+                ret = CR_CW_ERR;
+                g_set_error(err, ERR_DOMAIN, CRE_ZSTD,
+                            "Fread() zstd rpmio: %d", Ferror((FD_t) cr_file->FILE));
             }
             break;
 
@@ -1217,6 +1260,19 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
             }
             break;
 
+        case (CR_CW_ZSTD_COMPRESSION): // ---------------------------------------
+            if (len == 0) {
+                ret = 0;
+                break;
+            }
+            if ((ret = Fwrite(buffer, 1, len, (FD_t) cr_file->FILE)) != (int) len) {
+                ret = CR_CW_ERR;
+                g_set_error(err, ERR_DOMAIN, CRE_ZSTD,
+                            "Fwrite() from rpmio for zstd failed: %s",
+                            Fstrerror((FD_t) cr_file->FILE));
+            }
+            break;
+
         case (CR_CW_BZ2_COMPRESSION): // --------------------------------------
             BZ2_bzWrite(&bzerror, (BZFILE *) cr_file->FILE, (void *) buffer, len);
             if (bzerror == BZ_OK) {
@@ -1364,6 +1420,7 @@ cr_puts(CR_FILE *cr_file, const char *str, GError **err)
         case (CR_CW_BZ2_COMPRESSION): // --------------------------------------
         case (CR_CW_XZ_COMPRESSION): // ---------------------------------------
         case (CR_CW_ZCK_COMPRESSION): // --------------------------------------
+        case (CR_CW_ZSTD_COMPRESSION): // --------------------------------------
             len = strlen(str);
             ret = cr_write(cr_file, str, len, err);
             if (ret != (int) len)
@@ -1401,6 +1458,7 @@ cr_end_chunk(CR_FILE *cr_file, GError **err)
         case (CR_CW_GZ_COMPRESSION): // ---------------------------------------
         case (CR_CW_BZ2_COMPRESSION): // --------------------------------------
         case (CR_CW_XZ_COMPRESSION): // ---------------------------------------
+        case (CR_CW_ZSTD_COMPRESSION): // ---------------------------------------
             break;
         case (CR_CW_ZCK_COMPRESSION): { // ------------------------------------
 #ifdef WITH_ZCHUNK
@@ -1453,6 +1511,7 @@ cr_set_autochunk(CR_FILE *cr_file, gboolean auto_chunk, GError **err)
         case (CR_CW_GZ_COMPRESSION): // ---------------------------------------
         case (CR_CW_BZ2_COMPRESSION): // --------------------------------------
         case (CR_CW_XZ_COMPRESSION): // ---------------------------------------
+        case (CR_CW_ZSTD_COMPRESSION): // ---------------------------------------
             break;
         case (CR_CW_ZCK_COMPRESSION): { // ------------------------------------
 #ifdef WITH_ZCHUNK
@@ -1527,6 +1586,7 @@ cr_printf(GError **err, CR_FILE *cr_file, const char *format, ...)
         case (CR_CW_BZ2_COMPRESSION): // --------------------------------------
         case (CR_CW_XZ_COMPRESSION): // ---------------------------------------
         case (CR_CW_ZCK_COMPRESSION): // --------------------------------------
+        case (CR_CW_ZSTD_COMPRESSION): // --------------------------------------
             tmp_ret = cr_write(cr_file, buf, ret, err);
             if (tmp_ret != (int) ret)
                 ret = CR_CW_ERR;

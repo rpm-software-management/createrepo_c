@@ -636,6 +636,7 @@ cr_end_handler(void *pdata, G_GNUC_UNUSED const xmlChar *element)
         if (!pkg_file->name) {
             g_set_error(&pd->err, ERR_DOMAIN, ERR_CODE_XML,
                         "Invalid <file> element: %s", pd->content);
+            g_free(pkg_file);
             break;
         }
         pd->content[pd->lcontent - strlen(pkg_file->name)] = '\0';

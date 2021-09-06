@@ -154,11 +154,24 @@ cr_checksum_file(const char *filename,
         return NULL;
     }
 
-    while ((readed = fread(buf, 1, BUFFER_SIZE, f)) == BUFFER_SIZE)
-        EVP_DigestUpdate(ctx, buf, readed);
+    while ((readed = fread(buf, 1, BUFFER_SIZE, f)) == BUFFER_SIZE) {
+        if (!EVP_DigestUpdate(ctx, buf, readed)) {
+            g_set_error(err, ERR_DOMAIN, CRE_OPENSSL,
+                        "EVP_DigestUpdate() failed");
+            EVP_MD_CTX_destroy(ctx);
+            fclose(f);
+            return NULL;
+        }
+    }
 
     if (feof(f)) {
-        EVP_DigestUpdate(ctx, buf, readed);
+        if (!EVP_DigestUpdate(ctx, buf, readed)) {
+            g_set_error(err, ERR_DOMAIN, CRE_OPENSSL,
+                        "EVP_DigestUpdate() failed");
+            EVP_MD_CTX_destroy(ctx);
+            fclose(f);
+            return NULL;
+        }
     } else {
         g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "Error while reading a file: %s", g_strerror(errno));
@@ -169,7 +182,13 @@ cr_checksum_file(const char *filename,
 
     fclose(f);
 
-    EVP_DigestFinal_ex(ctx, raw_checksum, &len);
+    if (!EVP_DigestFinal_ex(ctx, raw_checksum, &len)) {
+        g_set_error(err, ERR_DOMAIN, CRE_OPENSSL,
+                    "EVP_DigestFinal_ex() failed");
+        EVP_MD_CTX_destroy(ctx);
+        return NULL;
+    }
+
     EVP_MD_CTX_destroy(ctx);
     checksum = g_malloc0(sizeof(char) * (len * 2 + 1));
     for (size_t x = 0; x < len; x++)

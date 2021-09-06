@@ -51,6 +51,7 @@ py_package_from_rpm(G_GNUC_UNUSED PyObject *self, PyObject *args)
                               location_base, changelog_limit, NULL,
                               flags, &tmp_err);
     if (tmp_err) {
+        cr_package_free(pkg);
         nice_exception(&tmp_err, "Cannot load %s: ", filename);
         return NULL;
     }

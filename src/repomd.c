@@ -176,6 +176,7 @@ cr_get_compressed_content_stat(const char *filename,
 
     if (readed == CR_CW_ERR) {
         cr_close(cwfile, NULL);
+        g_free(checksum);
         return NULL;
     }
 
@@ -197,6 +198,7 @@ cr_get_compressed_content_stat(const char *filename,
     } else {
         g_set_error(err, ERR_DOMAIN, CRE_MEMORY,
                     "Cannot allocate memory");
+        g_free(checksum);
     }
 
     cr_close(cwfile, NULL);

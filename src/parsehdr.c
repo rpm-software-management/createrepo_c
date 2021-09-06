@@ -499,6 +499,10 @@ cr_package_from_header(Header hdr,
                             pkg->enhances = g_slist_prepend(pkg->enhances, dependency);
                         }
                         break;
+                    default:
+                        g_warning("Unknown dependency type for dependency: \"%s\" with version: \"%s\"",
+                                  dependency->name, dependency->version);
+                        g_free(dependency);
 #endif
                 } // Switch end
             } // While end

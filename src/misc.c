@@ -931,10 +931,7 @@ cr_str_to_version(const char *str)
         // Whole string has been converted successfully
         return ver;
     } else {
-        if (endptr[0] == '.') {
-            // '.' is supposed to be delimiter -> skip it and go to next chunk
-            ptr = endptr+1;
-        } else {
+        if (endptr[0] != '.') { // '.' is supposed to be delimiter
             ver.suffix = g_strdup(endptr);
             return ver;
         }
@@ -1149,7 +1146,6 @@ cr_str_to_nevr(const char *instr)
         if (nvr[i] == '-') {
             nevr->version = g_strdup(nvr+i+1);
             nvr[i] = '\0';
-            len = i;
             break;
         }
 
@@ -1193,7 +1189,6 @@ cr_str_to_nevra(const char *instr)
     cr_NEVR *nevr;
     cr_NEVRA *nevra = NULL;
     gchar *str, *epoch = NULL;
-    size_t len;
     int i;
 
     if (!instr)
@@ -1219,14 +1214,11 @@ cr_str_to_nevra(const char *instr)
         }
     }
 
-    len = strlen(str);
-
     // Get arch
-    for (i = len-1; i >= 0; i--)
+    for (i = strlen(str)-1; i >= 0; i--)
         if (str[i] == '.') {
             nevra->arch = g_strdup(str+i+1);
             str[i] = '\0';
-            len = i;
             break;
         }
 

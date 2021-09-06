@@ -766,8 +766,7 @@ cr_prestodelta_thread(gpointer data, gpointer udata)
         // 1. Remove the key and value from the table without freeing them
         g_hash_table_steal(user_data->ht, key);
         // 2. Append to the list (the value from the hash table)
-        GSList *list = (GSList *) pval;
-        list = g_slist_append(pval, xml_chunk);
+        GSList *list = g_slist_append(pval, xml_chunk);
         // 3. Insert the modified list again
         g_hash_table_insert(user_data->ht, pkey, list);
     } else {

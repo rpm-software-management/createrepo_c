@@ -41,6 +41,7 @@ py_xml_dump_primary(G_GNUC_UNUSED PyObject *self, PyObject *args)
     xml = cr_xml_dump_primary(Package_FromPyObject(py_pkg), &err);
     if (err) {
         nice_exception(&err, NULL);
+        free(xml);
         return NULL;
     }
 

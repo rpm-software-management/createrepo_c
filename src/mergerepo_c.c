@@ -667,10 +667,10 @@ merge_repos(GHashTable *merged,
 {
     long loaded_packages = 0;
     GSList *used_noarch_keys = NULL;
+    GError *err = NULL;
 
 #ifdef WITH_LIBMODULEMD
     g_autoptr(ModulemdModuleIndexMerger) merger = NULL;
-    GError *err = NULL;
 
     merger = modulemd_module_index_merger_new();
 #endif /* WITH_LIBMODULEMD */
@@ -710,9 +710,10 @@ merge_repos(GHashTable *merged,
 
         g_debug("Processing: %s", repopath);
 
-        if (cr_metadata_load_xml(metadata, ml, NULL) != CRE_OK) {
+        if (cr_metadata_load_xml(metadata, ml, &err) != CRE_OK) {
             cr_metadata_free(metadata);
-            g_critical("Cannot load repo: \"%s\"", ml->repomd);
+            g_critical("Cannot load repo: \"%s\" : %s", ml->original_url, err->message);
+            g_error_free(err);
             g_free(repopath);
             break;
         }

@@ -464,6 +464,7 @@ cr_metadata_load_modulemd(ModulemdModuleIndex **moduleindex,
     int ret;
     gboolean result;
     GError *tmp_err = NULL;
+    const GError *subdoc_error = NULL;
     CR_FILE *modulemd = NULL;
     g_autoptr (GPtrArray) failures = NULL;
 
@@ -494,6 +495,18 @@ cr_metadata_load_modulemd(ModulemdModuleIndex **moduleindex,
                                                        &tmp_err);
     if (!result) {
         if (!tmp_err){
+            if (failures->len) {
+                subdoc_error = modulemd_subdocument_info_get_gerror(g_ptr_array_index(failures, 0));
+                if (subdoc_error)
+                {
+                    g_set_error(err, CRE_MODULEMD, CREATEREPO_C_ERROR,
+                                "Error in \"%s\" : %s",
+                                g_path_get_basename(path_to_md),
+                                subdoc_error->message);
+                    return CRE_MODULEMD;
+                }
+            }
+
             g_set_error(err, CRE_MODULEMD, CREATEREPO_C_ERROR,
                         "Unknown error in libmodulemd with %s",
                         path_to_md);

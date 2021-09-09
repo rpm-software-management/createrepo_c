@@ -184,7 +184,45 @@ gboolean cr_copy_file(const char *src,
                     cr_compress_file_with_stat(SRC, DST, COMTYPE, NULL, ZCK_DICT_DIR, \
                                                ZCK_AUTO_CHUNK, ERR)
 
+/** Compress file. This function is temporary and present
+ * only in rhel 8, it will be removed in future versions.
+ * @param SRC           source filename
+ * @param DST           destination (If dst is dir, filename of src +
+ *                      compression suffix is used.
+ *                      If dst is NULL, src + compression suffix is used)
+ * @param COMTYPE       type of compression
+ * @param ZCK_DICT_DIR  Location of zchunk zdicts (if zchunk is enabled)
+ * @param ZCK_AUTO_CHUNK Whether zchunk file should be auto-chunked
+ * @param ERR           GError **
+ * @return              cr_Error return code
+ */
+#define cr_compress_file_v2(SRC, DST, COMTYPE, ZCK_DICT_DIR, ZCK_AUTO_CHUNK, ERR) \
+                    cr_compress_file_with_stat_v2(SRC, DST, COMTYPE, NULL, ZCK_DICT_DIR, \
+                                               ZCK_AUTO_CHUNK, ERR)
 /** Compress file.
+ * @param src           source filename
+ * @param dst           pointer to destination (If dst is dir, filename of src +
+ *                      compression suffix is used.
+ *                      If dst is NULL, src + compression suffix is used)
+ * @param comtype       type of compression
+ * @param stat          pointer to cr_ContentStat or NULL
+ * @param zck_dict_dir  Location of zchunk zdicts (if zchunk is enabled)
+ * @param zck_auto_chunk Whether zchunk file should be auto-chunked
+ * @param err           GError **
+ * @return              cr_Error return code
+ */
+int cr_compress_file_with_stat(const char *src,
+                               char **dst,
+                               cr_CompressionType comtype,
+                               cr_ContentStat *stat,
+                               const char *zck_dict_dir,
+                               gboolean zck_auto_chunk,
+                               GError **err);
+
+/** Compress file with stat versions 2. This function is temporary and present
+ * only in rhel 8, it will be removed in future versions.
+ * It is a compatibility function that preserves the API and behavior of
+ * cr_compress_file_with_stat from createrepo_c-0.12.0.
  * @param src           source filename
  * @param dst           destination (If dst is dir, filename of src +
  *                      compression suffix is used.
@@ -196,13 +234,13 @@ gboolean cr_copy_file(const char *src,
  * @param err           GError **
  * @return              cr_Error return code
  */
-int cr_compress_file_with_stat(const char *src,
-                               const char *dst,
-                               cr_CompressionType comtype,
-                               cr_ContentStat *stat,
-                               const char *zck_dict_dir,
-                               gboolean zck_auto_chunk,
-                               GError **err);
+int cr_compress_file_with_stat_v2(const char *src,
+                                  const char *dst,
+                                  cr_CompressionType comtype,
+                                  cr_ContentStat *stat,
+                                  const char *zck_dict_dir,
+                                  gboolean zck_auto_chunk,
+                                  GError **err);
 
 /** Decompress file.
  * @param SRC           source filename

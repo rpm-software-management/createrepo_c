@@ -548,8 +548,8 @@ compressfile_test_text_file(Copyfiletest *copyfiletest,
     GError *tmp_err = NULL;
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    ret = cr_compress_file(TEST_TEXT_FILE, copyfiletest->dst_file,
-                           CR_CW_GZ_COMPRESSION, NULL, FALSE, &tmp_err);
+    ret = cr_compress_file_v2(TEST_TEXT_FILE, copyfiletest->dst_file,
+                              CR_CW_GZ_COMPRESSION, NULL, FALSE, &tmp_err);
     g_assert(!tmp_err);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
@@ -574,9 +574,9 @@ compressfile_with_stat_test_text_file(Copyfiletest *copyfiletest,
     g_assert(!tmp_err);
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
-    ret = cr_compress_file_with_stat(TEST_TEXT_FILE, copyfiletest->dst_file,
-                                     CR_CW_GZ_COMPRESSION, stat, NULL, FALSE,
-                                     &tmp_err);
+    ret = cr_compress_file_with_stat_v2(TEST_TEXT_FILE, copyfiletest->dst_file,
+                                        CR_CW_GZ_COMPRESSION, stat, NULL, FALSE,
+                                        &tmp_err);
     g_assert(!tmp_err);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
@@ -603,9 +603,9 @@ compressfile_with_stat_test_gz_file_gz_output(Copyfiletest *copyfiletest,
     char * dst_full_name = g_strconcat(copyfiletest->dst_file, ".gz", NULL);
 
     g_assert(!g_file_test(dst_full_name, G_FILE_TEST_EXISTS));
-    ret = cr_compress_file_with_stat(TEST_TEXT_FILE_GZ, dst_full_name,
-                                     CR_CW_GZ_COMPRESSION, stat, NULL, FALSE,
-                                     &tmp_err);
+    ret = cr_compress_file_with_stat_v2(TEST_TEXT_FILE_GZ, dst_full_name,
+                                        CR_CW_GZ_COMPRESSION, stat, NULL, FALSE,
+                                        &tmp_err);
     g_assert(!tmp_err);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(dst_full_name, G_FILE_TEST_IS_REGULAR));
@@ -633,9 +633,9 @@ compressfile_test_gz_file_xz_output(Copyfiletest *copyfiletest,
     char * dst_full_name = g_strconcat(copyfiletest->dst_file, ".xz", NULL);
 
     g_assert(!g_file_test(dst_full_name, G_FILE_TEST_EXISTS));
-    ret = cr_compress_file(TEST_TEXT_FILE_GZ, dst_full_name,
-                                     CR_CW_XZ_COMPRESSION, NULL, FALSE,
-                                     &tmp_err);
+    ret = cr_compress_file_v2(TEST_TEXT_FILE_GZ, dst_full_name,
+                              CR_CW_XZ_COMPRESSION, NULL, FALSE,
+                              &tmp_err);
     g_assert(!tmp_err);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(dst_full_name, G_FILE_TEST_IS_REGULAR));
@@ -660,9 +660,9 @@ compressfile_test_xz_file_gz_output(Copyfiletest *copyfiletest,
     char * dst_full_name = g_strconcat(copyfiletest->dst_file, ".gz", NULL);
 
     g_assert(!g_file_test(dst_full_name, G_FILE_TEST_EXISTS));
-    ret = cr_compress_file(TEST_TEXT_FILE_XZ, dst_full_name,
-                                     CR_CW_GZ_COMPRESSION, NULL, FALSE,
-                                     &tmp_err);
+    ret = cr_compress_file_v2(TEST_TEXT_FILE_XZ, dst_full_name,
+                              CR_CW_GZ_COMPRESSION, NULL, FALSE,
+                              &tmp_err);
     g_assert(!tmp_err);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(dst_full_name, G_FILE_TEST_IS_REGULAR));
@@ -687,9 +687,9 @@ compressfile_test_sqlite_file_gz_output(Copyfiletest *copyfiletest,
     char * dst_full_name = g_strconcat(copyfiletest->dst_file, ".gz", NULL);
 
     g_assert(!g_file_test(dst_full_name, G_FILE_TEST_EXISTS));
-    ret = cr_compress_file(TEST_SQLITE_FILE, dst_full_name,
-                                     CR_CW_GZ_COMPRESSION, NULL, FALSE,
-                                     &tmp_err);
+    ret = cr_compress_file_v2(TEST_SQLITE_FILE, dst_full_name,
+                              CR_CW_GZ_COMPRESSION, NULL, FALSE,
+                              &tmp_err);
     g_assert(!tmp_err);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(dst_full_name, G_FILE_TEST_EXISTS));

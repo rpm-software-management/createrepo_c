@@ -100,13 +100,13 @@ cr_compressing_thread(gpointer data, G_GNUC_UNUSED gpointer user_data)
                                 cr_compression_suffix(task->type),
                                 NULL);
 
-    cr_compress_file_with_stat(task->src,
-                               task->dst,
-                               task->type,
-                               task->stat,
-                               task->zck_dict_dir,
-                               task->zck_auto_chunk,
-                               &tmp_err);
+    cr_compress_file_with_stat_v2(task->src,
+                                  task->dst,
+                                  task->type,
+                                  task->stat,
+                                  task->zck_dict_dir,
+                                  task->zck_auto_chunk,
+                                  &tmp_err);
 
     if (tmp_err) {
         // Error encountered

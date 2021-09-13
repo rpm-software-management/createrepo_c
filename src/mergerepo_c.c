@@ -651,6 +651,9 @@ add_package:
 }
 
 
+/**
+ * @return Number of loaded packages or -1 on error
+ */
 long
 merge_repos(GHashTable *merged,
 #ifdef WITH_LIBMODULEMD
@@ -715,7 +718,7 @@ merge_repos(GHashTable *merged,
             g_critical("Cannot load repo: \"%s\" : %s", ml->original_url, err->message);
             g_error_free(err);
             g_free(repopath);
-            break;
+            return -1;
         }
 
 #ifdef WITH_LIBMODULEMD
@@ -1948,14 +1951,16 @@ main(int argc, char **argv)
         koji_stuff_destroy(&koji_stuff);
 
 
-    // Dump metadata
-    dump_merged_metadata(merged_hashtable,
-                         loaded_packages,
-                         groupfile,
+    if(loaded_packages >= 0) {
+        // Dump metadata
+        dump_merged_metadata(merged_hashtable,
+                loaded_packages,
+                groupfile,
 #ifdef WITH_LIBMODULEMD
-                         merged_index,
+                merged_index,
 #endif
-                         cmd_options);
+                cmd_options);
+    }
 
 
     // Remove downloaded repos and free repo location structures
@@ -1973,5 +1978,5 @@ main(int argc, char **argv)
     cr_metadata_free(noarch_metadata);
     destroy_merged_metadata_hashtable(merged_hashtable);
     free_options(cmd_options);
-    return 0;
+    return loaded_packages >= 0 ? 0 : 1;
 }

@@ -77,6 +77,7 @@ struct CmdOptions {
     char *zck_dict_dir;         /*!< directory with zchunk dictionaries */
     gboolean keep_all_metadata; /*!< keep groupfile and updateinfo from source
                                      repo during update */
+    gboolean discard_additional_metadata; /*!< Inverse option to keep_all_metadata */
     gboolean ignore_lock;       /*!< Ignore existing .repodata/ - remove it,
                                      create the new one (empty) to serve as
                                      a lock and use a .repodata.date.pid for

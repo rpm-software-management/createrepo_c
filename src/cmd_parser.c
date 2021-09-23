@@ -65,6 +65,8 @@ struct CmdOptions _cmd_options = {
         .zck_compression            = FALSE,
         .zck_dict_dir               = NULL,
         .recycle_pkglist            = FALSE,
+
+        .keep_all_metadata          = TRUE,
     };
 
 
@@ -168,6 +170,9 @@ static GOptionEntry cmd_entries[] =
 #endif
     { "keep-all-metadata", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.keep_all_metadata),
       "Keep all additional metadata (not primary, filelists and other xml or sqlite files, "
+      "nor their compressed variants) from source repository during update (default).", NULL },
+    { "discard-additional-metadata", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.discard_additional_metadata),
+      "Discard all additional metadata (not primary, filelists and other xml or sqlite files, "
       "nor their compressed variants) from source repository during update.", NULL },
     { "compatibility", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.compatibility),
       "Enforce maximal compatibility with classical createrepo (Affects only: --retain-old-md).", NULL },
@@ -510,9 +515,13 @@ check_arguments(struct CmdOptions *options,
         x++;
     }
 
-    // Check keep-all-metadata
-    if (options->keep_all_metadata && !options->update) {
-        g_warning("--keep-all-metadata has no effect (--update is not used)");
+    if (options->discard_additional_metadata) {
+        options->keep_all_metadata = FALSE;
+    }
+
+    // Check discard-additional-metadata
+    if (options->discard_additional_metadata && !options->update) {
+        g_warning("--discard-additional-metadata has no effect (--update is not used)");
     }
 
     // Process --distro tags

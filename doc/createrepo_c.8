@@ -1,6 +1,6 @@
 .\" Man page generated from reStructuredText.
 .
-.TH CREATEREPO_C 8 "2020-07-02" "" ""
+.TH CREATEREPO_C 8 "2021-09-23" "" ""
 .SH NAME
 createrepo_c \- Create rpm-md format (xml-rpm-metadata) repository
 .
@@ -173,7 +173,10 @@ Generate zchunk files as well as the standard repodata.
 Directory containing compression dictionaries for use by zchunk
 .SS \-\-keep\-all\-metadata
 .sp
-Keep all additional metadata (not primary, filelists and other xml or sqlite files, nor their compressed variants) from source repository during update.
+Keep all additional metadata (not primary, filelists and other xml or sqlite files, nor their compressed variants) from source repository during update (default).
+.SS \-\-discard\-additional\-metadata
+.sp
+Discard all additional metadata (not primary, filelists and other xml or sqlite files, nor their compressed variants) from source repository during update.
 .SS \-\-compatibility
 .sp
 Enforce maximal compatibility with classical createrepo (Affects only: \-\-retain\-old\-md).

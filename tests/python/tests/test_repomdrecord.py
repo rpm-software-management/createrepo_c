@@ -102,7 +102,7 @@ class TestCaseRepomdRecord(unittest.TestCase):
         self.assertEqual(zrc.size, 269)
         self.assertEqual(zrc.size_open, 167)
         self.assertEqual(zrc.size_header, 132)
-        self.assertEqual(zrc.db_ver, 10)
+        self.assertEqual(zrc.db_ver, 0)
 
         zrc.rename_file()
 
@@ -132,7 +132,7 @@ class TestCaseRepomdRecord(unittest.TestCase):
         self.assertTrue(rec.timestamp > 0)
         self.assertEqual(rec.size, 134)
         self.assertEqual(rec.size_open, 167)
-        self.assertEqual(rec.db_ver, 10)
+        self.assertEqual(rec.db_ver, 0)
 
         # Set new values
 

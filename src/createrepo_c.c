@@ -56,6 +56,7 @@
 #endif /* WITH_LIBMODULEMD */
 
 #define OUTDELTADIR "drpms/"
+#define DEFAULT_DATABASE_VERSION    10
 
 /** Check if the filename is excluded by any exclude mask.
  * @param filename      Filename (basename).
@@ -1611,6 +1612,11 @@ main(int argc, char **argv)
         pri_db_rec = cr_repomd_record_new("primary_db", pri_db_name);
         fil_db_rec = cr_repomd_record_new("filelists_db", fil_db_name);
         oth_db_rec = cr_repomd_record_new("other_db", oth_db_name);
+
+        // Set db version
+        pri_db_rec->db_ver = DEFAULT_DATABASE_VERSION;
+        fil_db_rec->db_ver = DEFAULT_DATABASE_VERSION;
+        oth_db_rec->db_ver = DEFAULT_DATABASE_VERSION;
 
         g_free(pri_db_name);
         g_free(fil_db_name);

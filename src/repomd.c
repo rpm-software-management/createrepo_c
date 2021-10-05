@@ -38,7 +38,6 @@
 
 #define ERR_DOMAIN                  CREATEREPO_C_ERROR
 #define LOCATION_HREF_PREFIX        "repodata/"
-#define DEFAULT_DATABASE_VERSION    10
 #define BUFFER_SIZE                 8192
 
 cr_DistroTag *
@@ -329,11 +328,6 @@ cr_repomd_record_fill(cr_RepomdRecord *md,
             return CRE_STAT;
         }
     }
-
-    // Set db version
-
-    if (!md->db_ver)
-        md->db_ver = DEFAULT_DATABASE_VERSION;
 
     return CRE_OK;
 }

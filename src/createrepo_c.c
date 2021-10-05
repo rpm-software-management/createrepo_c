@@ -45,6 +45,7 @@
 #include "misc.h"
 #include "parsepkg.h"
 #include "repomd.h"
+#include "repomd_internal.h"
 #include "sqlite.h"
 #include "threads.h"
 #include "version.h"
@@ -948,9 +949,6 @@ main(int argc, char **argv)
             additional_metadata = g_slist_prepend(additional_metadata, m);
         }
     }
-
-    cr_metadatalocation_free(old_metadata_location);
-    old_metadata_location = NULL;
 
     // Create and open new compressed files
     cr_XmlFile *pri_cr_file;
@@ -1981,9 +1979,24 @@ deltaerror:
 
     cr_repomd_sort_records(repomd_obj);
 
+
+    // Compare old repomd with the new one to see if we actually need to update the repodata.
+    // If some retain options are specified always update the repo.
+    if (old_metadata_location && cr_repomd_compare(repomd_obj, old_metadata_location->repomd_data) &&
+        !cmd_options->retain_old && !cmd_options->retain_old_md_by_age) {
+        g_message("New and old repodata match, not updating.");
+        if (cr_rm(tmp_out_repo, CR_RM_RECURSIVE, NULL, &tmp_err)) {
+            g_debug("tmp_out_repo %s removed", tmp_out_repo);
+        } else {
+            g_warning("Cannot remove %s: %s", tmp_out_repo, tmp_err->message);
+            g_clear_error(&tmp_err);
+        }
+
+        goto cleanup;
+    }
+
     char *repomd_xml = cr_xml_dump_repomd(repomd_obj, &tmp_err);
     assert(repomd_xml || tmp_err);
-    cr_repomd_free(repomd_obj);
 
     if (!repomd_xml) {
         g_critical("Cannot generate repomd.xml: %s", tmp_err->message);
@@ -2061,14 +2074,6 @@ deltaerror:
         g_debug("Renamed %s -> %s", tmp_out_repo, out_repo);
     }
 
-    // Remove lock
-    if (g_strcmp0(lock_dir, tmp_out_repo))
-        // If lock_dir is not same as temporary repo dir then remove it
-        cr_remove_dir(lock_dir, NULL);
-
-    // Disable path stored for exit handler
-    cr_unset_cleanup_handler(NULL);
-
     sigprocmask(SIG_SETMASK, &old_mask, NULL);
 
     // === End of section that has to be maximally atomic ===
@@ -2084,15 +2089,29 @@ deltaerror:
     }
 
 
+    g_free(old_repodata_path);
+
+cleanup:
     // Clean up
     g_debug("Memory cleanup");
+
+    cr_repomd_free(repomd_obj);
+
+    // Remove lock
+    if (g_strcmp0(lock_dir, tmp_out_repo))
+        // If lock_dir is not same as temporary repo dir then remove it
+        cr_remove_dir(lock_dir, NULL);
+
+    // Disable path stored for exit handler
+    cr_unset_cleanup_handler(NULL);
+
+    cr_metadatalocation_free(old_metadata_location);
 
     if (old_metadata)
         cr_metadata_free(old_metadata);
 
     g_free(user_data.prev_srpm);
     g_free(user_data.cur_srpm);
-    g_free(old_repodata_path);
     g_free(in_repo);
     g_free(out_repo);
     g_free(tmp_out_repo);

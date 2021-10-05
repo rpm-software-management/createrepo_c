@@ -959,3 +959,143 @@ cr_repomd_sort_records(cr_Repomd *repomd)
 
     repomd->records = g_slist_sort(repomd->records, record_cmp);
 }
+
+
+gboolean cr_repomd_compare(cr_Repomd *repomd1, cr_Repomd *repomd2)
+{
+    if (!repomd1 || !repomd2) {
+        return FALSE;
+    }
+
+    // We don't want to compare revision (repomd1->revision), when the user
+    // doesn't specify any it is automatically filled with epoch timestamp,
+    // those would differ every time.
+
+    if (g_strcmp0(repomd1->contenthash, repomd2->contenthash)) {
+        return FALSE;
+    }
+    if (g_strcmp0(repomd1->contenthash_type, repomd2->contenthash_type)) {
+        return FALSE;
+    }
+
+    if (g_slist_length(repomd1->repo_tags) != g_slist_length(repomd2->repo_tags)) {
+        return FALSE;
+    }
+    gboolean found = FALSE;
+    for (GSList *elem1 = repomd1->repo_tags; elem1; elem1 = g_slist_next(elem1)) {
+        found = FALSE;
+        gchar *repo_tag1 = elem1->data;
+        for (GSList *elem2 = repomd2->repo_tags; elem2; elem2 = g_slist_next(elem2)) {
+            gchar *repo_tag2 = elem2->data;
+            if (!g_strcmp0(repo_tag1, repo_tag2)) {
+                found = TRUE;
+                break;
+            }
+        }
+
+        if (!found) {
+            return FALSE;
+        }
+    }
+
+    if (g_slist_length(repomd1->content_tags) != g_slist_length(repomd2->content_tags)) {
+        return FALSE;
+    }
+    for (GSList *elem1 = repomd1->content_tags; elem1; elem1 = g_slist_next(elem1)) {
+        found = FALSE;
+        gchar *content_tag1 = elem1->data;
+        for (GSList *elem2 = repomd2->content_tags; elem2; elem2 = g_slist_next(elem2)) {
+            gchar *content_tag2 = elem2->data;
+            if (!g_strcmp0(content_tag1, content_tag2)) {
+                found = TRUE;
+                break;
+            }
+        }
+
+        if (!found) {
+            return FALSE;
+        }
+    }
+
+    if (g_slist_length(repomd1->distro_tags) != g_slist_length(repomd2->distro_tags)) {
+        return FALSE;
+    }
+    for (GSList *elem1 = repomd1->distro_tags; elem1; elem1 = g_slist_next(elem1)) {
+        cr_DistroTag *distro_tag1 = elem1->data;
+        found = FALSE;
+        for (GSList *elem2 = repomd2->distro_tags; elem2; elem2 = g_slist_next(elem2)) {
+            cr_DistroTag *distro_tag2 = elem2->data;
+            if (!g_strcmp0(distro_tag1->cpeid, distro_tag2->cpeid) && !g_strcmp0(distro_tag1->val, distro_tag2->val)) {
+                found = TRUE;
+                break;
+            }
+        }
+
+        if (!found) {
+            return FALSE;
+        }
+    }
+
+    if (g_slist_length(repomd1->records) != g_slist_length(repomd2->records)) {
+        return FALSE;
+    }
+    for (GSList *elem1 = repomd1->records; elem1; elem1 = g_slist_next(elem1)) {
+        found = FALSE;
+        cr_RepomdRecord *record1 = elem1->data;
+        for (GSList *elem2 = repomd2->records; elem2; elem2 = g_slist_next(elem2)) {
+            cr_RepomdRecord *record2 = elem2->data;
+            if (g_strcmp0(record1->type, record2->type)) {
+                continue;
+            }
+            if (g_strcmp0(record1->location_href, record2->location_href)) {
+                continue;
+            }
+            if (g_strcmp0(record1->location_base, record2->location_base)) {
+                continue;
+            }
+            if (g_strcmp0(record1->checksum, record2->checksum)) {
+                continue;
+            }
+            if (g_strcmp0(record1->checksum_type, record2->checksum_type)) {
+                continue;
+            }
+            if (g_strcmp0(record1->checksum_open, record2->checksum_open)) {
+                continue;
+            }
+            if (g_strcmp0(record1->checksum_open_type, record2->checksum_open_type)) {
+                continue;
+            }
+            if (g_strcmp0(record1->checksum_header, record2->checksum_header)) {
+                continue;
+            }
+            if (g_strcmp0(record1->checksum_header_type, record2->checksum_header_type)) {
+                continue;
+            }
+
+            // We don't want to compare timestamps (record1->timestamp)
+            // or real location (record1->location_real)
+
+            if (record1->size != record2->size) {
+                continue;
+            }
+            if (record1->size_open != record2->size_open) {
+                continue;
+            }
+            if (record1->size_header != record2->size_header) {
+                continue;
+            }
+            if (record1->db_ver != record2->db_ver) {
+                continue;
+            }
+
+            found = TRUE;
+            break;
+        }
+
+        if (!found) {
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}

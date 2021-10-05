@@ -29,6 +29,12 @@ extern "C" {
 
 cr_DistroTag *cr_distrotag_new();
 
+/** Compare two cr_Repomd objects to see if they match exactly
+ * @param repomd1                cr_Repomd object
+ * @param repomd2                cr_Repomd object
+ */
+gboolean cr_repomd_compare(cr_Repomd *repomd1, cr_Repomd *repomd2);
+
 #ifdef __cplusplus
 }
 #endif

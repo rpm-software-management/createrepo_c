@@ -60,6 +60,10 @@ cr_metadatalocation_free(struct cr_MetadataLocation *ml)
         cr_remove_dir(ml->local_path, NULL);
     }
 
+    if (ml->repomd_data) {
+        cr_repomd_free(ml->repomd_data);
+    }
+
     g_free(ml->pri_xml_href);
     g_free(ml->fil_xml_href);
     g_free(ml->oth_xml_href);
@@ -146,6 +150,7 @@ cr_parse_repomd(const char *repomd_path,
     mdloc = g_malloc0(sizeof(struct cr_MetadataLocation));
     mdloc->repomd = g_strdup(repomd_path);
     mdloc->local_path = g_strdup(repopath);
+    mdloc->repomd_data = repomd;
 
     for (GSList *elem = repomd->records; elem; elem = g_slist_next(elem)) {
         cr_RepomdRecord *record = elem->data;
@@ -178,8 +183,6 @@ cr_parse_repomd(const char *repomd_path,
         } else
             g_free(full_location_href);
     }
-
-    cr_repomd_free(repomd);
 
     return mdloc;
 }

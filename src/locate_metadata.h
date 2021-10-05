@@ -21,6 +21,7 @@
 #define __C_CREATEREPOLIB_LOCATE_METADATA_H__
 
 #include <glib.h>
+#include "repomd.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -50,6 +51,7 @@ struct cr_MetadataLocation {
     int  tmp;                   /*!< if true - metadata were downloaded and
                                      will be removed during
                                      cr_metadata_location_free*/
+    cr_Repomd *repomd_data;     /*!< parsed repomd */
 };
 
 /** Structure representing additional metadata location and type.

@@ -1685,8 +1685,8 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                 continue;
             }
 
-            if (g_rename(full_path, new_full_path) == -1)
-                g_critical("Cannot move file %s -> %s", full_path, new_full_path);
+            if (!cr_move_recursive(full_path, new_full_path, &tmp_err))
+                g_critical("Cannot move file %s -> %s : %s", full_path, new_full_path, tmp_err->message);
             else
                 g_debug("Moved %s -> %s", full_path, new_full_path);
 
@@ -1706,8 +1706,8 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
 
     // Rename tmp_out_repo to out_repo
-    if (g_rename(cmd_options->tmp_out_repo, cmd_options->out_repo) == -1) {
-        g_critical("Cannot rename %s -> %s", cmd_options->tmp_out_repo, cmd_options->out_repo);
+    if (!cr_move_recursive(cmd_options->tmp_out_repo, cmd_options->out_repo, &tmp_err)) {
+        g_critical("Cannot rename %s -> %s : %s", cmd_options->tmp_out_repo, cmd_options->out_repo, tmp_err->message);
     } else {
         g_debug("Renamed %s -> %s", cmd_options->tmp_out_repo, cmd_options->out_repo);
     }

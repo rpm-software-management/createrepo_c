@@ -2038,18 +2038,18 @@ deltaerror:
     gchar *old_repodata_path = g_build_filename(out_dir, tmp_dirname, NULL);
     g_free(tmp_dirname);
 
-    if (g_rename(out_repo, old_repodata_path) == -1) {
+    if (!cr_move_recursive(out_repo, old_repodata_path, &tmp_err)) {
         g_debug("Old repodata doesn't exists: Cannot rename %s -> %s: %s",
-                out_repo, old_repodata_path, g_strerror(errno));
+                out_repo, old_repodata_path, tmp_err->message);
     } else {
         g_debug("Renamed %s -> %s", out_repo, old_repodata_path);
         old_repodata_renamed = TRUE;
     }
 
     // Rename tmp_out_repo to out_repo
-    if (g_rename(tmp_out_repo, out_repo) == -1) {
+    if (!cr_move_recursive(tmp_out_repo, out_repo, &tmp_err)) {
         g_critical("Cannot rename %s -> %s: %s", tmp_out_repo, out_repo,
-                   g_strerror(errno));
+                   tmp_err->message);
         exit(EXIT_FAILURE);
     } else {
         g_debug("Renamed %s -> %s", tmp_out_repo, out_repo);

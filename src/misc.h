@@ -251,6 +251,15 @@ gboolean cr_better_copy_file(const char *src,
  */
 int cr_remove_dir(const char *path, GError **err);
 
+/** Move a directory and its contents. Native move is preferred,
+ *  if not supported copy and delete fallback is used.
+ * @param srcDir        A source directory path
+ * @param dstDir        A destination directory path
+ * @param err           GError **
+ * @return              TRUE on success, FALSE otherwise
+ */
+gboolean cr_move_recursive(const char *srcDir, const char *dstDir, GError **err);
+
 /** Normalize path (Path with exactly one trailing '/').
  *@param path           path
  *@return               mallocated string with normalized path or NULL

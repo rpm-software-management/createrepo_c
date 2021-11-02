@@ -846,6 +846,16 @@ cr_remove_dir(const char *path, GError **err)
     return CRE_OK;
 }
 
+gboolean
+cr_move_recursive(const char *srcDir, const char *dstDir, GError **err)
+{
+    if (rename(srcDir, dstDir) == -1) {
+        if (!cr_cp(srcDir, dstDir, CR_CP_RECURSIVE, NULL, err))
+            return FALSE;
+        return (cr_remove_dir(srcDir, err) == CRE_OK);
+    }
+    return TRUE;
+}
 
 // Return path with exactly one trailing '/'
 char *

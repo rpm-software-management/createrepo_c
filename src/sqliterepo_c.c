@@ -637,10 +637,8 @@ move_results(const gchar *tmp_out_repo,
         dst_path = g_build_filename(in_repo, filename, NULL);
 
         // Move the file
-        if (g_rename(src_path, dst_path) == -1) {
-            g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
-                        "Cannot move: %s to: %s: %s",
-                        src_path, dst_path, g_strerror(errno));
+        if (!cr_move_recursive(src_path, dst_path, &tmp_err)) {
+            g_propagate_error(err, tmp_err);
             return FALSE;
         }
     }
@@ -651,10 +649,8 @@ move_results(const gchar *tmp_out_repo,
         _cleanup_free_ gchar *dst_path = NULL;
         src_path = g_build_filename(tmp_out_repo, "repomd.xml", NULL);
         dst_path = g_build_filename(in_repo, "repomd.xml", NULL);
-        if (g_rename(src_path, dst_path) == -1) {
-            g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
-                        "Cannot move: %s to: %s: %s",
-                        src_path, dst_path, g_strerror(errno));
+        if (!cr_move_recursive(src_path, dst_path, &tmp_err)) {
+            g_propagate_error(err, tmp_err);
             return FALSE;
         }
     }

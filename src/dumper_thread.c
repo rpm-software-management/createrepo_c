@@ -279,8 +279,10 @@ get_checksum(const char *filename,
 
         write(fd, checksum, strlen(checksum));
         close(fd);
-        if (g_rename(template, cachefn) == -1)
+        if (!cr_move_recursive(template, cachefn, &tmp_err)) {
+            g_propagate_prefixed_error(err, tmp_err, "Error while renaming: ");
             g_remove(template);
+        }
         g_free(template);
     }
 

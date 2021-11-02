@@ -26,6 +26,7 @@
 #include "xml_dump.h"
 #include "compression_wrapper.h"
 #include "xml_dump_internal.h"
+#include "misc.h"
 
 #define ERR_DOMAIN              CREATEREPO_C_ERROR
 
@@ -485,7 +486,7 @@ cr_rewrite_header_package_count(gchar *original_filename,
         return;
     }
 
-    if (g_rename(tmp_xml_filename, original_filename) == -1) {
+    if (!cr_move_recursive(tmp_xml_filename, original_filename, &tmp_err)) {
         g_propagate_prefixed_error(err, tmp_err, "Error encountered while renaming:");
         g_free(tmp_xml_filename);
         return;

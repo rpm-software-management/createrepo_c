@@ -292,3 +292,47 @@ cr_xml_parser_generic_from_string(xmlParserCtxtPtr parser,
 
     return ret;
 }
+
+const xmlChar **
+unescape_ampersand_from_values(const xmlChar **attr, gboolean *allocation_needed) {
+    *allocation_needed = FALSE;
+
+    if (!attr) {
+        return attr;
+    }
+
+    // In the vast majority of cases there is no '&' in the
+    // data so check if there is any first and if not return
+    // quickly.
+    //
+    // attr consists of key1, value1, key2, value2 pairs,
+    // we know which keys we want (they don't contain &) so
+    // we don't have to check those.
+    size_t nattr;
+    for (nattr = 1; attr[nattr]; nattr+=2) {
+        if (strchr((char *)attr[nattr], '&')) {
+            *allocation_needed = TRUE;
+        }
+    }
+
+    if (!*allocation_needed) {
+        return attr;
+    }
+
+    char **attr_copy = g_malloc0(sizeof(char *) * (nattr - 1));
+    if (attr_copy) {
+        for (nattr = 0; attr[nattr]; nattr++) {
+            if (strchr((char *)attr[nattr], '&')) {
+                char **cut_out_amp = g_strsplit((char *)attr[nattr], "#38;", -1);
+                attr_copy[nattr] = g_strjoinv(NULL, cut_out_amp);
+                g_strfreev(cut_out_amp);
+            } else {
+                attr_copy[nattr] = g_strdup((char *)attr[nattr]);
+            }
+        }
+
+        attr_copy[nattr] = 0;
+    }
+
+    return (const xmlChar **)attr_copy;
+}

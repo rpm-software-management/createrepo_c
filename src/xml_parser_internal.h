@@ -249,6 +249,15 @@ other_parser_data_new(cr_XmlParserNewPkgCb newpkgcb,
                       cr_XmlParserWarningCb warningcb,
                       void *warningcb_data);
 
+/** Replace &#38; by real ampersand char from values in attr.
+ * @param attr                   List of attributes
+ * @param allocation_needed      Output bool whether returned attr has to be freed.
+ * @return                       attr with regular '&' instead of "&#38";
+ */
+const xmlChar **unescape_ampersand_from_values(const xmlChar **attr,
+                                               gboolean *allocation_needed);
+
+
 #ifdef __cplusplus
 }
 #endif

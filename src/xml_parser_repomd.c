@@ -114,6 +114,9 @@ cr_start_handler(void *pdata, const xmlChar *element, const xmlChar **attr)
         return;
     }
 
+    gboolean free_attr = FALSE;
+    attr = unescape_ampersand_from_values(attr, &free_attr);
+
     // Update parser data
     pd->state      = sw->to;
     pd->docontent  = sw->docontent;
@@ -257,6 +260,10 @@ cr_start_handler(void *pdata, const xmlChar *element, const xmlChar **attr)
     case STATE_DBVERSION:
     default:
         break;
+    }
+
+    if (free_attr) {
+        g_strfreev((char **)attr);
     }
 }
 

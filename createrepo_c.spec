@@ -22,6 +22,12 @@
 %bcond_without libmodulemd
 %endif
 
+%if 0%{?rhel} && 0%{?rhel} <= 8
+%bcond_without legacy_hashes
+%else
+%bcond_with legacy_hashes
+%endif
+
 Summary:        Creates a common metadata repository
 Name:           createrepo_c
 Version:        0.17.7
@@ -107,6 +113,7 @@ pushd build-py3
   %cmake .. \
       -DWITH_ZCHUNK=%{?with_zchunk:ON}%{!?with_zchunk:OFF} \
       -DWITH_LIBMODULEMD=%{?with_libmodulemd:ON}%{!?with_libmodulemd:OFF} \
+      -DWITH_LEGACY_HASHES=%{?with_legacy_hashes:ON}%{!?with_legacy_hashes:OFF} \
       -DENABLE_DRPM=%{?with_drpm:ON}%{!?with_drpm:OFF}
   make %{?_smp_mflags} RPM_OPT_FLAGS="%{optflags}"
   # Build C documentation

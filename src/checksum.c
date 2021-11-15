@@ -40,7 +40,7 @@ cr_ChecksumType
 cr_checksum_type(const char *name)
 {
     size_t len;
-    char name_lower[MAX_CHECKSUM_NAME_LEN+1];
+    char name_lower[MAX_CHECKSUM_NAME_LEN+1] = {0};
 
     if (!name)
         return CR_CHECKSUM_UNKNOWN;

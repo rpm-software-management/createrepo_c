@@ -77,8 +77,10 @@ c_newpkgcb(cr_Package **pkg,
         }
     }
 
+    if (result->ob_refcnt == 1) {
+        *pkg = NULL;
+    }
     Py_DECREF(result);
-
     return CR_CB_RET_OK;
 }
 
@@ -87,6 +89,7 @@ c_pkgcb(cr_Package *pkg,
         void *cbdata,
         GError **err)
 {
+    // destroys "pkg"
     PyObject *arglist, *result, *py_pkg;
     CbData *data = cbdata;
 

@@ -87,11 +87,6 @@ cr_package_free(cr_Package *package)
     if (package->chunk && !(package->loadingflags & CR_PACKAGE_SINGLE_CHUNK))
         g_string_chunk_free (package->chunk);
 
-/* Note: Since glib 2.28
- * g_slist_foreach && g_slist_free could be replaced with one function:
- * g_slist_free_full()
- */
-
     if (package->requires) {
         g_slist_free_full(package->requires, g_free);
     }

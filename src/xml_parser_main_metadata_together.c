@@ -249,6 +249,7 @@ pkgcb_primary(cr_Package *pkg, void *cbdata, G_GNUC_UNUSED GError **err)
             // user specified their own new function: call it and copy package data into user_created_pkg
             cr_Package *user_created_pkg = NULL;
             if (cb_data->newpkgcb(&user_created_pkg, pkg->pkgId, pkg->name, pkg->arch, cb_data->newpkgcb_data, err)) {
+                cr_package_free(pkg);
                 return CR_CB_RET_ERR;
             } else {
                 if (user_created_pkg) {

@@ -431,7 +431,7 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
             dict_base = g_strndup(cpath, strlen(cpath)-4);
         else
             dict_base = g_strdup(cpath);
-        file_basename = g_path_get_basename(dict_base); 
+        file_basename = g_path_get_basename(dict_base);
         _cleanup_free_ gchar *dict_file = cr_get_dict_file(zck_dict_dir, file_basename);
         /* Read dictionary from file */
         if (dict_file && !g_file_get_contents(dict_file, &dict,
@@ -556,8 +556,8 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
 
     crecord->checksum = g_string_chunk_insert(crecord->chunk, cchecksum);
     crecord->checksum_type = g_string_chunk_insert(crecord->chunk, checksum_str);
-    crecord->checksum_open = g_string_chunk_insert(record->chunk, checksum);
-    crecord->checksum_open_type = g_string_chunk_insert(record->chunk, checksum_str);
+    crecord->checksum_open = g_string_chunk_insert(crecord->chunk, checksum);
+    crecord->checksum_open_type = g_string_chunk_insert(crecord->chunk, checksum_str);
     if (hdr_checksum_str) {
         crecord->checksum_header = g_string_chunk_insert(crecord->chunk, hdrchecksum);
         crecord->checksum_header_type = g_string_chunk_insert(crecord->chunk, hdr_checksum_str);

@@ -1070,6 +1070,10 @@ cr_split_rpm_filename(const char *filename)
 
     nevra = cr_str_to_nevra(str);
     g_free(str);
+    if (!nevra) {
+        g_free(epoch);
+        return NULL;
+    }
 
     if (epoch) {
         g_free(nevra->epoch);
@@ -1226,10 +1230,19 @@ cr_str_to_nevra(const char *instr)
         g_warning("Invalid arch %s", nevra->arch);
         cr_nevra_free(nevra);
         g_free(str);
+        g_free(epoch);
         return NULL;
     }
 
     nevr = cr_str_to_nevr(str);
+    if (!nevr) {
+        g_warning("Invalid nevr %s", str);
+        cr_nevra_free(nevra);
+        g_free(str);
+        g_free(epoch);
+        return NULL;
+    }
+
     nevra->name     = nevr->name;
     nevra->epoch    = nevr->epoch;
     nevra->version  = nevr->version;

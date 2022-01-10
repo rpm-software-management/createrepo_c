@@ -1307,7 +1307,7 @@ main(int argc, char **argv)
     g_thread_pool_free(pool, FALSE, TRUE);
 
     // if there were any errors, exit nonzero
-    if ( cmd_options->error_exit_val && user_data.had_errors ) {
+    if ( user_data.had_errors ) {
 	exit_val = 2;
     }
 

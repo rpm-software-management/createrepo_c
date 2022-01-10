@@ -208,7 +208,7 @@ static GOptionEntry cmd_entries[] =
     { "repomd-checksum", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.repomd_checksum),
       "Checksum type to be used in repomd.xml", "CHECKSUM_TYPE"},
     { "error-exit-val", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.error_exit_val),
-      "Exit with retval 2 if there were any errors during processing", NULL },
+      "Exit with retval 2 if there were any errors during processing (option deprecated, on by default)", NULL },
     { "recycle-pkglist", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.recycle_pkglist),
       "Read the list of packages from old metadata directory and re-use it.  This "
       "option is only useful with --update (complements --pkglist and friends).",

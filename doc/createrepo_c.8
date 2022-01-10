@@ -212,7 +212,7 @@ Append this prefix before location_href in output repodata
 Checksum type to be used in repomd.xml
 .SS \-\-error\-exit\-val
 .sp
-Exit with retval 2 if there were any errors during processing
+Exit with retval 2 if there were any errors during processing (option deprecated, on by default)
 .SS \-\-ignore\-lock
 .sp
 Expert (risky) option: Ignore an existing .repodata/. (Remove the existing .repodata/ and create an empty new one to serve as a lock for other createrepo instances. For the repodata generation, a different temporary dir with the name in format .repodata.time.microseconds.pid/ will be used). NOTE: Use this option on your own risk! If two createrepos run simultaneously, then the state of the generated metadata is not guaranteed \- it can be inconsistent and wrong.

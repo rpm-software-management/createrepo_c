@@ -149,8 +149,14 @@ class Repomd(_createrepo_c.Repomd):
     def __init__(self, path=None):
         """:arg path: Path to existing repomd.xml or None"""
         _createrepo_c.Repomd.__init__(self)
+        self.warnings = []
+
+        def _warningcb(warning_type, message):
+            self.warnings.append((warning_type, message))
+            return True  # continue parsing
+
         if path:
-            xml_parse_repomd(path, self)
+            xml_parse_repomd(path, self, warningcb=_warningcb)
 
     def __iter__(self):
         for rec in self.records:
@@ -229,9 +235,14 @@ class UpdateInfo(_createrepo_c.UpdateInfo):
     def __init__(self, path=None):
         """:arg path: Path to existing updateinfo.xml or None"""
         _createrepo_c.UpdateInfo.__init__(self)
-        if path:
-            xml_parse_updateinfo(path, self)
+        self.warnings = []
 
+        def _warningcb(warning_type, message):
+            self.warnings.append((warning_type, message))
+            return True  # continue parsing
+
+        if path:
+            xml_parse_updateinfo(path, self, warningcb=_warningcb)
 
 # UpdateRecord class
 

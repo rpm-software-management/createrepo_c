@@ -222,7 +222,6 @@ get_checksum(const char *filename,
 
     if (cachedir) {
         // Prepare cache fn
-        char *key;
         cr_ChecksumCtx *ctx = cr_checksum_new(type, err);
         if (!ctx) return NULL;
 
@@ -233,14 +232,14 @@ get_checksum(const char *filename,
         if (pkg->hdrid)
             cr_checksum_update(ctx, pkg->hdrid, strlen(pkg->hdrid), NULL);
 
-        key = cr_checksum_final(ctx, err);
+        gchar *key = cr_checksum_final(ctx, err);
         if (!key) return NULL;
 
         cachefn = g_strdup_printf("%s%s-%s-%"G_GINT64_FORMAT"-%"G_GINT64_FORMAT,
                                   cachedir,
                                   cr_get_filename(pkg->location_href),
                                   key, pkg->size_installed, pkg->time_file);
-        free(key);
+        g_free(key);
 
         // Try to load checksum
         FILE *f = fopen(cachefn, "r");

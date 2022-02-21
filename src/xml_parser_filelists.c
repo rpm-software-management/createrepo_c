@@ -400,9 +400,9 @@ cr_xml_parse_filelists_snippet(const char *xml_string,
                                void *warningcb_data,
                                GError **err)
 {
-    char* wrapped_xml_string = g_strconcat("<filelists>", xml_string, "</filelists>", NULL);
+    gchar* wrapped_xml_string = g_strconcat("<filelists>", xml_string, "</filelists>", NULL);
     int ret = cr_xml_parse_filelists_internal(wrapped_xml_string, newpkgcb, newpkgcb_data, pkgcb, pkgcb_data,
                                               warningcb, warningcb_data, &cr_xml_parser_generic_from_string, err);
-    free(wrapped_xml_string);
+    g_free(wrapped_xml_string);
     return ret;
 }

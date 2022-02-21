@@ -71,7 +71,7 @@ cr_drpm_create(cr_DeltaTargetPackage *old,
     if (ret != DRPM_ERR_OK) {
         g_set_error(err, ERR_DOMAIN, CRE_DELTARPM,
                     "Deltarpm cannot make %s (%d) from old: %s and new: %s", drpmpath, ret, old->path, new->path);
-        free(drpmpath);
+        g_free(drpmpath);
         drpm_make_options_destroy(&opts);
         return NULL;
     }

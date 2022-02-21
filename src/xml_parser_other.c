@@ -394,9 +394,9 @@ cr_xml_parse_other_snippet(const char *xml_string,
                            void *warningcb_data,
                            GError **err)
 {
-    char* wrapped_xml_string = g_strconcat("<otherdata>", xml_string, "</otherdata>", NULL);
+    gchar* wrapped_xml_string = g_strconcat("<otherdata>", xml_string, "</otherdata>", NULL);
     int ret = cr_xml_parse_other_internal(wrapped_xml_string, newpkgcb, newpkgcb_data, pkgcb, pkgcb_data,
                                           warningcb, warningcb_data, &cr_xml_parser_generic_from_string, err);
-    free(wrapped_xml_string);
+    g_free(wrapped_xml_string);
     return ret;
 }

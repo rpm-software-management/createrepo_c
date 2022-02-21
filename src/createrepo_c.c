@@ -910,7 +910,7 @@ main(int argc, char **argv)
                            (tmp_err ? tmp_err->message : "Unknown error"));
                 g_clear_error(&tmp_err);
                 free(moduleindex_str);
-                free(modules_metadata_path);
+                g_free(modules_metadata_path);
                 g_clear_pointer(&merger, g_object_unref);
                 exit(EXIT_FAILURE);
             }
@@ -920,7 +920,7 @@ main(int argc, char **argv)
             if (tmp_err) {
                 g_critical("%s: Error while closing: : %s", __func__, tmp_err->message);
                 g_clear_error(&tmp_err);
-                free(modules_metadata_path);
+                g_free(modules_metadata_path);
                 g_clear_pointer(&merger, g_object_unref);
                 exit(EXIT_FAILURE);
             }

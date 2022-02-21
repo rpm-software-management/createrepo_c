@@ -90,7 +90,7 @@ cr_xml_parser_warning(cr_ParserData *pd,
 {
     int ret;
     va_list args;
-    char *warn;
+    gchar *warn;
     GError *tmp_err;
 
     assert(pd);

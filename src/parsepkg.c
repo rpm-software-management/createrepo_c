@@ -190,14 +190,14 @@ cr_package_from_rpm(const char *filename,
     }
 
     // Compute checksum
-    char *checksum = cr_checksum_file(filename, checksum_type, &tmp_err);
+    gchar *checksum = cr_checksum_file(filename, checksum_type, &tmp_err);
     if (!checksum) {
         g_propagate_prefixed_error(err, tmp_err,
                                    "Error while checksum calculation: ");
         goto errexit;
     }
     pkg->pkgId = cr_safe_string_chunk_insert(pkg->chunk, checksum);
-    free(checksum);
+    g_free(checksum);
 
     // Get header range
     struct cr_HeaderRangeStruct hdr_r = cr_get_header_byte_range(filename,

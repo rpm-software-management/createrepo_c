@@ -164,9 +164,9 @@ package_str(_PackageObject *self)
     if (check_PackageStatus(self))
         return NULL;
     if (self->package) {
-        char *nevra = cr_package_nvra(self->package);
+        gchar *nevra = cr_package_nvra(self->package);
         ret = PyUnicode_FromString(nevra);
-        free(nevra);
+        g_free(nevra);
     } else {
         ret = PyUnicode_FromString("-");
     }
@@ -185,9 +185,9 @@ nvra(_PackageObject *self, G_GNUC_UNUSED void *nothing)
     PyObject *pystr;
     if (check_PackageStatus(self))
         return NULL;
-    char *nvra = cr_package_nvra(self->package);
+    gchar *nvra = cr_package_nvra(self->package);
     pystr = PyUnicodeOrNone_FromString(nvra);
-    free(nvra);
+    g_free(nvra);
     return pystr;
 }
 
@@ -201,9 +201,9 @@ nevra(_PackageObject *self, G_GNUC_UNUSED void *nothing)
     PyObject *pystr;
     if (check_PackageStatus(self))
         return NULL;
-    char *nevra = cr_package_nevra(self->package);
+    gchar *nevra = cr_package_nevra(self->package);
     pystr = PyUnicodeOrNone_FromString(nevra);
-    free(nevra);
+    g_free(nevra);
     return pystr;
 }
 

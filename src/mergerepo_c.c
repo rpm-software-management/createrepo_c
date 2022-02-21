@@ -1679,7 +1679,9 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                 g_debug("Skip move of: %s -> %s (the destination file already exists)",
                         full_path, new_full_path);
                 g_debug("Removing: %s", full_path);
-                g_remove(full_path);
+                if (g_remove(full_path) == -1) {
+                    g_warning("Cannot remove %s: %s", full_path, g_strerror(errno));
+                }
                 g_free(full_path);
                 g_free(new_full_path);
                 continue;

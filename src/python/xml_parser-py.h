@@ -72,4 +72,11 @@ PyDoc_STRVAR(xml_parse_main_metadata_together__doc__,
 
 PyObject *py_xml_parse_main_metadata_together(PyObject *self, PyObject *args, PyObject *kwargs);
 
+extern PyTypeObject PkgIterator_Type;
+
+#define PkgIteratorObject_Check(o) PyObject_TypeCheck(o, &PkgIterator_Type)
+
+PyObject *Object_FromPkgIterator(cr_PkgIterator *iter);
+cr_PkgIterator *PkgIterator_FromPyObject(PyObject *o);
+
 #endif

@@ -790,3 +790,232 @@ py_xml_parse_main_metadata_together(G_GNUC_UNUSED PyObject *self, PyObject *args
 
     Py_RETURN_NONE;
 }
+
+typedef struct {
+    PyObject_HEAD
+    cr_PkgIterator *pkg_iterator;
+    CbData *cbdata;
+} _PkgIteratorObject;
+
+cr_PkgIterator *
+PkgIterator_FromPyObject(PyObject *o)
+{
+    if (!PkgIteratorObject_Check(o)) {
+        PyErr_SetString(PyExc_TypeError, "Expected a createrepo_c.PkgIterator object.");
+        return NULL;
+    }
+    return ((_PkgIteratorObject *)o)->pkg_iterator;
+}
+
+PyObject *
+Object_FromPkgIterator(cr_PkgIterator *pkg_iterator)
+{
+    if (!pkg_iterator) {
+        PyErr_SetString(PyExc_ValueError, "Expected a cr_PkgIterator pointer not NULL.");
+        return NULL;
+    }
+
+    PyObject *py_pkg_iterator = PyObject_CallObject((PyObject *)&PkgIterator_Type, NULL);
+    ((_PkgIteratorObject *)py_pkg_iterator)->pkg_iterator = pkg_iterator;
+    return py_pkg_iterator;
+}
+
+static int
+check_PkgIteratorStatus(const _PkgIteratorObject *self)
+{
+    assert(self != NULL);
+    assert(PkgIteratorObject_Check(self));
+    if (self->pkg_iterator == NULL) {
+        PyErr_SetString(CrErr_Exception, "Improper createrepo_c PkgIterator object.");
+        return -1;
+    }
+    return 0;
+}
+
+/* Function on the type */
+
+static PyObject *
+pkg_iterator_new(PyTypeObject *type,
+            G_GNUC_UNUSED PyObject *args,
+            G_GNUC_UNUSED PyObject *kwds)
+{
+    _PkgIteratorObject *self = (_PkgIteratorObject *)type->tp_alloc(type, 0);
+    if (self) {
+        self->pkg_iterator = NULL;
+        self->cbdata = g_malloc0(sizeof(CbData));
+    }
+    return (PyObject *)self;
+}
+
+PyDoc_STRVAR(pkg_iterator_init__doc__,
+             "PkgIterator object\n\n"
+             ".. method:: __init__()\n\n"
+             "    Default constructor\n");
+
+static int
+pkg_iterator_init(_PkgIteratorObject *self, PyObject *args, PyObject *kwargs)
+{
+    char *primary_path;
+    char *filelists_path;
+    char *other_path;
+    PyObject *py_newpkgcb, *py_warningcb;
+    GError *tmp_err = NULL;
+    static char *kwlist[] = {"primary", "filelists", "other", "newpkgcb",
+                             "warningcb", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sssOO:pkg_iterator_init", kwlist,
+                                     &primary_path, &filelists_path, &other_path, &py_newpkgcb,
+                                     &py_warningcb)) {
+        return -1;
+    }
+
+    if (!primary_path || !filelists_path || !other_path) {
+        PyErr_SetString(PyExc_TypeError, "file paths must be provided");
+        return -1;
+    }
+
+    if (!PyCallable_Check(py_newpkgcb) && py_newpkgcb != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "newpkgcb must be callable or None");
+        return -1;
+    }
+
+    if (!PyCallable_Check(py_warningcb) && py_warningcb != Py_None) {
+        PyErr_SetString(PyExc_TypeError, "warningcb must be callable or None");
+        return -1;
+    }
+
+    if (self->pkg_iterator) // reinitialization by __init__()
+        cr_PkgIterator_free(self->pkg_iterator, &tmp_err);
+    if (tmp_err) {
+        nice_exception(&tmp_err, NULL);
+        return -1;
+    }
+
+    Py_XINCREF(py_newpkgcb);
+    Py_XINCREF(py_warningcb);
+
+    cr_XmlParserNewPkgCb ptr_c_newpkgcb = NULL;
+    cr_XmlParserWarningCb ptr_c_warningcb = NULL;
+
+    if (py_newpkgcb != Py_None)
+        ptr_c_newpkgcb = c_newpkgcb;
+    if (py_warningcb != Py_None)
+        ptr_c_warningcb = c_warningcb;
+
+    self->cbdata->py_newpkgcb = py_newpkgcb;
+    self->cbdata->py_pkgcb = NULL;
+    self->cbdata->py_warningcb = py_warningcb;
+    self->cbdata->py_pkgs = PyDict_New();
+
+    self->pkg_iterator = cr_PkgIterator_new(
+        primary_path, filelists_path, other_path, ptr_c_newpkgcb, self->cbdata, ptr_c_warningcb, self->cbdata, &tmp_err);
+
+    if (tmp_err) {
+        nice_exception(&tmp_err, NULL);
+        return -1;
+    }
+
+    if (self->pkg_iterator == NULL) {
+        PyErr_SetString(CrErr_Exception, "PkgIterator initialization failed");
+        return -1;
+    }
+
+    return 0;
+}
+
+static void
+pkg_iterator_dealloc(_PkgIteratorObject *self)
+{
+    GError *tmp_err;
+    if (self->pkg_iterator) {
+        cr_PkgIterator_free(self->pkg_iterator, &tmp_err);
+    }
+    if (self->cbdata) {
+        Py_XDECREF(self->cbdata->py_newpkgcb);
+        Py_XDECREF(self->cbdata->py_warningcb);
+        Py_XDECREF(self->cbdata->py_pkgs);
+
+        free(self->cbdata);
+    }
+
+    Py_TYPE(self)->tp_free(self);
+}
+
+static PyObject *
+pkg_iterator_next_package(_PkgIteratorObject *self, G_GNUC_UNUSED void *nothing)
+{
+    cr_Package *pkg;
+    GError *tmp_err = NULL;
+
+    if (check_PkgIteratorStatus(self)) {
+        return NULL;
+    }
+    pkg = cr_PkgIterator_parse_next(self->pkg_iterator, &tmp_err);
+    if (tmp_err) {
+        cr_package_free(pkg);
+        nice_exception(&tmp_err, NULL);
+        return NULL;
+    }
+
+    if (!pkg) {
+        assert(cr_PkgIterator_is_finished(self->pkg_iterator));
+        PyErr_SetNone(PyExc_StopIteration);
+        return NULL;
+    }
+
+    PyObject *keyFromPtr = PyLong_FromVoidPtr(pkg);
+    PyObject *py_pkg = PyDict_GetItem(self->cbdata->py_pkgs, keyFromPtr);
+    if (py_pkg) {
+        // Remove pkg from PyDict but keep one reference so its not freed if the
+        // user doesn't have any references to the package
+        Py_XINCREF(py_pkg);
+        PyDict_DelItem(self->cbdata->py_pkgs, keyFromPtr);
+    } else {
+        // The package was not provided by user in c_newpkgcb,
+        // create new python package object
+        py_pkg = Object_FromPackage(pkg, 1);
+    }
+    Py_DECREF(keyFromPtr);
+    return py_pkg;
+
+}
+
+static PyObject *
+pkg_iterator_is_finished(_PkgIteratorObject *self, G_GNUC_UNUSED void *nothing) {
+    if (check_PkgIteratorStatus(self))
+        return NULL;
+
+    if (cr_PkgIterator_is_finished (self->pkg_iterator)) {
+        Py_RETURN_TRUE;
+    } else {
+        Py_RETURN_FALSE;
+    }
+}
+
+PyDoc_STRVAR(pkg_iterator_is_finished__doc__,
+             "Whether the package iterator has been consumed. \n\n"
+             ".. method:: is_finished()\n\n"
+             "    Whether the iterator is consumed.\n");
+
+static struct PyMethodDef pkg_iterator_methods[] = {
+    {"is_finished", (PyCFunction) pkg_iterator_is_finished, METH_NOARGS, pkg_iterator_is_finished__doc__},
+    {NULL, NULL, 0, NULL} /* sentinel */
+};
+
+/* Object */
+
+PyTypeObject PkgIterator_Type = {
+    PyVarObject_HEAD_INIT(NULL, 0)
+        .tp_name = "createrepo_c.PkgIterator",
+    .tp_basicsize = sizeof(_PkgIteratorObject),
+    .tp_dealloc = (destructor) pkg_iterator_dealloc,
+    .tp_repr = 0, // (reprfunc) pkg_iterator_repr,
+    .tp_str = 0, //(reprfunc) pkg_iterator_str,
+    .tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE,
+    .tp_doc = pkg_iterator_init__doc__,
+    .tp_iter = PyObject_SelfIter,
+    .tp_iternext = pkg_iterator_next_package,
+    .tp_methods = pkg_iterator_methods,
+    .tp_init = (initproc) pkg_iterator_init,
+    .tp_new = pkg_iterator_new,
+};

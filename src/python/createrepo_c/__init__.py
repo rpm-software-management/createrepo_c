@@ -367,6 +367,11 @@ compression_suffix  = _createrepo_c.compression_suffix
 detect_compression  = _createrepo_c.detect_compression
 compression_type    = _createrepo_c.compression_type
 
+class PackageIterator(_createrepo_c.PkgIterator):
+    def __init__(self, primary_path, filelists_path, other_path, newpkgcb=None, warningcb=None):
+        """Parse completed packages one at a time."""
+        _createrepo_c.PkgIterator.__init__(
+            self, primary_path, filelists_path, other_path, newpkgcb, warningcb)
 
 # If we have been built as a Python package, e.g. "setup.py", this is where the binaries
 # will be located.

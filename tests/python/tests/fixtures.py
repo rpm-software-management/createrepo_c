@@ -90,6 +90,11 @@ REPO_02_OTHXML = os.path.join(REPO_02_PATH, "repodata/",
 
 REPO_WITH_ADDITIONAL_METADATA = os.path.join(REPOS_PATH, "repo_with_additional_metadata")
 
+REPO_WITH_DUPLICATE_PACKAGES = os.path.join(REPOS_PATH, "repo_with_duplicate_packages")
+PRIMARY_DUPLICATE_PACKAGES_PATH = os.path.join(REPO_WITH_DUPLICATE_PACKAGES, "repodata/primary.xml.gz")
+FILELISTS_DUPLICATE_PACKAGES_PATH = os.path.join(REPO_WITH_DUPLICATE_PACKAGES, "repodata/filelists.xml.gz")
+OTHER_DUPLICATE_PACKAGES_PATH = os.path.join(REPO_WITH_DUPLICATE_PACKAGES, "repodata/other.xml.gz")
+
 # Test files
 
 FILE_BINARY = "binary_file"

@@ -1,8 +1,4 @@
-import re
 import unittest
-import shutil
-import tempfile
-import os.path
 import createrepo_c as cr
 
 from .fixtures import *
@@ -1170,3 +1166,210 @@ class TestCaseXmlParserMainMetadataTogether(unittest.TestCase):
                           FILELISTS_MULTI_WARN_00_PATH,
                           OTHER_MULTI_WARN_00_PATH,
                           newpkgcb, None, warningcb)
+
+class TestCaseXmlParserPkgIterator(unittest.TestCase):
+    def test_xml_parser_pkg_iterator_repo01(self):
+        warnings = []
+
+        def warningcb(warn_type, msg):
+            warnings.append((warn_type, msg))
+
+        package_iterator = cr.PackageIterator(
+            primary_path=REPO_01_PRIXML, filelists_path=REPO_01_FILXML, other_path=REPO_01_OTHXML,
+            warningcb=warningcb,
+        )
+
+        pkg = next(package_iterator)
+
+        self.assertListEqual(warnings, [])
+        self.assertEqual(pkg.pkgId, "152824bff2aa6d54f429d43e87a3ff3a0286505c6d93ec87692b5e3a9e3b97bf")
+        self.assertEqual(pkg.name, "super_kernel")
+        self.assertEqual(pkg.arch, "x86_64")
+        self.assertEqual(pkg.version, "6.0.1")
+        self.assertEqual(pkg.epoch, "0")
+        self.assertEqual(pkg.release, "2")
+        self.assertEqual(pkg.summary, "Test package")
+        self.assertEqual(pkg.description, "This package has provides, requires, obsoletes, conflicts options.")
+        self.assertEqual(pkg.url, "http://so_super_kernel.com/it_is_awesome/yep_it_really_is")
+        self.assertEqual(pkg.time_file, 1334667003)
+        self.assertEqual(pkg.time_build, 1334667003)
+        self.assertEqual(pkg.rpm_license, "LGPLv2")
+        self.assertEqual(pkg.rpm_vendor, None)
+        self.assertEqual(pkg.rpm_group, "Applications/System")
+        self.assertEqual(pkg.rpm_buildhost, "localhost.localdomain")
+        self.assertEqual(pkg.rpm_sourcerpm, "super_kernel-6.0.1-2.src.rpm")
+        self.assertEqual(pkg.rpm_header_start, 280)
+        self.assertEqual(pkg.rpm_header_end, 2637)
+        self.assertEqual(pkg.rpm_packager, None)
+        self.assertEqual(pkg.size_package, 2845)
+        self.assertEqual(pkg.size_installed, 0)
+        self.assertEqual(pkg.size_archive, 404)
+        self.assertEqual(pkg.location_href, "super_kernel-6.0.1-2.x86_64.rpm")
+        self.assertEqual(pkg.location_base, None)
+        self.assertEqual(pkg.checksum_type, "sha256")
+        self.assertEqual(pkg.requires,
+                [('bzip2', 'GE', '0', '1.0.0', None, True),
+                 ('expat', None, None, None, None, True),
+                 ('glib', 'GE', '0', '2.26.0', None, False),
+                 ('zlib', None, None, None, None, False)])
+        self.assertEqual(pkg.provides,
+                [('not_so_super_kernel', 'LT', '0', '5.8.0', None, False),
+                 ('super_kernel', 'EQ', '0', '6.0.0', None, False),
+                 ('super_kernel', 'EQ', '0', '6.0.1', '2', False),
+                 ('super_kernel(x86-64)', 'EQ', '0', '6.0.1', '2', False)])
+        self.assertEqual(pkg.conflicts,
+                [('kernel', None, None, None, None, False),
+                 ('super_kernel', 'EQ', '0', '5.0.0', None, False),
+                 ('super_kernel', 'LT', '0', '4.0.0', None, False)])
+        self.assertEqual(pkg.obsoletes,
+                [('kernel', None, None, None, None, False),
+                 ('super_kernel', 'EQ', '0', '5.9.0', None, False)])
+        self.assertEqual(pkg.files,
+                [(None, '/usr/bin/', 'super_kernel'),
+                 (None, '/usr/share/man/', 'super_kernel.8.gz')])
+        self.assertEqual(pkg.changelogs,
+                [('Tomas Mlcoch <tmlcoch@redhat.com> - 6.0.1-1',
+                   1334664000,
+                  '- First release'),
+                 ('Tomas Mlcoch <tmlcoch@redhat.com> - 6.0.1-2',
+                   1334664001,
+                   '- Second release')])
+
+        self.assertRaises(StopIteration, next, package_iterator)
+        self.assertTrue(package_iterator.is_finished())
+
+    def test_xml_parser_pkg_iterator_repo02(self):
+        warnings = []
+        def warningcb(warn_type, msg):
+            warnings.append((warn_type, msg))
+
+        package_iterator = cr.PackageIterator(
+            primary_path=REPO_02_PRIXML, filelists_path=REPO_02_FILXML, other_path=REPO_02_OTHXML,
+            warningcb=warningcb,
+        )
+        packages = list(package_iterator)
+
+        self.assertEqual(len(packages), 2)
+        self.assertEqual(packages[0].name, "fake_bash")
+        self.assertListEqual(warnings, [])
+        self.assertRaises(StopIteration, next, package_iterator)
+        self.assertTrue(package_iterator.is_finished())
+
+    def test_xml_parser_pkg_iterator_repo02_newpkgcb_as_filter(self):
+        def newpkgcb(pkgId, name, arch):
+            if name in {"fake_bash"}:
+                return cr.Package()
+
+        package_iterator = cr.PackageIterator(
+            primary_path=REPO_02_PRIXML, filelists_path=REPO_02_FILXML, other_path=REPO_02_OTHXML,
+            newpkgcb=newpkgcb,
+        )
+
+        packages = list(package_iterator)
+
+        self.assertEqual(len(packages), 1)
+        self.assertEqual(packages[0].name, "fake_bash")
+        self.assertRaises(StopIteration, next, package_iterator)
+        self.assertTrue(package_iterator.is_finished())
+
+    def test_xml_parser_pkg_iterator_warnings(self):
+        warnings = []
+        def warningcb(warn_type, msg):
+            warnings.append((warn_type, msg))
+
+        package_iterator = cr.PackageIterator(
+            primary_path=PRIMARY_MULTI_WARN_00_PATH, filelists_path=FILELISTS_MULTI_WARN_00_PATH, other_path=OTHER_MULTI_WARN_00_PATH,
+            warningcb=warningcb,
+        )
+
+        self.assertEqual(next(package_iterator).name, 'fake_bash')
+        self.assertFalse(package_iterator.is_finished())
+        self.assertEqual(next(package_iterator).name, 'super_kernel')
+
+        self.assertRaises(StopIteration, next, package_iterator)
+        self.assertTrue(package_iterator.is_finished())
+
+        self.assertEqual(warnings,
+            [(0, 'Unknown element "fooelement"'),
+             (1, 'Missing attribute "type" of a package element'),
+             (0, 'Unknown element "foo"'),
+             (3, 'Conversion of "foobar" to integer failed'),
+             (0, 'Unknown element "bar"'),
+             (1, 'Missing attribute "arch" of a package element'),
+             (2, 'Unknown file type "xxx"'),
+             (0, 'Unknown element "bar"'),
+             (1, 'Missing attribute "name" of a package element'),
+             (0, 'Unknown element "bar"'),
+             (3, 'Conversion of "xxx" to integer failed')])
+
+
+    def test_xml_parser_package_iterator_error(self):
+
+        package_iterator = cr.PackageIterator(
+            primary_path=PRIMARY_ERROR_00_PATH, filelists_path=FILELISTS_ERROR_00_PATH, other_path=OTHER_ERROR_00_PATH,
+        )
+
+        with self.assertRaises(cr.CreaterepoCError) as ctx:
+            packages = list(package_iterator)
+
+
+    def test_xml_parser_pkg_iterator_newpkgcb_abort(self):
+        def newpkgcb(pkgId, name, arch):
+            raise Error("Foo error")
+
+        package_iterator = cr.PackageIterator(
+            primary_path=REPO_02_PRIXML, filelists_path=REPO_02_FILXML, other_path=REPO_02_OTHXML,
+            newpkgcb=newpkgcb,
+        )
+
+        with self.assertRaises(cr.CreaterepoCError) as ctx:
+            packages = list(package_iterator)
+
+
+    def test_xml_parser_pkg_iterator_warningcb_abort(self):
+        def warningcb(type, msg):
+            raise Error("Foo error")
+
+        package_iterator = cr.PackageIterator(
+            primary_path=PRIMARY_MULTI_WARN_00_PATH, filelists_path=FILELISTS_MULTI_WARN_00_PATH, other_path=OTHER_MULTI_WARN_00_PATH,
+            warningcb=warningcb,
+        )
+
+        with self.assertRaises(cr.CreaterepoCError) as ctx:
+            packages = list(package_iterator)
+
+
+    def test_xml_parser_pkg_iterator_duplicate_pkgs(self):
+        # This shouldn't really be allowed, the same NEVRA (or) pkgid shouldn't be present twice in a repo.
+        # but it is unfortunately common so parsing the repos should be possible.
+        package_iterator = cr.PackageIterator(
+            primary_path=PRIMARY_DUPLICATE_PACKAGES_PATH,
+            filelists_path=FILELISTS_DUPLICATE_PACKAGES_PATH,
+            other_path=OTHER_DUPLICATE_PACKAGES_PATH,
+        )
+
+        packages = list(package_iterator)
+
+        self.assertEqual(len(packages), 4)
+        self.assertEqual(packages[0].nevra(), "fake_bash-0:1.1.1-1.x86_64")
+        self.assertEqual(packages[1].nevra(), "fake_bash-0:1.1.1-1.x86_64")
+        self.assertEqual(packages[2].nevra(), "super_kernel-0:6.0.1-2.x86_64")
+        self.assertEqual(packages[3].nevra(), "super_kernel-0:6.0.1-2.x86_64")
+
+        self.assertEqual(packages[0].pkgId, "90f61e546938a11449b710160ad294618a5bd3062e46f8cf851fd0088af184b7")
+        self.assertEqual(packages[1].pkgId, "90f61e546938a11449b710160ad294618a5bd3062e46f8cf851fd0088af184b7")
+        self.assertEqual(packages[2].pkgId, "6d43a638af70ef899933b1fd86a866f18f65b0e0e17dcbf2e42bfd0cdd7c63c3")
+        self.assertEqual(packages[3].pkgId, "6d43a638af70ef899933b1fd86a866f18f65b0e0e17dcbf2e42bfd0cdd7c63c3")
+
+        self.assertEqual(len(packages[0].files), 1)
+        self.assertEqual(len(packages[1].files), 1)
+        self.assertEqual(len(packages[2].files), 2)
+        self.assertEqual(len(packages[3].files), 2)
+
+        self.assertEqual(len(packages[0].changelogs), 1)
+        self.assertEqual(len(packages[1].changelogs), 1)
+        self.assertEqual(len(packages[2].changelogs), 2)
+        self.assertEqual(len(packages[3].changelogs), 2)
+
+        self.assertRaises(StopIteration, next, package_iterator)
+        self.assertTrue(package_iterator.is_finished())

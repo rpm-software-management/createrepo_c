@@ -462,7 +462,11 @@ out:
     if (allow_out_of_order) {
         g_hash_table_destroy(cbdata.in_progress_pkgs_hash);
     } else {
-        cr_slist_free_full(cbdata.in_progress_pkgs_list, (GDestroyNotify) cr_package_free);
+        if (cbdata.newpkgcb) {
+            g_slist_free(cbdata.in_progress_pkgs_list);
+        } else {
+            cr_slist_free_full(cbdata.in_progress_pkgs_list, (GDestroyNotify) cr_package_free);
+        }
     }
 
     return ret;

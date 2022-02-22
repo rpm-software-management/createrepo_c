@@ -48,7 +48,7 @@ call_user_callback_if_package_finished(cr_Package *pkg, cr_CbData *cb_data, GErr
         (pkg->loadingflags & CR_PACKAGE_LOADED_FIL))
     {
         //remove first element in the list
-        cb_data->in_progress_pkgs_list = cb_data->in_progress_pkgs_list->next;
+        cb_data->in_progress_pkgs_list = g_slist_delete_link(cb_data->in_progress_pkgs_list, cb_data->in_progress_pkgs_list);
 
         // One package was fully finished
         cb_data->in_progress_count_primary--;

@@ -1119,12 +1119,27 @@ class TestCaseXmlParserMainMetadataTogether(unittest.TestCase):
             return pkg
 
         self.assertRaises(cr.CreaterepoCError, cr.xml_parse_main_metadata_together,
-                          PRIMARY_ERROR_00_PATH, FILELISTS_ERROR_00_PATH,
-                          OTHER_ERROR_00_PATH, newpkgcb, None, None)
+                          PRIMARY_ERROR_00_PATH, REPO_02_FILXML,
+                          REPO_02_OTHXML, newpkgcb, None, None)
 
         # unlike parsing just primary, filelists or other separately when parsing together primary is parsed first fully
         # before newpkgcb is called so the error is detected before any user package is created
         self.assertEqual(len(userdata["pkgs"]), 0)
+
+        # test when the error is filelists
+        self.assertRaises(cr.CreaterepoCError, cr.xml_parse_main_metadata_together,
+                          REPO_02_PRIXML, FILELISTS_ERROR_00_PATH,
+                          REPO_02_OTHXML, newpkgcb, None, None)
+
+        self.assertEqual(len(userdata["pkgs"]), 2)
+
+        # test when the error is other
+        userdata = { "pkgs": [] }
+        self.assertRaises(cr.CreaterepoCError, cr.xml_parse_main_metadata_together,
+                          REPO_02_PRIXML, REPO_02_FILXML,
+                          OTHER_ERROR_00_PATH, newpkgcb, None, None)
+
+        self.assertEqual(len(userdata["pkgs"]), 2)
 
     def test_xml_parser_main_metadata_together_newpkgcb_abort(self):
         def newpkgcb(pkgId, name, arch):

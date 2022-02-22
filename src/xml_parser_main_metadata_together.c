@@ -432,15 +432,27 @@ out:
         }
     }
 
-    cr_xml_parser_data_free(primary_pd);
-    cr_xml_parser_data_free(filelists_pd);
-    cr_xml_parser_data_free(other_pd);
+    // When interrupted at the right time primary_pd->pkg can either be:
+    //  - referenced in both primary_pd->pkg and cbdata.in_progress_pkgs_list or
+    //  - referenced only in primary_pd->pkg (we have started parsing the pkg but didn't finish it yet)
+    // in order to avoid a crash remove it from the list if present
+    // primary_pd->pkg is a special case because of newpkgcb_primary
+    if (cbdata.in_progress_pkgs_list) {
+        cbdata.in_progress_pkgs_list = g_slist_remove(cbdata.in_progress_pkgs_list, primary_pd->pkg);
+    }
+    if (primary_pd) {
+        cr_package_free(primary_pd->pkg);
+    }
 
     if (cbdata.newpkgcb) {
         g_slist_free(cbdata.in_progress_pkgs_list);
     } else {
         cr_slist_free_full(cbdata.in_progress_pkgs_list, (GDestroyNotify) cr_package_free);
     }
+
+    cr_xml_parser_data_free(primary_pd);
+    cr_xml_parser_data_free(filelists_pd);
+    cr_xml_parser_data_free(other_pd);
 
     return ret;
 }

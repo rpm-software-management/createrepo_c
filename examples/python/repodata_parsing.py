@@ -251,8 +251,7 @@ def third_method():
                                         other_xml_path,
                                         None,
                                         pkgcb,
-                                        warningcb,
-                                        False)
+                                        warningcb)
 
 if __name__ == "__main__":
     print('"All in one shot" method:')

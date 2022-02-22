@@ -715,16 +715,15 @@ py_xml_parse_main_metadata_together(G_GNUC_UNUSED PyObject *self, PyObject *args
     char *primary_filename;
     char *filelists_filename;
     char *other_filename;
-    int allow_out_of_order = 1;
     PyObject *py_newpkgcb, *py_pkgcb, *py_warningcb;
     CbData cbdata;
     GError *tmp_err = NULL;
     static char *kwlist[] = { "primary", "filelists", "other", "newpkgcb", "pkgcb",
-                              "warningcb", "allow_out_of_order", NULL };
+                              "warningcb", NULL };
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sssOOO|p:py_xml_parse_main_metadata_together", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sssOOO:py_xml_parse_main_metadata_together", kwlist,
                                      &primary_filename, &filelists_filename, &other_filename, &py_newpkgcb,
-                                     &py_pkgcb, &py_warningcb, &allow_out_of_order)) {
+                                     &py_pkgcb, &py_warningcb )) {
         return NULL;
     }
 
@@ -777,7 +776,6 @@ py_xml_parse_main_metadata_together(G_GNUC_UNUSED PyObject *self, PyObject *args
                                         &cbdata,
                                         ptr_c_warningcb,
                                         &cbdata,
-                                        allow_out_of_order,
                                         &tmp_err);
 
     Py_XDECREF(py_newpkgcb);

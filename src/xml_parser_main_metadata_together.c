@@ -31,8 +31,7 @@
 #define ERR_DOMAIN      CREATEREPO_C_ERROR
 
 typedef struct {
-    GHashTable           *in_progress_pkgs_hash; //used only when allowing out of order pkgs
-    GSList               *in_progress_pkgs_list; // used only when not allowing out of order pkgs
+    GSList               *in_progress_pkgs_list;
     int                  in_progress_count_primary;
     int                  in_progress_count_filelists;
     int                  in_progress_count_other;
@@ -48,12 +47,8 @@ call_user_callback_if_package_finished(cr_Package *pkg, cr_CbData *cb_data, GErr
     if (pkg && (pkg->loadingflags & CR_PACKAGE_LOADED_PRI) && (pkg->loadingflags & CR_PACKAGE_LOADED_OTH) &&
         (pkg->loadingflags & CR_PACKAGE_LOADED_FIL))
     {
-        if (cb_data->in_progress_pkgs_hash) {
-            g_hash_table_remove(cb_data->in_progress_pkgs_hash, pkg->pkgId);
-        } else {
-            //remove first element in the list
-            cb_data->in_progress_pkgs_list = cb_data->in_progress_pkgs_list->next;
-        }
+        //remove first element in the list
+        cb_data->in_progress_pkgs_list = cb_data->in_progress_pkgs_list->next;
 
         // One package was fully finished
         cb_data->in_progress_count_primary--;
@@ -80,36 +75,24 @@ call_user_callback_if_package_finished(cr_Package *pkg, cr_CbData *cb_data, GErr
 static cr_Package*
 find_in_progress_pkg(cr_CbData *cb_data, const char *pkgId, int in_progress_pkg_index, GError **err)
 {
-    gpointer pval = NULL;
-    if (cb_data->in_progress_pkgs_hash) {
-        if (!g_hash_table_lookup_extended(cb_data->in_progress_pkgs_hash, pkgId, NULL, &pval)) {
-            pval = NULL;
-        }
-    } else {
-        // This is checking out of order pkgs because if we don't have in_progress_pkgs_hash -> we enforce
-        // order by using a list
-        pval = g_slist_nth_data(cb_data->in_progress_pkgs_list, in_progress_pkg_index);
-        if (pval && g_strcmp0(((cr_Package *) pval)->pkgId, pkgId)) {
-            g_set_error(err, ERR_DOMAIN, CRE_XMLPARSER,
-                        "Out of order metadata: %s vs %s.", ((cr_Package *) pval)->pkgId, pkgId);
-            pval = NULL;
-        }
+    gpointer pval = g_slist_nth_data(cb_data->in_progress_pkgs_list, in_progress_pkg_index);
+    // This is checking out of order pkgs
+    if (pval && g_strcmp0(((cr_Package *) pval)->pkgId, pkgId)) {
+        g_set_error(err, ERR_DOMAIN, CRE_XMLPARSER,
+                    "Out of order metadata: %s vs %s.", ((cr_Package *) pval)->pkgId, pkgId);
+        pval = NULL;
     }
 
     return pval;
 }
 
 static void
-store_in_progress_pkg(cr_CbData *cb_data, cr_Package *pkg, const char *pkgId)
+store_in_progress_pkg(cr_CbData *cb_data, cr_Package *pkg)
 {
     if (!pkg) {
         return;
     }
-    if (cb_data->in_progress_pkgs_hash) {
-        g_hash_table_insert(cb_data->in_progress_pkgs_hash, g_strdup(pkgId), pkg);
-    } else {
-        cb_data->in_progress_pkgs_list = g_slist_append(cb_data->in_progress_pkgs_list, pkg);
-    }
+    cb_data->in_progress_pkgs_list = g_slist_append(cb_data->in_progress_pkgs_list, pkg);
 }
 
 static int
@@ -171,7 +154,7 @@ newpkg_general(cr_Package **pkg,
             *pkg = cr_package_new();
         }
 
-        store_in_progress_pkg(cb_data, *pkg, pkgId);
+        store_in_progress_pkg(cb_data, *pkg);
     }
 
     if (*err) {
@@ -257,7 +240,7 @@ pkgcb_primary(cr_Package *pkg, void *cbdata, G_GNUC_UNUSED GError **err)
                 }
                 // user_created_pkg can be NULL if newpkgcb returns OK but
                 // not an allocated pkg -> this means we should skip it
-                store_in_progress_pkg(cb_data, user_created_pkg, pkg->pkgId);
+                store_in_progress_pkg(cb_data, user_created_pkg);
                 cr_package_free(pkg);
                 pkg = user_created_pkg;
             }
@@ -267,7 +250,7 @@ pkgcb_primary(cr_Package *pkg, void *cbdata, G_GNUC_UNUSED GError **err)
                 g_clear_error(&out_of_order_err);
             }
         } else {
-            store_in_progress_pkg(cb_data, pkg, pkg->pkgId);
+            store_in_progress_pkg(cb_data, pkg);
         }
 
     }
@@ -334,7 +317,6 @@ int cr_xml_parse_main_metadata_together(const char *primary_path,
                                         void *pkgcb_data,
                                         cr_XmlParserWarningCb warningcb,
                                         void *warningcb_data,
-                                        gboolean allow_out_of_order,
                                         GError **err)
 {
     int ret = CRE_OK;
@@ -345,15 +327,10 @@ int cr_xml_parse_main_metadata_together(const char *primary_path,
 
     cr_CbData cbdata;
     cbdata.in_progress_pkgs_list = NULL;
-    cbdata.in_progress_pkgs_hash = NULL;
     cbdata.newpkgcb = newpkgcb;
     cbdata.newpkgcb_data = newpkgcb_data;
     cbdata.pkgcb = pkgcb;
     cbdata.pkgcb_data = pkgcb_data;
-
-    if (allow_out_of_order) {
-        cbdata.in_progress_pkgs_hash = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
-    }
 
     assert(primary_path);
     assert(filelists_path);
@@ -459,14 +436,10 @@ out:
     cr_xml_parser_data_free(filelists_pd);
     cr_xml_parser_data_free(other_pd);
 
-    if (allow_out_of_order) {
-        g_hash_table_destroy(cbdata.in_progress_pkgs_hash);
+    if (cbdata.newpkgcb) {
+        g_slist_free(cbdata.in_progress_pkgs_list);
     } else {
-        if (cbdata.newpkgcb) {
-            g_slist_free(cbdata.in_progress_pkgs_list);
-        } else {
-            cr_slist_free_full(cbdata.in_progress_pkgs_list, (GDestroyNotify) cr_package_free);
-        }
+        cr_slist_free_full(cbdata.in_progress_pkgs_list, (GDestroyNotify) cr_package_free);
     }
 
     return ret;

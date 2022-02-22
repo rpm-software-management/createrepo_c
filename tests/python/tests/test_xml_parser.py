@@ -1049,8 +1049,7 @@ class TestCaseXmlParserMainMetadataTogether(unittest.TestCase):
         def warningcb(warn_type, msg):
             userdata["warnings"].append((warn_type, msg))
 
-        cr.xml_parse_main_metadata_together(REPO_02_PRIXML, REPO_02_FILXML, REPO_02_OTHXML, newpkgcb, pkgcb, warningcb,
-                                            allow_out_of_order=True)
+        cr.xml_parse_main_metadata_together(REPO_02_PRIXML, REPO_02_FILXML, REPO_02_OTHXML, newpkgcb, pkgcb, warningcb)
 
         self.assertEqual([pkg.name for pkg in userdata["pkgs"]],
             ['fake_bash', 'super_kernel'])

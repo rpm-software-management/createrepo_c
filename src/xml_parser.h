@@ -297,10 +297,6 @@ cr_xml_parse_updateinfo(const char *path,
  * @param pkgcb_data         User data for the pkgcb.
  * @param warningcb          Callback for warning messages.
  * @param warningcb_data     User data for the warningcb.
- * @param allow_out_of_order Whether we should allow different order of packages
- *                           among the main metadata files. If allowed, the more
- *                           the order varies the more memory we will need to
- *                           store all the started but unfinished packages.
  * @param err                GError **
  * @return                   cr_Error code.
  */
@@ -314,7 +310,6 @@ cr_xml_parse_main_metadata_together(const char *primary_path,
                                     void *pkgcb_data,
                                     cr_XmlParserWarningCb warningcb,
                                     void *warningcb_data,
-                                    gboolean allow_out_of_order,
                                     GError **err);
 
 /** @} */

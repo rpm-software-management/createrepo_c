@@ -316,6 +316,21 @@ cr_xml_parse_main_metadata_together(const char *primary_path,
                                     void *warningcb_data,
                                     GError **err);
 
+typedef struct _cr_PkgIterator cr_PkgIterator;
+
+cr_PkgIterator *
+cr_PkgIterator_new(const char *primary_path,
+                   const char *filelists_path,
+                   const char *other_path,
+                   cr_XmlParserNewPkgCb newpkgcb,
+                   void *newpkgcb_data,
+                   cr_XmlParserWarningCb warningcb,
+                   void *warningcb_data,
+                   GError **err);
+cr_Package* cr_PkgIterator_parse_next(cr_PkgIterator *iter, GError **err);
+void cr_PkgIterator_free(cr_PkgIterator *iter, GError **err);
+gboolean cr_PkgIterator_is_finished(cr_PkgIterator *iter);
+
 /** @} */
 
 #ifdef __cplusplus

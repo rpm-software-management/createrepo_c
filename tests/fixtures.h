@@ -87,6 +87,9 @@
 #define TEST_MRF_UE_OTH_02      TEST_MODIFIED_REPO_FILES_PATH"unknown_element_02-other.xml"
 #define TEST_LONG_PRIMARY       TEST_MODIFIED_REPO_FILES_PATH"long_primary.xml"
 #define TEST_DIFF_ORDER_FILELISTS TEST_MODIFIED_REPO_FILES_PATH"repo_02_different_order_filelists.xml"
+#define TEST_PRIMARY_MULTI_WARN_00 TEST_MODIFIED_REPO_FILES_PATH"multiple_warnings_00-primary.xml"
+#define TEST_FILELISTS_MULTI_WARN_00 TEST_MODIFIED_REPO_FILES_PATH"multiple_warnings_00-filelists.xml"
+#define TEST_OTHER_MULTI_WARN_00 TEST_MODIFIED_REPO_FILES_PATH"multiple_warnings_00-other.xml"
 
 // Test files
 

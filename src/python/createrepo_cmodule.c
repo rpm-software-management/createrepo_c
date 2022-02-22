@@ -217,6 +217,12 @@ PyInit__createrepo_c(void)
     Py_INCREF(&XmlFile_Type);
     PyModule_AddObject(m, "XmlFile", (PyObject *)&XmlFile_Type);
 
+    /* _createrepo_c.PkgIterator */
+    if (PyType_Ready(&PkgIterator_Type) < 0)
+        return NULL;
+    Py_INCREF(&PkgIterator_Type);
+    PyModule_AddObject(m, "PkgIterator", (PyObject *)&PkgIterator_Type);
+
     /* Createrepo init */
 
     cr_xml_dump_init();

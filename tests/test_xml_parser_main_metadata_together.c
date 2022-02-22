@@ -258,31 +258,31 @@ main(int argc, char *argv[])
 {
     g_test_init(&argc, &argv, NULL);
 
-    g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_main_metadata_together_00",
+    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_00",
                     test_cr_xml_parse_main_metadata_together_00);
 
-    g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_main_metadata_together_01_out_of_order_pkgs",
+    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_01_out_of_order_pkgs",
                     test_cr_xml_parse_main_metadata_together_01_out_of_order_pkgs);
 
-    g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_main_metadata_together_02_invalid_path",
+    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_02_invalid_path",
                     test_cr_xml_parse_main_metadata_together_02_invalid_path);
 
-    g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_main_metadata_together_03_newpkgcb_returns_null",
+    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_03_newpkgcb_returns_null",
                     test_cr_xml_parse_main_metadata_together_03_newpkgcb_returns_null);
 
-    g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_main_metadata_together_04_newpkgcb_interrupt",
+    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_04_newpkgcb_interrupt",
                     test_cr_xml_parse_main_metadata_together_04_newpkgcb_interrupt);
 
-    g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_main_metadata_together_05_pkgcb_interrupt",
+    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_05_pkgcb_interrupt",
                     test_cr_xml_parse_main_metadata_together_05_pkgcb_interrupt);
 
-    g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_main_metadata_together_06_warnings_bad_file_type",
+    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_06_warnings_bad_file_type",
                     test_cr_xml_parse_main_metadata_together_06_warnings_bad_file_type);
 
-    g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_main_metadata_together_07_warningcb_interrupt",
+    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_07_warningcb_interrupt",
                     test_cr_xml_parse_main_metadata_together_07_warningcb_interrupt);
 
-    g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_main_metadata_together_08_long_primary",
+    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_08_long_primary",
                     test_cr_xml_parse_main_metadata_together_08_long_primary);
 
     return g_test_run();

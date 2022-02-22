@@ -129,13 +129,13 @@ main(int argc, char *argv[])
 {
     g_test_init(&argc, &argv, NULL);
 
-    g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_repomd_00",
+    g_test_add_func("/xml_parser_repomd/test_cr_xml_parse_repomd_00",
                     test_cr_xml_parse_repomd_00);
-    g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_repomd_01",
+    g_test_add_func("/xml_parser_repomd/test_cr_xml_parse_repomd_01",
                     test_cr_xml_parse_repomd_01);
-    g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_repomd_02",
+    g_test_add_func("/xml_parser_repomd/test_cr_xml_parse_repomd_02",
                     test_cr_xml_parse_repomd_02);
-    g_test_add_func("/xml_parser_filelists/test_cr_xml_parse_repomd_warningcb_interrupt",
+    g_test_add_func("/xml_parser_repomd/test_cr_xml_parse_repomd_warningcb_interrupt",
                     test_cr_xml_parse_repomd_warningcb_interrupt);
 
     return g_test_run();

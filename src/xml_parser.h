@@ -279,17 +279,21 @@ cr_xml_parse_updateinfo(const char *path,
                         GError **err);
 
 /** Parse all 3 main metadata types (primary, filelists and other) at the same time.
- * Once a package is fully parsed pkgcb is called which transfers ownership of the package
- * to the user, cr_xml_parse_main_metadata_together no longer needs it and it can be freed.
+ * Once a package is fully parsed pkgcb is called, if a cr_Package wasn't provided using
+ * newpkgcb new cr_Package is created and its ownership is transferred to the user by the
+ * pkgcb call.
  * This means we don't have store all the packages in memory at the same time, which
  * significantly reduces the memory footprint.
  * Input metadata files can be compressed.
+ * Metadata primary, filelists and other have to have the packages in the same order.
  * @param primary_path       Path to a primary xml file.
  * @param filelists_path     Path to a filelists xml file.
  * @param other_path         Path to an other xml file.
  * @param newpkgcb           Callback for a new package. Called when the new package
- *                           xml chunk is found and a package object to store
- *                           the data is needed.
+ *                           xml chunk is found and a package object to store the data
+ *                           is needed. If this callback is used, the user has full
+ *                           ownership of the package, it will not be freed if the
+ *                           parsing is interrupted or there is an error.
  * @param newpkgcb_data      User data for the newpkgcb.
  * @param pkgcb              Package callback. Called when a package is completely
  *                           parsed containing information from all 3 main metadata

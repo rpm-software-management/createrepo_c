@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<otherdata xmlns="http://linux.duke.edu/metadata/other" packages="1">
+<package pkgid="152824bff2aa6d54f429d43e87a3ff3a0286505c6d93ec87692b5e3a9e3b97bf" name="super&amp;_kernel" arch="x86_64">
+    <version epoch="0" ver="6.0.1" rel="2"/>
+
+<changelog author="Tomas Mlcoch &lt;tml&amp;coch@redhat.com&gt; - 6.0.1-1" date="1334664000">- Firs&amp;t release</changelog>
+<changelog author="Tomas Mlcoch &lt;tmlcoch@redhat.com&gt; - 6.0.1-2" date="1334664001">- Second releas&amp;e</changelog>
+
+</package>
+
+</otherdata>

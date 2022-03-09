@@ -27,6 +27,15 @@ OTHER_ERROR_00_PATH = os.path.join(MODIFIED_REPO_FILES_PATH,
 OTHER_MULTI_WARN_00_PATH = os.path.join(MODIFIED_REPO_FILES_PATH,
                            "multiple_warnings_00-other.xml")
 
+REPO_01_AMPERSAND_PRIMARY = os.path.join(MODIFIED_REPO_FILES_PATH,
+                                         "repo_01_ampersand-primary.xml")
+REPO_01_AMPERSAND_FILELISTS = os.path.join(MODIFIED_REPO_FILES_PATH,
+                                         "repo_01_ampersand-filelists.xml")
+REPO_01_AMPERSAND_OTHER = os.path.join(MODIFIED_REPO_FILES_PATH,
+                                         "repo_01_ampersand-other.xml")
+AMPERSAND_UPDATEINFO = os.path.join(MODIFIED_REPO_FILES_PATH,
+                                         "updateinfo_ampersand.xml")
+
 # Packages
 
 PKG_ARCHER = "Archer-3.4.5-6.x86_64.rpm"

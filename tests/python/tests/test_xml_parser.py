@@ -78,6 +78,81 @@ class TestCaseXmlParserPrimary(unittest.TestCase):
                 [(None, '/usr/bin/', 'super_kernel')])
         self.assertEqual(pkg.changelogs, [])
 
+    def test_xml_parser_primary_repo01_ampersand(self):
+
+        userdata = {
+                "pkgs": [],
+                "pkgcb_calls": 0,
+                "warnings": []
+            }
+
+        def newpkgcb(pkgId, name, arch):
+            pkg = cr.Package()
+            userdata["pkgs"].append(pkg)
+            return pkg
+
+        def pkgcb(pkg):
+            userdata["pkgcb_calls"] += 1
+
+        def warningcb(warn_type, msg):
+            userdata["warnings"].append((warn_type, msg))
+
+        cr.xml_parse_primary(REPO_01_AMPERSAND_PRIMARY, newpkgcb, pkgcb, warningcb, 1)
+
+        self.assertEqual([pkg.name for pkg in userdata["pkgs"]],
+            ['super_kernel'])
+        self.assertEqual(userdata["pkgcb_calls"], 1)
+        self.assertEqual(userdata["warnings"], [])
+
+        pkg = userdata["pkgs"][0]
+        self.assertEqual(pkg.pkgId, "152824bff2aa6d54f429d43e87a3ff3a0286505c6d93ec87692b5e3a9e3b97bf")
+        self.assertEqual(pkg.name, "super_kernel")
+        self.assertEqual(pkg.arch, "x86_64")
+        self.assertEqual(pkg.version, "6.0.1")
+        self.assertEqual(pkg.epoch, "0")
+        self.assertEqual(pkg.release, "2")
+        self.assertEqual(pkg.summary, "Tes&t package")
+        self.assertEqual(pkg.description, "This& package has provides, requires, obsoletes, conflicts options.")
+        self.assertEqual(pkg.url, "http://so_super_kernel.com/&it_is_awesome/yep_it_really_is")
+        self.assertEqual(pkg.time_file, 1334667003)
+        self.assertEqual(pkg.time_build, 1334667003)
+        self.assertEqual(pkg.rpm_license, "LGPL&v2")
+        self.assertEqual(pkg.rpm_vendor, None)
+        self.assertEqual(pkg.rpm_group, "Applications/S&ystem")
+        self.assertEqual(pkg.rpm_buildhost, "localhost.localdomain")
+        self.assertEqual(pkg.rpm_sourcerpm, "super_kernel&-6.0.1-2.src.rpm")
+        self.assertEqual(pkg.rpm_header_start, 280)
+        self.assertEqual(pkg.rpm_header_end, 2637)
+        self.assertEqual(pkg.rpm_packager, None)
+        self.assertEqual(pkg.size_package, 2845)
+        self.assertEqual(pkg.size_installed, 0)
+        self.assertEqual(pkg.size_archive, 404)
+        self.assertEqual(pkg.location_href, "super_kernel&-6.0.1-2.x86_64.rpm")
+        self.assertEqual(pkg.location_base, None)
+        self.assertEqual(pkg.checksum_type, "sha256")
+        self.assertEqual(pkg.requires,
+                [('bzip2', 'GE', '0', '1.0.0', None, True),
+                 ('expat', None, None, None, None, True),
+                 ('glib', 'GE', '0', '2.2&6.0', None, False),
+                 ('zlib', None, None, None, None, False)])
+        self.assertEqual(pkg.provides,
+                [('not_so_super_kernel', 'LT', '0', '5.8.0', None, False),
+                 ('super_kernel', 'EQ', '0', '6.0.0', None, False),
+                 ('supe&r_kernel', 'EQ', '0', '6.0.1', '2', False),
+                 ('super_&&kernel(x86-64)', 'EQ', '0', '6.0.1', '2', False)])
+        self.assertEqual(pkg.conflicts,
+                [('kernel', None, None, None, None, False),
+                 ('sup&er_kernel', 'EQ', '0', '5.0.0', None, False),
+                 ('super_kernel', 'LT', '0', '4.0.0', None, False)])
+        self.assertEqual(pkg.obsoletes,
+                [('kernel', None, None, None, None, False),
+                 ('super_kernel', 'EQ', '0', '5.9.0', None, False)])
+        self.assertEqual(pkg.files,
+                [(None, '/usr/bin&/', 'super_kernel'),
+                 (None, '/usr/bin/', 'supe&&r_kernel'),
+                 (None, '/usr/bin/', 'super_kernel')])
+        self.assertEqual(pkg.changelogs, [])
+
     def test_xml_parser_primary_snippet01(self):
 
         userdata = {
@@ -354,6 +429,67 @@ class TestCaseXmlParserFilelists(unittest.TestCase):
         self.assertEqual(pkg.obsoletes, [])
         self.assertEqual(pkg.files,
                 [(None, '/usr/bin/', 'super_kernel'),
+                 (None, '/usr/share/man/', 'super_kernel.8.gz')])
+        self.assertEqual(pkg.changelogs, [])
+
+    def test_xml_parser_filelists_repo01_ampersand(self):
+
+        userdata = {
+                "pkgs": [],
+                "pkgcb_calls": 0,
+                "warnings": []
+            }
+
+        def newpkgcb(pkgId, name, arch):
+            pkg = cr.Package()
+            userdata["pkgs"].append(pkg)
+            return pkg
+
+        def pkgcb(pkg):
+            userdata["pkgcb_calls"] += 1
+
+        def warningcb(warn_type, msg):
+            userdata["warnings"].append((warn_type, msg))
+
+        cr.xml_parse_filelists(REPO_01_AMPERSAND_FILELISTS, newpkgcb, pkgcb, warningcb)
+
+        self.assertEqual([pkg.name for pkg in userdata["pkgs"]],
+            ['super&_kernel'])
+        self.assertEqual(userdata["pkgcb_calls"], 1)
+        self.assertEqual(userdata["warnings"], [])
+
+        pkg = userdata["pkgs"][0]
+        self.assertEqual(pkg.pkgId, "152824bff2aa6d54f429d43e87a3ff3a0286505c6d93ec87692b5e3a9e3b97bf")
+        self.assertEqual(pkg.name, "super&_kernel")
+        self.assertEqual(pkg.arch, "x86_64")
+        self.assertEqual(pkg.version, "6.0.1")
+        self.assertEqual(pkg.epoch, "0")
+        self.assertEqual(pkg.release, "2")
+        self.assertEqual(pkg.summary, None)
+        self.assertEqual(pkg.description, None)
+        self.assertEqual(pkg.url, None)
+        self.assertEqual(pkg.time_file, 0)
+        self.assertEqual(pkg.time_build, 0)
+        self.assertEqual(pkg.rpm_license, None)
+        self.assertEqual(pkg.rpm_vendor, None)
+        self.assertEqual(pkg.rpm_group, None)
+        self.assertEqual(pkg.rpm_buildhost, None)
+        self.assertEqual(pkg.rpm_sourcerpm, None)
+        self.assertEqual(pkg.rpm_header_start, 0)
+        self.assertEqual(pkg.rpm_header_end, 0)
+        self.assertEqual(pkg.rpm_packager, None)
+        self.assertEqual(pkg.size_package, 0)
+        self.assertEqual(pkg.size_installed, 0)
+        self.assertEqual(pkg.size_archive, 0)
+        self.assertEqual(pkg.location_href, None)
+        self.assertEqual(pkg.location_base, None)
+        self.assertEqual(pkg.checksum_type, None)
+        self.assertEqual(pkg.requires, [])
+        self.assertEqual(pkg.provides, [])
+        self.assertEqual(pkg.conflicts, [])
+        self.assertEqual(pkg.obsoletes, [])
+        self.assertEqual(pkg.files,
+                [(None, '/usr/&&bin/', 'super_kernel'),
                  (None, '/usr/share/man/', 'super_kernel.8.gz')])
         self.assertEqual(pkg.changelogs, [])
 
@@ -660,6 +796,71 @@ class TestCaseXmlParserOther(unittest.TestCase):
                  ('Tomas Mlcoch <tmlcoch@redhat.com> - 6.0.1-2',
                    1334664001,
                    '- Second release')])
+
+    def test_xml_parser_other_repo01_ampersand(self):
+
+        userdata = {
+                "pkgs": [],
+                "pkgcb_calls": 0,
+                "warnings": []
+            }
+
+        def newpkgcb(pkgId, name, arch):
+            pkg = cr.Package()
+            userdata["pkgs"].append(pkg)
+            return pkg
+
+        def pkgcb(pkg):
+            userdata["pkgcb_calls"] += 1
+
+        def warningcb(warn_type, msg):
+            userdata["warnings"].append((warn_type, msg))
+
+        cr.xml_parse_other(REPO_01_AMPERSAND_OTHER, newpkgcb, pkgcb, warningcb)
+
+        self.assertEqual([pkg.name for pkg in userdata["pkgs"]],
+            ['super&_kernel'])
+        self.assertEqual(userdata["pkgcb_calls"], 1)
+        self.assertEqual(userdata["warnings"], [])
+
+        pkg = userdata["pkgs"][0]
+        self.assertEqual(pkg.pkgId, "152824bff2aa6d54f429d43e87a3ff3a0286505c6d93ec87692b5e3a9e3b97bf")
+        self.assertEqual(pkg.name, "super&_kernel")
+        self.assertEqual(pkg.arch, "x86_64")
+        self.assertEqual(pkg.version, "6.0.1")
+        self.assertEqual(pkg.epoch, "0")
+        self.assertEqual(pkg.release, "2")
+        self.assertEqual(pkg.summary, None)
+        self.assertEqual(pkg.description, None)
+        self.assertEqual(pkg.url, None)
+        self.assertEqual(pkg.time_file, 0)
+        self.assertEqual(pkg.time_build, 0)
+        self.assertEqual(pkg.rpm_license, None)
+        self.assertEqual(pkg.rpm_vendor, None)
+        self.assertEqual(pkg.rpm_group, None)
+        self.assertEqual(pkg.rpm_buildhost, None)
+        self.assertEqual(pkg.rpm_sourcerpm, None)
+        self.assertEqual(pkg.rpm_header_start, 0)
+        self.assertEqual(pkg.rpm_header_end, 0)
+        self.assertEqual(pkg.rpm_packager, None)
+        self.assertEqual(pkg.size_package, 0)
+        self.assertEqual(pkg.size_installed, 0)
+        self.assertEqual(pkg.size_archive, 0)
+        self.assertEqual(pkg.location_href, None)
+        self.assertEqual(pkg.location_base, None)
+        self.assertEqual(pkg.checksum_type, None)
+        self.assertEqual(pkg.requires, [])
+        self.assertEqual(pkg.provides, [])
+        self.assertEqual(pkg.conflicts, [])
+        self.assertEqual(pkg.obsoletes, [])
+        self.assertEqual(pkg.files, [])
+        self.assertEqual(pkg.changelogs,
+                [('Tomas Mlcoch <tml&coch@redhat.com> - 6.0.1-1',
+                   1334664000,
+                  '- Firs&t release'),
+                 ('Tomas Mlcoch <tmlcoch@redhat.com> - 6.0.1-2',
+                   1334664001,
+                   '- Second releas&e')])
 
     def test_xml_parser_other_snippet01(self):
 
@@ -1373,3 +1574,56 @@ class TestCaseXmlParserPkgIterator(unittest.TestCase):
 
         self.assertRaises(StopIteration, next, package_iterator)
         self.assertTrue(package_iterator.is_finished())
+
+class TestCaseXmlParserUpdateinfo(unittest.TestCase):
+    def test_xml_parser_updateinfo_ampersand(self):
+
+        userdata = {
+                "pkgs": [],
+                "pkgcb_calls": 0,
+                "warnings": []
+            }
+
+        def warningcb(warn_type, msg):
+            userdata["warnings"].append((warn_type, msg))
+
+        ui = cr.UpdateInfo()
+        cr.xml_parse_updateinfo(AMPERSAND_UPDATEINFO, ui, warningcb)
+
+        self.assertEqual(userdata["warnings"], [])
+
+        self.assertEqual(len(ui.updates), 1)
+        rec = ui.updates[0]
+
+        self.assertEqual(rec.fromstr, "se&cresponseteam@foo.bar")
+        self.assertEqual(rec.status, "final")
+        self.assertEqual(rec.type, "enhancement")
+        self.assertEqual(rec.version, "3")
+        self.assertEqual(rec.id, "foobarupd&ate_1")
+        self.assertEqual(rec.title, "title_1")
+        self.assertEqual(rec.rights, "rights_1&")
+        self.assertEqual(rec.release, "release_1&")
+        self.assertEqual(rec.pushcount, "pushcount_1")
+        self.assertEqual(rec.severity, "severity_1")
+        self.assertEqual(rec.summary, "summary_1")
+        self.assertEqual(rec.description, "description_1")
+        self.assertEqual(rec.solution, "solution_1&")
+        self.assertEqual(rec.reboot_suggested, True)
+        self.assertEqual(len(rec.references), 1)
+
+        ref = rec.references[0]
+        self.assertEqual(ref.href, "https://foo&bar/foobarupdate_1")
+        self.assertEqual(ref.id, "1")
+        self.assertEqual(ref.type, "self")
+        self.assertEqual(ref.title, "u&pdate_1")
+        self.assertEqual(len(rec.collections), 1)
+
+        col = rec.collections[0]
+        self.assertEqual(col.shortname, "f&oo.component")
+        self.assertEqual(col.name, "Foo component&")
+        self.assertEqual(len(col.packages), 1)
+
+        pkg = col.packages[0]
+        self.assertEqual(pkg.name, "ba&r")
+        self.assertEqual(pkg.src, "bar-2.0.1-3.src.rpm")
+        self.assertEqual(pkg.filename, "bar&-2.0.1-3.noarch.rpm")

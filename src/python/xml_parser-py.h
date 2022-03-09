@@ -64,12 +64,4 @@ PyDoc_STRVAR(xml_parse_updateinfo__doc__,
 
 PyObject *py_xml_parse_updateinfo(PyObject *self, PyObject *args);
 
-PyDoc_STRVAR(xml_parse_main_metadata_together__doc__,
-"xml_parse_main_metadata_together(primary_filename, filelists_filename, other_filename, newpkgcb, pkgcb, warningcb) -> None\n\n"
-"Parse primary.xml, filelists.xml and other.xml together at the same time."
-"- It can handle if packages are not in the same order in all 3 files but memory requirements grow."
-"- It is not guaranteed that newpkgcb is always followed by pkgcb for the given package, it is possible newpkgcb will be called several times for different packages and only after that pkgcbs will be called.");
-
-PyObject *py_xml_parse_main_metadata_together(PyObject *self, PyObject *args, PyObject *kwargs);
-
 #endif

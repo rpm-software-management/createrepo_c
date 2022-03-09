@@ -278,45 +278,6 @@ cr_xml_parse_updateinfo(const char *path,
                         void *warningcb_data,
                         GError **err);
 
-/** Parse all 3 main metadata types (primary, filelists and other) at the same time.
- * Once a package is fully parsed pkgcb is called which transfers ownership of the package
- * to the user, cr_xml_parse_main_metadata_together no longer needs it and it can be freed.
- * This means we don't have store all the packages in memory at the same time, which
- * significantly reduces the memory footprint.
- * Input metadata files can be compressed.
- * @param primary_path       Path to a primary xml file.
- * @param filelists_path     Path to a filelists xml file.
- * @param other_path         Path to an other xml file.
- * @param newpkgcb           Callback for a new package. Called when the new package
- *                           xml chunk is found and a package object to store
- *                           the data is needed.
- * @param newpkgcb_data      User data for the newpkgcb.
- * @param pkgcb              Package callback. Called when a package is completely
- *                           parsed containing information from all 3 main metadata
- *                           files. Could be NULL if newpkgcb is not NULL.
- * @param pkgcb_data         User data for the pkgcb.
- * @param warningcb          Callback for warning messages.
- * @param warningcb_data     User data for the warningcb.
- * @param allow_out_of_order Whether we should allow different order of packages
- *                           among the main metadata files. If allowed, the more
- *                           the order varies the more memory we will need to
- *                           store all the started but unfinished packages.
- * @param err                GError **
- * @return                   cr_Error code.
- */
-int
-cr_xml_parse_main_metadata_together(const char *primary_path,
-                                    const char *filelists_path,
-                                    const char *other_path,
-                                    cr_XmlParserNewPkgCb newpkgcb,
-                                    void *newpkgcb_data,
-                                    cr_XmlParserPkgCb pkgcb,
-                                    void *pkgcb_data,
-                                    cr_XmlParserWarningCb warningcb,
-                                    void *warningcb_data,
-                                    gboolean allow_out_of_order,
-                                    GError **err);
-
 /** @} */
 
 #ifdef __cplusplus

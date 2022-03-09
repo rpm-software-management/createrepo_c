@@ -211,48 +211,6 @@ def second_method():
     for pkg in packages.values():
         print_package_info(pkg)
 
-def third_method():
-    """Parsing main metadata types (primary, filelists, other) at the same time.
-    This approach significantly reduces memory footprint because we don't need
-    to keep all the packages in memory, user can handle them one by one.
-
-    The API reflects xml_parse_primary/filelists/other except that it handles
-    all of them at the same time.
-
-    """
-    def warningcb(warning_type, message):
-        print("PARSER WARNING: %s" % message)
-        return True
-
-    repomd = cr.Repomd()
-    cr.xml_parse_repomd(os.path.join(REPO_PATH, "repodata/repomd.xml"), repomd, warningcb)
-
-    primary_xml_path   = None
-    filelists_xml_path = None
-    other_xml_path     = None
-    for record in repomd.records:
-        if record.type == "primary":
-            primary_xml_path = os.path.join(REPO_PATH, record.location_href)
-        elif record.type == "filelists":
-            filelists_xml_path = os.path.join(REPO_PATH, record.location_href)
-        elif record.type == "other":
-            other_xml_path = os.path.join(REPO_PATH, record.location_href)
-
-    #
-    # Main XML metadata parsing (primary, filelists, other)
-    #
-
-    def pkgcb(pkg):
-        # Called when whole package entry from all 3 metadata xml files is parsed
-        print_package_info(pkg)
-
-    cr.xml_parse_main_metadata_together(primary_xml_path,
-                                        filelists_xml_path,
-                                        other_xml_path,
-                                        None,
-                                        pkgcb,
-                                        warningcb,
-                                        False)
 
 if __name__ == "__main__":
     print('"All in one shot" method:')
@@ -263,7 +221,3 @@ if __name__ == "__main__":
     print("Callback based method:")
     second_method()
 
-    print()
-
-    print("Streaming callback based method:")
-    third_method()

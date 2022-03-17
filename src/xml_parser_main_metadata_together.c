@@ -65,7 +65,7 @@ struct _cr_PkgIterator {
 };
 
 static int
-queue_package_if_finished(cr_Package *pkg, cr_CbData *cb_data, GError **err)
+queue_package_if_finished(cr_Package *pkg, cr_CbData *cb_data)
 {
     if (pkg && (pkg->loadingflags & CR_PACKAGE_LOADED_PRI) && (pkg->loadingflags & CR_PACKAGE_LOADED_OTH) &&
         (pkg->loadingflags & CR_PACKAGE_LOADED_FIL))
@@ -210,7 +210,7 @@ pkgcb_filelists(cr_Package *pkg, void *cbdata, G_GNUC_UNUSED GError **err)
     cr_CbData *cb_data = cbdata;
     cb_data->in_progress_count_filelists++;
     pkg->loadingflags |= CR_PACKAGE_LOADED_FIL;
-    return queue_package_if_finished(pkg, cb_data, err);
+    return queue_package_if_finished(pkg, cb_data);
 }
 
 static int
@@ -219,7 +219,7 @@ pkgcb_other(cr_Package *pkg, void *cbdata, G_GNUC_UNUSED GError **err)
     cr_CbData *cb_data = cbdata;
     cb_data->in_progress_count_other++;
     pkg->loadingflags |= CR_PACKAGE_LOADED_OTH;
-    return queue_package_if_finished(pkg, cb_data, err);
+    return queue_package_if_finished(pkg, cb_data);
 }
 
 static int
@@ -282,7 +282,7 @@ pkgcb_primary(cr_Package *pkg, void *cbdata, G_GNUC_UNUSED GError **err)
         pkg->loadingflags |= CR_PACKAGE_FROM_XML;
     }
 
-    return queue_package_if_finished(pkg, cb_data, err);
+    return queue_package_if_finished(pkg, cb_data);
 }
 
 static gboolean

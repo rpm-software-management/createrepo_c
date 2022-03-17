@@ -66,6 +66,7 @@ cr_metadatalocation_free(struct cr_MetadataLocation *ml)
 
     g_free(ml->pri_xml_href);
     g_free(ml->fil_xml_href);
+    g_free(ml->fex_xml_href);
     g_free(ml->oth_xml_href);
     g_free(ml->pri_sqlite_href);
     g_free(ml->fil_sqlite_href);
@@ -166,6 +167,8 @@ cr_parse_repomd(const char *repomd_path,
             mdloc->pri_sqlite_href = full_location_href;
         else if (!g_strcmp0(record->type, "filelists"))
             mdloc->fil_xml_href = full_location_href;
+        else if (!g_strcmp0(record->type, "filelists_ext"))
+            mdloc->fex_xml_href = full_location_href;
         else if (!g_strcmp0(record->type, "filelists_db") && !ignore_sqlite)
             mdloc->fil_sqlite_href = full_location_href;
         else if (!g_strcmp0(record->type, "other"))
@@ -295,6 +298,8 @@ cr_get_remote_metadata(const char *repopath, gboolean ignore_sqlite)
         cr_download(handle, r_location->pri_xml_href, tmp_repodata, &tmp_err);
     if (!tmp_err && r_location->fil_xml_href)
         cr_download(handle, r_location->fil_xml_href, tmp_repodata, &tmp_err);
+    if (!tmp_err && r_location->fex_xml_href)
+        cr_download(handle, r_location->fex_xml_href, tmp_repodata, &tmp_err);
     if (!tmp_err && r_location->oth_xml_href)
         cr_download(handle, r_location->oth_xml_href, tmp_repodata, &tmp_err);
     if (!tmp_err && r_location->pri_sqlite_href)

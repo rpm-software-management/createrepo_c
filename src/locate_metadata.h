@@ -37,6 +37,7 @@ extern "C" {
 struct cr_MetadataLocation {
     char *pri_xml_href;         /*!< path to primary.xml */
     char *fil_xml_href;         /*!< path to filelists.xml */
+    char *fex_xml_href;         /*!< path to filelists_ext.xml */
     char *oth_xml_href;         /*!< path to other.xml */
     char *pri_sqlite_href;      /*!< path to primary.sqlite */
     char *fil_sqlite_href;      /*!< path to filelists.sqlite */

@@ -120,6 +120,28 @@ test_cr_xml_package_iterator_00(void)
     g_assert_cmpint(parsed, ==, 2);
 }
 
+static void
+test_cr_xml_package_iterator_filelists_ext_00(void)
+{
+    int parsed = 0;
+    GError *tmp_err = NULL;
+    cr_Package *package = NULL;
+
+    cr_PkgIterator *pkg_iterator = cr_PkgIterator_new(
+        TEST_REPO_04_PRIMARY, TEST_REPO_04_FILELISTS_EXT, TEST_REPO_04_OTHER, NULL, NULL, NULL, NULL, &tmp_err);
+
+    while ((package = cr_PkgIterator_parse_next(pkg_iterator, &tmp_err))) {
+        parsed++;
+        cr_package_free(package);
+    }
+
+    g_assert(cr_PkgIterator_is_finished(pkg_iterator));
+    cr_PkgIterator_free(pkg_iterator, &tmp_err);
+
+    g_assert(tmp_err == NULL);
+    g_assert_cmpint(parsed, ==, 2);
+}
+
 
 static void
 test_cr_xml_package_iterator_01_warningcb_interrupt(void)
@@ -294,6 +316,9 @@ main(int argc, char *argv[])
 
     g_test_add_func("/xml_parser_main_metadata/test_cr_xml_package_iterator_00",
                     test_cr_xml_package_iterator_00);
+
+    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_package_iterator_filelists_ext_00",
+                    test_cr_xml_package_iterator_filelists_ext_00);
 
     g_test_add_func("/xml_parser_main_metadata/test_cr_xml_package_iterator_01_warningcb_interrupt",
                     test_cr_xml_package_iterator_01_warningcb_interrupt);

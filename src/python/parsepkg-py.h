@@ -31,7 +31,7 @@ PyObject *py_package_from_rpm(PyObject *self, PyObject *args);
 
 PyDoc_STRVAR(xml_from_rpm__doc__,
 "xml_from_rpm(filename, checksum_type, location_href, "
-"location_base, changelog_limit) -> (str, str, str)\n\n"
+"location_base, changelog_limit[, filelists_ext]) -> (str, str, str[, str])\n\n"
 "XML for the package rpm package");
 
 PyObject *py_xml_from_rpm(PyObject *self, PyObject *args);

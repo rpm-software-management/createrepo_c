@@ -143,7 +143,7 @@ cr_xmlNewProp(xmlNodePtr node, const xmlChar *name, const xmlChar *orig_content)
 }
 
 void
-cr_xml_dump_files(xmlNodePtr node, cr_Package *package, int primary)
+cr_xml_dump_files(xmlNodePtr node, cr_Package *package, int primary, gboolean filelists_ext)
 {
     if (!node || !package->files) {
         return;
@@ -194,6 +194,10 @@ cr_xml_dump_files(xmlNodePtr node, cr_Package *package, int primary)
         // Write type (skip type if type value is empty of "file")
         if (entry->type && entry->type[0] != '\0' && strcmp(entry->type, "file")) {
             cr_xmlNewProp(file_node, BAD_CAST "type", BAD_CAST entry->type);
+        }
+
+        if (filelists_ext && entry->digest && entry->digest[0] != '\0') {
+            cr_xmlNewProp(file_node, BAD_CAST "hash", BAD_CAST entry->digest);
         }
     }
 }
@@ -274,16 +278,17 @@ cr_Package_contains_forbidden_control_chars(cr_Package *pkg)
 }
 
 struct cr_XmlStruct
-cr_xml_dump(cr_Package *pkg, GError **err)
+cr_xml_dump_int(cr_Package *pkg, gboolean filelists_ext, GError **err)
 {
     struct cr_XmlStruct result;
     GError *tmp_err = NULL;
 
     assert(!err || *err == NULL);
 
-    result.primary   = NULL;
-    result.filelists = NULL;
-    result.other     = NULL;
+    result.primary       = NULL;
+    result.filelists     = NULL;
+    result.filelists_ext = NULL;
+    result.other         = NULL;
 
     if (!pkg)
         return result;
@@ -308,6 +313,18 @@ cr_xml_dump(cr_Package *pkg, GError **err)
         return result;
     }
 
+    if (filelists_ext) {
+        result.filelists_ext = cr_xml_dump_filelists_ext(pkg, &tmp_err);
+        if (tmp_err) {
+            g_propagate_error(err, tmp_err);
+            g_free(result.primary);
+            result.primary = NULL;
+            g_free(result.filelists);
+            result.filelists = NULL;
+            return result;
+        }
+    }
+
     result.other = cr_xml_dump_other(pkg, &tmp_err);
     if (tmp_err) {
         g_propagate_error(err, tmp_err);
@@ -315,8 +332,24 @@ cr_xml_dump(cr_Package *pkg, GError **err)
         result.primary = NULL;
         g_free(result.filelists);
         result.filelists = NULL;
+	if (filelists_ext) {
+            g_free(result.filelists_ext);
+            result.filelists_ext = NULL;
+	}
         return result;
     }
 
     return result;
+}
+
+struct cr_XmlStruct
+cr_xml_dump(cr_Package *pkg, GError **err)
+{
+    return cr_xml_dump_int(pkg, FALSE, err);
+}
+
+struct cr_XmlStruct
+cr_xml_dump_ext(cr_Package *pkg, GError **err)
+{
+    return cr_xml_dump_int(pkg, TRUE, err);
 }

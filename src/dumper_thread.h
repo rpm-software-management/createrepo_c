@@ -54,12 +54,15 @@ struct DuplicateLocation {
 struct UserData {
     cr_XmlFile *pri_f;              // Opened compressed primary.xml.*
     cr_XmlFile *fil_f;              // Opened compressed filelists.xml.*
+    cr_XmlFile *fex_f;              // Opened compressed filelists_ext.xml.*
     cr_XmlFile *oth_f;              // Opened compressed other.xml.*
     cr_SqliteDb *pri_db;            // Primary db
     cr_SqliteDb *fil_db;            // Filelists db
+    cr_SqliteDb *fex_db;            // Filelists_ext db
     cr_SqliteDb *oth_db;            // Other db
     cr_XmlFile *pri_zck;            // Opened compressed primary.xml.zck
     cr_XmlFile *fil_zck;            // Opened compressed filelists.xml.zck
+    cr_XmlFile *fex_zck;            // Opened compressed filelists_ext.xml.zck
     cr_XmlFile *oth_zck;            // Opened compressed other.xml.zck
     char *prev_srpm;                // Previous srpm
     char *cur_srpm;                 // Current srpm
@@ -71,6 +74,7 @@ struct UserData {
     cr_ChecksumType checksum_type;  // Constant representing selected checksum
     const char *checksum_cachedir;  // Dir with cached checksums
     gboolean skip_symlinks;         // Skip symlinks
+    gboolean filelists_ext;         // Include hashes (and create filelist_ext.*)
     long task_count;                // Total number of tasks to process
     long package_count;             // Total number of packages processed
     long skipped_count;             // Total number of explicitly skipped packages
@@ -82,22 +86,25 @@ struct UserData {
     // Update stuff
     gboolean skip_stat;             // Skip stat() while updating
     cr_Metadata *old_metadata;      // Loaded metadata
-    GMutex mutex_old_md;           // Mutex for accessing old metadata
+    GMutex mutex_old_md;            // Mutex for accessing old metadata
 
     // Thread serialization
-    GMutex mutex_pri;              // Mutex for primary metadata
-    GMutex mutex_fil;              // Mutex for filelists metadata
-    GMutex mutex_oth;              // Mutex for other metadata
-    GCond cond_pri;                // Condition for primary metadata
-    GCond cond_fil;                // Condition for filelists metadata
-    GCond cond_oth;                // Condition for other metadata
+    GMutex mutex_pri;               // Mutex for primary metadata
+    GMutex mutex_fil;               // Mutex for filelists metadata
+    GMutex mutex_fex;               // Mutex for filelists_ext metadata
+    GMutex mutex_oth;               // Mutex for other metadata
+    GCond cond_pri;                 // Condition for primary metadata
+    GCond cond_fil;                 // Condition for filelists metadata
+    GCond cond_fex;                 // Condition for filelists_ext metadata
+    GCond cond_oth;                 // Condition for other metadata
     volatile long id_pri;           // ID of task on turn (write primary metadata)
     volatile long id_fil;           // ID of task on turn (write filelists metadata)
+    volatile long id_fex;           // ID of task on turn (write filelists_ext metadata)
     volatile long id_oth;           // ID of task on turn (write other metadata)
 
     // Buffering
     GQueue *buffer;                 // Buffer for done tasks
-    GMutex mutex_buffer;           // Mutex for accessing the buffer
+    GMutex mutex_buffer;            // Mutex for accessing the buffer
 
     // Delta generation
     gboolean deltas;                // Are deltas enabled?

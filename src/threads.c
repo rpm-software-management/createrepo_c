@@ -167,6 +167,9 @@ cr_repomdrecordfilltask_free(cr_RepomdRecordFillTask *task,
 {
     assert(!err || *err == NULL);
 
+    if (!task)
+        return;
+
     if (task->err)
         g_error_free(task->err);
     g_free(task);

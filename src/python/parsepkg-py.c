@@ -66,35 +66,49 @@ py_xml_from_rpm(G_GNUC_UNUSED PyObject *self, PyObject *args)
     PyObject *tuple;
     int checksum_type, changelog_limit;
     char *filename, *location_href, *location_base;
+    gboolean filelists_ext = FALSE;
+    int tuple_index = 0, tuple_size = 3;
     struct cr_XmlStruct xml_res;
     GError *tmp_err = NULL;
 
-    if (!PyArg_ParseTuple(args, "sizzi:py_xml_from_rpm",
+    if (!PyArg_ParseTuple(args, "sizzi|p:py_xml_from_rpm",
                                          &filename,
                                          &checksum_type,
                                          &location_href,
                                          &location_base,
-                                         &changelog_limit)) {
+                                         &changelog_limit,
+                                         &filelists_ext)) {
         return NULL;
     }
 
-    xml_res = cr_xml_from_rpm(filename, checksum_type, location_href,
-                              location_base, changelog_limit, NULL, &tmp_err);
+    if (filelists_ext) {
+        xml_res = cr_xml_from_rpm_ext(filename, checksum_type, location_href,
+                                      location_base, changelog_limit, NULL, &tmp_err);
+    } else {
+        xml_res = cr_xml_from_rpm(filename, checksum_type, location_href,
+                                  location_base, changelog_limit, NULL, &tmp_err);
+    }
     if (tmp_err) {
         nice_exception(&tmp_err, "Cannot load %s: ", filename);
         return NULL;
     }
 
-    if ((tuple = PyTuple_New(3)) == NULL)
+    if (filelists_ext)
+        tuple_size = 4;
+
+    if ((tuple = PyTuple_New(tuple_size)) == NULL)
         goto py_xml_from_rpm_end; // Free xml_res and return NULL
 
-    PyTuple_SetItem(tuple, 0, PyUnicodeOrNone_FromString(xml_res.primary));
-    PyTuple_SetItem(tuple, 1, PyUnicodeOrNone_FromString(xml_res.filelists));
-    PyTuple_SetItem(tuple, 2, PyUnicodeOrNone_FromString(xml_res.other));
+    PyTuple_SetItem(tuple, tuple_index++, PyUnicodeOrNone_FromString(xml_res.primary));
+    PyTuple_SetItem(tuple, tuple_index++, PyUnicodeOrNone_FromString(xml_res.filelists));
+    if (filelists_ext)
+        PyTuple_SetItem(tuple, tuple_index++, PyUnicodeOrNone_FromString(xml_res.filelists_ext));
+    PyTuple_SetItem(tuple, tuple_index++, PyUnicodeOrNone_FromString(xml_res.other));
 
 py_xml_from_rpm_end:
     free(xml_res.primary);
     free(xml_res.filelists);
+    free(xml_res.filelists_ext);
     free(xml_res.other);
 
     return tuple;

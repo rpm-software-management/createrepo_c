@@ -57,6 +57,8 @@ static struct PyMethodDef createrepo_c_methods[] = {
         METH_VARARGS, xml_dump_primary__doc__},
     {"xml_dump_filelists",      (PyCFunction)py_xml_dump_filelists,
         METH_VARARGS, xml_dump_filelists__doc__},
+    {"xml_dump_filelists_ext",  (PyCFunction)py_xml_dump_filelists_ext,
+        METH_VARARGS, xml_dump_filelists_ext__doc__},
     {"xml_dump_other",          (PyCFunction)py_xml_dump_other,
         METH_VARARGS, xml_dump_other__doc__},
     {"xml_dump_updaterecord",    (PyCFunction)py_xml_dump_updaterecord,
@@ -285,11 +287,13 @@ PyInit__createrepo_c(void)
     /* Sqlite DB types */
     PyModule_AddIntConstant(m, "DB_PRIMARY", CR_DB_PRIMARY);
     PyModule_AddIntConstant(m, "DB_FILELISTS", CR_DB_FILELISTS);
+    PyModule_AddIntConstant(m, "DB_FILELISTS_EXT", CR_DB_FILELISTS_EXT);
     PyModule_AddIntConstant(m, "DB_OTHER", CR_DB_OTHER);
 
     /* XmlFile types */
     PyModule_AddIntConstant(m, "XMLFILE_PRIMARY", CR_XMLFILE_PRIMARY);
     PyModule_AddIntConstant(m, "XMLFILE_FILELISTS", CR_XMLFILE_FILELISTS);
+    PyModule_AddIntConstant(m, "XMLFILE_FILELISTS_EXT", CR_XMLFILE_FILELISTS_EXT);
     PyModule_AddIntConstant(m, "XMLFILE_OTHER", CR_XMLFILE_OTHER);
     PyModule_AddIntConstant(m, "XMLFILE_PRESTODELTA", CR_XMLFILE_PRESTODELTA);
     PyModule_AddIntConstant(m, "XMLFILE_UPDATEINFO", CR_XMLFILE_UPDATEINFO);

@@ -150,8 +150,8 @@ int cr_xml_parse_primary_snippet(const char *xml_string,
                                  int do_files,
                                  GError **err);
 
-/** Parse filelists.xml. File could be compressed.
- * @param path           Path to filelists.xml
+/** Parse filelists[_ext].xml. File could be compressed.
+ * @param path           Path to filelists[_ext].xml
  * @param newpkgcb       Callback for new package (Called when new package
  *                       xml chunk is found and package object to store
  *                       the data is needed). If NULL cr_newpkgcb is used.
@@ -174,9 +174,9 @@ int cr_xml_parse_filelists(const char *path,
                            void *warningcb_data,
                            GError **err);
 
-/** Parse string snippet of filelists xml repodata. Snippet cannot contain
- * root xml element <filelists>. It contains only <package> elemetns.
- * @param xml_string     String containg filelists xml data
+/** Parse string snippet of filelists[_ext] xml repodata. Snippet cannot contain
+ * root xml element <filelists[_ext]>. It contains only <package> elemetns.
+ * @param xml_string     String containg filelists[_ext] xml data
  * @param newpkgcb       Callback for new package (Called when new package
  *                       xml chunk is found and package object to store
  *                       the data is needed). If NULL cr_newpkgcb is used.

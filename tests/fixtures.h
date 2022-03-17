@@ -31,6 +31,7 @@
 #define TEST_REPO_01                    TEST_DATA_PATH"repo_01/"
 #define TEST_REPO_02                    TEST_DATA_PATH"repo_02/"
 #define TEST_REPO_03                    TEST_DATA_PATH"repo_03/"
+#define TEST_REPO_04                    TEST_DATA_PATH"repo_04/"
 #define TEST_REPO_KOJI_01               TEST_DATA_PATH"repo_koji_01/"
 #define TEST_REPO_KOJI_02               TEST_DATA_PATH"repo_koji_02/"
 #define TEST_FILES_PATH                 TEST_DATA_PATH"test_files/"
@@ -61,6 +62,14 @@
 #define TEST_REPO_03_FILELISTS  TEST_REPO_03"repodata/95a4415d859d7120efb6b3cf964c07bebbff9a5275ca673e6e74a97bcbfb2a5f-filelists.xml.gz"
 #define TEST_REPO_03_OTHER      TEST_REPO_03"repodata/ef3e20691954c3d1318ec3071a982da339f4ed76967ded668b795c9e070aaab6-other.xml.gz"
 #define TEST_REPO_03_MODULEMD   TEST_REPO_03"repodata/a850093e240506c728d6ce26a6fc51d6a7fe10730c67988d13afa7dd82df82d5-modules.yaml.xz"
+
+// REPO_04 is a copy of REPO_02 with filelists_ext metadata
+#define TEST_REPO_04_REPOMD        TEST_REPO_04"repodata/repomd.xml"
+#define TEST_REPO_04_PRIMARY       TEST_REPO_04"repodata/6a5f64dd82a126a161657764fe8f4b4092c0a3b61b9a34bde2af89dc1df112a1-primary.xml.gz"
+#define TEST_REPO_04_FILELISTS     TEST_REPO_04"repodata/d7b8b1b6caa124aa17e4c6a1867e50e6893791ade0ebe212ab6f536695b5ce84-filelists.xml.gz"
+#define TEST_REPO_04_FILELISTS_EXT TEST_REPO_04"repodata/5675d4a5265eacfd0af1f366057cf2e29d02a350ea03a59c1e2644d749afbd97-filelists_ext.xml.gz"
+#define TEST_REPO_04_OTHER         TEST_REPO_04"repodata/6d0101044d9b4683e4ddc76491b3eb2228cddaace9e1d148c5eb138de9f71c17-other.xml.gz"
+
 
 #define TEST_REPO_WITH_ADDITIONAL_METADATA_REPOMD                TEST_REPO_WITH_ADDITIONAL_METADATA"repodata/repomd.xml"
 #define TEST_REPO_WITH_ADDITIONAL_METADATA_PRIMARY_XML_GZ        TEST_REPO_WITH_ADDITIONAL_METADATA"repodata/490a2a494a3827b8a356f728ac36bc02fb009b0eaea173c890e727bb54219037-primary.xml.gz"
@@ -103,8 +112,10 @@
 
 // Repodata snippets
 
-#define TEST_FILELISTS_SNIPPET_01   TEST_REPODATA_SNIPPETS"filelists_snippet_01.xml"
-#define TEST_FILELISTS_SNIPPET_02   TEST_REPODATA_SNIPPETS"filelists_snippet_02.xml"
+#define TEST_FILELISTS_SNIPPET_01     TEST_REPODATA_SNIPPETS"filelists_snippet_01.xml"
+#define TEST_FILELISTS_SNIPPET_02     TEST_REPODATA_SNIPPETS"filelists_snippet_02.xml"
+#define TEST_FILELISTS_EXT_SNIPPET_01 TEST_REPODATA_SNIPPETS"filelists_ext_snippet_01.xml"
+#define TEST_FILELISTS_EXT_SNIPPET_02 TEST_REPODATA_SNIPPETS"filelists_ext_snippet_02.xml"
 
 // Other
 

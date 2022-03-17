@@ -431,8 +431,8 @@ CheckPyDependency(PyObject *dep)
 static int
 CheckPyPackageFile(PyObject *dep)
 {
-    if (!PyTuple_Check(dep) || PyTuple_Size(dep) != 3) {
-        PyErr_SetString(PyExc_TypeError, "Element of list has to be a tuple with 3 items.");
+    if (!PyTuple_Check(dep) || PyTuple_Size(dep) != 4) {
+        PyErr_SetString(PyExc_TypeError, "Element of list has to be a tuple with 4 items.");
         return 1;
     }
     return 0;
@@ -548,6 +548,8 @@ static PyGetSetDef package_getsetters[] = {
         "Base location of this package", OFFSET(location_base)},
     {"checksum_type",    (getter)get_str, (setter)set_str,
         "Type of checksum", OFFSET(checksum_type)},
+    {"files_checksum_type",    (getter)get_str, (setter)set_str,
+        "Type of checksum for files", OFFSET(files_checksum_type)},
     {"requires",         (getter)get_list, (setter)set_list,
         "Capabilities the package requires", &(list_convertors[0])},
     {"provides",         (getter)get_list, (setter)set_list,

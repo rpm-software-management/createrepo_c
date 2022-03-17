@@ -36,12 +36,13 @@ extern "C" {
 /** Supported types of xml files
  */
 typedef enum {
-    CR_XMLFILE_PRIMARY,     /*!< primary.xml */
-    CR_XMLFILE_FILELISTS,   /*!< filelists.xml */
-    CR_XMLFILE_OTHER,       /*!< other.xml */
-    CR_XMLFILE_PRESTODELTA, /*!< prestodelta.xml */
-    CR_XMLFILE_UPDATEINFO,  /*!< updateinfo.xml */
-    CR_XMLFILE_SENTINEL,    /*!< sentinel of the list */
+    CR_XMLFILE_PRIMARY,       /*!< primary.xml */
+    CR_XMLFILE_FILELISTS,     /*!< filelists.xml */
+    CR_XMLFILE_FILELISTS_EXT, /*!< filelists_ext.xml */
+    CR_XMLFILE_OTHER,         /*!< other.xml */
+    CR_XMLFILE_PRESTODELTA,   /*!< prestodelta.xml */
+    CR_XMLFILE_UPDATEINFO,    /*!< updateinfo.xml */
+    CR_XMLFILE_SENTINEL,      /*!< sentinel of the list */
 } cr_XmlFileType;
 
 /** cr_XmlFile structure.
@@ -87,6 +88,15 @@ typedef struct {
 #define cr_xmlfile_open_filelists(FILENAME, COMTYPE, ERR) \
             cr_xmlfile_open(FILENAME, CR_XMLFILE_FILELISTS, COMTYPE, ERR)
 
+/** Open a new filelists_ext XML file.
+ * @param FILENAME      Filename.
+ * @param COMTYPE       Type of used compression.
+ * @param ERR           GError **
+ * @return              Opened cr_XmlFile or NULL on error
+ */
+#define cr_xmlfile_open_filelists_ext(FILENAME, COMTYPE, ERR) \
+            cr_xmlfile_open(FILENAME, CR_XMLFILE_FILELISTS_EXT, COMTYPE, ERR)
+
 /** Open a new filelists XML file.
  * @param FILENAME      Filename.
  * @param COMTYPE       Type of compression.
@@ -96,6 +106,16 @@ typedef struct {
  */
 #define cr_xmlfile_sopen_filelists(FILENAME, COMTYPE, STAT, ERR) \
             cr_xmlfile_sopen(FILENAME, CR_XMLFILE_FILELISTS, COMTYPE, STAT, ERR)
+
+/** Open a new filelists_ext XML file.
+ * @param FILENAME      Filename.
+ * @param COMTYPE       Type of compression.
+ * @param STAT          cr_ContentStat object or NULL.
+ * @param ERR           GError **
+ * @return              Opened cr_XmlFile or NULL on error
+ */
+#define cr_xmlfile_sopen_filelists_ext(FILENAME, COMTYPE, STAT, ERR) \
+            cr_xmlfile_sopen(FILENAME, CR_XMLFILE_FILELISTS_EXT, COMTYPE, STAT, ERR)
 
 /** Open a new other XML file.
  * @param FILENAME      Filename.

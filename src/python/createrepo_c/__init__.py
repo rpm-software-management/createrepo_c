@@ -67,15 +67,17 @@ HT_KEY_FILENAME = _createrepo_c.HT_KEY_FILENAME #: Package filename as a key
 HT_DUPACT_KEEPFIRST = _createrepo_c.HT_DUPACT_KEEPFIRST #: If an key is duplicated, keep only the first occurrence
 HT_DUPACT_REMOVEALL = _createrepo_c.HT_DUPACT_REMOVEALL #: If an key is duplicated, discard all occurrences
 
-DB_PRIMARY      = _createrepo_c.DB_PRIMARY   #: Primary database
-DB_FILELISTS    = _createrepo_c.DB_FILELISTS #: Filelists database
-DB_OTHER        = _createrepo_c.DB_OTHER     #: Other database
+DB_PRIMARY       = _createrepo_c.DB_PRIMARY       #: Primary database
+DB_FILELISTS     = _createrepo_c.DB_FILELISTS     #: Filelists database
+DB_FILELISTS_EXT = _createrepo_c.DB_FILELISTS_EXT #: Filelists_ext database
+DB_OTHER         = _createrepo_c.DB_OTHER         #: Other database
 
-XMLFILE_PRIMARY     = _createrepo_c.XMLFILE_PRIMARY     #: Primary xml file
-XMLFILE_FILELISTS   = _createrepo_c.XMLFILE_FILELISTS   #: Filelists xml file
-XMLFILE_OTHER       = _createrepo_c.XMLFILE_OTHER       #: Other xml file
-XMLFILE_PRESTODELTA = _createrepo_c.XMLFILE_PRESTODELTA #: Prestodelta xml file
-XMLFILE_UPDATEINFO  = _createrepo_c.XMLFILE_UPDATEINFO  #: Updateinfo xml file
+XMLFILE_PRIMARY       = _createrepo_c.XMLFILE_PRIMARY       #: Primary xml file
+XMLFILE_FILELISTS     = _createrepo_c.XMLFILE_FILELISTS     #: Filelists xml file
+XMLFILE_FILELISTS_EXT = _createrepo_c.XMLFILE_FILELISTS_EXT #: Filelists_ext xml file
+XMLFILE_OTHER         = _createrepo_c.XMLFILE_OTHER         #: Other xml file
+XMLFILE_PRESTODELTA   = _createrepo_c.XMLFILE_PRESTODELTA   #: Prestodelta xml file
+XMLFILE_UPDATEINFO    = _createrepo_c.XMLFILE_UPDATEINFO    #: Updateinfo xml file
 
 #: XML warning - Unknown tag
 XML_WARNING_UNKNOWNTAG  = _createrepo_c.XML_WARNING_UNKNOWNTAG
@@ -270,9 +272,10 @@ class PrimaryXmlFile(XmlFile):
 class FilelistsXmlFile(XmlFile):
     def __init__(self, path, compressiontype=GZ_COMPRESSION,
                  contentstat=None):
-        """:arg path: Path to the filelists xml file
+        """:arg path: Path to the filelists[_ext] xml file
         :arg compressiontype: Compression type
         :arg contentstat: ContentStat object"""
+        # TODO(aplanas) Do I need to differentiate?
         XmlFile.__init__(self, path, XMLFILE_FILELISTS,
                          compressiontype, contentstat)
 
@@ -310,7 +313,8 @@ def xml_from_rpm(filename, checksum_type=SHA256, location_href=None,
 
 xml_dump_primary        = _createrepo_c.xml_dump_primary
 xml_dump_filelists      = _createrepo_c.xml_dump_filelists
-xml_dump_other          =  _createrepo_c.xml_dump_other
+xml_dump_filelists_ext  = _createrepo_c.xml_dump_filelists_ext
+xml_dump_other          = _createrepo_c.xml_dump_other
 xml_dump_updaterecord   = _createrepo_c.xml_dump_updaterecord
 xml_dump                = _createrepo_c.xml_dump
 
@@ -321,7 +325,7 @@ def xml_parse_primary(path, newpkgcb=None, pkgcb=None,
                                            warningcb, do_files)
 
 def xml_parse_filelists(path, newpkgcb=None, pkgcb=None, warningcb=None):
-    """Parse filelists.xml"""
+    """Parse filelists[_ext].xml"""
     return _createrepo_c.xml_parse_filelists(path, newpkgcb, pkgcb, warningcb)
 
 def xml_parse_other(path, newpkgcb=None, pkgcb=None, warningcb=None):
@@ -336,7 +340,7 @@ def xml_parse_primary_snippet(xml_string, newpkgcb=None, pkgcb=None,
 
 def xml_parse_filelists_snippet(xml_string, newpkgcb=None, pkgcb=None,
                                 warningcb=None):
-    """Parse the contents of filelists.xml from a string"""
+    """Parse the contents of filelists[_ext].xml from a string"""
     return _createrepo_c.xml_parse_filelists_snippet(xml_string, newpkgcb, pkgcb,
                                              warningcb)
 

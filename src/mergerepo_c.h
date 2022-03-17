@@ -51,6 +51,7 @@ struct CmdOptions {
     char *archlist;
     gboolean database;
     gboolean no_database;
+    gboolean filelists_ext;
     gboolean verbose;
     char *outputdir;
     char *outputrepo;

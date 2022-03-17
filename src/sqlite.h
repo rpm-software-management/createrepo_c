@@ -61,10 +61,11 @@ extern "C" {
 /** Database type.
  */
 typedef enum {
-    CR_DB_PRIMARY,      /*!< primary */
-    CR_DB_FILELISTS,    /*!< filelists */
-    CR_DB_OTHER,        /*!< other */
-    CR_DB_SENTINEL,     /*!< sentinel of the list */
+    CR_DB_PRIMARY,       /*!< primary */
+    CR_DB_FILELISTS,     /*!< filelists */
+    CR_DB_FILELISTS_EXT, /*!< filelists_ext */
+    CR_DB_OTHER,         /*!< other */
+    CR_DB_SENTINEL,      /*!< sentinel of the list */
 } cr_DatabaseType;
 
 typedef struct _DbPrimaryStatements   * cr_DbPrimaryStatements; /*!<

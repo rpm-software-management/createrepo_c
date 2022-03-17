@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<repomd xmlns="http://linux.duke.edu/metadata/repo" xmlns:rpm="http://linux.duke.edu/metadata/rpm">
+  <revision>1648713099</revision>
+  <data type="primary">
+    <checksum type="sha256">6a5f64dd82a126a161657764fe8f4b4092c0a3b61b9a34bde2af89dc1df112a1</checksum>
+    <open-checksum type="sha256">1bba2a9c15c538c0c75311727f70a08ca11170ea2add44871c4d273e828454a2</open-checksum>
+    <location href="repodata/6a5f64dd82a126a161657764fe8f4b4092c0a3b61b9a34bde2af89dc1df112a1-primary.xml.gz"/>
+    <timestamp>1648713099</timestamp>
+    <size>987</size>
+    <open-size>3280</open-size>
+  </data>
+  <data type="filelists">
+    <checksum type="sha256">d7b8b1b6caa124aa17e4c6a1867e50e6893791ade0ebe212ab6f536695b5ce84</checksum>
+    <open-checksum type="sha256">9c41a54fe07b5d6c762d7262f68aea1af9c7736f8e06f1841a0dc03ed21a7a88</open-checksum>
+    <location href="repodata/d7b8b1b6caa124aa17e4c6a1867e50e6893791ade0ebe212ab6f536695b5ce84-filelists.xml.gz"/>
+    <timestamp>1648713099</timestamp>
+    <size>336</size>
+    <open-size>583</open-size>
+  </data>
+  <data type="other">
+    <checksum type="sha256">6d0101044d9b4683e4ddc76491b3eb2228cddaace9e1d148c5eb138de9f71c17</checksum>
+    <open-checksum type="sha256">e14aa58fbdec752786f303ce30ccaee0b7457172dfb26b0820fa8bcf3f3ddb40</open-checksum>
+    <location href="repodata/6d0101044d9b4683e4ddc76491b3eb2228cddaace9e1d148c5eb138de9f71c17-other.xml.gz"/>
+    <timestamp>1648713099</timestamp>
+    <size>397</size>
+    <open-size>815</open-size>
+  </data>
+  <data type="filelists_ext">
+    <checksum type="sha256">5675d4a5265eacfd0af1f366057cf2e29d02a350ea03a59c1e2644d749afbd97</checksum>
+    <open-checksum type="sha256">1d71bbe08947468f20e0b3b062e177add2db77adc673045cfa9e199487210b05</open-checksum>
+    <location href="repodata/5675d4a5265eacfd0af1f366057cf2e29d02a350ea03a59c1e2644d749afbd97-filelists_ext.xml.gz"/>
+    <timestamp>1648713099</timestamp>
+    <size>409</size>
+    <open-size>867</open-size>
+  </data>
+</repomd>

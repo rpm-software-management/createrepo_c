@@ -38,7 +38,7 @@ typedef enum {
     CR_PACKAGE_FROM_XML     = (1<<2),   /*!< Metadata parsed xml */
     /* Some values are reserved (for sqlite, solv, etc..) */
     CR_PACKAGE_LOADED_PRI   = (1<<10),  /*!< Primary metadata was loaded */
-    CR_PACKAGE_LOADED_FIL   = (1<<11),  /*!< Filelists metadata was loaded */
+    CR_PACKAGE_LOADED_FIL   = (1<<11),  /*!< Filelists[_ext] metadata was loaded */
     CR_PACKAGE_LOADED_OTH   = (1<<12),  /*!< Other metadata was loaded */
     CR_PACKAGE_SINGLE_CHUNK = (1<<13),  /*!< Package shares a single chunk with others */
 } cr_PackageLoadingFlags;
@@ -61,6 +61,7 @@ typedef struct {
     char *type;                 /*!< one of "" (regular file), "dir", "ghost" */
     char *path;                 /*!< path to file */
     char *name;                 /*!< filename */
+    char *digest;               /*!< file checksum */
 } cr_PackageFile;
 
 /** Changelog entry.
@@ -111,6 +112,8 @@ typedef struct {
     char *location_base;        /*!< location (url) of repository */
     char *checksum_type;        /*!< type of checksum used ("sha1", "sha256",
                                      "md5", ..) */
+    char *files_checksum_type;  /*!< type of checksum used for files ("sha1",
+                                     "sha256", "md5", ..) */
 
     GSList *requires;           /*!< requires (list of cr_Dependency structs) */
     GSList *provides;           /*!< provides (list of cr_Dependency structs) */

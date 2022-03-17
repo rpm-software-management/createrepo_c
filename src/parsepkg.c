@@ -237,9 +237,10 @@ cr_xml_from_rpm(const char *filename,
     assert(filename);
     assert(!err || *err == NULL);
 
-    result.primary   = NULL;
-    result.filelists = NULL;
-    result.other     = NULL;
+    result.primary       = NULL;
+    result.filelists     = NULL;
+    result.filelists_ext = NULL;
+    result.other         = NULL;
 
     pkg = cr_package_from_rpm(filename,
                               checksum_type,
@@ -253,6 +254,42 @@ cr_xml_from_rpm(const char *filename,
         return result;
 
     result = cr_xml_dump(pkg, err);
+    cr_package_free(pkg);
+    return result;
+}
+
+struct cr_XmlStruct
+cr_xml_from_rpm_ext(const char *filename,
+                    cr_ChecksumType checksum_type,
+                    const char *location_href,
+                    const char *location_base,
+                    int changelog_limit,
+                    struct stat *stat_buf,
+                    GError **err)
+{
+    cr_Package *pkg;
+    struct cr_XmlStruct result;
+
+    assert(filename);
+    assert(!err || *err == NULL);
+
+    result.primary       = NULL;
+    result.filelists     = NULL;
+    result.filelists_ext = NULL;
+    result.other         = NULL;
+
+    pkg = cr_package_from_rpm(filename,
+                              checksum_type,
+                              location_href,
+                              location_base,
+                              changelog_limit,
+                              stat_buf,
+                              CR_HDRR_NONE,
+                              err);
+    if (!pkg)
+        return result;
+
+    result = cr_xml_dump_ext(pkg, err);
     cr_package_free(pkg);
     return result;
 }

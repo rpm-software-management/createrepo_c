@@ -169,12 +169,13 @@ PyObject_FromPackageFile(cr_PackageFile *file)
 {
     PyObject *tuple;
 
-    if ((tuple = PyTuple_New(3)) == NULL)
+    if ((tuple = PyTuple_New(4)) == NULL)
         return NULL;
 
     PyTuple_SetItem(tuple, 0, PyUnicodeOrNone_FromString(file->type));
     PyTuple_SetItem(tuple, 1, PyUnicodeOrNone_FromString(file->path));
     PyTuple_SetItem(tuple, 2, PyUnicodeOrNone_FromString(file->name));
+    PyTuple_SetItem(tuple, 3, PyUnicodeOrNone_FromString(file->digest));
 
     return tuple;
 }
@@ -193,6 +194,9 @@ PyObject_ToPackageFile(PyObject *tuple, GStringChunk *chunk)
 
     pyobj = PyTuple_GetItem(tuple, 2);
     file->name = PyObject_ToChunkedString(pyobj, chunk);
+
+    pyobj = PyTuple_GetItem(tuple, 3);
+    file->digest = PyObject_ToChunkedString(pyobj, chunk);
 
     return file;
 }

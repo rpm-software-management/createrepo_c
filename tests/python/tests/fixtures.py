@@ -22,6 +22,11 @@ FILELISTS_ERROR_00_PATH = os.path.join(MODIFIED_REPO_FILES_PATH,
 FILELISTS_MULTI_WARN_00_PATH = os.path.join(MODIFIED_REPO_FILES_PATH,
                                "multiple_warnings_00-filelists.xml")
 
+FILELISTS_EXT_ERROR_00_PATH = os.path.join(MODIFIED_REPO_FILES_PATH,
+                              "error_00-filelists_ext.xml")
+FILELISTS_EXT_MULTI_WARN_00_PATH = os.path.join(MODIFIED_REPO_FILES_PATH,
+                                   "multiple_warnings_00-filelists_ext.xml")
+
 OTHER_ERROR_00_PATH = os.path.join(MODIFIED_REPO_FILES_PATH,
                       "error_00-other.xml")
 OTHER_MULTI_WARN_00_PATH = os.path.join(MODIFIED_REPO_FILES_PATH,
@@ -97,6 +102,17 @@ REPO_02_FILXML = os.path.join(REPO_02_PATH, "repodata/",
 REPO_02_OTHXML = os.path.join(REPO_02_PATH, "repodata/",
     "ab5d3edeea50f9b4ec5ee13e4d25c147e318e3a433dbabc94d3461f58ac28255-other.xml.gz")
 
+REPO_04_PATH = os.path.join(REPOS_PATH, "repo_04")
+REPO_04_REPOMD = os.path.join(REPO_04_PATH, "repodata/repomd.xml")
+REPO_04_PRIXML = os.path.join(REPO_04_PATH, "repodata/",
+    "6a5f64dd82a126a161657764fe8f4b4092c0a3b61b9a34bde2af89dc1df112a1-primary.xml.gz")
+REPO_04_FILXML = os.path.join(REPO_04_PATH, "repodata/",
+    "d7b8b1b6caa124aa17e4c6a1867e50e6893791ade0ebe212ab6f536695b5ce84-filelists.xml.gz")
+REPO_04_FEXXML = os.path.join(REPO_04_PATH, "repodata/",
+    "5675d4a5265eacfd0af1f366057cf2e29d02a350ea03a59c1e2644d749afbd97-filelists_ext.xml.gz")
+REPO_04_OTHXML = os.path.join(REPO_04_PATH, "repodata/",
+    "6d0101044d9b4683e4ddc76491b3eb2228cddaace9e1d148c5eb138de9f71c17-other.xml.gz")
+
 REPO_WITH_ADDITIONAL_METADATA = os.path.join(REPOS_PATH, "repo_with_additional_metadata")
 
 REPO_WITH_DUPLICATE_PACKAGES = os.path.join(REPOS_PATH, "repo_with_duplicate_packages")
@@ -121,6 +137,8 @@ PRIMARY_SNIPPET_01 = os.path.join(REPODATA_SNIPPETS, "primary_snippet_01.xml")
 PRIMARY_SNIPPET_02 = os.path.join(REPODATA_SNIPPETS, "primary_snippet_02.xml")
 FILELISTS_SNIPPET_01 = os.path.join(REPODATA_SNIPPETS, "filelists_snippet_01.xml")
 FILELISTS_SNIPPET_02 = os.path.join(REPODATA_SNIPPETS, "filelists_snippet_02.xml")
+FILELISTS_EXT_SNIPPET_01 = os.path.join(REPODATA_SNIPPETS, "filelists_ext_snippet_01.xml")
+FILELISTS_EXT_SNIPPET_02 = os.path.join(REPODATA_SNIPPETS, "filelists_extXS_snippet_02.xml")
 OTHER_SNIPPET_01 = os.path.join(REPODATA_SNIPPETS, "other_snippet_01.xml")
 OTHER_SNIPPET_02 = os.path.join(REPODATA_SNIPPETS, "other_snippet_02.xml")
 

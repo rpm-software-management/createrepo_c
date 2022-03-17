@@ -177,7 +177,7 @@ typedef struct {
         (they have different basenames, mtimes or sizes),
         then we want to ignore these packages during
         loading. It's because the pkgId is used to pair metadata from
-        primary.xml with metadata from filelists.xml and other.xml and
+        primary.xml with metadata from filelists[_ext].xml and other.xml and
         we want the pkgId to be unique.
         Key is pkgId and value is NULL. */
     cr_ParsingState state;
@@ -553,7 +553,7 @@ cr_metadata_load_xml(cr_Metadata *md,
     intern_hashtable = cr_new_metadata_hashtable();
     result = cr_load_xml_files(intern_hashtable,
                                ml->pri_xml_href,
-                               ml->fil_xml_href,
+                               ml->fex_xml_href ? ml->fex_xml_href : ml->fil_xml_href,
                                ml->oth_xml_href,
                                md->chunk,
                                md->pkglist_ht,

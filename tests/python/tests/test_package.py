@@ -32,6 +32,7 @@ class TestCasePackage(unittest.TestCase):
         self.assertEqual(pkg.location_href, None)
         self.assertEqual(pkg.location_base, None)
         self.assertEqual(pkg.checksum_type, "sha256")
+        self.assertEqual(pkg.files_checksum_type, "sha256")
         self.assertEqual(pkg.requires, [])
         self.assertEqual(pkg.provides, [
             ('empty', 'EQ', '0', '0', '0', False),
@@ -77,6 +78,7 @@ class TestCasePackage(unittest.TestCase):
         self.assertEqual(pkg.location_href, None)
         self.assertEqual(pkg.location_base, None)
         self.assertEqual(pkg.checksum_type, "sha256")
+        self.assertEqual(pkg.files_checksum_type, "sha256")
         self.assertEqual(pkg.requires, [
             ('fooa', 'LE', '0', '2', None, False),
             ('foob', 'GE', '0', '1.0.0', '1', False),
@@ -113,9 +115,9 @@ class TestCasePackage(unittest.TestCase):
         self.assertEqual(pkg.recommends, [])
         self.assertEqual(pkg.supplements, [])
         self.assertEqual(pkg.files, [
-            ('', '/usr/bin/', 'complex_a'),
-            ('dir', '/usr/share/doc/', 'Archer-3.4.5'),
-            ('', '/usr/share/doc/Archer-3.4.5/', 'README')
+            ('', '/usr/bin/', 'complex_a', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'),
+            ('dir', '/usr/share/doc/', 'Archer-3.4.5', ''),
+            ('', '/usr/share/doc/Archer-3.4.5/', 'README', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')
             ])
         self.assertEqual(pkg.changelogs, [
             ('Tomas Mlcoch <tmlcoch@redhat.com> - 1.1.1-1', 1334664000,
@@ -200,8 +202,8 @@ class TestCasePackage(unittest.TestCase):
         self.assertEqual(pkg.recommends, [('foo_rec', 'GE', '0', '1.1.0', None, False)])
         pkg.supplements = [('foo_sup', 'GE', '0', '1.1.0', None, False)]
         self.assertEqual(pkg.supplements, [('foo_sup', 'GE', '0', '1.1.0', None, False)])
-        pkg.files = [(None, '/foo/', 'bar')]
-        self.assertEqual(pkg.files, [(None, '/foo/', 'bar')])
+        pkg.files = [(None, '/foo/', 'bar', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')]
+        self.assertEqual(pkg.files, [(None, '/foo/', 'bar', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')])
         pkg.changelogs = [('me', 123456, 'first commit')]
         self.assertEqual(pkg.changelogs, [('me', 123456, 'first commit')])
 
@@ -228,4 +230,3 @@ class TestCasePackage(unittest.TestCase):
         del(pkg_c)
         self.assertEqual(pkg_d.name, "FooPackage")
         del(pkg_d)
-

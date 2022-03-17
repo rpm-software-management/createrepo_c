@@ -32,7 +32,7 @@
 
 
 void
-cr_xml_dump_filelists_items(xmlNodePtr root, cr_Package *package)
+cr_xml_dump_filelists_items(xmlNodePtr root, cr_Package *package, gboolean filelists_ext)
 {
     /***********************************
      Element: package
@@ -66,15 +66,19 @@ cr_xml_dump_filelists_items(xmlNodePtr root, cr_Package *package)
     // Write version attribute rel
     cr_xmlNewProp(version, BAD_CAST "rel", BAD_CAST package->release);
 
+    if (filelists_ext) {
+        // Add checksum files type
+        xmlNodePtr checksum = xmlNewChild(root, NULL, BAD_CAST "checksum", NULL);
+        cr_xmlNewProp(checksum, BAD_CAST "type", BAD_CAST package->files_checksum_type);
+    }
 
     // Files dump
-
-    cr_xml_dump_files(root, package, 0);
+    cr_xml_dump_files(root, package, 0, filelists_ext);
 }
 
 
 char *
-cr_xml_dump_filelists(cr_Package *package, GError **err)
+cr_xml_dump_filelists_chunk(cr_Package *package, gboolean filelists_ext, GError **err)
 {
     xmlNodePtr root;
     char *result;
@@ -99,7 +103,7 @@ cr_xml_dump_filelists(cr_Package *package, GError **err)
     }
 
     root = xmlNewNode(NULL, BAD_CAST "package");
-    cr_xml_dump_filelists_items(root, package);
+    cr_xml_dump_filelists_items(root, package, filelists_ext);
     // xmlNodeDump seems to be a little bit faster than xmlDocDumpFormatMemory
     xmlNodeDump(buf, NULL, root, FORMAT_LEVEL, FORMAT_XML);
     assert(buf->content);
@@ -114,4 +118,18 @@ cr_xml_dump_filelists(cr_Package *package, GError **err)
     xmlFreeNode(root);
 
     return result;
+}
+
+
+char *
+cr_xml_dump_filelists(cr_Package *package, GError **err)
+{
+    return cr_xml_dump_filelists_chunk(package, FALSE, err);
+}
+
+
+char *
+cr_xml_dump_filelists_ext(cr_Package *package, GError **err)
+{
+    return cr_xml_dump_filelists_chunk(package, TRUE, err);
 }

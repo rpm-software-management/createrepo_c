@@ -78,6 +78,15 @@ wait_for_incremented_ids(long id, struct UserData *udata)
     g_cond_broadcast(&(udata->cond_fil));
     g_mutex_unlock(&(udata->mutex_fil));
 
+    if (udata->filelists_ext) {
+        g_mutex_lock(&(udata->mutex_fex));
+        while (udata->id_fex != id)
+            g_cond_wait (&(udata->cond_fex), &(udata->mutex_fex));
+        ++udata->id_fex;
+        g_cond_broadcast(&(udata->cond_fex));
+        g_mutex_unlock(&(udata->mutex_fex));
+    }
+
     g_mutex_lock(&(udata->mutex_oth));
     while (udata->id_oth != id)
         g_cond_wait (&(udata->cond_oth), &(udata->mutex_oth));
@@ -190,6 +199,51 @@ write_pkg(long id,
     g_cond_broadcast(&(udata->cond_fil));
     g_mutex_unlock(&(udata->mutex_fil));
 
+    // Write filelist_ext data
+    if (udata->filelists_ext) {
+        g_mutex_lock(&(udata->mutex_fex));
+        while (udata->id_fex != id)
+            g_cond_wait (&(udata->cond_fex), &(udata->mutex_fex));
+        ++udata->id_fex;
+        cr_xmlfile_add_chunk(udata->fex_f, (const char *) res.filelists_ext, &tmp_err);
+        if (tmp_err) {
+            g_critical("Cannot add filelists_ext chunk:\n%s\nError: %s",
+                       res.filelists_ext, tmp_err->message);
+            udata->had_errors = TRUE;
+            g_clear_error(&tmp_err);
+        }
+
+        if (udata->fex_db) {
+            cr_db_add_pkg(udata->fex_db, pkg, &tmp_err);
+            if (tmp_err) {
+                g_critical("Cannot add record of %s (%s) to filelists_ext db: %s",
+                           pkg->name, pkg->pkgId, tmp_err->message);
+                udata->had_errors = TRUE;
+                g_clear_error(&tmp_err);
+            }
+        }
+        if (udata->fex_zck) {
+            if (new_pkg) {
+                cr_end_chunk(udata->fex_zck->f, &tmp_err);
+                if (tmp_err) {
+                    g_critical("Unable to end filelists_ext zchunk: %s", tmp_err->message);
+                    udata->had_errors = TRUE;
+                    g_clear_error(&tmp_err);
+                }
+            }
+            cr_xmlfile_add_chunk(udata->fex_zck, (const char *) res.filelists_ext, &tmp_err);
+            if (tmp_err) {
+                g_critical("Cannot add filelists_ext zchunk:\n%s\nError: %s",
+                           res.filelists_ext, tmp_err->message);
+                udata->had_errors = TRUE;
+                g_clear_error(&tmp_err);
+            }
+        }
+
+        g_cond_broadcast(&(udata->cond_fex));
+        g_mutex_unlock(&(udata->mutex_fex));
+    }
+
     // Write other data
     g_mutex_lock(&(udata->mutex_oth));
     while (udata->id_oth != id)
@@ -266,7 +320,12 @@ cr_delayed_dump_run(gpointer user_data)
             goto next_package;
         }
 
-        struct cr_XmlStruct res = cr_xml_dump(dtask.pkg, &tmp_err);
+        struct cr_XmlStruct res;
+        if (udata->filelists_ext) {
+            res = cr_xml_dump_ext(dtask.pkg,  &tmp_err);
+        } else {
+            res = cr_xml_dump(dtask.pkg, &tmp_err);
+        }
         if (tmp_err) {
             g_critical("Cannot dump XML for %s (%s): %s",
                        dtask.pkg->name, dtask.pkg->pkgId, tmp_err->message);
@@ -279,6 +338,7 @@ cr_delayed_dump_run(gpointer user_data)
 
         g_free(res.primary);
         g_free(res.filelists);
+        g_free(res.filelists_ext);
         g_free(res.other);
 next_package:
         if (dtask.clean)
@@ -663,7 +723,11 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     // Pre-calculate the XML data aside any critical section, and early enough
     // so we can put it into the buffer (so buffered single-threaded write later
     // is faster).
-    res = cr_xml_dump(pkg, &tmp_err);
+    if (udata->filelists_ext) {
+        res = cr_xml_dump_ext(pkg,  &tmp_err);
+    } else {
+        res = cr_xml_dump(pkg, &tmp_err);
+    }
     if (tmp_err) {
         g_critical("Cannot dump XML for %s (%s): %s",
                    pkg->name, pkg->pkgId, tmp_err->message);
@@ -709,6 +773,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
 
     g_free(res.primary);
     g_free(res.filelists);
+    g_free(res.filelists_ext);
     g_free(res.other);
 
 task_cleanup:
@@ -741,6 +806,7 @@ task_cleanup:
                 cr_package_free(buf_task->pkg);
             g_free(buf_task->res.primary);
             g_free(buf_task->res.filelists);
+            g_free(buf_task->res.filelists_ext);
             g_free(buf_task->res.other);
             g_free(buf_task);
         } else {

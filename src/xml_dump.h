@@ -66,6 +66,8 @@ extern "C" {
 #define CR_XML_COMMON_NS            "http://linux.duke.edu/metadata/common"
 /** Default namespace for filelists.xml */
 #define CR_XML_FILELISTS_NS         "http://linux.duke.edu/metadata/filelists"
+/** Default namespace for filelists_ext.xml */
+#define CR_XML_FILELISTS_EXT_NS         "http://linux.duke.edu/metadata/filelists_ext"
 /** Default namespace for other.xml */
 #define CR_XML_OTHER_NS             "http://linux.duke.edu/metadata/other"
 /** Default namespace for repomd.xml */
@@ -74,12 +76,13 @@ extern "C" {
 #define CR_XML_RPM_NS               "http://linux.duke.edu/metadata/rpm"
 
 
-/** Xml chunks for primary.xml, filelists.xml and other.xml.
+/** Xml chunks for primary.xml, filelists[_ext].xml and other.xml.
  */
 struct cr_XmlStruct {
-    char *primary;      /*!< XML chunk for primary.xml */
-    char *filelists;    /*!< XML chunk for filelists.xml */
-    char *other;        /*!< XML chunk for other.xml */
+    char *primary;          /*!< XML chunk for primary.xml */
+    char *filelists;        /*!< XML chunk for filelists.xml */
+    char *filelists_ext;    /*!< XML chunk for filelists_ext.xml */
+    char *other;            /*!< XML chunk for other.xml */
 };
 
 /** Initialize dumping part of library (Initialize libxml2).
@@ -104,6 +107,13 @@ char *cr_xml_dump_primary(cr_Package *package, GError **err);
  */
 char *cr_xml_dump_filelists(cr_Package *package, GError **err);
 
+/** Generate filelists_ext xml chunk from cr_Package.
+ * @param package       cr_Package
+ * @param err           **GError
+ * @return              xml chunk string or NULL on error
+ */
+char *cr_xml_dump_filelists_ext(cr_Package *package, GError **err);
+
 /** Generate other xml chunk from cr_Package.
  * @param package       cr_Package
  * @param err           **GError
@@ -117,6 +127,13 @@ char *cr_xml_dump_other(cr_Package *package, GError **err);
  * @return              cr_XmlStruct
  */
 struct cr_XmlStruct cr_xml_dump(cr_Package *package, GError **err);
+
+/** Generate all four xml chunks (primary, filelists[_ext], other) from cr_Package.
+ * @param package       cr_Package
+ * @param err           **GError
+ * @return              cr_XmlStruct
+ */
+struct cr_XmlStruct cr_xml_dump_ext(cr_Package *package, GError **err);
 
 /** Generate xml representation of cr_Repomd.
  * @param repomd        cr_Repomd

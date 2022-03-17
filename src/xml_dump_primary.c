@@ -372,7 +372,7 @@ cr_xml_dump_primary_base_items(xmlNodePtr root, cr_Package *package)
     cr_xml_dump_primary_dump_pco(format,   package, PCO_TYPE_ENHANCES);
     cr_xml_dump_primary_dump_pco(format,   package, PCO_TYPE_RECOMMENDS);
     cr_xml_dump_primary_dump_pco(format,   package, PCO_TYPE_SUPPLEMENTS);
-    cr_xml_dump_files(format, package, 1);
+    cr_xml_dump_files(format, package, 1, FALSE);
 }
 
 

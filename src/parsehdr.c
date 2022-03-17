@@ -20,6 +20,7 @@
 #include <glib.h>
 #include <assert.h>
 #include <rpm/rpmfi.h>
+#include <rpm/rpmpgp.h>
 #include <stdlib.h>
 #include "parsehdr.h"
 #include "xml_dump.h"
@@ -77,6 +78,34 @@ static DepItem dep_items[] = {
 #endif
     { DEP_SENTINEL, 0, 0, 0 },
 };
+
+static const char *
+cr_hash_algo_str(const pgpHashAlgo algo) {
+    switch (algo) {
+    case PGPHASHALGO_MD5:
+        return "md5";
+    case PGPHASHALGO_SHA1:
+        return "sha1";
+    case PGPHASHALGO_RIPEMD160:
+        return "ripemd160";
+    case PGPHASHALGO_MD2:
+        return "md2";
+    case PGPHASHALGO_TIGER192:
+        return "tiger192";
+    case PGPHASHALGO_HAVAL_5_160:
+        return "haval-5-160";
+    case PGPHASHALGO_SHA256:
+        return "sha256";
+    case PGPHASHALGO_SHA384:
+        return "sha384";
+    case PGPHASHALGO_SHA512:
+        return "sha512";
+    case PGPHASHALGO_SHA224:
+        return "sha224";
+    default:
+        return "unknown";
+    }
+}
 
 static inline int
 cr_compare_dependency(const char *dep1, const char *dep2)
@@ -214,6 +243,8 @@ cr_package_from_header(Header hdr,
     if (headerGet(hdr, RPMTAG_LONGSIZE, td, flags)) {
         pkg->size_installed = rpmtdGetNumber(td);
     }
+    pgpHashAlgo fda = headerGetNumber(hdr, RPMTAG_FILEDIGESTALGO);
+    pkg->files_checksum_type = cr_safe_string_chunk_insert(pkg->chunk, cr_hash_algo_str(fda));
     rpmtdFreeData(td);
     // RPMTAG_LONGARCHIVESIZE is allways present (is emulated for small packages because HEADERGET_EXT flag was used)
     if (headerGet(hdr, RPMTAG_LONGARCHIVESIZE, td, flags)) {
@@ -229,10 +260,11 @@ cr_package_from_header(Header hdr,
     //
 
     rpmtd full_filenames = rpmtdNew(); // Only for filenames_hashtable
-    rpmtd indexes   = rpmtdNew();
-    rpmtd filenames = rpmtdNew();
-    rpmtd fileflags = rpmtdNew();
-    rpmtd filemodes = rpmtdNew();
+    rpmtd indexes     = rpmtdNew();
+    rpmtd filenames   = rpmtdNew();
+    rpmtd fileflags   = rpmtdNew();
+    rpmtd filemodes   = rpmtdNew();
+    rpmtd filedigests = rpmtdNew();
 
     GHashTable *filenames_hashtable = g_hash_table_new(g_str_hash, g_str_equal);
 
@@ -253,22 +285,25 @@ cr_package_from_header(Header hdr,
         assert(x == dir_count);
     }
 
-    if (headerGet(hdr, RPMTAG_FILENAMES,  full_filenames,  flags) &&
-        headerGet(hdr, RPMTAG_DIRINDEXES, indexes,  flags) &&
-        headerGet(hdr, RPMTAG_BASENAMES,  filenames, flags) &&
-        headerGet(hdr, RPMTAG_FILEFLAGS,  fileflags, flags) &&
-        headerGet(hdr, RPMTAG_FILEMODES,  filemodes, flags))
+    if (headerGet(hdr, RPMTAG_FILENAMES,   full_filenames,  flags) &&
+        headerGet(hdr, RPMTAG_DIRINDEXES,  indexes,     flags) &&
+        headerGet(hdr, RPMTAG_BASENAMES,   filenames,   flags) &&
+        headerGet(hdr, RPMTAG_FILEFLAGS,   fileflags,   flags) &&
+        headerGet(hdr, RPMTAG_FILEMODES,   filemodes,   flags) &&
+        headerGet(hdr, RPMTAG_FILEDIGESTS, filedigests, flags))
     {
         rpmtdInit(full_filenames);
         rpmtdInit(indexes);
         rpmtdInit(filenames);
         rpmtdInit(fileflags);
         rpmtdInit(filemodes);
+        rpmtdInit(filedigests);
         while ((rpmtdNext(full_filenames) != -1)   &&
                (rpmtdNext(indexes) != -1)   &&
                (rpmtdNext(filenames) != -1) &&
                (rpmtdNext(fileflags) != -1) &&
-               (rpmtdNext(filemodes) != -1))
+               (rpmtdNext(filemodes) != -1) &&
+               (rpmtdNext(filedigests) != -1))
         {
             cr_PackageFile *packagefile = cr_package_file_new();
             packagefile->name = cr_safe_string_chunk_insert(pkg->chunk,
@@ -286,6 +321,9 @@ cr_package_from_header(Header hdr,
                 packagefile->type = cr_safe_string_chunk_insert(pkg->chunk, "");
             }
 
+            packagefile->digest = cr_safe_string_chunk_insert(pkg->chunk,
+                                                              rpmtdGetString(filedigests));
+
             g_hash_table_replace(filenames_hashtable,
                                  (gpointer) rpmtdGetString(full_filenames),
                                  (gpointer) rpmtdGetString(full_filenames));
@@ -298,11 +336,13 @@ cr_package_from_header(Header hdr,
         rpmtdFreeData(filenames);
         rpmtdFreeData(fileflags);
         rpmtdFreeData(filemodes);
+        rpmtdFreeData(filedigests);
     }
 
     rpmtdFree(dirnames);
     rpmtdFree(indexes);
     rpmtdFree(filemodes);
+    rpmtdFree(filedigests);
 
     if (dir_list) {
         free((void *) dir_list);

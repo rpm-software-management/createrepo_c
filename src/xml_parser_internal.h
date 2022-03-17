@@ -35,7 +35,7 @@ extern "C" {
 #define XML_BUFFER_SIZE         8192
 #define CONTENT_REALLOC_STEP    256
 
-/* Some notes about XML parsing (primary, filelists, other)
+/* Some notes about XML parsing (primary, filelists[_ext], other)
  * ========================================================
  * - Error during parsing is indicated via cr_ParserData->err member.
  * - User specified callback have to be sanitized! User callbacks
@@ -44,7 +44,7 @@ extern "C" {
  *   of the callback has to set the GError by himself.
  */
 
-/** File types in filelists.xml
+/** File types in filelists[_ext].xml
  */
 typedef enum {
     FILE_FILE,
@@ -88,6 +88,7 @@ typedef struct _cr_ParserData {
         Was the main tag present? E.g.:
         For primary.xml <metadata>
         For filelists.xml <filelists>
+        For filelists_ext.xml <filelists_ext>
         For other.xml <otherdata>
         For repomd.xml <repomd>
         For updateinfo.xml <updates>
@@ -128,6 +129,8 @@ typedef struct _cr_ParserData {
 
     cr_FileType last_file_type; /*!<
         Type of file in a currently parsed element */
+    char *last_digest; /*!<
+        Disgest of the current parsed element */
 
     /* Other related stuff */
 

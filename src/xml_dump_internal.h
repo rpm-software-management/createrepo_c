@@ -47,8 +47,9 @@ extern "C" {
  * @param package       cr_Package
  * @param primary       process only primary files (see cr_is_primary() function
  *                      in the misc module)
+ * @param filelists_ext includes the optional hash attribute for each file
  */
-void cr_xml_dump_files(xmlNodePtr node, cr_Package *package, int primary);
+void cr_xml_dump_files(xmlNodePtr node, cr_Package *package, int primary, gboolean filelists_ext);
 
 /** Createrepo_c wrapper over libxml xmlNewTextChild.
  * It allows content to be NULL and non UTF-8 (if content is no UTF8

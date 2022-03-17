@@ -102,6 +102,26 @@ struct cr_XmlStruct cr_xml_from_rpm(const char *filename,
                                     struct stat *stat_buf,
                                     GError **err);
 
+/** Generate XML, including filelists_ext, for the specified package.
+ * @param filename              rpm filename
+ * @param checksum_type         type of checksum to be used
+ * @param location_href         package location inside repository
+ * @param location_base         location (url) of repository
+ * @param changelog_limit       number of changelog entries
+ * @param stat_buf              struct stat of the filename
+ *                              (optional - could be NULL)
+ * @param err                   GError **
+ * @return                      struct cr_XmlStruct with primary, filelists[_ext]
+ *                              and other xmls
+ */
+struct cr_XmlStruct cr_xml_from_rpm_ext(const char *filename,
+                                        cr_ChecksumType checksum_type,
+                                        const char *location_href,
+                                        const char *location_base,
+                                        int changelog_limit,
+                                        struct stat *stat_buf,
+                                        GError **err);
+
 /** @} */
 
 #ifdef __cplusplus

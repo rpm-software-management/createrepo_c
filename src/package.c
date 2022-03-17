@@ -210,6 +210,7 @@ cr_package_copy_into(cr_Package *orig, cr_Package *pkg)
     pkg->location_href    = cr_safe_string_chunk_insert(pkg->chunk, orig->location_href);
     pkg->location_base    = cr_safe_string_chunk_insert(pkg->chunk, orig->location_base);
     pkg->checksum_type    = cr_safe_string_chunk_insert(pkg->chunk, orig->checksum_type);
+    pkg->files_checksum_type = cr_safe_string_chunk_insert(pkg->chunk, orig->files_checksum_type);
 
     pkg->requires    = cr_dependency_dup(pkg->chunk, orig->requires);
     pkg->provides    = cr_dependency_dup(pkg->chunk, orig->provides);
@@ -223,9 +224,10 @@ cr_package_copy_into(cr_Package *orig, cr_Package *pkg)
     for (GSList *elem = orig->files; elem; elem = g_slist_next(elem)) {
         cr_PackageFile *orig_file = elem->data;
         cr_PackageFile *file = cr_package_file_new();
-        file->type = cr_safe_string_chunk_insert(pkg->chunk, orig_file->type);
-        file->path = cr_safe_string_chunk_insert(pkg->chunk, orig_file->path);
-        file->name = cr_safe_string_chunk_insert(pkg->chunk, orig_file->name);
+        file->type   = cr_safe_string_chunk_insert(pkg->chunk, orig_file->type);
+        file->path   = cr_safe_string_chunk_insert(pkg->chunk, orig_file->path);
+        file->name   = cr_safe_string_chunk_insert(pkg->chunk, orig_file->name);
+        file->digest = cr_safe_string_chunk_insert(pkg->chunk, orig_file->digest);
         pkg->files = g_slist_prepend(pkg->files, file);
     }
 

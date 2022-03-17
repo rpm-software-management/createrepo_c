@@ -1062,23 +1062,28 @@ main(int argc, char **argv)
     }
 
     // Create and open new compressed files
-    cr_XmlFile *pri_cr_file;
-    cr_XmlFile *fil_cr_file;
-    cr_XmlFile *oth_cr_file;
+    cr_XmlFile *pri_cr_file = NULL;
+    cr_XmlFile *fil_cr_file = NULL;
+    cr_XmlFile *fex_cr_file = NULL;
+    cr_XmlFile *oth_cr_file = NULL;
 
-    cr_ContentStat *pri_stat;
-    cr_ContentStat *fil_stat;
-    cr_ContentStat *oth_stat;
+    cr_ContentStat *pri_stat = NULL;
+    cr_ContentStat *fil_stat = NULL;
+    cr_ContentStat *fex_stat = NULL;
+    cr_ContentStat *oth_stat = NULL;
 
-    gchar *pri_xml_filename;
-    gchar *fil_xml_filename;
-    gchar *oth_xml_filename;
+    gchar *pri_xml_filename = NULL;
+    gchar *fil_xml_filename = NULL;
+    gchar *fex_xml_filename = NULL;
+    gchar *oth_xml_filename = NULL;
 
     g_message("Temporary output repo path: %s", tmp_out_repo);
     g_debug("Creating .xml.gz files");
 
     pri_xml_filename = g_strconcat(tmp_out_repo, "/primary.xml", xml_compression_suffix, NULL);
     fil_xml_filename = g_strconcat(tmp_out_repo, "/filelists.xml", xml_compression_suffix, NULL);
+    if (cmd_options->filelists_ext)
+        fex_xml_filename = g_strconcat(tmp_out_repo, "/filelists_ext.xml", xml_compression_suffix, NULL);
     oth_xml_filename = g_strconcat(tmp_out_repo, "/other.xml", xml_compression_suffix, NULL);
 
     pri_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
@@ -1094,6 +1099,7 @@ main(int argc, char **argv)
         cr_contentstat_free(pri_stat, NULL);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
+        g_free(fex_xml_filename);
         g_free(oth_xml_filename);
         exit(EXIT_FAILURE);
     }
@@ -1112,9 +1118,34 @@ main(int argc, char **argv)
         cr_contentstat_free(fil_stat, NULL);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
+        g_free(fex_xml_filename);
         g_free(oth_xml_filename);
         cr_xmlfile_close(pri_cr_file, NULL);
         exit(EXIT_FAILURE);
+    }
+
+    if (cmd_options->filelists_ext) {
+        fex_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
+        fex_cr_file = cr_xmlfile_sopen_filelists_ext(fex_xml_filename,
+                                                    xml_compression,
+                                                    fex_stat,
+                                                    &tmp_err);
+        assert(fex_cr_file || tmp_err);
+        if (!fex_cr_file) {
+            g_critical("Cannot open file %s: %s",
+                       fex_xml_filename, tmp_err->message);
+            g_clear_error(&tmp_err);
+            cr_contentstat_free(pri_stat, NULL);
+            cr_contentstat_free(fil_stat, NULL);
+            cr_contentstat_free(fex_stat, NULL);
+            g_free(pri_xml_filename);
+            g_free(fil_xml_filename);
+            g_free(fex_xml_filename);
+            g_free(oth_xml_filename);
+            cr_xmlfile_close(fil_cr_file, NULL);
+            cr_xmlfile_close(pri_cr_file, NULL);
+            exit(EXIT_FAILURE);
+        }
     }
 
     oth_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
@@ -1129,10 +1160,13 @@ main(int argc, char **argv)
         g_clear_error(&tmp_err);
         cr_contentstat_free(pri_stat, NULL);
         cr_contentstat_free(fil_stat, NULL);
+        cr_contentstat_free(fex_stat, NULL);
         cr_contentstat_free(oth_stat, NULL);
         g_free(pri_xml_filename);
         g_free(fil_xml_filename);
+        g_free(fex_xml_filename);
         g_free(oth_xml_filename);
+        cr_xmlfile_close(fex_cr_file, NULL);
         cr_xmlfile_close(fil_cr_file, NULL);
         cr_xmlfile_close(pri_cr_file, NULL);
         exit(EXIT_FAILURE);
@@ -1143,6 +1177,8 @@ main(int argc, char **argv)
     if (!cmd_options->delayed_dump) {
         cr_xmlfile_set_num_of_pkgs(pri_cr_file, task_count, NULL);
         cr_xmlfile_set_num_of_pkgs(fil_cr_file, task_count, NULL);
+	if (cmd_options->filelists_ext)
+            cr_xmlfile_set_num_of_pkgs(fex_cr_file, task_count, NULL);
         cr_xmlfile_set_num_of_pkgs(oth_cr_file, task_count, NULL);
         package_count_in_headers = task_count;
     }
@@ -1150,14 +1186,17 @@ main(int argc, char **argv)
     // Open sqlite databases
     gchar *pri_db_filename = NULL;
     gchar *fil_db_filename = NULL;
+    gchar *fex_db_filename = NULL;
     gchar *oth_db_filename = NULL;
     cr_SqliteDb *pri_db = NULL;
     cr_SqliteDb *fil_db = NULL;
+    cr_SqliteDb *fex_db = NULL;
     cr_SqliteDb *oth_db = NULL;
 
     if (!cmd_options->no_database) {
         _cleanup_file_close_ int pri_db_fd = -1;
         _cleanup_file_close_ int fil_db_fd = -1;
+        _cleanup_file_close_ int fex_db_fd = -1;
         _cleanup_file_close_ int oth_db_fd = -1;
 
         g_message("Preparing sqlite DBs");
@@ -1165,12 +1204,16 @@ main(int argc, char **argv)
             g_debug("Creating databases");
             pri_db_filename = g_strconcat(tmp_out_repo, "/primary.sqlite", NULL);
             fil_db_filename = g_strconcat(tmp_out_repo, "/filelists.sqlite", NULL);
+	    if (cmd_options->filelists_ext)
+                fex_db_filename = g_strconcat(tmp_out_repo, "/filelists_ext.sqlite", NULL);
             oth_db_filename = g_strconcat(tmp_out_repo, "/other.sqlite", NULL);
         } else {
             g_debug("Creating databases localy");
             const gchar *tmpdir = g_get_tmp_dir();
             pri_db_filename = g_build_filename(tmpdir, "primary.XXXXXX.sqlite", NULL);
             fil_db_filename = g_build_filename(tmpdir, "filelists.XXXXXX.sqlite", NULL);
+	    if (cmd_options->filelists_ext)
+                fex_db_filename = g_build_filename(tmpdir, "filelists_ext.XXXXXX.sqlite", NULL);
             oth_db_filename = g_build_filename(tmpdir, "other.XXXXXXX.sqlite", NULL);
             pri_db_fd = g_mkstemp(pri_db_filename);
             g_debug("%s", pri_db_filename);
@@ -1183,6 +1226,14 @@ main(int argc, char **argv)
             if (fil_db_fd == -1) {
                 g_critical("Cannot open %s: %s", fil_db_filename, g_strerror(errno));
                 exit(EXIT_FAILURE);
+            }
+            if (cmd_options->filelists_ext) {
+                fex_db_fd = g_mkstemp(fex_db_filename);
+                 g_debug("%s", fex_db_filename);
+                if (fex_db_fd == -1) {
+                    g_critical("Cannot open %s: %s", fex_db_filename, g_strerror(errno));
+                    exit(EXIT_FAILURE);
+                }
             }
             oth_db_fd = g_mkstemp(oth_db_filename);
             g_debug("%s", oth_db_filename);
@@ -1210,6 +1261,21 @@ main(int argc, char **argv)
             exit(EXIT_FAILURE);
         }
 
+        if (cmd_options->filelists_ext) {
+            // TODO(aplanas): For now, the SQListe database for
+            // filenames_ext will be the same that for filenames,
+            // until we decide how will be the schema change.
+            // fex_db = cr_db_open_filelists_ext(fex_db_filename, &tmp_err);
+            fex_db = cr_db_open_filelists(fex_db_filename, &tmp_err);
+            assert(fex_db || tmp_err);
+            if (!fex_db) {
+                g_critical("Cannot open %s: %s",
+                           fex_db_filename, tmp_err->message);
+                g_clear_error(&tmp_err);
+                exit(EXIT_FAILURE);
+            }
+        }
+
         oth_db = cr_db_open_other(oth_db_filename, &tmp_err);
         assert(oth_db || tmp_err);
         if (!oth_db) {
@@ -1222,21 +1288,27 @@ main(int argc, char **argv)
 
     gchar *pri_zck_filename = NULL;
     gchar *fil_zck_filename = NULL;
+    gchar *fex_zck_filename = NULL;
     gchar *oth_zck_filename = NULL;
     cr_XmlFile *pri_cr_zck = NULL;
     cr_XmlFile *fil_cr_zck = NULL;
+    cr_XmlFile *fex_cr_zck = NULL;
     cr_XmlFile *oth_cr_zck = NULL;
     cr_ContentStat *pri_zck_stat = NULL;
     cr_ContentStat *fil_zck_stat = NULL;
+    cr_ContentStat *fex_zck_stat = NULL;
     cr_ContentStat *oth_zck_stat = NULL;
     gchar *pri_dict = NULL;
     gchar *fil_dict = NULL;
+    gchar *fex_dict = NULL;
     gchar *oth_dict = NULL;
     size_t pri_dict_size = 0;
     size_t fil_dict_size = 0;
+    size_t fex_dict_size = 0;
     size_t oth_dict_size = 0;
     gchar *pri_dict_file = NULL;
     gchar *fil_dict_file = NULL;
+    gchar *fex_dict_file = NULL;
     gchar *oth_dict_file = NULL;
 
     if (cmd_options->zck_dict_dir) {
@@ -1244,6 +1316,9 @@ main(int argc, char **argv)
                                          "primary.xml");
         fil_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
                                          "filelists.xml");
+	if (cmd_options->filelists_ext)
+            fex_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
+                                             "filelists_ext.xml");
         oth_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
                                          "other.xml");
         if (pri_dict_file && !g_file_get_contents(pri_dict_file, &pri_dict,
@@ -1260,6 +1335,13 @@ main(int argc, char **argv)
             g_clear_error(&tmp_err);
             exit(EXIT_FAILURE);
         }
+        if (fex_dict_file && !g_file_get_contents(fex_dict_file, &fex_dict,
+                                                 &fex_dict_size, &tmp_err)) {
+            g_critical("Error reading zchunk filelists dict %s: %s",
+                       fex_dict_file, tmp_err->message);
+            g_clear_error(&tmp_err);
+            exit(EXIT_FAILURE);
+	}
         if (oth_dict_file && !g_file_get_contents(oth_dict_file, &oth_dict,
                                                  &oth_dict_size, &tmp_err)) {
             g_critical("Error reading zchunk other dict %s: %s",
@@ -1273,6 +1355,8 @@ main(int argc, char **argv)
 
         pri_zck_filename = g_strconcat(tmp_out_repo, "/primary.xml.zck", NULL);
         fil_zck_filename = g_strconcat(tmp_out_repo, "/filelists.xml.zck", NULL);
+	if (cmd_options->filelists_ext)
+            fex_zck_filename = g_strconcat(tmp_out_repo, "/filelists_ext.xml.zck", NULL);
         oth_zck_filename = g_strconcat(tmp_out_repo, "/other.xml.zck", NULL);
 
         pri_zck_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
@@ -1288,6 +1372,7 @@ main(int argc, char **argv)
             cr_contentstat_free(pri_zck_stat, NULL);
             g_free(pri_zck_filename);
             g_free(fil_zck_filename);
+            g_free(fex_zck_filename);
             g_free(oth_zck_filename);
             exit(EXIT_FAILURE);
         }
@@ -1314,6 +1399,7 @@ main(int argc, char **argv)
             cr_contentstat_free(fil_zck_stat, NULL);
             g_free(pri_zck_filename);
             g_free(fil_zck_filename);
+            g_free(fex_zck_filename);
             g_free(oth_zck_filename);
             cr_xmlfile_close(pri_cr_zck, NULL);
             exit(EXIT_FAILURE);
@@ -1327,6 +1413,37 @@ main(int argc, char **argv)
         }
         g_free(fil_dict);
 
+        if (cmd_options->filelists_ext) {
+            fex_zck_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
+            fex_cr_zck = cr_xmlfile_sopen_filelists_ext(fex_zck_filename,
+                                                        CR_CW_ZCK_COMPRESSION,
+                                                        fex_zck_stat,
+                                                        &tmp_err);
+            assert(fex_cr_zck || tmp_err);
+            if (!fex_cr_zck) {
+                g_critical("Cannot open file %s: %s",
+                           fex_zck_filename, tmp_err->message);
+                g_clear_error(&tmp_err);
+                cr_contentstat_free(pri_zck_stat, NULL);
+                cr_contentstat_free(fil_zck_stat, NULL);
+                cr_contentstat_free(fex_zck_stat, NULL);
+                g_free(pri_zck_filename);
+                g_free(fil_zck_filename);
+                g_free(fex_zck_filename);
+                g_free(oth_zck_filename);
+                cr_xmlfile_close(pri_cr_zck, NULL);
+                exit(EXIT_FAILURE);
+            }
+            cr_set_dict(fex_cr_zck->f, fex_dict, fex_dict_size, &tmp_err);
+            if (tmp_err) {
+                g_critical("Error reading setting filelists_ext dict %s: %s",
+                           fex_dict_file, tmp_err->message);
+                g_clear_error(&tmp_err);
+                exit(EXIT_FAILURE);
+            }
+            g_free(fex_dict);
+        }
+
         oth_zck_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
         oth_cr_zck = cr_xmlfile_sopen_other(oth_zck_filename,
                                             CR_CW_ZCK_COMPRESSION,
@@ -1339,10 +1456,13 @@ main(int argc, char **argv)
             g_clear_error(&tmp_err);
             cr_contentstat_free(pri_zck_stat, NULL);
             cr_contentstat_free(fil_zck_stat, NULL);
+            cr_contentstat_free(fex_zck_stat, NULL);
             cr_contentstat_free(oth_zck_stat, NULL);
             g_free(pri_zck_filename);
             g_free(fil_zck_filename);
+            g_free(fex_zck_filename);
             g_free(oth_zck_filename);
+            cr_xmlfile_close(fex_cr_zck, NULL);
             cr_xmlfile_close(fil_cr_zck, NULL);
             cr_xmlfile_close(pri_cr_zck, NULL);
             exit(EXIT_FAILURE);
@@ -1361,6 +1481,8 @@ main(int argc, char **argv)
         if (!cmd_options->delayed_dump) {
             cr_xmlfile_set_num_of_pkgs(pri_cr_zck, task_count, NULL);
             cr_xmlfile_set_num_of_pkgs(fil_cr_zck, task_count, NULL);
+            if (cmd_options->filelists_ext)
+                cr_xmlfile_set_num_of_pkgs(fex_cr_zck, task_count, NULL);
             cr_xmlfile_set_num_of_pkgs(oth_cr_zck, task_count, NULL);
         }
     }
@@ -1368,23 +1490,27 @@ main(int argc, char **argv)
     // Thread pool - User data initialization
     user_data.pri_f             = pri_cr_file;
     user_data.fil_f             = fil_cr_file;
+    user_data.fex_f             = fex_cr_file;
     user_data.oth_f             = oth_cr_file;
     user_data.pri_db            = pri_db;
     user_data.fil_db            = fil_db;
+    user_data.fex_db            = fex_db;
     user_data.oth_db            = oth_db;
     user_data.pri_zck           = pri_cr_zck;
     user_data.fil_zck           = fil_cr_zck;
+    user_data.fex_zck           = fex_cr_zck;
     user_data.oth_zck           = oth_cr_zck;
     if (cmd_options->compatibility && cmd_options->changelog_limit == DEFAULT_CHANGELOG_LIMIT ) {
-      user_data.changelog_limit   = -1;
+      user_data.changelog_limit = -1;
     } else {
-      user_data.changelog_limit   = cmd_options->changelog_limit;
+      user_data.changelog_limit = cmd_options->changelog_limit;
     }
     user_data.location_base     = cmd_options->location_base;
     user_data.checksum_type_str = cr_checksum_name_str(cmd_options->checksum_type);
     user_data.checksum_type     = cmd_options->checksum_type;
     user_data.checksum_cachedir = cmd_options->checksum_cachedir;
     user_data.skip_symlinks     = cmd_options->skip_symlinks;
+    user_data.filelists_ext     = cmd_options->filelists_ext;
     user_data.repodir_name_len  = strlen(in_dir);
     user_data.package_count     = 0;
     user_data.nevra_table       = g_hash_table_new(g_str_hash, g_str_equal);
@@ -1392,6 +1518,7 @@ main(int argc, char **argv)
     user_data.old_metadata      = old_metadata;
     user_data.id_pri            = 0;
     user_data.id_fil            = 0;
+    user_data.id_fex            = 0;
     user_data.id_oth            = 0;
     user_data.buffer            = g_queue_new();
     user_data.deltas            = cmd_options->deltas;
@@ -1406,9 +1533,11 @@ main(int argc, char **argv)
     g_mutex_init(&(user_data.mutex_output_pkg_list));
     g_mutex_init(&(user_data.mutex_pri));
     g_mutex_init(&(user_data.mutex_fil));
+    g_mutex_init(&(user_data.mutex_fex));
     g_mutex_init(&(user_data.mutex_oth));
     g_cond_init(&(user_data.cond_pri));
     g_cond_init(&(user_data.cond_fil));
+    g_cond_init(&(user_data.cond_fex));
     g_cond_init(&(user_data.cond_oth));
     g_mutex_init(&(user_data.mutex_buffer));
     g_mutex_init(&(user_data.mutex_old_md));
@@ -1456,10 +1585,14 @@ main(int argc, char **argv)
         package_count_in_headers = user_data.task_count - skipped_pkgs;
         cr_xmlfile_set_num_of_pkgs(pri_cr_file, package_count_in_headers, NULL);
         cr_xmlfile_set_num_of_pkgs(fil_cr_file, package_count_in_headers, NULL);
+        if (cmd_options->filelists_ext)
+            cr_xmlfile_set_num_of_pkgs(fex_cr_file, package_count_in_headers, NULL);
         cr_xmlfile_set_num_of_pkgs(oth_cr_file, package_count_in_headers, NULL);
         if (cmd_options->zck_compression) {
             cr_xmlfile_set_num_of_pkgs(pri_cr_zck, package_count_in_headers, NULL);
             cr_xmlfile_set_num_of_pkgs(fil_cr_zck, package_count_in_headers, NULL);
+            if (cmd_options->filelists_ext)
+                cr_xmlfile_set_num_of_pkgs(fex_cr_zck, package_count_in_headers, NULL);
             cr_xmlfile_set_num_of_pkgs(oth_cr_zck, package_count_in_headers, NULL);
         }
         cr_delayed_dump_run(&user_data);
@@ -1481,6 +1614,8 @@ main(int argc, char **argv)
     if (!tmp_err)
         cr_xmlfile_close(fil_cr_file, &tmp_err);
     if (!tmp_err)
+        cr_xmlfile_close(fex_cr_file, &tmp_err);
+    if (!tmp_err)
         cr_xmlfile_close(oth_cr_file, &tmp_err);
     if (tmp_err) {
         g_critical("Error while closing xml files: %s", tmp_err->message);
@@ -1499,6 +1634,13 @@ main(int argc, char **argv)
     if (tmp_err) {
         g_critical("%s: %s",
                    fil_zck_filename, tmp_err->message);
+        g_clear_error(&tmp_err);
+        exit(EXIT_FAILURE);
+    }
+    cr_xmlfile_close(fex_cr_zck, &tmp_err);
+    if (tmp_err) {
+        g_critical("%s: %s",
+                   fex_zck_filename, tmp_err->message);
         g_clear_error(&tmp_err);
         exit(EXIT_FAILURE);
     }
@@ -1525,9 +1667,11 @@ main(int argc, char **argv)
 
         cr_CompressionTask *pri_rewrite_pkg_count_task     = NULL;
         cr_CompressionTask *fil_rewrite_pkg_count_task     = NULL;
+        cr_CompressionTask *fex_rewrite_pkg_count_task     = NULL;
         cr_CompressionTask *oth_rewrite_pkg_count_task     = NULL;
         cr_CompressionTask *pri_zck_rewrite_pkg_count_task = NULL;
         cr_CompressionTask *fil_zck_rewrite_pkg_count_task = NULL;
+        cr_CompressionTask *fex_zck_rewrite_pkg_count_task = NULL;
         cr_CompressionTask *oth_zck_rewrite_pkg_count_task = NULL;
 
         pri_rewrite_pkg_count_task = cr_compressiontask_new(pri_xml_filename,
@@ -1545,6 +1689,16 @@ main(int argc, char **argv)
                                                             NULL, FALSE, 1,
                                                             &tmp_err);
         g_thread_pool_push(rewrite_pkg_count_pool, fil_rewrite_pkg_count_task, NULL);
+
+        if (cmd_options->filelists_ext) {
+            fex_rewrite_pkg_count_task = cr_compressiontask_new(fex_xml_filename,
+                                                                NULL,
+                                                                xml_compression,
+                                                                cmd_options->repomd_checksum_type,
+                                                                NULL, FALSE, 1,
+                                                                &tmp_err);
+            g_thread_pool_push(rewrite_pkg_count_pool, fex_rewrite_pkg_count_task, NULL);
+        }
 
         oth_rewrite_pkg_count_task = cr_compressiontask_new(oth_xml_filename,
                                                             NULL,
@@ -1571,6 +1725,16 @@ main(int argc, char **argv)
                                                                 FALSE, 1, &tmp_err);
             g_thread_pool_push(rewrite_pkg_count_pool, fil_zck_rewrite_pkg_count_task, NULL);
 
+            if (cmd_options->filelists_ext) {
+                fex_zck_rewrite_pkg_count_task = cr_compressiontask_new(fex_zck_filename,
+                                                                    NULL,
+                                                                    CR_CW_ZCK_COMPRESSION,
+                                                                    cmd_options->repomd_checksum_type,
+                                                                    fex_dict_file,
+                                                                    FALSE, 1, &tmp_err);
+                g_thread_pool_push(rewrite_pkg_count_pool, fex_zck_rewrite_pkg_count_task, NULL);
+	    }
+
             oth_zck_rewrite_pkg_count_task = cr_compressiontask_new(oth_zck_filename,
                                                                 NULL,
                                                                 CR_CW_ZCK_COMPRESSION,
@@ -1584,19 +1748,25 @@ main(int argc, char **argv)
 
         error_check_and_set_content_stat(pri_rewrite_pkg_count_task, pri_xml_filename, &exit_val, &pri_stat);
         error_check_and_set_content_stat(fil_rewrite_pkg_count_task, fil_xml_filename, &exit_val, &fil_stat);
+        if (cmd_options->filelists_ext)
+            error_check_and_set_content_stat(fex_rewrite_pkg_count_task, fex_xml_filename, &exit_val, &fex_stat);
         error_check_and_set_content_stat(oth_rewrite_pkg_count_task, oth_xml_filename, &exit_val, &oth_stat);
 
         cr_compressiontask_free(pri_rewrite_pkg_count_task, NULL);
         cr_compressiontask_free(fil_rewrite_pkg_count_task, NULL);
+        cr_compressiontask_free(fex_rewrite_pkg_count_task, NULL);
         cr_compressiontask_free(oth_rewrite_pkg_count_task, NULL);
 
         if (cmd_options->zck_compression){
             error_check_and_set_content_stat(pri_zck_rewrite_pkg_count_task, pri_zck_filename, &exit_val, &pri_zck_stat);
             error_check_and_set_content_stat(fil_zck_rewrite_pkg_count_task, fil_zck_filename, &exit_val, &fil_zck_stat);
+            if (cmd_options->filelists_ext)
+                error_check_and_set_content_stat(fex_zck_rewrite_pkg_count_task, fex_zck_filename, &exit_val, &fex_zck_stat);
             error_check_and_set_content_stat(oth_zck_rewrite_pkg_count_task, oth_zck_filename, &exit_val, &oth_zck_stat);
 
             cr_compressiontask_free(pri_zck_rewrite_pkg_count_task, NULL);
             cr_compressiontask_free(fil_zck_rewrite_pkg_count_task, NULL);
+            cr_compressiontask_free(fex_zck_rewrite_pkg_count_task, NULL);
             cr_compressiontask_free(oth_zck_rewrite_pkg_count_task, NULL);
         }
 
@@ -1604,6 +1774,7 @@ main(int argc, char **argv)
     if (cmd_options->zck_compression){
         g_free(pri_dict_file);
         g_free(fil_dict_file);
+        g_free(fex_dict_file);
         g_free(oth_dict_file);
     }
 
@@ -1612,9 +1783,11 @@ main(int argc, char **argv)
     g_mutex_clear(&(user_data.mutex_output_pkg_list));
     g_mutex_clear(&(user_data.mutex_pri));
     g_mutex_clear(&(user_data.mutex_fil));
+    g_mutex_clear(&(user_data.mutex_fex));
     g_mutex_clear(&(user_data.mutex_oth));
     g_cond_clear(&(user_data.cond_pri));
     g_cond_clear(&(user_data.cond_fil));
+    g_cond_clear(&(user_data.cond_fex));
     g_cond_clear(&(user_data.cond_oth));
     g_mutex_clear(&(user_data.mutex_buffer));
     g_mutex_clear(&(user_data.mutex_old_md));
@@ -1627,12 +1800,17 @@ main(int argc, char **argv)
 
     cr_RepomdRecord *pri_xml_rec = cr_repomd_record_new("primary", pri_xml_filename);
     cr_RepomdRecord *fil_xml_rec = cr_repomd_record_new("filelists", fil_xml_filename);
+    cr_RepomdRecord *fex_xml_rec              = NULL;
+    if (cmd_options->filelists_ext)
+        fex_xml_rec = cr_repomd_record_new("filelists_ext", fex_xml_filename);
     cr_RepomdRecord *oth_xml_rec = cr_repomd_record_new("other", oth_xml_filename);
     cr_RepomdRecord *pri_db_rec               = NULL;
     cr_RepomdRecord *fil_db_rec               = NULL;
+    cr_RepomdRecord *fex_db_rec               = NULL;
     cr_RepomdRecord *oth_db_rec               = NULL;
     cr_RepomdRecord *pri_zck_rec              = NULL;
     cr_RepomdRecord *fil_zck_rec              = NULL;
+    cr_RepomdRecord *fex_zck_rec              = NULL;
     cr_RepomdRecord *oth_zck_rec              = NULL;
     cr_RepomdRecord *prestodelta_rec          = NULL;
     cr_RepomdRecord *prestodelta_zck_rec      = NULL;
@@ -1643,18 +1821,22 @@ main(int argc, char **argv)
     // XML
     cr_repomd_record_load_contentstat(pri_xml_rec, pri_stat);
     cr_repomd_record_load_contentstat(fil_xml_rec, fil_stat);
+    if (cmd_options->filelists_ext)
+        cr_repomd_record_load_contentstat(fex_xml_rec, fex_stat);
     cr_repomd_record_load_contentstat(oth_xml_rec, oth_stat);
 
     cr_contentstat_free(pri_stat, NULL);
     cr_contentstat_free(fil_stat, NULL);
+    cr_contentstat_free(fex_stat, NULL);
     cr_contentstat_free(oth_stat, NULL);
 
     GThreadPool *fill_pool = g_thread_pool_new(cr_repomd_record_fill_thread,
                                                NULL, 3, FALSE, NULL);
 
-    cr_RepomdRecordFillTask *pri_fill_task;
-    cr_RepomdRecordFillTask *fil_fill_task;
-    cr_RepomdRecordFillTask *oth_fill_task;
+    cr_RepomdRecordFillTask *pri_fill_task = NULL;
+    cr_RepomdRecordFillTask *fil_fill_task = NULL;
+    cr_RepomdRecordFillTask *fex_fill_task = NULL;
+    cr_RepomdRecordFillTask *oth_fill_task = NULL;
 
     pri_fill_task = cr_repomdrecordfilltask_new(pri_xml_rec,
                                                 cmd_options->repomd_checksum_type,
@@ -1665,6 +1847,13 @@ main(int argc, char **argv)
                                                 cmd_options->repomd_checksum_type,
                                                 NULL);
     g_thread_pool_push(fill_pool, fil_fill_task, NULL);
+
+    if (cmd_options->filelists_ext) {
+        fex_fill_task = cr_repomdrecordfilltask_new(fex_xml_rec,
+                                                    cmd_options->repomd_checksum_type,
+                                                    NULL);
+        g_thread_pool_push(fill_pool, fex_fill_task, NULL);
+    }
 
     oth_fill_task = cr_repomdrecordfilltask_new(oth_xml_rec,
                                                 cmd_options->repomd_checksum_type,
@@ -1694,6 +1883,7 @@ main(int argc, char **argv)
 
     cr_repomdrecordfilltask_free(pri_fill_task, NULL);
     cr_repomdrecordfilltask_free(fil_fill_task, NULL);
+    cr_repomdrecordfilltask_free(fex_fill_task, NULL);
     cr_repomdrecordfilltask_free(oth_fill_task, NULL);
 
     // Sqlite db
@@ -1703,12 +1893,18 @@ main(int argc, char **argv)
                                          sqlite_compression_suffix, NULL);
         gchar *fil_db_name = g_strconcat(tmp_out_repo, "/filelists.sqlite",
                                          sqlite_compression_suffix, NULL);
+        gchar *fex_db_name = NULL;
+        if (cmd_options->filelists_ext)
+            fex_db_name = g_strconcat(tmp_out_repo, "/filelists_ext.sqlite",
+                                      sqlite_compression_suffix, NULL);
         gchar *oth_db_name = g_strconcat(tmp_out_repo, "/other.sqlite",
                                          sqlite_compression_suffix, NULL);
 
         cr_db_dbinfo_update(pri_db, pri_xml_rec->checksum, &tmp_err);
         if (!tmp_err)
             cr_db_dbinfo_update(fil_db, fil_xml_rec->checksum, &tmp_err);
+        if (!tmp_err && cmd_options->filelists_ext)
+            cr_db_dbinfo_update(fex_db, fex_xml_rec->checksum, &tmp_err);
         if (!tmp_err)
             cr_db_dbinfo_update(oth_db, oth_xml_rec->checksum, &tmp_err);
         if (tmp_err) {
@@ -1720,6 +1916,8 @@ main(int argc, char **argv)
         cr_db_close(pri_db, &tmp_err);
         if (!tmp_err)
             cr_db_close(fil_db, &tmp_err);
+        if (!tmp_err)
+            cr_db_close(fex_db, &tmp_err);
         if (!tmp_err)
             cr_db_close(oth_db, &tmp_err);
         if (tmp_err) {
@@ -1733,9 +1931,10 @@ main(int argc, char **argv)
         GThreadPool *compress_pool =  g_thread_pool_new(cr_compressing_thread,
                                                         NULL, 3, FALSE, NULL);
 
-        cr_CompressionTask *pri_db_task;
-        cr_CompressionTask *fil_db_task;
-        cr_CompressionTask *oth_db_task;
+        cr_CompressionTask *pri_db_task = NULL;
+        cr_CompressionTask *fil_db_task = NULL;
+        cr_CompressionTask *fex_db_task = NULL;
+        cr_CompressionTask *oth_db_task = NULL;
 
         pri_db_task = cr_compressiontask_new(pri_db_filename,
                                              pri_db_name,
@@ -1751,6 +1950,15 @@ main(int argc, char **argv)
                                              NULL, FALSE, 1, NULL);
         g_thread_pool_push(compress_pool, fil_db_task, NULL);
 
+        if (cmd_options->filelists_ext) {
+            fex_db_task = cr_compressiontask_new(fex_db_filename,
+                                                 fex_db_name,
+                                                 sqlite_compression,
+                                                 cmd_options->repomd_checksum_type,
+                                                 NULL, FALSE, 1, NULL);
+            g_thread_pool_push(compress_pool, fex_db_task, NULL);
+        }
+
         oth_db_task = cr_compressiontask_new(oth_db_filename,
                                              oth_db_name,
                                              sqlite_compression,
@@ -1763,37 +1971,48 @@ main(int argc, char **argv)
         if (!cmd_options->local_sqlite) {
             cr_rm(pri_db_filename, CR_RM_FORCE, NULL, NULL);
             cr_rm(fil_db_filename, CR_RM_FORCE, NULL, NULL);
+            if (cmd_options->filelists_ext)
+                cr_rm(fex_db_filename, CR_RM_FORCE, NULL, NULL);
             cr_rm(oth_db_filename, CR_RM_FORCE, NULL, NULL);
         }
 
         // Prepare repomd records
         pri_db_rec = cr_repomd_record_new("primary_db", pri_db_name);
         fil_db_rec = cr_repomd_record_new("filelists_db", fil_db_name);
+        if (cmd_options->filelists_ext)
+            fex_db_rec = cr_repomd_record_new("filelists_db", fex_db_name);
         oth_db_rec = cr_repomd_record_new("other_db", oth_db_name);
 
         // Set db version
         pri_db_rec->db_ver = DEFAULT_DATABASE_VERSION;
         fil_db_rec->db_ver = DEFAULT_DATABASE_VERSION;
+        if (cmd_options->filelists_ext)
+            fex_db_rec->db_ver = DEFAULT_DATABASE_VERSION;
         oth_db_rec->db_ver = DEFAULT_DATABASE_VERSION;
 
         g_free(pri_db_name);
         g_free(fil_db_name);
+        g_free(fex_db_name);
         g_free(oth_db_name);
 
         cr_repomd_record_load_contentstat(pri_db_rec, pri_db_task->stat);
         cr_repomd_record_load_contentstat(fil_db_rec, fil_db_task->stat);
+        if (cmd_options->filelists_ext)
+            cr_repomd_record_load_contentstat(fex_db_rec, fex_db_task->stat);
         cr_repomd_record_load_contentstat(oth_db_rec, oth_db_task->stat);
 
         cr_compressiontask_free(pri_db_task, NULL);
         cr_compressiontask_free(fil_db_task, NULL);
+        cr_compressiontask_free(fex_db_task, NULL);
         cr_compressiontask_free(oth_db_task, NULL);
 
         fill_pool = g_thread_pool_new(cr_repomd_record_fill_thread,
                                       NULL, 3, FALSE, NULL);
 
-        cr_RepomdRecordFillTask *pri_db_fill_task;
-        cr_RepomdRecordFillTask *fil_db_fill_task;
-        cr_RepomdRecordFillTask *oth_db_fill_task;
+        cr_RepomdRecordFillTask *pri_db_fill_task = NULL;
+        cr_RepomdRecordFillTask *fil_db_fill_task = NULL;
+        cr_RepomdRecordFillTask *fex_db_fill_task = NULL;
+        cr_RepomdRecordFillTask *oth_db_fill_task = NULL;
 
         pri_db_fill_task = cr_repomdrecordfilltask_new(pri_db_rec,
                                                        cmd_options->repomd_checksum_type,
@@ -1805,6 +2024,13 @@ main(int argc, char **argv)
                                                        NULL);
         g_thread_pool_push(fill_pool, fil_db_fill_task, NULL);
 
+        if (cmd_options->filelists_ext) {
+            fex_db_fill_task = cr_repomdrecordfilltask_new(fex_db_rec,
+                                                           cmd_options->repomd_checksum_type,
+                                                           NULL);
+            g_thread_pool_push(fill_pool, fex_db_fill_task, NULL);
+        }
+
         oth_db_fill_task = cr_repomdrecordfilltask_new(oth_db_rec,
                                                        cmd_options->repomd_checksum_type,
                                                        NULL);
@@ -1814,6 +2040,7 @@ main(int argc, char **argv)
 
         cr_repomdrecordfilltask_free(pri_db_fill_task, NULL);
         cr_repomdrecordfilltask_free(fil_db_fill_task, NULL);
+        cr_repomdrecordfilltask_free(fex_db_fill_task, NULL);
         cr_repomdrecordfilltask_free(oth_db_fill_task, NULL);
     }
 
@@ -1822,18 +2049,23 @@ main(int argc, char **argv)
         // Prepare repomd records
         pri_zck_rec = cr_repomd_record_new("primary_zck", pri_zck_filename);
         fil_zck_rec = cr_repomd_record_new("filelists_zck", fil_zck_filename);
+        if (cmd_options->filelists_ext)
+            fex_zck_rec = cr_repomd_record_new("filelists_ext_zck", fex_zck_filename);
         oth_zck_rec = cr_repomd_record_new("other_zck", oth_zck_filename);
 
         cr_repomd_record_load_zck_contentstat(pri_zck_rec, pri_zck_stat);
         cr_repomd_record_load_zck_contentstat(fil_zck_rec, fil_zck_stat);
+        if (cmd_options->filelists_ext)
+            cr_repomd_record_load_zck_contentstat(fex_zck_rec, fex_zck_stat);
         cr_repomd_record_load_zck_contentstat(oth_zck_rec, oth_zck_stat);
 
         fill_pool = g_thread_pool_new(cr_repomd_record_fill_thread,
                                       NULL, 3, FALSE, NULL);
 
-        cr_RepomdRecordFillTask *pri_zck_fill_task;
-        cr_RepomdRecordFillTask *fil_zck_fill_task;
-        cr_RepomdRecordFillTask *oth_zck_fill_task;
+        cr_RepomdRecordFillTask *pri_zck_fill_task = NULL;
+        cr_RepomdRecordFillTask *fil_zck_fill_task = NULL;
+        cr_RepomdRecordFillTask *fex_zck_fill_task = NULL;
+        cr_RepomdRecordFillTask *oth_zck_fill_task = NULL;
 
         pri_zck_fill_task = cr_repomdrecordfilltask_new(pri_zck_rec,
                                                        cmd_options->repomd_checksum_type,
@@ -1845,6 +2077,13 @@ main(int argc, char **argv)
                                                        NULL);
         g_thread_pool_push(fill_pool, fil_zck_fill_task, NULL);
 
+        if (cmd_options->filelists_ext) {
+            fex_zck_fill_task = cr_repomdrecordfilltask_new(fex_zck_rec,
+                                                           cmd_options->repomd_checksum_type,
+                                                           NULL);
+            g_thread_pool_push(fill_pool, fex_zck_fill_task, NULL);
+        }
+
         oth_zck_fill_task = cr_repomdrecordfilltask_new(oth_zck_rec,
                                                        cmd_options->repomd_checksum_type,
                                                        NULL);
@@ -1854,6 +2093,7 @@ main(int argc, char **argv)
 
         cr_repomdrecordfilltask_free(pri_zck_fill_task, NULL);
         cr_repomdrecordfilltask_free(fil_zck_fill_task, NULL);
+        cr_repomdrecordfilltask_free(fex_zck_fill_task, NULL);
         cr_repomdrecordfilltask_free(oth_zck_fill_task, NULL);
 
         //ZCK for additional metadata
@@ -1925,6 +2165,7 @@ main(int argc, char **argv)
 
     cr_contentstat_free(pri_zck_stat, NULL);
     cr_contentstat_free(fil_zck_stat, NULL);
+    cr_contentstat_free(fex_zck_stat, NULL);
     cr_contentstat_free(oth_zck_stat, NULL);
 
 #ifdef CR_DELTA_RPM_SUPPORT
@@ -2068,12 +2309,18 @@ deltaerror:
     if (cmd_options->unique_md_filenames) {
         cr_repomd_record_rename_file(pri_xml_rec, NULL);
         cr_repomd_record_rename_file(fil_xml_rec, NULL);
+        if (cmd_options->filelists_ext)
+            cr_repomd_record_rename_file(fex_xml_rec, NULL);
         cr_repomd_record_rename_file(oth_xml_rec, NULL);
         cr_repomd_record_rename_file(pri_db_rec, NULL);
         cr_repomd_record_rename_file(fil_db_rec, NULL);
+        if (cmd_options->filelists_ext)
+            cr_repomd_record_rename_file(fex_db_rec, NULL);
         cr_repomd_record_rename_file(oth_db_rec, NULL);
         cr_repomd_record_rename_file(pri_zck_rec, NULL);
         cr_repomd_record_rename_file(fil_zck_rec, NULL);
+        if (cmd_options->filelists_ext)
+            cr_repomd_record_rename_file(fex_zck_rec, NULL);
         cr_repomd_record_rename_file(oth_zck_rec, NULL);
         cr_repomd_record_rename_file(prestodelta_rec, NULL);
         cr_repomd_record_rename_file(prestodelta_zck_rec, NULL);
@@ -2088,9 +2335,13 @@ deltaerror:
         gint64 revision = strtoll(cmd_options->revision, NULL, 0);
         cr_repomd_record_set_timestamp(pri_xml_rec, revision);
         cr_repomd_record_set_timestamp(fil_xml_rec, revision);
+        if (cmd_options->filelists_ext)
+            cr_repomd_record_set_timestamp(fex_xml_rec, revision);
         cr_repomd_record_set_timestamp(oth_xml_rec, revision);
         cr_repomd_record_set_timestamp(pri_db_rec, revision);
         cr_repomd_record_set_timestamp(fil_db_rec, revision);
+        if (cmd_options->filelists_ext)
+            cr_repomd_record_set_timestamp(fex_db_rec, revision);
         cr_repomd_record_set_timestamp(oth_db_rec, revision);
         cr_repomd_record_set_timestamp(prestodelta_rec, revision);
         GSList *element = additional_metadata_rec;
@@ -2102,12 +2353,18 @@ deltaerror:
     // Gen xml
     cr_repomd_set_record(repomd_obj, pri_xml_rec);
     cr_repomd_set_record(repomd_obj, fil_xml_rec);
+    if (cmd_options->filelists_ext)
+        cr_repomd_set_record(repomd_obj, fex_xml_rec);
     cr_repomd_set_record(repomd_obj, oth_xml_rec);
     cr_repomd_set_record(repomd_obj, pri_db_rec);
     cr_repomd_set_record(repomd_obj, fil_db_rec);
+    if (cmd_options->filelists_ext)
+        cr_repomd_set_record(repomd_obj, fex_db_rec);
     cr_repomd_set_record(repomd_obj, oth_db_rec);
     cr_repomd_set_record(repomd_obj, pri_zck_rec);
     cr_repomd_set_record(repomd_obj, fil_zck_rec);
+    if (cmd_options->filelists_ext)
+        cr_repomd_set_record(repomd_obj, fex_zck_rec);
     cr_repomd_set_record(repomd_obj, oth_zck_rec);
     cr_repomd_set_record(repomd_obj, prestodelta_rec);
     cr_repomd_set_record(repomd_obj, prestodelta_zck_rec);
@@ -2280,12 +2537,15 @@ cleanup:
     g_free(lock_dir);
     g_free(pri_xml_filename);
     g_free(fil_xml_filename);
+    g_free(fex_xml_filename);
     g_free(oth_xml_filename);
     g_free(pri_db_filename);
     g_free(fil_db_filename);
+    g_free(fex_db_filename);
     g_free(oth_db_filename);
     g_free(pri_zck_filename);
     g_free(fil_zck_filename);
+    g_free(fex_zck_filename);
     g_free(oth_zck_filename);
     g_slist_free_full(additional_metadata, (GDestroyNotify) cr_metadatum_free);
     g_slist_free(additional_metadata_rec);

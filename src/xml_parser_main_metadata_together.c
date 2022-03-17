@@ -319,65 +319,6 @@ parse_next_section(CR_FILE *target_file, const char *path, cr_ParserData *pd, GE
 
 //TODO(amatej): there is quite some overlap with this and cr_load_xml_files,
 //              consider using this api to implement cr_load_xml_files?
-int cr_xml_parse_main_metadata_together(const char *primary_path,
-                                        const char *filelists_path,
-                                        const char *other_path,
-                                        cr_XmlParserNewPkgCb newpkgcb,
-                                        void *newpkgcb_data,
-                                        cr_XmlParserPkgCb pkgcb,
-                                        void *pkgcb_data,
-                                        cr_XmlParserWarningCb warningcb,
-                                        void *warningcb_data,
-                                        GError **err)
-{
-    assert(pkgcb || newpkgcb);
-    cr_PkgIterator* pkg_iterator = cr_PkgIterator_new(
-        primary_path, filelists_path, other_path, newpkgcb, newpkgcb_data, warningcb, warningcb_data, err
-    );
-
-    if (*err) {
-        return (*err)->code;
-    }
-
-    assert(pkg_iterator);
-    cr_Package* package = NULL;
-    GError* tmp_err = NULL;
-
-    while (package = cr_PkgIterator_parse_next(pkg_iterator, err)) {
-        if (pkgcb) {
-            // call user package callback
-            // pkgcb() destroys the package!!
-            if (pkgcb(package, pkgcb_data, &tmp_err)) {
-                // Error condition
-                if (tmp_err) {
-                    g_propagate_prefixed_error(err, tmp_err, "Parsing interrupted: ");
-                } else {
-                    g_set_error(err, ERR_DOMAIN, CRE_CBINTERRUPTED, "Parsing interrupted");
-                }
-                cr_PkgIterator_free(pkg_iterator, err);
-                return CRE_CBINTERRUPTED;
-            } else {
-                // If callback return CRE_OK but it simultaneously set
-                // the tmp_err then it's a programming error.
-                assert(tmp_err == NULL);
-            }
-        } else {
-            // Free the package if there is no external callback to do so and we have no newpkgcb
-            if (!newpkgcb) {
-                cr_package_free(package);
-            }
-        }
-    }
-
-    cr_PkgIterator_free(pkg_iterator, err);
-
-    if (*err) {
-        return (*err)->code;
-    } else {
-        return CRE_OK;
-    }
-}
-
 // TODO: maybe whether or not individual files are parsed could be controlled by NULL paths? I think cr_load_xml_files
 // already works that way.
 cr_PkgIterator *

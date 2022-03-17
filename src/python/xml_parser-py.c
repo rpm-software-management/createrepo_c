@@ -859,8 +859,9 @@ pkg_iterator_dealloc(_PkgIteratorObject *self)
 }
 
 static PyObject *
-pkg_iterator_next_package(_PkgIteratorObject *self, G_GNUC_UNUSED void *nothing)
+pkg_iterator_next_package(PyObject *PyObject_self)
 {
+    _PkgIteratorObject *self = (_PkgIteratorObject *) PyObject_self;
     cr_Package *pkg;
     GError *tmp_err = NULL;
 

@@ -29,54 +29,6 @@
 #include "createrepo/xml_parser_internal.h"
 
 // Callbacks
-
-static int
-pkgcb(cr_Package *pkg, void *cbdata, GError **err)
-{
-    g_assert(pkg);
-    g_assert(!err || *err == NULL);
-    if (cbdata) *((int *)cbdata) += 1;
-    cr_package_free(pkg);
-    return CR_CB_RET_OK;
-}
-
-static int
-pkgcb_interrupt(cr_Package *pkg, void *cbdata, GError **err)
-{
-    g_assert(pkg);
-    g_assert(!err || *err == NULL);
-    if (cbdata) *((int *)cbdata) += 1;
-    cr_package_free(pkg);
-    return CR_CB_RET_ERR;
-}
-
-static int
-newpkgcb(cr_Package **pkg,
-         G_GNUC_UNUSED const char *pkgId,
-         const char *name,
-         G_GNUC_UNUSED const char *arch,
-         G_GNUC_UNUSED void *cbdata,
-         GError **err)
-{
-    g_assert(pkg != NULL);
-    g_assert(*pkg == NULL);
-    g_assert(pkgId != NULL);
-    g_assert(!err || *err == NULL);
-
-    *pkg = cr_package_new();
-    cr_Package **list;
-
-    if (cbdata) {
-        cr_Package **pkgl = cbdata;
-        for (; *pkgl; pkgl++) {
-            continue;
-        }
-        *pkgl = *pkg;
-    }
-
-    return CR_CB_RET_OK;
-}
-
 static int
 newpkgcb_skip_fake_bash(cr_Package **pkg,
                         G_GNUC_UNUSED const char *pkgId,
@@ -144,162 +96,6 @@ warningcb_interrupt(G_GNUC_UNUSED cr_XmlParserWarningType type,
     if (cbdata) *((int *)cbdata) += 1;
 
     return CR_CB_RET_ERR;
-}
-
-// Tests
-
-static void
-test_cr_xml_parse_main_metadata_together_00(void)
-{
-    int parsed = 0;
-    GError *tmp_err = NULL;
-    int ret = cr_xml_parse_main_metadata_together(TEST_REPO_02_PRIMARY, TEST_REPO_02_FILELISTS, TEST_REPO_02_OTHER,
-                                                  NULL, NULL, pkgcb, &parsed, NULL, NULL, &tmp_err);
-    g_assert(tmp_err == NULL);
-    g_assert_cmpint(ret, ==, CRE_OK);
-    g_assert_cmpint(parsed, ==, 2);
-}
-
-static void
-test_cr_xml_parse_main_metadata_together_01_out_of_order_pkgs(void)
-{
-    int parsed = 0;
-    GError *tmp_err = NULL;
-    int ret = cr_xml_parse_main_metadata_together(TEST_REPO_02_PRIMARY,
-                                                  TEST_DIFF_ORDER_FILELISTS,
-                                                  TEST_REPO_02_OTHER,
-                                                  NULL, NULL, pkgcb, &parsed, NULL, NULL, &tmp_err);
-    g_assert(tmp_err != NULL);
-    g_assert_cmpint(ret, ==, CRE_XMLPARSER);
-    g_clear_error(&tmp_err);
-}
-
-static void
-test_cr_xml_parse_main_metadata_together_02_invalid_path(void)
-{
-    int parsed = 0;
-    GError *tmp_err = NULL;
-    int ret = cr_xml_parse_main_metadata_together("/non/existent/file", TEST_REPO_02_FILELISTS, TEST_REPO_02_OTHER,
-                                                  NULL, NULL, pkgcb, &parsed, NULL, NULL, &tmp_err);
-    g_assert(tmp_err != NULL);
-    g_assert_cmpint(ret, ==, CRE_NOFILE);
-    g_error_free(tmp_err);
-}
-
-static void
-test_cr_xml_parse_main_metadata_together_03_newpkgcb_returns_null(void)
-{
-    int parsed = 0;
-    GError *tmp_err = NULL;
-    int ret = cr_xml_parse_main_metadata_together(TEST_REPO_02_PRIMARY, TEST_REPO_02_FILELISTS, TEST_REPO_02_OTHER,
-                                                  newpkgcb_skip_fake_bash, NULL, pkgcb, &parsed, NULL, NULL, &tmp_err);
-    g_assert(tmp_err == NULL);
-    g_assert_cmpint(ret, ==, CRE_OK);
-    g_assert_cmpint(parsed, ==, 1);
-
-    parsed = 0;
-    ret = cr_xml_parse_main_metadata_together(TEST_REPO_02_PRIMARY, TEST_DIFF_ORDER_FILELISTS, TEST_REPO_02_OTHER,
-                                              newpkgcb_skip_fake_bash, NULL, pkgcb, &parsed, NULL, NULL, &tmp_err);
-    g_assert(tmp_err == NULL);
-    g_assert_cmpint(ret, ==, CRE_OK);
-    g_assert_cmpint(parsed, ==, 1);
-
-    parsed = 0;
-    ret = cr_xml_parse_main_metadata_together(TEST_REPO_02_PRIMARY, TEST_DIFF_ORDER_FILELISTS, TEST_REPO_02_OTHER,
-                                              newpkgcb_skip_fake_bash, NULL, pkgcb, &parsed, NULL, NULL, &tmp_err);
-    g_assert(tmp_err == NULL);
-    g_assert_cmpint(ret, ==, CRE_OK);
-    g_assert_cmpint(parsed, ==, 1);
-}
-
-static void
-test_cr_xml_parse_main_metadata_together_04_newpkgcb_interrupt(void)
-{
-    int parsed = 0;
-    GError *tmp_err = NULL;
-    int ret = cr_xml_parse_main_metadata_together(TEST_REPO_02_PRIMARY, TEST_REPO_02_FILELISTS, TEST_REPO_02_OTHER,
-                                                  newpkgcb_interrupt, &parsed, NULL, NULL, NULL, NULL, &tmp_err);
-    g_assert(tmp_err != NULL);
-    g_error_free(tmp_err);
-    g_assert_cmpint(ret, ==, CRE_CBINTERRUPTED);
-    g_assert_cmpint(parsed, ==, 1);
-}
-
-static void
-test_cr_xml_parse_main_metadata_together_05_pkgcb_interrupt(void)
-{
-    int parsed = 0;
-    GError *tmp_err = NULL;
-    int ret = cr_xml_parse_main_metadata_together(TEST_REPO_02_PRIMARY, TEST_REPO_02_FILELISTS, TEST_REPO_02_OTHER,
-                                                  NULL, NULL, pkgcb_interrupt, &parsed, NULL, NULL, &tmp_err);
-    g_assert(tmp_err != NULL);
-    g_error_free(tmp_err);
-    g_assert_cmpint(ret, ==, CRE_CBINTERRUPTED);
-    g_assert_cmpint(parsed, ==, 1);
-}
-
-static void
-test_cr_xml_parse_main_metadata_together_06_warnings_bad_file_type(void)
-{
-    int parsed = 0;
-    char *warnmsgs;
-    GError *tmp_err = NULL;
-    GString *warn_strings = g_string_new(0);
-    int ret = cr_xml_parse_main_metadata_together(TEST_REPO_02_PRIMARY, TEST_MRF_BAD_TYPE_FIL, TEST_REPO_02_OTHER,
-                                                  NULL, NULL, pkgcb, &parsed, warningcb, warn_strings, &tmp_err);
-    g_assert(tmp_err == NULL);
-    g_assert_cmpint(ret, ==, CRE_OK);
-    g_assert_cmpint(parsed, ==, 2);
-    warnmsgs = g_string_free(warn_strings, FALSE);
-    g_assert_cmpstr(warnmsgs, ==, "Unknown file type \"foo\";");
-    g_free(warnmsgs);
-}
-
-static void
-test_cr_xml_parse_main_metadata_together_07_warningcb_interrupt(void)
-{
-    int numofwarnings = 0;
-    GError *tmp_err = NULL;
-    int ret = cr_xml_parse_main_metadata_together(TEST_REPO_02_PRIMARY, TEST_MRF_BAD_TYPE_FIL, TEST_REPO_02_OTHER,
-                                                  NULL, NULL, pkgcb, NULL, warningcb_interrupt, &numofwarnings,
-                                                  &tmp_err);
-    g_assert(tmp_err != NULL);
-    g_error_free(tmp_err);
-    g_assert_cmpint(ret, ==, CRE_CBINTERRUPTED);
-    g_assert_cmpint(numofwarnings, ==, 1);
-}
-
-static void
-test_cr_xml_parse_main_metadata_together_071_multiple_warningcb(void)
-{
-    char *warnmsgs;
-    GString *warn_strings = g_string_new(0);
-    cr_Package *list_of_pkgs[2] = {NULL, NULL};
-    GError *tmp_err = NULL;
-    int ret = cr_xml_parse_main_metadata_together(TEST_PRIMARY_MULTI_WARN_00, TEST_FILELISTS_MULTI_WARN_00, TEST_OTHER_MULTI_WARN_00,
-                                                  newpkgcb, &list_of_pkgs, NULL, NULL, warningcb, warn_strings, &tmp_err);
-    g_assert(tmp_err == NULL);
-    g_assert(list_of_pkgs[0] != NULL);
-    g_assert(list_of_pkgs[1] != NULL);
-    cr_package_free(list_of_pkgs[0]);
-    cr_package_free(list_of_pkgs[1]);
-    g_assert_cmpint(ret, ==, CRE_OK);
-    warnmsgs = g_string_free(warn_strings, FALSE);
-    g_assert_cmpstr(warnmsgs, ==, "Unknown element \"fooelement\";Missing attribute \"type\" of a package element;Unknown element \"foo\";Conversion of \"foobar\" to integer failed;Unknown element \"bar\";Missing attribute \"arch\" of a package element;Unknown file type \"xxx\";Unknown element \"bar\";Missing attribute \"name\" of a package element;Unknown element \"bar\";Conversion of \"xxx\" to integer failed;");
-    g_free(warnmsgs);
-}
-
-
-static void
-test_cr_xml_parse_main_metadata_together_08_long_primary(void)
-{
-    int parsed = 0;
-    GError *tmp_err = NULL;
-    int ret = cr_xml_parse_main_metadata_together(TEST_LONG_PRIMARY, TEST_REPO_02_FILELISTS, TEST_REPO_02_OTHER,
-                                                  NULL, NULL, pkgcb, &parsed, NULL, NULL, &tmp_err);
-    g_assert(tmp_err == NULL);
-    g_assert_cmpint(ret, ==, CRE_OK);
-    g_assert_cmpint(parsed, ==, 2);
 }
 
 static void
@@ -372,40 +168,129 @@ test_cr_xml_package_iterator_02_long_primary(void)
     g_assert_cmpint(parsed, ==, 2);
 }
 
+static void
+test_cr_xml_package_iterator_03_out_of_order_pkgs(void)
+{
+    GError *tmp_err = NULL;
+    cr_Package *package = NULL;
+
+    cr_PkgIterator *pkg_iterator = cr_PkgIterator_new(
+        TEST_REPO_02_PRIMARY, TEST_DIFF_ORDER_FILELISTS, TEST_REPO_02_OTHER, NULL, NULL, NULL, NULL, &tmp_err);
+
+    package = cr_PkgIterator_parse_next(pkg_iterator, &tmp_err);
+
+    g_assert(package == NULL);
+    g_assert(tmp_err != NULL);
+
+    cr_PkgIterator_free(pkg_iterator, &tmp_err);
+}
+
+static void
+test_cr_xml_package_iterator_04_invalid_path(void)
+{
+    GError *tmp_err = NULL;
+
+    cr_PkgIterator *pkg_iterator = cr_PkgIterator_new(
+        "/non/existing/file.xml", TEST_REPO_02_FILELISTS, TEST_REPO_02_OTHER, NULL, NULL, NULL, NULL, &tmp_err);
+
+    g_assert(pkg_iterator == NULL);
+    g_assert(tmp_err != NULL);
+}
+
+static void
+test_cr_xml_package_iterator_05_newpkgcb_returns_null(void)
+{
+    int parsed = 0;
+    GError *tmp_err = NULL;
+    cr_Package *package = NULL;
+
+    cr_PkgIterator *pkg_iterator = cr_PkgIterator_new(
+        TEST_REPO_02_PRIMARY, TEST_REPO_02_FILELISTS, TEST_REPO_02_OTHER, newpkgcb_skip_fake_bash, NULL, NULL, NULL, &tmp_err);
+
+    while ((package = cr_PkgIterator_parse_next(pkg_iterator, &tmp_err))) {
+        parsed++;
+        cr_package_free(package);
+    }
+
+    cr_PkgIterator_free(pkg_iterator, &tmp_err);
+
+    g_assert(tmp_err == NULL);
+    g_assert_cmpint(parsed, ==, 1);
+}
+
+static void
+test_cr_xml_package_iterator_06_newpkgcb_interrupt(void)
+{
+    GError *tmp_err = NULL;
+    cr_Package *package = NULL;
+    int new_cb_count = 0;
+
+    cr_PkgIterator *pkg_iterator = cr_PkgIterator_new(
+        TEST_REPO_02_PRIMARY, TEST_REPO_02_FILELISTS, TEST_REPO_02_OTHER, newpkgcb_interrupt, &new_cb_count, NULL, NULL, &tmp_err);
+
+    package = cr_PkgIterator_parse_next(pkg_iterator, &tmp_err);
+
+    g_assert(package == NULL);
+    g_assert(tmp_err != NULL);
+    g_assert_cmpint(new_cb_count, ==, 1);
+
+    cr_PkgIterator_free(pkg_iterator, &tmp_err);
+}
+
+static void
+test_cr_xml_package_iterator_07_warnings_bad_file_type(void)
+{
+    GError *tmp_err = NULL;
+    cr_Package *package = NULL;
+    GString *warn_strings = g_string_new(0);
+    int parsed = 0;
+
+    cr_PkgIterator *pkg_iterator = cr_PkgIterator_new(
+        TEST_REPO_02_PRIMARY, TEST_MRF_BAD_TYPE_FIL, TEST_REPO_02_OTHER, NULL, NULL, warningcb, warn_strings, &tmp_err);
+
+    while ((package = cr_PkgIterator_parse_next(pkg_iterator, &tmp_err))) {
+        parsed++;
+        cr_package_free(package);
+    }
+
+    g_assert(tmp_err == NULL);
+    g_assert_cmpint(parsed, ==, 2);
+    char *warnmsgs = g_string_free(warn_strings, FALSE);
+    g_assert_cmpstr(warnmsgs, ==, "Unknown file type \"foo\";");
+    g_free(warnmsgs);
+
+    cr_PkgIterator_free(pkg_iterator, &tmp_err);
+}
+
+static void
+test_cr_xml_package_iterator_08_multiple_warningscb(void)
+{
+    GError *tmp_err = NULL;
+    cr_Package *package = NULL;
+    GString *warn_strings = g_string_new(0);
+    int parsed = 0;
+
+    cr_PkgIterator *pkg_iterator = cr_PkgIterator_new(
+        TEST_PRIMARY_MULTI_WARN_00, TEST_FILELISTS_MULTI_WARN_00, TEST_OTHER_MULTI_WARN_00, NULL, NULL, warningcb, warn_strings, &tmp_err);
+
+    while ((package = cr_PkgIterator_parse_next(pkg_iterator, &tmp_err))) {
+        parsed++;
+        cr_package_free(package);
+    }
+
+    g_assert(tmp_err == NULL);
+    g_assert_cmpint(parsed, ==, 2);
+    char *warnmsgs = g_string_free(warn_strings, FALSE);
+    g_assert_cmpstr(warnmsgs, ==, "Unknown element \"fooelement\";Missing attribute \"type\" of a package element;Unknown element \"foo\";Conversion of \"foobar\" to integer failed;Unknown element \"bar\";Missing attribute \"arch\" of a package element;Unknown file type \"xxx\";Unknown element \"bar\";Missing attribute \"name\" of a package element;Unknown element \"bar\";Conversion of \"xxx\" to integer failed;");
+    g_free(warnmsgs);
+
+    cr_PkgIterator_free(pkg_iterator, &tmp_err);
+}
+
 int
 main(int argc, char *argv[])
 {
     g_test_init(&argc, &argv, NULL);
-
-    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_00",
-                    test_cr_xml_parse_main_metadata_together_00);
-
-    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_01_out_of_order_pkgs",
-                    test_cr_xml_parse_main_metadata_together_01_out_of_order_pkgs);
-
-    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_02_invalid_path",
-                    test_cr_xml_parse_main_metadata_together_02_invalid_path);
-
-    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_03_newpkgcb_returns_null",
-                    test_cr_xml_parse_main_metadata_together_03_newpkgcb_returns_null);
-
-    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_04_newpkgcb_interrupt",
-                    test_cr_xml_parse_main_metadata_together_04_newpkgcb_interrupt);
-
-    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_05_pkgcb_interrupt",
-                    test_cr_xml_parse_main_metadata_together_05_pkgcb_interrupt);
-
-    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_06_warnings_bad_file_type",
-                    test_cr_xml_parse_main_metadata_together_06_warnings_bad_file_type);
-
-    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_07_warningcb_interrupt",
-                    test_cr_xml_parse_main_metadata_together_07_warningcb_interrupt);
-
-    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_08_long_primary",
-                    test_cr_xml_parse_main_metadata_together_08_long_primary);
-
-    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_parse_main_metadata_together_071_multiple_warningcb",
-                    test_cr_xml_parse_main_metadata_together_071_multiple_warningcb);
 
     g_test_add_func("/xml_parser_main_metadata/test_cr_xml_package_iterator_00",
                     test_cr_xml_package_iterator_00);
@@ -415,6 +300,24 @@ main(int argc, char *argv[])
 
     g_test_add_func("/xml_parser_main_metadata/test_cr_xml_package_iterator_02_long_primary",
                     test_cr_xml_package_iterator_02_long_primary);
+
+    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_package_iterator_03_out_of_order_pkgs",
+                    test_cr_xml_package_iterator_03_out_of_order_pkgs);
+
+    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_package_iterator_04_invalid_path",
+                    test_cr_xml_package_iterator_04_invalid_path);
+
+    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_package_iterator_05_newpkgcb_returns_null",
+                    test_cr_xml_package_iterator_05_newpkgcb_returns_null);
+
+    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_package_iterator_06_newpkgcb_interrupt",
+                    test_cr_xml_package_iterator_06_newpkgcb_interrupt);
+
+    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_package_iterator_07_warnings_bad_file_type",
+                    test_cr_xml_package_iterator_07_warnings_bad_file_type);
+
+    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_package_iterator_08_multiple_warningscb",
+                    test_cr_xml_package_iterator_08_multiple_warningscb);
 
     return g_test_run();
 }

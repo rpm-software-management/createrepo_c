@@ -309,8 +309,8 @@ unescape_ampersand_from_values(const xmlChar **attr, gboolean *allocation_needed
     // we know which keys we want (they don't contain &) so
     // we don't have to check those.
     size_t nattr;
-    for (nattr = 1; attr[nattr]; nattr+=2) {
-        if (strchr((char *)attr[nattr], '&')) {
+    for (nattr = 0; attr[nattr]; nattr+=2) {
+        if (strchr((char *)attr[nattr+1], '&')) {
             *allocation_needed = TRUE;
         }
     }
@@ -319,7 +319,7 @@ unescape_ampersand_from_values(const xmlChar **attr, gboolean *allocation_needed
         return attr;
     }
 
-    char **attr_copy = g_malloc0(sizeof(char *) * (nattr - 1));
+    char **attr_copy = g_malloc0(sizeof(char *) * (nattr + 1));
     if (attr_copy) {
         for (nattr = 0; attr[nattr]; nattr++) {
             if (strchr((char *)attr[nattr], '&')) {

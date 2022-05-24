@@ -40,6 +40,7 @@ SET(headers
     constants.h
     mergerepo_c.h
     createrepo_c.h
+    createrepo_shared.h
     deltarpms.h
     error.h
     helpers.h

@@ -120,13 +120,6 @@ cr_unset_cleanup_handler(GError **err);
 void
 cr_setup_logging(gboolean quiet, gboolean verbose);
 
-/**
- * Set global pointer to exit value that is used in function set by atexit
- * @param exit_val          Pointer to exit_value int
- */
-void
-cr_set_global_exit_value(int *exit_val);
-
 /** @} */
 
 #ifdef __cplusplus

@@ -230,11 +230,12 @@ cr_lock_repo(const gchar *repo_dir,
 
         // Try to create own - just as a lock
         if (g_mkdir(lock_dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
+            const gchar * mkdir_error = g_strerror(errno);
             g_critical("(--ignore-lock enabled) Cannot create %s: %s",
-                       lock_dir, g_strerror(errno));
+                       lock_dir, mkdir_error);
             g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
                         "Cannot create: %s (--ignore-lock enabled): %s",
-                        lock_dir, g_strerror(errno));
+                        lock_dir, mkdir_error);
             return FALSE;
         } else {
             g_debug("(--ignore-lock enabled) Own and empty %s created "
@@ -249,11 +250,12 @@ cr_lock_repo(const gchar *repo_dir,
         tmp_repodata_dir = cr_append_pid_and_datetime(tmp, "/");
 
         if (g_mkdir(tmp_repodata_dir, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH)) {
+            const gchar * mkdir_error = g_strerror(errno);
             g_critical("(--ignore-lock enabled) Cannot create %s: %s",
-                       tmp_repodata_dir, g_strerror(errno));
+                       tmp_repodata_dir, mkdir_error);
             g_set_error(err, CREATEREPO_C_ERROR, CRE_IO,
                         "Cannot create: %s (--ignore-lock enabled): %s",
-                        tmp_repodata_dir, g_strerror(errno));
+                        tmp_repodata_dir, mkdir_error);
             return FALSE;
         } else {
             g_debug("(--ignore-lock enabled) For data generation is used: %s",

@@ -343,10 +343,11 @@ load_rpm(const char *fullpath,
     if (!stat_buf) {
         struct stat stat_buf_own;
         if (stat(fullpath, &stat_buf_own) == -1) {
+            const gchar * stat_error = g_strerror(errno);
             g_warning("%s: stat(%s) error (%s)", __func__,
-                      fullpath, g_strerror(errno));
+                      fullpath, stat_error);
             g_set_error(err,  CREATEREPO_C_ERROR, CRE_IO, "stat(%s) failed: %s",
-                        fullpath, g_strerror(errno));
+                        fullpath, stat_error);
             goto errexit;
         }
         pkg->time_file    = stat_buf_own.st_mtime;

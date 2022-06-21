@@ -261,10 +261,11 @@ cr_get_header_byte_range(const char *filename, GError **err)
 
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
+        const gchar * fopen_error = g_strerror(errno);
         g_debug("%s: Cannot open file %s (%s)", __func__, filename,
-                g_strerror(errno));
+                fopen_error);
         g_set_error(err, ERR_DOMAIN, CRE_IO,
-                    "Cannot open %s: %s", filename, g_strerror(errno));
+                    "Cannot open %s: %s", filename, fopen_error);
         return results;
     }
 
@@ -272,10 +273,10 @@ cr_get_header_byte_range(const char *filename, GError **err)
     // Get header range
 
     if (fseek(fp, 104, SEEK_SET) != 0) {
-        g_debug("%s: fseek fail on %s (%s)", __func__, filename,
-                g_strerror(errno));
+        const gchar * fseek_error = g_strerror(errno);
+        g_debug("%s: fseek fail on %s (%s)", __func__, filename, fseek_error);
         g_set_error(err, ERR_DOMAIN, CRE_IO,
-                    "Cannot seek over %s: %s", filename, g_strerror(errno));
+                    "Cannot seek over %s: %s", filename, fseek_error);
         fclose(fp);
         return results;
     }
@@ -406,19 +407,21 @@ cr_copy_file(const char *src, const char *in_dst, GError **err)
 
     // Open src file
     if ((orig = fopen(src, "rb")) == NULL) {
+        const gchar * fopen_error = g_strerror(errno);
         g_debug("%s: Cannot open source file %s (%s)", __func__, src,
-                g_strerror(errno));
+                fopen_error);
         g_set_error(err, ERR_DOMAIN, CRE_IO,
-                    "Cannot open file %s: %s", src, g_strerror(errno));
+                    "Cannot open file %s: %s", src, fopen_error);
         return FALSE;
     }
 
     // Open dst file
     if ((new = fopen(dst, "wb")) == NULL) {
+        const gchar * fopen_error = g_strerror(errno);
         g_debug("%s: Cannot open destination file %s (%s)", __func__, dst,
-                g_strerror(errno));
+                fopen_error);
         g_set_error(err, ERR_DOMAIN, CRE_IO,
-                    "Cannot open file %s: %s", dst, g_strerror(errno));
+                    "Cannot open file %s: %s", dst, fopen_error);
         return FALSE;
     }
 
@@ -431,10 +434,11 @@ cr_copy_file(const char *src, const char *in_dst, GError **err)
         }
 
         if (fwrite(buf, 1, readed, new) != readed) {
+            const gchar * fwrite_error = g_strerror(errno);
             g_debug("%s: Error while copy %s -> %s (%s)", __func__, src,
-                    dst, g_strerror(errno));
+                    dst, fwrite_error);
             g_set_error(err, ERR_DOMAIN, CRE_IO,
-                    "Error while write %s: %s", dst, g_strerror(errno));
+                    "Error while write %s: %s", dst, fwrite_error);
             return FALSE;
         }
     }
@@ -658,10 +662,11 @@ cr_decompress_file_with_stat(const char *src,
 
     new = fopen(dst, "wb");
     if (!new) {
+        const gchar * fopen_error = g_strerror(errno);
         g_debug("%s: Cannot open destination file %s (%s)",
-                __func__, dst, g_strerror(errno));
+                __func__, dst, fopen_error);
         g_set_error(err, ERR_DOMAIN, CRE_IO,
-                    "Cannot open %s: %s", src, g_strerror(errno));
+                    "Cannot open %s: %s", src, fopen_error);
         ret = CRE_IO;
         goto compress_file_cleanup;
     }
@@ -677,10 +682,11 @@ cr_decompress_file_with_stat(const char *src,
         }
 
         if (fwrite(buf, 1, readed, new) != (size_t) readed) {
+            const gchar * fwrite_error = g_strerror(errno);
             g_debug("%s: Error while copy %s -> %s (%s)",
-                    __func__, src, dst, g_strerror(errno));
+                    __func__, src, dst, fwrite_error);
             g_set_error(err, ERR_DOMAIN, CRE_IO,
-                        "Error while write %s: %s", dst, g_strerror(errno));
+                        "Error while write %s: %s", dst, fwrite_error);
             ret = CRE_IO;
             goto compress_file_cleanup;
         }

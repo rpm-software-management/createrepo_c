@@ -553,6 +553,31 @@ load_old_metadata(cr_Metadata **md,
               g_hash_table_size(cr_metadata_hashtable(*md)));
 }
 
+// Sorting function for location_href strings, by length.
+// Compatible with g_array_sort()
+static int strlensort(gconstpointer a, gconstpointer b)
+{
+    // Function is supposed to take a double-pointer so unfortunately you cannot pass a
+    // string-comparison function directly.
+    gchar **a_ptr = (gchar **)a;
+    gchar **b_ptr = (gchar **)b;
+
+    int a_len = strnlen(*a_ptr, 4096);
+    int b_len = strnlen(*b_ptr, 4096);
+    if (a_len > b_len)
+    {
+        return 1;
+    }
+    else if (b_len > a_len)
+    {
+        return -1;
+    }
+    else
+    {
+        return 0;
+    }
+}
+
 int
 main(int argc, char **argv)
 {
@@ -1276,6 +1301,7 @@ main(int argc, char **argv)
     user_data.repodir_name_len  = strlen(in_dir);
     user_data.task_count        = task_count;
     user_data.package_count     = 0;
+    user_data.nevra_table       = g_hash_table_new(g_str_hash, g_str_equal);
     user_data.skip_stat         = cmd_options->skip_stat;
     user_data.old_metadata      = old_metadata;
     user_data.id_pri            = 0;
@@ -1290,6 +1316,7 @@ main(int argc, char **argv)
     user_data.had_errors        = 0;
     user_data.output_pkg_list   = output_pkg_list;
 
+    g_mutex_init(&(user_data.mutex_nevra_table));
     g_mutex_init(&(user_data.mutex_output_pkg_list));
     g_mutex_init(&(user_data.mutex_pri));
     g_mutex_init(&(user_data.mutex_fil));
@@ -1310,9 +1337,36 @@ main(int argc, char **argv)
     // Wait until pool is finished
     g_thread_pool_free(pool, FALSE, TRUE);
 
+    GHashTableIter iter;
+    gpointer key, value;
+
+    g_hash_table_iter_init(&iter, user_data.nevra_table);
+    while (g_hash_table_iter_next(&iter, &key, &value))
+    {
+        gchar *nevra = (gchar *) key;
+        GArray *locations = (GArray *) value;
+        if (locations->len > 1) {
+            g_warning("Package '%s' has duplicate metadata entries, only one should exist", nevra);
+
+            g_array_sort(locations, strlensort);
+
+            for (int i=0; i<locations->len; i++) {
+                g_warning("    Sourced from location: \'%s\'", g_array_index(locations, gchar *, i));
+            }
+        }
+
+        g_hash_table_iter_steal(&iter);
+        g_free(nevra);
+        for (int i = 0; i < locations->len; i++) {
+            g_free(g_array_index(locations, gchar *, i));
+        }
+        g_array_free(locations, TRUE);
+    }
+    g_hash_table_destroy(user_data.nevra_table);
+
     // if there were any errors, exit nonzero
     if ( user_data.had_errors ) {
-	exit_val = 2;
+	    exit_val = 2;
     }
 
     g_message("Pool finished%s", (user_data.had_errors ? " with errors" : ""));
@@ -1453,6 +1507,7 @@ main(int argc, char **argv)
     }
 
     g_queue_free(user_data.buffer);
+    g_mutex_clear(&(user_data.mutex_nevra_table));
     g_mutex_clear(&(user_data.mutex_output_pkg_list));
     g_mutex_clear(&(user_data.mutex_pri));
     g_mutex_clear(&(user_data.mutex_fil));

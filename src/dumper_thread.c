@@ -551,6 +551,19 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     }
 #endif
 
+    // Allow checking that the same package (NEVRA) isn't present multiple times in the metadata
+    // Keep a hashtable of NEVRA mapped to an array-list of location_href values
+    g_mutex_lock(&(udata->mutex_nevra_table));
+    gchar *nevra = cr_package_nevra(pkg);
+    GArray *pkg_locations = g_hash_table_lookup(udata->nevra_table, nevra);
+    if (!pkg_locations) {
+        pkg_locations = g_array_new(FALSE, TRUE, sizeof(gchar *));
+        g_hash_table_insert(udata->nevra_table, nevra, pkg_locations);
+    }
+    gchar *location = g_strdup(pkg->location_href);
+    g_array_append_val(pkg_locations, location);
+    g_mutex_unlock(&(udata->mutex_nevra_table));
+
     // Buffering stuff
     g_mutex_lock(&(udata->mutex_buffer));
 

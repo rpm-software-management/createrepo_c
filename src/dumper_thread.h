@@ -69,6 +69,10 @@ struct UserData {
     long task_count;                // Total number of task to process
     long package_count;             // Total number of packages processed
 
+    // Duplicate package error checking
+    GMutex mutex_nevra_table;       // Mutex for the table of NEVRAs
+    GHashTable *nevra_table;         // Table of NEVRAs, with a list of location_href as key
+
     // Update stuff
     gboolean skip_stat;             // Skip stat() while updating
     cr_Metadata *old_metadata;      // Loaded metadata

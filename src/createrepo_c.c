@@ -106,14 +106,13 @@ allowed_modulemd_module_metadata_file(const gchar *filename)
  *
  * @param a_p           Pointer to first struct PoolTask
  * @param b_p           Pointer to second struct PoolTask
- * @param user_data     Unused (user data)
  */
 static int
-task_cmp(gconstpointer a_p, gconstpointer b_p, G_GNUC_UNUSED gpointer user_data)
+task_cmp(gconstpointer a_p, gconstpointer b_p)
 {
     int ret;
-    const struct PoolTask *a = a_p;
-    const struct PoolTask *b = b_p;
+    const struct PoolTask *a = *(struct PoolTask **) a_p;
+    const struct PoolTask *b = *(struct PoolTask **) b_p;
     ret = g_strcmp0(a->filename, b->filename);
     if (ret) return ret;
     return g_strcmp0(a->path, b->path);
@@ -143,7 +142,7 @@ fill_pool(GThreadPool *pool,
           long *task_count,
           int  media_id)
 {
-    GQueue queue = G_QUEUE_INIT;
+    GArray *package_tasks = g_array_new(FALSE, FALSE, sizeof(struct PoolTask *));
     struct PoolTask *task;
 
     if ( ! cmd_options->split ) {
@@ -243,7 +242,7 @@ fill_pool(GThreadPool *pool,
                     task->path = g_strdup(dirname);
                     *current_pkglist = g_slist_prepend(*current_pkglist, task->filename);
                     // TODO: One common path for all tasks with the same path?
-                    g_queue_insert_sorted(&queue, task, task_cmp, NULL);
+                    g_array_append_val(package_tasks, task);
                 } else {
                     g_free(full_path);
                 }
@@ -299,18 +298,23 @@ fill_pool(GThreadPool *pool,
                 task->filename  = g_strdup(filename);         // foobar.rpm
                 task->path      = strndup(relative_path, x);  // packages/i386/
                 *current_pkglist = g_slist_prepend(*current_pkglist, task->filename);
-                g_queue_insert_sorted(&queue, task, task_cmp, NULL);
+                g_array_append_val(package_tasks, task);
             }
         }
     }
 
+    g_array_sort(package_tasks, task_cmp);
+
     // Push sorted tasks into the thread pool
-    while ((task = g_queue_pop_head(&queue)) != NULL) {
+    for (int i=0; i<package_tasks->len; i++) {
+        task = g_array_index(package_tasks, struct PoolTask *, i);
         task->id = *task_count;
         task->media_id = media_id;
         g_thread_pool_push(pool, task, NULL);
         ++*task_count;
     }
+
+    g_array_free(package_tasks, TRUE);
 
     return *task_count;
 }
@@ -427,10 +431,10 @@ cr_create_repomd_records_for_groupfile_metadata(const cr_Metadatum *group_metada
 }
 
 /** Creates list of cr_RepomdRecords from list
- *  of additional metadata (cr_Metadatum) 
+ *  of additional metadata (cr_Metadatum)
  *
  * @param additional_metadata       List of cr_Metadatum
- * @param repomd_checksum_type      
+ * @param repomd_checksum_type
  *
  * @return                          New GSList of cr_RepomdRecords
  */
@@ -439,7 +443,7 @@ cr_create_repomd_records_for_additional_metadata(GSList *additional_metadata,
                                                  cr_ChecksumType repomd_checksum_type)
 {
     GError *tmp_err = NULL;
-    GSList *additional_metadata_rec = NULL; 
+    GSList *additional_metadata_rec = NULL;
     GSList *element = additional_metadata;
     for (; element; element=g_slist_next(element)) {
         additional_metadata_rec = g_slist_prepend(additional_metadata_rec,
@@ -468,9 +472,9 @@ cr_create_repomd_records_for_additional_metadata(GSList *additional_metadata,
  *  use content stats of the new file
  *
  * @param task          Rewrite pkg count task
- * @param filename      Name of file with wrong package count 
+ * @param filename      Name of file with wrong package count
  * @param exit_val      If errors occured set createrepo_c exit value
- * @param content_stat  Content stats for filename    
+ * @param content_stat  Content stats for filename
  *
  */
 static void
@@ -794,7 +798,7 @@ main(int argc, char **argv)
 
     cr_Metadatum *new_groupfile_metadatum = NULL;
 
-    // Groupfile specified as argument 
+    // Groupfile specified as argument
     if (cmd_options->groupfile_fullpath) {
         new_groupfile_metadatum = g_malloc0(sizeof(cr_Metadatum));
         new_groupfile_metadatum->name = cr_copy_metadatum(cmd_options->groupfile_fullpath, tmp_out_repo, &tmp_err);
@@ -1478,7 +1482,7 @@ main(int argc, char **argv)
     cr_RepomdRecord *prestodelta_zck_rec      = NULL;
 
     // List of cr_RepomdRecords
-    GSList *additional_metadata_rec           = NULL; 
+    GSList *additional_metadata_rec           = NULL;
 
     // XML
     cr_repomd_record_load_contentstat(pri_xml_rec, pri_stat);
@@ -1729,9 +1733,9 @@ main(int argc, char **argv)
                 g_clear_error(&tmp_err);
                 exit(EXIT_FAILURE);
             }
-            /* Only create additional_metadata_zck if additional_metadata isn't already zchunk 
+            /* Only create additional_metadata_zck if additional_metadata isn't already zchunk
              * and its zck version doesn't yet exists */
-            if (com_type != CR_CW_ZCK_COMPRESSION && 
+            if (com_type != CR_CW_ZCK_COMPRESSION &&
                 !g_slist_find_custom(additional_metadata_rec, additional_metadatum_rec_zck_type, cr_cmp_repomd_record_type)) {
                 GSList *additional_metadatum_rec_elem = g_slist_find_custom(additional_metadata_rec,
                                                                             ((cr_Metadatum *) element->data)->type,

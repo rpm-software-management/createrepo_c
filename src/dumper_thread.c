@@ -233,6 +233,57 @@ write_pkg(long id,
     g_mutex_unlock(&(udata->mutex_oth));
 }
 
+
+struct DelayedTask {
+    cr_Package *pkg;
+    gboolean clean;
+};
+
+
+void
+cr_delayed_dump_set(gpointer user_data)
+{
+    struct UserData *udata = (struct UserData *) user_data;
+    udata->delayed_write = g_array_sized_new(TRUE, TRUE,
+                                             sizeof(struct DelayedTask),
+                                             udata->task_count);
+}
+
+
+void
+cr_delayed_dump_run(gpointer user_data)
+{
+    GError *tmp_err = NULL;
+    struct UserData *udata = (struct UserData *) user_data;
+    long int stop = udata->task_count;
+    g_debug("Performing the delayed metadata dump");
+    for (int id = 0; id < stop; id++) {
+        struct DelayedTask dtask = g_array_index(udata->delayed_write,
+                                                 struct DelayedTask, id);
+        if (!dtask.pkg)
+            return;  // dumper pool failed to load this package
+
+        struct cr_XmlStruct res = cr_xml_dump(dtask.pkg, &tmp_err);
+        if (tmp_err) {
+            g_critical("Cannot dump XML for %s (%s): %s",
+                       dtask.pkg->name, dtask.pkg->pkgId, tmp_err->message);
+            udata->had_errors = TRUE;
+            g_clear_error(&tmp_err);
+        }
+        else {
+            write_pkg(id, res, dtask.pkg, udata);
+        }
+
+        if (dtask.clean) {
+            cr_package_free(dtask.pkg);
+        }
+        g_free(res.primary);
+        g_free(res.filelists);
+        g_free(res.other);
+    }
+}
+
+
 static char *
 get_checksum(const char *filename,
              cr_ChecksumType type,
@@ -425,6 +476,19 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     struct UserData *udata = (struct UserData *) user_data;
     struct PoolTask *task  = (struct PoolTask *) data;
 
+    struct DelayedTask *dtask = NULL;
+    if (udata->delayed_write) {
+        // even if we might found out that this is an invalid package,
+        // we have to allocate a delayed task, we have to assure that
+        // len(delayed_write) == udata->task_count and that all items
+        // are processed in the delayed run.
+        dtask = &g_array_index(udata->delayed_write,
+                               struct DelayedTask,
+                               task->id);
+        dtask->pkg = NULL;
+        dtask->clean = FALSE;
+    }
+
     // get location_href without leading part of path (path to repo)
     // including '/' char
     _cleanup_free_ gchar *location_href = NULL;
@@ -580,6 +644,16 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     g_array_append_val(pkg_locations, location);
     g_mutex_unlock(&(udata->mutex_nevra_table));
 
+    if (dtask) {
+        dtask->pkg = pkg;
+        dtask->clean = pkg_new ? TRUE : FALSE;
+        g_free(task->full_path);
+        g_free(task->filename);
+        g_free(task->path);
+        g_free(task);
+        return;
+    }
+
     // Pre-calculate the XML data aside any critical section, and early enough
     // so we can put it into the buffer (so buffered single-threaded write later
     // is faster).
@@ -636,7 +710,7 @@ task_cleanup:
     if (pkg_new)
         cr_package_free(pkg_new);
 
-    if (udata->id_pri <= task->id) {
+    if (!dtask && udata->id_pri <= task->id) {
         // An error was encountered and we have to wait to increment counters
         wait_for_incremented_ids(task->id, udata);
     }

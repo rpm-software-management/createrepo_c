@@ -109,11 +109,19 @@ struct UserData {
 
     FILE *output_pkg_list;          // File where a list of read packages is written
     GMutex mutex_output_pkg_list;   // Mutex for output_pkg_list file
+    GArray *delayed_write;          // Dump these files once all packages are loaded
 };
 
 
 void
 cr_dumper_thread(gpointer data, gpointer user_data);
+
+
+void
+cr_delayed_dump_set(gpointer user_data);
+
+void
+cr_delayed_dump_run(gpointer user_data);
 
 /** @} */
 

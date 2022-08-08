@@ -779,6 +779,11 @@ main(int argc, char **argv)
     g_debug("Package count: %ld", task_count);
     g_message("Directory walk done - %ld packages", task_count);
 
+    user_data.task_count        = task_count;
+    if (cmd_options->delayed_dump)
+        // call this when we know the expected task_count
+        cr_delayed_dump_set(&user_data);
+
     if (cmd_options->update) {
         if (old_metadata)
             g_debug("Old metadata already loaded.");
@@ -1058,9 +1063,11 @@ main(int argc, char **argv)
 
     // Set number of packages
     g_debug("Setting number of packages");
-    cr_xmlfile_set_num_of_pkgs(pri_cr_file, task_count, NULL);
-    cr_xmlfile_set_num_of_pkgs(fil_cr_file, task_count, NULL);
-    cr_xmlfile_set_num_of_pkgs(oth_cr_file, task_count, NULL);
+    if (!cmd_options->delayed_dump) {
+        cr_xmlfile_set_num_of_pkgs(pri_cr_file, task_count, NULL);
+        cr_xmlfile_set_num_of_pkgs(fil_cr_file, task_count, NULL);
+        cr_xmlfile_set_num_of_pkgs(oth_cr_file, task_count, NULL);
+    }
 
     // Open sqlite databases
     gchar *pri_db_filename = NULL;
@@ -1273,9 +1280,11 @@ main(int argc, char **argv)
 
         // Set number of packages
         g_debug("Setting number of packages");
-        cr_xmlfile_set_num_of_pkgs(pri_cr_zck, task_count, NULL);
-        cr_xmlfile_set_num_of_pkgs(fil_cr_zck, task_count, NULL);
-        cr_xmlfile_set_num_of_pkgs(oth_cr_zck, task_count, NULL);
+        if (!cmd_options->delayed_dump) {
+            cr_xmlfile_set_num_of_pkgs(pri_cr_zck, task_count, NULL);
+            cr_xmlfile_set_num_of_pkgs(fil_cr_zck, task_count, NULL);
+            cr_xmlfile_set_num_of_pkgs(oth_cr_zck, task_count, NULL);
+        }
     }
 
     // Thread pool - User data initialization
@@ -1299,7 +1308,6 @@ main(int argc, char **argv)
     user_data.checksum_cachedir = cmd_options->checksum_cachedir;
     user_data.skip_symlinks     = cmd_options->skip_symlinks;
     user_data.repodir_name_len  = strlen(in_dir);
-    user_data.task_count        = task_count;
     user_data.package_count     = 0;
     user_data.nevra_table       = g_hash_table_new(g_str_hash, g_str_equal);
     user_data.skip_stat         = cmd_options->skip_stat;
@@ -1363,6 +1371,19 @@ main(int argc, char **argv)
         g_array_free(locations, TRUE);
     }
     g_hash_table_destroy(user_data.nevra_table);
+
+    if (cmd_options->delayed_dump) {
+        // Finally dump the delayed (new) metadata! (no threading for now)
+        cr_xmlfile_set_num_of_pkgs(pri_cr_file, task_count, NULL);
+        cr_xmlfile_set_num_of_pkgs(fil_cr_file, task_count, NULL);
+        cr_xmlfile_set_num_of_pkgs(oth_cr_file, task_count, NULL);
+        if (cmd_options->zck_compression) {
+            cr_xmlfile_set_num_of_pkgs(pri_cr_zck, task_count, NULL);
+            cr_xmlfile_set_num_of_pkgs(fil_cr_zck, task_count, NULL);
+            cr_xmlfile_set_num_of_pkgs(oth_cr_zck, task_count, NULL);
+        }
+        cr_delayed_dump_run(&user_data);
+    }
 
     // if there were any errors, exit nonzero
     if ( user_data.had_errors ) {

@@ -578,6 +578,67 @@ static int strlensort(gconstpointer a, gconstpointer b)
     }
 }
 
+// Sorting function for DuplicateLocation pointers, by pkg build time.
+// Compatible with g_array_sort()
+static int buildtimesort(gconstpointer a, gconstpointer b)
+{
+    // Function is supposed to take a double-pointer so unfortunately you cannot pass a
+    // string-comparison function directly.
+    struct DuplicateLocation *a_loc = (struct DuplicateLocation *)a;
+    struct DuplicateLocation *b_loc = (struct DuplicateLocation *)b;
+
+    assert(a_loc->pkg->time_build != 0);
+    assert(b_loc->pkg->time_build != 0);
+
+    // order by build time first
+    int64_t result = a_loc->pkg->time_build - b_loc->pkg->time_build;
+    if (result)
+        return result;
+
+    // and then alphabetically by the rpm location
+    return g_strcmp0(a_loc->location, b_loc->location);
+}
+
+
+static int
+handle_nevra_duplicates(GArray *locations, CmdDupNevra option)
+{
+    int skipped = 0;
+    for (size_t i=0; i<locations->len; i++) {
+        struct DuplicateLocation location = g_array_index(
+                locations, struct DuplicateLocation, i);
+        if (option == CR_ARG_DUP_NEVRA_KEEP_LAST) {
+            if (i < locations->len - 1) {
+                location.pkg->skip_dump = TRUE;
+                skipped += 1;
+            }
+        }
+    }
+    return skipped;
+}
+
+
+static void
+duplicates_warning(const char *nevra, GArray *locations, CmdDupNevra option)
+{
+  g_warning("Package '%s' has duplicate metadata entries, only one should exist", nevra);
+
+  char *skip_reason= "";
+  if (option == CR_ARG_DUP_NEVRA_KEEP_LAST) {
+      skip_reason = " (not dumped, 'keep-last')";
+  }
+  for (size_t i=0; i<locations->len; i++) {
+      struct DuplicateLocation location = g_array_index(locations, struct
+                                                        DuplicateLocation, i);
+      g_warning("    Sourced from location: \'%s\', build timestamp: %ld%s",
+                location.location,
+                location.pkg->time_build,
+                location.pkg->skip_dump ? skip_reason : "");
+
+  }
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -734,6 +795,7 @@ main(int argc, char **argv)
     g_debug("Thread pool ready");
 
     long task_count = 0;
+    long package_count_in_headers = 0;
     GSList *current_pkglist = NULL;
     /* ^^^ List with basenames of files which will be processed */
 
@@ -778,6 +840,11 @@ main(int argc, char **argv)
 
     g_debug("Package count: %ld", task_count);
     g_message("Directory walk done - %ld packages", task_count);
+
+    if (cmd_options->nevra_duplicates)
+        // we need to construct the large table of cr_Packages to analyse
+        // all the NEVRAs together.
+        cmd_options->delayed_dump = TRUE;
 
     user_data.task_count        = task_count;
     if (cmd_options->delayed_dump)
@@ -1067,6 +1134,7 @@ main(int argc, char **argv)
         cr_xmlfile_set_num_of_pkgs(pri_cr_file, task_count, NULL);
         cr_xmlfile_set_num_of_pkgs(fil_cr_file, task_count, NULL);
         cr_xmlfile_set_num_of_pkgs(oth_cr_file, task_count, NULL);
+        package_count_in_headers = task_count;
     }
 
     // Open sqlite databases
@@ -1348,39 +1416,41 @@ main(int argc, char **argv)
     GHashTableIter iter;
     gpointer key, value;
 
+    int skipped_pkgs = 0;
     g_hash_table_iter_init(&iter, user_data.nevra_table);
     while (g_hash_table_iter_next(&iter, &key, &value))
     {
         gchar *nevra = (gchar *) key;
         GArray *locations = (GArray *) value;
         if (locations->len > 1) {
-            g_warning("Package '%s' has duplicate metadata entries, only one should exist", nevra);
-
+            g_array_sort(locations, buildtimesort);
+            skipped_pkgs += handle_nevra_duplicates(locations, cmd_options->nevra_duplicates);
+            // re-sort to keep the warning-output easily readable for humans
             g_array_sort(locations, strlensort);
-
-            for (int i=0; i<locations->len; i++) {
-                g_warning("    Sourced from location: \'%s\'", g_array_index(locations, gchar *, i));
-            }
+            duplicates_warning(nevra, locations, cmd_options->nevra_duplicates);
         }
 
         g_hash_table_iter_steal(&iter);
         g_free(nevra);
         for (int i = 0; i < locations->len; i++) {
-            g_free(g_array_index(locations, gchar *, i));
+            g_free(g_array_index(locations, struct DuplicateLocation, i).location);
         }
         g_array_free(locations, TRUE);
     }
     g_hash_table_destroy(user_data.nevra_table);
 
+    user_data.skipped_count = skipped_pkgs;
+
     if (cmd_options->delayed_dump) {
-        // Finally dump the delayed (new) metadata! (no threading for now)
-        cr_xmlfile_set_num_of_pkgs(pri_cr_file, task_count, NULL);
-        cr_xmlfile_set_num_of_pkgs(fil_cr_file, task_count, NULL);
-        cr_xmlfile_set_num_of_pkgs(oth_cr_file, task_count, NULL);
+        // Finally dump the delayed (new) metadata!
+        package_count_in_headers = user_data.task_count - skipped_pkgs;
+        cr_xmlfile_set_num_of_pkgs(pri_cr_file, package_count_in_headers, NULL);
+        cr_xmlfile_set_num_of_pkgs(fil_cr_file, package_count_in_headers, NULL);
+        cr_xmlfile_set_num_of_pkgs(oth_cr_file, package_count_in_headers, NULL);
         if (cmd_options->zck_compression) {
-            cr_xmlfile_set_num_of_pkgs(pri_cr_zck, task_count, NULL);
-            cr_xmlfile_set_num_of_pkgs(fil_cr_zck, task_count, NULL);
-            cr_xmlfile_set_num_of_pkgs(oth_cr_zck, task_count, NULL);
+            cr_xmlfile_set_num_of_pkgs(pri_cr_zck, package_count_in_headers, NULL);
+            cr_xmlfile_set_num_of_pkgs(fil_cr_zck, package_count_in_headers, NULL);
+            cr_xmlfile_set_num_of_pkgs(oth_cr_zck, package_count_in_headers, NULL);
         }
         cr_delayed_dump_run(&user_data);
     }
@@ -1437,7 +1507,7 @@ main(int argc, char **argv)
      * that unfortunately means we have to decompress metadata files change package
      * count value and compress them again.
      */
-    if (user_data.package_count != user_data.task_count){
+    if (package_count_in_headers != user_data.package_count) {
         g_message("Warning: There were some invalid packages: we have to recompress other, filelists and primary xml metadata files in order to have correct package counts");
 
         GThreadPool *rewrite_pkg_count_pool = g_thread_pool_new(cr_rewrite_pkg_count_thread,

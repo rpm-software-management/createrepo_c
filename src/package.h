@@ -135,6 +135,7 @@ typedef struct {
 
     cr_PackageLoadingFlags loadingflags; /*!<
         Bitfield flags with information about package loading  */
+    gboolean skip_dump;         /*!<  Don't dump this package to metadata. */
 } cr_Package;
 
 /** Create new (empty) dependency structure.

@@ -131,7 +131,7 @@ cr_rewrite_pkg_count_thread(gpointer data, gpointer user_data)
     cr_rewrite_header_package_count(task->src,
                                     task->type,
                                     ud->package_count,
-                                    ud->task_count,
+                                    ud->task_count - ud->skipped_count,
                                     task->stat,
                                     task->zck_dict_dir,
                                     &tmp_err);

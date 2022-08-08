@@ -260,8 +260,11 @@ cr_delayed_dump_run(gpointer user_data)
     for (int id = 0; id < stop; id++) {
         struct DelayedTask dtask = g_array_index(udata->delayed_write,
                                                  struct DelayedTask, id);
-        if (!dtask.pkg)
-            return;  // dumper pool failed to load this package
+        if (!dtask.pkg || dtask.pkg->skip_dump) {
+            // invalid || explicitly skipped task
+            wait_for_incremented_ids(id, udata);
+            goto next_package;
+        }
 
         struct cr_XmlStruct res = cr_xml_dump(dtask.pkg, &tmp_err);
         if (tmp_err) {
@@ -274,12 +277,12 @@ cr_delayed_dump_run(gpointer user_data)
             write_pkg(id, res, dtask.pkg, udata);
         }
 
-        if (dtask.clean) {
-            cr_package_free(dtask.pkg);
-        }
         g_free(res.primary);
         g_free(res.filelists);
         g_free(res.other);
+next_package:
+        if (dtask.clean)
+            cr_package_free(dtask.pkg);
     }
 }
 
@@ -637,10 +640,13 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     gchar *nevra = cr_package_nevra(pkg);
     GArray *pkg_locations = g_hash_table_lookup(udata->nevra_table, nevra);
     if (!pkg_locations) {
-        pkg_locations = g_array_new(FALSE, TRUE, sizeof(gchar *));
+        pkg_locations = g_array_new(FALSE, TRUE, sizeof(struct DuplicateLocation));
         g_hash_table_insert(udata->nevra_table, nevra, pkg_locations);
     }
-    gchar *location = g_strdup(pkg->location_href);
+
+    struct DuplicateLocation location;
+    location.location = g_strdup(pkg->location_href);
+    location.pkg = pkg;
     g_array_append_val(pkg_locations, location);
     g_mutex_unlock(&(udata->mutex_nevra_table));
 

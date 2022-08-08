@@ -26,6 +26,10 @@
 
 #define DEFAULT_CHANGELOG_LIMIT         10
 
+typedef enum {
+    CR_ARG_DUP_NEVRA_KEEP_ALL = 0,
+    CR_ARG_DUP_NEVRA_KEEP_LAST,
+} CmdDupNevra;
 
 /**
  * Command line options
@@ -142,6 +146,7 @@ struct CmdOptions {
     gboolean delayed_dump;      /*!< Load _all_ the packages (parallel workers)
                                      first, and then dump the database.  This
                                      allows additional package filtering. */
+    CmdDupNevra nevra_duplicates; /*!< What to do about duplicated NEVRA */
 };
 
 /**

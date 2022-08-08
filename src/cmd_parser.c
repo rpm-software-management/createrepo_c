@@ -67,8 +67,27 @@ struct CmdOptions _cmd_options = {
         .recycle_pkglist            = FALSE,
 
         .keep_all_metadata          = TRUE,
+        .nevra_duplicates           = CR_ARG_DUP_NEVRA_KEEP_ALL,
     };
 
+
+gboolean
+duplicated_nevra_option_parser(const gchar *,
+                               const gchar *value,
+                               gpointer,
+                               GError **error)
+{
+    if (!g_strcmp0(value, "keep"))
+        _cmd_options.nevra_duplicates = CR_ARG_DUP_NEVRA_KEEP_ALL;
+    else if (!g_strcmp0(value, "keep-last"))
+        _cmd_options.nevra_duplicates = CR_ARG_DUP_NEVRA_KEEP_LAST;
+    else {
+        g_set_error(error, ERR_DOMAIN, CRE_BADARG,
+                    "Bad --duplicated-nevra argument, use 'keep' or 'keep-last'.");
+        return FALSE;
+    }
+    return TRUE;
+}
 
 
 // Command line params
@@ -213,6 +232,8 @@ static GOptionEntry cmd_entries[] =
       "Read the list of packages from old metadata directory and re-use it.  This "
       "option is only useful with --update (complements --pkglist and friends).",
       NULL },
+    { "duplicated-nevra", 0, 0, G_OPTION_ARG_CALLBACK, duplicated_nevra_option_parser,
+      "What to do about duplicates.", NULL, },
     { NULL, 0, 0, G_OPTION_ARG_NONE, NULL, NULL, NULL },
 };
 

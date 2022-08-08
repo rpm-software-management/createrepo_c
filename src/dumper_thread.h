@@ -46,6 +46,11 @@ struct PoolTask {
     char* path;                     // Just path     - /foo/bar/packages
 };
 
+struct DuplicateLocation {
+    gchar *location;
+    cr_Package *pkg;
+};
+
 struct UserData {
     cr_XmlFile *pri_f;              // Opened compressed primary.xml.*
     cr_XmlFile *fil_f;              // Opened compressed filelists.xml.*
@@ -66,8 +71,9 @@ struct UserData {
     cr_ChecksumType checksum_type;  // Constant representing selected checksum
     const char *checksum_cachedir;  // Dir with cached checksums
     gboolean skip_symlinks;         // Skip symlinks
-    long task_count;                // Total number of task to process
+    long task_count;                // Total number of tasks to process
     long package_count;             // Total number of packages processed
+    long skipped_count;             // Total number of explicitly skipped packages
 
     // Duplicate package error checking
     GMutex mutex_nevra_table;       // Mutex for the table of NEVRAs

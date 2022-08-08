@@ -139,6 +139,9 @@ struct CmdOptions {
     GSList *modulemd_metadata;  /*!< paths to all modulemd metadata */
 
     gboolean recycle_pkglist;
+    gboolean delayed_dump;      /*!< Load _all_ the packages (parallel workers)
+                                     first, and then dump the database.  This
+                                     allows additional package filtering. */
 };
 
 /**

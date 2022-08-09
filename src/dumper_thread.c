@@ -496,7 +496,6 @@ cr_dumper_thread(gpointer data, gpointer user_data)
                        udata->checksum_cachedir, location_href,
                        location_base, udata->changelog_limit,
                        NULL, hdrrflags, &tmp_err);
-        pkg_new = pkg;
         assert(pkg || tmp_err);
 
         if (!pkg) {
@@ -507,14 +506,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
             goto task_cleanup;
         }
 
-        res = cr_xml_dump(pkg, &tmp_err);
-        if (tmp_err) {
-            g_critical("Cannot dump XML for %s (%s): %s",
-                       pkg->name, pkg->pkgId, tmp_err->message);
-            udata->had_errors = TRUE;
-            g_clear_error(&tmp_err);
-            goto task_cleanup;
-        }
+        pkg_new = pkg; // We allocated, we clean
 
         if (udata->output_pkg_list){
             g_mutex_lock(&(udata->mutex_output_pkg_list));
@@ -524,14 +516,6 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     } else {
         // Just gen XML from old loaded metadata
         pkg = md;
-        res = cr_xml_dump(md, &tmp_err);
-        if (tmp_err) {
-            g_critical("Cannot dump XML for %s (%s): %s",
-                       md->name, md->pkgId, tmp_err->message);
-            udata->had_errors = TRUE;
-            g_clear_error(&tmp_err);
-            goto task_cleanup;
-        }
     }
 
 #ifdef CR_DELTA_RPM_SUPPORT
@@ -570,6 +554,18 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     g_array_append_val(pkg_locations, location);
     g_mutex_unlock(&(udata->mutex_nevra_table));
 
+    // Pre-calculate the XML data aside any critical section, and early enough
+    // so we can put it into the buffer (so buffered single-threaded write later
+    // is faster).
+    res = cr_xml_dump(pkg, &tmp_err);
+    if (tmp_err) {
+        g_critical("Cannot dump XML for %s (%s): %s",
+                   pkg->name, pkg->pkgId, tmp_err->message);
+        udata->had_errors = TRUE;
+        g_clear_error(&tmp_err);
+        goto task_cleanup;
+    }
+
     // Buffering stuff
     g_mutex_lock(&(udata->mutex_buffer));
 
@@ -605,15 +601,15 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     // Dump XML and SQLite
     write_pkg(task->id, res, pkg, udata);
 
-    // Clean up
-    if (pkg_new)
-        cr_package_free(pkg_new);
-
     g_free(res.primary);
     g_free(res.filelists);
     g_free(res.other);
 
 task_cleanup:
+    // Clean up
+    if (pkg_new)
+        cr_package_free(pkg_new);
+
     if (udata->id_pri <= task->id) {
         // An error was encountered and we have to wait to increment counters
         g_mutex_lock(&(udata->mutex_pri));

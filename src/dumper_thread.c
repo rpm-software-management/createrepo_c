@@ -43,8 +43,6 @@ struct BufferedTask {
     long id;                        // ID of the task
     struct cr_XmlStruct res;        // XML for primary, filelists and other
     cr_Package *pkg;                // Package structure
-    char *location_href;            // location_href path
-    char *location_base;            // location_base path
     int pkg_from_md;                // If true - package structure if from
                                     // old metadata and must not be freed!
                                     // If false - package is from file and
@@ -472,14 +470,20 @@ cr_dumper_thread(gpointer data, gpointer user_data)
             }
 
             if (old_used) {
+                // CR_PACKAGE_SINGLE_CHUNK used with the preloaded (old)
+                // metadata.  Create a new per-package chunk.
+                assert (!md->chunk);
+                md->chunk = g_string_chunk_new(1024);
+                md->loadingflags &= ~CR_PACKAGE_SINGLE_CHUNK;
+
                 // We have usable old data, but we have to set proper locations
                 // WARNING! This two lines destructively modifies content of
                 // packages in old metadata.
-                md->location_href = location_href;
-                md->location_base = location_base;
-                // ^^^ The location_base not location_href are properly saved
-                // into pkg chunk this is intentional as after the metadata
-                // are written (dumped) none should use them again.
+                md->location_href = cr_safe_string_chunk_insert(md->chunk, location_href);
+                md->location_base = cr_safe_string_chunk_insert(md->chunk, location_base);
+                // ^^^ The location_base and location_href create a new data
+                // chunk, even though the rest of the metadata is stored in the
+                // global chunk (shared with all packages).
             }
         }
     }
@@ -581,18 +585,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         buf_task->id  = task->id;
         buf_task->res = res;
         buf_task->pkg = pkg;
-        buf_task->location_href = NULL;
-        buf_task->location_base = NULL;
         buf_task->pkg_from_md = (pkg == md) ? 1 : 0;
-
-        if (pkg == md) {
-            // We MUST store locations for reused packages who goes to the buffer
-            buf_task->location_href = g_strdup(location_href);
-            buf_task->pkg->location_href = buf_task->location_href;
-
-            buf_task->location_base = g_strdup(location_base);
-            buf_task->pkg->location_base = buf_task->location_base;
-        }
 
         g_queue_insert_sorted(udata->buffer, buf_task, buf_task_sort_func, NULL);
         g_mutex_unlock(&(udata->mutex_buffer));
@@ -661,8 +654,6 @@ task_cleanup:
             g_free(buf_task->res.primary);
             g_free(buf_task->res.filelists);
             g_free(buf_task->res.other);
-            g_free(buf_task->location_href);
-            g_free(buf_task->location_base);
             g_free(buf_task);
         } else {
             g_mutex_unlock(&(udata->mutex_buffer));

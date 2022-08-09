@@ -62,6 +62,32 @@ buf_task_sort_func(gconstpointer a, gconstpointer b, G_GNUC_UNUSED gpointer data
 
 
 static void
+wait_for_incremented_ids(long id, struct UserData *udata)
+{
+    g_mutex_lock(&(udata->mutex_pri));
+    while (udata->id_pri != id)
+        g_cond_wait (&(udata->cond_pri), &(udata->mutex_pri));
+    ++udata->id_pri;
+    g_cond_broadcast(&(udata->cond_pri));
+    g_mutex_unlock(&(udata->mutex_pri));
+
+    g_mutex_lock(&(udata->mutex_fil));
+    while (udata->id_fil != id)
+        g_cond_wait (&(udata->cond_fil), &(udata->mutex_fil));
+    ++udata->id_fil;
+    g_cond_broadcast(&(udata->cond_fil));
+    g_mutex_unlock(&(udata->mutex_fil));
+
+    g_mutex_lock(&(udata->mutex_oth));
+    while (udata->id_oth != id)
+        g_cond_wait (&(udata->cond_oth), &(udata->mutex_oth));
+    ++udata->id_oth;
+    g_cond_broadcast(&(udata->cond_oth));
+    g_mutex_unlock(&(udata->mutex_oth));
+}
+
+
+static void
 write_pkg(long id,
           struct cr_XmlStruct res,
           cr_Package *pkg,
@@ -612,26 +638,7 @@ task_cleanup:
 
     if (udata->id_pri <= task->id) {
         // An error was encountered and we have to wait to increment counters
-        g_mutex_lock(&(udata->mutex_pri));
-        while (udata->id_pri != task->id)
-            g_cond_wait (&(udata->cond_pri), &(udata->mutex_pri));
-        ++udata->id_pri;
-        g_cond_broadcast(&(udata->cond_pri));
-        g_mutex_unlock(&(udata->mutex_pri));
-
-        g_mutex_lock(&(udata->mutex_fil));
-        while (udata->id_fil != task->id)
-            g_cond_wait (&(udata->cond_fil), &(udata->mutex_fil));
-        ++udata->id_fil;
-        g_cond_broadcast(&(udata->cond_fil));
-        g_mutex_unlock(&(udata->mutex_fil));
-
-        g_mutex_lock(&(udata->mutex_oth));
-        while (udata->id_oth != task->id)
-            g_cond_wait (&(udata->cond_oth), &(udata->mutex_oth));
-        ++udata->id_oth;
-        g_cond_broadcast(&(udata->cond_oth));
-        g_mutex_unlock(&(udata->mutex_oth));
+        wait_for_incremented_ids(task->id, udata);
     }
 
     g_free(task->full_path);

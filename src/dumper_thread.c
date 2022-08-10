@@ -43,10 +43,10 @@ struct BufferedTask {
     long id;                        // ID of the task
     struct cr_XmlStruct res;        // XML for primary, filelists and other
     cr_Package *pkg;                // Package structure
-    int pkg_from_md;                // If true - package structure if from
-                                    // old metadata and must not be freed!
-                                    // If false - package is from file and
-                                    // it must be freed!
+    gboolean clean;                 // If false - 'pkg' points at an external
+                                    // package structure that uses a memory
+                                    // chunk handled by the old metadata.
+                                    // It must not be freed!
 };
 
 
@@ -390,7 +390,8 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     GError *tmp_err = NULL;
     gboolean old_used = FALSE;  // To use old metadata?
     cr_Package *md  = NULL;     // Package from loaded MetaData
-    cr_Package *pkg = NULL;     // Package from file
+    cr_Package *pkg_new = NULL; // Package from file, newly allocated
+    cr_Package *pkg = NULL;     // Package we work with
     struct stat stat_buf;       // Struct with info from stat() on file
     struct cr_XmlStruct res;    // Structure for generated XML
     cr_HeaderReadingFlags hdrrflags = CR_HDRR_NONE;
@@ -495,6 +496,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
                        udata->checksum_cachedir, location_href,
                        location_base, udata->changelog_limit,
                        NULL, hdrrflags, &tmp_err);
+        pkg_new = pkg;
         assert(pkg || tmp_err);
 
         if (!pkg) {
@@ -585,7 +587,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         buf_task->id  = task->id;
         buf_task->res = res;
         buf_task->pkg = pkg;
-        buf_task->pkg_from_md = (pkg == md) ? 1 : 0;
+        buf_task->clean = pkg_new ? TRUE : FALSE;
 
         g_queue_insert_sorted(udata->buffer, buf_task, buf_task_sort_func, NULL);
         g_mutex_unlock(&(udata->mutex_buffer));
@@ -604,7 +606,9 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     write_pkg(task->id, res, pkg, udata);
 
     // Clean up
-    cr_package_free(pkg);
+    if (pkg_new)
+        cr_package_free(pkg_new);
+
     g_free(res.primary);
     g_free(res.filelists);
     g_free(res.other);
@@ -650,7 +654,8 @@ task_cleanup:
             // Dump XML and SQLite
             write_pkg(buf_task->id, buf_task->res, buf_task->pkg, udata);
             // Clean up
-            cr_package_free(buf_task->pkg);
+            if (buf_task->clean)
+                cr_package_free(buf_task->pkg);
             g_free(buf_task->res.primary);
             g_free(buf_task->res.filelists);
             g_free(buf_task->res.other);

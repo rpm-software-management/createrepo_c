@@ -631,10 +631,12 @@ cr_dumper_thread(gpointer data, gpointer user_data)
                 md->loadingflags &= ~CR_PACKAGE_SINGLE_CHUNK;
 
                 // We have usable old data, but we have to set proper locations
-                // WARNING! This two lines destructively modifies content of
-                // packages in old metadata.
+                // WARNING! location_href is overidden
+                // location_base is kept by default, unless specified differently
+                //
                 md->location_href = cr_safe_string_chunk_insert(md->chunk, location_href);
-                md->location_base = cr_safe_string_chunk_insert(md->chunk, location_base);
+                if (location_base)
+                    md->location_base = cr_safe_string_chunk_insert(md->chunk, location_base);
                 // ^^^ The location_base and location_href create a new data
                 // chunk, even though the rest of the metadata is stored in the
                 // global chunk (shared with all packages).

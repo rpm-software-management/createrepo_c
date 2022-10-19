@@ -20,6 +20,7 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <assert.h>
+#include <rpm/rpmstring.h>
 #include "xml_file.h"
 #include <errno.h>
 #include "error.h"

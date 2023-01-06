@@ -31,6 +31,10 @@
 #define MAX_CHECKSUM_NAME_LEN   7
 #define BUFFER_SIZE             2048
 
+// For deltarpm checking we always need md5, even if we don't want to support
+// MD5 for anything else in the repo files
+#define CR_CHECKSUM_MD5INT 250
+
 struct _cr_ChecksumCtx {
     EVP_MD_CTX      *ctx;
     cr_ChecksumType type;
@@ -121,6 +125,7 @@ cr_checksum_file(const char *filename,
     const EVP_MD *ctx_type;
 
     switch (type) {
+        case CR_CHECKSUM_MD5INT: ctx_type = EVP_md5();    break;
 #ifdef WITH_LEGACY_HASHES
         case CR_CHECKSUM_MD5:    ctx_type = EVP_md5();    break;
         case CR_CHECKSUM_SHA:    ctx_type = EVP_sha1();   break;

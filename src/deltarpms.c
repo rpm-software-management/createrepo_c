@@ -35,7 +35,8 @@
 #include "misc.h"
 #include "error.h"
 
-
+// MD5 support, private to work even without legacy support enabled
+#define CR_CHECKSUM_MD5INT 250
 #define ERR_DOMAIN      CREATEREPO_C_ERROR
 
 gboolean
@@ -48,6 +49,43 @@ cr_drpm_support(void)
 }
 
 #ifdef    CR_DELTA_RPM_SUPPORT
+
+gboolean
+cr_drpm_check_checksum(const char *drpmpath, const char *new_path) {
+    drpm *delta = NULL;
+    gchar *target_md5, *checksum;
+    GError *tmp_err = NULL;
+
+    int error = drpm_read(&delta, drpmpath);
+
+    if (error != DRPM_ERR_OK) {
+        return FALSE;
+    }
+
+    error = drpm_get_string(delta, DRPM_TAG_TGTMD5, &target_md5);
+
+    if (error != DRPM_ERR_OK) {
+        return FALSE;
+    }
+
+    error = drpm_destroy(&delta);
+
+    if (error != DRPM_ERR_OK) {
+        return FALSE;
+    }
+
+    checksum = cr_checksum_file(new_path, CR_CHECKSUM_MD5INT, &tmp_err);
+
+    if (tmp_err) {
+        return FALSE;
+    }
+
+    gboolean ret = g_ascii_strcasecmp(checksum, target_md5) == 0?TRUE:FALSE;
+
+    g_free(target_md5);
+
+    return ret;
+}
 
 char *
 cr_drpm_create(cr_DeltaTargetPackage *old,
@@ -62,6 +100,15 @@ cr_drpm_create(cr_DeltaTargetPackage *old,
                              new->version, new->release, old->arch);
     drpmpath = g_build_filename(destdir, drpmfn, NULL);
     g_free(drpmfn);
+
+
+    if(g_file_test(drpmpath, (G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR))) {
+       // Check if drpm file exists and new file is still the same
+       if (cr_drpm_check_checksum(drpmpath, new->path) == TRUE) {
+           g_debug("%s: drpm file (%s) already exists, skipping generation", __func__, drpmpath);
+           return drpmpath;
+       }
+    }
 
     drpm_make_options *opts;
     drpm_make_options_init(&opts);

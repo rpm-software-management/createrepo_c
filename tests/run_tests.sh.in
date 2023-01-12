@@ -9,6 +9,13 @@ RET=0
 # object file: No such file or directory" error message.
 export "LD_LIBRARY_PATH=${CMAKE_BINARY_DIR}/src/:"
 
+# s390x has a hardware implementation of DEFLATE, which changes how
+# zlib and gzip works.  For the purposes of the test suite, disable
+# the hardware accelerated DEFLATE usage so that our gzipped test
+# files will always generate the same message digests regardless of
+# architecture.
+[ "$(uname -m)" = "s390x" ] && export DFLTCC=0
+
 # Go to source dir (so test would be able to use testdata/ in this dir)
 cd ${CMAKE_CURRENT_SOURCE_DIR}
 

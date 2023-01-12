@@ -37,7 +37,6 @@ find_package(BZip2 REQUIRED)
 find_package(CURL REQUIRED)
 find_package(LibXml2 REQUIRED)
 find_package(OpenSSL REQUIRED)
-find_package(ZLIB REQUIRED)
 
 pkg_check_modules(GLIB2 REQUIRED glib-2.0)
 pkg_check_modules(GTHREAD2 REQUIRED gthread-2.0)
@@ -59,7 +58,6 @@ include_directories(${CURL_INCLUDE_DIRS})
 include_directories(${GLIB2_INCLUDE_DIRS})
 include_directories(${LIBXML2_INCLUDE_DIR})
 include_directories(${OPENSSL_INCLUDE_DIR})
-include_directories(${ZLIB_INCLUDE_DIR})
 
 # SuSE/Mageia/Mandriva legacy weak deps support
 OPTION (ENABLE_LEGACY_WEAKDEPS "Enable legacy SUSE/Mageia/Mandriva weakdeps support?" ON)
@@ -80,6 +78,19 @@ IF (ENABLE_DRPM)
     include_directories (${DRPM_INCLUDE_DIRS})
     ADD_DEFINITIONS("-DCR_DELTA_RPM_SUPPORT")
 ENDIF (ENABLE_DRPM)
+
+# Zlib-ng is a performance-oriented fork of zlib
+# with a more active development cadence
+OPTION (WITH_ZLIBNG "Build against zlib-ng rather than zlib" OFF)
+IF (WITH_ZLIBNG)
+    pkg_check_modules(ZLIB-NG REQUIRED zlib-ng)
+    include_directories(${ZLIB-NG_INCLUDEDIR})
+    SET (CMAKE_C_FLAGS          "${CMAKE_C_FLAGS} -DWITH_ZLIBNG -DWITH_GZFILEOP")
+    SET (CMAKE_C_FLAGS_DEBUG    "${CMAKE_C_FLAGS_DEBUG} -DWITH_ZLIBNG -DWITH_GZFILEOP")
+ELSE (WITH_ZLIBNG)
+    find_package(ZLIB REQUIRED)
+    include_directories(${ZLIB_INCLUDE_DIR})
+ENDIF (WITH_ZLIBNG)
 
 # option to enable/disable python support
 OPTION (ENABLE_PYTHON "Enable python support?" ON)

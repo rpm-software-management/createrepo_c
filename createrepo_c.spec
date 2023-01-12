@@ -49,7 +49,11 @@ BuildRequires:  rpm-devel >= 4.8.0-28
 BuildRequires:  sqlite-devel
 BuildRequires:  xz
 BuildRequires:  xz-devel
+%if %{with zlibng}
+BuildRequires:  zlib-ng-devel
+%else
 BuildRequires:  zlib-devel
+%endif
 %if %{with zchunk}
 BuildRequires:  pkgconfig(zck) >= 0.9.11
 BuildRequires:  zchunk
@@ -114,7 +118,8 @@ pushd build-py3
       -DWITH_ZCHUNK=%{?with_zchunk:ON}%{!?with_zchunk:OFF} \
       -DWITH_LIBMODULEMD=%{?with_libmodulemd:ON}%{!?with_libmodulemd:OFF} \
       -DWITH_LEGACY_HASHES=%{?with_legacy_hashes:ON}%{!?with_legacy_hashes:OFF} \
-      -DENABLE_DRPM=%{?with_drpm:ON}%{!?with_drpm:OFF}
+      -DENABLE_DRPM=%{?with_drpm:ON}%{!?with_drpm:OFF} \
+      -DWITH_ZLIBNG=%{?with_zlibng:ON}%{!?with_zlibng:OFF}
   make %{?_smp_mflags} RPM_OPT_FLAGS="%{optflags}"
   # Build C documentation
   make doc-c

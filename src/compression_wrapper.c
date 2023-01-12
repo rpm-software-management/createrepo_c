@@ -27,7 +27,18 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdbool.h>
-#include <zlib.h>
+#ifdef WITH_ZLIBNG
+    #include <zlib-ng.h>
+    #define gzopen zng_gzopen
+    #define gzclose zng_gzclose
+    #define gzread zng_gzread
+    #define gzwrite zng_gzwrite
+    #define gzbuffer zng_gzbuffer
+    #define gzsetparams zng_gzsetparams
+    #define gzerror zng_gzerror
+#else
+    #include <zlib.h>
+#endif
 #include <bzlib.h>
 #include <lzma.h>
 #ifdef WITH_ZCHUNK
@@ -85,11 +96,6 @@ LZMA_CHECK_SHA256
 #define XZ_MEMORY_USAGE_LIMIT   UINT64_MAX
 #define XZ_DECODER_FLAGS        0
 #define XZ_BUFFER_SIZE          (1024*32)
-
-#if ZLIB_VERNUM < 0x1240
-// XXX: Zlib has gzbuffer since 1.2.4
-#define gzbuffer(a,b) 0
-#endif
 
 cr_ContentStat *
 cr_contentstat_new(cr_ChecksumType type, GError **err)
@@ -1549,7 +1555,7 @@ cr_printf(GError **err, CR_FILE *cr_file, const char *format, ...)
     return ret;
 }
 
-ssize_t 
+ssize_t
 cr_get_zchunk_with_index(CR_FILE *cr_file, ssize_t zchunk_index, char **copy_buf, GError **err)
 {
     assert(cr_file);

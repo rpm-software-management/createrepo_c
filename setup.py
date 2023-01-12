@@ -44,6 +44,7 @@ setup(
         '-DENABLE_BASHCOMP:BOOL=OFF',
         '-DENABLE_DRPM:BOOL=OFF',
         '-DWITH_LEGACY_HASHES:BOOL=ON',
+        '-DWITH_ZLIBNG:BOOL=OFF', # not available on manylinux2014 image
     ],
     cmake_languages=['C'],
     entry_points={

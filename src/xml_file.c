@@ -19,6 +19,7 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <rpm/rpmstring.h>
 #include <assert.h>
 #include <rpm/rpmstring.h>
 #include "xml_file.h"

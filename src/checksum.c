@@ -49,7 +49,7 @@ cr_checksum_type(const char *name)
     if (len > MAX_CHECKSUM_NAME_LEN)
         return CR_CHECKSUM_UNKNOWN;
 
-    for (size_t x = 0; x <= len; x++)
+    for (size_t x = 0; x < len; x++)
         name_lower[x] = tolower(name[x]);
 
     if (!strncmp(name_lower, "sha", 3)) {

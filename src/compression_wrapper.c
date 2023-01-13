@@ -86,11 +86,6 @@ LZMA_CHECK_SHA256
 #define XZ_DECODER_FLAGS        0
 #define XZ_BUFFER_SIZE          (1024*32)
 
-#if ZLIB_VERNUM < 0x1240
-// XXX: Zlib has gzbuffer since 1.2.4
-#define gzbuffer(a,b) 0
-#endif
-
 cr_ContentStat *
 cr_contentstat_new(cr_ChecksumType type, GError **err)
 {
@@ -1549,7 +1544,7 @@ cr_printf(GError **err, CR_FILE *cr_file, const char *format, ...)
     return ret;
 }
 
-ssize_t 
+ssize_t
 cr_get_zchunk_with_index(CR_FILE *cr_file, ssize_t zchunk_index, char **copy_buf, GError **err)
 {
     assert(cr_file);

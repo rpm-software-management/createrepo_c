@@ -10,6 +10,12 @@
 %bcond_without drpm
 %endif
 
+%if 0%{?fedora}
+%bcond_without zlibng
+%else
+%bcond_with zlibng
+%endif
+
 %if 0%{?rhel}
 %bcond_with zchunk
 %else

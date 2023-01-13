@@ -544,7 +544,6 @@ compressfile_test_text_file(Copyfiletest *copyfiletest,
                             G_GNUC_UNUSED gconstpointer test_data)
 {
     int ret;
-    char *checksum;
     GError *tmp_err = NULL;
 
     g_assert(!g_file_test(copyfiletest->dst_file, G_FILE_TEST_EXISTS));
@@ -553,10 +552,12 @@ compressfile_test_text_file(Copyfiletest *copyfiletest,
     g_assert(!tmp_err);
     g_assert_cmpint(ret, ==, CRE_OK);
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
-    checksum = cr_checksum_file(copyfiletest->dst_file, CR_CHECKSUM_SHA256, NULL);
-    g_assert_cmpstr(checksum, ==, "8909fde88a5747d800fd2562b0f22945f014aa7df64"
-                                  "cf1c15c7933ae54b72ab6");
-    g_free(checksum);
+
+    // assert content is readable after decompression and recompression
+    char buf[30];
+    char *dst_full_name = g_strconcat(copyfiletest->dst_file, ".gz", NULL);
+    read_file(dst_full_name, CR_CW_GZ_COMPRESSION, buf, 30);
+    g_assert(g_strrstr(buf, "Lorem ipsum dolor sit amet"));
 }
 
 

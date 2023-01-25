@@ -21,6 +21,7 @@
 
 #include <glib/gstdio.h>
 #include <glib.h>
+#include <gio/gio.h>
 #include <arpa/inet.h>
 #include <assert.h>
 #include <curl/curl.h>
@@ -794,8 +795,6 @@ cr_download(CURL *in_handle,
     return CRE_OK;
 }
 
-
-
 gboolean
 cr_better_copy_file(const char *src, const char *in_dst, GError **err)
 {
@@ -819,7 +818,6 @@ cr_better_copy_file(const char *src, const char *in_dst, GError **err)
 
     return TRUE;
 }
-
 
 int
 cr_remove_dir_cb(const char *fpath,
@@ -856,7 +854,7 @@ gboolean
 cr_move_recursive(const char *srcDir, const char *dstDir, GError **err)
 {
     if (rename(srcDir, dstDir) == -1) {
-        if (!cr_cp(srcDir, dstDir, CR_CP_RECURSIVE, NULL, err))
+        if (!cr_gio_cp(g_file_new_for_path(srcDir), g_file_new_for_path(dstDir), G_FILE_COPY_ALL_METADATA, NULL, err))
             return FALSE;
         return (cr_remove_dir(srcDir, err) == CRE_OK);
     }
@@ -1423,6 +1421,44 @@ cr_cp(const char *src,
     g_ptr_array_free(argv_array, TRUE);
 
     return ret;
+}
+
+gboolean
+cr_gio_cp(GFile *src,
+      GFile *dst,
+      GFileCopyFlags flags,
+      GCancellable *cancellable,
+      GError **err)
+{
+    assert(src);
+    assert(dst);
+    assert(!err || *err == NULL);
+
+    GFileType type = g_file_query_file_type(src, G_FILE_QUERY_INFO_NONE, NULL);
+
+    if (type == G_FILE_TYPE_DIRECTORY) {
+        g_file_make_directory(dst, cancellable, err);
+        g_file_copy_attributes(src, dst, flags, cancellable, err);
+
+        GFileEnumerator *enumerator = g_file_enumerate_children(src, G_FILE_ATTRIBUTE_STANDARD_NAME, G_FILE_QUERY_INFO_NONE, cancellable, err);
+        for (GFileInfo *info = g_file_enumerator_next_file(enumerator, cancellable, err); info != NULL; info = g_file_enumerator_next_file(enumerator, cancellable, err)) {
+            const char *relative_path = g_file_info_get_name(info);
+            cr_gio_cp(
+                g_file_resolve_relative_path(src, relative_path),
+                g_file_resolve_relative_path(dst, relative_path),
+                flags, cancellable, err);
+        }
+    } else if (type == G_FILE_TYPE_REGULAR) {
+        g_file_copy(src, dst, flags, cancellable, NULL, NULL, err);
+    }
+
+    if (err != NULL) {
+        return TRUE;
+    }
+    else {
+        return FALSE;
+    }
+
 }
 
 gboolean

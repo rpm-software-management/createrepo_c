@@ -19,6 +19,7 @@
 
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <gio/gio.h>
 #include <errno.h>
 #include <string.h>
 #include <time.h>
@@ -448,10 +449,9 @@ cr_old_metadata_retention(const char *old_repo,
             continue;
         }
 
-        // COPY!
-        cr_cp(full_path,
-              new_full_path,
-              CR_CP_RECURSIVE|CR_CP_PRESERVE_ALL,
+        cr_gio_cp(g_file_new_for_path(full_path),
+              g_file_new_for_path(new_full_path),
+              G_FILE_COPY_ALL_METADATA,
               NULL,
               &tmp_err);
 
@@ -476,5 +476,3 @@ exit:
 
     return ret;
 }
-
-

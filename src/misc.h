@@ -26,6 +26,7 @@ extern "C" {
 
 #include <glib.h>
 #include <string.h>
+#include <gio/gio.h>
 #include <curl/curl.h>
 #include "compression_wrapper.h"
 #include "xml_parser.h"
@@ -449,7 +450,7 @@ typedef enum {
         preserve the all attributes (if possible) */
 } cr_CpFlags;
 
-/** Recursive copy of directory (works on files as well)
+/** Wrapper for cp
  * @param src           Source (supports wildcards)
  * @param dst           Destination (supports wildcards)
  * @param flags         Flags
@@ -461,6 +462,20 @@ cr_cp(const char *src,
       const char *dst,
       cr_CpFlags flags,
       const char *working_directory,
+      GError **err) __attribute__ ((deprecated ("please use `cr_gio_cp` instead")));
+
+/** Recursive copy of directory (works on files as well)
+ * @param src           Source (supports wildcards)
+ * @param dst           Destination (supports wildcards)
+ * @param flags         Flags
+ * @param cancellable   Can this be cancelled by another thread?
+ * @param err           GError **
+ */
+gboolean
+cr_gio_cp(GFile *src,
+      GFile *dst,
+      GFileCopyFlags flags,
+      GCancellable *cancellable,
       GError **err);
 
 typedef enum {

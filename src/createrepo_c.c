@@ -59,6 +59,16 @@
 #define OUTDELTADIR "drpms/"
 #define DEFAULT_DATABASE_VERSION    10
 
+/*
+ * Starting with glib 2.70.0, g_pattern_spec_match() replaces
+ * g_pattern_match().
+ */
+#ifdef GLIB_VERSION_2_70
+#define PATTERN_MATCH g_pattern_spec_match
+#else
+#define PATTERN_MATCH g_pattern_match
+#endif
+
 /** Check if the filename is excluded by any exclude mask.
  * @param filename      Filename (basename).
  * @param exclude_masks List of exclude masks
@@ -74,8 +84,8 @@ allowed_file(const gchar *filename, GSList *exclude_masks)
 
         GSList *element = exclude_masks;
         for (; element; element=g_slist_next(element)) {
-            if (g_pattern_match((GPatternSpec *) element->data,
-                                str_len, filename, reversed_filename))
+            if (PATTERN_MATCH((GPatternSpec *) element->data,
+                              str_len, filename, reversed_filename))
             {
                 g_free(reversed_filename);
                 g_debug("Exclude masks hit - skipping: %s", filename);

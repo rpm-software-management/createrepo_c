@@ -16,7 +16,7 @@
 %bcond_without zchunk
 %endif
 
-%if 0%{?rhel} && 0%{?rhel} < 8
+%if 0%{?rhel} && 0%{?rhel} < 7
 %bcond_with libmodulemd
 %else
 %bcond_without libmodulemd
@@ -56,8 +56,13 @@ BuildRequires:  zchunk
 %endif
 %if %{with libmodulemd}
 BuildRequires:  pkgconfig(modulemd-2.0) >= %{libmodulemd_version}
+%if 0%{?rhel} && 0%{?rhel} <= 7
+BuildRequires:  libmodulemd2
+Requires:       libmodulemd2%{?_isa} >= %{libmodulemd_version}
+%else
 BuildRequires:  libmodulemd
 Requires:       libmodulemd%{?_isa} >= %{libmodulemd_version}
+%endif
 %endif
 Requires:       %{name}-libs =  %{version}-%{release}
 BuildRequires:  bash-completion

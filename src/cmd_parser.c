@@ -118,7 +118,7 @@ static GOptionEntry cmd_entries[] =
     { "database", 'd', 0, G_OPTION_ARG_NONE, &(_cmd_options.database),
       "Generate sqlite databases for use with yum.", NULL },
     { "no-database", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.no_database),
-      "Do not generate sqlite databases in the repository.", NULL },
+      "Do not generate sqlite databases in the repository (default).", NULL },
     { "filelists-ext", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.filelists_ext),
       "Create filelists-ext metadata with file hashes.", NULL },
     { "update", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.update),

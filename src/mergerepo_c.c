@@ -1242,7 +1242,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_SqliteDb *fex_db = NULL;
     cr_SqliteDb *oth_db = NULL;
 
-    if (!cmd_options->no_database) {
+    if (cmd_options->database) {
         gchar *pri_db_filename = NULL;
         gchar *fil_db_filename = NULL;
         gchar *fex_db_filename = NULL;
@@ -1329,7 +1329,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                 cr_xmlfile_add_chunk(oth_cr_zck, (const char *) res.other, NULL);
             }
 
-            if (!cmd_options->no_database) {
+            if (cmd_options->database) {
                 cr_db_add_pkg(pri_db, pkg, NULL);
                 cr_db_add_pkg(fil_db, pkg, NULL);
                 if (cmd_options->filelists_ext)
@@ -1585,7 +1585,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     // Sqlite db
 
-    if (!cmd_options->no_database) {
+    if (cmd_options->database) {
         const char *db_suffix = cr_compression_suffix(cmd_options->db_compression_type);
 
         // Insert XML checksums into the dbs

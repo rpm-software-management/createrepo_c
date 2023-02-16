@@ -109,7 +109,7 @@ REPO_04_PRIXML = os.path.join(REPO_04_PATH, "repodata/",
 REPO_04_FILXML = os.path.join(REPO_04_PATH, "repodata/",
     "d7b8b1b6caa124aa17e4c6a1867e50e6893791ade0ebe212ab6f536695b5ce84-filelists.xml.gz")
 REPO_04_FEXXML = os.path.join(REPO_04_PATH, "repodata/",
-    "5675d4a5265eacfd0af1f366057cf2e29d02a350ea03a59c1e2644d749afbd97-filelists_ext.xml.gz")
+    "5675d4a5265eacfd0af1f366057cf2e29d02a350ea03a59c1e2644d749afbd97-filelists-ext.xml.gz")
 REPO_04_OTHXML = os.path.join(REPO_04_PATH, "repodata/",
     "6d0101044d9b4683e4ddc76491b3eb2228cddaace9e1d148c5eb138de9f71c17-other.xml.gz")
 

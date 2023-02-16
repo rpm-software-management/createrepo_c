@@ -28,7 +28,7 @@
   <data type="filelists_ext">
     <checksum type="sha256">5675d4a5265eacfd0af1f366057cf2e29d02a350ea03a59c1e2644d749afbd97</checksum>
     <open-checksum type="sha256">1d71bbe08947468f20e0b3b062e177add2db77adc673045cfa9e199487210b05</open-checksum>
-    <location href="repodata/5675d4a5265eacfd0af1f366057cf2e29d02a350ea03a59c1e2644d749afbd97-filelists_ext.xml.gz"/>
+    <location href="repodata/5675d4a5265eacfd0af1f366057cf2e29d02a350ea03a59c1e2644d749afbd97-filelists-ext.xml.gz"/>
     <timestamp>1648713099</timestamp>
     <size>409</size>
     <open-size>867</open-size>

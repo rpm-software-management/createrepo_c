@@ -44,10 +44,10 @@ PyObject *py_xml_parse_filelists_snippet(PyObject *self, PyObject *args);
 
 PyDoc_STRVAR(xml_parse_filelists_ext__doc__,
 "xml_parse_filelists_ext(filename, newpkgcb, pkgcb, warningcb) -> None\n\n"
-"Parse filelists_ext.xml");
+"Parse filelists-ext.xml");
 PyDoc_STRVAR(xml_parse_filelists_ext_snippet__doc__,
 "xml_parse_filelists_ext_snippet(snippet, newpkgcb, pkgcb, warningcb) -> None\n\n"
-"Parse filelists_ext xml snippet");
+"Parse filelists-ext xml snippet");
 
 PyObject *py_xml_parse_filelists_ext(PyObject *self, PyObject *args);
 PyObject *py_xml_parse_filelists_ext_snippet(PyObject *self, PyObject *args);

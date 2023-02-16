@@ -54,15 +54,15 @@ struct DuplicateLocation {
 struct UserData {
     cr_XmlFile *pri_f;              // Opened compressed primary.xml.*
     cr_XmlFile *fil_f;              // Opened compressed filelists.xml.*
-    cr_XmlFile *fex_f;              // Opened compressed filelists_ext.xml.*
+    cr_XmlFile *fex_f;              // Opened compressed filelists-ext.xml.*
     cr_XmlFile *oth_f;              // Opened compressed other.xml.*
     cr_SqliteDb *pri_db;            // Primary db
     cr_SqliteDb *fil_db;            // Filelists db
-    cr_SqliteDb *fex_db;            // Filelists_ext db
+    cr_SqliteDb *fex_db;            // Filelists-ext db
     cr_SqliteDb *oth_db;            // Other db
     cr_XmlFile *pri_zck;            // Opened compressed primary.xml.zck
     cr_XmlFile *fil_zck;            // Opened compressed filelists.xml.zck
-    cr_XmlFile *fex_zck;            // Opened compressed filelists_ext.xml.zck
+    cr_XmlFile *fex_zck;            // Opened compressed filelists-ext.xml.zck
     cr_XmlFile *oth_zck;            // Opened compressed other.xml.zck
     char *prev_srpm;                // Previous srpm
     char *cur_srpm;                 // Current srpm

@@ -80,7 +80,7 @@ static GOptionEntry cmd_entries[] =
     { "no-database", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.no_database),
       "", NULL },
     { "filelists_ext", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.filelists_ext),
-      "Create filelists_ext metadata with file hashes.", NULL },
+      "Create filelists-ext metadata with file hashes.", NULL },
     { "verbose", 'v', 0, G_OPTION_ARG_NONE, &(_cmd_options.verbose),
       "", NULL },
     { "outputdir", 'o', 0, G_OPTION_ARG_FILENAME, &(_cmd_options.outputdir),
@@ -923,7 +923,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                                          "filelists.xml");
 	if (cmd_options->filelists_ext)
             fex_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
-                                             "filelists_ext.xml");
+                                             "filelists-ext.xml");
         oth_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
                                          "other.xml");
         if (pri_dict_file && !g_file_get_contents(pri_dict_file, &pri_dict,
@@ -966,7 +966,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     gchar *fex_xml_filename = NULL;
     if (cmd_options->filelists_ext)
         fex_xml_filename = g_strconcat(cmd_options->tmp_out_repo,
-                                       "/filelists_ext.xml.gz", NULL);
+                                       "/filelists-ext.xml.gz", NULL);
     gchar *oth_xml_filename = g_strconcat(cmd_options->tmp_out_repo,
                                           "/other.xml.gz", NULL);
 
@@ -1109,7 +1109,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                                        "/filelists.xml.zck", NULL);
 	if (cmd_options->filelists_ext)
             fex_zck_filename = g_strconcat(cmd_options->tmp_out_repo,
-                                           "/filelists_ext.xml.zck", NULL);
+                                           "/filelists-ext.xml.zck", NULL);
         oth_zck_filename = g_strconcat(cmd_options->tmp_out_repo,
                                        "/other.xml.zck", NULL);
 
@@ -1254,7 +1254,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                                       "/filelists.sqlite", NULL);
 	if (cmd_options->filelists_ext)
             fex_db_filename = g_strconcat(cmd_options->tmp_out_repo,
-                                          "/filelists_ext.sqlite", NULL);
+                                          "/filelists-ext.sqlite", NULL);
         oth_db_filename = g_strconcat(cmd_options->tmp_out_repo,
                                       "/other.sqlite", NULL);
 
@@ -1608,7 +1608,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         gchar *fex_db_filename = NULL;
         if (cmd_options->filelists_ext)
             fex_db_filename = g_strconcat(cmd_options->tmp_out_repo,
-                                          "/filelists_ext.sqlite", NULL);
+                                          "/filelists-ext.sqlite", NULL);
         gchar *oth_db_filename = g_strconcat(cmd_options->tmp_out_repo,
                                              "/other.sqlite", NULL);
 

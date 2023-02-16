@@ -67,7 +67,7 @@
 #define TEST_REPO_04_REPOMD        TEST_REPO_04"repodata/repomd.xml"
 #define TEST_REPO_04_PRIMARY       TEST_REPO_04"repodata/6a5f64dd82a126a161657764fe8f4b4092c0a3b61b9a34bde2af89dc1df112a1-primary.xml.gz"
 #define TEST_REPO_04_FILELISTS     TEST_REPO_04"repodata/d7b8b1b6caa124aa17e4c6a1867e50e6893791ade0ebe212ab6f536695b5ce84-filelists.xml.gz"
-#define TEST_REPO_04_FILELISTS_EXT TEST_REPO_04"repodata/5675d4a5265eacfd0af1f366057cf2e29d02a350ea03a59c1e2644d749afbd97-filelists_ext.xml.gz"
+#define TEST_REPO_04_FILELISTS_EXT TEST_REPO_04"repodata/5675d4a5265eacfd0af1f366057cf2e29d02a350ea03a59c1e2644d749afbd97-filelists-ext.xml.gz"
 #define TEST_REPO_04_OTHER         TEST_REPO_04"repodata/6d0101044d9b4683e4ddc76491b3eb2228cddaace9e1d148c5eb138de9f71c17-other.xml.gz"
 
 

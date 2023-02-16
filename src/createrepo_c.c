@@ -1083,7 +1083,7 @@ main(int argc, char **argv)
     pri_xml_filename = g_strconcat(tmp_out_repo, "/primary.xml", xml_compression_suffix, NULL);
     fil_xml_filename = g_strconcat(tmp_out_repo, "/filelists.xml", xml_compression_suffix, NULL);
     if (cmd_options->filelists_ext)
-        fex_xml_filename = g_strconcat(tmp_out_repo, "/filelists_ext.xml", xml_compression_suffix, NULL);
+        fex_xml_filename = g_strconcat(tmp_out_repo, "/filelists-ext.xml", xml_compression_suffix, NULL);
     oth_xml_filename = g_strconcat(tmp_out_repo, "/other.xml", xml_compression_suffix, NULL);
 
     pri_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
@@ -1205,7 +1205,7 @@ main(int argc, char **argv)
             pri_db_filename = g_strconcat(tmp_out_repo, "/primary.sqlite", NULL);
             fil_db_filename = g_strconcat(tmp_out_repo, "/filelists.sqlite", NULL);
 	    if (cmd_options->filelists_ext)
-                fex_db_filename = g_strconcat(tmp_out_repo, "/filelists_ext.sqlite", NULL);
+                fex_db_filename = g_strconcat(tmp_out_repo, "/filelists-ext.sqlite", NULL);
             oth_db_filename = g_strconcat(tmp_out_repo, "/other.sqlite", NULL);
         } else {
             g_debug("Creating databases localy");
@@ -1213,7 +1213,7 @@ main(int argc, char **argv)
             pri_db_filename = g_build_filename(tmpdir, "primary.XXXXXX.sqlite", NULL);
             fil_db_filename = g_build_filename(tmpdir, "filelists.XXXXXX.sqlite", NULL);
 	    if (cmd_options->filelists_ext)
-                fex_db_filename = g_build_filename(tmpdir, "filelists_ext.XXXXXX.sqlite", NULL);
+                fex_db_filename = g_build_filename(tmpdir, "filelists-ext.XXXXXX.sqlite", NULL);
             oth_db_filename = g_build_filename(tmpdir, "other.XXXXXXX.sqlite", NULL);
             pri_db_fd = g_mkstemp(pri_db_filename);
             g_debug("%s", pri_db_filename);
@@ -1318,7 +1318,7 @@ main(int argc, char **argv)
                                          "filelists.xml");
 	if (cmd_options->filelists_ext)
             fex_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
-                                             "filelists_ext.xml");
+                                             "filelists-ext.xml");
         oth_dict_file = cr_get_dict_file(cmd_options->zck_dict_dir,
                                          "other.xml");
         if (pri_dict_file && !g_file_get_contents(pri_dict_file, &pri_dict,
@@ -1356,7 +1356,7 @@ main(int argc, char **argv)
         pri_zck_filename = g_strconcat(tmp_out_repo, "/primary.xml.zck", NULL);
         fil_zck_filename = g_strconcat(tmp_out_repo, "/filelists.xml.zck", NULL);
 	if (cmd_options->filelists_ext)
-            fex_zck_filename = g_strconcat(tmp_out_repo, "/filelists_ext.xml.zck", NULL);
+            fex_zck_filename = g_strconcat(tmp_out_repo, "/filelists-ext.xml.zck", NULL);
         oth_zck_filename = g_strconcat(tmp_out_repo, "/other.xml.zck", NULL);
 
         pri_zck_stat = cr_contentstat_new(cmd_options->repomd_checksum_type, NULL);
@@ -1895,7 +1895,7 @@ main(int argc, char **argv)
                                          sqlite_compression_suffix, NULL);
         gchar *fex_db_name = NULL;
         if (cmd_options->filelists_ext)
-            fex_db_name = g_strconcat(tmp_out_repo, "/filelists_ext.sqlite",
+            fex_db_name = g_strconcat(tmp_out_repo, "/filelists-ext.sqlite",
                                       sqlite_compression_suffix, NULL);
         gchar *oth_db_name = g_strconcat(tmp_out_repo, "/other.sqlite",
                                          sqlite_compression_suffix, NULL);

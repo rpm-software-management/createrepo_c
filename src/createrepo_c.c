@@ -1980,7 +1980,7 @@ main(int argc, char **argv)
         pri_db_rec = cr_repomd_record_new("primary_db", pri_db_name);
         fil_db_rec = cr_repomd_record_new("filelists_db", fil_db_name);
         if (cmd_options->filelists_ext)
-            fex_db_rec = cr_repomd_record_new("filelists_db", fex_db_name);
+            fex_db_rec = cr_repomd_record_new("filelists_ext_db", fex_db_name);
         oth_db_rec = cr_repomd_record_new("other_db", oth_db_name);
 
         // Set db version

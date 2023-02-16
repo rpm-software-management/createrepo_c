@@ -118,8 +118,8 @@ static GOptionEntry cmd_entries[] =
       "Generate sqlite databases for use with yum.", NULL },
     { "no-database", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.no_database),
       "Do not generate sqlite databases in the repository.", NULL },
-    { "filelists_ext", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.filelists_ext),
-      "Create filelists_ext metadata with file hashes.", NULL },
+    { "filelists-ext", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.filelists_ext),
+      "Create filelists-ext metadata with file hashes.", NULL },
     { "update", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.update),
       "If metadata already exists in the outputdir and an rpm is unchanged "
       "(based on file size and mtime) since the metadata was generated, reuse "

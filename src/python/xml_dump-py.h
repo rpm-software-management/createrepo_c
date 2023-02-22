@@ -36,7 +36,7 @@ PyObject *py_xml_dump_filelists(PyObject *self, PyObject *args);
 
 PyDoc_STRVAR(xml_dump_filelists_ext__doc__,
 "xml_dump_filelists_ext(pkg) -> str\n\n"
-"Generate filelists_ext xml chunk from the package");
+"Generate filelists-ext xml chunk from the package");
 
 PyObject *py_xml_dump_filelists_ext(PyObject *self, PyObject *args);
 
@@ -48,7 +48,7 @@ PyObject *py_xml_dump_other(PyObject *self, PyObject *args);
 
 PyDoc_STRVAR(xml_dump__doc__,
 "xml_dump(pkg[, filelists_ext]) -> (str, str, str[, str])\n\n"
-"Generate primary, filelists, filelists_ext and other xml chunks from the package");
+"Generate primary, filelists, filelists-ext and other xml chunks from the package");
 
 PyObject *py_xml_dump(PyObject *self, PyObject *args);
 

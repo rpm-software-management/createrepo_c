@@ -1436,7 +1436,7 @@ main(int argc, char **argv)
             }
             cr_set_dict(fex_cr_zck->f, fex_dict, fex_dict_size, &tmp_err);
             if (tmp_err) {
-                g_critical("Error reading setting filelists_ext dict %s: %s",
+                g_critical("Error reading setting filelists-ext dict %s: %s",
                            fex_dict_file, tmp_err->message);
                 g_clear_error(&tmp_err);
                 exit(EXIT_FAILURE);
@@ -1802,7 +1802,7 @@ main(int argc, char **argv)
     cr_RepomdRecord *fil_xml_rec = cr_repomd_record_new("filelists", fil_xml_filename);
     cr_RepomdRecord *fex_xml_rec              = NULL;
     if (cmd_options->filelists_ext)
-        fex_xml_rec = cr_repomd_record_new("filelists_ext", fex_xml_filename);
+        fex_xml_rec = cr_repomd_record_new("filelists-ext", fex_xml_filename);
     cr_RepomdRecord *oth_xml_rec = cr_repomd_record_new("other", oth_xml_filename);
     cr_RepomdRecord *pri_db_rec               = NULL;
     cr_RepomdRecord *fil_db_rec               = NULL;
@@ -1980,7 +1980,7 @@ main(int argc, char **argv)
         pri_db_rec = cr_repomd_record_new("primary_db", pri_db_name);
         fil_db_rec = cr_repomd_record_new("filelists_db", fil_db_name);
         if (cmd_options->filelists_ext)
-            fex_db_rec = cr_repomd_record_new("filelists_ext_db", fex_db_name);
+            fex_db_rec = cr_repomd_record_new("filelists-ext_db", fex_db_name);
         oth_db_rec = cr_repomd_record_new("other_db", oth_db_name);
 
         // Set db version
@@ -2050,7 +2050,7 @@ main(int argc, char **argv)
         pri_zck_rec = cr_repomd_record_new("primary_zck", pri_zck_filename);
         fil_zck_rec = cr_repomd_record_new("filelists_zck", fil_zck_filename);
         if (cmd_options->filelists_ext)
-            fex_zck_rec = cr_repomd_record_new("filelists_ext_zck", fex_zck_filename);
+            fex_zck_rec = cr_repomd_record_new("filelists-ext_zck", fex_zck_filename);
         oth_zck_rec = cr_repomd_record_new("other_zck", oth_zck_filename);
 
         cr_repomd_record_load_zck_contentstat(pri_zck_rec, pri_zck_stat);

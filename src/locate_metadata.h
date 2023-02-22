@@ -41,6 +41,7 @@ struct cr_MetadataLocation {
     char *oth_xml_href;         /*!< path to other.xml */
     char *pri_sqlite_href;      /*!< path to primary.sqlite */
     char *fil_sqlite_href;      /*!< path to filelists.sqlite */
+    char *fex_sqlite_href;      /*!< path to filelists-ext.sqlite */
     char *oth_sqlite_href;      /*!< path to other.sqlite */
     GSList *additional_metadata; /*!< list of cr_Metadatum: paths 
                                       to additional metadata such 

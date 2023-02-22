@@ -39,7 +39,7 @@
                                  CR_XML_RPM_NS"\" packages=\"%d\">\n"
 #define XML_FILELISTS_HEADER     XML_HEADER"<filelists xmlns=\"" \
                                  CR_XML_FILELISTS_NS"\" packages=\"%d\">\n"
-#define XML_FILELISTS_EXT_HEADER XML_HEADER"<filelists_ext xmlns=\"" \
+#define XML_FILELISTS_EXT_HEADER XML_HEADER"<filelists-ext xmlns=\"" \
                                  CR_XML_FILELISTS_EXT_NS"\" packages=\"%d\">\n"
 #define XML_OTHER_HEADER         XML_HEADER"<otherdata xmlns=\"" \
                                  CR_XML_OTHER_NS"\" packages=\"%d\">\n"
@@ -51,7 +51,7 @@
 
 #define XML_PRIMARY_FOOTER       "</metadata>"
 #define XML_FILELISTS_FOOTER     "</filelists>"
-#define XML_FILELISTS_EXT_FOOTER "</filelists_ext>"
+#define XML_FILELISTS_EXT_FOOTER "</filelists-ext>"
 #define XML_OTHER_FOOTER         "</otherdata>"
 #define XML_PRESTODELTA_FOOTER   "</prestodelta>"
 #define XML_UPDATEINFO_FOOTER    "</updates>"

@@ -88,7 +88,7 @@ typedef struct _cr_ParserData {
         Was the main tag present? E.g.:
         For primary.xml <metadata>
         For filelists.xml <filelists>
-        For filelists-ext.xml <filelists_ext>
+        For filelists-ext.xml <filelists-ext>
         For other.xml <otherdata>
         For repomd.xml <repomd>
         For updateinfo.xml <updates>

@@ -66,8 +66,8 @@ extern "C" {
 #define CR_XML_COMMON_NS            "http://linux.duke.edu/metadata/common"
 /** Default namespace for filelists.xml */
 #define CR_XML_FILELISTS_NS         "http://linux.duke.edu/metadata/filelists"
-/** Default namespace for filelists_ext.xml */
-#define CR_XML_FILELISTS_EXT_NS         "http://linux.duke.edu/metadata/filelists_ext"
+/** Default namespace for filelists-ext.xml */
+#define CR_XML_FILELISTS_EXT_NS         "http://linux.duke.edu/metadata/filelists-ext"
 /** Default namespace for other.xml */
 #define CR_XML_OTHER_NS             "http://linux.duke.edu/metadata/other"
 /** Default namespace for repomd.xml */
@@ -81,7 +81,7 @@ extern "C" {
 struct cr_XmlStruct {
     char *primary;          /*!< XML chunk for primary.xml */
     char *filelists;        /*!< XML chunk for filelists.xml */
-    char *filelists_ext;    /*!< XML chunk for filelists_ext.xml */
+    char *filelists_ext;    /*!< XML chunk for filelists-ext.xml */
     char *other;            /*!< XML chunk for other.xml */
 };
 
@@ -107,7 +107,7 @@ char *cr_xml_dump_primary(cr_Package *package, GError **err);
  */
 char *cr_xml_dump_filelists(cr_Package *package, GError **err);
 
-/** Generate filelists_ext xml chunk from cr_Package.
+/** Generate filelists-ext xml chunk from cr_Package.
  * @param package       cr_Package
  * @param err           **GError
  * @return              xml chunk string or NULL on error

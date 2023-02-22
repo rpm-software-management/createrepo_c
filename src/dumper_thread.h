@@ -74,7 +74,7 @@ struct UserData {
     cr_ChecksumType checksum_type;  // Constant representing selected checksum
     const char *checksum_cachedir;  // Dir with cached checksums
     gboolean skip_symlinks;         // Skip symlinks
-    gboolean filelists_ext;         // Include hashes (and create filelist_ext.*)
+    gboolean filelists_ext;         // Include hashes (and create filelists-ext.*)
     long task_count;                // Total number of tasks to process
     long package_count;             // Total number of packages processed
     long skipped_count;             // Total number of explicitly skipped packages
@@ -91,15 +91,15 @@ struct UserData {
     // Thread serialization
     GMutex mutex_pri;               // Mutex for primary metadata
     GMutex mutex_fil;               // Mutex for filelists metadata
-    GMutex mutex_fex;               // Mutex for filelists_ext metadata
+    GMutex mutex_fex;               // Mutex for filelists-ext metadata
     GMutex mutex_oth;               // Mutex for other metadata
     GCond cond_pri;                 // Condition for primary metadata
     GCond cond_fil;                 // Condition for filelists metadata
-    GCond cond_fex;                 // Condition for filelists_ext metadata
+    GCond cond_fex;                 // Condition for filelists-ext metadata
     GCond cond_oth;                 // Condition for other metadata
     volatile long id_pri;           // ID of task on turn (write primary metadata)
     volatile long id_fil;           // ID of task on turn (write filelists metadata)
-    volatile long id_fex;           // ID of task on turn (write filelists_ext metadata)
+    volatile long id_fex;           // ID of task on turn (write filelists-ext metadata)
     volatile long id_oth;           // ID of task on turn (write other metadata)
 
     // Buffering

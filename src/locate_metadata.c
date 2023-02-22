@@ -167,16 +167,19 @@ cr_parse_repomd(const char *repomd_path,
             mdloc->pri_sqlite_href = full_location_href;
         else if (!g_strcmp0(record->type, "filelists"))
             mdloc->fil_xml_href = full_location_href;
-        else if (!g_strcmp0(record->type, "filelists_ext"))
-            mdloc->fex_xml_href = full_location_href;
         else if (!g_strcmp0(record->type, "filelists_db") && !ignore_sqlite)
             mdloc->fil_sqlite_href = full_location_href;
+        else if (!g_strcmp0(record->type, "filelists-ext"))
+            mdloc->fex_xml_href = full_location_href;
+        else if (!g_strcmp0(record->type, "filelists-ext_db") && !ignore_sqlite)
+            mdloc->fex_sqlite_href = full_location_href;
         else if (!g_strcmp0(record->type, "other"))
             mdloc->oth_xml_href = full_location_href;
         else if (!g_strcmp0(record->type, "other_db") && !ignore_sqlite)
             mdloc->oth_sqlite_href = full_location_href;
         else if ( !g_str_has_prefix(record->type, "primary_"   ) &&
                   !g_str_has_prefix(record->type, "filelists_" ) && 
+                  !g_str_has_prefix(record->type, "filelists-ext_" ) && 
                   !g_str_has_prefix(record->type, "other_"     ) ) 
         {
             mdloc->additional_metadata = cr_insert_additional_metadatum(full_location_href,

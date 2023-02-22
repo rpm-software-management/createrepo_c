@@ -79,7 +79,7 @@ static GOptionEntry cmd_entries[] =
       "", NULL },
     { "no-database", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.no_database),
       "", NULL },
-    { "filelists_ext", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.filelists_ext),
+    { "filelists-ext", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.filelists_ext),
       "Create filelists-ext metadata with file hashes.", NULL },
     { "verbose", 'v', 0, G_OPTION_ARG_NONE, &(_cmd_options.verbose),
       "", NULL },
@@ -942,7 +942,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         }
         if (fex_dict_file && !g_file_get_contents(fex_dict_file, &fex_dict,
                                                  &fex_dict_size, &tmp_err)) {
-            g_critical("Error reading zchunk filelists_ext dict %s: %s",
+            g_critical("Error reading zchunk filelists-ext dict %s: %s",
                        fex_dict_file, tmp_err->message);
             g_clear_error(&tmp_err);
             exit(EXIT_FAILURE);
@@ -1188,7 +1188,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
             }
             cr_set_dict(fex_cr_zck->f, fex_dict, fex_dict_size, &tmp_err);
             if (tmp_err) {
-                g_critical("Error reading setting filelists_ext dict %s: %s",
+                g_critical("Error reading setting filelists-ext dict %s: %s",
                            fex_dict_file, tmp_err->message);
                 g_clear_error(&tmp_err);
                 exit(EXIT_FAILURE);
@@ -1262,7 +1262,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         fil_db = cr_db_open_filelists(fil_db_filename, NULL);
         if (cmd_options->filelists_ext)
             // TODO(aplanas): For now, the SQListe database for
-            // filenames_ext will be the same that for filenames,
+            // filenames-ext will be the same that for filenames,
             // until we decide how will be the schema change.
             // fex_db = cr_db_open_filelists_ext(fex_db_filename, NULL);
             fex_db = cr_db_open_filelists(fex_db_filename, NULL);
@@ -1422,7 +1422,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_RepomdRecord *fil_xml_rec = cr_repomd_record_new("filelists", fil_xml_filename);
     cr_RepomdRecord *fex_xml_rec              = NULL;
     if (cmd_options->filelists_ext)
-        fex_xml_rec = cr_repomd_record_new("filelists_ext", fil_xml_filename);
+        fex_xml_rec = cr_repomd_record_new("filelists-ext", fil_xml_filename);
     cr_RepomdRecord *oth_xml_rec = cr_repomd_record_new("other", oth_xml_filename);
     cr_RepomdRecord *pri_db_rec               = NULL;
     cr_RepomdRecord *fil_db_rec               = NULL;
@@ -1663,7 +1663,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         pri_db_rec = cr_repomd_record_new("primary_db", pri_db_c_filename);
         fil_db_rec = cr_repomd_record_new("filelists_db", fil_db_c_filename);
         if (cmd_options->filelists_ext)
-            fex_db_rec = cr_repomd_record_new("filelists_ext_db", fil_db_c_filename);
+            fex_db_rec = cr_repomd_record_new("filelists-ext_db", fil_db_c_filename);
         oth_db_rec = cr_repomd_record_new("other_db", oth_db_c_filename);
 
         g_free(pri_db_filename);
@@ -1732,7 +1732,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         pri_zck_rec = cr_repomd_record_new("primary_zck", pri_zck_filename);
         fil_zck_rec = cr_repomd_record_new("filelists_zck", fil_zck_filename);
         if (cmd_options->filelists_ext)
-            fex_zck_rec = cr_repomd_record_new("filelists_ext_zck", fex_zck_filename);
+            fex_zck_rec = cr_repomd_record_new("filelists-ext_zck", fex_zck_filename);
         oth_zck_rec = cr_repomd_record_new("other_zck", oth_zck_filename);
 
         g_free(pri_zck_filename);

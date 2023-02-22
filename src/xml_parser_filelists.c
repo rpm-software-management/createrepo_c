@@ -50,7 +50,7 @@ typedef enum {
  * than a "version" element). */
 static cr_StatesSwitch stateswitches[] = {
     { STATE_START,         "filelists",     STATE_FILELISTS,     0 },
-    { STATE_START,         "filelists_ext", STATE_FILELISTS_EXT, 0 },
+    { STATE_START,         "filelists-ext", STATE_FILELISTS_EXT, 0 },
     { STATE_FILELISTS,     "package",       STATE_PACKAGE,       0 },
     { STATE_FILELISTS_EXT, "package",       STATE_PACKAGE,       0 },
     { STATE_PACKAGE,       "file",          STATE_FILE,          1 },
@@ -434,9 +434,9 @@ cr_xml_parse_filelists_snippet(const char *xml_string,
                                void *warningcb_data,
                                GError **err)
 {
-    // This function can parse filelists and filelists_ext.  The state
+    // This function can parse filelists and filelists-ext.  The state
     // machine do not track if the wrapped XML is one or another, so
-    // is safe for a filelists_ext snipped to be surrounded by
+    // is safe for a filelists-ext snipped to be surrounded by
     // <filelists>
     gchar* wrapped_xml_string = g_strconcat("<filelists>", xml_string, "</filelists>", NULL);
     int ret = cr_xml_parse_filelists_internal(wrapped_xml_string, newpkgcb, newpkgcb_data, pkgcb, pkgcb_data,

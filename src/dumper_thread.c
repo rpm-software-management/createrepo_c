@@ -199,7 +199,7 @@ write_pkg(long id,
     g_cond_broadcast(&(udata->cond_fil));
     g_mutex_unlock(&(udata->mutex_fil));
 
-    // Write filelist_ext data
+    // Write filelists-ext data
     if (udata->filelists_ext) {
         g_mutex_lock(&(udata->mutex_fex));
         while (udata->id_fex != id)
@@ -207,7 +207,7 @@ write_pkg(long id,
         ++udata->id_fex;
         cr_xmlfile_add_chunk(udata->fex_f, (const char *) res.filelists_ext, &tmp_err);
         if (tmp_err) {
-            g_critical("Cannot add filelists_ext chunk:\n%s\nError: %s",
+            g_critical("Cannot add filelists-ext chunk:\n%s\nError: %s",
                        res.filelists_ext, tmp_err->message);
             udata->had_errors = TRUE;
             g_clear_error(&tmp_err);
@@ -216,7 +216,7 @@ write_pkg(long id,
         if (udata->fex_db) {
             cr_db_add_pkg(udata->fex_db, pkg, &tmp_err);
             if (tmp_err) {
-                g_critical("Cannot add record of %s (%s) to filelists_ext db: %s",
+                g_critical("Cannot add record of %s (%s) to filelists-ext db: %s",
                            pkg->name, pkg->pkgId, tmp_err->message);
                 udata->had_errors = TRUE;
                 g_clear_error(&tmp_err);
@@ -226,14 +226,14 @@ write_pkg(long id,
             if (new_pkg) {
                 cr_end_chunk(udata->fex_zck->f, &tmp_err);
                 if (tmp_err) {
-                    g_critical("Unable to end filelists_ext zchunk: %s", tmp_err->message);
+                    g_critical("Unable to end filelists-ext zchunk: %s", tmp_err->message);
                     udata->had_errors = TRUE;
                     g_clear_error(&tmp_err);
                 }
             }
             cr_xmlfile_add_chunk(udata->fex_zck, (const char *) res.filelists_ext, &tmp_err);
             if (tmp_err) {
-                g_critical("Cannot add filelists_ext zchunk:\n%s\nError: %s",
+                g_critical("Cannot add filelists-ext zchunk:\n%s\nError: %s",
                            res.filelists_ext, tmp_err->message);
                 udata->had_errors = TRUE;
                 g_clear_error(&tmp_err);

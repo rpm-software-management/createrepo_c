@@ -56,7 +56,7 @@ struct CmdOptions {
     gboolean version;           /*!< print program version */
     gboolean database;          /*!< create sqlite database metadata */
     gboolean no_database;       /*!< do not create database */
-    gboolean filelists_ext;     /*!< create filelists_ext metadata with file hashes */
+    gboolean filelists_ext;     /*!< create filelists-ext metadata with file hashes */
     char *checksum;             /*!< type of checksum */
     char *compress_type;        /*!< which compression type to use */
     char *general_compress_type;/*!< which compression type to use (even for

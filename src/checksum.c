@@ -105,6 +105,32 @@ cr_checksum_name_str(cr_ChecksumType type)
     }
 }
 
+size_t
+cr_checksum_raw_size(cr_ChecksumType type)
+{
+    switch (type) {
+    case CR_CHECKSUM_UNKNOWN:
+        return 0;
+#ifdef WITH_LEGACY_HASHES
+    case CR_CHECKSUM_MD5:
+        return 16;
+    case CR_CHECKSUM_SHA:
+    case CR_CHECKSUM_SHA1:
+        return 20;
+#endif
+    case CR_CHECKSUM_SHA224:
+        return 28;
+    case CR_CHECKSUM_SHA256:
+        return 32;
+    case CR_CHECKSUM_SHA384:
+        return 48;
+    case CR_CHECKSUM_SHA512:
+        return 64;
+    default:
+        return 0;
+    }
+}
+
 char *
 cr_checksum_file(const char *filename,
                  cr_ChecksumType type,
@@ -265,12 +291,10 @@ cr_checksum_update(cr_ChecksumCtx *ctx,
     return CRE_OK;
 }
 
-char *
-cr_checksum_final(cr_ChecksumCtx *ctx, GError **err)
+size_t
+cr_checksum_final_raw(cr_ChecksumCtx *ctx, unsigned char *raw_checksum, GError **err)
 {
     unsigned int len;
-    unsigned char raw_checksum[EVP_MAX_MD_SIZE];
-    char *checksum;
 
     assert(ctx);
     assert(!err || *err == NULL);
@@ -278,18 +302,25 @@ cr_checksum_final(cr_ChecksumCtx *ctx, GError **err)
     if (!EVP_DigestFinal_ex(ctx->ctx, raw_checksum, &len)) {
         g_set_error(err, ERR_DOMAIN, CRE_OPENSSL,
                     "EVP_DigestFinal_ex() failed");
-        EVP_MD_CTX_destroy(ctx->ctx);
-        g_free(ctx);
-        return NULL;
+        len = 0;
     }
-
     EVP_MD_CTX_destroy(ctx->ctx);
+    g_free(ctx);
+    return len;
+}
 
-    checksum = g_malloc0(sizeof(char) * (len * 2 + 1));
+char *
+cr_checksum_final(cr_ChecksumCtx *ctx, GError **err)
+{
+    unsigned char raw_checksum[EVP_MAX_MD_SIZE];
+    size_t len = cr_checksum_final_raw(ctx, raw_checksum, err);
+
+    if (!len)
+        return NULL;
+
+    char *checksum = g_malloc0(sizeof(char) * (len * 2 + 1));
     for (size_t x = 0; x < len; x++)
         sprintf(checksum+(x*2), "%02x", raw_checksum[x]);
-
-    g_free(ctx);
 
     return checksum;
 }

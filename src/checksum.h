@@ -67,6 +67,12 @@ const char *cr_checksum_name_str(cr_ChecksumType type);
  */
 cr_ChecksumType cr_checksum_type(const char *name);
 
+/** Return size of raw checksum
+ * @param type          checksum type
+ * @return              size of raw checksum or 0 on error
+ */
+size_t cr_checksum_raw_size(cr_ChecksumType type);
+
 /** Compute file checksum.
  * @param filename      filename
  * @param type          type of checksum
@@ -104,6 +110,14 @@ int cr_checksum_update(cr_ChecksumCtx *ctx,
  * @return          Checksum string or NULL on error.
  */
 char *cr_checksum_final(cr_ChecksumCtx *ctx, GError **err);
+
+/** Finalize checksum calculation, fill raw_checksum buffer and return checksum length.
+ * Free all checksum context resources.
+ * @param ctx       Checksum context.
+ * @param err       GError **
+ * @return          Raw checksum length or 0 on error.
+ */
+size_t cr_checksum_final_raw(cr_ChecksumCtx *ctx, unsigned char *raw_checksum, GError **err);
 
 /** @} */
 

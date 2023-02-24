@@ -439,6 +439,47 @@ prepare_split_media_baseurl(int media_id, const char *location_base)
     return g_strdup_printf("%s#%d", tmp_location_base, media_id);
 }
 
+static char *
+get_checksum_from_hash(const char *filename,
+                       cr_ChecksumType type,
+                       GHashTable *checksum_hash,
+                       unsigned int header_start)
+{
+    FILE *fp = fopen(filename, "rb");
+    if (!fp)
+        return NULL;
+    char *buf = g_malloc(header_start);
+    if (fread(buf, header_start, 1, fp) != 1) {
+        g_free(buf);
+        fclose(fp);
+        return NULL;
+    }
+#ifdef WITH_LEGACY_HASHES
+    cr_ChecksumCtx *ctx = cr_checksum_new(CR_CHECKSUM_MD5, NULL);
+    if (ctx)
+        cr_checksum_update(ctx, buf, header_start, NULL);
+    g_free(buf);
+    fclose(fp);
+    if (!ctx)
+        return NULL;
+#endif
+    unsigned char raw_key_checksum[16];
+    if (cr_checksum_final_raw(ctx, raw_key_checksum, NULL) != sizeof(raw_key_checksum))
+        return NULL;
+    unsigned char *raw_checksum = g_hash_table_lookup(checksum_hash, raw_key_checksum);
+    if (!raw_checksum)
+        return NULL;
+    size_t checksum_size = cr_checksum_raw_size(type);
+    if (!checksum_size)
+        return NULL;
+    char * checksum = g_malloc0(sizeof(char) * (checksum_size * 2 + 1));
+    for (size_t x = 0; x < checksum_size; x++)
+        sprintf(checksum+(x*2), "%02x", raw_checksum[x]);
+    return checksum;
+}
+
+
+
 static cr_Package *
 load_rpm(const char *fullpath,
          cr_ChecksumType checksum_type,
@@ -448,6 +489,7 @@ load_rpm(const char *fullpath,
          int changelog_limit,
          struct stat *stat_buf,
          cr_HeaderReadingFlags hdrrflags,
+         GHashTable *checksum_hash,
          GError **err)
 {
     cr_Package *pkg = NULL;
@@ -488,7 +530,11 @@ load_rpm(const char *fullpath,
     }
 
     // Compute checksum
-    char *checksum = get_checksum(fullpath, checksum_type, pkg,
+    char *checksum = NULL;
+    if (checksum_hash)
+        checksum = get_checksum_from_hash(fullpath, checksum_type, checksum_hash, hdr_r.start);
+    if (!checksum)
+        checksum = get_checksum(fullpath, checksum_type, pkg,
                                   checksum_cachedir, &tmp_err);
     if (!checksum) {
         g_propagate_error(err, tmp_err);
@@ -640,7 +686,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         pkg = load_rpm(task->full_path, udata->checksum_type,
                        udata->checksum_cachedir, location_href,
                        location_base, udata->changelog_limit,
-                       NULL, hdrrflags, &tmp_err);
+                       NULL, hdrrflags, udata->checksum_hash, &tmp_err);
         assert(pkg || tmp_err);
 
         if (!pkg) {

@@ -329,6 +329,89 @@ fill_pool(GThreadPool *pool,
     return *task_count;
 }
 
+static guint
+checksum_hash_func(gconstpointer key)
+{
+    const unsigned char *kd = key;
+    /* the input is already a hash, so we just return the first 4 bytes as integer */
+    return kd[0] << 24 | kd[1] << 16 | kd[2] << 8 | kd[3];
+}
+
+static gboolean
+checksum_hash_equal(gconstpointer a,
+                    gconstpointer b)
+{
+    return memcmp((const void *)a, (const void *)b, 16) == 0 ? TRUE : FALSE;
+}
+
+
+static gboolean
+create_checksum_hextobin(const char *in, unsigned char *out, size_t len)
+{
+    for (size_t i = 0; i < len; i++, in += 2) {
+        int v1 = g_ascii_xdigit_value(in[0]);
+        if (v1 == -1)
+            return FALSE;
+        int v2 = g_ascii_xdigit_value(in[1]);
+        if (v2 == -1)
+            return FALSE;
+        *out++ = (v1 << 4) | v2;
+    }
+    return TRUE;
+}
+
+/** Create hash table of file checksums
+ * Called only if the CREATEREPO_CHECKSUMS environment variable is set to a file
+ * containing checksums.
+ *
+ * @param fp                File handle of opened checksums file
+ * @param checksum_type     Checksum type we need to generate
+ * @return                  Hash table filled with checksums
+ */
+static GHashTable *
+create_checksum_hash(FILE *fp,
+                     cr_ChecksumType checksum_type)
+{
+    if (!fp)
+        return NULL;
+
+#ifdef WITH_LEGACY_HASHES
+    if (checksum_type == CR_CHECKSUM_SHA)
+        checksum_type = CR_CHECKSUM_SHA1;
+#endif
+    size_t checksum_size = cr_checksum_raw_size(checksum_type);
+    if (!checksum_size)
+        return NULL;
+    const char *checksum_type_str = cr_checksum_name_str(checksum_type);
+    size_t checksum_type_str_len = strlen(checksum_type_str);
+
+    GHashTable *checksum_hash = g_hash_table_new_full(checksum_hash_func, checksum_hash_equal, g_free, NULL);
+
+    char *line = NULL, *lp;
+    size_t len = 0;
+    ssize_t r;
+    while ((r = getline(&line, &len, fp)) != -1) {
+        if (r < 32)
+	  continue;
+        for (lp = strchr(line + 32, ':'); lp; lp = strchr(lp + 1, ':'))
+            if (!strncmp(lp - checksum_type_str_len, checksum_type_str, checksum_type_str_len))
+                break;
+        if (!lp)
+            continue;
+        unsigned char *keyvalue = g_malloc(16 + checksum_size);
+        if (!create_checksum_hextobin(line, keyvalue, 16)) {
+            g_free(keyvalue);
+        } else if (!create_checksum_hextobin(lp + 1, keyvalue + 16, checksum_size)) {
+            g_free(keyvalue);
+        } else {
+            g_hash_table_replace(checksum_hash, keyvalue, keyvalue + 16);
+        }
+    }
+    if (line)
+        free(line);
+    return checksum_hash;
+}
+
 
 /** Prepare cache dir for checksums.
  * Called only if --cachedir options is used.
@@ -1444,6 +1527,18 @@ main(int argc, char **argv)
         }
     }
 
+    GHashTable *checksum_hash = NULL;
+    const char *checksum_hash_file = getenv("CREATEREPO_CHECKSUMS");
+    if (checksum_hash_file) {
+        FILE *checksum_file_fp = fopen(checksum_hash_file, "r");
+        if (checksum_file_fp) {
+            checksum_hash = create_checksum_hash(checksum_file_fp, cmd_options->checksum_type);
+            fclose(checksum_file_fp);
+        } else {
+            g_warning("Cannot open checksum file %s: %s", checksum_hash_file, g_strerror(errno));
+        }
+    }
+
     // Thread pool - User data initialization
     user_data.pri_f             = pri_cr_file;
     user_data.fil_f             = fil_cr_file;
@@ -1483,6 +1578,7 @@ main(int argc, char **argv)
 
     user_data.cut_dirs          = cmd_options->cut_dirs;
     user_data.location_prefix   = cmd_options->location_prefix;
+    user_data.checksum_hash     = checksum_hash;
     user_data.had_errors        = 0;
     user_data.output_pkg_list   = output_pkg_list;
 
@@ -1569,6 +1665,10 @@ main(int argc, char **argv)
 
     g_message("Pool finished%s", (user_data.had_errors ? " with errors" : ""));
 
+    if (checksum_hash) {
+        g_hash_table_destroy(checksum_hash);
+        checksum_hash = NULL;
+    }
     cr_xml_dump_cleanup();
 
     if (output_pkg_list)

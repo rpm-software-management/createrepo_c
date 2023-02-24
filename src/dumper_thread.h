@@ -72,6 +72,7 @@ struct UserData {
     const char *checksum_type_str;  // Name of selected checksum
     cr_ChecksumType checksum_type;  // Constant representing selected checksum
     const char *checksum_cachedir;  // Dir with cached checksums
+    GHashTable *checksum_hash;      // Hash with checksums read from file
     gboolean skip_symlinks;         // Skip symlinks
     gboolean filelists_ext;         // Include hashes (and create filelists-ext.*)
     long task_count;                // Total number of tasks to process

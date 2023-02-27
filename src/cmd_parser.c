@@ -22,6 +22,7 @@
 #include <string.h>
 #include <assert.h>
 #include <errno.h>
+#include <locale.h>
 #include "cmd_parser.h"
 #include "deltarpms.h"
 #include "error.h"
@@ -276,6 +277,13 @@ struct CmdOptions *parse_arguments(int *argc, char ***argv, GError **err)
                                       NULL);
     g_option_group_add_entries(group_expert, expert_entries);
     g_option_context_add_group(context, group_expert);
+
+    /*
+      setlocale is required to ensure that NON-ASCII chars can be parsed
+      SEE https://developer-old.gnome.org/glib/unstable/glib-running.html#setlocale
+      for further information
+    */
+    setlocale(LC_ALL, "");
 
     ret = g_option_context_parse(context, argc, argv, err);
     g_option_context_free(context);

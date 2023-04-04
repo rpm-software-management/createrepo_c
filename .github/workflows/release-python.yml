@@ -17,8 +17,9 @@ jobs:
       run: |
         sudo dnf -y install dnf-plugins-core
         sudo dnf -y builddep createrepo_c.spec
+        sudo dnf -y install twine pytest
         pip install --upgrade pip
-        pip install twine pytest scikit-build
+        pip install scikit-build
 
     - name: Build Python sdist
       run: python3 setup.py sdist

@@ -45,7 +45,7 @@ fi
 REPO=$1
 
 if [ ! -d "$REPO" ]; then
-    echo "Directory $REPO doesn't exists"
+    echo "Directory $REPO doesn't exist"
     exit 1
 fi
 

@@ -218,7 +218,7 @@ cmd_options_to_task(GSList **modifyrepotasks,
 
     if (metadatapath && !g_file_test(metadatapath, G_FILE_TEST_IS_REGULAR)) {
         g_set_error(err, ERR_DOMAIN, CRE_ERROR,
-                    "File \"%s\" is not regular file or doesn't exists",
+                    "File \"%s\" is not regular file or doesn't exist",
                     metadatapath);
         return FALSE;
     }

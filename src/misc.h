@@ -547,7 +547,7 @@ cr_nevra_free(cr_NEVRA *nevra);
 /** Are the files identical?
  * Different paths could point to the same file.
  * This functions checks if both paths point to the same file or not.
- * If one of the files doesn't exists, the funcion doesn't fail
+ * If one of the files doesn't exist, the funcion doesn't fail
  * and just put FALSE into "indentical" value and returns.
  * @param fn1           First path
  * @param fn2           Second path

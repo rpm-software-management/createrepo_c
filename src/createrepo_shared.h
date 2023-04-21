@@ -75,7 +75,7 @@ cr_unblock_terminating_signals(GError **err);
 /**
  * This function does:
  * - Tries to create repo/.repodata/ dir.
- * - If it doesn't exists, it's created and function returns TRUE.
+ * - If it doesn't exist, it's created and function returns TRUE.
  * - If it exists and ignore_lock is FALSE, returns FALSE and err is set.
  * - If it exists and ignore_lock is TRUE it:
  *  - Removes the existing .repodata/ dir and all its content

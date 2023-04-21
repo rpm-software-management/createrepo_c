@@ -125,7 +125,7 @@ cr_get_compressed_content_stat(const char *filename,
 
     if (!g_file_test(filename, G_FILE_TEST_IS_REGULAR)) {
         g_set_error(err, ERR_DOMAIN, CRE_NOFILE,
-                    "File %s doesn't exists or not a regular file", filename);
+                    "File %s doesn't exist or not a regular file", filename);
         return NULL;
     }
 
@@ -231,10 +231,10 @@ cr_repomd_record_fill(cr_RepomdRecord *md,
     checksum_t = checksum_type;
 
     if (!g_file_test(path, G_FILE_TEST_IS_REGULAR)) {
-        // File doesn't exists
-        g_warning("%s: File %s doesn't exists", __func__, path);
+        // File doesn't exist
+        g_warning("%s: File %s doesn't exist", __func__, path);
         g_set_error(err, ERR_DOMAIN, CRE_NOFILE,
-                    "File %s doesn't exists or not a regular file", path);
+                    "File %s doesn't exist or not a regular file", path);
         return CRE_NOFILE;
     }
 
@@ -370,10 +370,10 @@ cr_repomd_record_compress_and_fill(cr_RepomdRecord *record,
     }
 
     if (!g_file_test(record->location_real, G_FILE_TEST_IS_REGULAR)) {
-        // File doesn't exists
-        g_warning("%s: File %s doesn't exists", __func__, record->location_real);
+        // File doesn't exist
+        g_warning("%s: File %s doesn't exist", __func__, record->location_real);
         g_set_error(err, ERR_DOMAIN, CRE_NOFILE,
-                    "File %s doesn't exists or not a regular file",
+                    "File %s doesn't exist or not a regular file",
                     record->location_real);
         return CRE_NOFILE;;
     }

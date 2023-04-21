@@ -386,7 +386,7 @@ check_arguments(struct CmdOptions *options,
     // Check outputdir
     if (options->outputdir && !g_file_test(options->outputdir, G_FILE_TEST_EXISTS|G_FILE_TEST_IS_DIR)) {
         g_set_error(err, ERR_DOMAIN, CRE_BADARG,
-                    "Specified outputdir \"%s\" doesn't exists",
+                    "Specified outputdir \"%s\" doesn't exist",
                     options->outputdir);
         return FALSE;
     }
@@ -498,7 +498,7 @@ check_arguments(struct CmdOptions *options,
 
         if (!remote && !g_file_test(options->groupfile_fullpath, G_FILE_TEST_IS_REGULAR)) {
             g_set_error(err, ERR_DOMAIN, CRE_BADARG,
-                        "groupfile %s doesn't exists",
+                        "groupfile %s doesn't exist",
                         options->groupfile_fullpath);
             return FALSE;
         }
@@ -508,7 +508,7 @@ check_arguments(struct CmdOptions *options,
     if (options->pkglist) {
         if (!g_file_test(options->pkglist, G_FILE_TEST_IS_REGULAR)) {
             g_set_error(err, ERR_DOMAIN, CRE_BADARG,
-                        "pkglist file \"%s\" doesn't exists", options->pkglist);
+                        "pkglist file \"%s\" doesn't exist", options->pkglist);
             return FALSE;
         } else {
             char *content = NULL;

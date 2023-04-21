@@ -210,7 +210,7 @@ cr_get_local_metadata(const char *repopath, gboolean ignore_sqlite)
     // Create path to repomd.xml and check if it exists
     repomd = g_build_filename(repopath, "repodata", "repomd.xml", NULL);
     if (!g_file_test(repomd, G_FILE_TEST_EXISTS)) {
-        g_debug("%s: %s doesn't exists", __func__, repomd);
+        g_debug("%s: %s doesn't exist", __func__, repomd);
         return ret;
     }
 

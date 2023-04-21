@@ -144,7 +144,7 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
     gchar *repomd_path = g_build_filename(repopath, "repomd.xml", NULL);
     if (!g_file_test(repomd_path, G_FILE_TEST_IS_REGULAR)) {
         g_set_error(err, ERR_DOMAIN, CRE_IO,
-                    "Regular file \"%s\" doesn't exists", repomd_path);
+                    "Regular file \"%s\" doesn't exist", repomd_path);
         g_free(repomd_path);
         return FALSE;
     }
@@ -241,7 +241,7 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
                 }
             }
 
-            // Check if record with this name doesn't exists yet
+            // Check if record with this name doesn't exist yet
             if (cr_repomd_get_record(repomd, task->type))
                 g_warning("Record with type \"%s\" already exists "
                           "in repomd.xml", task->type);

@@ -127,10 +127,10 @@ cr_detect_compression(const char *filename, GError **err)
     assert(!err || *err == NULL);
 
     if (!g_file_test(filename, G_FILE_TEST_IS_REGULAR)) {
-        g_debug("%s: File %s doesn't exists or not a regular file",
+        g_debug("%s: File %s doesn't exist or not a regular file",
                 __func__, filename);
         g_set_error(err, ERR_DOMAIN, CRE_NOFILE,
-                    "File %s doesn't exists or not a regular file", filename);
+                    "File %s doesn't exist or not a regular file", filename);
         return CR_CW_UNKNOWN_COMPRESSION;
     }
 

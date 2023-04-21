@@ -329,7 +329,7 @@ check_arguments(struct CmdOptions *options)
             ret = FALSE;
         }
         if (!g_file_test(options->blocked, G_FILE_TEST_EXISTS)) {
-            g_critical("File %s doesn't exists", options->blocked);
+            g_critical("File %s doesn't exist", options->blocked);
             ret = FALSE;
         }
     }

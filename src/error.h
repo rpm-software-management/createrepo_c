@@ -41,7 +41,7 @@ typedef enum {
     CRE_NOFILE, /*!<
         (7) File doesn't exist */
     CRE_NODIR, /*!<
-        (8) Directory doesn't exist (not a dir or path doesn't exists) */
+        (8) Directory doesn't exist (not a dir or path doesn't exist) */
     CRE_EXISTS, /*!<
         (9) File/Directory already exists */
     CRE_UNKNOWNCHECKSUMTYPE, /*!<

@@ -39,7 +39,7 @@ class TestCaseParsepkg(unittest.TestCase):
 
         # Test error cases
 
-        # Rpm doesn't exists
+        # Rpm doesn't exist
         self.assertRaises(IOError, cr.package_from_rpm, "this_foo_pkg_should_not_exists.rpm")
 
         # Path is a directory, not a file
@@ -58,7 +58,7 @@ class TestCaseParsepkg(unittest.TestCase):
 
         # Test error cases
 
-        # Rpm doesn't exists
+        # Rpm doesn't exist
         self.assertRaises(IOError, cr.xml_from_rpm, "this_foo_pkg_should_not_exists.rpm")
 
         # Path is a directory, not a file

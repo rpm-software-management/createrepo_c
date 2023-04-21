@@ -2475,7 +2475,7 @@ deltaerror:
     g_free(tmp_dirname);
 
     if (!cr_move_recursive(out_repo, old_repodata_path, &tmp_err)) {
-        g_debug("Old repodata doesn't exists: Cannot rename %s -> %s: %s",
+        g_debug("Old repodata doesn't exist: Cannot rename %s -> %s: %s",
                 out_repo, old_repodata_path, tmp_err->message);
     } else {
         g_debug("Renamed %s -> %s", out_repo, old_repodata_path);

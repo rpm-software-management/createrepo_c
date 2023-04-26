@@ -76,7 +76,7 @@ class TestCaseXmlParserPrimary(unittest.TestCase):
                 [('kernel', None, None, None, None, False),
                  ('super_kernel', 'EQ', '0', '5.9.0', None, False)])
         self.assertEqual(pkg.files,
-                [(None, '/usr/bin/', 'super_kernel', None)])
+                [(None, '/usr/bin/', 'super_kernel')])
         self.assertEqual(pkg.changelogs, [])
 
     def test_xml_parser_primary_repo01_ampersand(self):
@@ -150,9 +150,9 @@ class TestCaseXmlParserPrimary(unittest.TestCase):
                 [('kernel', None, None, None, None, False),
                  ('super_kernel', 'EQ', '0', '5.9.0', None, False)])
         self.assertEqual(pkg.files,
-                [(None, '/usr/bin&/', 'super_kernel', None),
-                 (None, '/usr/bin/', 'supe&&r_kernel', None),
-                 (None, '/usr/bin/', 'super_kernel', None)])
+                [(None, '/usr/bin&/', 'super_kernel'),
+                 (None, '/usr/bin/', 'supe&&r_kernel'),
+                 (None, '/usr/bin/', 'super_kernel')])
         self.assertEqual(pkg.changelogs, [])
 
     def test_xml_parser_primary_snippet01(self):
@@ -227,7 +227,7 @@ class TestCaseXmlParserPrimary(unittest.TestCase):
                 [('kernel', None, None, None, None, False),
                  ('super_kernel', 'EQ', '0', '5.9.0', None, False)])
         self.assertEqual(pkg.files,
-                [(None, '/usr/bin/', 'super_kernel', None)])
+                [(None, '/usr/bin/', 'super_kernel')])
         self.assertEqual(pkg.changelogs, [])
 
     def test_xml_parser_primary_repo02(self):
@@ -432,8 +432,8 @@ class TestCaseXmlParserFilelists(unittest.TestCase):
         self.assertEqual(pkg.conflicts, [])
         self.assertEqual(pkg.obsoletes, [])
         self.assertEqual(pkg.files,
-                [(None, '/usr/bin/', 'super_kernel', None),
-                 (None, '/usr/share/man/', 'super_kernel.8.gz', None)])
+                [(None, '/usr/bin/', 'super_kernel'),
+                 (None, '/usr/share/man/', 'super_kernel.8.gz')])
         self.assertEqual(pkg.changelogs, [])
 
     def test_xml_parser_filelists_repo01_ampersand(self):
@@ -494,8 +494,8 @@ class TestCaseXmlParserFilelists(unittest.TestCase):
         self.assertEqual(pkg.conflicts, [])
         self.assertEqual(pkg.obsoletes, [])
         self.assertEqual(pkg.files,
-                [(None, '/usr/&&bin/', 'super_kernel', None),
-                 (None, '/usr/share/man/', 'super_kernel.8.gz', None)])
+                [(None, '/usr/&&bin/', 'super_kernel'),
+                 (None, '/usr/share/man/', 'super_kernel.8.gz')])
         self.assertEqual(pkg.changelogs, [])
 
     def test_xml_parser_filelists_snippet01(self):
@@ -557,8 +557,8 @@ class TestCaseXmlParserFilelists(unittest.TestCase):
         self.assertEqual(pkg.conflicts, [])
         self.assertEqual(pkg.obsoletes, [])
         self.assertEqual(pkg.files,
-                [(None, '/usr/bin/', 'super_kernel', None),
-                 (None, '/usr/share/man/', 'super_kernel.8.gz', None)])
+                [(None, '/usr/bin/', 'super_kernel'),
+                 (None, '/usr/share/man/', 'super_kernel.8.gz')])
         self.assertEqual(pkg.changelogs, [])
 
     def test_xml_parser_filelists_repo02(self):
@@ -1215,8 +1215,8 @@ class TestCaseXmlParserPkgIterator(unittest.TestCase):
                 [('kernel', None, None, None, None, False),
                  ('super_kernel', 'EQ', '0', '5.9.0', None, False)])
         self.assertEqual(pkg.files,
-                [(None, '/usr/bin/', 'super_kernel', None),
-                 (None, '/usr/share/man/', 'super_kernel.8.gz', None)])
+                [(None, '/usr/bin/', 'super_kernel'),
+                 (None, '/usr/share/man/', 'super_kernel.8.gz')])
         self.assertEqual(pkg.changelogs,
                 [('Tomas Mlcoch <tmlcoch@redhat.com> - 6.0.1-1',
                    1334664000,

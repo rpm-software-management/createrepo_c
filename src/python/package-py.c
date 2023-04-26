@@ -431,8 +431,9 @@ CheckPyDependency(PyObject *dep)
 static int
 CheckPyPackageFile(PyObject *dep)
 {
-    if (!PyTuple_Check(dep) || PyTuple_Size(dep) != 4) {
-        PyErr_SetString(PyExc_TypeError, "Element of list has to be a tuple with 4 items.");
+    // The fourth element (file checksum) is optional since it is present only in filelists-ext
+    if (!PyTuple_Check(dep) || (PyTuple_Size(dep) != 4 && PyTuple_Size(dep) != 3)) {
+        PyErr_SetString(PyExc_TypeError, "Element of list has to be a tuple with 3 or 4 items.");
         return 1;
     }
     return 0;

@@ -169,13 +169,18 @@ PyObject_FromPackageFile(cr_PackageFile *file)
 {
     PyObject *tuple;
 
-    if ((tuple = PyTuple_New(4)) == NULL)
-        return NULL;
+    if (file->digest != NULL) {
+        if ((tuple = PyTuple_New(4)) == NULL)
+            return NULL;
+        PyTuple_SetItem(tuple, 3, PyUnicodeOrNone_FromString(file->digest));
+    } else {
+        if ((tuple = PyTuple_New(3)) == NULL)
+            return NULL;
+    }
 
     PyTuple_SetItem(tuple, 0, PyUnicodeOrNone_FromString(file->type));
     PyTuple_SetItem(tuple, 1, PyUnicodeOrNone_FromString(file->path));
     PyTuple_SetItem(tuple, 2, PyUnicodeOrNone_FromString(file->name));
-    PyTuple_SetItem(tuple, 3, PyUnicodeOrNone_FromString(file->digest));
 
     return tuple;
 }

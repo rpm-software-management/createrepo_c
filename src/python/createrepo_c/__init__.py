@@ -107,6 +107,7 @@ PCOR_ENTRY_PRE     = 5 #: PCOR entry tuple index - pre
 FILE_ENTRY_TYPE = 0 #: File entry tuple index - file type
 FILE_ENTRY_PATH = 1 #: File entry tuple index - path
 FILE_ENTRY_NAME = 2 #: File entry tuple index - file name
+FILE_ENTRY_DIGEST = 3 #: File entry tuple index - file digest, present only in filelists-ext
 
 # Tuple indexes for changelog entry
 CHANGELOG_ENTRY_AUTHOR    = 0 #: Changelog entry tuple index - Author

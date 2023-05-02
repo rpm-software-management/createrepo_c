@@ -240,16 +240,30 @@ cr_is_primary(const char *filename)
 }
 */
 
-#define VAL_LEN         4       // Len of numeric values in rpm
+#define VAL_LEN         4       // Len of numeric values in rpm (bytes)
 
 struct cr_HeaderRangeStruct
 cr_get_header_byte_range(const char *filename, GError **err)
 {
-    /* Values readed by fread are 4 bytes long and stored as big-endian.
-     * So there is htonl function to convert this big-endian number into host
-     * byte order.
-     */
-
+    // Lead is 96 bytes.
+    //
+    // Each Header starts like this (16 bytes)
+    // 3 bytes for the magic
+    // 1 byte RPM version number - always 1
+    // 4 reserved bytes (no meaning, just padding)
+    // 4 bytes for the number of entries in the index (u32)
+    // 4 bytes for the length of the data section (u32)
+    //
+    // Next comes a series of index entries. Each index entry is 16 bytes
+    // 4 bytes for the tag (u32)
+    // 4 bytes for the tag data type (u32)
+    // 4 bytes for the offset relative to the beginning of the data store
+    // 4 bytes for the count that contains the number of data items pointed to by the index entry
+    //
+    // After the header entries comes the data section. This stores the data pointed to by
+    // the offsets within each index entry.
+    //
+    // All numeric values are big-endian and need to be converted into host byte order.
     struct cr_HeaderRangeStruct results;
 
     assert(!err || *err == NULL);
@@ -257,9 +271,7 @@ cr_get_header_byte_range(const char *filename, GError **err)
     results.start = 0;
     results.end   = 0;
 
-
     // Open file
-
     FILE *fp = fopen(filename, "rb");
     if (!fp) {
         const gchar * fopen_error = g_strerror(errno);
@@ -270,9 +282,8 @@ cr_get_header_byte_range(const char *filename, GError **err)
         return results;
     }
 
-
     // Get header range
-
+    // Seek to Lead (96) + 8 bytes and read the number of entries in the signature header, then convert to host byte order
     if (fseek(fp, 104, SEEK_SET) != 0) {
         const gchar * fseek_error = g_strerror(errno);
         g_debug("%s: fseek fail on %s (%s)", __func__, filename, fseek_error);
@@ -291,6 +302,7 @@ cr_get_header_byte_range(const char *filename, GError **err)
         return results;
     }
     sigindex = htonl(sigindex);
+    // Read the length of the data section and convert to host byte order
     if (fread(&sigdata, VAL_LEN, 1, fp) != 1) {
         g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "fread() error on %s: %s", filename, g_strerror(errno));
@@ -299,6 +311,7 @@ cr_get_header_byte_range(const char *filename, GError **err)
     }
     sigdata = htonl(sigdata);
 
+    // Lead (96) + HeaderIndex (16) = 112. Index entries are 16 bytes each. Include padding to align to 8 bytes
     unsigned int sigindexsize = sigindex * 16;
     unsigned int sigsize = sigdata + sigindexsize;
     unsigned int disttoboundary = sigsize % 8;
@@ -307,6 +320,7 @@ cr_get_header_byte_range(const char *filename, GError **err)
     }
     unsigned int hdrstart = 112 + sigsize + disttoboundary;
 
+    // Seek to start of header (96) + 8 bytes and read the number of entries in the header, then convert to host byte order
     fseek(fp, hdrstart, SEEK_SET);
     fseek(fp, 8, SEEK_CUR);
 
@@ -319,6 +333,7 @@ cr_get_header_byte_range(const char *filename, GError **err)
         return results;
     }
     hdrindex = htonl(hdrindex);
+    // Read the length of the data section and convert to host byte order
     if (fread(&hdrdata, VAL_LEN, 1, fp) != 1) {
         g_set_error(err, ERR_DOMAIN, CRE_IO,
                     "fread() error on %s: %s", filename, g_strerror(errno));
@@ -326,15 +341,14 @@ cr_get_header_byte_range(const char *filename, GError **err)
         return results;
     }
     hdrdata = htonl(hdrdata);
+    // Calculate the end of the header
     unsigned int hdrindexsize = hdrindex * 16;
     unsigned int hdrsize = hdrdata + hdrindexsize + 16;
     unsigned int hdrend = hdrstart + hdrsize;
 
     fclose(fp);
 
-
     // Check sanity
-
     if (hdrend < hdrstart) {
         g_debug("%s: sanity check fail on %s (%d > %d))", __func__,
                 filename, hdrstart, hdrend);

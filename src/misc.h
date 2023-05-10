@@ -116,7 +116,7 @@ static inline int cr_is_primary(const char *filename) {
     if (strstr(filename, "bin/"))
         return 1;
     return 0;
-};
+}
 
 /** Header range
  */

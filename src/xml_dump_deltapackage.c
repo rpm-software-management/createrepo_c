@@ -134,7 +134,7 @@ cr_xml_dump_deltapackage(cr_DeltaPackage *package, GError **err)
     // First line in the buf is not indented, we must indent it by ourself
     result = g_malloc(sizeof(char *) * buf->use + INDENT + 1);
     for (int x = 0; x < INDENT; x++) result[x] = ' ';
-    memcpy((void *) result+INDENT, buf->content, buf->use);
+    memcpy(result+INDENT, buf->content, buf->use);
     result[buf->use + INDENT]   = '\n';
     result[buf->use + INDENT + 1]   = '\0';
 

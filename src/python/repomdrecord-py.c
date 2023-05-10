@@ -146,7 +146,7 @@ copy_repomdrecord(_RepomdRecordObject *self, G_GNUC_UNUSED void *nothing)
 }
 
 PyDoc_STRVAR(fill__doc__,
-"fill() -> None\n\n"
+"fill(checksum_type) -> None\n\n"
 "Fill unfilled items in the RepomdRecord (sizes and checksums)");
 
 static PyObject *

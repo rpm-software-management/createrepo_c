@@ -845,7 +845,7 @@ cr_close(CR_FILE *cr_file, GError **err)
             }
             break;
 
-        case (CR_CW_ZSTD_COMPRESSION): // --------------------------------------
+        case (CR_CW_ZSTD_COMPRESSION): { // --------------------------------------
 #ifdef WITH_ZSTD
             ZstdFile * zstd = (ZstdFile *) cr_file->FILE;
             if (cr_file->mode == CR_CW_MODE_READ) {
@@ -881,7 +881,7 @@ cr_close(CR_FILE *cr_file, GError **err)
             g_set_error(err, ERR_DOMAIN, CRE_IO, "createrepo_c wasn't compiled with zstd support");
             break;
 #endif // WITH_ZSTD
-
+        }
         case (CR_CW_BZ2_COMPRESSION): // --------------------------------------
             if (cr_file->mode == CR_CW_MODE_READ)
                 BZ2_bzReadClose(&rc, (BZFILE *) cr_file->FILE);
@@ -1093,7 +1093,7 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
             }
             break;
 
-        case (CR_CW_ZSTD_COMPRESSION): // ---------------------------------------
+        case (CR_CW_ZSTD_COMPRESSION): { // ---------------------------------------
 #ifdef WITH_ZSTD
             ZstdFile * zstd = (ZstdFile *) cr_file->FILE;
 
@@ -1129,7 +1129,7 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
             g_set_error(err, ERR_DOMAIN, CRE_IO, "createrepo_c wasn't compiled with zstd support");
             break;
 #endif // WITH_ZSTD
-
+        }
         case (CR_CW_BZ2_COMPRESSION): // --------------------------------------
             ret = BZ2_bzRead(&bzerror, (BZFILE *) cr_file->FILE, buffer, len);
             if (!ret && bzerror == BZ_SEQUENCE_ERROR)
@@ -1364,7 +1364,7 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
             }
             break;
 
-        case (CR_CW_ZSTD_COMPRESSION): // ---------------------------------------
+        case (CR_CW_ZSTD_COMPRESSION): { // ---------------------------------------
 #ifdef WITH_ZSTD
             ZstdFile * zstd = (ZstdFile *) cr_file->FILE;
             ZSTD_inBuffer zib = {buffer, len, 0};
@@ -1401,6 +1401,7 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
             g_set_error(err, ERR_DOMAIN, CRE_IO, "createrepo_c wasn't compiled with zstd support");
             break;
 #endif // WITH_ZSTD
+        }
 
         case (CR_CW_BZ2_COMPRESSION): // --------------------------------------
             BZ2_bzWrite(&bzerror, (BZFILE *) cr_file->FILE, (void *) buffer, len);

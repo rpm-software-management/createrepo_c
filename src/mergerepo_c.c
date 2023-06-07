@@ -51,7 +51,7 @@
 
 struct CmdOptions _cmd_options = {
         .db_compression_type = DEFAULT_DB_COMPRESSION_TYPE,
-        .groupfile_compression_type = DEFAULT_GROUPFILE_COMPRESSION_TYPE,
+        .compression_type = DEFAULT_COMPRESSION_TYPE,
         .merge_method = MM_DEFAULT,
         .unique_md_filenames = TRUE,
         .simple_md_filenames = FALSE,
@@ -281,11 +281,11 @@ check_arguments(struct CmdOptions *options)
 
         if (type == CR_CW_UNKNOWN_COMPRESSION) {
             g_critical("Compression %s not available: Please choose from: "
-                       "gz or bz2 or xz", options->compress_type);
+                       "gz, bz2, xz or zstd", options->compress_type);
             ret = FALSE;
         } else {
             options->db_compression_type = type;
-            options->groupfile_compression_type = type;
+            options->compression_type = type;
         }
     }
 
@@ -956,28 +956,32 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         }
     }
 
-    const char *groupfile_suffix = cr_compression_suffix(
-                                    cmd_options->groupfile_compression_type);
+    const char *compression_suffix = cr_compression_suffix(
+                                    cmd_options->compression_type);
 
     gchar *pri_xml_filename = g_strconcat(cmd_options->tmp_out_repo,
-                                          "/primary.xml.gz", NULL);
+                                          "/primary.xml",
+                                          compression_suffix, NULL);
     gchar *fil_xml_filename = g_strconcat(cmd_options->tmp_out_repo,
-                                          "/filelists.xml.gz", NULL);
+                                          "/filelists.xml",
+                                          compression_suffix, NULL);
     gchar *fex_xml_filename = NULL;
     if (cmd_options->filelists_ext)
         fex_xml_filename = g_strconcat(cmd_options->tmp_out_repo,
-                                       "/filelists-ext.xml.gz", NULL);
+                                       "/filelists-ext.xml",
+                                       compression_suffix, NULL);
     gchar *oth_xml_filename = g_strconcat(cmd_options->tmp_out_repo,
-                                          "/other.xml.gz", NULL);
+                                          "/other.xml",
+                                          compression_suffix, NULL);
 
     gchar *update_info_filename = NULL;
     if (!cmd_options->noupdateinfo)
         update_info_filename  = g_strconcat(cmd_options->tmp_out_repo,
                                             "/updateinfo.xml",
-                                            groupfile_suffix, NULL);
+                                            compression_suffix, NULL);
 
     pri_f = cr_xmlfile_sopen_primary(pri_xml_filename,
-                                     CR_CW_GZ_COMPRESSION,
+                                     cmd_options->compression_type,
                                      pri_stat,
                                      &tmp_err);
     if (tmp_err) {
@@ -1005,7 +1009,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     }
 
     fil_f = cr_xmlfile_sopen_filelists(fil_xml_filename,
-                                       CR_CW_GZ_COMPRESSION,
+                                       cmd_options->compression_type,
                                        fil_stat,
                                        &tmp_err);
     if (tmp_err) {
@@ -1034,7 +1038,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 
     if (cmd_options->filelists_ext) {
         fex_f = cr_xmlfile_sopen_filelists(fex_xml_filename,
-                                           CR_CW_GZ_COMPRESSION,
+                                           cmd_options->compression_type,
                                            fex_stat,
                                            &tmp_err);
         if (tmp_err) {
@@ -1064,7 +1068,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     }
 
     oth_f = cr_xmlfile_sopen_other(oth_xml_filename,
-                                   CR_CW_GZ_COMPRESSION,
+                                   cmd_options->compression_type,
                                    oth_stat,
                                    &tmp_err);
     if (tmp_err) {
@@ -1367,7 +1371,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     if (!cmd_options->noupdateinfo) {
         CR_FILE *update_info = cr_open(update_info_filename,
                                        CR_CW_MODE_WRITE,
-                                       cmd_options->groupfile_compression_type,
+                                       cmd_options->compression_type,
                                        &tmp_err);
         if (update_info) {
             cr_puts(update_info,
@@ -1390,10 +1394,10 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     if (module_index) {
         gboolean ret;
         modulemd_filename =
-            g_strconcat(cmd_options->tmp_out_repo, "/modules.yaml.gz", NULL);
+            g_strconcat(cmd_options->tmp_out_repo, "/modules.yaml", compression_suffix, NULL);
         CR_FILE *modulemd = cr_open(modulemd_filename,
                                     CR_CW_MODE_WRITE,
-                                    CR_CW_GZ_COMPRESSION,
+                                    cmd_options->compression_type,
                                     &tmp_err);
         if (modulemd) {
             ret = modulemd_module_index_dump_to_custom(module_index,
@@ -1522,7 +1526,7 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         cr_repomd_record_compress_and_fill(groupfile_rec,
                                            compressed_groupfile_rec,
                                            CR_CHECKSUM_SHA256,
-                                           cmd_options->groupfile_compression_type,
+                                           cmd_options->compression_type,
                                            NULL, NULL);
         if (cmd_options->zck_compression) {
             groupfile_zck_rec = cr_repomd_record_new("group_zck", NULL);

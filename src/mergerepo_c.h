@@ -28,7 +28,7 @@ extern "C" {
 #include "compression_wrapper.h"
 
 #define DEFAULT_DB_COMPRESSION_TYPE             CR_CW_BZ2_COMPRESSION
-#define DEFAULT_GROUPFILE_COMPRESSION_TYPE      CR_CW_GZ_COMPRESSION
+#define DEFAULT_COMPRESSION_TYPE                CR_CW_ZSTD_COMPRESSION
 
 typedef enum {
     MM_DEFAULT,
@@ -83,7 +83,7 @@ struct CmdOptions {
     GSList *repo_list;
     GSList *arch_list;
     cr_CompressionType db_compression_type;
-    cr_CompressionType groupfile_compression_type;
+    cr_CompressionType compression_type;
     MergeMethod merge_method;
 };
 

@@ -884,9 +884,9 @@ main(int argc, char **argv)
     const char *xml_compression_suffix = NULL;
     const char *sqlite_compression_suffix = NULL;
     const char *compression_suffix = NULL;
-    cr_CompressionType xml_compression = CR_CW_GZ_COMPRESSION;
+    cr_CompressionType xml_compression = CR_CW_ZSTD_COMPRESSION;
     cr_CompressionType sqlite_compression = CR_CW_BZ2_COMPRESSION;
-    cr_CompressionType compression = CR_CW_GZ_COMPRESSION;
+    cr_CompressionType compression = CR_CW_ZSTD_COMPRESSION;
 
     if (cmd_options->compression_type != CR_CW_UNKNOWN_COMPRESSION) {
         sqlite_compression = cmd_options->compression_type;
@@ -1078,7 +1078,7 @@ main(int argc, char **argv)
     gchar *oth_xml_filename = NULL;
 
     g_message("Temporary output repo path: %s", tmp_out_repo);
-    g_debug("Creating .xml.gz files");
+    g_debug("Creating .xml.%s files", xml_compression_suffix);
 
     pri_xml_filename = g_strconcat(tmp_out_repo, "/primary.xml", xml_compression_suffix, NULL);
     fil_xml_filename = g_strconcat(tmp_out_repo, "/filelists.xml", xml_compression_suffix, NULL);

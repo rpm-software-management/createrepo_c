@@ -700,3 +700,31 @@ cr_metadata_locate_and_load_xml(cr_Metadata *md,
 
     return ret;
 }
+
+gchar *
+cr_compress_groupfile(const char *groupfile, const char *dest_dir, cr_CompressionType compression)
+{
+    const char *compression_suffix = cr_compression_suffix(compression);
+    GError *tmp_err = NULL;
+    gchar *compressed_path;
+    cr_CompressionType old_type = cr_detect_compression(groupfile, &tmp_err);
+    if (tmp_err) {
+        compressed_path = g_strconcat(dest_dir, cr_get_filename(groupfile), compression_suffix, NULL);
+        g_debug("Unable to detect compression type of %s, using %s for groupfile.", groupfile, compressed_path);
+        g_clear_error(&tmp_err);
+    } else if (old_type == CR_CW_NO_COMPRESSION) {
+        compressed_path = g_strconcat(dest_dir, cr_get_filename(groupfile), compression_suffix, NULL);
+    } else {
+        // strip compression suffix
+        gchar *tmp_file = g_strndup(groupfile, strlen(groupfile) - strlen(cr_compression_suffix(old_type)));
+        compressed_path = g_strconcat(dest_dir, cr_get_filename(tmp_file), compression_suffix, NULL);
+        g_free(tmp_file);
+    }
+    if (cr_compress_file(groupfile, compressed_path, compression, NULL, 0, &tmp_err) != CRE_OK) {
+        g_critical("Cannot compress file: %s: %s", groupfile,
+                   (tmp_err ? tmp_err->message : "Unknown error"));
+        g_clear_error(&tmp_err);
+        exit(EXIT_FAILURE);
+    }
+    return compressed_path;
+}

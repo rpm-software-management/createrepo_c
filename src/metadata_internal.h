@@ -46,6 +46,17 @@ cr_metadata_load_modulemd(ModulemdModuleIndex **moduleindex,
                           gchar *path_to_md,
                           GError **err);
 
+/** Compress groupfile into dest_dir with specified compression.
+ * @param groupfile     Path to local groupfile, it can be already compressed by
+ *                      some compression.
+ * @param dest_dir      Path to directory where the compressed groupfile should be stored.
+ * @return              Path to the new compressed groupfile. Has to be freed by the caller.
+ */
+gchar *
+cr_compress_groupfile(const char *groupfile,
+                      const char *dest_dir,
+                      cr_CompressionType compression);
+
 
 #endif /* WITH_LIBMODULEMD */
 

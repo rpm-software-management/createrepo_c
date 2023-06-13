@@ -847,25 +847,7 @@ main(int argc, char **argv)
 
     // Groupfile specified as argument
     if (cmd_options->groupfile_fullpath) {
-        gchar *compressed_path;
-        cr_CompressionType old_type = cr_detect_compression(cmd_options->groupfile_fullpath, &tmp_err);
-        if (tmp_err) {
-            compressed_path = g_strconcat(tmp_out_repo, cr_get_filename(cmd_options->groupfile_fullpath), compression_suffix, NULL);
-            g_debug("Unable to detect compression type of %s, using %s for groupfile.", cmd_options->groupfile_fullpath, compressed_path);
-            g_clear_error(&tmp_err);
-        } else if (old_type == CR_CW_NO_COMPRESSION) {
-            compressed_path = g_strconcat(tmp_out_repo, cr_get_filename(cmd_options->groupfile_fullpath), compression_suffix, NULL);
-        } else {
-            // strip compression suffix
-            _cleanup_free_ gchar *tmp_file = g_strndup(cmd_options->groupfile_fullpath, strlen(cmd_options->groupfile_fullpath) - strlen(cr_compression_suffix(old_type)));
-            compressed_path = g_strconcat(tmp_out_repo, cr_get_filename(tmp_file), compression_suffix, NULL);
-        }
-        if (cr_compress_file(cmd_options->groupfile_fullpath, compressed_path, compression, NULL, NULL, &tmp_err) != CRE_OK) {
-            g_critical("Cannot compress file: %s: %s", cmd_options->groupfile_fullpath,
-                       (tmp_err ? tmp_err->message : "Unknown error"));
-            g_clear_error(&tmp_err);
-            exit(EXIT_FAILURE);
-        }
+        gchar *compressed_path = cr_compress_groupfile(cmd_options->groupfile_fullpath, tmp_out_repo, compression);
         cr_Metadatum *new_groupfile_metadatum = g_malloc0(sizeof(cr_Metadatum));
         new_groupfile_metadatum->name = compressed_path;
         new_groupfile_metadatum->type = g_strdup("group");

@@ -4,7 +4,7 @@
 
 %global bash_completion %{_datadir}/bash-completion/completions/*
 
-%if 0%{?rhel} && ( 0%{?rhel} <= 7 || 0%{?rhel} >= 9 )
+%if ( 0%{?rhel} && ( 0%{?rhel} <= 7 || 0%{?rhel} >= 9 ) ) || ( 0%{?fedora} && 0%{?fedora} >= 39 )
 %bcond_with drpm
 %else
 %bcond_without drpm

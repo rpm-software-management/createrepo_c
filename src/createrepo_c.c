@@ -382,64 +382,6 @@ prepare_cache_dir(struct CmdOptions *cmd_options,
     return TRUE;
 }
 
-/** Adds groupfile cr_RepomdRecords to additional_metadata_rec list.
- *  Groupfile is a special case, because it's the only metadatum
- *  that can be inputed to createrepo_c via command line option.
- *
- * @param group_metadatum           Cr_Metadatum for used groupfile
- * @param additional_metadata_rec   GSList of cr_RepomdRecords
- * @param comp_type                 Groupfile compression type
- * @param repomd_checksum_type
- *
- * @return                          GSList with added cr_RepomdRecords for
- *                                  groupfile
- */
-GSList*
-cr_create_repomd_records_for_groupfile_metadata(const cr_Metadatum *group_metadatum,
-                                                GSList *additional_metadata_rec,
-                                                cr_CompressionType comp_type,
-                                                cr_ChecksumType repomd_checksum_type)
-{
-    GError *tmp_err = NULL;
-    char *compression_suffix = g_strdup(cr_compression_suffix(comp_type));
-    compression_suffix[0] = '_'; //replace '.'
-    additional_metadata_rec = g_slist_prepend(additional_metadata_rec,
-                                              cr_repomd_record_new(
-                                                  group_metadatum->type,
-                                                  group_metadatum->name
-                                              ));
-
-    gchar *compressed_record_type = g_strconcat(group_metadatum->type, compression_suffix, NULL);
-    additional_metadata_rec = g_slist_prepend(additional_metadata_rec,
-                                              cr_repomd_record_new(
-                                                  compressed_record_type,
-                                                  NULL
-                                              ));
-
-    cr_repomd_record_compress_and_fill(additional_metadata_rec->next->data,
-                                       additional_metadata_rec->data,
-                                       repomd_checksum_type,
-                                       comp_type,
-                                       NULL,
-                                       &tmp_err);
-
-    if (tmp_err) {
-        g_critical("Cannot process %s %s: %s",
-                   group_metadatum->type,
-                   group_metadatum->name,
-                   tmp_err->message);
-        g_free(compression_suffix);
-        g_free(compressed_record_type);
-        g_clear_error(&tmp_err);
-        exit(EXIT_FAILURE);
-    }
-
-    g_free(compressed_record_type);
-    g_free(compression_suffix);
-
-    return additional_metadata_rec;
-}
-
 /** Creates list of cr_RepomdRecords from list
  *  of additional metadata (cr_Metadatum)
  *
@@ -903,13 +845,32 @@ main(int argc, char **argv)
     sqlite_compression_suffix = cr_compression_suffix(sqlite_compression);
     compression_suffix = cr_compression_suffix(compression);
 
-    cr_Metadatum *new_groupfile_metadatum = NULL;
-
     // Groupfile specified as argument
     if (cmd_options->groupfile_fullpath) {
-        new_groupfile_metadatum = g_malloc0(sizeof(cr_Metadatum));
-        new_groupfile_metadatum->name = cr_copy_metadatum(cmd_options->groupfile_fullpath, tmp_out_repo, &tmp_err);
+        gchar *compressed_path;
+        cr_CompressionType old_type = cr_detect_compression(cmd_options->groupfile_fullpath, &tmp_err);
+        if (tmp_err) {
+            compressed_path = g_strconcat(tmp_out_repo, cr_get_filename(cmd_options->groupfile_fullpath), compression_suffix, NULL);
+            g_debug("Unable to detect compression type of %s, using %s for groupfile.", cmd_options->groupfile_fullpath, compressed_path);
+            g_clear_error(&tmp_err);
+        } else if (old_type == CR_CW_NO_COMPRESSION) {
+            compressed_path = g_strconcat(tmp_out_repo, cr_get_filename(cmd_options->groupfile_fullpath), compression_suffix, NULL);
+        } else {
+            // strip compression suffix
+            _cleanup_free_ gchar *tmp_file = g_strndup(cmd_options->groupfile_fullpath, strlen(cmd_options->groupfile_fullpath) - strlen(cr_compression_suffix(old_type)));
+            compressed_path = g_strconcat(tmp_out_repo, cr_get_filename(tmp_file), compression_suffix, NULL);
+        }
+        if (cr_compress_file(cmd_options->groupfile_fullpath, compressed_path, compression, NULL, NULL, &tmp_err) != CRE_OK) {
+            g_critical("Cannot compress file: %s: %s", cmd_options->groupfile_fullpath,
+                       (tmp_err ? tmp_err->message : "Unknown error"));
+            g_clear_error(&tmp_err);
+            exit(EXIT_FAILURE);
+        }
+        cr_Metadatum *new_groupfile_metadatum = g_malloc0(sizeof(cr_Metadatum));
+        new_groupfile_metadatum->name = compressed_path;
         new_groupfile_metadatum->type = g_strdup("group");
+        additional_metadata = g_slist_prepend(additional_metadata, new_groupfile_metadatum);
+
         //remove old groupfile(s) (every [compressed] variant)
         if (old_metadata_location){
             GSList *node_iter = old_metadata_location->additional_metadata;
@@ -1863,20 +1824,6 @@ main(int argc, char **argv)
 
     additional_metadata_rec = cr_create_repomd_records_for_additional_metadata(additional_metadata,
                                                                                cmd_options->repomd_checksum_type);
-
-    if (new_groupfile_metadatum) {
-        additional_metadata_rec = cr_create_repomd_records_for_groupfile_metadata(new_groupfile_metadatum,
-                                                                                  additional_metadata_rec,
-                                                                                  compression,
-                                                                                  cmd_options->repomd_checksum_type);
-
-        //NOTE(amatej): Now we can add groupfile metadata to the additional_metadata list, for unified handlig while zck compressing
-        additional_metadata = g_slist_prepend(additional_metadata, new_groupfile_metadatum);
-        cr_Metadatum *compressed_new_groupfile_metadatum = g_malloc0(sizeof(cr_Metadatum));
-        compressed_new_groupfile_metadatum->name = g_strdup(((cr_RepomdRecord *) additional_metadata_rec->data)->location_real);
-        compressed_new_groupfile_metadatum->type = g_strdup(((cr_RepomdRecord *) additional_metadata_rec->data)->type);
-        additional_metadata = g_slist_prepend(additional_metadata, compressed_new_groupfile_metadatum);
-    }
 
     // Wait till repomd record fill task of xml files ends.
     g_thread_pool_free(fill_pool, FALSE, TRUE);

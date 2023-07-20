@@ -1437,7 +1437,6 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     cr_RepomdRecord *fex_zck_rec              = NULL;
     cr_RepomdRecord *oth_zck_rec              = NULL;
     cr_RepomdRecord *groupfile_rec            = NULL;
-    cr_RepomdRecord *compressed_groupfile_rec = NULL;
     cr_RepomdRecord *groupfile_zck_rec        = NULL;
     cr_RepomdRecord *update_info_rec          = NULL;
     cr_RepomdRecord *update_info_zck_rec      = NULL;
@@ -1521,13 +1520,11 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     // Groupfile
 
     if (groupfile) {
-        groupfile_rec = cr_repomd_record_new("group", groupfile);
-        compressed_groupfile_rec = cr_repomd_record_new("group_gz", NULL);
-        cr_repomd_record_compress_and_fill(groupfile_rec,
-                                           compressed_groupfile_rec,
-                                           CR_CHECKSUM_SHA256,
-                                           cmd_options->compression_type,
-                                           NULL, NULL);
+        gchar *compressed_path = cr_compress_groupfile(groupfile, cmd_options->tmp_out_repo, cmd_options->compression_type);
+        groupfile_rec = cr_repomd_record_new("group", compressed_path);
+        g_free(compressed_path);
+        cr_repomd_record_fill(groupfile_rec, CR_CHECKSUM_SHA256, NULL);
+
         if (cmd_options->zck_compression) {
             groupfile_zck_rec = cr_repomd_record_new("group_zck", NULL);
             cr_repomd_record_compress_and_fill(groupfile_rec,
@@ -1811,7 +1808,6 @@ dump_merged_metadata(GHashTable *merged_hashtable,
             cr_repomd_record_rename_file(fex_zck_rec, NULL);
         cr_repomd_record_rename_file(oth_zck_rec, NULL);
         cr_repomd_record_rename_file(groupfile_rec, NULL);
-        cr_repomd_record_rename_file(compressed_groupfile_rec, NULL);
         cr_repomd_record_rename_file(groupfile_zck_rec, NULL);
         cr_repomd_record_rename_file(update_info_rec, NULL);
         cr_repomd_record_rename_file(update_info_zck_rec, NULL);
@@ -1844,7 +1840,6 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         cr_repomd_set_record(repomd_obj, fex_zck_rec);
     cr_repomd_set_record(repomd_obj, oth_zck_rec);
     cr_repomd_set_record(repomd_obj, groupfile_rec);
-    cr_repomd_set_record(repomd_obj, compressed_groupfile_rec);
     cr_repomd_set_record(repomd_obj, groupfile_zck_rec);
     cr_repomd_set_record(repomd_obj, update_info_rec);
     cr_repomd_set_record(repomd_obj, update_info_zck_rec);
@@ -2054,33 +2049,15 @@ main(int argc, char **argv)
                     GSList *loc_groupfile = (g_slist_find_custom(loc->additional_metadata, "group", cr_cmp_metadatum_type));
                     if (loc_groupfile) {
                         cr_Metadatum *g = loc_groupfile->data;
-                        if (cr_copy_file(g->name, cmd_options->tmp_out_repo, &tmp_err)) {
-                            groupfile = g_strconcat(cmd_options->tmp_out_repo,
-                                    cr_get_filename(g->name),
-                                    NULL);
-                            g_debug("Using groupfile: %s", groupfile);
-                            break;
-                      } else {
-                            g_warning("Groupfile %s from repo: %s cannot be used: %s\n",
-                                    g->name, loc->original_url, tmp_err->message);
-                            g_clear_error(&tmp_err);
-                        }
+                        groupfile = g_strdup(g->name);
+                        break;
                     }
                 }
             }
         }
     } else {
         // Use groupfile specified by user
-        if (cr_copy_file(cmd_options->groupfile, cmd_options->tmp_out_repo, &tmp_err)) {
-            groupfile = g_strconcat(cmd_options->tmp_out_repo,
-                                    cr_get_filename(cmd_options->groupfile),
-                                    NULL);
-            g_debug("Using user specified groupfile: %s", groupfile);
-        } else {
-            g_critical("Cannot copy groupfile %s: %s",
-                       cmd_options->groupfile, tmp_err->message);
-            return 1;
-        }
+        groupfile = g_strdup(cmd_options->groupfile);
     }
 
     // Load noarch repo

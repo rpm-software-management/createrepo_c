@@ -582,9 +582,9 @@ duplicates_warning(const char *nevra, GArray *locations, CmdDupNevra option)
   for (size_t i=0; i<locations->len; i++) {
       struct DuplicateLocation location = g_array_index(locations, struct
                                                         DuplicateLocation, i);
-      g_warning("    Sourced from location: \'%s\', build timestamp: %ld%s",
+      g_warning("    Sourced from location: \'%s\', build timestamp: %jd%s",
                 location.location,
-                location.pkg->time_build,
+                (intmax_t) location.pkg->time_build,
                 location.pkg->skip_dump ? skip_reason : "");
 
   }

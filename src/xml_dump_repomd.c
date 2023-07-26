@@ -143,7 +143,7 @@ cr_xml_dump_repomd_body(xmlNodePtr root, cr_Repomd *repomd)
                            BAD_CAST repomd->revision);
     } else {
         // Use the current time if no revision was explicitly specified
-        gchar *rev = g_strdup_printf("%ld", time(NULL));
+        gchar *rev = g_strdup_printf("%jd", (intmax_t) time(NULL));
         xmlNewChild(root, NULL, BAD_CAST "revision", BAD_CAST rev);
         g_free(rev);
     }

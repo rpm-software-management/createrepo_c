@@ -1512,11 +1512,11 @@ cr_append_pid_and_datetime(const char *str, const char *suffix)
     gettimeofday(&tv, NULL);
     timeinfo = localtime (&(tv.tv_sec));
     strftime(datetime, 80, "%Y%m%d%H%M%S", timeinfo);
-    gchar *result = g_strdup_printf("%s%jd.%s.%ld%s",
+    gchar *result = g_strdup_printf("%s%jd.%s.%jd%s",
                                     str ? str : "",
                                     (intmax_t) getpid(),
                                     datetime,
-                                    tv.tv_usec,
+                                    (intmax_t) tv.tv_usec,
                                     suffix ? suffix : "");
     return result;
 }

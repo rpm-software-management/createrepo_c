@@ -106,6 +106,7 @@ PCOR_ENTRY_RELEASE = 4 #: PCOR entry tuple index - release
 PCOR_ENTRY_PRE     = 5 #: PCOR entry tuple index - pre
 
 
+# NOTE(amatej): Consider changing the tuple into a class if it should be extended with new data.
 # Tuple indexes for file entry
 FILE_ENTRY_TYPE = 0 #: File entry tuple index - file type
 FILE_ENTRY_PATH = 1 #: File entry tuple index - path

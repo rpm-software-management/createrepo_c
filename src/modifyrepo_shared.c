@@ -31,7 +31,11 @@
 #include "xml_dump.h"
 
 #define ERR_DOMAIN              CREATEREPO_C_ERROR
+#ifdef WITH_ZSTD
 #define DEFAULT_COMPRESSION     CR_CW_ZSTD_COMPRESSION
+#else
+#define DEFAULT_COMPRESSION     CR_CW_GZ_COMPRESSION
+#endif // WITH_ZSTD
 #define DEFAULT_CHECKSUM        CR_CHECKSUM_SHA256
 
 cr_ModifyRepoTask *

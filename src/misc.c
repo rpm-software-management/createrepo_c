@@ -17,8 +17,6 @@
  * USA.
  */
 
-#define _XOPEN_SOURCE 500
-
 #include <glib/gstdio.h>
 #include <glib.h>
 #include <gio/gio.h>

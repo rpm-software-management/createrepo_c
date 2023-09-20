@@ -704,6 +704,8 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     if (!pkg_locations) {
         pkg_locations = g_array_new(FALSE, TRUE, sizeof(struct DuplicateLocation));
         g_hash_table_insert(udata->nevra_table, nevra, pkg_locations);
+    } else {
+        g_free(nevra);
     }
 
     struct DuplicateLocation location;

@@ -203,6 +203,7 @@ test_cr_xml_package_iterator_03_out_of_order_pkgs(void)
 
     g_assert(package == NULL);
     g_assert(tmp_err != NULL);
+    g_clear_error(&tmp_err);
 
     cr_PkgIterator_free(pkg_iterator, &tmp_err);
 }
@@ -217,6 +218,7 @@ test_cr_xml_package_iterator_04_invalid_path(void)
 
     g_assert(pkg_iterator == NULL);
     g_assert(tmp_err != NULL);
+    g_clear_error(&tmp_err);
 }
 
 static void
@@ -254,6 +256,7 @@ test_cr_xml_package_iterator_06_newpkgcb_interrupt(void)
 
     g_assert(package == NULL);
     g_assert(tmp_err != NULL);
+    g_clear_error(&tmp_err);
     g_assert_cmpint(new_cb_count, ==, 1);
 
     cr_PkgIterator_free(pkg_iterator, &tmp_err);

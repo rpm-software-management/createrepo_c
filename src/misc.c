@@ -866,8 +866,15 @@ gboolean
 cr_move_recursive(const char *srcDir, const char *dstDir, GError **err)
 {
     if (rename(srcDir, dstDir) == -1) {
-        if (!cr_gio_cp(g_file_new_for_path(srcDir), g_file_new_for_path(dstDir), G_FILE_COPY_ALL_METADATA, NULL, err))
+        GFile * gsrcDir = g_file_new_for_path(srcDir);
+        GFile * gdstDir = g_file_new_for_path(dstDir);
+        if (!cr_gio_cp(gsrcDir, gdstDir, G_FILE_COPY_ALL_METADATA, NULL, err)) {
+            g_object_unref(gsrcDir);
+            g_object_unref(gdstDir);
             return FALSE;
+        }
+        g_object_unref(gsrcDir);
+        g_object_unref(gdstDir);
         return (cr_remove_dir(srcDir, err) == CRE_OK);
     }
     return TRUE;
@@ -1081,6 +1088,7 @@ cr_split_rpm_filename(const char *filename)
             g_free(str);
             str = filename_epoch[0];
             epoch = filename_epoch[1];
+            g_free(filename_epoch);
         } else {
             g_strfreev(filename_epoch);
         }
@@ -1239,6 +1247,7 @@ cr_str_to_nevra(const char *instr)
             epoch = epoch_candidate;
             g_free(str);
             str = nvra_epoch[0];
+            g_free(nvra_epoch);
         } else {
             g_strfreev(nvra_epoch);
         }

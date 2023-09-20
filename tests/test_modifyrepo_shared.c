@@ -86,7 +86,7 @@ test_cr_write_file(void)
     task->compress = 1;
 
     GError **err = NULL;
-    cr_write_file(repopath, task, CR_CW_GZ_COMPRESSION, err);
+    char * out = cr_write_file(repopath, task, CR_CW_GZ_COMPRESSION, err);
     
     //bz1639287 file should not be named text_file.gz.gz
     gchar *dst = g_strconcat(repopath, "/", "text_file.gz" , NULL);
@@ -96,6 +96,7 @@ test_cr_write_file(void)
     g_free(repopath);
     g_free(tmp_dir);
     g_free(dst);
+    g_free(out);
 }
 
 static void 

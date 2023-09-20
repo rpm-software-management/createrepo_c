@@ -134,6 +134,7 @@ test_cr_db_add_primary_pkg(TestData *testdata,
 
     // Cleanup
 
+    cr_package_free(pkg);
     g_timer_stop(timer);
     g_timer_destroy(timer);
     g_free(path);

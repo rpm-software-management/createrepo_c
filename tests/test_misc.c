@@ -388,8 +388,9 @@ test_cr_get_filename(void)
 }
 
 
+// Read from the file maximum of buffer_len-1 bytes and add terminating zero.
 static int
-read_file(char *f, cr_CompressionType compression, char* buffer, int amount)
+read_file(char *f, cr_CompressionType compression, char* buffer, int buffer_len)
 {
     int ret = CRE_OK;
     GError *tmp_err = NULL;
@@ -399,7 +400,9 @@ read_file(char *f, cr_CompressionType compression, char* buffer, int amount)
         ret = tmp_err->code;
         return ret;
     }
-    cr_read(orig, buffer, amount, &tmp_err);
+    int read = cr_read(orig, buffer, buffer_len-1, &tmp_err);
+    g_assert_cmpint(read, !=, CR_CW_ERR);
+    buffer[read] = 0;
     if (orig)
         cr_close(orig, NULL);
     return ret;

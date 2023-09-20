@@ -199,6 +199,7 @@ static void test_cr_parse_repomd(void)
     g_assert_cmpstr(TEST_REPO_00_PRIMARY, ==, ret->pri_xml_href);
     g_assert_cmpstr(TEST_REPO_00_OTHER, ==, ret->oth_xml_href);
     g_assert_cmpstr(TEST_REPO_00_FILELISTS, ==, ret->fil_xml_href);
+    cr_metadatalocation_free(ret);
 }
 
 static void test_cr_parse_repomd_with_additional_metadata(void)
@@ -235,7 +236,7 @@ static void test_cr_parse_repomd_with_additional_metadata(void)
     metadatum = g_slist_find_custom(ret->additional_metadata, "updateinfo_zck", cr_cmp_metadatum_type)->data;
     g_assert(metadatum);
 
-    g_slist_free_full(ret->additional_metadata, (GDestroyNotify) cr_metadatum_free);
+    cr_metadatalocation_free(ret);
 }
 
 int main(int argc, char *argv[])

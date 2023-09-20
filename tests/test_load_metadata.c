@@ -187,6 +187,8 @@ static void test_cr_metadata_locate_and_load_modulemd(void)
     g_assert_nonnull (modulemd_module_index_get_module (
                       cr_metadata_modulemd(metadata),
                       "testmodule"));
+
+    cr_metadata_free(metadata);
 }
 #endif /* WITH_LIBMODULEMD */
 

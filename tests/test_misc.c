@@ -586,6 +586,7 @@ compressfile_with_stat_test_text_file(Copyfiletest *copyfiletest,
     g_assert(g_file_test(copyfiletest->dst_file, G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(TEST_TEXT_FILE, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(stat->checksum, ==, checksum);
+    g_free(checksum);
     cr_contentstat_free(stat, &tmp_err);
     g_assert(!tmp_err);
 }
@@ -615,6 +616,7 @@ compressfile_with_stat_test_gz_file_gz_output(Copyfiletest *copyfiletest,
     g_assert(g_file_test(dst_full_name, G_FILE_TEST_IS_REGULAR));
     checksum = cr_checksum_file(TEST_TEXT_FILE, CR_CHECKSUM_SHA256, NULL);
     g_assert_cmpstr(stat->checksum, ==, checksum);
+    g_free(checksum);
 
     //assert content is readable after decompression and recompression
     char buf[30];
@@ -699,6 +701,7 @@ compressfile_test_sqlite_file_gz_output(Copyfiletest *copyfiletest,
     g_assert(g_file_test(dst_full_name, G_FILE_TEST_EXISTS));
 
     g_assert(!tmp_err);
+    g_free(dst_full_name);
 }
 
 

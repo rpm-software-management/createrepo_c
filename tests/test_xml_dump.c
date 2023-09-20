@@ -33,6 +33,7 @@ test_cr_Package_contains_forbidden_control_chars_01(void)
 {
     cr_Package *p = get_package();
     g_assert(!cr_Package_contains_forbidden_control_chars(p));
+    cr_package_free(p);
 }
 
 static void
@@ -42,6 +43,7 @@ test_cr_Package_contains_forbidden_control_chars_02(void)
     p->name = "foo";
 
     g_assert(cr_Package_contains_forbidden_control_chars(p));
+    cr_package_free(p);
 }
 
 static void
@@ -51,6 +53,7 @@ test_cr_Package_contains_forbidden_control_chars_03(void)
     p->summary = "foo";
 
     g_assert(cr_Package_contains_forbidden_control_chars(p));
+    cr_package_free(p);
 }
 
 static void
@@ -61,6 +64,7 @@ test_cr_Package_contains_forbidden_control_chars_04(void)
     dep->name = "foobar_dep";
 
     g_assert(cr_Package_contains_forbidden_control_chars(p));
+    cr_package_free(p);
 }
 
 static void
@@ -71,6 +75,7 @@ test_cr_Package_contains_forbidden_control_chars_05(void)
     file->name = "obar_dep";
 
     g_assert(cr_Package_contains_forbidden_control_chars(p));
+    cr_package_free(p);
 }
 
 static void
@@ -81,6 +86,7 @@ test_cr_GSList_of_cr_Dependency_contains_forbidden_control_chars_01(void)
     dep->name = "foobar_dep";
 
     g_assert(cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(p->requires));
+    cr_package_free(p);
 }
 
 static void
@@ -91,6 +97,7 @@ test_cr_GSList_of_cr_Dependency_contains_forbidden_control_chars_02(void)
     dep->name = "fo	badep";
 
     g_assert(!cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(p->requires));
+    cr_package_free(p);
 }
 
 int

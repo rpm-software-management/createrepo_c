@@ -258,8 +258,10 @@ test_koji_allowed_pkg_included(void)
     g_assert(koji_allowed(pkg, koji_stuff));
 
     g_assert_cmpint(g_hash_table_size(koji_stuff->seen_rpms), ==, 1);
-    g_assert(g_hash_table_contains(koji_stuff->seen_rpms, cr_package_nvra(pkg)));
+    gchar * nvra = cr_package_nvra(pkg);
+    g_assert(g_hash_table_contains(koji_stuff->seen_rpms, nvra));
 
+    g_free(nvra);
     koji_stuff_destroy(&koji_stuff);
     cr_package_free(pkg);
 }

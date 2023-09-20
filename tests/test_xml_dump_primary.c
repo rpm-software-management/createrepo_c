@@ -41,6 +41,7 @@ xmlNodePtr cmp_package_files_and_xml(GSList *files, xmlNodePtr current, int only
             g_assert_cmpstr((char *) current->properties->name, ==, "type");
             g_assert_cmpstr((char *) current->properties->children->content, ==, IF_NULL_EMPTY(entry->type));
         }
+        g_free(fullname);
     }
 
     return current->next;
@@ -273,8 +274,10 @@ test_cr_xml_dump_primary_dump_pco_00(void)
     xmlNodePtr node;
     node = xmlNewNode(NULL, BAD_CAST "wrapper");
     cr_xml_dump_primary_dump_pco(node, p, PCO_TYPE_REQUIRES);
-    node = node->children;
-    node = cmp_package_pco_and_xml(p->requires, node, PCO_TYPE_REQUIRES);
+    xmlNodePtr node_children = node->children;
+    cmp_package_pco_and_xml(p->requires, node_children, PCO_TYPE_REQUIRES);
+    xmlFreeNode(node);
+    cr_package_free(p);
 }
 
 static void
@@ -328,9 +331,12 @@ test_cr_xml_dump_primary_dump_pco_01(void)
     cr_xml_dump_primary_dump_pco(node, p, PCO_TYPE_REQUIRES);
     cr_xml_dump_primary_dump_pco(node, p, PCO_TYPE_OBSOLETES);
 
-    node = node->children;
-    node = cmp_package_pco_and_xml(p->requires, node, PCO_TYPE_REQUIRES);
-    node = cmp_package_pco_and_xml(p->obsoletes, node, PCO_TYPE_OBSOLETES);
+    xmlNodePtr node_children = node->children;
+    node_children = cmp_package_pco_and_xml(p->requires, node_children, PCO_TYPE_REQUIRES);
+    node_children = cmp_package_pco_and_xml(p->obsoletes, node_children, PCO_TYPE_OBSOLETES);
+
+    xmlFreeNode(node);
+    cr_package_free(p);
 }
 
 static void
@@ -346,6 +352,7 @@ test_cr_xml_dump_primary_base_items_00(void)
     cr_xml_dump_primary_base_items(node, pkg);
     cmp_package_and_xml_node(pkg, node);
 
+    xmlFreeNode(node);
     cr_package_free(pkg);
 }
 
@@ -363,6 +370,7 @@ test_cr_xml_dump_primary_base_items_01(void)
     cr_xml_dump_primary_base_items(node, pkg);
     cmp_package_and_xml_node(pkg, node);
 
+    xmlFreeNode(node);
     cr_package_free(pkg);
 }
 
@@ -379,6 +387,7 @@ test_cr_xml_dump_primary_base_items_02(void)
     cr_xml_dump_primary_base_items(node, pkg);
     cmp_package_and_xml_node(pkg, node);
 
+    xmlFreeNode(node);
     cr_package_free(pkg);
 }
 

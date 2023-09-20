@@ -31,6 +31,8 @@
 %bcond_with legacy_hashes
 %endif
 
+%bcond_with sanitizers
+
 Summary:        Creates a common metadata repository
 Name:           createrepo_c
 Version:        1.0.0
@@ -75,6 +77,12 @@ BuildRequires:  drpm-devel >= 0.4.0
 %endif
 %if %{with zstd}
 BuildRequires:  pkgconfig(libzstd)
+%endif
+
+%if %{with sanitizers}
+BuildRequires:  libasan
+BuildRequires:  liblsan
+BuildRequires:  libubsan
 %endif
 
 %if 0%{?fedora} || 0%{?rhel} > 7
@@ -127,7 +135,8 @@ pushd build-py3
       -DWITH_LIBMODULEMD=%{?with_libmodulemd:ON}%{!?with_libmodulemd:OFF} \
       -DWITH_LEGACY_HASHES=%{?with_legacy_hashes:ON}%{!?with_legacy_hashes:OFF} \
       -DENABLE_DRPM=%{?with_drpm:ON}%{!?with_drpm:OFF} \
-      -DWITH_ZSTD=%{?with_zstd:ON}%{!?with_zstd:OFF}
+      -DWITH_ZSTD=%{?with_zstd:ON}%{!?with_zstd:OFF} \
+      -DWITH_SANITIZERS=%{?with_sanitizers:ON}%{!?with_sanitizers:OFF}
   make %{?_smp_mflags} RPM_OPT_FLAGS="%{optflags}"
   # Build C documentation
   make doc-c

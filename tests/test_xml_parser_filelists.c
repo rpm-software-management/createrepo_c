@@ -88,6 +88,25 @@ newpkgcb_skip_fake_bash(cr_Package **pkg,
     return CR_CB_RET_OK;
 }
 
+// Keep reference to the new package so we can free it in case of an interrupt
+static int
+newpkgcb_ref(cr_Package **pkg,
+             G_GNUC_UNUSED const char *pkgId,
+             G_GNUC_UNUSED const char *name,
+             G_GNUC_UNUSED const char *arch,
+             G_GNUC_UNUSED void *cbdata,
+             GError **err)
+{
+    g_assert(pkg != NULL);
+    g_assert(*pkg == NULL);
+    g_assert(pkgId != NULL);
+    g_assert(!err || *err == NULL);
+
+    *pkg = cr_package_new();
+    if (cbdata) *((cr_Package **)cbdata) = *pkg;
+    return CR_CB_RET_OK;
+}
+
 static int
 newpkgcb_interrupt(cr_Package **pkg,
                    G_GNUC_UNUSED const char *pkgId,
@@ -315,9 +334,10 @@ static void
 test_cr_xml_parse_filelists_warningcb_interrupt(void)
 {
     int parsed = 0, numofwarnings = 0;
+    cr_Package *pkgref;
     GError *tmp_err = NULL;
     int ret = cr_xml_parse_filelists(TEST_MRF_BAD_TYPE_FIL,
-                                     NULL, NULL,
+                                     newpkgcb_ref, &pkgref,
                                      pkgcb, &parsed,  warningcb_interrupt,
                                      &numofwarnings, &tmp_err);
     g_assert(tmp_err != NULL);
@@ -325,6 +345,7 @@ test_cr_xml_parse_filelists_warningcb_interrupt(void)
     g_assert_cmpint(ret, ==, CRE_CBINTERRUPTED);
     g_assert_cmpint(parsed, ==, 1);
     g_assert_cmpint(numofwarnings, ==, 1);
+    cr_package_free(pkgref);
 }
 
 static void

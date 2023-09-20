@@ -900,7 +900,7 @@ test_cr_get_zchunk_with_index(void)
     g_assert(!tmp_err);
 
     g_assert_cmpint(cr_get_zchunk_with_index(f, 1, &output, &tmp_err), ==, 56);
-    g_assert(g_str_has_prefix(output, "foobar foobar foobar"));
+    g_assert(!strncmp(output, "foobar foobar foobar", 20));
     g_free(output);
     g_assert(!tmp_err);
 

@@ -111,6 +111,12 @@ if (WITH_ZSTD)
     SET (CMAKE_C_FLAGS_DEBUG    "${CMAKE_C_FLAGS_DEBUG} -DWITH_ZSTD")
 endif()
 
+if (WITH_SANITIZERS)
+    message(WARNING "Building with sanitizers enabled!")
+    add_compile_options(-fsanitize=address -fsanitize=undefined -fsanitize=leak)
+    link_libraries(asan ubsan)
+endif()
+
 # Threaded XZ Compression
 # Note: This option is disabled by default, because Createrepo_c
 # parallelize a lot of tasks (including compression) by default, this

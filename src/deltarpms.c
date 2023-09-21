@@ -130,6 +130,7 @@ cr_deltapackage_from_drpm_base(const char *filename,
 
     deltapackage->nevr = cr_safe_string_chunk_insert_null(
                                     deltapackage->chunk, str);
+    free(str);
 
     ret = drpm_get_string(delta, DRPM_TAG_SEQUENCE, &str);
     if (ret != DRPM_ERR_OK) {
@@ -141,6 +142,7 @@ cr_deltapackage_from_drpm_base(const char *filename,
 
     deltapackage->sequence = cr_safe_string_chunk_insert_null(
                                     deltapackage->chunk, str);
+    free(str);
 
     drpm_destroy(&delta);
 
@@ -328,7 +330,8 @@ cr_delta_thread(gpointer data, gpointer udata)
             cr_DeltaTargetPackage *old = lelem->data;
 
             g_debug("Generating delta %s -> %s", old->path, tpkg->path);
-            cr_drpm_create(old, tpkg, user_data->outdeltadir, &tmp_err);
+            char * drpm_path = cr_drpm_create(old, tpkg, user_data->outdeltadir, &tmp_err);
+            free(drpm_path);
             if (tmp_err) {
                 g_warning("Cannot generate delta %s -> %s : %s",
                           old->path, tpkg->path, tmp_err->message);
@@ -338,6 +341,8 @@ cr_delta_thread(gpointer data, gpointer udata)
             if (++x == user_data->num_deltas)
                 break;
         }
+
+        g_slist_free_full(local_candidates, (GDestroyNotify) cr_deltatargetpackage_free);
     }
 
     g_debug("Deltas for \"%s\" (%"G_GINT64_FORMAT") generated",

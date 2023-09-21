@@ -1511,15 +1511,7 @@ main(int argc, char **argv)
             g_array_sort(locations, strlensort);
             duplicates_warning(nevra, locations, cmd_options->nevra_duplicates);
         }
-
-        g_hash_table_iter_steal(&iter);
-        g_free(nevra);
-        for (int i = 0; i < locations->len; i++) {
-            g_free(g_array_index(locations, struct DuplicateLocation, i).location);
-        }
-        g_array_free(locations, TRUE);
     }
-    g_hash_table_destroy(user_data.nevra_table);
 
     user_data.skipped_count = skipped_pkgs;
 
@@ -1540,6 +1532,21 @@ main(int argc, char **argv)
         }
         cr_delayed_dump_run(&user_data);
     }
+
+    // Clean up nevra_table and everything it contains
+    g_hash_table_iter_init(&iter, user_data.nevra_table);
+    while (g_hash_table_iter_next(&iter, &key, &value))
+    {
+        g_free(key);
+        g_hash_table_iter_steal(&iter);
+        GArray *locations = (GArray *) value;
+        for (size_t i = 0; i < locations->len; i++) {
+            g_free(g_array_index(locations, struct DuplicateLocation, i).location);
+            cr_package_free(g_array_index(locations, struct DuplicateLocation, i).pkg);
+        }
+        g_array_free(locations, TRUE);
+    }
+    g_hash_table_destroy(user_data.nevra_table);
 
     // if there were any errors, exit nonzero
     if ( user_data.had_errors ) {

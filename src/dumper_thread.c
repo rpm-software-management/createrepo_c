@@ -43,10 +43,6 @@ struct BufferedTask {
     long id;                        // ID of the task
     struct cr_XmlStruct res;        // XML for primary, filelists and other
     cr_Package *pkg;                // Package structure
-    gboolean clean;                 // If false - 'pkg' points at an external
-                                    // package structure that uses a memory
-                                    // chunk handled by the old metadata.
-                                    // It must not be freed!
 };
 
 
@@ -290,7 +286,6 @@ write_pkg(long id,
 
 struct DelayedTask {
     cr_Package *pkg;
-    gboolean clean;
 };
 
 
@@ -317,7 +312,7 @@ cr_delayed_dump_run(gpointer user_data)
         if (!dtask.pkg || dtask.pkg->skip_dump) {
             // invalid || explicitly skipped task
             wait_for_incremented_ids(id, udata);
-            goto next_package;
+            continue;
         }
 
         struct cr_XmlStruct res;
@@ -340,9 +335,6 @@ cr_delayed_dump_run(gpointer user_data)
         g_free(res.filelists);
         g_free(res.filelists_ext);
         g_free(res.other);
-next_package:
-        if (dtask.clean)
-            cr_package_free(dtask.pkg);
     }
 }
 
@@ -530,7 +522,6 @@ cr_dumper_thread(gpointer data, gpointer user_data)
     GError *tmp_err = NULL;
     gboolean old_used = FALSE;  // To use old metadata?
     cr_Package *md  = NULL;     // Package from loaded MetaData
-    cr_Package *pkg_new = NULL; // Package from file, newly allocated
     cr_Package *pkg = NULL;     // Package we work with
     struct stat stat_buf;       // Struct with info from stat() on file
     struct cr_XmlStruct res;    // Structure for generated XML
@@ -549,7 +540,6 @@ cr_dumper_thread(gpointer data, gpointer user_data)
                                struct DelayedTask,
                                task->id);
         dtask->pkg = NULL;
-        dtask->clean = FALSE;
     }
 
     // get location_href without leading part of path (path to repo)
@@ -661,8 +651,6 @@ cr_dumper_thread(gpointer data, gpointer user_data)
             goto task_cleanup;
         }
 
-        pkg_new = pkg; // We allocated, we clean
-
         if (udata->output_pkg_list){
             g_mutex_lock(&(udata->mutex_output_pkg_list));
             fprintf(udata->output_pkg_list, "%s\n", pkg->location_href);
@@ -710,13 +698,16 @@ cr_dumper_thread(gpointer data, gpointer user_data)
 
     struct DuplicateLocation location;
     location.location = g_strdup(pkg->location_href);
+    // location (udate->nevra_table) gathers all handled packages:
+    //  - new cr_Packages produced by processing rpm files
+    //  - old cr_Packages transferred from parsed old metadata (during --update)
+    // Therefore it takes ownership of them, it is resposible for freeing them.
     location.pkg = pkg;
     g_array_append_val(pkg_locations, location);
     g_mutex_unlock(&(udata->mutex_nevra_table));
 
     if (dtask) {
         dtask->pkg = pkg;
-        dtask->clean = pkg_new ? TRUE : FALSE;
         g_free(task->full_path);
         g_free(task->filename);
         g_free(task->path);
@@ -757,7 +748,6 @@ cr_dumper_thread(gpointer data, gpointer user_data)
         buf_task->id  = task->id;
         buf_task->res = res;
         buf_task->pkg = pkg;
-        buf_task->clean = pkg_new ? TRUE : FALSE;
 
         g_queue_insert_sorted(udata->buffer, buf_task, buf_task_sort_func, NULL);
         g_mutex_unlock(&(udata->mutex_buffer));
@@ -782,9 +772,6 @@ cr_dumper_thread(gpointer data, gpointer user_data)
 
 task_cleanup:
     // Clean up
-    if (pkg_new)
-        cr_package_free(pkg_new);
-
     if (!dtask && udata->id_pri <= task->id) {
         // An error was encountered and we have to wait to increment counters
         wait_for_incremented_ids(task->id, udata);
@@ -806,8 +793,6 @@ task_cleanup:
             // Dump XML and SQLite
             write_pkg(buf_task->id, buf_task->res, buf_task->pkg, udata);
             // Clean up
-            if (buf_task->clean)
-                cr_package_free(buf_task->pkg);
             g_free(buf_task->res.primary);
             g_free(buf_task->res.filelists);
             g_free(buf_task->res.filelists_ext);

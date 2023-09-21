@@ -81,7 +81,7 @@ struct UserData {
 
     // Duplicate package error checking
     GMutex mutex_nevra_table;       // Mutex for the table of NEVRAs
-    GHashTable *nevra_table;         // Table of NEVRAs, with a list of location_href as key
+    GHashTable *nevra_table;        // Table of NEVRAs mapped to packages and their locations
 
     // Update stuff
     gboolean skip_stat;             // Skip stat() while updating

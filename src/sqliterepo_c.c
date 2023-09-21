@@ -725,8 +725,6 @@ generate_sqlite_from_xml(const gchar *path,
     // Set other paths
     in_repo         = g_build_filename(in_dir, "repodata/", NULL);
     out_dir         = g_strdup(in_dir);
-    lock_dir        = g_build_filename(out_dir, ".repodata/", NULL);
-    tmp_out_repo    = g_build_filename(out_dir, ".repodata/", NULL);
 
     // Block signals that terminates the process
     if (!cr_block_terminating_signals(err))

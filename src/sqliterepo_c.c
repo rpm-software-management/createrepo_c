@@ -102,6 +102,9 @@ sqliterepocmdoptions_free(SqliterepoCmdOptions *options)
 CR_DEFINE_CLEANUP_FUNCTION0(SqliterepoCmdOptions*, cr_local_sqliterepocmdoptions_free, sqliterepocmdoptions_free)
 #define _cleanup_sqliterepocmdoptions_free_ __attribute__ ((cleanup(cr_local_sqliterepocmdoptions_free)))
 
+CR_DEFINE_CLEANUP_FUNCTION0(cr_Repomd*, cr_local_repomd_free, cr_repomd_free)
+#define _cleanup_repomd_free_ __attribute__ ((cleanup(cr_local_repomd_free)))
+
 /**
  * Parse commandline arguments for sqliterepo utility
  */
@@ -769,7 +772,7 @@ generate_sqlite_from_xml(const gchar *path,
 
     // Parse repomd.xml
     int rc;
-    cr_Repomd *repomd = cr_repomd_new();
+    _cleanup_repomd_free_ cr_Repomd *repomd = cr_repomd_new();
 
     rc = cr_xml_parse_repomd(repomd_path,
                              repomd,
@@ -967,7 +970,6 @@ generate_sqlite_from_xml(const gchar *path,
     g_rmdir(tmp_out_repo);
 
     // Clean up
-    cr_repomd_free(repomd);
     cr_repomd_record_free(pri_db_rec);
     cr_repomd_record_free(fil_db_rec);
     cr_repomd_record_free(oth_db_rec);

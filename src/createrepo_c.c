@@ -907,6 +907,7 @@ main(int argc, char **argv)
                     GSList *next_inner = g_slist_next(element_iter);
                     gchar *path_to_found_md = (gchar *) element_iter->data;
                     if (!g_strcmp0(path_to_found_md, m->name)) {
+                        g_free(path_to_found_md);
                         cmd_options->modulemd_metadata = g_slist_delete_link(
                             cmd_options->modulemd_metadata, element_iter);
                     }

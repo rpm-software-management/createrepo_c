@@ -52,13 +52,13 @@ cr_metadata_load_modulemd(ModulemdModuleIndex **moduleindex,
  * @param dest_dir      Path to directory where the compressed groupfile should be stored.
  * @return              Path to the new compressed groupfile. Has to be freed by the caller.
  */
+
+#endif /* WITH_LIBMODULEMD */
+
 gchar *
 cr_compress_groupfile(const char *groupfile,
                       const char *dest_dir,
                       cr_CompressionType compression);
-
-
-#endif /* WITH_LIBMODULEMD */
 
 #ifdef __cplusplus
 }

@@ -202,8 +202,8 @@ class TestCasePackage(unittest.TestCase):
         self.assertEqual(pkg.recommends, [('foo_rec', 'GE', '0', '1.1.0', None, False)])
         pkg.supplements = [('foo_sup', 'GE', '0', '1.1.0', None, False)]
         self.assertEqual(pkg.supplements, [('foo_sup', 'GE', '0', '1.1.0', None, False)])
-        pkg.files = [(None, '/foo/', 'bar', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')]
-        self.assertEqual(pkg.files, [(None, '/foo/', 'bar', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')])
+        pkg.files = [(None, '/foo/', 'bar', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'), (None, '/baz/', 'qux')]
+        self.assertEqual(pkg.files, [(None, '/baz/', 'qux'), (None, '/foo/', 'bar', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855')])
         pkg.changelogs = [('me', 123456, 'first commit')]
         self.assertEqual(pkg.changelogs, [('me', 123456, 'first commit')])
 

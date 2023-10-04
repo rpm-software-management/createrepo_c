@@ -200,8 +200,11 @@ PyObject_ToPackageFile(PyObject *tuple, GStringChunk *chunk)
     pyobj = PyTuple_GetItem(tuple, 2);
     file->name = PyObject_ToChunkedString(pyobj, chunk);
 
-    pyobj = PyTuple_GetItem(tuple, 3);
-    file->digest = PyObject_ToChunkedString(pyobj, chunk);
+    // The digest (part of filelists-ext) is optional, only set it in case it is present
+    if (PyTuple_Size(tuple) == 4) {
+        pyobj = PyTuple_GetItem(tuple, 3);
+        file->digest = PyObject_ToChunkedString(pyobj, chunk);
+    }
 
     return file;
 }

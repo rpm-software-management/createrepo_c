@@ -63,7 +63,7 @@
  * Starting with glib 2.70.0, g_pattern_spec_match() replaces
  * g_pattern_match().
  */
-#ifdef GLIB_VERSION_2_70
+#if GLIB_CHECK_VERSION(2, 70, 0)
 #define PATTERN_MATCH g_pattern_spec_match
 #else
 #define PATTERN_MATCH g_pattern_match

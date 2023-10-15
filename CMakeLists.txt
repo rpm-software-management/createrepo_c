@@ -48,13 +48,6 @@ pkg_check_modules(LZMA REQUIRED liblzma)
 pkg_check_modules(SQLITE3 REQUIRED sqlite3)
 pkg_check_modules(RPM REQUIRED rpm)
 
-pkg_check_modules(LIBMAGIC libmagic)
-# the pkg-config was only added in F33
-IF (NOT LIBMAGIC_FOUND)
-    find_path(LIBMAGIC_INCLUDE_DIRS NAMES magic.h PATHS ${CMAKE_INCLUDE_PATH})
-    find_library(LIBMAGIC_LIBRARIES NAMES magic PATHS ${CMAKE_LIBRARY_PATH})
-ENDIF()
-
 # Add include dirs
 
 include_directories(${BZIP2_INCLUDE_DIRS})

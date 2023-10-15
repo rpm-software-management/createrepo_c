@@ -20,7 +20,6 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <stdio.h>
-#include <magic.h>
 #include <assert.h>
 #include <errno.h>
 #include <string.h>
@@ -135,8 +134,6 @@ typedef struct {
 cr_CompressionType
 cr_detect_compression(const char *filename, GError **err)
 {
-    cr_CompressionType type = CR_CW_UNKNOWN_COMPRESSION;
-
     assert(filename);
     assert(!err || *err == NULL);
 
@@ -171,91 +168,60 @@ cr_detect_compression(const char *filename, GError **err)
     } else if (g_str_has_suffix(filename, ".xml") ||
                g_str_has_suffix(filename, ".tar") ||
                g_str_has_suffix(filename, ".yaml") ||
-               g_str_has_suffix(filename, ".sqlite"))
+               g_str_has_suffix(filename, ".sqlite") ||
+               g_str_has_suffix(filename, ".txt"))
     {
         return CR_CW_NO_COMPRESSION;
     }
 
     // No success? Let's get hardcore... (Use magic bytes)
-
-    magic_t myt = magic_open(MAGIC_MIME | MAGIC_SYMLINK);
-    if (myt == NULL) {
-        g_set_error(err, ERR_DOMAIN, CRE_MAGIC,
-                    "magic_open() failed: Cannot allocate the magic cookie");
+    g_debug("%s: File has no recognizable extension, checking magic bytes (%s)", __func__, filename);
+    unsigned char magic[5];
+    FILE* file = fopen(filename, "rb");
+    if (file == NULL) {
+        g_debug("%s: Unable to open file! (%s)", __func__, filename);
+        g_set_error(err, ERR_DOMAIN, CRE_IO, "fopen(): %s", g_strerror(errno));
         return CR_CW_UNKNOWN_COMPRESSION;
     }
 
-    if (magic_load(myt, NULL) == -1) {
-        g_set_error(err, ERR_DOMAIN, CRE_MAGIC,
-                    "magic_load() failed: %s", magic_error(myt));
-        return CR_CW_UNKNOWN_COMPRESSION;
+    size_t bytesRead = fread(magic, 1, sizeof(magic), file);
+    if (bytesRead != sizeof(magic)) {
+        // Assume that if there's less than 5 bytes in the file, it's uncompressed
+        g_debug("%s: Unable to read bytes from file for magic number detection, assuming uncompressed (%s)",
+            __func__, filename);
+        return CR_CW_NO_COMPRESSION;
+    }
+    fclose(file);
+
+    if (!memcmp(magic, "\x1F\x8B", 2)) {
+        return CR_CW_GZ_COMPRESSION;
+    } else if (!memcmp(magic, "\x28\xB5\x2F\xFD", 4)) {
+        return CR_CW_ZSTD_COMPRESSION;
+    } else if (!memcmp(magic, "\x42\x5A", 2)) {
+        return CR_CW_BZ2_COMPRESSION;
+    } else if (!memcmp(magic, "\xFD\x37\x7A\x58\x5A", 5)) {
+        return CR_CW_XZ_COMPRESSION;
+    } else if (!memcmp(magic, "\0ZCK1", 5)) {
+        return CR_CW_ZCK_COMPRESSION;
     }
 
-    const char *mime_type = magic_file(myt, filename);
+    // Still no luck? Heuristic: if the filename has >1 stacked file extension, and we don't
+    // recognize the last one, then return CR_CW_UNKNOWN_COMPRESSION. If it has only a single
+    // file extension and we don't recognize it, then we return CR_CW_NO_COMPRESSION.
+    g_debug("%s: Unable to detect compression from magic bytes (%s)", __func__, filename);
+    gchar *basename = g_path_get_basename(filename);
+    gchar **parts = g_strsplit(basename, ".", -1);
+    bool more_than_one_extension = g_strv_length(parts) >= 3;
+    g_strfreev(parts);
+    g_free(basename);
 
-    if (mime_type) {
-        g_debug("%s: Detected mime type: %s (%s)", __func__, mime_type,
-                filename);
-
-        if (g_str_has_prefix(mime_type, "application/x-gzip") ||
-            g_str_has_prefix(mime_type, "application/gzip") ||
-            g_str_has_prefix(mime_type, "application/gzip-compressed") ||
-            g_str_has_prefix(mime_type, "application/gzipped") ||
-            g_str_has_prefix(mime_type, "application/x-gzip-compressed") ||
-            g_str_has_prefix(mime_type, "application/x-compress") ||
-            g_str_has_prefix(mime_type, "application/x-gunzip") ||
-            g_str_has_prefix(mime_type, "multipart/x-gzip"))
-        {
-            type = CR_CW_GZ_COMPRESSION;
-        }
-
-        else if (g_str_has_prefix(mime_type, "application/zstd"))
-        {
-            type = CR_CW_ZSTD_COMPRESSION;
-        }
-
-        else if (g_str_has_prefix(mime_type, "application/x-bzip2") ||
-                 g_str_has_prefix(mime_type, "application/x-bz2") ||
-                 g_str_has_prefix(mime_type, "application/bzip2") ||
-                 g_str_has_prefix(mime_type, "application/bz2"))
-        {
-            type = CR_CW_BZ2_COMPRESSION;
-        }
-
-        else if (g_str_has_prefix(mime_type, "application/x-xz"))
-        {
-            type = CR_CW_XZ_COMPRESSION;
-        }
-
-        else if (g_str_has_prefix(mime_type, "text/plain") ||
-                 g_str_has_prefix(mime_type, "text/xml") ||
-                 g_str_has_prefix(mime_type, "application/xml") ||
-                 g_str_has_prefix(mime_type, "application/x-xml") ||
-                 g_str_has_prefix(mime_type, "application/x-empty") ||
-                 g_str_has_prefix(mime_type, "application/x-tar") ||
-                 g_str_has_prefix(mime_type, "inode/x-empty"))
-        {
-            type = CR_CW_NO_COMPRESSION;
-        }
+    if (more_than_one_extension) {
+        g_debug("%s: File has more than one extension, returning unknown compression (%s)", __func__, filename);
+        return CR_CW_UNKNOWN_COMPRESSION;
     } else {
-        g_debug("%s: Mime type not detected! (%s): %s", __func__, filename,
-                magic_error(myt));
-        g_set_error(err, ERR_DOMAIN, CRE_MAGIC,
-                    "mime_type() detection failed: %s", magic_error(myt));
-        magic_close(myt);
-        return CR_CW_UNKNOWN_COMPRESSION;
+        g_debug("%s: File has one or no extension, assuming uncompressed (%s)", __func__, filename);
+        return CR_CW_NO_COMPRESSION;
     }
-
-
-    // Xml detection
-
-    if (type == CR_CW_UNKNOWN_COMPRESSION && g_str_has_suffix(filename, ".xml"))
-        type = CR_CW_NO_COMPRESSION;
-
-
-    magic_close(myt);
-
-    return type;
 }
 
 cr_CompressionType

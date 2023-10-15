@@ -27,7 +27,7 @@
 #include "createrepo/misc.h"
 #include "createrepo/compression_wrapper.h"
 
-#define TMP_FILE_PATTERN                        "test_XXXXXX.txt"
+#define TMP_FILE_PATTERN                        "test_XXXXXX"
 
 #define COMPRESSED_BUFFER_LEN                   512
 

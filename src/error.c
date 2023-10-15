@@ -60,7 +60,7 @@ cr_strerror(cr_Error rc)
         case CRE_BADXMLOTHER:
             return "Bad other XML";
         case CRE_MAGIC:
-            return "Magic Number Recognition Library (libmagic) error";
+            return "Magic Number Recognition error";
         case CRE_GZ:
             return "Gzip library related error";
         case CRE_BZ2:

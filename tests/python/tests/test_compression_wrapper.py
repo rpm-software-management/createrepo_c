@@ -66,9 +66,9 @@ class TestCaseCompressionWrapper(unittest.TestCase):
 
         # Disabled because magic module doesn't recognize zchunk files yet
         # Bad suffix - zck compression
-        #path = os.path.join(COMPRESSED_FILES_PATH, "01_plain.foo4")
-        #comtype = cr.detect_compression(path)
-        #self.assertEqual(comtype, cr.ZCK)
+        path = os.path.join(COMPRESSED_FILES_PATH, "01_plain.foo4")
+        comtype = cr.detect_compression(path)
+        self.assertEqual(comtype, cr.ZCK)
 
         # Bad suffix - zstd compression
         path = os.path.join(COMPRESSED_FILES_PATH, "01_plain.foo5")

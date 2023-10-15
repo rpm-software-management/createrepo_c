@@ -63,7 +63,7 @@ typedef enum {
     CRE_BADXMLREPOMD, /*!<
         (18) Bad repomd.xml file */
     CRE_MAGIC, /*!<
-        (19) Magic Number Recognition Library (libmagic) error */
+        (19) Magic Number Recognition error */
     CRE_GZ, /*!<
         (20) Gzip library related error */
     CRE_BZ2, /*!<
@@ -75,7 +75,7 @@ typedef enum {
     CRE_CURL, /*!<
         (24) Curl library related error */
     CRE_ASSERT, /*!<
-        (25) Ideally this error should never happend. Nevertheless if
+        (25) Ideally this error should never happened. Nevertheless if
         it happend, probable reason is that some values of createrepo_c
         object was changed (by you - a programmer) in a bad way */
     CRE_BADCMDARG, /*!<

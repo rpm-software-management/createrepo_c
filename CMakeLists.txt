@@ -1,5 +1,5 @@
-PROJECT (createrepo_c C)
 CMAKE_MINIMUM_REQUIRED (VERSION 2.8.12)
+PROJECT (createrepo_c C)
 
 include(GNUInstallDirs)
 

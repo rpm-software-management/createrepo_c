@@ -6,12 +6,12 @@ on:
     types: [created]
 
 jobs:
-  release:
-    name: PyPI Release
+  build_sdist:
+    name: Build source packages
     runs-on: ubuntu-latest
     container: fedora:latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
 
     - name: Install dependencies
       run: |
@@ -29,9 +29,55 @@ jobs:
         pip install dist/*.tar.gz
         pytest --verbose --color=yes tests/python/tests/
 
-    - name: Publish packages to PyPI
+    - uses: actions/upload-artifact@v3
+      with:
+        path: dist/*.tar.gz
+
+  build_bdist:
+    name: Build binary wheels
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    # setup Python for cibuildwheel
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.x'
+
+    # for other architectures, see: https://cibuildwheel.readthedocs.io/en/stable/faq/#emulation
+    - name: Build wheels for CPython
+      uses: pypa/cibuildwheel@v2.16.2
       env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{secrets.PYPI_API_TOKEN}}
-      run: |
-        twine upload dist/*.tar.gz
+        CIBW_ARCHS: auto64  # only 64-bit
+        CIBW_SKIP: "pp* *-musllinux_* cp36* cp37* cp38*"  # no PyPy or musl builds, no older Python versions
+        CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014  # centos 7
+        CIBW_BEFORE_ALL_LINUX: yum -y install yum-utils epel-release && yes | yum-builddep createrepo_c.spec
+        # CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28   # centos 8, but not supported widely yet
+        # CIBW_BEFORE_ALL_LINUX: dnf -y install epel-release && yes | dnf -y builddep createrepo_c.spec
+        CIBW_BEFORE_BUILD: python -m pip install scikit-build
+        CIBW_TEST_REQUIRES: pytest
+        CIBW_TEST_COMMAND: |
+          pytest --verbose --color=yes {project}/tests/python/tests/
+
+    - uses: actions/upload-artifact@v3
+      with:
+        path: ./wheelhouse/*.whl
+
+
+  upload_pypi:
+    name: Publish packages to PyPI
+    # only publish packages once everything is successful
+    needs: [build_bdist, build_sdist]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact
+          path: dist
+
+      - uses: pypa/gh-action-pypi-publish@v1.8.10
+        with:
+          user: __token__
+          password: ${{secrets.PYPI_API_TOKEN}}
+          # To test: repository_url: https://test.pypi.org/legacy/

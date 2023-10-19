@@ -1,13 +1,13 @@
 ---
 name: Python Release
 
-on:
-  release:
-    types: [created]
+on: pull_request
+  # release:
+  #   types: [created]
 
 jobs:
-  release:
-    name: PyPI Release
+  build_sdist:
+    name: Build source packages
     runs-on: ubuntu-latest
     container: fedora:latest
     steps:
@@ -50,7 +50,7 @@ jobs:
       uses: pypa/cibuildwheel@v2.16.2
       env:
         CIBW_ARCHS: auto64  # only 64-bit
-        CIBW_SKIP: "pp* *-musllinux_*"  # no PyPy builds
+        CIBW_SKIP: "pp* *-musllinux_* cp36* cp37* cp38*"  # no PyPy or musl builds, no older Python versions
         CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014  # centos 7
         CIBW_BEFORE_ALL_LINUX: yum -y install yum-utils epel-release && yes | yum-builddep createrepo_c.spec
         # CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28   # centos 8, but not supported widely yet
@@ -65,19 +65,19 @@ jobs:
         path: ./wheelhouse/*.whl
 
 
-  upload_pypi:
-    name: Publish packages to PyPI
-    # only publish packages once everything is successful
-    needs: [build_bdist, build_sdist]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: artifact
-          path: dist
+  # upload_pypi:
+  #   name: Publish packages to PyPI
+  #   # only publish packages once everything is successful
+  #   needs: [build_bdist, build_sdist]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/download-artifact@v3
+  #       with:
+  #         name: artifact
+  #         path: dist
 
-      - uses: pypa/gh-action-pypi-publish@v1.8.10
-        with:
-          user: __token__
-          password: ${{secrets.PYPI_API_TOKEN}}
-          # To test: repository_url: https://test.pypi.org/legacy/
+  #     - uses: pypa/gh-action-pypi-publish@v1.8.10
+  #       with:
+  #         user: __token__
+  #         password: ${{secrets.PYPI_API_TOKEN}}
+  #         # To test: repository_url: https://test.pypi.org/legacy/

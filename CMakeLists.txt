@@ -21,8 +21,6 @@ if(NOT BUILD_LIBCREATEREPO_C_SHARED)
   set(CMAKE_POSITION_INDEPENDENT_CODE 1)
 endif()
 
-option(WITH_ZSTD "Build with zstd support" ON)
-
 option(CREATEREPO_C_INSTALL_DEVELOPMENT "Install createrepo_c development files." ON)
 option(CREATEREPO_C_INSTALL_MANPAGES "Install createrepo_c man-pages." ON)
 
@@ -47,6 +45,7 @@ pkg_check_modules(GTHREAD2 REQUIRED gthread-2.0)
 pkg_check_modules(LZMA REQUIRED liblzma)
 pkg_check_modules(SQLITE3 REQUIRED sqlite3)
 pkg_check_modules(RPM REQUIRED rpm)
+pkg_check_modules(ZSTD REQUIRED libzstd)
 
 pkg_check_modules(LIBMAGIC libmagic)
 # the pkg-config was only added in F33
@@ -64,6 +63,7 @@ include_directories(${GIO_INCLUDE_DIRS})
 include_directories(${LIBXML2_INCLUDE_DIR})
 include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${ZLIB_INCLUDE_DIR})
+include_directories(${ZSTD_INCLUDE_DIRS})
 
 # SuSE/Mageia/Mandriva legacy weak deps support
 OPTION (ENABLE_LEGACY_WEAKDEPS "Enable legacy SUSE/Mageia/Mandriva weakdeps support?" ON)
@@ -104,12 +104,6 @@ IF (WITH_LIBMODULEMD)
     SET (CMAKE_C_FLAGS_DEBUG    "${CMAKE_C_FLAGS_DEBUG} -DWITH_LIBMODULEMD")
 ENDIF (WITH_LIBMODULEMD)
 
-if (WITH_ZSTD)
-    pkg_check_modules(ZSTD REQUIRED libzstd)
-    include_directories(${ZSTD_INCLUDE_DIRS})
-    SET (CMAKE_C_FLAGS          "${CMAKE_C_FLAGS} -DWITH_ZSTD")
-    SET (CMAKE_C_FLAGS_DEBUG    "${CMAKE_C_FLAGS_DEBUG} -DWITH_ZSTD")
-endif()
 
 if (WITH_SANITIZERS)
     message(WARNING "Building with sanitizers enabled!")

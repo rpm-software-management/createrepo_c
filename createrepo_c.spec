@@ -18,11 +18,8 @@
 
 %if 0%{?rhel} && 0%{?rhel} < 7
 %bcond_with libmodulemd
-# dnf supports zstd since 8.4: https://bugzilla.redhat.com/show_bug.cgi?id=1914876
-%bcond_with zstd
 %else
 %bcond_without libmodulemd
-%bcond_without zstd
 %endif
 
 %if 0%{?rhel} && 0%{?rhel} <= 8
@@ -75,9 +72,8 @@ Requires: rpm >= 4.9.0
 %if %{with drpm}
 BuildRequires:  drpm-devel >= 0.4.0
 %endif
-%if %{with zstd}
+# dnf supports zstd since 8.4: https://bugzilla.redhat.com/show_bug.cgi?id=1914876
 BuildRequires:  pkgconfig(libzstd)
-%endif
 
 %if %{with sanitizers}
 BuildRequires:  libasan
@@ -135,7 +131,6 @@ pushd build-py3
       -DWITH_LIBMODULEMD=%{?with_libmodulemd:ON}%{!?with_libmodulemd:OFF} \
       -DWITH_LEGACY_HASHES=%{?with_legacy_hashes:ON}%{!?with_legacy_hashes:OFF} \
       -DENABLE_DRPM=%{?with_drpm:ON}%{!?with_drpm:OFF} \
-      -DWITH_ZSTD=%{?with_zstd:ON}%{!?with_zstd:OFF} \
       -DWITH_SANITIZERS=%{?with_sanitizers:ON}%{!?with_sanitizers:OFF}
   make %{?_smp_mflags} RPM_OPT_FLAGS="%{optflags}"
   # Build C documentation

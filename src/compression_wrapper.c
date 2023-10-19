@@ -35,9 +35,7 @@
 #endif  // WITH_ZCHUNK
 #include "error.h"
 #include "compression_wrapper.h"
-#ifdef WITH_ZSTD
 #include <zstd.h>
-#endif
 
 
 #define ERR_DOMAIN                      CREATEREPO_C_ERROR
@@ -121,7 +119,6 @@ typedef struct {
     unsigned char buffer[XZ_BUFFER_SIZE];
 } XzFile;
 
-#ifdef WITH_ZSTD
 #define CR_CW_ZSTD_COMPRESSION_LEVEL    9
 typedef struct {
     void *buffer;
@@ -130,7 +127,6 @@ typedef struct {
     ZSTD_outBuffer zob;
     void * context;     //ZSTD_{C,D}Ctx
 } ZstdFile;
-#endif
 
 cr_CompressionType
 cr_detect_compression(const char *filename, GError **err)
@@ -440,7 +436,6 @@ cr_sopen(const char *filename,
             break;
 
         case (CR_CW_ZSTD_COMPRESSION): { // ------------------------------------
-#ifdef WITH_ZSTD
             FILE *f = fopen(filename, mode_str);
 
             if (!f) {
@@ -483,10 +478,6 @@ cr_sopen(const char *filename,
             file->FILE = (void *) zstd_file;
 
             break;
-#else
-            g_set_error(err, ERR_DOMAIN, CRE_IO, "createrepo_c wasn't compiled with zstd support");
-            break;
-#endif // WITH_ZSTD
         }
 
         case (CR_CW_BZ2_COMPRESSION): { // ------------------------------------
@@ -846,7 +837,6 @@ cr_close(CR_FILE *cr_file, GError **err)
             break;
 
         case (CR_CW_ZSTD_COMPRESSION): { // --------------------------------------
-#ifdef WITH_ZSTD
             ZstdFile * zstd = (ZstdFile *) cr_file->FILE;
             if (cr_file->mode == CR_CW_MODE_READ) {
                 ZSTD_freeDCtx(zstd->context);
@@ -877,10 +867,6 @@ cr_close(CR_FILE *cr_file, GError **err)
 
             ret = CRE_OK;
             break;
-#else
-            g_set_error(err, ERR_DOMAIN, CRE_IO, "createrepo_c wasn't compiled with zstd support");
-            break;
-#endif // WITH_ZSTD
         }
         case (CR_CW_BZ2_COMPRESSION): // --------------------------------------
             if (cr_file->mode == CR_CW_MODE_READ)
@@ -1094,7 +1080,6 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
             break;
 
         case (CR_CW_ZSTD_COMPRESSION): { // ---------------------------------------
-#ifdef WITH_ZSTD
             ZstdFile * zstd = (ZstdFile *) cr_file->FILE;
 
             ZSTD_outBuffer zob = {buffer, len, 0};
@@ -1125,10 +1110,6 @@ cr_read(CR_FILE *cr_file, void *buffer, unsigned int len, GError **err)
             }
 
             break;
-#else
-            g_set_error(err, ERR_DOMAIN, CRE_IO, "createrepo_c wasn't compiled with zstd support");
-            break;
-#endif // WITH_ZSTD
         }
         case (CR_CW_BZ2_COMPRESSION): // --------------------------------------
             ret = BZ2_bzRead(&bzerror, (BZFILE *) cr_file->FILE, buffer, len);
@@ -1365,7 +1346,6 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
             break;
 
         case (CR_CW_ZSTD_COMPRESSION): { // ---------------------------------------
-#ifdef WITH_ZSTD
             ZstdFile * zstd = (ZstdFile *) cr_file->FILE;
             ZSTD_inBuffer zib = {buffer, len, 0};
 
@@ -1397,10 +1377,6 @@ cr_write(CR_FILE *cr_file, const void *buffer, unsigned int len, GError **err)
             }
 
             break;
-#else
-            g_set_error(err, ERR_DOMAIN, CRE_IO, "createrepo_c wasn't compiled with zstd support");
-            break;
-#endif // WITH_ZSTD
         }
 
         case (CR_CW_BZ2_COMPRESSION): // --------------------------------------

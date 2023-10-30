@@ -15,6 +15,8 @@ with open('VERSION.cmake', 'r+') as version_file:
 setup(
     name='createrepo_c',
     description='C implementation of createrepo',
+    long_description='C implementation of createrepo',
+    long_description_content_type='text/markdown',
     version=version,
     license='GPLv2+',
     author='RPM Software Management',

@@ -118,7 +118,16 @@ typedef struct {
     unsigned char buffer[XZ_BUFFER_SIZE];
 } XzFile;
 
-#define CR_CW_ZSTD_COMPRESSION_LEVEL    9
+
+/** level 10 or 11 are good choices for the XML files that we generate.
+ * level 10 requires ~ 18% more time with 1% saving over level 9
+ * level 11 requires ~ 50% more time with 1.5% saving over level 9
+ * level 12 requires ~ 65% more time with 1.5% saving over level 9
+ * level 13 requires ~ 260% more time with 1.55% saving over level 9
+*/
+
+#define CR_CW_ZSTD_COMPRESSION_LEVEL    10
+
 typedef struct {
     void *buffer;
     size_t buffer_size;

@@ -117,6 +117,7 @@ cr_xml_dump_other(cr_Package *package, GError **err)
 {
     xmlNodePtr root;
     char *result;
+    gboolean xml_dump_pretty = cr_xml_dump_get_parameter(CR_XML_DUMP_DO_PRETTY_PRINT);
 
     assert(!err || *err == NULL);
 
@@ -140,7 +141,7 @@ cr_xml_dump_other(cr_Package *package, GError **err)
     root = xmlNewNode(NULL, BAD_CAST "package");
     cr_xml_dump_other_items(root, package);
     // xmlNodeDump seems to be a little bit faster than xmlDocDumpFormatMemory
-    xmlNodeDump(buf, NULL, root, FORMAT_LEVEL, FORMAT_XML);
+    xmlNodeDump(buf, NULL, root, 0, xml_dump_pretty);
     assert(buf->content);
     result = g_strndup((char *) buf->content, (buf->use+1));
     result[buf->use]     = '\n';

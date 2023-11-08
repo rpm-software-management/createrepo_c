@@ -104,7 +104,7 @@ parse_arguments(int *argc, char ***argv, RawCmdOptions *options, GError **err)
 
     };
 
-    // Frstly, set default values
+    // Firstly, set default values
     options->version = FALSE;
     options->mdtype = NULL;
     options->remove = NULL;

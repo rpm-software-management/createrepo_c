@@ -85,9 +85,29 @@ struct cr_XmlStruct {
     char *other;            /*!< XML chunk for other.xml */
 };
 
-/** Initialize dumping part of library (Initialize libxml2).
+/** Xml dump options
  */
+typedef enum {
+    CR_XML_DUMP_DO_PRETTY_PRINT,   /* do a pretty print when dumping the XML */
+
+    CR_XML_DUMP_OPTION_COUNT,
+    CR_XML_DUMP_OPTION_MAX = 1024
+} cr_dump_parameter;
+
+/** Initialize dumping part of library. Call only once from the main thread.
+ *
+ * Initializes libxml2.
+ */
+
 void cr_xml_dump_init();
+
+/** Set one xml dump parameter.
+*/
+void cr_xml_dump_set_parameter(cr_dump_parameter param, int value);
+
+/** Get the value of one xml dump parameter.
+*/
+int cr_xml_dump_get_parameter(cr_dump_parameter param);
 
 /** Cleanup initialized dumping part of library
  */

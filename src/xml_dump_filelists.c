@@ -82,6 +82,7 @@ cr_xml_dump_filelists_chunk(cr_Package *package, gboolean filelists_ext, GError 
 {
     xmlNodePtr root;
     char *result;
+    gboolean xml_dump_pretty = cr_xml_dump_get_parameter(CR_XML_DUMP_DO_PRETTY_PRINT);
 
     assert(!err || *err == NULL);
 
@@ -105,7 +106,7 @@ cr_xml_dump_filelists_chunk(cr_Package *package, gboolean filelists_ext, GError 
     root = xmlNewNode(NULL, BAD_CAST "package");
     cr_xml_dump_filelists_items(root, package, filelists_ext);
     // xmlNodeDump seems to be a little bit faster than xmlDocDumpFormatMemory
-    xmlNodeDump(buf, NULL, root, FORMAT_LEVEL, FORMAT_XML);
+    xmlNodeDump(buf, NULL, root, 0, xml_dump_pretty);
     assert(buf->content);
     result = g_strndup((char *) buf->content, (buf->use+1));
     result[buf->use]     = '\n';

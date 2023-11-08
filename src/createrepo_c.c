@@ -736,6 +736,7 @@ main(int argc, char **argv)
     // Init package parser
     cr_package_parser_init();
     cr_xml_dump_init();
+    cr_xml_dump_set_parameter(CR_XML_DUMP_DO_PRETTY_PRINT, cmd_options->pretty);
 
     // Thread pool - Creation
     struct UserData user_data = {0};

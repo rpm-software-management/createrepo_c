@@ -29,12 +29,41 @@
 #include "xml_dump_internal.h"
 
 
+static int _xml_dump_parameters[CR_XML_DUMP_OPTION_COUNT];
+
 void
 cr_xml_dump_init()
 {
     xmlInitParser();
+
+    /* Default Settings for parameters */
+    _xml_dump_parameters[CR_XML_DUMP_DO_PRETTY_PRINT] = TRUE;
 }
 
+void cr_xml_dump_set_parameter(cr_dump_parameter param, int value)
+{
+    switch(param) {
+        case CR_XML_DUMP_DO_PRETTY_PRINT:
+            _xml_dump_parameters[param] = value;
+        break;
+        default:
+            /* undefined parameter, ignored. */
+        break;
+    }
+}
+
+/** Get the value of one xml dump parameter.
+*/
+int cr_xml_dump_get_parameter(cr_dump_parameter param) {
+    switch (param) {
+        case CR_XML_DUMP_DO_PRETTY_PRINT:
+            return _xml_dump_parameters[param];
+        default:
+            break;
+    }
+
+    return 0;
+}
 
 void
 cr_xml_dump_cleanup()

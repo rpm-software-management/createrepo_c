@@ -201,6 +201,7 @@ cr_xml_dump_updateinfo(cr_UpdateInfo *updateinfo, GError **err)
     xmlDocPtr doc;
     xmlNodePtr root;
     char *result;
+    gboolean xml_dump_pretty = cr_xml_dump_get_parameter(CR_XML_DUMP_DO_PRETTY_PRINT);
 
     assert(!err || *err == NULL);
 
@@ -217,7 +218,7 @@ cr_xml_dump_updateinfo(cr_UpdateInfo *updateinfo, GError **err)
                               (xmlChar **) &result,
                               NULL,
                               XML_ENCODING,
-                              FORMAT_XML);
+                              xml_dump_pretty);
 
     // Clean up
 
@@ -230,7 +231,8 @@ char *
 cr_xml_dump_updaterecord(cr_UpdateRecord *rec, GError **err)
 {
     xmlNodePtr root;
-    char *result;
+    char *result, *p;
+    gboolean xml_dump_pretty = cr_xml_dump_get_parameter(CR_XML_DUMP_DO_PRETTY_PRINT);
 
     assert(!err || *err == NULL);
 
@@ -252,14 +254,16 @@ cr_xml_dump_updaterecord(cr_UpdateRecord *rec, GError **err)
 
     root = cr_xml_dump_updateinforecord_internal(NULL, rec);
     // xmlNodeDump seems to be a little bit faster than xmlDocDumpFormatMemory
-    xmlNodeDump(buf, NULL, root, 1, FORMAT_XML);
+    xmlNodeDump(buf, NULL, root, 1, xml_dump_pretty);
     assert(buf->content);
     // First line in the buf is not indented, we must indent it by ourself
-    result = g_malloc(sizeof(char *) * buf->use + INDENT + 1);
-    for (int x = 0; x < INDENT; x++) result[x] = ' ';
-    memcpy(result+INDENT, buf->content, buf->use);
-    result[buf->use + INDENT]   = '\n';
-    result[buf->use + INDENT + 1]   = '\0';
+    result = p = g_malloc(sizeof(char *) * buf->use + INDENT + 1);
+    if (xml_dump_pretty) {
+        for (int x = 0; x < INDENT; x++, p++) result[x] = ' ';
+    }
+    memcpy(p, buf->content, buf->use);
+    p[buf->use]   = '\n';
+    p[buf->use + 1]   = '\0';
 
     // Cleanup
 

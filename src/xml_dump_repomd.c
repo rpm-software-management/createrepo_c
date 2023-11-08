@@ -231,6 +231,7 @@ cr_xml_dump_repomd(cr_Repomd *repomd, GError **err)
     xmlDocPtr doc;
     xmlNodePtr root;
     char *result;
+    gboolean xml_dump_pretty = cr_xml_dump_get_parameter(CR_XML_DUMP_DO_PRETTY_PRINT);
 
     assert(!err || *err == NULL);
 
@@ -251,7 +252,7 @@ cr_xml_dump_repomd(cr_Repomd *repomd, GError **err)
                               (xmlChar **) &result,
                               NULL,
                               XML_ENCODING,
-                              FORMAT_XML);
+                              xml_dump_pretty);
 
     // Clean up
 

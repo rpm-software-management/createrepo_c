@@ -37,6 +37,7 @@
 #define DEFAULT_UNIQUE_MD_FILENAMES     TRUE
 #define DEFAULT_IGNORE_LOCK             FALSE
 #define DEFAULT_LOCAL_SQLITE            FALSE
+#define DEFAULT_FORMAT_PRETTY           TRUE
 
 struct CmdOptions _cmd_options = {
         .changelog_limit            = DEFAULT_CHANGELOG_LIMIT,
@@ -54,7 +55,7 @@ struct CmdOptions _cmd_options = {
         .cut_dirs                   = 0,
         .location_prefix            = NULL,
         .repomd_checksum            = NULL,
-
+        .pretty                     = DEFAULT_FORMAT_PRETTY,
         .deltas                     = FALSE,
         .oldpackagedirs             = NULL,
         .num_deltas                 = 1,
@@ -115,6 +116,8 @@ static GOptionEntry cmd_entries[] =
       "metadata. The default is now \"sha256\".", "CHECKSUM_TYPE" },
     { "pretty", 'p', 0, G_OPTION_ARG_NONE, &(_cmd_options.pretty),
       "Make sure all xml generated is formatted (default)", NULL },
+    { "no-pretty", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &(_cmd_options.pretty),
+      "No extra indentation in generated xml", NULL },
     { "database", 'd', 0, G_OPTION_ARG_NONE, &(_cmd_options.database),
       "Generate sqlite databases for use with yum.", NULL },
     { "no-database", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.no_database),

@@ -643,7 +643,9 @@ cr_sopen(const char *filename,
             zckCtx *zck = file->FILE;
             if (mode == CR_CW_MODE_WRITE) {
                 if (!file->FILE || !zck_init_write(zck, fd) ||
-                   !zck_set_ioption(zck, ZCK_MANUAL_CHUNK, 1)) {
+                   !zck_set_ioption(zck, ZCK_MANUAL_CHUNK, 1) ||
+                   !zck_set_ioption(zck, ZCK_COMP_TYPE, ZCK_COMP_ZSTD) ||
+                   !zck_set_ioption(zck, ZCK_ZSTD_COMP_LEVEL, CR_CW_ZSTD_COMPRESSION_LEVEL)) {
                     zck_set_log_fd(STDOUT_FILENO);
                     g_set_error(err, ERR_DOMAIN, CRE_IO, "%s",
                                 zck_get_error(zck));

@@ -4,7 +4,9 @@
 
 %global bash_completion %{_datadir}/bash-completion/completions/*
 
-%if ( 0%{?rhel} && ( 0%{?rhel} <= 7 || 0%{?rhel} >= 9 ) ) || ( 0%{?fedora} && 0%{?fedora} >= 39 )
+# Fedora infrastructure needs it for producing Fedora ≤ 39 and EPEL ≤ 7 repositories
+# See https://github.com/rpm-software-management/createrepo_c/issues/398
+%if ( 0%{?rhel} && ( 0%{?rhel} <= 7 || 0%{?rhel} >= 9 ) ) || ( 0%{?fedora} && 0%{?fedora} >= 45 )
 %bcond_with drpm
 %else
 %bcond_without drpm

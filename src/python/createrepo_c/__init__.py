@@ -1,6 +1,7 @@
 """
 """
 
+import collections
 import os
 import subprocess
 import sys
@@ -381,6 +382,168 @@ class PackageIterator(_createrepo_c.PkgIterator):
         """Parse completed packages one at a time."""
         _createrepo_c.PkgIterator.__init__(
             self, primary_path, filelists_path, other_path, newpkgcb, warningcb)
+
+
+class RepositoryReader:
+    """Parser for RPM metadata."""
+
+    def __init__(self):
+        """Initialize empty (use one of the alternate constructors)."""
+        self._primary_xml_path = None
+        self._filelists_xml_path = None
+        self._other_xml_path = None
+        self._updateinfo_path = None
+        self.repomd = None
+
+    @staticmethod
+    def from_path(path, warningcb=None):
+        """Construct a parser from an on-disk repository."""
+
+        if not warningcb:
+            def _warningcb(warning_type, message):
+                print("PARSER WARNING: %s" % message)
+                return True
+            warningcb = _warningcb
+
+        repomd_path = Path(path) / "repodata" / "repomd.xml"
+        if not repomd_path.exists():
+            raise FileNotFoundError("No repository found at the provided path.")
+
+        repomd = Repomd(str(repomd_path))
+        metadata_files = {record.type: record for record in repomd.records}
+        parser = RepositoryReader()
+        parser._primary_xml_path = os.path.join(path, metadata_files["primary"].location_href)
+        parser._filelists_xml_path = os.path.join(path, metadata_files["filelists"].location_href)
+        parser._other_xml_path = os.path.join(path, metadata_files["other"].location_href)
+
+        if metadata_files.get("updateinfo"):
+            parser._updateinfo_path = os.path.join(path, metadata_files["updateinfo"].location_href)
+        parser.repomd = repomd
+        return parser
+
+    @staticmethod
+    def from_metadata_files(primary_xml_path, filelists_xml_path, other_xml_path, updateinfo_xml_path=None):
+        """Construct a parser from the three main metadata files."""
+
+        parser = RepositoryReader()
+        parser._primary_xml_path = primary_xml_path
+        parser._filelists_xml_path = filelists_xml_path
+        parser._other_xml_path = other_xml_path
+        parser._updateinfo_path = updateinfo_xml_path
+
+        return parser
+
+    def advisories(self):
+        """Get advisories"""
+        if not self._updateinfo_path:
+            return []
+        else:
+            return UpdateInfo(self._updateinfo_path).updates
+
+    def package_count(self):
+        """Count the total number of packages."""
+        # It would be much faster to just read the number in the header of the metadata.
+        # But there's no way to do that. This gets fuzzy around the topic of duplicates.
+        # If the same package is listed more than once, is that counted as more than one package?
+        # Currently, no.
+        return len(self.parse_packages(only_primary=True))
+
+    def iter_packages(self, warningcb=None):
+        """
+        Return an object which permits iterating over packages one at a time.
+
+        This uses less memory than parse_packages() and works in the presence of duplicate packages.
+
+        Kwargs:
+            warningcb (callable): A callback function for warnings emitted by the parser.
+
+        Returns:
+            cr.PackageIterator object.
+        """
+        return PackageIterator(
+            primary_path=self._primary_xml_path,
+            filelists_path=self._filelists_xml_path,
+            other_path=self._other_xml_path,
+            warningcb=warningcb,
+        )
+
+    def parse_packages(self, only_primary=False):
+        """
+        Parse repodata to extract package info.
+
+        Note: In the presence of duplicated packages in the repo (i.e. same pkgId), this will
+        deduplicate them however the packages may have duplicate files or changelogs listed within.
+        See: https://github.com/rpm-software-management/createrepo_c/issues/306
+
+        Args:
+            primary_xml_path (str): a path to a downloaded primary.xml
+            filelists_xml_path (str): a path to a downloaded filelists.xml
+            other_xml_path (str): a path to a downloaded other.xml
+
+        Kwargs:
+            only_primary (bool): If true, only the metadata in primary.xml will be parsed.
+
+        Returns:
+            A 2-item tuple containing:
+                A dict containing createrepo_c package objects with the pkgId as a key
+                A list of warnings encountered during parsing
+
+        """
+
+        warnings = []
+
+        def warningcb(warning_type, message):
+            """Optional callback for warnings about wierd stuff and formatting in XML.
+
+            Args:
+                warning_type (int): One of the XML_WARNING_* constants.
+                message (str): Message.
+            """
+            warnings.append((warning_type, message))
+            return True  # continue parsing
+
+        def pkgcb(pkg):
+            """
+            A callback which is used when a whole package entry in xml is parsed.
+
+            Args:
+                pkg(preaterepo_c.Package): a parsed metadata for a package
+
+            """
+            packages[pkg.pkgId] = pkg
+
+        def newpkgcb(pkgId, name, arch):
+            """
+            A callback which is used when a new package entry is encountered.
+
+            Only opening <package> element is parsed at that moment.
+            This function has to return a package which parsed data will be added to
+            or None if a package should be skipped.
+
+            pkgId, name and arch of a package can be used to skip further parsing. Available
+            only for filelists.xml and other.xml.
+
+            Args:
+                pkgId(str): pkgId of a package
+                name(str): name of a package
+                arch(str): arch of a package
+
+            Returns:
+                createrepo_c.Package: a package which parsed data should be added to.
+
+                If None is returned, further parsing of a package will be skipped.
+
+            """
+            return packages.get(pkgId, None)
+
+        packages = collections.OrderedDict()
+
+        xml_parse_primary(self._primary_xml_path, pkgcb=pkgcb, warningcb=warningcb, do_files=False)
+        if not only_primary:
+            xml_parse_filelists(self._filelists_xml_path, newpkgcb=newpkgcb, warningcb=warningcb)
+            xml_parse_other(self._other_xml_path, newpkgcb=newpkgcb, warningcb=warningcb)
+        return packages, warnings
+
 
 # If we have been built as a Python package, e.g. "setup.py", this is where the binaries
 # will be located.

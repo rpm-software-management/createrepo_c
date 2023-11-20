@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <libxml/encoding.h>
+#include <libxml/xmlstring.h>
 #include "misc.h"
 #include "sqlite.h"
 #include "error.h"

@@ -111,7 +111,9 @@ open_sqlite_db(const char *path, GError **err)
 
     assert(!err || *err == NULL);
 
-    rc = sqlite3_open(path, &db);
+    rc = sqlite3_open_v2(path, &db,
+            SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE|SQLITE_OPEN_SHAREDCACHE,
+            NULL);
     if (rc != SQLITE_OK) {
         g_set_error(err, ERR_DOMAIN, CRE_DB,
                     "Can not open SQL database: %s", sqlite3_errmsg(db));
@@ -1538,8 +1540,6 @@ cr_db_open(const char *path, cr_DatabaseType db_type, GError **err)
             // because --local-sqlite option was used
             exists = FALSE;
     }
-
-    sqlite3_enable_shared_cache(1);
 
     db = open_sqlite_db(path, &tmp_err);
     if (tmp_err) {

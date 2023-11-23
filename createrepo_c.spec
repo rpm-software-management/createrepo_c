@@ -49,7 +49,7 @@ BuildRequires:  libcurl-devel
 BuildRequires:  libxml2-devel
 BuildRequires:  openssl-devel
 BuildRequires:  rpm-devel >= 4.8.0-28
-BuildRequires:  sqlite-devel
+BuildRequires:  sqlite-devel >= 3.6.18
 BuildRequires:  xz
 BuildRequires:  xz-devel
 BuildRequires:  zlib-devel

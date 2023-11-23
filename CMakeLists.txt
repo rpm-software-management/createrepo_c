@@ -43,7 +43,7 @@ pkg_check_modules(GLIB2 REQUIRED glib-2.0)
 pkg_check_modules(GIO REQUIRED gio-2.0)
 pkg_check_modules(GTHREAD2 REQUIRED gthread-2.0)
 pkg_check_modules(LZMA REQUIRED liblzma)
-pkg_check_modules(SQLITE3 REQUIRED sqlite3)
+pkg_check_modules(SQLITE3 REQUIRED sqlite3>=3.6.18)
 pkg_check_modules(RPM REQUIRED rpm)
 pkg_check_modules(ZSTD REQUIRED libzstd)
 

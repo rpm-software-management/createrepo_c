@@ -201,7 +201,7 @@ cr_xml_parser_generic(xmlParserCtxtPtr parser,
 
         if (xmlParseChunk(parser, buf, len, len == 0)) {
             ret = CRE_XMLPARSER;
-            xmlErrorPtr xml_err = xmlCtxtGetLastError(parser);
+            const xmlError *xml_err = xmlCtxtGetLastError(parser);
             g_critical("%s: parsing error '%s': %s",
                        __func__,
                        path,
@@ -272,7 +272,7 @@ cr_xml_parser_generic_from_string(xmlParserCtxtPtr parser,
 
         if (xmlParseChunk(parser, data, block_size, finished)) {
             ret = CRE_XMLPARSER;
-            xmlErrorPtr xml_err = xmlCtxtGetLastError(parser);
+            const xmlError *xml_err = xmlCtxtGetLastError(parser);
             g_critical("%s: parsing error '%s': %s",
                        __func__,
                        data,

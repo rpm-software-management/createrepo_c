@@ -181,7 +181,7 @@ cr_package_copy(cr_Package *orig)
     return pkg;
 }
 
-void
+__attribute__ ((visibility("hidden"))) void
 cr_package_copy_into(cr_Package *orig, cr_Package *pkg)
 {
     pkg->pkgKey           = orig->pkgKey;

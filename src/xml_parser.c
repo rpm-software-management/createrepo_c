@@ -29,7 +29,7 @@
 #define ERR_DOMAIN      CREATEREPO_C_ERROR
 
 
-cr_ParserData *
+__attribute__ ((visibility("hidden"))) cr_ParserData *
 cr_xml_parser_data(unsigned int numstates)
 {
     cr_ParserData *pd = g_new0(cr_ParserData, 1);
@@ -41,7 +41,7 @@ cr_xml_parser_data(unsigned int numstates)
     return pd;
 }
 
-void
+__attribute__ ((visibility("hidden"))) void
 cr_xml_parser_data_free(cr_ParserData *pd)
 {
     if (!pd) {
@@ -56,7 +56,7 @@ cr_xml_parser_data_free(cr_ParserData *pd)
     g_free(pd);
 }
 
-void
+__attribute__ ((visibility("hidden"))) void
 cr_char_handler(void *pdata, const xmlChar *s, int len)
 {
     int l;
@@ -82,7 +82,7 @@ cr_char_handler(void *pdata, const xmlChar *s, int len)
     *c = '\0';
 }
 
-int
+__attribute__ ((visibility("hidden"))) int
 cr_xml_parser_warning(cr_ParserData *pd,
                       cr_XmlParserWarningType type,
                       const char *msg,
@@ -121,7 +121,7 @@ cr_xml_parser_warning(cr_ParserData *pd,
     return ret;
 }
 
-gint64
+__attribute__ ((visibility("hidden"))) gint64
 cr_xml_parser_strtoll(cr_ParserData *pd,
                       const char *nptr,
                       unsigned int base)
@@ -147,7 +147,7 @@ cr_xml_parser_strtoll(cr_ParserData *pd,
     return val;
 }
 
-int
+__attribute__ ((visibility("hidden"))) int
 cr_newpkgcb(cr_Package **pkg,
             G_GNUC_UNUSED const char *pkgId,
             G_GNUC_UNUSED const char *name,
@@ -163,7 +163,7 @@ cr_newpkgcb(cr_Package **pkg,
     return CR_CB_RET_OK;
 }
 
-int
+__attribute__ ((visibility("hidden"))) int
 cr_xml_parser_generic(xmlParserCtxtPtr parser,
                       cr_ParserData *pd,
                       const char *path,
@@ -240,7 +240,7 @@ cr_xml_parser_generic(xmlParserCtxtPtr parser,
     return ret;
 }
 
-int
+__attribute__ ((visibility("hidden"))) int
 cr_xml_parser_generic_from_string(xmlParserCtxtPtr parser,
                                   cr_ParserData *pd,
                                   const char *xml_string,
@@ -293,7 +293,7 @@ cr_xml_parser_generic_from_string(xmlParserCtxtPtr parser,
     return ret;
 }
 
-const xmlChar **
+__attribute__ ((visibility("hidden"))) const xmlChar **
 unescape_ampersand_from_values(const xmlChar **attr, gboolean *allocation_needed) {
     *allocation_needed = FALSE;
 

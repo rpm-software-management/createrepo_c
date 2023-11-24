@@ -116,7 +116,7 @@ cr_latin1_to_utf8(const unsigned char *in, unsigned char *out)
     *out = '\0';
 }
 
-xmlNodePtr
+__attribute__ ((visibility("hidden"))) xmlNodePtr
 cr_xmlNewTextChild(xmlNodePtr parent,
                    xmlNsPtr ns,
                    const xmlChar *name,
@@ -145,7 +145,7 @@ cr_xmlNewTextChild(xmlNodePtr parent,
     return child;
 }
 
-xmlAttrPtr
+__attribute__ ((visibility("hidden"))) xmlAttrPtr
 cr_xmlNewProp(xmlNodePtr node, const xmlChar *name, const xmlChar *orig_content)
 {
     int free_content = 0;
@@ -171,7 +171,7 @@ cr_xmlNewProp(xmlNodePtr node, const xmlChar *name, const xmlChar *orig_content)
     return attr;
 }
 
-void
+__attribute__ ((visibility("hidden")))  void
 cr_xml_dump_files(xmlNodePtr node, cr_Package *package, int primary, gboolean filelists_ext)
 {
     if (!node || !package->files) {
@@ -306,7 +306,7 @@ cr_Package_contains_forbidden_control_chars(cr_Package *pkg)
     return 0;
 }
 
-struct cr_XmlStruct
+static struct cr_XmlStruct
 cr_xml_dump_int(cr_Package *pkg, gboolean filelists_ext, GError **err)
 {
     struct cr_XmlStruct result;

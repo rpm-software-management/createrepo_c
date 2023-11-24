@@ -298,7 +298,7 @@ parse_next_section(CR_FILE *target_file, const char *path, cr_ParserData *pd, GE
     }
     int done = parsed_len == 0;
     if (xmlParseChunk(pd->parser, buf, parsed_len, done)) {
-        xmlErrorPtr xml_err = xmlCtxtGetLastError(pd->parser);
+        const xmlError *xml_err = xmlCtxtGetLastError(pd->parser);
         g_critical("%s: parsing error '%s': %s", __func__, path,
                    (xml_err) ? xml_err->message : "UNKNOWN_ERROR");
         g_set_error(err, ERR_DOMAIN, CRE_XMLPARSER,

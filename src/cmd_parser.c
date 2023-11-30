@@ -183,9 +183,9 @@ static GOptionEntry cmd_entries[] =
     { "xz", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.xz_compression),
       "Use xz for repodata compression.", NULL },
     { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type),
-      "Which compression type to use for additional metadata files (comps, updateinfo, etc). Supported compressions are: bzip2, gzip, zck, zstd, xz.", "COMPRESSION_TYPE" },
+      "Which compression type to use for additional metadata files (comps, updateinfo, etc). Supported compressions are: bz2, gz, zck, zstd, xz.", "COMPRESSION_TYPE" },
     { "general-compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.general_compress_type),
-      "Which compression type to use (even for primary, filelists and other xml). Supported compressions are: bzip2, gzip, zck, zstd, xz.",
+      "Which compression type to use (even for primary, filelists and other xml). Supported compressions are: bz2, gz, zck, zstd, xz.",
       "COMPRESSION_TYPE" },
 #ifdef WITH_ZCHUNK
     { "zck", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.zck_compression),

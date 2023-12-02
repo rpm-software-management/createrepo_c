@@ -182,7 +182,7 @@ Keep all additional metadata (not primary, filelists and other xml or sqlite fil
 Discard all additional metadata (not primary, filelists and other xml or sqlite files, nor their compressed variants) from source repository during update.
 .SS \-\-compatibility
 .sp
-Enforce maximal compatibility with classical createrepo (Affects only: \-\-retain\-old\-md).
+Enforce maximal compatibility with classical createrepo (Changes \-\-retain\-old\-md behavior, uses Gzip for compression).
 .SS \-\-retain\-old\-md\-by\-age AGE
 .sp
 During \-\-update, remove all files in repodata/ which are older then the specified period of time. (e.g. \(aq2h\(aq, \(aq30d\(aq, ...). Available units (m \- minutes, h \- hours, d \- days)

@@ -831,6 +831,11 @@ main(int argc, char **argv)
     cr_CompressionType sqlite_compression = CR_CW_BZ2_COMPRESSION;
     cr_CompressionType compression = CR_CW_ZSTD_COMPRESSION;
 
+    if (cmd_options->compatibility) {
+        xml_compression    = CR_CW_GZ_COMPRESSION;
+        compression        = CR_CW_GZ_COMPRESSION;
+    }
+
     if (cmd_options->compression_type != CR_CW_UNKNOWN_COMPRESSION) {
         sqlite_compression = cmd_options->compression_type;
         compression        = cmd_options->compression_type;

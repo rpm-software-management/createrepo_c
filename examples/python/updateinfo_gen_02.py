@@ -15,7 +15,7 @@ def generate():
     pkg.src = "foo.src.rpm"
     pkg.filename = "foo-1.2.3-1.rpm"
     pkg.sum = "123456789"
-    pkg.sum_type = cr.MD5
+    pkg.sum_type = cr.SHA256
     pkg.reboot_suggested = False
 
     col = cr.UpdateCollection()

@@ -331,7 +331,8 @@ Modifyrepo - at least not yet.
 | type          | Type of the metadata | Any string | Based on filename |
 | remove        | Remove specified file/type from repodata | ``true`` or ``false`` | ``false`` |
 | compress      | Compress the new metadata before adding it to repo | ``true`` or ``false`` | ``true`` |
-| compress-type | Compression format to use | ``gz``, ``bz2``, ``xz`` | ``gz`` |
+| compress-type | Compression format to use for auxillary metadata | ``gz``, ``zstd``, ``bz2``, ``xz`` | ``zstd`` |
+| general-compress-type | Compression format to use for primary metadata | ``gz``, ``zstd``, ``bz2``, ``xz`` | ``zstd`` |
 | checksum      | Checksum type to use | ``md5``, ``sha``, ``sha1``, ``sha224``, ``sha256``, ``sha384``, ``sha512`` | ``sha256`` |
 | unique-md-filenames | Include the file's checksum in the filename | ``true`` or ``false`` | ``true`` |
 | new-name      | New name for the file. If ``compress`` is ``true``, then compression suffix will be appended. If ``unique-md-filenames`` is ``true``, then checksum will be prepended. | Any string | Original source filename |

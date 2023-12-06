@@ -1445,11 +1445,7 @@ main(int argc, char **argv)
     user_data.fil_zck           = fil_cr_zck;
     user_data.fex_zck           = fex_cr_zck;
     user_data.oth_zck           = oth_cr_zck;
-    if (cmd_options->compatibility && cmd_options->changelog_limit == DEFAULT_CHANGELOG_LIMIT ) {
-      user_data.changelog_limit = -1;
-    } else {
-      user_data.changelog_limit = cmd_options->changelog_limit;
-    }
+    user_data.changelog_limit = cmd_options->changelog_limit;
     user_data.location_base     = cmd_options->location_base;
     user_data.checksum_type_str = cr_checksum_name_str(cmd_options->checksum_type);
     user_data.checksum_type     = cmd_options->checksum_type;

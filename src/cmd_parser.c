@@ -182,16 +182,20 @@ static GOptionEntry cmd_entries[] =
       "Number of workers to spawn to read rpms.", NULL },
     { "xz", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.xz_compression),
       "Use xz for repodata compression.", NULL },
-    { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type),
-      "Which compression type to use for additional metadata files (comps, updateinfo, etc). Supported compressions are: bz2, gz, zck, zstd, xz.", "COMPRESSION_TYPE" },
-    { "general-compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.general_compress_type),
-      "Which compression type to use (even for primary, filelists and other xml). Supported compressions are: bz2, gz, zck, zstd, xz.",
-      "COMPRESSION_TYPE" },
 #ifdef WITH_ZCHUNK
+    { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type),
+      "Which compression type to use for additional metadata files (comps, updateinfo, etc). Supported values are: bz2, gz, zck, zstd, xz.", "COMPRESSION_TYPE" },
+    { "general-compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.general_compress_type),
+      "Which compression type to use (even for primary, filelists and other xml). Supported values are: bz2, gz, zck, zstd, xz.", "COMPRESSION_TYPE" },
     { "zck", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.zck_compression),
       "Generate zchunk files as well as the standard repodata.", NULL },
     { "zck-dict-dir", 0, 0, G_OPTION_ARG_FILENAME, &(_cmd_options.zck_dict_dir),
       "Directory containing compression dictionaries for use by zchunk", "ZCK_DICT_DIR" },
+#else
+    { "compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.compress_type),
+      "Which compression type to use for additional metadata files (comps, updateinfo, etc). Supported values are: bz2, gz, zstd, xz.", "COMPRESSION_TYPE" },
+    { "general-compress-type", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.general_compress_type),
+      "Which compression type to use (even for primary, filelists and other xml). Supported values are: bz2, gz, zstd, xz.", "COMPRESSION_TYPE" },
 #endif
     { "keep-all-metadata", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.keep_all_metadata),
       "Keep all additional metadata (not primary, filelists and other xml or sqlite files, "
@@ -318,6 +322,10 @@ check_and_set_compression_type(const char *type_str,
         *type = CR_CW_BZ2_COMPRESSION;
     } else if (!strcmp(compress_str->str, "xz")) {
         *type = CR_CW_XZ_COMPRESSION;
+#ifdef WITH_ZCHUNK
+    } else if (!strcmp(compress_str->str, "zck")) {
+        *type = CR_CW_ZCK_COMPRESSION;
+#endif
     } else if (!strcmp(compress_str->str, "zstd")) {
         *type = CR_CW_ZSTD_COMPRESSION;
     } else {
@@ -645,6 +653,14 @@ check_arguments(struct CmdOptions *options,
                     "Cannot use --zck-dict-dir without setting --zck");
         return FALSE;
     }
+
+    // Zchunk options
+    if (options->general_compression_type == CR_CW_ZCK_COMPRESSION && options->zck_compression) {
+        g_set_error(err, ERR_DOMAIN, CRE_BADARG,
+                    "Cannot use --general-compress-type=zck with --zck");
+        return FALSE;
+    }
+
     if (options->zck_dict_dir)
         options->zck_dict_dir = cr_normalize_dir_path(options->zck_dict_dir);
 

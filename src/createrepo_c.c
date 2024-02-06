@@ -1143,7 +1143,9 @@ main(int argc, char **argv)
     cr_SqliteDb *fex_db = NULL;
     cr_SqliteDb *oth_db = NULL;
 
-    if (cmd_options->database) {
+    gboolean should_create_databases = cmd_options->database || (cmd_options->compatibility && !cmd_options->no_database);
+
+    if (should_create_databases) {
         _cleanup_file_close_ int pri_db_fd = -1;
         _cleanup_file_close_ int fil_db_fd = -1;
         _cleanup_file_close_ int fex_db_fd = -1;
@@ -1826,8 +1828,7 @@ main(int argc, char **argv)
     cr_repomdrecordfilltask_free(oth_fill_task, NULL);
 
     // Sqlite db
-    if (cmd_options->database) {
-
+    if (should_create_databases) {
         gchar *pri_db_name = g_strconcat(tmp_out_repo, "/primary.sqlite",
                                          sqlite_compression_suffix, NULL);
         gchar *fil_db_name = g_strconcat(tmp_out_repo, "/filelists.sqlite",

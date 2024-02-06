@@ -149,6 +149,12 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
         return FALSE;
     }
 
+    // Set up XML dump parameters
+
+    cr_xml_dump_init();
+
+    // Dump repomd.xml
+
     cr_Repomd *repomd = cr_repomd_new();
     int rc = cr_xml_parse_repomd(repomd_path, repomd, cr_warning_cb,
                                   "Repomd XML parser", err);

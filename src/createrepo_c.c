@@ -853,7 +853,12 @@ main(int argc, char **argv)
 
     // Groupfile specified as argument
     if (cmd_options->groupfile_fullpath) {
-        gchar *compressed_path = cr_compress_groupfile(cmd_options->groupfile_fullpath, tmp_out_repo, compression);
+        cr_CompressionType group_compression = compression;
+        // Skip compressing the group metadata when using --compatibility flag
+        if (cmd_options->compatibility) {
+            group_compression = CR_CW_NO_COMPRESSION;
+        }
+        gchar *compressed_path = cr_compress_groupfile(cmd_options->groupfile_fullpath, tmp_out_repo, group_compression);
         cr_Metadatum *new_groupfile_metadatum = g_malloc0(sizeof(cr_Metadatum));
         new_groupfile_metadatum->name = compressed_path;
         new_groupfile_metadatum->type = g_strdup("group");

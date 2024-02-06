@@ -875,6 +875,10 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 {
     GError *tmp_err = NULL;
 
+    // Set up XML dump parameters
+
+    cr_xml_dump_init();
+
     // Create/Open output xml files
 
     cr_ContentStat *pri_stat = cr_contentstat_new(CR_CHECKSUM_SHA256, NULL);

@@ -204,7 +204,7 @@ static GOptionEntry cmd_entries[] =
       "Discard all additional metadata (not primary, filelists and other xml or sqlite files, "
       "nor their compressed variants) from source repository during update.", NULL },
     { "compatibility", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.compatibility),
-      "Enforce maximal compatibility with classical createrepo (Changes --retain-old-md behavior, uses Gzip for compression).", NULL },
+      "Enforce maximal compatibility with classical createrepo (Changes --retain-old-md behavior, uses Gzip for compression, produces sqlite metadata by default).", NULL },
     { "retain-old-md-by-age", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.retain_old_md_by_age),
       "During --update, remove all files in repodata/ which are older "
       "then the specified period of time. (e.g. '2h', '30d', ...). "

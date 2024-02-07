@@ -634,6 +634,11 @@ main(int argc, char **argv)
         }
     }
 
+    // Using createrepo assumes compatibility mode
+    if (!g_strcmp0(g_path_get_basename(argv[0]),"createrepo")) {
+        cmd_options->compatibility=TRUE;
+    }
+
     // Dirs
     gchar *in_dir       = NULL;  // path/to/repo/
     gchar *in_repo      = NULL;  // path/to/repo/repodata/

@@ -70,7 +70,11 @@ Requires:       libmodulemd%{?_isa} >= %{libmodulemd_version}
 %endif
 %endif
 Requires:       %{name}-libs = %{epoch_dep}%{version}-%{release}
+%if 0%{?fedora} > 40 || 0%{?rhel} > 10
+BuildRequires:  bash-completion-devel
+%else
 BuildRequires:  bash-completion
+%endif
 Requires: rpm >= 4.9.0
 %if %{with drpm}
 BuildRequires:  drpm-devel >= 0.4.0

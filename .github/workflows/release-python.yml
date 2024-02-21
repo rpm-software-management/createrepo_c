@@ -36,6 +36,15 @@ jobs:
   build_bdist:
     name: Build binary wheels
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - arch: auto64  # native 64-bit
+            skip: "pp* *-musllinux_* cp36* cp37* cp38*"  # no PyPy or musl builds, no older Python versions
+          - arch: aarch64
+            skip: "pp* *-musllinux_* cp36* cp37* cp38* cp310* cp312*"   # qemu builds are incredibly slow, so only do 3.9 and 3.11
+    # TODO: when github actions gets native aarch64 runners, we can ditch qemu and not worry about the emulation performance
+
     steps:
     - uses: actions/checkout@v4
 
@@ -45,16 +54,20 @@ jobs:
       with:
         python-version: '3.x'
 
-    # for other architectures, see: https://cibuildwheel.readthedocs.io/en/stable/faq/#emulation
+    - name: Set up QEMU
+      if: runner.os == 'Linux' && ${{ matrix.arch }} == "aarch64"
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: arm64
+
     - name: Build wheels for CPython
-      uses: pypa/cibuildwheel@v2.16.2
+      uses: pypa/cibuildwheel@v2.16.5
       env:
-        CIBW_ARCHS: auto64  # only 64-bit
-        CIBW_SKIP: "pp* *-musllinux_* cp36* cp37* cp38*"  # no PyPy or musl builds, no older Python versions
-        CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014  # centos 7
-        CIBW_BEFORE_ALL_LINUX: yum -y install yum-utils epel-release && yes | yum-builddep createrepo_c.spec
-        # CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28   # centos 8, but not supported widely yet
-        # CIBW_BEFORE_ALL_LINUX: dnf -y install epel-release && yes | dnf -y builddep createrepo_c.spec
+        CIBW_ARCHS: ${{ matrix.arch }}
+        CIBW_SKIP: ${{ matrix.skip }}
+        CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28  # alma 8
+        CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
+        CIBW_BEFORE_ALL_LINUX: dnf -y install epel-release && yes | dnf -y builddep createrepo_c.spec
         CIBW_BEFORE_BUILD: python -m pip install scikit-build
         CIBW_TEST_REQUIRES: pytest
         CIBW_TEST_COMMAND: |
@@ -76,7 +89,7 @@ jobs:
           name: artifact
           path: dist
 
-      - uses: pypa/gh-action-pypi-publish@v1.8.10
+      - uses: pypa/gh-action-pypi-publish@v1.8.11
         with:
           user: __token__
           password: ${{secrets.PYPI_API_TOKEN}}

@@ -234,76 +234,169 @@ cr_xml_dump_files(xmlNodePtr node, cr_Package *package, int primary, gboolean fi
 gboolean
 cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(GSList *dep)
 {
+    gboolean ret = FALSE;
     GSList *element;
     for (element = dep; element; element=g_slist_next(element)) {
         cr_Dependency *d = element->data;
-        if ((d->name    && cr_hascontrollchars((unsigned char *) d->name))    ||
-            (d->epoch   && cr_hascontrollchars((unsigned char *) d->epoch))   ||
-            (d->version && cr_hascontrollchars((unsigned char *) d->version)) ||
-            (d->release && cr_hascontrollchars((unsigned char *) d->release)))
-        {
-            return 1;
+        if (d->name    && cr_hascontrollchars((unsigned char *) d->name)) {
+            g_printerr("name %s have forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", d->name);
+            ret = TRUE;
+        }
+        if (d->epoch   && cr_hascontrollchars((unsigned char *) d->epoch)) {
+            g_printerr("epoch %s have forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", d->epoch);
+            ret = TRUE;
+        }
+        if (d->version && cr_hascontrollchars((unsigned char *) d->version)) {
+            g_printerr("version %s have forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", d->version);
+            ret = TRUE;
+        }
+        if (d->release && cr_hascontrollchars((unsigned char *) d->release)) {
+            g_printerr("release %s have forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", d->release);
+            ret = TRUE;
         }
     }
-    return 0;
+    return ret;
 }
 
 gboolean
 cr_Package_contains_forbidden_control_chars(cr_Package *pkg)
 {
-    if ((pkg->name          && cr_hascontrollchars((unsigned char *) pkg->name))          ||
-        (pkg->arch          && cr_hascontrollchars((unsigned char *) pkg->arch))          ||
-        (pkg->version       && cr_hascontrollchars((unsigned char *) pkg->version))       ||
-        (pkg->epoch         && cr_hascontrollchars((unsigned char *) pkg->epoch))         ||
-        (pkg->release       && cr_hascontrollchars((unsigned char *) pkg->release))       ||
-        (pkg->summary       && cr_hascontrollchars((unsigned char *) pkg->summary))       ||
-        (pkg->description   && cr_hascontrollchars((unsigned char *) pkg->description))   ||
-        (pkg->url           && cr_hascontrollchars((unsigned char *) pkg->url))           ||
-        (pkg->rpm_license   && cr_hascontrollchars((unsigned char *) pkg->rpm_license))   ||
-        (pkg->rpm_vendor    && cr_hascontrollchars((unsigned char *) pkg->rpm_vendor))    ||
-        (pkg->rpm_group     && cr_hascontrollchars((unsigned char *) pkg->rpm_group))     ||
-        (pkg->rpm_buildhost && cr_hascontrollchars((unsigned char *) pkg->rpm_buildhost)) ||
-        (pkg->rpm_sourcerpm && cr_hascontrollchars((unsigned char *) pkg->rpm_sourcerpm)) ||
-        (pkg->rpm_packager  && cr_hascontrollchars((unsigned char *) pkg->rpm_packager))  ||
-        (pkg->location_href && cr_hascontrollchars((unsigned char *) pkg->location_href)) ||
-        (pkg->location_base && cr_hascontrollchars((unsigned char *) pkg->location_base)))
-    {
-        return 1;
+    gboolean ret = FALSE;
+
+    if (pkg->name && cr_hascontrollchars((unsigned char *) pkg->name)) {
+        g_printerr("Package name %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->name);
+        ret = TRUE;
+    }
+    if (pkg->arch && cr_hascontrollchars((unsigned char *) pkg->arch)) {
+        g_printerr("Package arch %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->arch);
+        ret = TRUE;
+    }
+    if (pkg->version && cr_hascontrollchars((unsigned char *) pkg->version)) {
+        g_printerr("Package version %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->version);
+        ret = TRUE;
+    }
+    if (pkg->epoch && cr_hascontrollchars((unsigned char *) pkg->epoch)) {
+        g_printerr("Package epoch %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->epoch);
+        ret = TRUE;
+    }
+    if (pkg->release && cr_hascontrollchars((unsigned char *) pkg->release)) {
+        g_printerr("Package release %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->release);
+        ret = TRUE;
+    }
+    if (pkg->summary && cr_hascontrollchars((unsigned char *) pkg->summary)) {
+        g_printerr("Package summary %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->summary);
+        ret = TRUE;
+    }
+    if (pkg->description && cr_hascontrollchars((unsigned char *) pkg->description)) {
+        g_printerr("Package description %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->description);
+        ret = TRUE;
+    }
+    if (pkg->url && cr_hascontrollchars((unsigned char *) pkg->url)) {
+        g_printerr("Package URL %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->url);
+        ret = TRUE;
+    }
+    if (pkg->rpm_license && cr_hascontrollchars((unsigned char *) pkg->rpm_license)) {
+        g_printerr("Package RPM license %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->rpm_license);
+        ret = TRUE;
+    }
+    if (pkg->rpm_vendor && cr_hascontrollchars((unsigned char *) pkg->rpm_vendor)) {
+        g_printerr("Package RPM vendor %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->rpm_vendor);
+        ret = TRUE;
+    }
+    if (pkg->rpm_group && cr_hascontrollchars((unsigned char *) pkg->rpm_group)) {
+        g_printerr("Package RPM group %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->rpm_group);
+        ret = TRUE;
+    }
+    if (pkg->rpm_buildhost && cr_hascontrollchars((unsigned char *) pkg->rpm_buildhost)) {
+        g_printerr("Package RPM buildhost %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->rpm_buildhost);
+        ret = TRUE;
+    }
+    if (pkg->rpm_sourcerpm && cr_hascontrollchars((unsigned char *) pkg->rpm_sourcerpm)) {
+        g_printerr("Package RPM sourcerpm %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->rpm_sourcerpm);
+        ret = TRUE;
+    }
+    if (pkg->rpm_packager && cr_hascontrollchars((unsigned char *) pkg->rpm_packager)) {
+        g_printerr("Package RPM packager %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->rpm_packager);
+        ret = TRUE;
+    }
+    if (pkg->location_href && cr_hascontrollchars((unsigned char *) pkg->location_href)) {
+        g_printerr("Package location href %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->location_href);
+        ret = TRUE;
+    }
+    if (pkg->location_base && cr_hascontrollchars((unsigned char *) pkg->location_base)) {
+        g_printerr("Package location base %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->location_base);
+        ret = TRUE;
     }
 
-    if (cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->requires)    ||
-        cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->provides)    ||
-        cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->conflicts)   ||
-        cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->obsoletes)   ||
-        cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->suggests)    ||
-        cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->enhances)    ||
-        cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->recommends)  ||
-        cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->supplements))
-    {
-        return 1;
+
+    if (cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->requires)) {
+        g_printerr("One or more dependencies in 'requires' contain forbidden control chars (ASCII values <32 except 9, 10 and 13).\n");
+        ret = TRUE;
     }
+
+    if (cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->provides)) {
+        g_printerr("One or more dependencies in 'provides' contain forbidden control chars (ASCII values <32 except 9, 10 and 13).\n");
+        ret = TRUE;
+    }
+
+    if (cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->conflicts)) {
+        g_printerr("One or more dependencies in 'conflicts' contain forbidden control chars (ASCII values <32 except 9, 10 and 13).\n");
+        ret = TRUE;
+    }
+
+    if (cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->obsoletes)) {
+        g_printerr("One or more dependencies in 'obsoletes' contain forbidden control chars (ASCII values <32 except 9, 10 and 13).\n");
+        ret = TRUE;
+    }
+
+    if (cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->suggests)) {
+        g_printerr("One or more dependencies in 'suggests' contain forbidden control chars (ASCII values <32 except 9, 10 and 13).\n");
+        ret = TRUE;
+    }
+
+    if (cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->enhances)) {
+        g_printerr("One or more dependencies in 'enhances' contain forbidden control chars (ASCII values <32 except 9, 10 and 13).\n");
+        ret = TRUE;
+    }
+
+    if (cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->recommends)) {
+        g_printerr("One or more dependencies in 'recommends' contain forbidden control chars (ASCII values <32 except 9, 10 and 13).\n");
+        ret = TRUE;
+    }
+
+    if (cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->supplements)) {
+        g_printerr("One or more dependencies in 'supplements' contain forbidden control chars (ASCII values <32 except 9, 10 and 13).\n");
+        ret = TRUE;
+    }
+
 
     GSList *element;
 
     for (element = pkg->files; element; element=g_slist_next(element)) {
         cr_PackageFile *f = element->data;
-        if ((f->name && cr_hascontrollchars((unsigned char *) f->name)) ||
-            (f->path && cr_hascontrollchars((unsigned char *) f->path)))
-        {
-            return 1;
+        if (f->name && cr_hascontrollchars((unsigned char *) f->name)) {
+            g_printerr("File name %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", f->name);
+            ret = TRUE;
+        }
+        if (f->path && cr_hascontrollchars((unsigned char *) f->path)) {
+            g_printerr("File path %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", f->path);
+            ret = TRUE;
         }
     }
 
     for (element = pkg->changelogs; element; element=g_slist_next(element)) {
         cr_ChangelogEntry *ch = element->data;
-        if ((ch->author    && cr_hascontrollchars((unsigned char *) ch->author)) ||
-            (ch->changelog && cr_hascontrollchars((unsigned char *) ch->changelog)))
-        {
-            return 1;
+        if (ch->author && cr_hascontrollchars((unsigned char *) ch->author)) {
+            g_printerr("Changelog author %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", ch->author);
+            ret = TRUE;
+        }
+        if (ch->changelog && cr_hascontrollchars((unsigned char *) ch->changelog)) {
+            g_printerr("Changelog entry %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", ch->changelog);
+            ret = TRUE;
         }
     }
 
-    return 0;
+    return ret;
 }
 
 struct cr_XmlStruct

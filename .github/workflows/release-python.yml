@@ -40,10 +40,8 @@ jobs:
       matrix:
         include:
           - arch: auto64  # native 64-bit
-            skip: "pp* *-musllinux_* cp36* cp37* cp38*"  # no PyPy or musl builds, no older Python versions
           - arch: aarch64
-            skip: "pp* *-musllinux_* cp36* cp37* cp38* cp310* cp312*"   # qemu builds are incredibly slow, so only do 3.9 and 3.11
-    # TODO: when github actions gets native aarch64 runners, we can ditch qemu and not worry about the emulation performance
+    # TODO: when github actions gets native aarch64 runners, ditch qemu, it will be much faster
 
     steps:
     - uses: actions/checkout@v4
@@ -64,7 +62,7 @@ jobs:
       uses: pypa/cibuildwheel@v2.16.5
       env:
         CIBW_ARCHS: ${{ matrix.arch }}
-        CIBW_SKIP: ${{ matrix.skip }}
+        CIBW_SKIP: "pp* *-musllinux_* cp36* cp37* cp38*"  # no PyPy or musl builds, no older Python versions
         CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28  # alma 8
         CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
         CIBW_BEFORE_ALL_LINUX: dnf -y install epel-release && yes | dnf -y builddep createrepo_c.spec

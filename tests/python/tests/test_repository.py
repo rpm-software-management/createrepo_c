@@ -154,6 +154,8 @@ class TestCaseRepositoryWriter(unittest.TestCase):
 
     def test_add_repo_metadata(self):
         """Test adding an additional repo metadata file to the repository."""
+        basename = os.path.basename(TEST_COMPS_00)
+
         with cr.RepositoryWriter(self.tmpdir) as writer:
             writer.add_repomd_metadata("group", TEST_COMPS_00, use_compression=False)
 
@@ -162,7 +164,6 @@ class TestCaseRepositoryWriter(unittest.TestCase):
 
         # test that the metadata file was added to repomd
         record = [record for record in writer.repomd.records if record.type == "group"][0]
-        basename = os.path.basename(TEST_COMPS_00)
         md_path_relative = f"repodata/{record.checksum}-{basename}"
         assert record.location_href == md_path_relative
 
@@ -179,7 +180,6 @@ class TestCaseRepositoryWriter(unittest.TestCase):
 
         # test that the metadata file was added to repomd
         record = [record for record in writer.repomd.records if record.type == "group"][0]
-        basename = os.path.basename(TEST_COMPS_00)
         md_path_relative = f"repodata/{record.checksum}-{basename}.zst"
         assert record.location_href == md_path_relative
 
@@ -196,11 +196,19 @@ class TestCaseRepositoryWriter(unittest.TestCase):
         # test that adding a file already in the repodata/ directory works (outside of repository already tested)
         with cr.RepositoryWriter(self.tmpdir) as writer:
             md_path = shutil.copy2(TEST_COMPS_00, writer.repodata_dir)
-            writer.add_repomd_metadata("group", md_path)
+            writer.add_repomd_metadata("group", md_path, use_compression=True)
 
         record = [record for record in writer.repomd.records if record.type == "group"][0]
-        basename = os.path.basename(TEST_COMPS_00)
         md_path_relative = f"repodata/{record.checksum}-{basename}.zst"
+        assert record.location_href == md_path_relative
+
+        # same as the above test, but without compression enabled
+        with cr.RepositoryWriter(self.tmpdir) as writer:
+            md_path = shutil.copy2(TEST_COMPS_00, writer.repodata_dir)
+            writer.add_repomd_metadata("group", md_path, use_compression=False)
+
+        record = [record for record in writer.repomd.records if record.type == "group"][0]
+        md_path_relative = f"repodata/{record.checksum}-{basename}"
         assert record.location_href == md_path_relative
 
     def test_add_package(self):

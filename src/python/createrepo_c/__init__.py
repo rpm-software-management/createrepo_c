@@ -680,7 +680,10 @@ class RepositoryWriter:
             compress_file(path, str(dst), self._compression)
             self.additional_metadata_files[name] = dst
         else:
-            path = shutil.copy2(path, self.repodata_dir)
+            try:
+                path = shutil.copy2(path, self.repodata_dir)
+            except shutil.SameFileError:
+                pass
             self.additional_metadata_files[name] = path
 
     def add_update_record(self, rec):

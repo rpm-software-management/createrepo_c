@@ -53,8 +53,8 @@ class TestCaseParsepkg(unittest.TestCase):
         self.assertTrue(xml)
         self.assertTrue(len(xml) == 3)
         self.assertTrue("<name>Archer</name>" in xml[0])
-        self.assertTrue('<package pkgid="4e0b775220c67f0f2c1fd2177e626b9c863a098130224ff09778ede25cea9a9e" name="Archer" arch="x86_64">' in xml[1])
-        self.assertTrue('<package pkgid="4e0b775220c67f0f2c1fd2177e626b9c863a098130224ff09778ede25cea9a9e" name="Archer" arch="x86_64">' in xml[2])
+        self.assertTrue('<package pkgid="65dd4d39b7539cb0b6b150db20a314402845e006cc0456d910bce87741f81b82" name="Archer" arch="x86_64">' in xml[1])
+        self.assertTrue('<package pkgid="65dd4d39b7539cb0b6b150db20a314402845e006cc0456d910bce87741f81b82" name="Archer" arch="x86_64">' in xml[2])
 
         # Test error cases
 

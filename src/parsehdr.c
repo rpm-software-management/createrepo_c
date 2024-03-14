@@ -425,6 +425,8 @@ cr_package_from_header(Header hdr,
                     // Calculate pre value
                     if (num_flags & (RPMSENSE_PREREQ |
                                      RPMSENSE_SCRIPT_PRE |
+                                     RPMSENSE_POSTTRANS |
+                                     RPMSENSE_PRETRANS |
                                      RPMSENSE_SCRIPT_POST))
                     {
                         pre = 1;

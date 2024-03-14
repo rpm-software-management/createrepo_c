@@ -16,6 +16,8 @@ Requires: fooc = 3
 Requires: food < 4
 Requires: fooe > 5
 Requires(pre): foof = 6
+Requires(pretrans): foog = 7
+Requires(posttrans): fooh = 8
 
 Provides: bara <= 22
 Provides: barb >= 11.22.33-44

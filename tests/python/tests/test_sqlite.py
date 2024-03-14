@@ -155,22 +155,23 @@ class TestCaseSqlite(unittest.TestCase):
         # Check packages table
         res = con.execute("select * from packages").fetchall()
         self.assertEqual(res,
-            [(1, u'4e0b775220c67f0f2c1fd2177e626b9c863a098130224ff09778ede25cea9a9e',
+            [(1, u'65dd4d39b7539cb0b6b150db20a314402845e006cc0456d910bce87741f81b82',
               u'Archer', u'x86_64', u'3.4.5', u'2', u'6', u'Complex package.',
               u'Archer package', u'http://soo_complex_package.eu/',
-              res[0][10], 1365416480, u'GPL', u'ISIS', u'Development/Tools',
-              u'localhost.localdomain', u'Archer-3.4.5-6.src.rpm', 280, 2865,
-              u'Sterling Archer', 3101, 0, 544, None, None, u'sha256')])
+              res[0][10], 1710742930, u'GPL', u'ISIS', u'Development/Tools',
+              u'localhost.localdomain', u'Archer-3.4.5-6.src.rpm', 4504, 7517,
+              u'Sterling Archer', 7737, 0, 544, None, None, u'sha256')])
 
         # Check provides table
         self.assertEqual(con.execute("select * from provides").fetchall(),
-            [(u'bara', u'LE', u'0', u'22', None, 1),
+            [(u'Archer', u'EQ', u'2', u'3.4.5', u'6', 1),
+             (u'Archer(x86-64)', u'EQ', u'2', u'3.4.5', u'6', 1),
+             (u'bara', u'LE', u'0', u'22', None, 1),
              (u'barb', u'GE', u'0', u'11.22.33', u'44', 1),
              (u'barc', u'EQ', u'0', u'33', None, 1),
              (u'bard', u'LT', u'0', u'44', None, 1),
-             (u'bare', u'GT', u'0', u'55', None, 1),
-             (u'Archer', u'EQ', u'2', u'3.4.5', u'6', 1),
-             (u'Archer(x86-64)', u'EQ', u'2', u'3.4.5', u'6', 1)])
+             (u'bare', u'GT', u'0', u'55', None, 1)])
+
 
         # Check conflicts table
         self.assertEqual(con.execute("select * from conflicts").fetchall(),
@@ -195,7 +196,9 @@ class TestCaseSqlite(unittest.TestCase):
              (u'fooc', u'EQ', u'0', u'3', None, 1, u'FALSE'),
              (u'food', u'LT', u'0', u'4', None, 1, u'FALSE'),
              (u'fooe', u'GT', u'0', u'5', None, 1, u'FALSE'),
-             (u'foof', u'EQ', u'0', u'6', None, 1, u'TRUE')])
+             (u'foof', u'EQ', u'0', u'6', None, 1, u'TRUE'),
+             (u'foog', u'EQ', u'0', u'7', None, 1, u'TRUE'),
+             (u'fooh', u'EQ', u'0', u'8', None, 1, u'TRUE')])
 
         # Check files table
         self.assertEqual(con.execute("select * from files").fetchall(),
@@ -219,7 +222,7 @@ class TestCaseSqlite(unittest.TestCase):
 
         # Check packages table
         self.assertEqual(con.execute("select * from packages").fetchall(),
-            [(1, u'4e0b775220c67f0f2c1fd2177e626b9c863a098130224ff09778ede25cea9a9e')])
+            [(1, u'65dd4d39b7539cb0b6b150db20a314402845e006cc0456d910bce87741f81b82')])
 
         # Check files table
         self.assertEqual(set(con.execute("select * from filelist").fetchall()),
@@ -245,7 +248,7 @@ class TestCaseSqlite(unittest.TestCase):
 
         # Check packages table
         self.assertEqual(con.execute("select * from packages").fetchall(),
-            [(1, u'4e0b775220c67f0f2c1fd2177e626b9c863a098130224ff09778ede25cea9a9e')])
+            [(1, u'65dd4d39b7539cb0b6b150db20a314402845e006cc0456d910bce87741f81b82')])
 
         # Check filelist table
         self.assertEqual(set(con.execute("select * from filelist").fetchall()),

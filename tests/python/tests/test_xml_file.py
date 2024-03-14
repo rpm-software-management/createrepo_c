@@ -196,13 +196,13 @@ class TestCaseXmlFile(unittest.TestCase):
   <name>Archer</name>
   <arch>x86_64</arch>
   <version epoch="2" ver="3.4.5" rel="6"/>
-  <checksum type="sha256" pkgid="YES">4e0b775220c67f0f2c1fd2177e626b9c863a098130224ff09778ede25cea9a9e</checksum>
+  <checksum type="sha256" pkgid="YES">65dd4d39b7539cb0b6b150db20a314402845e006cc0456d910bce87741f81b82</checksum>
   <summary>Complex package.</summary>
   <description>Archer package</description>
   <packager>Sterling Archer</packager>
   <url>http://soo_complex_package.eu/</url>
-  <time file="111" build="1365416480"/>
-  <size package="3101" installed="0" archive="544"/>
+  <time file="111" build="1710742930"/>
+  <size package="7737" installed="0" archive="544"/>
   <location href=""/>
   <format>
     <rpm:license>GPL</rpm:license>
@@ -210,15 +210,15 @@ class TestCaseXmlFile(unittest.TestCase):
     <rpm:group>Development/Tools</rpm:group>
     <rpm:buildhost>localhost.localdomain</rpm:buildhost>
     <rpm:sourcerpm>Archer-3.4.5-6.src.rpm</rpm:sourcerpm>
-    <rpm:header-range start="280" end="2865"/>
+    <rpm:header-range start="4504" end="7517"/>
     <rpm:provides>
+      <rpm:entry name="Archer" flags="EQ" epoch="2" ver="3.4.5" rel="6"/>
+      <rpm:entry name="Archer(x86-64)" flags="EQ" epoch="2" ver="3.4.5" rel="6"/>
       <rpm:entry name="bara" flags="LE" epoch="0" ver="22"/>
       <rpm:entry name="barb" flags="GE" epoch="0" ver="11.22.33" rel="44"/>
       <rpm:entry name="barc" flags="EQ" epoch="0" ver="33"/>
       <rpm:entry name="bard" flags="LT" epoch="0" ver="44"/>
       <rpm:entry name="bare" flags="GT" epoch="0" ver="55"/>
-      <rpm:entry name="Archer" flags="EQ" epoch="2" ver="3.4.5" rel="6"/>
-      <rpm:entry name="Archer(x86-64)" flags="EQ" epoch="2" ver="3.4.5" rel="6"/>
     </rpm:provides>
     <rpm:requires>
       <rpm:entry name="fooa" flags="LE" epoch="0" ver="2"/>
@@ -227,6 +227,8 @@ class TestCaseXmlFile(unittest.TestCase):
       <rpm:entry name="food" flags="LT" epoch="0" ver="4"/>
       <rpm:entry name="fooe" flags="GT" epoch="0" ver="5"/>
       <rpm:entry name="foof" flags="EQ" epoch="0" ver="6" pre="1"/>
+      <rpm:entry name="foog" flags="EQ" epoch="0" ver="7" pre="1"/>
+      <rpm:entry name="fooh" flags="EQ" epoch="0" ver="8" pre="1"/>
     </rpm:requires>
     <rpm:conflicts>
       <rpm:entry name="bba" flags="LE" epoch="0" ver="2222"/>
@@ -264,7 +266,7 @@ class TestCaseXmlFile(unittest.TestCase):
             self.assertEqual(filelists.read(),
 """<?xml version="1.0" encoding="UTF-8"?>
 <filelists xmlns="http://linux.duke.edu/metadata/filelists" packages="0">
-<package pkgid="4e0b775220c67f0f2c1fd2177e626b9c863a098130224ff09778ede25cea9a9e" name="Archer" arch="x86_64">
+<package pkgid="65dd4d39b7539cb0b6b150db20a314402845e006cc0456d910bce87741f81b82" name="Archer" arch="x86_64">
   <version epoch="2" ver="3.4.5" rel="6"/>
   <file>/usr/bin/complex_a</file>
   <file type="dir">/usr/share/doc/Archer-3.4.5</file>
@@ -289,7 +291,7 @@ class TestCaseXmlFile(unittest.TestCase):
             self.assertEqual(other.read(),
 """<?xml version="1.0" encoding="UTF-8"?>
 <otherdata xmlns="http://linux.duke.edu/metadata/other" packages="0">
-<package pkgid="4e0b775220c67f0f2c1fd2177e626b9c863a098130224ff09778ede25cea9a9e" name="Archer" arch="x86_64">
+<package pkgid="65dd4d39b7539cb0b6b150db20a314402845e006cc0456d910bce87741f81b82" name="Archer" arch="x86_64">
   <version epoch="2" ver="3.4.5" rel="6"/>
   <changelog author="Tomas Mlcoch &lt;tmlcoch@redhat.com&gt; - 1.1.1-1" date="1334664000">- First changelog.</changelog>
   <changelog author="Tomas Mlcoch &lt;tmlcoch@redhat.com&gt; - 2.2.2-2" date="1334750400">- That was totally ninja!</changelog>

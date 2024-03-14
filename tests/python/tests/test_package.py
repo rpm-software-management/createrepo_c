@@ -53,7 +53,7 @@ class TestCasePackage(unittest.TestCase):
     def test_package_archer(self):
         pkg = cr.package_from_rpm(PKG_ARCHER_PATH)
         self.assertTrue(pkg)
-        self.assertEqual(pkg.pkgId, "4e0b775220c67f0f2c1fd2177e626b9c863a098130224ff09778ede25cea9a9e")
+        self.assertEqual(pkg.pkgId, "65dd4d39b7539cb0b6b150db20a314402845e006cc0456d910bce87741f81b82")
         self.assertEqual(pkg.name, "Archer")
         self.assertEqual(pkg.arch, "x86_64")
         self.assertEqual(pkg.version, "3.4.5")
@@ -63,16 +63,16 @@ class TestCasePackage(unittest.TestCase):
         self.assertEqual(pkg.description, "Archer package")
         self.assertEqual(pkg.url, "http://soo_complex_package.eu/")
         #self.assertEqual(pkg.time_file, 1365416502)
-        self.assertEqual(pkg.time_build, 1365416480)
+        self.assertEqual(pkg.time_build, 1710742930)
         self.assertEqual(pkg.rpm_license, "GPL")
         self.assertEqual(pkg.rpm_vendor, "ISIS")
         self.assertEqual(pkg.rpm_group, "Development/Tools")
         self.assertEqual(pkg.rpm_buildhost, "localhost.localdomain")
         self.assertEqual(pkg.rpm_sourcerpm, "Archer-3.4.5-6.src.rpm")
-        self.assertEqual(pkg.rpm_header_start, 280)
-        self.assertEqual(pkg.rpm_header_end, 2865)
+        self.assertEqual(pkg.rpm_header_start, 4504)
+        self.assertEqual(pkg.rpm_header_end, 7517)
         self.assertEqual(pkg.rpm_packager, "Sterling Archer")
-        self.assertEqual(pkg.size_package, 3101)
+        self.assertEqual(pkg.size_package, 7737)
         self.assertEqual(pkg.size_installed, 0)
         self.assertEqual(pkg.size_archive, 544)
         self.assertEqual(pkg.location_href, None)
@@ -85,16 +85,18 @@ class TestCasePackage(unittest.TestCase):
             ('fooc', 'EQ', '0', '3', None, False),
             ('food', 'LT', '0', '4', None, False),
             ('fooe', 'GT', '0', '5', None, False),
-            ('foof', 'EQ', '0', '6', None, True)
+            ('foof', 'EQ', '0', '6', None, True),
+            ('foog', 'EQ', '0', '7', None, True),
+            ('fooh', 'EQ', '0', '8', None, True)
             ])
         self.assertEqual(pkg.provides, [
+            ('Archer', 'EQ', '2', '3.4.5', '6', False),
+            ('Archer(x86-64)', 'EQ', '2', '3.4.5', '6', False),
             ('bara', 'LE', '0', '22', None, False),
             ('barb', 'GE', '0', '11.22.33', '44', False),
             ('barc', 'EQ', '0', '33', None, False),
             ('bard', 'LT', '0', '44', None, False),
-            ('bare', 'GT', '0', '55', None, False),
-            ('Archer', 'EQ', '2', '3.4.5', '6', False),
-            ('Archer(x86-64)', 'EQ', '2', '3.4.5', '6', False)
+            ('bare', 'GT', '0', '55', None, False)
             ])
         self.assertEqual(pkg.conflicts, [
             ('bba', 'LE', '0', '2222', None, False),

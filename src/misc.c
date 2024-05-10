@@ -831,7 +831,7 @@ cr_better_copy_file(const char *src, const char *in_dst, GError **err)
     return TRUE;
 }
 
-int
+static int
 cr_remove_dir_cb(const char *fpath,
                  G_GNUC_UNUSED const struct stat *sb,
                  G_GNUC_UNUSED int typeflag,

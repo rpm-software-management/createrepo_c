@@ -42,6 +42,7 @@ class TestCaseRepositoryReader(unittest.TestCase):
 
         assert reader.package_count() == 1
 
+
 class TestCaseRepositoryWriter(unittest.TestCase):
 
     def setUp(self):
@@ -99,13 +100,18 @@ class TestCaseRepositoryWriter(unittest.TestCase):
             record_path = os.path.join(self.tmpdir, record.location_href)
             assert os.path.exists(record_path)
 
-            reader = cr.RepositoryReader.from_path(self.tmpdir)
-            for pkg in reader.iter_packages():
-                # test that the package files are present where expected
-                pkg_path = os.path.join(self.tmpdir, pkg.location_href)
-                assert os.path.exists(pkg_path)
-                # test that the package checksum type is correct
-                assert pkg.checksum_type == "sha256"
+        reader = cr.RepositoryReader.from_path(self.tmpdir)
+        for pkg in reader.iter_packages():
+            # test that the package files are present where expected
+            pkg_path = os.path.join(self.tmpdir, pkg.location_href)
+            assert os.path.exists(pkg_path)
+            # test that the package checksum type is correct
+            assert pkg.checksum_type == "sha256"
+
+        expected_updaterecords = [TEST_UPDATERECORD_UPDATE1]
+        for expected, actual in zip(expected_updaterecords, reader.advisories()):
+            assert_updaterecord_equal(expected, actual)
+
 
     def test_options(self):
         """Test that overriding default options works as intended"""
@@ -142,15 +148,20 @@ class TestCaseRepositoryWriter(unittest.TestCase):
             record_path = os.path.join(self.tmpdir, record.location_href)
             assert os.path.exists(record_path)
 
-            reader = cr.RepositoryReader.from_path(self.tmpdir)
-            for pkg in reader.iter_packages():
-                # test that the package files are present where expected
-                pkg_path = os.path.join(self.tmpdir, pkg.location_href)
-                assert os.path.exists(pkg_path)
-                # test that changelog_limit works
-                assert len(pkg.changelogs) <= 1
-                # test that the package checksum type is correct
-                assert pkg.checksum_type == "sha512"
+        reader = cr.RepositoryReader.from_path(self.tmpdir)
+        for pkg in reader.iter_packages():
+            # test that the package files are present where expected
+            pkg_path = os.path.join(self.tmpdir, pkg.location_href)
+            assert os.path.exists(pkg_path)
+            # test that changelog_limit works
+            assert len(pkg.changelogs) <= 1
+            # test that the package checksum type is correct
+            assert pkg.checksum_type == "sha512"
+
+        expected_updaterecords = [TEST_UPDATERECORD_UPDATE1]
+        for expected, actual in zip(expected_updaterecords, reader.advisories()):
+            assert_updaterecord_equal(expected, actual)
+
 
     def test_add_repo_metadata(self):
         """Test adding an additional repo metadata file to the repository."""
@@ -240,3 +251,24 @@ class TestCaseRepositoryWriter(unittest.TestCase):
             # test that the package files are present where expected
             pkg_path = os.path.join(self.tmpdir, pkg.location_href)
             assert os.path.exists(pkg_path)
+
+
+def assert_updaterecord_equal(expected, actual):
+    assert expected.fromstr == actual.fromstr
+    assert expected.status == actual.status
+    assert expected.type == actual.type
+    assert expected.version == actual.version
+    assert expected.id == actual.id
+    assert expected.title == actual.title
+    assert expected.issued_date == actual.issued_date
+    assert expected.updated_date == actual.updated_date
+    assert expected.rights == actual.rights
+    assert expected.release == actual.release
+    assert expected.pushcount == actual.pushcount
+    assert expected.severity == actual.severity
+    assert expected.summary == actual.summary
+    assert expected.reboot_suggested == actual.reboot_suggested
+    assert expected.description == actual.description
+    assert expected.solution == actual.solution
+    assert len(expected.references) == len(actual.references)
+    assert len(expected.collections) == len(actual.collections)

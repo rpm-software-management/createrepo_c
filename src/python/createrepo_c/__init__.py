@@ -714,10 +714,8 @@ class RepositoryWriter:
         if self._updaterecords:
             upd_xml_path = self.repodata_dir / ("updateinfo.xml" + self._compression_suffix)
             writer = UpdateInfoXmlFile(str(upd_xml_path), compressiontype=self._compression)
-            updateinfo = UpdateInfo()
             for rec in self._updaterecords:
-                updateinfo.append(rec)
-            writer.add_chunk(updateinfo.xml_dump())
+                writer.add_chunk(_createrepo_c.xml_dump_updaterecord(rec))
             self.working_metadata_files["updateinfo"] = MetadataInfoHolder(upd_xml_path, writer)
 
         # Create all the repomdrecords for the standard metadata

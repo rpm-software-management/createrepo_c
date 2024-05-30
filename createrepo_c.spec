@@ -127,7 +127,7 @@ Python 3 bindings for the createrepo_c library.
 
 %prep
 %autosetup -p1
-
+%py3_shebang_fix examples/python
 mkdir build-py3
 
 %build
@@ -202,6 +202,7 @@ ln -sr %{buildroot}%{_bindir}/modifyrepo_c %{buildroot}%{_bindir}/modifyrepo
 %{_includedir}/%{name}/
 
 %files -n python3-%{name}
+%doc examples/python/*
 %{python3_sitearch}/%{name}/
 %{python3_sitearch}/%{name}-%{version}-py%{python3_version}.egg-info
 

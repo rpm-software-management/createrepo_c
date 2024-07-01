@@ -190,13 +190,13 @@ cr_detect_compression(const char *filename, GError **err)
     }
 
     size_t bytesRead = fread(magic, 1, sizeof(magic), file);
+    fclose(file);
     if (bytesRead != sizeof(magic)) {
         // Assume that if there's less than 5 bytes in the file, it's uncompressed
         g_debug("%s: Unable to read bytes from file for magic number detection, assuming uncompressed (%s)",
             __func__, filename);
         return CR_CW_NO_COMPRESSION;
     }
-    fclose(file);
 
     if (!memcmp(magic, "\x1F\x8B", 2)) {
         return CR_CW_GZ_COMPRESSION;

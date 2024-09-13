@@ -113,7 +113,7 @@ cr_repomd_record_copy(const cr_RepomdRecord *orig)
     return rec;
 }
 
-cr_ContentStat *
+static cr_ContentStat *
 cr_get_compressed_content_stat(const char *filename,
                                cr_ChecksumType checksum_type,
                                GError **err)

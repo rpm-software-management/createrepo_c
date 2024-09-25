@@ -3,7 +3,6 @@
 PACKAGE="createrepo_c"
 RPMBUILD_DIR="${HOME}/rpmbuild/"
 BUILD_DIR="$RPMBUILD_DIR/BUILD"
-GITREV=`git rev-parse --short HEAD`
 PREFIX=""   # Root project dir
 MY_DIR=`dirname "$0"`
 
@@ -20,6 +19,13 @@ if [ ! -d "$RPMBUILD_DIR" ]; then
     echo "init rpmbuild dir with command: rpmdev-setuptree"
     echo "(Hint: Package group @development-tools and package fedora-packager)"
     exit 1
+fi
+
+if [ $# -gt "1" ]
+then
+    GITREV=$2
+else
+    GITREV=`git rev-parse --short HEAD`
 fi
 
 echo "Generating rpm for $GITREV"
@@ -54,7 +60,7 @@ fi
 echo "Copying done"
 
 echo "> Starting rpmbuild $PACKAGE.."
-rpmbuild -ba "$RPMBUILD_DIR/SPECS/$PACKAGE.spec"
+rpmbuild -ba --define "gitrev $GITREV" "$RPMBUILD_DIR/SPECS/$PACKAGE.spec"
 if [ ! $? == "0" ]; then
     echo "Error while: rpmbuild -ba $RPMBUILD_DIR/SPECS/$PACKAGE.spec"
     exit 1

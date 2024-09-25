@@ -38,7 +38,11 @@ Version:        1.1.4
 Release:        1%{?dist}
 License:        GPL-2.0-or-later
 URL:            https://github.com/rpm-software-management/createrepo_c
-Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
+%if "%{?gitrev}" == ""
+Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.xz
+%else
+Source0:        %{name}-%{gitrev}.tar.xz
+%endif
 
 %global epoch_dep %{?epoch:%{epoch}:}
 
@@ -126,7 +130,8 @@ Requires:       %{name}-libs = %{epoch_dep}%{version}-%{release}
 Python 3 bindings for the createrepo_c library.
 
 %prep
-%autosetup -p1
+%setup -n %{name}
+%autopatch -p1
 %py3_shebang_fix examples/python
 mkdir build-py3
 

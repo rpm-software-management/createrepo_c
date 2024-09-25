@@ -8,6 +8,7 @@ snippets/
 # Packages and tarball
 createrepo*.rpm
 python-createrepo*.rpm
+python3-createrepo*.rpm
 createrepo_c-*.tar.xz
 
 # Makefile generated files

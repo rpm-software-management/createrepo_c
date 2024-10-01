@@ -86,18 +86,18 @@ ENDIF ()
 ADD_LIBRARY(libcreaterepo_c ${createrepo_c_library_type} ${createrepo_c_SRCS})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${BZIP2_LIBRARIES})
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${CURL_LIBRARY})
-TARGET_LINK_LIBRARIES(libcreaterepo_c ${GLIB2_LIBRARIES})
-TARGET_LINK_LIBRARIES(libcreaterepo_c ${GIO_LIBRARIES})
-TARGET_LINK_LIBRARIES(libcreaterepo_c ${LIBMODULEMD_LIBRARIES})
+TARGET_LINK_LIBRARIES(libcreaterepo_c PkgConfig::GLIB2)
+TARGET_LINK_LIBRARIES(libcreaterepo_c PkgConfig::GIO)
+TARGET_LINK_LIBRARIES(libcreaterepo_c PkgConfig::LIBMODULEMD)
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${LIBXML2_LIBRARIES})
-TARGET_LINK_LIBRARIES(libcreaterepo_c ${LZMA_LIBRARIES})
+TARGET_LINK_LIBRARIES(libcreaterepo_c PkgConfig::LZMA)
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${OPENSSL_LIBRARIES})
-TARGET_LINK_LIBRARIES(libcreaterepo_c ${RPM_LIBRARIES})
-TARGET_LINK_LIBRARIES(libcreaterepo_c ${SQLITE3_LIBRARIES})
+TARGET_LINK_LIBRARIES(libcreaterepo_c PkgConfig::RPM)
+TARGET_LINK_LIBRARIES(libcreaterepo_c PkgConfig::SQLITE3)
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${ZLIB_LIBRARY})
-TARGET_LINK_LIBRARIES(libcreaterepo_c ${ZCK_LIBRARIES})
-TARGET_LINK_LIBRARIES(libcreaterepo_c ${DRPM_LIBRARIES})
-TARGET_LINK_LIBRARIES(libcreaterepo_c ${ZSTD_LIBRARIES})
+TARGET_LINK_LIBRARIES(libcreaterepo_c PkgConfig::ZCK)
+TARGET_LINK_LIBRARIES(libcreaterepo_c PkgConfig::DRPM)
+TARGET_LINK_LIBRARIES(libcreaterepo_c PkgConfig::ZSTD)
 
 SET_TARGET_PROPERTIES(libcreaterepo_c PROPERTIES
                       OUTPUT_NAME "createrepo_c"
@@ -108,27 +108,27 @@ SET_TARGET_PROPERTIES(libcreaterepo_c PROPERTIES
 ADD_EXECUTABLE(createrepo_c createrepo_c.c cmd_parser.c)
 TARGET_LINK_LIBRARIES(createrepo_c
                         libcreaterepo_c
-                        ${GLIB2_LIBRARIES}
-                        ${GTHREAD2_LIBRARIES})
+                        PkgConfig::GLIB2
+                        PkgConfig::GTHREAD2)
 
 ADD_EXECUTABLE(mergerepo_c mergerepo_c.c)
 TARGET_LINK_LIBRARIES(mergerepo_c
                         libcreaterepo_c
-                        ${GLIB2_LIBRARIES}
-                        ${GTHREAD2_LIBRARIES}
-                        ${LIBMODULEMD_LIBRARIES})
+                        PkgConfig::GLIB2
+                        PkgConfig::GTHREAD2
+                        PkgConfig::LIBMODULEMD)
 
 ADD_EXECUTABLE(modifyrepo_c modifyrepo_c.c)
 TARGET_LINK_LIBRARIES(modifyrepo_c
                         libcreaterepo_c
-                        ${GLIB2_LIBRARIES}
-                        ${GTHREAD2_LIBRARIES})
+                        PkgConfig::GLIB2
+                        PkgConfig::GTHREAD2)
 
 ADD_EXECUTABLE(sqliterepo_c sqliterepo_c.c)
 TARGET_LINK_LIBRARIES(sqliterepo_c
                         libcreaterepo_c
-                        ${GLIB2_LIBRARIES}
-                        ${GTHREAD2_LIBRARIES})
+                        PkgConfig::GLIB2
+                        PkgConfig::GTHREAD2)
 
 CONFIGURE_FILE("createrepo_c.pc.cmake" "${CMAKE_SOURCE_DIR}/src/createrepo_c.pc" @ONLY)
 CONFIGURE_FILE("version.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/version.h" @ONLY)

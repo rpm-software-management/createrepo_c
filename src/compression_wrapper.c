@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <unistd.h>
 #include <zlib.h>
 #include <bzlib.h>
 #include <lzma.h>

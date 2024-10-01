@@ -31,6 +31,7 @@
 #include <lzma.h>
 #ifdef WITH_ZCHUNK
 #include <zck.h>
+#include <unistd.h>
 #endif  // WITH_ZCHUNK
 #include "error.h"
 #include "compression_wrapper.h"

@@ -9,4 +9,4 @@ fi
 
 echo "Generate tarball for revision: $GITREV"
 
-git archive "${GITREV}" --prefix="$PACKAGE"/ | xz > "$TARGET_DIR"/"$PACKAGE"-"${GITREV}".tar.xz
+git archive "${GITREV}" --prefix="$PACKAGE"/ | gzip > "$TARGET_DIR"/"$PACKAGE"-"${GITREV}".tar.gz

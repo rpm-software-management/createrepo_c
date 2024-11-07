@@ -121,6 +121,50 @@ test_cr_xml_package_iterator_00(void)
 }
 
 static void
+test_cr_xml_package_iterator_00_no_filelists(void)
+{
+    int parsed = 0;
+    GError *tmp_err = NULL;
+    cr_Package *package = NULL;
+
+    cr_PkgIterator *pkg_iterator = cr_PkgIterator_new(
+        TEST_REPO_02_PRIMARY, NULL, TEST_REPO_02_OTHER, NULL, NULL, NULL, NULL, &tmp_err);
+
+    while ((package = cr_PkgIterator_parse_next(pkg_iterator, &tmp_err))) {
+        parsed++;
+        cr_package_free(package);
+    }
+
+    g_assert(cr_PkgIterator_is_finished(pkg_iterator));
+    cr_PkgIterator_free(pkg_iterator, &tmp_err);
+
+    g_assert(tmp_err == NULL);
+    g_assert_cmpint(parsed, ==, 2);
+}
+
+static void
+test_cr_xml_package_iterator_00_no_other(void)
+{
+    int parsed = 0;
+    GError *tmp_err = NULL;
+    cr_Package *package = NULL;
+
+    cr_PkgIterator *pkg_iterator = cr_PkgIterator_new(
+        TEST_REPO_02_PRIMARY, TEST_REPO_02_FILELISTS, NULL, NULL, NULL, NULL, NULL, &tmp_err);
+
+    while ((package = cr_PkgIterator_parse_next(pkg_iterator, &tmp_err))) {
+        parsed++;
+        cr_package_free(package);
+    }
+
+    g_assert(cr_PkgIterator_is_finished(pkg_iterator));
+    cr_PkgIterator_free(pkg_iterator, &tmp_err);
+
+    g_assert(tmp_err == NULL);
+    g_assert_cmpint(parsed, ==, 2);
+}
+
+static void
 test_cr_xml_package_iterator_filelists_ext_00(void)
 {
     int parsed = 0;
@@ -319,6 +363,12 @@ main(int argc, char *argv[])
 
     g_test_add_func("/xml_parser_main_metadata/test_cr_xml_package_iterator_00",
                     test_cr_xml_package_iterator_00);
+
+    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_package_iterator_00_no_filelists",
+                    test_cr_xml_package_iterator_00_no_filelists);
+
+    g_test_add_func("/xml_parser_main_metadata/test_cr_xml_package_iterator_00_no_other",
+                    test_cr_xml_package_iterator_00_no_other);
 
     g_test_add_func("/xml_parser_main_metadata/test_cr_xml_package_iterator_filelists_ext_00",
                     test_cr_xml_package_iterator_filelists_ext_00);

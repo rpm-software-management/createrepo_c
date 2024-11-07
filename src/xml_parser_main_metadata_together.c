@@ -31,15 +31,16 @@
 #define ERR_DOMAIN      CREATEREPO_C_ERROR
 
 typedef struct {
-    GSList               *in_progress_pkgs_list;
-    int                  in_progress_count_primary;
-    int                  in_progress_count_filelists;
-    int                  in_progress_count_other;
-    GQueue               *finished_pkgs_queue;
-    cr_XmlParserNewPkgCb newpkgcb;      // newpkgcb passed in from user
-    void                 *newpkgcb_data;// newpkgcb data passed in from user
-    cr_XmlParserPkgCb    pkgcb;         // pkgcb passed in from user
-    void                 *pkgcb_data;   // pkgcb data passed in from user
+    GSList                 *in_progress_pkgs_list;
+    int                    in_progress_count_primary;
+    int                    in_progress_count_filelists;
+    int                    in_progress_count_other;
+    GQueue                 *finished_pkgs_queue;
+    cr_XmlParserNewPkgCb   newpkgcb;      // newpkgcb passed in from user
+    void                   *newpkgcb_data;// newpkgcb data passed in from user
+    cr_XmlParserPkgCb      pkgcb;         // pkgcb passed in from user
+    void                   *pkgcb_data;   // pkgcb data passed in from user
+    cr_PackageLoadingFlags loadingflags;  // which callbacks need to be called before the package is considered "finished" loading
 } cr_CbData;
 
 struct _cr_PkgIterator {
@@ -67,17 +68,19 @@ struct _cr_PkgIterator {
 static int
 queue_package_if_finished(cr_Package *pkg, cr_CbData *cb_data)
 {
-    if (pkg && (pkg->loadingflags & CR_PACKAGE_LOADED_PRI) && (pkg->loadingflags & CR_PACKAGE_LOADED_OTH) &&
-        (pkg->loadingflags & CR_PACKAGE_LOADED_FIL))
+    if (pkg && ((pkg->loadingflags & cb_data->loadingflags) == cb_data->loadingflags))
     {
         //remove first element in the list
         cb_data->in_progress_pkgs_list = g_slist_delete_link(cb_data->in_progress_pkgs_list, cb_data->in_progress_pkgs_list);
 
         // One package was fully finished
         cb_data->in_progress_count_primary--;
-        cb_data->in_progress_count_filelists--;
-        cb_data->in_progress_count_other--;
-
+        if (cb_data->loadingflags & CR_PACKAGE_LOADED_FIL) {
+            cb_data->in_progress_count_filelists--;
+        }
+        if (cb_data->loadingflags & CR_PACKAGE_LOADED_OTH) {
+            cb_data->in_progress_count_other--;
+        }
         g_queue_push_tail(cb_data->finished_pkgs_queue, pkg);
     }
     return CR_CB_RET_OK;
@@ -319,8 +322,6 @@ parse_next_section(CR_FILE *target_file, const char *path, cr_ParserData *pd, GE
 
 //TODO(amatej): there is quite some overlap with this and cr_load_xml_files,
 //              consider using this api to implement cr_load_xml_files?
-// TODO: maybe whether or not individual files are parsed could be controlled by NULL paths? I think cr_load_xml_files
-// already works that way.
 cr_PkgIterator *
 cr_PkgIterator_new(const char *primary_path,
                    const char *filelists_path,
@@ -332,8 +333,6 @@ cr_PkgIterator_new(const char *primary_path,
                    GError **err)
 {
     assert(primary_path);
-    assert(filelists_path);
-    assert(other_path);
     assert(!err || *err == NULL);
 
     cr_PkgIterator* new_iter = g_new0(cr_PkgIterator, 1);
@@ -370,30 +369,41 @@ cr_PkgIterator_new(const char *primary_path,
     cbdata->newpkgcb_data = newpkgcb_data;
 
     new_iter->tmp_err = NULL;
+    int parse_files_in_primary = 0;
 
     GError* tmp_err = new_iter->tmp_err;
     new_iter->primary_f = cr_open(primary_path, CR_CW_MODE_READ, CR_CW_AUTO_DETECT_COMPRESSION, &tmp_err);
+    cbdata->loadingflags |= CR_PACKAGE_LOADED_PRI;
     if (tmp_err) {
         g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", primary_path);
         cr_PkgIterator_free(new_iter, err);
        return NULL;
     }
-    new_iter->filelists_f = cr_open(filelists_path, CR_CW_MODE_READ, CR_CW_AUTO_DETECT_COMPRESSION, &tmp_err);
-    if (tmp_err) {
-        g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", filelists_path);
-        cr_PkgIterator_free(new_iter, err);
-        return NULL;
+    if (new_iter->filelists_path) {
+        new_iter->filelists_f = cr_open(filelists_path, CR_CW_MODE_READ, CR_CW_AUTO_DETECT_COMPRESSION, &tmp_err);
+        cbdata->loadingflags |= CR_PACKAGE_LOADED_FIL;
+        if (tmp_err) {
+            g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", filelists_path);
+            cr_PkgIterator_free(new_iter, err);
+            return NULL;
+        }
+    } else {
+        new_iter->filelists_is_done = 1;
+        parse_files_in_primary = 1;
     }
-    new_iter->other_f = cr_open(other_path, CR_CW_MODE_READ, CR_CW_AUTO_DETECT_COMPRESSION, &tmp_err);
-    if (tmp_err) {
-        g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", other_path);
-        cr_PkgIterator_free(new_iter, err);
-        return NULL;
+    if (new_iter->other_path) {
+        new_iter->other_f = cr_open(other_path, CR_CW_MODE_READ, CR_CW_AUTO_DETECT_COMPRESSION, &tmp_err);
+        cbdata->loadingflags |= CR_PACKAGE_LOADED_OTH;
+        if (tmp_err) {
+            g_propagate_prefixed_error(err, tmp_err, "Cannot open %s: ", other_path);
+            cr_PkgIterator_free(new_iter, err);
+            return NULL;
+        }
+    } else {
+        new_iter->other_is_done = 1;
     }
 
-    //TODO(amatej): In the future we could make filelists/other optional if there is a need for it. That would mean we
-    //              should replace the last 0 in primary_parser_data_new depending on whether we have filelists or not.
-    new_iter->primary_pd = primary_parser_data_new(newpkgcb_primary, cbdata, pkgcb_primary, cbdata, warningcb, warningcb_data, 0);
+    new_iter->primary_pd = primary_parser_data_new(newpkgcb_primary, cbdata, pkgcb_primary, cbdata, warningcb, warningcb_data, parse_files_in_primary);
     new_iter->filelists_pd = filelists_parser_data_new(newpkgcb_filelists, cbdata, pkgcb_filelists, cbdata, warningcb, warningcb_data);
     new_iter->other_pd = other_parser_data_new(newpkgcb_other, cbdata, pkgcb_other, cbdata, warningcb, warningcb_data);
     return new_iter;
@@ -404,9 +414,7 @@ cr_PkgIterator_parse_next(cr_PkgIterator *iter, GError **err) {
     cr_CbData *cbdata = (cr_CbData*) iter->cbdata;
 
     while (!cr_PkgIterator_is_finished(iter) && g_queue_is_empty(cbdata->finished_pkgs_queue)) {
-        while ((cbdata->in_progress_count_primary <= cbdata->in_progress_count_filelists ||
-                cbdata->in_progress_count_primary <= cbdata->in_progress_count_other) &&
-               !iter->primary_is_done)
+        if (!iter->primary_is_done)
         {
             iter->primary_is_done = parse_next_section(iter->primary_f, iter->primary_path, iter->primary_pd, err);
             if (*err) {
@@ -414,9 +422,7 @@ cr_PkgIterator_parse_next(cr_PkgIterator *iter, GError **err) {
             }
         }
 
-        while ((cbdata->in_progress_count_filelists <= cbdata->in_progress_count_primary ||
-                cbdata->in_progress_count_filelists <= cbdata->in_progress_count_other) &&
-               !iter->filelists_is_done)
+        while (cbdata->in_progress_count_filelists <= cbdata->in_progress_count_primary && !iter->filelists_is_done)
         {
             iter->filelists_is_done = parse_next_section(iter->filelists_f, iter->filelists_path, iter->filelists_pd, err);
             if (*err) {
@@ -424,9 +430,7 @@ cr_PkgIterator_parse_next(cr_PkgIterator *iter, GError **err) {
             }
         }
 
-        while ((cbdata->in_progress_count_other <= cbdata->in_progress_count_filelists ||
-                cbdata->in_progress_count_other <= cbdata->in_progress_count_primary) &&
-               !iter->other_is_done)
+        while (cbdata->in_progress_count_other <= cbdata->in_progress_count_primary && !iter->other_is_done)
         {
             iter->other_is_done = parse_next_section(iter->other_f, iter->other_path, iter->other_pd, err);
             if (*err) {

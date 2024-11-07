@@ -1245,6 +1245,74 @@ class TestCaseXmlParserPkgIterator(unittest.TestCase):
         self.assertRaises(StopIteration, next, package_iterator)
         self.assertTrue(package_iterator.is_finished())
 
+    def test_xml_parser_pkg_iterator_repo02_only_primary(self):
+        warnings = []
+        def warningcb(warn_type, msg):
+            warnings.append((warn_type, msg))
+
+        package_iterator = cr.PackageIterator(
+            primary_path=REPO_02_PRIXML, filelists_path=None, other_path=None,
+            warningcb=warningcb,
+        )
+        packages = list(package_iterator)
+
+        self.assertEqual(len(packages), 2)
+        self.assertEqual(packages[0].name, "fake_bash")
+        self.assertEqual(packages[0].files, [(None, '/usr/bin/', 'fake_bash')])  # the files still get parsed - only from primary.xml
+        self.assertEqual(packages[0].changelogs, [])
+        self.assertListEqual(warnings, [])
+        self.assertRaises(StopIteration, next, package_iterator)
+        self.assertTrue(package_iterator.is_finished())
+
+
+    def test_xml_parser_pkg_iterator_repo02_no_primary(self):
+        def test():
+            cr.PackageIterator(
+                primary_path=None, filelists_path=REPO_02_FILXML, other_path=REPO_02_OTHXML,
+            )
+
+        self.assertRaises(TypeError, test)
+
+    def test_xml_parser_pkg_iterator_repo02_no_filelists(self):
+        warnings = []
+        def warningcb(warn_type, msg):
+            warnings.append((warn_type, msg))
+
+        package_iterator = cr.PackageIterator(
+            primary_path=REPO_02_PRIXML, filelists_path=None, other_path=REPO_02_OTHXML,
+            warningcb=warningcb,
+        )
+        packages = list(package_iterator)
+
+        self.assertEqual(len(packages), 2)
+        self.assertEqual(packages[0].name, "fake_bash")
+        self.assertEqual(packages[0].changelogs, [
+            ('Tomas Mlcoch <tmlcoch@redhat.com> - 1.1.1-1', 1334664000, '- First release'),
+        ])
+        self.assertEqual(packages[0].files, [(None, '/usr/bin/', 'fake_bash')])  # the files still get parsed - only from primary.xml
+        self.assertListEqual(warnings, [])
+        self.assertRaises(StopIteration, next, package_iterator)
+        self.assertTrue(package_iterator.is_finished())
+
+    def test_xml_parser_pkg_iterator_repo02_no_other(self):
+        warnings = []
+        def warningcb(warn_type, msg):
+            warnings.append((warn_type, msg))
+
+        package_iterator = cr.PackageIterator(
+            primary_path=REPO_02_PRIXML, filelists_path=REPO_02_FILXML, other_path=None,
+            warningcb=warningcb,
+        )
+        packages = list(package_iterator)
+
+        self.assertEqual(len(packages), 2)
+        self.assertEqual(packages[0].name, "fake_bash")
+        self.assertEqual(packages[0].changelogs, [])
+        self.assertEqual(packages[0].files, [(None, '/usr/bin/', 'fake_bash')])
+        self.assertListEqual(warnings, [])
+        self.assertRaises(StopIteration, next, package_iterator)
+        self.assertTrue(package_iterator.is_finished())
+
     def test_xml_parser_pkg_iterator_repo02_newpkgcb_as_filter(self):
         def newpkgcb(pkgId, name, arch):
             if name in {"fake_bash"}:

@@ -416,8 +416,8 @@ class RepositoryReader:
         metadata_files = {record.type: record for record in repomd.records}
         parser = RepositoryReader()
         parser._primary_xml_path = os.path.join(path, metadata_files["primary"].location_href)
-        parser._filelists_xml_path = os.path.join(path, metadata_files["filelists"].location_href)
-        parser._other_xml_path = os.path.join(path, metadata_files["other"].location_href)
+        parser._filelists_xml_path = os.path.join(path, metadata_files["filelists"].location_href) if metadata_files.get("filelists") else None
+        parser._other_xml_path = os.path.join(path, metadata_files["other"].location_href) if metadata_files.get("other") else None
 
         if metadata_files.get("updateinfo"):
             parser._updateinfo_path = os.path.join(path, metadata_files["updateinfo"].location_href)

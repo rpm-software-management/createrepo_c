@@ -780,14 +780,14 @@ pkg_iterator_init(_PkgIteratorObject *self, PyObject *args, PyObject *kwargs)
     static char *kwlist[] = {"primary", "filelists", "other", "newpkgcb",
                              "warningcb", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "sssOO:pkg_iterator_init", kwlist,
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "szzOO:pkg_iterator_init", kwlist,
                                      &primary_path, &filelists_path, &other_path, &py_newpkgcb,
                                      &py_warningcb)) {
         return -1;
     }
 
-    if (!primary_path || !filelists_path || !other_path) {
-        PyErr_SetString(PyExc_TypeError, "file paths must be provided");
+    if (!primary_path) {
+        PyErr_SetString(PyExc_TypeError, "primary file path must be provided");
         return -1;
     }
 

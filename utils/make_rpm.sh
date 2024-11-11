@@ -50,17 +50,16 @@ if [ ! $? == "0" ]; then
     exit 1
 fi
 
-# Copy via sed
-sed -i "s/%global gitrev .*/%global gitrev $GITREV/g" "$PREFIX/$PACKAGE.spec"
-sed "s/%global gitrev .*/%global gitrev $GITREV/g" "$PREFIX/$PACKAGE.spec" > "$RPMBUILD_DIR/SPECS/$PACKAGE.spec"
+cp "$PREFIX/$PACKAGE.spec" "$RPMBUILD_DIR/SPECS/"
 if [ ! $? == "0" ]; then
     echo "Error while: cp $PREFIX/$PACKAGE.spec $RPMBUILD_DIR/SPECS/"
     exit 1
 fi
+
 echo "Copying done"
 
 echo "> Starting rpmbuild $PACKAGE.."
-rpmbuild -ba "$RPMBUILD_DIR/SPECS/$PACKAGE.spec"
+rpmbuild -ba --define "gitrev $GITREV" "$RPMBUILD_DIR/SPECS/$PACKAGE.spec"
 if [ ! $? == "0" ]; then
     echo "Error while: rpmbuild -ba $RPMBUILD_DIR/SPECS/$PACKAGE.spec"
     exit 1

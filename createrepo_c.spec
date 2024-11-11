@@ -32,9 +32,15 @@
 
 %bcond_with sanitizers
 
+%if %{defined gitrev}
+%define package_version %{?gitrev}
+%else
+%define package_version 1.2.0
+%endif
+
 Summary:        Creates a common metadata repository
 Name:           createrepo_c
-Version:        1.2.0
+Version:        %{package_version}
 Release:        1%{?dist}
 License:        GPL-2.0-or-later
 URL:            https://github.com/rpm-software-management/createrepo_c
@@ -204,6 +210,6 @@ ln -sr %{buildroot}%{_bindir}/modifyrepo_c %{buildroot}%{_bindir}/modifyrepo
 %files -n python3-%{name}
 %doc examples/python/*
 %{python3_sitearch}/%{name}/
-%{python3_sitearch}/%{name}-%{version}-py%{python3_version}.egg-info
+%{python3_sitearch}/%{name}-*-py%{python3_version}.egg-info
 
 %changelog

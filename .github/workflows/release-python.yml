@@ -29,7 +29,7 @@ jobs:
         pip install dist/*.tar.gz
         pytest --verbose --color=yes tests/python/tests/
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         path: dist/*.tar.gz
 
@@ -59,7 +59,7 @@ jobs:
         platforms: arm64
 
     - name: Build wheels for CPython
-      uses: pypa/cibuildwheel@v2.16.5
+      uses: pypa/cibuildwheel@v2.21.3
       env:
         CIBW_ARCHS: ${{ matrix.arch }}
         CIBW_SKIP: "pp* *-musllinux_* cp36* cp37* cp38*"  # no PyPy or musl builds, no older Python versions
@@ -71,7 +71,7 @@ jobs:
         CIBW_TEST_COMMAND: |
           pytest --verbose --color=yes {project}/tests/python/tests/
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         path: ./wheelhouse/*.whl
 
@@ -82,7 +82,7 @@ jobs:
     needs: [build_bdist, build_sdist]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4.1.7
+      - uses: actions/download-artifact@v4
         with:
           name: artifact
           path: dist

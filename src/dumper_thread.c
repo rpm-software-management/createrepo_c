@@ -421,7 +421,7 @@ exit:
     return checksum;
 }
 
-gchar *
+static gchar *
 prepare_split_media_baseurl(int media_id, const char *location_base)
 {
     // Default location_base "media:" in split mode

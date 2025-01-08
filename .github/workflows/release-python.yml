@@ -59,7 +59,7 @@ jobs:
         platforms: arm64
 
     - name: Build wheels for CPython
-      uses: pypa/cibuildwheel@v2.21.3
+      uses: pypa/cibuildwheel@v2.22.0
       env:
         CIBW_ARCHS: ${{ matrix.arch }}
         CIBW_SKIP: "pp* *-musllinux_* cp36* cp37* cp38*"  # no PyPy or musl builds, no older Python versions
@@ -87,7 +87,7 @@ jobs:
           name: artifact
           path: dist
 
-      - uses: pypa/gh-action-pypi-publish@v1.8.11
+      - uses: pypa/gh-action-pypi-publish@v1.12.3
         with:
           user: __token__
           password: ${{secrets.PYPI_API_TOKEN}}

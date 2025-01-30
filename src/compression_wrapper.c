@@ -286,7 +286,7 @@ cr_gz_strerror(gzFile f)
 }
 
 #ifdef WITH_ZCHUNK
-cr_ChecksumType
+static cr_ChecksumType
 cr_cktype_from_zck(zckCtx *zck, GError **err)
 {
     int cktype = zck_get_full_hash_type(zck);

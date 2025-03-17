@@ -31,37 +31,33 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
+        name: source
         path: dist/*.tar.gz
 
   build_bdist:
     name: Build binary wheels
-    runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
-          - arch: auto64  # native 64-bit
-          - arch: aarch64
-    # TODO: when github actions gets native aarch64 runners, ditch qemu, it will be much faster
+          - os: ubuntu-24.04
+            arch: x86_64
+          - os: ubuntu-24.04-arm
+            arch: aarch64
+    runs-on: ${{ matrix.os }}
 
     steps:
     - uses: actions/checkout@v4
 
     # setup Python for cibuildwheel
     - name: Set up Python
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.x'
 
-    - name: Set up QEMU
-      if: runner.os == 'Linux' && ${{ matrix.arch }} == "aarch64"
-      uses: docker/setup-qemu-action@v3
-      with:
-        platforms: arm64
-
     - name: Build wheels for CPython
-      uses: pypa/cibuildwheel@v2.22.0
+      uses: pypa/cibuildwheel@v2.23.3
       env:
-        CIBW_ARCHS: ${{ matrix.arch }}
+        CIBW_ARCHS: auto64
         CIBW_SKIP: "pp* *-musllinux_* cp36* cp37* cp38*"  # no PyPy or musl builds, no older Python versions
         CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28  # alma 8
         CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
@@ -73,6 +69,7 @@ jobs:
 
     - uses: actions/upload-artifact@v4
       with:
+        name: ${{ matrix.arch }}
         path: ./wheelhouse/*.whl
 
 
@@ -84,10 +81,10 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: artifact
+          merge-multiple: true
           path: dist
 
-      - uses: pypa/gh-action-pypi-publish@v1.12.3
+      - uses: pypa/gh-action-pypi-publish@v1.12.4
         with:
           user: __token__
           password: ${{secrets.PYPI_API_TOKEN}}

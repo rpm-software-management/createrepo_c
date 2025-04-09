@@ -42,7 +42,7 @@ Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
 
 %global epoch_dep %{?epoch:%{epoch}:}
 
-BuildRequires:  cmake
+BuildRequires:  cmake >= 3.7.0
 BuildRequires:  gcc
 BuildRequires:  bzip2-devel
 BuildRequires:  doxygen

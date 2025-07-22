@@ -666,7 +666,7 @@ cr_package_from_header(Header hdr,
 
     if (hdrrflags & CR_HDRR_LOADHDRID)
         pkg->hdrid = cr_safe_string_chunk_insert(pkg->chunk,
-                                                 headerGetString(hdr, RPMTAG_HDRID));
+                                                 headerGetString(hdr, RPMTAG_SHA1HEADER));
 
     if (hdrrflags & CR_HDRR_LOADSIGNATURES) {
         rpmtd gpgtd = rpmtdNew();

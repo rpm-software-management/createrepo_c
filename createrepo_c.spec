@@ -145,25 +145,25 @@ pushd build-py3
       -DWITH_LEGACY_HASHES=%{?with_legacy_hashes:ON}%{!?with_legacy_hashes:OFF} \
       -DENABLE_DRPM=%{?with_drpm:ON}%{!?with_drpm:OFF} \
       -DWITH_SANITIZERS=%{?with_sanitizers:ON}%{!?with_sanitizers:OFF}
-  make %{?_smp_mflags} RPM_OPT_FLAGS="%{optflags}"
+  %cmake_build
   # Build C documentation
-  make doc-c
+  %cmake_build -t doc-c
 popd
 
 %check
 # Run Python 3 tests
 pushd build-py3
   # Compile C tests
-  make tests
+  %cmake_build -t tests
 
   # Run Python 3 tests
-  make ARGS="-V" test
+  %ctest -V
 popd
 
 %install
 pushd build-py3
   # Install createrepo_c with Python 3
-  make install DESTDIR=%{buildroot}
+  %cmake_install
 popd
 
 %if 0%{?fedora} || 0%{?rhel} > 7

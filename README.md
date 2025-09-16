@@ -61,6 +61,12 @@ Commands I am using for building the RPM:
     make clean && make
 ## Other build options
 
+### ``-DBUILD_DOC_C=OFF``
+
+Build C API documentation (Default: ON)
+
+Disable building of C API documentation, which requires doxygen to be present.
+
 ### ``-DENABLE_LEGACY_WEAKDEPS=ON``
 
 Enable legacy SUSE/Mageia/Mandriva weakdeps support (Default: ON)

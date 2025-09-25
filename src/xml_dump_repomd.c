@@ -30,7 +30,7 @@
 #include "xml_dump_internal.h"
 
 
-void
+static void
 cr_xml_dump_repomd_record(xmlNodePtr root, cr_RepomdRecord *rec)
 {
     xmlNodePtr data, node;
@@ -123,7 +123,7 @@ cr_xml_dump_repomd_record(xmlNodePtr root, cr_RepomdRecord *rec)
 }
 
 
-void
+static void
 cr_xml_dump_repomd_body(xmlNodePtr root, cr_Repomd *repomd)
 {
     GSList *element;

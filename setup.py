@@ -40,6 +40,7 @@ setup(
     },
     cmake_args=[
         '-DBIN_INSTALL_DIR:PATH=src/python/createrepo_c/data/bin',
+        '-DBUILD_DOC_C=OFF',
         '-DBUILD_LIBCREATEREPO_C_SHARED:BOOL=OFF',
         '-DCREATEREPO_C_INSTALL_DEVELOPMENT:BOOL=OFF',
         '-DCREATEREPO_C_INSTALL_MANPAGES:BOOL=OFF',

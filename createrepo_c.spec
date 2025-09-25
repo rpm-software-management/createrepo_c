@@ -4,6 +4,9 @@
 
 %global bash_completion %{_datadir}/bash-completion/completions/*
 
+# Generate API documentation from the sources
+%bcond_without doc_c
+
 # Fedora infrastructure needs it for producing Fedora ≤ 39 and EPEL ≤ 7 repositories
 # See https://github.com/rpm-software-management/createrepo_c/issues/398
 %if ( 0%{?rhel} && ( 0%{?rhel} <= 7 || 0%{?rhel} >= 9 ) ) || ( 0%{?fedora} && 0%{?fedora} >= 45 )
@@ -51,7 +54,9 @@ Source0:        %{url}/archive/%{version}/%{name}-%{version}.tar.gz
 BuildRequires:  cmake >= 3.7.0
 BuildRequires:  gcc
 BuildRequires:  bzip2-devel
+%if %{with doc_c}
 BuildRequires:  doxygen
+%endif
 BuildRequires:  glib2-devel >= 2.22.0
 BuildRequires:  libcurl-devel
 BuildRequires:  libxml2-devel
@@ -140,14 +145,15 @@ mkdir build-py3
 # Build createrepo_c with Pyhon 3
 pushd build-py3
   %cmake .. \
+      -DBUILD_DOC_C=%{?with_doc_c:ON}%{!?with_doc_c:OFF} \
       -DWITH_ZCHUNK=%{?with_zchunk:ON}%{!?with_zchunk:OFF} \
       -DWITH_LIBMODULEMD=%{?with_libmodulemd:ON}%{!?with_libmodulemd:OFF} \
       -DWITH_LEGACY_HASHES=%{?with_legacy_hashes:ON}%{!?with_legacy_hashes:OFF} \
       -DENABLE_DRPM=%{?with_drpm:ON}%{!?with_drpm:OFF} \
       -DWITH_SANITIZERS=%{?with_sanitizers:ON}%{!?with_sanitizers:OFF}
   %cmake_build
-  # Build C documentation
-  %cmake_build -t doc-c
+  # Build documentation
+  %cmake_build -t doc
 popd
 
 %check

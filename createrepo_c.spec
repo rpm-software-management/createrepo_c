@@ -157,6 +157,10 @@ pushd build-py3
   %cmake_build -t tests
 
   # Run Python 3 tests
+  %if 0%{?rhel} == 9 && %{defined ctest}
+    # Work around broken passing options to ctest macro, RHEL-120543
+    %global ctest(-) %{expand:%{macrobody:ctest}}
+  %endif
   %ctest -V
 popd
 

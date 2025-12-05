@@ -1,7 +1,9 @@
 ADD_SUBDIRECTORY (python)
 
 ADD_CUSTOM_TARGET (doc)
-ADD_DEPENDENCIES (doc doc-python)
+if (ENABLE_PYTHON)
+    ADD_DEPENDENCIES (doc doc-python)
+endif (ENABLE_PYTHON)
 
 option(BUILD_DOC_C "Build C API documentation" ON)
 if(BUILD_DOC_C)

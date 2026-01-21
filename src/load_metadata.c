@@ -76,13 +76,13 @@ cr_metadata_modulemd(cr_Metadata *md)
 }
 #endif /* WITH_LIBMODULEMD */
 
-void
+static void
 cr_free_values(gpointer data)
 {
     cr_package_free((cr_Package *) data);
 }
 
-GHashTable *
+static GHashTable *
 cr_new_metadata_hashtable()
 {
     GHashTable *hashtable = g_hash_table_new_full(g_str_hash, g_str_equal,
@@ -90,7 +90,7 @@ cr_new_metadata_hashtable()
     return hashtable;
 }
 
-void
+static void
 cr_destroy_metadata_hashtable(GHashTable *hashtable)
 {
     if (hashtable)

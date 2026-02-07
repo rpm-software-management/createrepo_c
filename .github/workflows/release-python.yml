@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     container: fedora:latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Install dependencies
       run: |
@@ -29,7 +29,7 @@ jobs:
         pip install dist/*.tar.gz
         pytest --verbose --color=yes tests/python/tests/
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v6
       with:
         name: source
         path: dist/*.tar.gz
@@ -46,16 +46,16 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     # setup Python for cibuildwheel
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.x'
 
     - name: Build wheels for CPython
-      uses: pypa/cibuildwheel@v2.23.3
+      uses: pypa/cibuildwheel@v3.3.1
       env:
         CIBW_ARCHS: auto64
         CIBW_SKIP: "pp* *-musllinux_* cp36* cp37* cp38*"  # no PyPy or musl builds, no older Python versions
@@ -67,7 +67,7 @@ jobs:
         CIBW_TEST_COMMAND: |
           pytest --verbose --color=yes {project}/tests/python/tests/
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v6
       with:
         name: ${{ matrix.arch }}
         path: ./wheelhouse/*.whl
@@ -79,7 +79,7 @@ jobs:
     needs: [build_bdist, build_sdist]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v6
         with:
           merge-multiple: true
           path: dist

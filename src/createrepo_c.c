@@ -827,9 +827,9 @@ main(int argc, char **argv)
     const char *xml_compression_suffix = NULL;
     const char *sqlite_compression_suffix = NULL;
     const char *compression_suffix = NULL;
-    cr_CompressionType xml_compression = CR_CW_ZSTD_COMPRESSION;
+    cr_CompressionType xml_compression = CR_DEFAULT_COMPRESSION;
     cr_CompressionType sqlite_compression = CR_CW_BZ2_COMPRESSION;
-    cr_CompressionType compression = CR_CW_ZSTD_COMPRESSION;
+    cr_CompressionType compression = CR_DEFAULT_COMPRESSION;
 
     if (cmd_options->compatibility) {
         xml_compression    = CR_CW_GZ_COMPRESSION;

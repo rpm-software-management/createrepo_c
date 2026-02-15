@@ -1474,9 +1474,13 @@ main(int argc, char **argv)
     user_data.id_fex            = 0;
     user_data.id_oth            = 0;
     user_data.buffer            = g_queue_new();
+
+#ifdef CR_DELTA_RPM_SUPPORT
     user_data.deltas            = cmd_options->deltas;
     user_data.max_delta_rpm_size= cmd_options->max_delta_rpm_size;
     user_data.deltatargetpackages = NULL;
+#endif
+
     user_data.cut_dirs          = cmd_options->cut_dirs;
     user_data.location_prefix   = cmd_options->location_prefix;
     user_data.had_errors        = 0;

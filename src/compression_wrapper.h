@@ -46,6 +46,11 @@ typedef enum {
     CR_CW_COMPRESSION_SENTINEL,       /*!< Sentinel of the list */
 } cr_CompressionType;
 
+/* Default compression method (configurable at build time) */
+#ifndef CR_DEFAULT_COMPRESSION
+#define CR_DEFAULT_COMPRESSION CR_CW_ZSTD_COMPRESSION
+#endif
+
 /** Open modes.
  */
 typedef enum {

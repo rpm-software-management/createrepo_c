@@ -56,10 +56,13 @@ struct CmdOptions _cmd_options = {
         .location_prefix            = NULL,
         .repomd_checksum            = NULL,
         .pretty                     = DEFAULT_FORMAT_PRETTY,
+
+#ifdef CR_DELTA_RPM_SUPPORT
         .deltas                     = FALSE,
         .oldpackagedirs             = NULL,
         .num_deltas                 = 1,
         .max_delta_rpm_size         = CR_DEFAULT_MAX_DELTA_RPM_SIZE,
+#endif
 
         .checksum_cachedir          = NULL,
         .repomd_checksum_type       = CR_CHECKSUM_SHA256,
@@ -630,6 +633,7 @@ check_arguments(struct CmdOptions *options,
         }
     }
 
+#ifdef CR_DELTA_RPM_SUPPORT
     // Check oldpackagedirs
     x = 0;
     while (options->oldpackagedirs && options->oldpackagedirs[x]) {
@@ -639,6 +643,7 @@ check_arguments(struct CmdOptions *options,
                                             (gpointer) path);
         x++;
     }
+#endif
 
     // Check cut_dirs
     if (options->cut_dirs < 0) {
@@ -690,7 +695,10 @@ free_options(struct CmdOptions *options)
     g_strfreev(options->distro_tags);
     g_strfreev(options->content_tags);
     g_strfreev(options->repo_tags);
+
+#ifdef CR_DELTA_RPM_SUPPORT
     g_strfreev(options->oldpackagedirs);
+#endif
 
     cr_slist_free_full(options->include_pkgs, g_free);
     cr_slist_free_full(options->exclude_masks,

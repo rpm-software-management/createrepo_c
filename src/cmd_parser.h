@@ -100,6 +100,7 @@ struct CmdOptions {
                                      d - days) */
     char *cachedir;             /*!< Cache dir for checksums */
 
+#ifdef CR_DELTA_RPM_SUPPORT
     gboolean deltas;            /*!< Is delta generation enabled? */
     char **oldpackagedirs;      /*!< Paths to look for older pks
                                      to delta agains */
@@ -107,6 +108,8 @@ struct CmdOptions {
                                      deltas against */
     gint64 max_delta_rpm_size;  /*!< Max size of an rpm that to run
                                      deltarpm against */
+#endif
+
     gboolean local_sqlite;      /*!< Gen sqlite locally into a directory for
                                      temporary files.
                                      For situations when sqlite has a trouble

@@ -84,7 +84,7 @@ cause degradation of performance.
 
 ### ``-DENABLE_DRPM=ON``
 
-Enable DeltaRPM support using drpm library (Default: ON)
+Enable DeltaRPM support using drpm library (Default: OFF)
 
 Adds support for creating DeltaRPMs and incorporating them
 into the repository.

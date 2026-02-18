@@ -19,8 +19,12 @@
 
 #include <glib.h>
 #include <assert.h>
+#include <rpm/header.h>
 #include <rpm/rpmfi.h>
 #include <rpm/rpmpgp.h>
+#include <rpm/rpmtag.h>
+#include <rpm/rpmtd.h>
+#include <rpm/rpmver.h>
 #include <stdlib.h>
 #include "parsehdr.h"
 #include "xml_dump.h"

@@ -25,7 +25,7 @@ extern "C" {
 #endif
 
 #include <glib.h>
-#include <rpm/rpmlib.h>
+#include <rpm/rpmtypes.h>
 #include "package.h"
 
 /** \defgroup   parsehdr         Header parser API.

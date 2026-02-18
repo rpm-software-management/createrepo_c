@@ -25,7 +25,7 @@
 #include <curl/curl.h>
 #include <errno.h>
 #include <ftw.h>
-#include <rpm/rpmlib.h>
+#include <rpm/rpmver.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

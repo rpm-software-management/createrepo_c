@@ -26,6 +26,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 #include <errno.h>
 #include <libxml/encoding.h>
 #include <libxml/xmlstring.h>

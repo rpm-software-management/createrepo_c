@@ -24,7 +24,11 @@
 #include <rpm/rpmpgp.h>
 #include <rpm/rpmtag.h>
 #include <rpm/rpmtd.h>
+#ifdef _AIX
+#include <rpm/rpmds.h>
+#else
 #include <rpm/rpmver.h>
+#endif
 #include <stdlib.h>
 #include "parsehdr.h"
 #include "xml_dump.h"

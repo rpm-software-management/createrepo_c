@@ -24,7 +24,11 @@
 #include <rpm/rpmpgp.h>
 #include <rpm/rpmtag.h>
 #include <rpm/rpmtd.h>
+#ifdef HAVE_RPM_RPMVER_H
 #include <rpm/rpmver.h>
+#else
+#include <rpm/rpmlib.h>
+#endif
 #include <stdlib.h>
 #include "parsehdr.h"
 #include "xml_dump.h"

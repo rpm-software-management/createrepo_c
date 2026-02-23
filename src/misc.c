@@ -25,7 +25,11 @@
 #include <curl/curl.h>
 #include <errno.h>
 #include <ftw.h>
+#ifdef HAVE_RPM_RPMVER_H
 #include <rpm/rpmver.h>
+#else
+#include <rpm/rpmlib.h>
+#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

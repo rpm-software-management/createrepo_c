@@ -78,6 +78,11 @@ IF (NOT HAVE_NFTW)
     ENDIF ()
 ENDIF ()
 
+# rpm/rpmver.h exists since RPM 4.16.0-beta2.
+IF (RPM_VERSION VERSION_GREATER_EQUAL "4.16.0")
+    ADD_COMPILE_DEFINITIONS(HAVE_RPM_RPMVER_H)
+ENDIF ()
+
 IF (BUILD_LIBCREATEREPO_C_SHARED)
   SET (createrepo_c_library_type SHARED)
 ELSE ()

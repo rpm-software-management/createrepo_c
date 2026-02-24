@@ -189,6 +189,7 @@ During \-\-update, remove all files in repodata/ which are older then the specif
 .SS \-c \-\-cachedir CACHEDIR.
 .sp
 Set path to cache dir
+.if @ENABLE_DRPM_MAN@ \{\
 .SS \-\-deltas
 .sp
 Tells createrepo to generate deltarpms and the delta metadata.
@@ -201,6 +202,7 @@ The number of older versions to make deltas against. Defaults to 1.
 .SS \-\-max\-delta\-rpm\-size MAX_DELTA_RPM_SIZE
 .sp
 Max size of an rpm that to run deltarpm against (in bytes).
+.\}
 .SS \-\-local\-sqlite
 .sp
 Gen sqlite DBs locally (into a directory for temporary files). Sometimes, sqlite has a trouble to gen DBs on a NFS mount, use this option in such cases. This option could lead to a higher memory consumption if TMPDIR is set to /tmp or not set at all, because then the /tmp is used and /tmp dir is often a ramdisk.

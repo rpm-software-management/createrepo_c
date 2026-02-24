@@ -15,8 +15,15 @@ if(BUILD_DOC_C)
     ADD_DEPENDENCIES (doc doc-c)
 endif(BUILD_DOC_C)
 
+IF(ENABLE_DRPM)
+    SET(ENABLE_DRPM_MAN 1)
+ELSE()
+    SET(ENABLE_DRPM_MAN 0)
+ENDIF()
+CONFIGURE_FILE(createrepo_c.8.in ${CMAKE_CURRENT_BINARY_DIR}/createrepo_c.8 @ONLY)
+
 IF(CREATEREPO_C_INSTALL_MANPAGES)
-    INSTALL(FILES createrepo_c.8 mergerepo_c.8 modifyrepo_c.8 sqliterepo_c.8
+    INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/createrepo_c.8 mergerepo_c.8 modifyrepo_c.8 sqliterepo_c.8
             DESTINATION "${CMAKE_INSTALL_MANDIR}/man8"
             COMPONENT bin)
 ENDIF(CREATEREPO_C_INSTALL_MANPAGES)

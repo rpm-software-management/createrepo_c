@@ -13,14 +13,18 @@ _cr_checksum_type()
 _cr_createrepo()
 {
     COMPREPLY=()
+    local _cr_has_drpm=@ENABLE_DRPM_BASH@
 
     case $3 in
         -V|--version|-h|--help)
             return 0
             ;;
-        --update-md-path|-o|--outputdir|--oldpackagedirs)
+        --update-md-path|-o|--outputdir)
             COMPREPLY=( $( compgen -d -- "$2" ) )
             return 0
+            ;;
+        --oldpackagedirs)
+            (( _cr_has_drpm )) && COMPREPLY=( $( compgen -d -- "$2" ) ) && return 0
             ;;
         -g|--groupfile)
             COMPREPLY=( $( compgen -f -o plusdirs -X '!*.xml' -- "$2" ) )
@@ -59,7 +63,7 @@ _cr_createrepo()
     esac
 
     if [[ $2 == -* ]] ; then
-        COMPREPLY=( $( compgen -W '--help --version --quiet --verbose
+        local cr_opts='--help --version --quiet --verbose
             --excludes --basedir --baseurl --groupfile --checksum
             --pretty --database --no-database --update --update-md-path
             --skip-stat --pkglist --includepkg --outputdir
@@ -69,8 +73,11 @@ _cr_createrepo()
             --compress-type --keep-all-metadata --compatibility
             --retain-old-md-by-age --cachedir --local-sqlite
             --cut-dirs --location-prefix
+            --recycle-pkglist'
+        (( _cr_has_drpm )) && cr_opts="$cr_opts
             --deltas --oldpackagedirs
-            --num-deltas --max-delta-rpm-size --recycle-pkglist' -- "$2" ) )
+            --num-deltas --max-delta-rpm-size"
+        COMPREPLY=( $( compgen -W "$cr_opts" -- "$2" ) )
     else
         COMPREPLY=( $( compgen -d -- "$2" ) )
     fi

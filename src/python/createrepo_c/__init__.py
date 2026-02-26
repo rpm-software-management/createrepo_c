@@ -86,6 +86,11 @@ XMLFILE_OTHER         = _createrepo_c.XMLFILE_OTHER         #: Other xml file
 XMLFILE_PRESTODELTA   = _createrepo_c.XMLFILE_PRESTODELTA   #: Prestodelta xml file
 XMLFILE_UPDATEINFO    = _createrepo_c.XMLFILE_UPDATEINFO    #: Updateinfo xml file
 
+HDRR_NONE           = _createrepo_c.HDRR_NONE           #: No header reading flags
+HDRR_LOADHDRID      = _createrepo_c.HDRR_LOADHDRID      #: Load hdrid
+HDRR_LOADSIGNATURES = _createrepo_c.HDRR_LOADSIGNATURES #: Load siggpg and sigpgp
+HDRR_NOFILEDIGESTS  = _createrepo_c.HDRR_NOFILEDIGESTS  #: Don't load file digests (changes package file tuples from 4 to 3 elements)
+
 #: XML warning - Unknown tag
 XML_WARNING_UNKNOWNTAG  = _createrepo_c.XML_WARNING_UNKNOWNTAG
 

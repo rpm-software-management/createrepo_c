@@ -232,3 +232,12 @@ class TestCasePackage(unittest.TestCase):
         del(pkg_c)
         self.assertEqual(pkg_d.name, "FooPackage")
         del(pkg_d)
+
+    def test_package_without_digests(self):
+        pkg = cr.package_from_rpm(PKG_ARCHER_PATH, header_reading_flags=cr.HDRR_NOFILEDIGESTS)
+        self.assertTrue(pkg)
+        self.assertEqual(pkg.files, [
+            ('', '/usr/bin/', 'complex_a'),
+            ('dir', '/usr/share/doc/', 'Archer-3.4.5'),
+            ('', '/usr/share/doc/Archer-3.4.5/', 'README')
+            ])

@@ -314,10 +314,10 @@ class UpdateInfoXmlFile(XmlFile):
 # Functions
 
 def package_from_rpm(filename, checksum_type=SHA256, location_href=None,
-                     location_base=None, changelog_limit=10):
+                     location_base=None, changelog_limit=10, header_reading_flags=HDRR_NONE):
     """:class:`.Package` object from the rpm package"""
     return _createrepo_c.package_from_rpm(filename, checksum_type,
-                      location_href, location_base, changelog_limit)
+                      location_href, location_base, changelog_limit, header_reading_flags)
 
 def xml_from_rpm(filename, checksum_type=SHA256, location_href=None,
                      location_base=None, changelog_limit=10):

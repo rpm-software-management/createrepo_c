@@ -39,6 +39,11 @@ typedef enum {
     CR_HDRR_NONE            = (1 << 0),
     CR_HDRR_LOADHDRID       = (1 << 1), /*!< Load hdrid */
     CR_HDRR_LOADSIGNATURES  = (1 << 2), /*!< Load siggpg and siggpg */
+    CR_HDRR_NOFILEDIGESTS   = (1 << 3), /*!< Don't load file digests */
+    CR_HDRR_ALL             = CR_HDRR_NONE |
+                              CR_HDRR_LOADHDRID |
+                              CR_HDRR_LOADSIGNATURES |
+                              CR_HDRR_NOFILEDIGESTS, /*!< All flags set (doesn't mean load all) */
 } cr_HeaderReadingFlags;
 
 /** Read data from header and return filled cr_Package structure.

@@ -36,20 +36,27 @@ py_package_from_rpm(G_GNUC_UNUSED PyObject *self, PyObject *args)
     int checksum_type, changelog_limit;
     char *filename, *location_href, *location_base;
     GError *tmp_err = NULL;
-    cr_HeaderReadingFlags flags = CR_HDRR_NONE; // TODO - support for flags
+    cr_HeaderReadingFlags header_reading_flags = CR_HDRR_NONE;
 
-    if (!PyArg_ParseTuple(args, "sizzi:py_package_from_rpm",
+    if (!PyArg_ParseTuple(args, "sizzi|i:py_package_from_rpm",
                                          &filename,
                                          &checksum_type,
                                          &location_href,
                                          &location_base,
-                                         &changelog_limit)) {
+                                         &changelog_limit,
+                                         &header_reading_flags)) {
+        return NULL;
+    }
+
+    if (header_reading_flags & ~ CR_HDRR_ALL) {
+        nice_exception(&tmp_err, "Unknown header reading flags.");
         return NULL;
     }
 
     pkg = cr_package_from_rpm(filename, checksum_type, location_href,
                               location_base, changelog_limit, NULL,
-                              flags, &tmp_err);
+                              header_reading_flags, &tmp_err);
+
     if (tmp_err) {
         cr_package_free(pkg);
         nice_exception(&tmp_err, "Cannot load %s: ", filename);

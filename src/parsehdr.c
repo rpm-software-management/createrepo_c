@@ -329,8 +329,10 @@ cr_package_from_header(Header hdr,
                 packagefile->type = cr_safe_string_chunk_insert(pkg->chunk, "");
             }
 
-            packagefile->digest = cr_safe_string_chunk_insert(pkg->chunk,
-                                                              rpmtdGetString(filedigests));
+            if (!(hdrrflags & CR_HDRR_NOFILEDIGESTS)) {
+                packagefile->digest = cr_safe_string_chunk_insert(pkg->chunk,
+                                                                  rpmtdGetString(filedigests));
+            }
 
             g_hash_table_replace(filenames_hashtable,
                                  (gpointer) rpmtdGetString(full_filenames),

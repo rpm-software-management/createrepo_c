@@ -10,12 +10,14 @@ jobs:
       - epel-9
       - epel-10
       - fedora-all
+      - fedora-eln
   - job: tests
     trigger: pull_request
     identifier: "createrepo_c-tests"
     targets:
       # EPELs fail now for unrelated reasons
       - fedora-all
+      - fedora-eln
     fmf_url: https://github.com/rpm-software-management/ci-dnf-stack.git
     fmf_ref: main
     tmt_plan: "^/plans/integration/behave-createrepo_c$"

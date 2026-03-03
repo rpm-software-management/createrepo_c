@@ -21,7 +21,7 @@
 %bcond_without zchunk
 %endif
 
-%if 0%{?rhel} && 0%{?rhel} < 7
+%if 0%{?rhel} && ( 0%{?rhel} < 7 || 0%{?rhel} >= 11 )
 %bcond_with libmodulemd
 %else
 %bcond_without libmodulemd

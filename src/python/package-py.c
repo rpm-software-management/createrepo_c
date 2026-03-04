@@ -287,6 +287,30 @@ get_str(_PackageObject *self, void *closure)
     return PyUnicode_FromString(str);
 }
 
+static PyObject *
+get_signatures(_PackageObject *self, G_GNUC_UNUSED void *unused)
+{
+    if (check_PackageStatus(self))
+        return NULL;
+
+    PyObject *list = PyList_New(0);
+    if (!list)
+        return NULL;
+
+    for (GSList *elem = cr_package_get_signatures(self->package); elem; elem = g_slist_next(elem))
+    {
+        PyObject *str = PyUnicode_FromString((char *)elem->data);
+        if (!str)
+        {
+            Py_DECREF(list);
+            return NULL;
+        }
+        PyList_Append(list, str);
+        Py_DECREF(str);
+    }
+
+    return list;
+}
 
 /** Convert C object to PyObject.
  * @param       C object
@@ -603,6 +627,8 @@ static PyGetSetDef package_getsetters[] = {
         &(ListConvertor){ cr_package_get_changelogs, cr_package_set_changelogs,
             (ConversionFromFunc) PyObject_FromChangelogEntry, CheckPyChangelogEntry,
             (ConversionToFunc) PyObject_ToChangelogEntry }},
+    {"signatures",       (getter)get_signatures, NULL,
+        "OpenPGP signatures of the package (read-only)", NULL},
     {NULL, NULL, NULL, NULL, NULL} /* sentinel */
 };
 

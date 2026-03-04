@@ -81,6 +81,8 @@ struct _cr_Package {
     cr_BinaryData *siggpg;
     cr_BinaryData *sigpgp;
 
+    GSList *signatures;         /*!< signatures (list of char*)*/
+
     GStringChunk *chunk;        /*!< string chunk for store all package strings
                                      on the single place */
 

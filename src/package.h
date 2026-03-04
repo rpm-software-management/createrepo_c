@@ -708,6 +708,13 @@ GSList *cr_package_get_changelogs(cr_Package *package);
  */
 void cr_package_set_changelogs(cr_Package *package, GSList *list);
 
+/** Get signatures (list of signature strings).
+ * Ownership: not transferred.
+ * @param package       cr_Package
+ * @return              signatures list or NULL
+ */
+GSList *cr_package_get_signatures(cr_Package *package);
+
 /** Get OpenPGP signature.
  * Ownership: not transferred.
  * @param package       cr_Package

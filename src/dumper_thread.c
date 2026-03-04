@@ -360,6 +360,13 @@ get_checksum(const char *filename,
             cr_checksum_update(ctx, pkg->siggpg->data, pkg->siggpg->size, NULL);
         if (pkg->sigpgp)
             cr_checksum_update(ctx, pkg->sigpgp->data, pkg->sigpgp->size, NULL);
+
+        for (GSList *elem = pkg->signatures; elem; elem = g_slist_next(elem)) {
+            const char *sig = (const char *)elem->data;
+            if (sig)
+                cr_checksum_update(ctx, sig, strlen(sig), NULL);
+        }
+
         if (pkg->hdrid)
             cr_checksum_update(ctx, pkg->hdrid, strlen(pkg->hdrid), NULL);
 

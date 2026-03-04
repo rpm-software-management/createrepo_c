@@ -243,6 +243,29 @@ static struct PyMethodDef package_methods[] = {
 /* Getters */
 
 static PyObject *
+get_signatures(_PackageObject *self, G_GNUC_UNUSED void *unused)
+{
+    if (check_PackageStatus(self))
+        return NULL;
+
+    PyObject *list = PyList_New(0);
+    if (!list)
+        return NULL;
+
+    for (GSList *elem = self->package->signatures; elem; elem = g_slist_next(elem)) {
+        PyObject *str = PyUnicode_FromString((char *) elem->data);
+        if (!str) {
+            Py_DECREF(list);
+            return NULL;
+        }
+        PyList_Append(list, str);
+        Py_DECREF(str);
+    }
+
+    return list;
+}
+
+static PyObject *
 get_num(_PackageObject *self, void *member_offset)
 {
     if (check_PackageStatus(self))
@@ -571,6 +594,8 @@ static PyGetSetDef package_getsetters[] = {
         "Files that package contains", &(list_convertors[8])},
     {"changelogs",       (getter)get_list, (setter)set_list,
         "Changelogs that package contains", &(list_convertors[9])},
+    {"signatures",       (getter)get_signatures, NULL,
+        "OpenPGP signatures of the package (read-only)", NULL},
     {NULL, NULL, NULL, NULL, NULL} /* sentinel */
 };
 

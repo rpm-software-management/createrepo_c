@@ -305,5 +305,11 @@ PyInit__createrepo_c(void)
     PyModule_AddIntConstant(m, "XML_WARNING_UNKNOWNVAL", CR_XML_WARNING_UNKNOWNVAL);
     PyModule_AddIntConstant(m, "XML_WARNING_BADATTRVAL", CR_XML_WARNING_BADATTRVAL);
 
+    /* Header Reading flags */
+    PyModule_AddIntConstant(m, "HDRR_NONE", CR_HDRR_NONE);
+    PyModule_AddIntConstant(m, "HDRR_LOADHDRID", CR_HDRR_LOADHDRID);
+    PyModule_AddIntConstant(m, "HDRR_LOADSIGNATURES", CR_HDRR_LOADSIGNATURES);
+    PyModule_AddIntConstant(m, "HDRR_NOFILEDIGESTS", CR_HDRR_NOFILEDIGESTS);
+
     return m;
 }

@@ -58,6 +58,10 @@ ADD_EXECUTABLE(test_modifyrepo_shared test_modifyrepo_shared.c)
 TARGET_LINK_LIBRARIES(test_modifyrepo_shared libcreaterepo_c PkgConfig::GLIB2)
 ADD_DEPENDENCIES(tests test_modifyrepo_shared)
 
+ADD_EXECUTABLE(test_parsepkg test_parsepkg.c)
+TARGET_LINK_LIBRARIES(test_parsepkg libcreaterepo_c PkgConfig::GLIB2)
+ADD_DEPENDENCIES(tests test_parsepkg)
+
 CONFIGURE_FILE("run_tests.sh.in"  "${CMAKE_BINARY_DIR}/tests/run_tests.sh")
 ADD_TEST(test_main run_tests.sh)
 

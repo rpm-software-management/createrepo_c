@@ -24,7 +24,7 @@
 
 PyDoc_STRVAR(package_from_rpm__doc__,
 "package_from_rpm(filename, checksum_type, location_href, "
-"location_base, changelog_limit) -> Package\n\n"
+"location_base, changelog_limit[, header_reading_flags]) -> Package\n\n"
 "Package object from the rpm package");
 
 PyObject *py_package_from_rpm(PyObject *self, PyObject *args);

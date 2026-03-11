@@ -268,6 +268,8 @@ class TestCaseSignatures(unittest.TestCase):
         self.assertEqual(len(pkg.signatures), 1)
         self.assertGreater(len(pkg.signatures[0]), 0)
 
+    # https://github.com/rpm-software-management/createrepo_c/pull/477#discussion_r2920022135
+    @unittest.skip("Skip v6 multiple signature test until all CI platforms recognize RPMTAG_OPENPGP")
     def test_signatures_v6_multiple(self):
         pkg = cr.package_from_rpm(PKG_EMPTY_SIGNED_V6_MULTIPLE_PATH,
                                    header_reading_flags=cr.HDRR_LOADSIGNATURES)

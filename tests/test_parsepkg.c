@@ -126,8 +126,12 @@ main(int argc, char *argv[])
                     test_parsepkg_signatures_single_eddsa);
     g_test_add_func("/parsepkg/signatures_single_rsa",
                     test_parsepkg_signatures_single_rsa);
-    g_test_add_func("/parsepkg/signatures_v6_multiple",
-                    test_parsepkg_signatures_v6_multiple);
+
+    // Disabled until all CI platforms recognize RPMTAG_OPENPGP
+    // https://github.com/rpm-software-management/createrepo_c/pull/477#discussion_r2920022135
+
+    // g_test_add_func("/parsepkg/signatures_v6_multiple",
+    //                 test_parsepkg_signatures_v6_multiple);
 
     int ret = g_test_run();
     cr_package_parser_cleanup();

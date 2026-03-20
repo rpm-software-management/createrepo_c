@@ -4,7 +4,6 @@ graft test*
 include VERSION.cmake
 include CMakeLists.txt
 include pyproject.toml
-include setup.py
 include requirements-dev.txt
 include AUTHORS
 include COPYING

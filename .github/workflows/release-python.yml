@@ -19,10 +19,10 @@ jobs:
         sudo dnf -y builddep createrepo_c.spec
         sudo dnf -y install twine pytest
         pip install --upgrade pip
-        pip install scikit-build
+        pip install build scikit-build-core
 
     - name: Build Python sdist
-      run: python3 setup.py sdist
+      run: python3 -m build --sdist
 
     - name: Install and Test Python source package
       run: |
@@ -58,11 +58,10 @@ jobs:
       uses: pypa/cibuildwheel@v3.3.1
       env:
         CIBW_ARCHS: auto64
-        CIBW_SKIP: "pp* *-musllinux_* *t-*"  # no PyPy, musl, or free-threaded builds
+        CIBW_SKIP: "pp* *-musllinux_*"  # no PyPy or musl builds
         CIBW_MANYLINUX_X86_64_IMAGE: manylinux_2_28  # alma 8
         CIBW_MANYLINUX_AARCH64_IMAGE: manylinux_2_28
         CIBW_BEFORE_ALL_LINUX: dnf -y install epel-release && yes | dnf -y builddep createrepo_c.spec
-        CIBW_BEFORE_BUILD: python -m pip install scikit-build
         CIBW_TEST_REQUIRES: pytest
         CIBW_TEST_COMMAND: |
           pytest --verbose --color=yes {project}/tests/python/tests/

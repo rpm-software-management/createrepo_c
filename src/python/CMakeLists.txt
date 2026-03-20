@@ -74,6 +74,12 @@ ELSE ()
     INSTALL(FILES createrepo_c/__init__.py DESTINATION ${PYTHON_INSTALL_DIR}/createrepo_c)
     INSTALL(TARGETS _createrepo_c LIBRARY DESTINATION ${PYTHON_INSTALL_DIR}/createrepo_c)
 
-    # Version has to be passed as last argument.
-    INSTALL(CODE "EXECUTE_PROCESS(COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/utils/setup_for_python_metadata.py install_egg_info --install-dir \$ENV{DESTDIR}/${PYTHON_INSTALL_DIR} ${VERSION})")
+    # Install dist-info metadata so distro packaging tools can discover this package
+    SET(_DIST_INFO_DIR "${PYTHON_INSTALL_DIR}/createrepo_c-${VERSION}.dist-info")
+    INSTALL(CODE "
+        file(MAKE_DIRECTORY \$ENV{DESTDIR}/${_DIST_INFO_DIR})
+        file(WRITE \$ENV{DESTDIR}/${_DIST_INFO_DIR}/METADATA \"Metadata-Version: 2.1\\nName: createrepo_c\\nVersion: ${VERSION}\\n\")
+        file(WRITE \$ENV{DESTDIR}/${_DIST_INFO_DIR}/INSTALLER \"cmake\\n\")
+        file(WRITE \$ENV{DESTDIR}/${_DIST_INFO_DIR}/RECORD \"\")
+    ")
 ENDIF ()

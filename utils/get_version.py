@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 
-import re
 import sys
 import os.path
 from optparse import OptionParser
 
-VERSION_FILE_PATH = "VERSION.cmake"
+VERSION_FILE_PATH = "VERSION"
 
 
 def parse(root_dir):
@@ -14,11 +13,12 @@ def parse(root_dir):
         print("File {path} doesn't exist".format(path=path))
         return None
 
-    content = open(path, "r").read()
+    content = open(path, "r").read().strip()
+    parts = content.split(".")
     ver = {}
-    ver['major'] = re.search(r'SET\s*\(CR_MAJOR\s+"(\d+)"', content).group(1)
-    ver['minor'] = re.search(r'SET\s*\(CR_MINOR\s+"(\d+)"', content).group(1)
-    ver['patch'] = re.search(r'SET\s*\(CR_PATCH\s+"(\d+)"', content).group(1)
+    ver['major'] = parts[0]
+    ver['minor'] = parts[1]
+    ver['patch'] = parts[2]
     return ver
 
 

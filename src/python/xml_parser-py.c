@@ -77,7 +77,7 @@ c_newpkgcb(cr_Package **pkg,
         }
     }
 
-    if (result->ob_refcnt == 1) {
+    if (Py_REFCNT(result) == 1) {
         *pkg = NULL;
     }
     Py_DECREF(result);

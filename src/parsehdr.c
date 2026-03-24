@@ -281,10 +281,10 @@ cr_package_from_header(Header hdr,
 
     // Create list of pointer to directory names
 
-    int dir_count;
+    uint32_t dir_count;
     char **dir_list = NULL;
     if (headerGet(hdr, RPMTAG_DIRNAMES, dirnames,  flags) && (dir_count = rpmtdCount(dirnames))) {
-        int x = 0;
+        uint32_t x = 0;
         dir_list = malloc(sizeof(char *) * dir_count);
         while (rpmtdNext(dirnames) != -1) {
             dir_list[x] = cr_safe_string_chunk_insert(pkg->chunk, rpmtdGetString(dirnames));
@@ -316,7 +316,12 @@ cr_package_from_header(Header hdr,
             cr_PackageFile *packagefile = cr_package_file_new();
             packagefile->name = cr_safe_string_chunk_insert(pkg->chunk,
                                                          rpmtdGetString(filenames));
-            packagefile->path = (dir_list) ? dir_list[(int) rpmtdGetNumber(indexes)] : "";
+            uint64_t dir_idx = rpmtdGetNumber(indexes);
+            if (dir_list && dir_idx < (uint64_t) dir_count) {
+                packagefile->path = dir_list[dir_idx];
+            } else {
+                packagefile->path = "";
+            }
 
             if (S_ISDIR(rpmtdGetNumber(filemodes))) {
                 // Directory

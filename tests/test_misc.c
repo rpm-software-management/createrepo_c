@@ -1307,6 +1307,101 @@ test_cr_cut_dirs(void)
 }
 
 
+// Allow g_warning() to not abort during tests that intentionally trigger warnings
+static gboolean
+log_not_fatal(const gchar *log_domain G_GNUC_UNUSED,
+              GLogLevelFlags log_level G_GNUC_UNUSED,
+              const gchar *message G_GNUC_UNUSED,
+              gpointer user_data G_GNUC_UNUSED)
+{
+    return FALSE;
+}
+
+// Test: clean string is not modified
+static void
+test_cr_safe_string_chunk_insert_clean(void)
+{
+    GStringChunk *chunk = g_string_chunk_new(1024);
+    gchar *result = cr_safe_string_chunk_insert(chunk, "hello world");
+    g_assert_cmpstr(result, ==, "hello world");
+    g_string_chunk_free(chunk);
+}
+
+// Test: NULL input returns NULL
+static void
+test_cr_safe_string_chunk_insert_null_input(void)
+{
+    GStringChunk *chunk = g_string_chunk_new(1024);
+    gchar *result = cr_safe_string_chunk_insert(chunk, NULL);
+    g_assert_null(result);
+    g_string_chunk_free(chunk);
+}
+
+// Test: control chars are stripped from the middle of a string
+static void
+test_cr_safe_string_chunk_insert_strips_control_chars(void)
+{
+    g_test_log_set_fatal_handler(log_not_fatal, NULL);
+    GStringChunk *chunk = g_string_chunk_new(1024);
+    gchar *result = cr_safe_string_chunk_insert(chunk, "foo\x1b" "bar");
+    g_assert_cmpstr(result, ==, "foobar");
+    g_string_chunk_free(chunk);
+}
+
+// Test: multiple control chars are all stripped
+static void
+test_cr_safe_string_chunk_insert_strips_multiple_control_chars(void)
+{
+    g_test_log_set_fatal_handler(log_not_fatal, NULL);
+    GStringChunk *chunk = g_string_chunk_new(1024);
+    gchar *result = cr_safe_string_chunk_insert(chunk, "\x01hello\x02 \x03world\x1f");
+    g_assert_cmpstr(result, ==, "hello world");
+    g_string_chunk_free(chunk);
+}
+
+// Test: allowed whitespace (tab, newline, carriage return) is preserved
+static void
+test_cr_safe_string_chunk_insert_preserves_whitespace(void)
+{
+    GStringChunk *chunk = g_string_chunk_new(1024);
+    gchar *result = cr_safe_string_chunk_insert(chunk, "foo\tbar\nbaz\rqux");
+    g_assert_cmpstr(result, ==, "foo\tbar\nbaz\rqux");
+    g_string_chunk_free(chunk);
+}
+
+// Test: string that is entirely control chars becomes empty
+static void
+test_cr_safe_string_chunk_insert_all_control_chars(void)
+{
+    g_test_log_set_fatal_handler(log_not_fatal, NULL);
+    GStringChunk *chunk = g_string_chunk_new(1024);
+    gchar *result = cr_safe_string_chunk_insert(chunk, "\x01\x02\x03");
+    g_assert_cmpstr(result, ==, "");
+    g_string_chunk_free(chunk);
+}
+
+// Test: _null variant returns NULL for empty string
+static void
+test_cr_safe_string_chunk_insert_null_empty(void)
+{
+    GStringChunk *chunk = g_string_chunk_new(1024);
+    gchar *result = cr_safe_string_chunk_insert_null(chunk, "");
+    g_assert_null(result);
+    g_string_chunk_free(chunk);
+}
+
+// Test: _null variant strips control chars
+static void
+test_cr_safe_string_chunk_insert_null_strips(void)
+{
+    g_test_log_set_fatal_handler(log_not_fatal, NULL);
+    GStringChunk *chunk = g_string_chunk_new(1024);
+    gchar *result = cr_safe_string_chunk_insert_null(chunk, "foo\x1b" "bar");
+    g_assert_cmpstr(result, ==, "foobar");
+    g_string_chunk_free(chunk);
+}
+
+
 int
 main(int argc, char *argv[])
 {
@@ -1379,6 +1474,22 @@ main(int argc, char *argv[])
             test_cr_cmp_evr);
     g_test_add_func("/misc/test_cr_cut_dirs",
             test_cr_cut_dirs);
+    g_test_add_func("/misc/test_cr_safe_string_chunk_insert_clean",
+            test_cr_safe_string_chunk_insert_clean);
+    g_test_add_func("/misc/test_cr_safe_string_chunk_insert_null_input",
+            test_cr_safe_string_chunk_insert_null_input);
+    g_test_add_func("/misc/test_cr_safe_string_chunk_insert_strips_control_chars",
+            test_cr_safe_string_chunk_insert_strips_control_chars);
+    g_test_add_func("/misc/test_cr_safe_string_chunk_insert_strips_multiple_control_chars",
+            test_cr_safe_string_chunk_insert_strips_multiple_control_chars);
+    g_test_add_func("/misc/test_cr_safe_string_chunk_insert_preserves_whitespace",
+            test_cr_safe_string_chunk_insert_preserves_whitespace);
+    g_test_add_func("/misc/test_cr_safe_string_chunk_insert_all_control_chars",
+            test_cr_safe_string_chunk_insert_all_control_chars);
+    g_test_add_func("/misc/test_cr_safe_string_chunk_insert_null_empty",
+            test_cr_safe_string_chunk_insert_null_empty);
+    g_test_add_func("/misc/test_cr_safe_string_chunk_insert_null_strips",
+            test_cr_safe_string_chunk_insert_null_strips);
 
     return g_test_run();
 }

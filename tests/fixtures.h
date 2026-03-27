@@ -27,6 +27,10 @@
 #define TEST_COMPRESSED_FILES_PATH      TEST_DATA_PATH"compressed_files/"
 #define TEST_MODIFIED_REPO_FILES_PATH   TEST_DATA_PATH"modified_repo_files/"
 #define TEST_PACKAGES_PATH              TEST_DATA_PATH"packages/"
+
+#define PKG_EMPTY_SIGNED_EDDSA          TEST_PACKAGES_PATH"empty-signed-eddsa-0-0.x86_64.rpm"
+#define PKG_EMPTY_SIGNED_RSA            TEST_PACKAGES_PATH"empty-signed-rsa-0-0.x86_64.rpm"
+#define PKG_EMPTY_SIGNED_V6_MULTIPLE    TEST_PACKAGES_PATH"empty-signed-v6-multiple-0-0.x86_64.rpm"
 #define TEST_REPO_00                    TEST_DATA_PATH"repo_00/"
 #define TEST_REPO_01                    TEST_DATA_PATH"repo_01/"
 #define TEST_REPO_02                    TEST_DATA_PATH"repo_02/"

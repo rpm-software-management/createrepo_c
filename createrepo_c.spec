@@ -129,7 +129,6 @@ These development files are for easy manipulation with a repodata.
 Summary:        Python 3 bindings for the createrepo_c library
 %{?python_provide:%python_provide python3-%{name}}
 BuildRequires:  python3-devel
-BuildRequires:  python3-setuptools
 BuildRequires:  python3-sphinx
 Requires:       %{name}-libs = %{epoch_dep}%{version}-%{release}
 
@@ -220,6 +219,6 @@ ln -sr %{buildroot}%{_bindir}/modifyrepo_c %{buildroot}%{_bindir}/modifyrepo
 %files -n python3-%{name}
 %doc examples/python/*
 %{python3_sitearch}/%{name}/
-%{python3_sitearch}/%{name}-*-py%{python3_version}.egg-info
+%{python3_sitearch}/%{name}-*.dist-info
 
 %changelog

@@ -28,7 +28,7 @@ extern "C" {
 #include "compression_wrapper.h"
 
 #define DEFAULT_DB_COMPRESSION_TYPE             CR_CW_BZ2_COMPRESSION
-#define DEFAULT_COMPRESSION_TYPE                CR_CW_ZSTD_COMPRESSION
+#define DEFAULT_COMPRESSION_TYPE                CR_DEFAULT_COMPRESSION
 
 typedef enum {
     MM_DEFAULT,

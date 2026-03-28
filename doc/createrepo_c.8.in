@@ -38,6 +38,7 @@ createrepo_c [options] <directory>
 .SH DESCRIPTION
 .sp
 Uses rpm packages from <directory> to create repodata.
+.if @WITH_LIBMODULEMD_MAN@ \{\
 .sp
 If compiled with libmodulemd support modular metadata inside <directory> identified by the patterns below and all their compressed variants are automatically collected, merged and added to the repodata.
 .sp
@@ -54,6 +55,7 @@ modules.yaml (recommended way of importing multiple documents at once)
 .UNINDENT
 .UNINDENT
 .UNINDENT
+.\}
 .SH OPTIONS
 .SS \-V \-\-version
 .sp

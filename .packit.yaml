@@ -1,5 +1,5 @@
 # See the documentation for more information:
-# https://packit.dev/docs/configuration/
+# https://packit.dev/docs/configuration
 
 specfile_path: createrepo_c.spec
 version_suffix: "^{PACKIT_PROJECT_SNAPSHOTID}"

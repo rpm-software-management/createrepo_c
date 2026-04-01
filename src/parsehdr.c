@@ -45,6 +45,11 @@
 #define RPMSENSE_MISSINGOK (1 << 19)
 #endif
 
+#ifndef RPMTAG_OPENPGP
+// hardcode RPMTAG_OPENPGP value, because we can't rely on it being defined, and we don't want to miss signatures
+#define RPMTAG_OPENPGP (RPMTAG_SIG_BASE + 22)
+#endif
+
 typedef enum DepType_e {
     DEP_PROVIDES,
     DEP_CONFLICTS,
@@ -165,7 +170,7 @@ cr_compare_dependency(const char *dep1, const char *dep2)
     if (ver1 > ver1_e) return 2;
     if (ver2 > ver2_e) return 1;
 
-/*  XXX: This piece of code could be removed in future 
+/*  XXX: This piece of code could be removed in future
     // Check if version is really version and not an architecture
     // case: libc.so.6(64bit) = 64 is not a version!
     ret1 = strncmp(ver1, "64bit", 5);
@@ -709,6 +714,42 @@ cr_package_from_header(Header hdr,
 
         rpmtdFree(gpgtd);
         rpmtdFree(pgptd);
+
+        rpmtd openpgptd = rpmtdNew();
+
+        // https://github.com/rpm-software-management/rpm/issues/4137
+        if (headerGet(hdr, RPMTAG_OPENPGP, openpgptd, HEADERGET_MINMEM)
+            && openpgptd->count > 0)
+        {
+            rpmtdInit(openpgptd);
+            while (rpmtdNext(openpgptd) != -1) {
+                const char *sig = rpmtdGetString(openpgptd);
+                pkg->signatures = g_slist_prepend(pkg->signatures,
+                                                  cr_safe_string_chunk_insert(pkg->chunk, sig));
+            }
+            pkg->signatures = g_slist_reverse(pkg->signatures);
+        }
+        rpmtdFreeData(openpgptd);
+        rpmtdFree(openpgptd);
+        if (!pkg->signatures)
+        {
+            rpmtd bintd = rpmtdNew();
+            gboolean found = headerGet(hdr, RPMTAG_RSAHEADER, bintd, flags)
+                             && bintd->count > 0;
+            if (!found) {
+                rpmtdFreeData(bintd);
+                found = headerGet(hdr, RPMTAG_DSAHEADER, bintd, flags)
+                        && bintd->count > 0;
+            }
+            if (found) {
+                gchar *b64 = g_base64_encode((const guchar *) bintd->data, bintd->count);
+                pkg->signatures = g_slist_prepend(pkg->signatures,
+                                                  cr_safe_string_chunk_insert(pkg->chunk, b64));
+                g_free(b64);
+            }
+            rpmtdFreeData(bintd);
+            rpmtdFree(bintd);
+        }
     }
 
     return pkg;

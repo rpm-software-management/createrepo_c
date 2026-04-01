@@ -2,6 +2,8 @@
 # https://packit.dev/docs/configuration/
 
 specfile_path: createrepo_c.spec
+version_suffix: "^{PACKIT_PROJECT_SNAPSHOTID}"
+update_release: false
 
 jobs:
   - job: copr_build

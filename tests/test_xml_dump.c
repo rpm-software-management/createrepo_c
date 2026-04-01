@@ -8,6 +8,16 @@
 #include "createrepo/misc.h"
 #include "createrepo/xml_dump.h"
 
+// Allow g_warning() to not abort during tests that intentionally trigger warnings
+static gboolean
+log_not_fatal(const gchar *log_domain G_GNUC_UNUSED,
+              GLogLevelFlags log_level G_GNUC_UNUSED,
+              const gchar *message G_GNUC_UNUSED,
+              gpointer user_data G_GNUC_UNUSED)
+{
+    return FALSE;
+}
+
 // Tests
 
 static void
@@ -28,75 +38,36 @@ test_cr_prepend_protocol_01(void)
     g_free(prepended_url);
 }
 
+// Test: xml dump succeeds for package with control chars (previously it would fail)
 static void
-test_cr_Package_contains_forbidden_control_chars_01(void)
+test_cr_xml_dump_with_control_chars(void)
 {
+    g_test_log_set_fatal_handler(log_not_fatal, NULL);
     cr_Package *p = get_package();
-    g_assert(!cr_Package_contains_forbidden_control_chars(p));
-    cr_package_free(p);
-}
 
-static void
-test_cr_Package_contains_forbidden_control_chars_02(void)
-{
-    cr_Package *p = get_package();
-    p->name = "foo";
+    // Inject a control char into a changelog entry via the string chunk
+    cr_ChangelogEntry *changelog = cr_changelog_entry_new();
+    changelog->author = cr_safe_string_chunk_insert(p->chunk, "John Doe <john@example.com>");
+    changelog->date = 1234567890;
+    changelog->changelog = cr_safe_string_chunk_insert(p->chunk,
+        "- added patch \x1b""9cd568066b5ff8d6");
+    p->changelogs = g_slist_prepend(p->changelogs, changelog);
 
-    g_assert(cr_Package_contains_forbidden_control_chars(p));
-    cr_package_free(p);
-}
+    // The control char should have been stripped at insert time
+    g_assert_cmpstr(changelog->changelog, ==, "- added patch 9cd568066b5ff8d6");
 
-static void
-test_cr_Package_contains_forbidden_control_chars_03(void)
-{
-    cr_Package *p = get_package();
-    p->summary = "foo";
+    // XML dump should succeed (not return an error)
+    GError *err = NULL;
+    struct cr_XmlStruct xml = cr_xml_dump(p, &err);
+    g_assert_no_error(err);
+    g_assert_nonnull(xml.primary);
+    g_assert_nonnull(xml.filelists);
+    g_assert_nonnull(xml.other);
 
-    g_assert(cr_Package_contains_forbidden_control_chars(p));
-    cr_package_free(p);
-}
-
-static void
-test_cr_Package_contains_forbidden_control_chars_04(void)
-{
-    cr_Package *p = get_package();
-    cr_Dependency *dep = p->requires->data;
-    dep->name = "foobar_dep";
-
-    g_assert(cr_Package_contains_forbidden_control_chars(p));
-    cr_package_free(p);
-}
-
-static void
-test_cr_Package_contains_forbidden_control_chars_05(void)
-{
-    cr_Package *p = get_package();
-    cr_PackageFile *file = p->files->data;
-    file->name = "obar_dep";
-
-    g_assert(cr_Package_contains_forbidden_control_chars(p));
-    cr_package_free(p);
-}
-
-static void
-test_cr_GSList_of_cr_Dependency_contains_forbidden_control_chars_01(void)
-{
-    cr_Package *p = get_package();
-    cr_Dependency *dep = p->requires->data;
-    dep->name = "foobar_dep";
-
-    g_assert(cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(p->requires));
-    cr_package_free(p);
-}
-
-static void
-test_cr_GSList_of_cr_Dependency_contains_forbidden_control_chars_02(void)
-{
-    cr_Package *p = get_package();
-    cr_Dependency *dep = p->requires->data;
-    dep->name = "fo	badep";
-
-    g_assert(!cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(p->requires));
+    g_free(xml.primary);
+    g_free(xml.filelists);
+    g_free(xml.filelists_ext);
+    g_free(xml.other);
     cr_package_free(p);
 }
 
@@ -109,20 +80,8 @@ main(int argc, char *argv[])
                     test_cr_prepend_protocol_00);
     g_test_add_func("/xml_dump/test_cr_prepend_protocol_01",
                     test_cr_prepend_protocol_01);
+    g_test_add_func("/xml_dump/test_cr_xml_dump_with_control_chars",
+                    test_cr_xml_dump_with_control_chars);
 
-    g_test_add_func("/xml_dump/test_cr_Package_contains_forbidden_control_chars_01",
-                    test_cr_Package_contains_forbidden_control_chars_01);
-    g_test_add_func("/xml_dump/test_cr_Package_contains_forbidden_control_chars_02",
-                    test_cr_Package_contains_forbidden_control_chars_02);
-    g_test_add_func("/xml_dump/test_cr_Package_contains_forbidden_control_chars_03",
-                    test_cr_Package_contains_forbidden_control_chars_03);
-    g_test_add_func("/xml_dump/test_cr_Package_contains_forbidden_control_chars_04",
-                    test_cr_Package_contains_forbidden_control_chars_04);
-    g_test_add_func("/xml_dump/test_cr_Package_contains_forbidden_control_chars_05",
-                    test_cr_Package_contains_forbidden_control_chars_05);
-    g_test_add_func("/xml_dump/test_cr_GSList_of_cr_Dependency_contains_forbidden_control_chars_01",
-                    test_cr_GSList_of_cr_Dependency_contains_forbidden_control_chars_01);
-    g_test_add_func("/xml_dump/test_cr_GSList_of_cr_Dependency_contains_forbidden_control_chars_02",
-                    test_cr_GSList_of_cr_Dependency_contains_forbidden_control_chars_02);
     return g_test_run();
 }

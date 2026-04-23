@@ -345,13 +345,13 @@ static ListConvertor list_convertors[] = {
 static PyObject *
 get_list(_PackageObject *self, void *conv)
 {
+    if (check_PackageStatus(self))
+        return NULL;
+
     ListConvertor *convertor = conv;
     PyObject *list;
     cr_Package *pkg = self->package;
     GSList *glist = *((GSList **) ((size_t) pkg + (size_t) convertor->offset));
-
-    if (check_PackageStatus(self))
-        return NULL;
 
     if ((list = PyList_New(0)) == NULL)
         return NULL;

@@ -845,7 +845,7 @@ pkg_iterator_init(_PkgIteratorObject *self, PyObject *args, PyObject *kwargs)
 static void
 pkg_iterator_dealloc(_PkgIteratorObject *self)
 {
-    GError *tmp_err;
+    GError *tmp_err = NULL;
     if (self->pkg_iterator) {
         cr_PkgIterator_free(self->pkg_iterator, &tmp_err);
     }

@@ -803,8 +803,16 @@ pkg_iterator_init(_PkgIteratorObject *self, PyObject *args, PyObject *kwargs)
         return -1;
     }
 
-    if (self->pkg_iterator) // reinitialization by __init__()
+    if (self->pkg_iterator) { // reinitialization by __init__()
         cr_PkgIterator_free(self->pkg_iterator, &tmp_err);
+        self->pkg_iterator = NULL;
+        Py_XDECREF(self->cbdata->py_newpkgcb);
+        Py_XDECREF(self->cbdata->py_warningcb);
+        Py_XDECREF(self->cbdata->py_pkgs);
+        self->cbdata->py_newpkgcb = NULL;
+        self->cbdata->py_warningcb = NULL;
+        self->cbdata->py_pkgs = NULL;
+    }
     if (tmp_err) {
         nice_exception(&tmp_err, NULL);
         return -1;

@@ -49,6 +49,10 @@ c_newpkgcb(cr_Package **pkg,
     CbData *data = cbdata;
 
     arglist = Py_BuildValue("(sss)", pkgId, name, arch);
+    if (!arglist) {
+        PyErr_ToGError(err);
+        return CR_CB_RET_ERR;
+    }
     result = PyObject_CallObject(data->py_newpkgcb, arglist);
     Py_DECREF(arglist);
 
@@ -94,18 +98,37 @@ c_pkgcb(cr_Package *pkg,
     CbData *data = cbdata;
 
     PyObject *keyFromPtr = PyLong_FromVoidPtr(pkg);
+    if (!keyFromPtr) {
+        PyErr_ToGError(err);
+        return CR_CB_RET_ERR;
+    }
     py_pkg = PyDict_GetItem(data->py_pkgs, keyFromPtr);
     if (py_pkg) {
         arglist = Py_BuildValue("(O)", py_pkg);
+        if (!arglist) {
+            Py_DECREF(keyFromPtr);
+            PyErr_ToGError(err);
+            return CR_CB_RET_ERR;
+        }
         result = PyObject_CallObject(data->py_pkgcb, arglist);
         PyDict_DelItem(data->py_pkgs, keyFromPtr);
     } else {
         // The package was not provided by user in c_newpkgcb,
         // create new python package object
         PyObject *new_py_pkg = Object_FromPackage(pkg, 1);
+        if (!new_py_pkg) {
+            Py_DECREF(keyFromPtr);
+            PyErr_ToGError(err);
+            return CR_CB_RET_ERR;
+        }
         arglist = Py_BuildValue("(O)", new_py_pkg);
-        result = PyObject_CallObject(data->py_pkgcb, arglist);
         Py_DECREF(new_py_pkg);
+        if (!arglist) {
+            Py_DECREF(keyFromPtr);
+            PyErr_ToGError(err);
+            return CR_CB_RET_ERR;
+        }
+        result = PyObject_CallObject(data->py_pkgcb, arglist);
     }
 
     Py_DECREF(arglist);
@@ -131,6 +154,10 @@ c_warningcb(cr_XmlParserWarningType type,
     CbData *data = cbdata;
 
     arglist = Py_BuildValue("(is)", type, msg);
+    if (!arglist) {
+        PyErr_ToGError(err);
+        return CR_CB_RET_ERR;
+    }
     result = PyObject_CallObject(data->py_warningcb, arglist);
     Py_DECREF(arglist);
 

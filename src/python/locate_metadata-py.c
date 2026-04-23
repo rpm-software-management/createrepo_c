@@ -190,6 +190,7 @@ getitem(_MetadataLocationObject *self, PyObject *pykey)
             for (GSList *elem = self->ml->additional_metadata; elem; elem=g_slist_next(elem)){
                 PyObject *namestr = PyUnicode_FromString(((cr_Metadatum *)(elem->data))->name);
                 if (!namestr || PyList_Append(list, namestr)) {
+                    Py_XDECREF(namestr);
                     Py_DECREF(list);
                     Py_XDECREF(pykey);
                     return NULL;

@@ -259,7 +259,8 @@ ht_keys(_MetadataObject *self, G_GNUC_UNUSED PyObject *args)
         PyObject *py_str = PyUnicode_FromString(elem->data);
         assert(py_str);
         if (PyList_Append(list, py_str) == -1) {
-            Py_XDECREF(list);
+            Py_DECREF(py_str);
+            Py_DECREF(list);
             g_list_free(keys);
             return NULL;
         }

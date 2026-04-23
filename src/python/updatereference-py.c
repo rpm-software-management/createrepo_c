@@ -42,6 +42,8 @@ Object_FromUpdateReference(cr_UpdateReference *ref)
     }
 
     py_rec = PyObject_CallObject((PyObject *) &UpdateReference_Type, NULL);
+    if (!py_rec)
+        return NULL;
     cr_updatereference_free(((_UpdateReferenceObject *)py_rec)->reference);
     ((_UpdateReferenceObject *)py_rec)->reference = ref;
 

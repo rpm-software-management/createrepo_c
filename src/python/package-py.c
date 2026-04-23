@@ -53,6 +53,8 @@ Object_FromPackage(cr_Package *pkg, int free_on_destroy)
     }
 
     pypkg = PyObject_CallObject((PyObject*)&Package_Type, NULL);
+    if (!pypkg)
+        return NULL;
     // XXX: Remove empty package in pypkg and replace it with pkg
     cr_package_free(((_PackageObject *)pypkg)->package);
     ((_PackageObject *)pypkg)->package = pkg;

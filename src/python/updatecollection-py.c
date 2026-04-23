@@ -44,6 +44,8 @@ Object_FromUpdateCollection(cr_UpdateCollection *rec)
     }
 
     py_rec = PyObject_CallObject((PyObject *) &UpdateCollection_Type, NULL);
+    if (!py_rec)
+        return NULL;
     cr_updatecollection_free(((_UpdateCollectionObject *)py_rec)->collection);
     ((_UpdateCollectionObject *)py_rec)->collection = rec;
 

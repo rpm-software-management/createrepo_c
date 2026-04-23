@@ -45,6 +45,8 @@ Object_FromUpdateRecord(cr_UpdateRecord *rec)
     }
 
     py_rec = PyObject_CallObject((PyObject *) &UpdateRecord_Type, NULL);
+    if (!py_rec)
+        return NULL;
     cr_updaterecord_free(((_UpdateRecordObject *)py_rec)->record);
     ((_UpdateRecordObject *)py_rec)->record = rec;
 

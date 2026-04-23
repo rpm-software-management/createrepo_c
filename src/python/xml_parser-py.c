@@ -733,6 +733,8 @@ Object_FromPkgIterator(cr_PkgIterator *pkg_iterator)
     }
 
     PyObject *py_pkg_iterator = PyObject_CallObject((PyObject *)&PkgIterator_Type, NULL);
+    if (!py_pkg_iterator)
+        return NULL;
     ((_PkgIteratorObject *)py_pkg_iterator)->pkg_iterator = pkg_iterator;
     return py_pkg_iterator;
 }

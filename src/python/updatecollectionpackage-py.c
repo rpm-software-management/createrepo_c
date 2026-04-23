@@ -42,6 +42,8 @@ Object_FromUpdateCollectionPackage(cr_UpdateCollectionPackage *pkg)
     }
 
     py_rec = PyObject_CallObject((PyObject *) &UpdateCollectionPackage_Type, NULL);
+    if (!py_rec)
+        return NULL;
     cr_updatecollectionpackage_free(((_UpdateCollectionPackageObject *)py_rec)->pkg);
     ((_UpdateCollectionPackageObject *)py_rec)->pkg = pkg;
 

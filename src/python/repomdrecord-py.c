@@ -42,6 +42,8 @@ Object_FromRepomdRecord(cr_RepomdRecord *rec)
     }
 
     py_rec = PyObject_CallObject((PyObject *) &RepomdRecord_Type, NULL);
+    if (!py_rec)
+        return NULL;
     cr_repomd_record_free(((_RepomdRecordObject *)py_rec)->record);
     ((_RepomdRecordObject *)py_rec)->record = rec;
 

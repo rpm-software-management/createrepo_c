@@ -265,7 +265,7 @@ PyObject_ToDistroTag(PyObject *tuple, GStringChunk *chunk)
     pyobj = PyTuple_GetItem(tuple, 0);
     tag->cpeid = PyObject_ToChunkedString(pyobj, chunk);
 
-    pyobj = PyTuple_GetItem(tuple, 2);
+    pyobj = PyTuple_GetItem(tuple, 1);
     tag->val = PyObject_ToChunkedString(pyobj, chunk);
 
     return tag;

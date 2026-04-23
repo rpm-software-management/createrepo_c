@@ -194,9 +194,14 @@ set_str(_ContentStatObject *self, PyObject *value, void *member_offset)
         return -1;
     }
     cr_ContentStat *rec = self->stat;
-    PyObject *pybytes = PyObject_ToPyBytesOrNull(value);
-    char *str = g_strdup(PyBytes_AsString(pybytes));
-    Py_XDECREF(pybytes);
+    char *str = NULL;
+    if (value != Py_None) {
+        PyObject *pybytes = PyObject_ToPyBytesOrNull(value);
+        if (!pybytes)
+            return -1;
+        str = g_strdup(PyBytes_AsString(pybytes));
+        Py_DECREF(pybytes);
+    }
     *((char **) ((size_t) rec + (size_t) member_offset)) = str;
     return 0;
 }

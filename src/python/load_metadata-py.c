@@ -92,7 +92,7 @@ metadata_init(_MetadataObject *self, PyObject *args, PyObject *kwds)
     /* Init */
     pkglist = GSList_FromPyList_Str(py_pkglist);
     self->md = cr_metadata_new(key, use_single_chunk, pkglist);
-    g_slist_free(pkglist);
+    g_slist_free_full(pkglist, g_free);
     if (self->md == NULL) {
         PyErr_SetString(CrErr_Exception, "Metadata initialization failed");
         return -1;

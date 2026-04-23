@@ -288,14 +288,17 @@ GSList_FromPyList_Str(PyObject *py_list)
     for (Py_ssize_t x=0; x < size; x++) {
         PyObject *py_str = PyList_GetItem(py_list, x);
         assert(py_str != NULL);
-        if (!PyUnicode_Check(py_str) && !PyBytes_Check(py_str))
-            // Hmm, element is not a string, just skip it
+        if (PyUnicode_Check(py_str)) {
+            PyObject *pybytes = PyUnicode_AsUTF8String(py_str);
+            if (!pybytes)
+                continue;
+            list = g_slist_prepend(list, g_strdup(PyBytes_AsString(pybytes)));
+            Py_DECREF(pybytes);
+        } else if (PyBytes_Check(py_str)) {
+            list = g_slist_prepend(list, g_strdup(PyBytes_AsString(py_str)));
+        } else {
             continue;
-
-        if (PyUnicode_Check(py_str))
-            py_str = PyUnicode_AsUTF8String(py_str);
-
-        list = g_slist_prepend(list, PyBytes_AsString(py_str));
+        }
     }
 
     return list;

@@ -79,19 +79,21 @@ PyUnicodeOrNone_FromString(const char *str)
 PyObject *
 PyObject_ToPyBytesOrNull(PyObject *pyobj)
 {
+    if (pyobj == Py_None) {
+        return NULL;
+    }
     if (PyUnicode_Check(pyobj)) {
         pyobj = PyUnicode_AsUTF8String(pyobj);
         if (!pyobj) {
             return NULL;
         }
-    } else {
-        Py_XINCREF(pyobj);
-    }
-
-    if (PyBytes_Check(pyobj)) {
+        return pyobj;
+    } else if (PyBytes_Check(pyobj)) {
+        Py_INCREF(pyobj);
         return pyobj;
     }
 
+    PyErr_SetString(PyExc_TypeError, "Unicode or bytes expected!");
     return NULL;
 }
 

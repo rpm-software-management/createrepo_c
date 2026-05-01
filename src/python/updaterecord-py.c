@@ -115,7 +115,8 @@ updaterecord_dealloc(_UpdateRecordObject *self)
 {
     if (self->record)
         cr_updaterecord_free(self->record);
-    Py_TYPE(self)->tp_free(self);
+    freefunc free_func = PyType_GetSlot(Py_TYPE(self), Py_tp_free);
+    free_func(self);
 }
 
 static PyObject *

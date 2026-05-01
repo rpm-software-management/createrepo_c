@@ -95,7 +95,8 @@ repomd_dealloc(_RepomdObject *self)
 {
     if (self->repomd)
         cr_repomd_free(self->repomd);
-    Py_TYPE(self)->tp_free(self);
+    freefunc free_func = PyType_GetSlot(Py_TYPE(self), Py_tp_free);
+    free_func(self);
 }
 
 static PyObject *

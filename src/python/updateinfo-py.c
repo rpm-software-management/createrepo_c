@@ -95,7 +95,8 @@ updateinfo_dealloc(_UpdateInfoObject *self)
 {
     if (self->updateinfo)
         cr_updateinfo_free(self->updateinfo);
-    Py_TYPE(self)->tp_free(self);
+    freefunc free_func = PyType_GetSlot(Py_TYPE(self), Py_tp_free);
+    free_func(self);
 }
 
 static PyObject *

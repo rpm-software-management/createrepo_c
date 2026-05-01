@@ -111,7 +111,8 @@ updatereference_dealloc(_UpdateReferenceObject *self)
 {
     if (self->reference)
         cr_updatereference_free(self->reference);
-    Py_TYPE(self)->tp_free(self);
+    freefunc free_func = PyType_GetSlot(Py_TYPE(self), Py_tp_free);
+    free_func(self);
 }
 
 static PyObject *

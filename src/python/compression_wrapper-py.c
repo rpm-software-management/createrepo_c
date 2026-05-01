@@ -174,7 +174,8 @@ crfile_dealloc(_CrFileObject *self)
 {
     cr_close(self->f, NULL);
     Py_XDECREF(self->py_stat);
-    Py_TYPE(self)->tp_free(self);
+    freefunc free_func = PyType_GetSlot(Py_TYPE(self), Py_tp_free);
+    free_func(self);
 }
 
 static PyObject *

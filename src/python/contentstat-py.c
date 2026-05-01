@@ -100,7 +100,8 @@ contentstat_dealloc(_ContentStatObject *self)
 {
     if (self->stat)
         cr_contentstat_free(self->stat, NULL);
-    Py_TYPE(self)->tp_free(self);
+    freefunc free_func = PyType_GetSlot(Py_TYPE(self), Py_tp_free);
+    free_func(self);
 }
 
 static PyObject *

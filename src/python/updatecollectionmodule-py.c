@@ -111,7 +111,8 @@ updatecollectionmodule_dealloc(_UpdateCollectionModuleObject *self)
 {
     if (self->module)
         cr_updatecollectionmodule_free(self->module);
-    Py_TYPE(self)->tp_free(self);
+    freefunc free_func = PyType_GetSlot(Py_TYPE(self), Py_tp_free);
+    free_func(self);
 }
 
 static PyObject *

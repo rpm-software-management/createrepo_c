@@ -120,108 +120,57 @@ PyInit__createrepo_c(void)
     /* Exceptions */
     if (!init_exceptions())
         return NULL;
-    PyModule_AddObject(m, "CreaterepoCError", CrErr_Exception);
+    PyModule_AddObjectRef(m, "CreaterepoCError", CrErr_Exception);
 
     /* Objects */
 
     /* _createrepo_c.ContentStat */
-    if (PyType_Ready(&ContentStat_Type) < 0)
-        return NULL;
-    Py_INCREF(&ContentStat_Type);
-    PyModule_AddObject(m, "ContentStat", (PyObject *)&ContentStat_Type);
+    PyModule_AddType(m, &ContentStat_Type);
 
     /* _createrepo_c.CrFile */
-    if (PyType_Ready(&CrFile_Type) < 0)
-        return NULL;
-    Py_INCREF(&CrFile_Type);
-    PyModule_AddObject(m, "CrFile", (PyObject *)&CrFile_Type);
+    PyModule_AddType(m, &CrFile_Type);
 
     /* _createrepo_c.Package */
-    if (PyType_Ready(&Package_Type) < 0)
-        return NULL;
-    Py_INCREF(&Package_Type);
-    PyModule_AddObject(m, "Package", (PyObject *)&Package_Type);
+    PyModule_AddType(m, &Package_Type);
 
     /* _createrepo_c.Metadata */
-    if (PyType_Ready(&Metadata_Type) < 0)
-        return NULL;
-    Py_INCREF(&Metadata_Type);
-    PyModule_AddObject(m, "Metadata", (PyObject *)&Metadata_Type);
+    PyModule_AddType(m, &Metadata_Type);
 
     /* _createrepo_c.MetadataLocation */
-    if (PyType_Ready(&MetadataLocation_Type) < 0)
-        return NULL;
-    Py_INCREF(&MetadataLocation_Type);
-    PyModule_AddObject(m, "MetadataLocation", (PyObject *)&MetadataLocation_Type);
+    PyModule_AddType(m, &MetadataLocation_Type);
 
     /* _createrepo_c.Repomd */
-    if (PyType_Ready(&Repomd_Type) < 0)
-        return NULL;
-    Py_INCREF(&Repomd_Type);
-    PyModule_AddObject(m, "Repomd", (PyObject *)&Repomd_Type);
+    PyModule_AddType(m, &Repomd_Type);
 
     /* _createrepo_c.RepomdRecord */
-    if (PyType_Ready(&RepomdRecord_Type) < 0)
-        return NULL;
-    Py_INCREF(&RepomdRecord_Type);
-    PyModule_AddObject(m, "RepomdRecord", (PyObject *)&RepomdRecord_Type);
+    PyModule_AddType(m, &RepomdRecord_Type);
 
     /* _createrepo_c.Sqlite */
-    if (PyType_Ready(&Sqlite_Type) < 0)
-        return NULL;
-    Py_INCREF(&Sqlite_Type);
-    PyModule_AddObject(m, "Sqlite", (PyObject *)&Sqlite_Type);
+    PyModule_AddType(m, &Sqlite_Type);
 
     /* _createrepo_c.UpdateCollection */
-    if (PyType_Ready(&UpdateCollection_Type) < 0)
-        return NULL;
-    Py_INCREF(&UpdateCollection_Type);
-    PyModule_AddObject(m, "UpdateCollection",
-                       (PyObject *)&UpdateCollection_Type);
+    PyModule_AddType(m, &UpdateCollection_Type);
 
     /* _createrepo_c.UpdateCollectionModule */
-    if (PyType_Ready(&UpdateCollectionModule_Type) < 0)
-        return NULL;
-    Py_INCREF(&UpdateCollectionModule_Type);
-    PyModule_AddObject(m, "UpdateCollectionModule",
-                       (PyObject *)&UpdateCollectionModule_Type);
+    PyModule_AddType(m, &UpdateCollectionModule_Type);
 
     /* _createrepo_c.UpdateCollectionPackage */
-    if (PyType_Ready(&UpdateCollectionPackage_Type) < 0)
-        return NULL;
-    Py_INCREF(&UpdateCollectionPackage_Type);
-    PyModule_AddObject(m, "UpdateCollectionPackage",
-                       (PyObject *)&UpdateCollectionPackage_Type);
+    PyModule_AddType(m, &UpdateCollectionPackage_Type);
 
     /* _createrepo_c.UpdateInfo */
-    if (PyType_Ready(&UpdateInfo_Type) < 0)
-        return NULL;
-    Py_INCREF(&UpdateInfo_Type);
-    PyModule_AddObject(m, "UpdateInfo", (PyObject *)&UpdateInfo_Type);
+    PyModule_AddType(m, &UpdateInfo_Type);
 
     /* _createrepo_c.UpdateRecord */
-    if (PyType_Ready(&UpdateRecord_Type) < 0)
-        return NULL;
-    Py_INCREF(&UpdateRecord_Type);
-    PyModule_AddObject(m, "UpdateRecord", (PyObject *)&UpdateRecord_Type);
+    PyModule_AddType(m, &UpdateRecord_Type);
 
     /* _createrepo_c.UpdateReference */
-    if (PyType_Ready(&UpdateReference_Type) < 0)
-        return NULL;
-    Py_INCREF(&UpdateReference_Type);
-    PyModule_AddObject(m, "UpdateReference", (PyObject *)&UpdateReference_Type);
+    PyModule_AddType(m, &UpdateReference_Type);
 
     /* _createrepo_c.XmlFile */
-    if (PyType_Ready(&XmlFile_Type) < 0)
-        return NULL;
-    Py_INCREF(&XmlFile_Type);
-    PyModule_AddObject(m, "XmlFile", (PyObject *)&XmlFile_Type);
+    PyModule_AddType(m, &XmlFile_Type);
 
     /* _createrepo_c.PkgIterator */
-    if (PyType_Ready(&PkgIterator_Type) < 0)
-        return NULL;
-    Py_INCREF(&PkgIterator_Type);
-    PyModule_AddObject(m, "PkgIterator", (PyObject *)&PkgIterator_Type);
+    PyModule_AddType(m, &PkgIterator_Type);
 
     /* Createrepo init */
 

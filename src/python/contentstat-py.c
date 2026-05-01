@@ -155,7 +155,7 @@ set_num(_ContentStatObject *self, PyObject *value, void *member_offset)
     if (PyLong_Check(value)) {
         val = (gint64) PyLong_AsLong(value);
     } else if (PyFloat_Check(value)) {
-        val = (gint64) PyFloat_AS_DOUBLE(value);
+        val = (gint64) PyFloat_AsDouble(value);
     } else {
         PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;
@@ -174,7 +174,7 @@ set_int(_ContentStatObject *self, PyObject *value, void *member_offset)
     if (PyLong_Check(value)) {
         val = PyLong_AsLong(value);
     } else if (PyFloat_Check(value)) {
-        val = (gint64) PyFloat_AS_DOUBLE(value);
+        val = (gint64) PyFloat_AsDouble(value);
     } else {
         PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;

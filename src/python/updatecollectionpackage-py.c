@@ -177,7 +177,7 @@ set_int(_UpdateCollectionPackageObject *self, PyObject *value, void *member_offs
     if (PyLong_Check(value)) {
         val = PyLong_AsLong(value);
     } else if (PyFloat_Check(value)) {
-        val = (long long) PyFloat_AS_DOUBLE(value);
+        val = (long long) PyFloat_AsDouble(value);
     } else {
         PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;

@@ -18,7 +18,6 @@
  */
 
 #include <Python.h>
-#include <datetime.h> // from python
 #include <assert.h>
 #include <stddef.h>
 #include <time.h>
@@ -274,8 +273,6 @@ get_str(_UpdateRecordObject *self, void *member_offset)
 static PyObject *
 get_datetime(_UpdateRecordObject *self, void *member_offset)
 {
-    PyDateTime_IMPORT;
-
     if (check_UpdateRecordStatus(self))
         return NULL;
     cr_UpdateRecord *rec = self->record;
@@ -303,9 +300,17 @@ get_datetime(_UpdateRecordObject *self, void *member_offset)
             }
         }
     }
-    PyObject *py_dt = PyDateTime_FromDateAndTime(dt->tm_year + 1900,
-                                      dt->tm_mon + 1, dt->tm_mday,
-                                      dt->tm_hour, dt->tm_min, dt->tm_sec, 0);
+
+    PyObject *datetime_mod = PyImport_ImportModule("datetime");
+    if (!datetime_mod) { g_free(dt); return NULL; }
+    PyObject *datetime_cls = PyObject_GetAttrString(datetime_mod, "datetime");
+    Py_DECREF(datetime_mod);
+    if (!datetime_cls) { g_free(dt); return NULL; }
+    PyObject *py_dt = PyObject_CallFunction(datetime_cls, "iiiiii",
+                                            dt->tm_year + 1900, dt->tm_mon + 1,
+                                            dt->tm_mday, dt->tm_hour,
+                                            dt->tm_min, dt->tm_sec);
+    Py_DECREF(datetime_cls);
     g_free(dt);
     return py_dt;
 }
@@ -369,10 +374,18 @@ set_str(_UpdateRecordObject *self, PyObject *value, void *member_offset)
 }
 
 static int
+_get_int_attr(PyObject *obj, const char *attr)
+{
+    PyObject *val = PyObject_GetAttrString(obj, attr);
+    if (!val) return -1;
+    int result = (int)PyLong_AsLong(val);
+    Py_DECREF(val);
+    return result;
+}
+
+static int
 set_datetime(_UpdateRecordObject *self, PyObject *value, void *member_offset)
 {
-    PyDateTime_IMPORT;
-
     if (check_UpdateRecordStatus(self))
         return -1;
 
@@ -399,17 +412,32 @@ set_datetime(_UpdateRecordObject *self, PyObject *value, void *member_offset)
         return 0;
     }
 
-    if (!PyDateTime_Check(value)) {
+    PyObject *datetime_mod = PyImport_ImportModule("datetime");
+    if (!datetime_mod) return -1;
+    PyObject *datetime_cls = PyObject_GetAttrString(datetime_mod, "datetime");
+    Py_DECREF(datetime_mod);
+    if (!datetime_cls) return -1;
+    int is_datetime = PyObject_IsInstance(value, datetime_cls);
+    Py_DECREF(datetime_cls);
+    if (is_datetime < 0) return -1;
+    if (!is_datetime) {
         PyErr_SetString(PyExc_TypeError, "DateTime, integer epoch or None expected!");
         return -1;
     }
 
+    int year = _get_int_attr(value, "year");
+    int month = _get_int_attr(value, "month");
+    int day = _get_int_attr(value, "day");
+    int hour = _get_int_attr(value, "hour");
+    int minute = _get_int_attr(value, "minute");
+    int second = _get_int_attr(value, "second");
+    if (PyErr_Occurred()) return -1;
+
     /* Length is 20: yyyy-mm-dd HH:MM:SS */
     char *date = malloc(20 * sizeof(char));
-    snprintf(date, 20, "%04d-%02d-%02d %02d:%02d:%02d",
-             PyDateTime_GET_YEAR(value) % 9999, PyDateTime_GET_MONTH(value) % 13,
-             PyDateTime_GET_DAY(value) % 32, PyDateTime_DATE_GET_HOUR(value) % 24,
-             (PyDateTime_DATE_GET_MINUTE(value) % 60), PyDateTime_DATE_GET_SECOND(value) % 60);
+    snprintf(date, 20, "%04u-%02u-%02u %02u:%02u:%02u",
+             (unsigned)year % 9999, (unsigned)month % 13, (unsigned)day % 32,
+             (unsigned)hour % 24, (unsigned)minute % 60, (unsigned)second % 60);
 
     char *str = cr_safe_string_chunk_insert(rec->chunk, date);
     free(date);

@@ -114,7 +114,7 @@ PyObject_ToLongLongOrZero(PyObject *pyobj)
     if (PyLong_Check(pyobj)) {
         num = (long long) PyLong_AsLongLong(pyobj);
     } else if (PyFloat_Check(pyobj)) {
-        num = (long long) PyFloat_AS_DOUBLE(pyobj);
+        num = (long long) PyFloat_AsDouble(pyobj);
     }
     return num;
 }

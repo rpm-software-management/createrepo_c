@@ -338,7 +338,7 @@ set_num(_RepomdRecordObject *self, PyObject *value, void *member_offset)
     if (PyLong_Check(value)) {
         val = (gint64) PyLong_AsLong(value);
     } else if (PyFloat_Check(value)) {
-        val = (gint64) PyFloat_AS_DOUBLE(value);
+        val = (gint64) PyFloat_AsDouble(value);
     } else {
         PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;
@@ -357,7 +357,7 @@ set_int(_RepomdRecordObject *self, PyObject *value, void *member_offset)
     if (PyLong_Check(value)) {
         val = PyLong_AsLong(value);
     } else if (PyFloat_Check(value)) {
-        val = (long long) PyFloat_AS_DOUBLE(value);
+        val = (long long) PyFloat_AsDouble(value);
     } else {
         PyErr_SetString(PyExc_TypeError, "Number expected!");
         return -1;

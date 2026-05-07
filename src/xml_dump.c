@@ -329,8 +329,8 @@ cr_Package_contains_forbidden_control_chars(cr_Package *pkg)
     }
 
 
-    if (cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->requires)) {
-        g_printerr("One or more dependencies in 'requires' contain forbidden control chars (ASCII values <32 except 9, 10 and 13).\n");
+    if (cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->requirements)) {
+        g_printerr("One or more dependencies in 'requirements' contain forbidden control chars (ASCII values <32 except 9, 10 and 13).\n");
         ret = TRUE;
     }
 

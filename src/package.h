@@ -115,7 +115,7 @@ typedef struct {
     char *files_checksum_type;  /*!< type of checksum used for files ("sha1",
                                      "sha256", "md5", ..) */
 
-    GSList *requires;           /*!< requires (list of cr_Dependency structs) */
+    GSList *requirements;       /*!< requires (list of cr_Dependency structs) */
     GSList *provides;           /*!< provides (list of cr_Dependency structs) */
     GSList *conflicts;          /*!< conflicts (list of cr_Dependency structs) */
     GSList *obsoletes;          /*!< obsoletes (list of cr_Dependency structs) */

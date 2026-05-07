@@ -300,7 +300,7 @@ typedef struct {
 
 /** List of convertors for converting a lists in cr_Package. */
 static ListConvertor list_convertors[] = {
-    { offsetof(cr_Package, requires),
+    { offsetof(cr_Package, requirements),
       (ConversionFromFunc) PyObject_FromDependency,
       (ConversionToCheckFunc) CheckPyDependency,
       (ConversionToFunc) PyObject_ToDependency },
@@ -552,8 +552,10 @@ static PyGetSetDef package_getsetters[] = {
         "Type of checksum", OFFSET(checksum_type)},
     {"files_checksum_type",    (getter)get_str, (setter)set_str,
         "Type of checksum for files", OFFSET(files_checksum_type)},
-    {"requires",         (getter)get_list, (setter)set_list,
+    {"requirements",     (getter)get_list, (setter)set_list,
         "Capabilities the package requires", &(list_convertors[0])},
+    {"requires",         (getter)get_list, (setter)set_list,
+        "Capabilities the package requires (deprecated; use requirements)", &(list_convertors[0])},
     {"provides",         (getter)get_list, (setter)set_list,
         "Capabilities the package provides", &(list_convertors[1])},
     {"conflicts",        (getter)get_list, (setter)set_list,

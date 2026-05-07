@@ -128,6 +128,7 @@ string(REPLACE "." ";" VERSION_LIST ${VERSION})
 list(GET VERSION_LIST 0 CR_MAJOR)
 list(GET VERSION_LIST 1 CR_MINOR)
 list(GET VERSION_LIST 2 CR_PATCH)
+set(CR_ABI_VERSION 1)
 message("Package version: ${VERSION}")
 
 # Other files

@@ -112,7 +112,7 @@ TARGET_LINK_LIBRARIES(libcreaterepo_c PkgConfig::ZSTD)
 
 SET_TARGET_PROPERTIES(libcreaterepo_c PROPERTIES
                       OUTPUT_NAME "createrepo_c"
-                      SOVERSION ${CR_MAJOR}
+                      SOVERSION ${CR_ABI_VERSION}
                       VERSION "${VERSION}"
                       COMPILE_DEFINITIONS "G_LOG_DOMAIN=\"${G_LOG_DOMAIN}\"")
 

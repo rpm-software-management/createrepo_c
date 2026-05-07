@@ -399,7 +399,7 @@ cr_start_handler(void *pdata, const xmlChar *element, const xmlChar **attr)
                 pd->pkg->provides = g_slist_prepend(pd->pkg->provides, dep);
                 break;
             case STATE_RPM_ENTRY_REQUIRES:
-                pd->pkg->requires = g_slist_prepend(pd->pkg->requires, dep);
+                pd->pkg->requirements = g_slist_prepend(pd->pkg->requirements, dep);
                 break;
             case STATE_RPM_ENTRY_CONFLICTS:
                 pd->pkg->conflicts = g_slist_prepend(pd->pkg->conflicts, dep);
@@ -601,7 +601,7 @@ cr_end_handler(void *pdata, G_GNUC_UNUSED const xmlChar *element)
         break;
 
     case STATE_RPM_REQUIRES:
-        pd->pkg->requires = g_slist_reverse(pd->pkg->requires);
+        pd->pkg->requirements = g_slist_reverse(pd->pkg->requirements);
         break;
 
     case STATE_RPM_CONFLICTS:

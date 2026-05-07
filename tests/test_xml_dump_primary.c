@@ -235,7 +235,7 @@ cmp_package_and_xml_node(cr_Package *pkg, xmlNodePtr node)
     current = current->next;
 
     current = cmp_package_pco_and_xml(pkg->provides, current, PCO_TYPE_PROVIDES);
-    current = cmp_package_pco_and_xml(pkg->requires, current, PCO_TYPE_REQUIRES);
+    current = cmp_package_pco_and_xml(pkg->requirements, current, PCO_TYPE_REQUIRES);
     current = cmp_package_pco_and_xml(pkg->conflicts, current, PCO_TYPE_CONFLICTS);
     current = cmp_package_pco_and_xml(pkg->obsoletes, current, PCO_TYPE_OBSOLETES);
     current = cmp_package_pco_and_xml(pkg->suggests, current, PCO_TYPE_SUGGESTS);
@@ -261,7 +261,7 @@ test_cr_xml_dump_primary_dump_pco_00(void)
     dep->name = "foobar_provide";
     dep->flags = NULL;
     dep->pre = FALSE;
-    p->requires = (g_slist_prepend(p->requires, dep));
+    p->requirements = (g_slist_prepend(p->requirements, dep));
 
     dep = cr_dependency_new();
     dep->name = "foobar_provide";
@@ -269,13 +269,13 @@ test_cr_xml_dump_primary_dump_pco_00(void)
     dep->pre = 1;
     dep->epoch = "44";
     dep->version = "1.2.3";
-    p->requires = (g_slist_prepend(p->requires, dep));
+    p->requirements = (g_slist_prepend(p->requirements, dep));
 
     xmlNodePtr node;
     node = xmlNewNode(NULL, BAD_CAST "wrapper");
     cr_xml_dump_primary_dump_pco(node, p, PCO_TYPE_REQUIRES);
     xmlNodePtr node_children = node->children;
-    cmp_package_pco_and_xml(p->requires, node_children, PCO_TYPE_REQUIRES);
+    cmp_package_pco_and_xml(p->requirements, node_children, PCO_TYPE_REQUIRES);
     xmlFreeNode(node);
     cr_package_free(p);
 }
@@ -291,7 +291,7 @@ test_cr_xml_dump_primary_dump_pco_01(void)
     dep->name = "foobar_provide";
     dep->flags = NULL;
     dep->pre = FALSE;
-    p->requires = (g_slist_prepend(p->requires, dep));
+    p->requirements = (g_slist_prepend(p->requirements, dep));
 
     dep = cr_dependency_new();
     dep->name = "foobar_provide";
@@ -299,7 +299,7 @@ test_cr_xml_dump_primary_dump_pco_01(void)
     dep->pre = 1;
     dep->epoch = "44";
     dep->version = "1.2.3";
-    p->requires = (g_slist_prepend(p->requires, dep));
+    p->requirements = (g_slist_prepend(p->requirements, dep));
 
     dep = cr_dependency_new();
     dep->name = "foobar_provide";
@@ -307,7 +307,7 @@ test_cr_xml_dump_primary_dump_pco_01(void)
     dep->pre = 0;
     dep->epoch = "44";
     dep->version = "1.2.3";
-    p->requires = (g_slist_prepend(p->requires, dep));
+    p->requirements = (g_slist_prepend(p->requirements, dep));
 
     dep = cr_dependency_new();
     dep->name = "foobar_provide";
@@ -332,7 +332,7 @@ test_cr_xml_dump_primary_dump_pco_01(void)
     cr_xml_dump_primary_dump_pco(node, p, PCO_TYPE_OBSOLETES);
 
     xmlNodePtr node_children = node->children;
-    node_children = cmp_package_pco_and_xml(p->requires, node_children, PCO_TYPE_REQUIRES);
+    node_children = cmp_package_pco_and_xml(p->requirements, node_children, PCO_TYPE_REQUIRES);
     node_children = cmp_package_pco_and_xml(p->obsoletes, node_children, PCO_TYPE_OBSOLETES);
 
     xmlFreeNode(node);

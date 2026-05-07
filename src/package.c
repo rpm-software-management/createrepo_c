@@ -87,8 +87,8 @@ cr_package_free(cr_Package *package)
     if (package->chunk && !(package->loadingflags & CR_PACKAGE_SINGLE_CHUNK))
         g_string_chunk_free (package->chunk);
 
-    if (package->requires) {
-        g_slist_free_full(package->requires, g_free);
+    if (package->requirements) {
+        g_slist_free_full(package->requirements, g_free);
     }
 
     if (package->provides) {
@@ -212,14 +212,14 @@ cr_package_copy_into(cr_Package *orig, cr_Package *pkg)
     pkg->checksum_type    = cr_safe_string_chunk_insert(pkg->chunk, orig->checksum_type);
     pkg->files_checksum_type = cr_safe_string_chunk_insert(pkg->chunk, orig->files_checksum_type);
 
-    pkg->requires    = cr_dependency_dup(pkg->chunk, orig->requires);
-    pkg->provides    = cr_dependency_dup(pkg->chunk, orig->provides);
-    pkg->conflicts   = cr_dependency_dup(pkg->chunk, orig->conflicts);
-    pkg->obsoletes   = cr_dependency_dup(pkg->chunk, orig->obsoletes);
-    pkg->suggests    = cr_dependency_dup(pkg->chunk, orig->suggests);
-    pkg->enhances    = cr_dependency_dup(pkg->chunk, orig->enhances);
-    pkg->recommends  = cr_dependency_dup(pkg->chunk, orig->recommends);
-    pkg->supplements = cr_dependency_dup(pkg->chunk, orig->supplements);
+    pkg->requirements = cr_dependency_dup(pkg->chunk, orig->requirements);
+    pkg->provides     = cr_dependency_dup(pkg->chunk, orig->provides);
+    pkg->conflicts    = cr_dependency_dup(pkg->chunk, orig->conflicts);
+    pkg->obsoletes    = cr_dependency_dup(pkg->chunk, orig->obsoletes);
+    pkg->suggests     = cr_dependency_dup(pkg->chunk, orig->suggests);
+    pkg->enhances     = cr_dependency_dup(pkg->chunk, orig->enhances);
+    pkg->recommends   = cr_dependency_dup(pkg->chunk, orig->recommends);
+    pkg->supplements  = cr_dependency_dup(pkg->chunk, orig->supplements);
 
     for (GSList *elem = orig->files; elem; elem = g_slist_next(elem)) {
         cr_PackageFile *orig_file = elem->data;

@@ -175,14 +175,14 @@ get_package()
     dep->flags = NULL;
     dep->pre = FALSE;
     dep->epoch = "3";
-    p->requires = (g_slist_prepend(p->requires, dep));
+    p->requirements = (g_slist_prepend(p->requirements, dep));
 
     dep = cr_dependency_new();
     dep->name = "foobar_pre_dep";
     dep->flags = "LE";
     dep->epoch = "3";
     dep->pre = TRUE;
-    p->requires = g_slist_prepend(p->requires, dep);
+    p->requirements = g_slist_prepend(p->requirements, dep);
 
     file = cr_package_file_new();
     file->type = "";
@@ -218,13 +218,13 @@ get_empty_package()
     dep->name   = NULL;
     dep->flags  = NULL;
     dep->pre    = FALSE;
-    p->requires = (g_slist_prepend(p->requires, dep));
+    p->requirements = (g_slist_prepend(p->requirements, dep));
 
     dep = cr_dependency_new();
     dep->name   = NULL;
     dep->flags  = NULL;
     dep->pre    = TRUE;
-    p->requires = g_slist_prepend(p->requires, dep);
+    p->requirements = g_slist_prepend(p->requirements, dep);
 
     file = cr_package_file_new();
     file->type = NULL;

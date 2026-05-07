@@ -33,7 +33,7 @@ class TestCasePackage(unittest.TestCase):
         self.assertEqual(pkg.location_base, None)
         self.assertEqual(pkg.checksum_type, "sha256")
         self.assertEqual(pkg.files_checksum_type, "sha256")
-        self.assertEqual(pkg.requires, [])
+        self.assertEqual(pkg.requirements, [])
         self.assertEqual(pkg.provides, [
             ('empty', 'EQ', '0', '0', '0', False),
             ('empty(x86-64)', 'EQ', '0', '0', '0', False)
@@ -79,7 +79,7 @@ class TestCasePackage(unittest.TestCase):
         self.assertEqual(pkg.location_base, None)
         self.assertEqual(pkg.checksum_type, "sha256")
         self.assertEqual(pkg.files_checksum_type, "sha256")
-        self.assertEqual(pkg.requires, [
+        self.assertEqual(pkg.requirements, [
             ('fooa', 'LE', '0', '2', None, False),
             ('foob', 'GE', '0', '1.0.0', '1', False),
             ('fooc', 'EQ', '0', '3', None, False),
@@ -188,8 +188,13 @@ class TestCasePackage(unittest.TestCase):
         pkg.checksum_type = "crc"
         self.assertEqual(pkg.checksum_type, "crc")
 
-        pkg.requires = [('bar', 'GE', '1', '3.2.1', None, True)]
-        self.assertEqual(pkg.requires, [('bar', 'GE', '1', '3.2.1', None, True)])
+        pkg.requirements = [('bar', 'GE', '1', '3.2.1', None, True)]
+        self.assertEqual(pkg.requirements, [('bar', 'GE', '1', '3.2.1', None, True)])
+        # Check that pkg.requires is an alias for pkg.requirements
+        self.assertEqual(pkg.requires,     [('bar', 'GE', '1', '3.2.1', None, True)])
+        pkg.requires = [('foo', 'GE', '1', '3.2.1', None, True)]
+        self.assertEqual(pkg.requirements, [('foo', 'GE', '1', '3.2.1', None, True)])
+
         pkg.provides = [('foo', None, None, None, None, False)]
         self.assertEqual(pkg.provides, [('foo', None, None, None, None, False)])
         pkg.conflicts = [('foobar', 'LT', '0', '1.0.0', None, False)]

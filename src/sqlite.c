@@ -1251,7 +1251,7 @@ cr_db_add_primary_pkg(cr_DbPrimaryStatements stmts,
         }
     }
 
-    for (iter = pkg->requires; iter; iter = iter->next) {
+    for (iter = pkg->requirements; iter; iter = iter->next) {
         db_dependency_write(stmts->db,
                             stmts->requires_handle,
                             pkg->pkgKey,

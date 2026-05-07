@@ -9,14 +9,14 @@ REPO_PATH = "repo/"
 
 
 def print_package_info(pkg):
-    def print_pcors(lst, requires=False):
+    def print_pcors(lst, requirements=False):
         for item in lst:
             print("    Name: %s" % item[cr.PCOR_ENTRY_NAME])
             print("    Flags: %s" % item[cr.PCOR_ENTRY_FLAGS])
             print("    Epoch: %s" % item[cr.PCOR_ENTRY_EPOCH])
             print("    Version: %s" % item[cr.PCOR_ENTRY_VERSION])
             print("    Release: %s" % item[cr.PCOR_ENTRY_RELEASE])
-            if requires:
+            if requirements:
                 print("    Pre: %s" % item[cr.PCOR_ENTRY_PRE])
             print("    +-----------------------------------+")
 
@@ -65,7 +65,7 @@ def print_package_info(pkg):
     print("Location href: %s" % pkg.location_href)
     print("Location base: %s" % pkg.location_base)
     print("Requires:")
-    print_pcors(pkg.requires, requires=True)
+    print_pcors(pkg.requirements, requirements=True)
     print("Provides:")
     print_pcors(pkg.provides)
     print("Conflicts:")

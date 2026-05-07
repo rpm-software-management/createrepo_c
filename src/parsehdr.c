@@ -365,7 +365,7 @@ cr_package_from_header(Header hdr,
 
 
     //
-    // PCOR (provides, conflicts, obsoletes, requires)
+    // PCOR (provides, conflicts, obsoletes, requirements)
     //
 
     rpmtd fileversions = rpmtdNew();
@@ -383,7 +383,7 @@ cr_package_from_header(Header hdr,
                                                            g_free,
                                                            NULL);
 
-    // Hashtable with already processed files from requires
+    // Hashtable with already processed files from requirements
     GHashTable *ap_hashtable = g_hash_table_new_full(g_str_hash,
                                                      g_str_equal,
                                                      NULL,
@@ -420,7 +420,7 @@ cr_package_from_header(Header hdr,
 
                 // Requires specific stuff
                 if (deptype == DEP_REQUIRES) {
-                    // Skip requires which start with "rpmlib("
+                    // Skip requirements which start with "rpmlib("
                     if (!strncmp("rpmlib(", filename, 7)) {
                         continue;
                     }
@@ -520,7 +520,7 @@ cr_package_from_header(Header hdr,
                         }
                         // XXX: libc.so filtering - END ///////////////////////
 
-                        pkg->requires = g_slist_prepend(pkg->requires, dependency);
+                        pkg->requirements = g_slist_prepend(pkg->requirements, dependency);
 
                         // Add file into ap_hashtable
                         struct ap_value_struct *value = malloc(sizeof(struct ap_value_struct));
@@ -566,7 +566,7 @@ cr_package_from_header(Header hdr,
 
             // XXX: libc.so filtering ////////////////////////////////
             if (deptype == DEP_REQUIRES && libc_require_highest)
-                pkg->requires = g_slist_prepend(pkg->requires, libc_require_highest);
+                pkg->requirements = g_slist_prepend(pkg->requirements, libc_require_highest);
             // XXX: libc.so filtering - END ////////////////////////////////
         }
 
@@ -575,14 +575,14 @@ cr_package_from_header(Header hdr,
         rpmtdFreeData(fileversions);
     }
 
-    pkg->provides    = g_slist_reverse (pkg->provides);
-    pkg->conflicts   = g_slist_reverse (pkg->conflicts);
-    pkg->obsoletes   = g_slist_reverse (pkg->obsoletes);
-    pkg->requires    = g_slist_reverse (pkg->requires);
-    pkg->suggests    = g_slist_reverse (pkg->suggests);
-    pkg->enhances    = g_slist_reverse (pkg->enhances);
-    pkg->recommends  = g_slist_reverse (pkg->recommends);
-    pkg->supplements = g_slist_reverse (pkg->supplements);
+    pkg->provides     = g_slist_reverse (pkg->provides);
+    pkg->conflicts    = g_slist_reverse (pkg->conflicts);
+    pkg->obsoletes    = g_slist_reverse (pkg->obsoletes);
+    pkg->requirements = g_slist_reverse (pkg->requirements);
+    pkg->suggests     = g_slist_reverse (pkg->suggests);
+    pkg->enhances     = g_slist_reverse (pkg->enhances);
+    pkg->recommends   = g_slist_reverse (pkg->recommends);
+    pkg->supplements  = g_slist_reverse (pkg->supplements);
 
     g_hash_table_remove_all(filenames_hashtable);
     g_hash_table_remove_all(provided_hashtable);

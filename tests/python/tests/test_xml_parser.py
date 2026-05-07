@@ -58,7 +58,7 @@ class TestCaseXmlParserPrimary(unittest.TestCase):
         self.assertEqual(pkg.location_base, None)
         self.assertEqual(pkg.checksum_type, "sha256")
         self.assertEqual(pkg.files_checksum_type, None)
-        self.assertEqual(pkg.requires,
+        self.assertEqual(pkg.requirements,
                 [('bzip2', 'GE', '0', '1.0.0', None, True),
                  ('expat', None, None, None, None, True),
                  ('glib', 'GE', '0', '2.26.0', None, False),
@@ -132,7 +132,7 @@ class TestCaseXmlParserPrimary(unittest.TestCase):
         self.assertEqual(pkg.location_base, None)
         self.assertEqual(pkg.checksum_type, "sha256")
         self.assertEqual(pkg.files_checksum_type, None)
-        self.assertEqual(pkg.requires,
+        self.assertEqual(pkg.requirements,
                 [('bzip2', 'GE', '0', '1.0.0', None, True),
                  ('expat', None, None, None, None, True),
                  ('glib', 'GE', '0', '2.2&6.0', None, False),
@@ -209,7 +209,7 @@ class TestCaseXmlParserPrimary(unittest.TestCase):
         self.assertEqual(pkg.location_base, None)
         self.assertEqual(pkg.checksum_type, "sha256")
         self.assertEqual(pkg.files_checksum_type, None)
-        self.assertEqual(pkg.requires,
+        self.assertEqual(pkg.requirements,
                 [('bzip2', 'GE', '0', '1.0.0', None, True),
                  ('expat', None, None, None, None, True),
                  ('glib', 'GE', '0', '2.26.0', None, False),
@@ -427,7 +427,7 @@ class TestCaseXmlParserFilelists(unittest.TestCase):
         self.assertEqual(pkg.location_base, None)
         self.assertEqual(pkg.checksum_type, None)
         self.assertEqual(pkg.files_checksum_type, None)
-        self.assertEqual(pkg.requires, [])
+        self.assertEqual(pkg.requirements, [])
         self.assertEqual(pkg.provides, [])
         self.assertEqual(pkg.conflicts, [])
         self.assertEqual(pkg.obsoletes, [])
@@ -489,7 +489,7 @@ class TestCaseXmlParserFilelists(unittest.TestCase):
         self.assertEqual(pkg.location_base, None)
         self.assertEqual(pkg.checksum_type, None)
         self.assertEqual(pkg.files_checksum_type, None)
-        self.assertEqual(pkg.requires, [])
+        self.assertEqual(pkg.requirements, [])
         self.assertEqual(pkg.provides, [])
         self.assertEqual(pkg.conflicts, [])
         self.assertEqual(pkg.obsoletes, [])
@@ -552,7 +552,7 @@ class TestCaseXmlParserFilelists(unittest.TestCase):
         self.assertEqual(pkg.location_base, None)
         self.assertEqual(pkg.checksum_type, None)
         self.assertEqual(pkg.files_checksum_type, None)
-        self.assertEqual(pkg.requires, [])
+        self.assertEqual(pkg.requirements, [])
         self.assertEqual(pkg.provides, [])
         self.assertEqual(pkg.conflicts, [])
         self.assertEqual(pkg.obsoletes, [])
@@ -791,7 +791,7 @@ class TestCaseXmlParserOther(unittest.TestCase):
         self.assertEqual(pkg.location_base, None)
         self.assertEqual(pkg.checksum_type, None)
         self.assertEqual(pkg.files_checksum_type, None)
-        self.assertEqual(pkg.requires, [])
+        self.assertEqual(pkg.requirements, [])
         self.assertEqual(pkg.provides, [])
         self.assertEqual(pkg.conflicts, [])
         self.assertEqual(pkg.obsoletes, [])
@@ -857,7 +857,7 @@ class TestCaseXmlParserOther(unittest.TestCase):
         self.assertEqual(pkg.location_base, None)
         self.assertEqual(pkg.checksum_type, None)
         self.assertEqual(pkg.files_checksum_type, None)
-        self.assertEqual(pkg.requires, [])
+        self.assertEqual(pkg.requirements, [])
         self.assertEqual(pkg.provides, [])
         self.assertEqual(pkg.conflicts, [])
         self.assertEqual(pkg.obsoletes, [])
@@ -924,7 +924,7 @@ class TestCaseXmlParserOther(unittest.TestCase):
         self.assertEqual(pkg.location_base, None)
         self.assertEqual(pkg.checksum_type, None)
         self.assertEqual(pkg.files_checksum_type, None)
-        self.assertEqual(pkg.requires, [])
+        self.assertEqual(pkg.requirements, [])
         self.assertEqual(pkg.provides, [])
         self.assertEqual(pkg.conflicts, [])
         self.assertEqual(pkg.obsoletes, [])
@@ -1197,7 +1197,7 @@ class TestCaseXmlParserPkgIterator(unittest.TestCase):
         self.assertEqual(pkg.location_base, None)
         self.assertEqual(pkg.checksum_type, "sha256")
         self.assertEqual(pkg.files_checksum_type, None)
-        self.assertEqual(pkg.requires,
+        self.assertEqual(pkg.requirements,
                 [('bzip2', 'GE', '0', '1.0.0', None, True),
                  ('expat', None, None, None, None, True),
                  ('glib', 'GE', '0', '2.26.0', None, False),

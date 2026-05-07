@@ -52,7 +52,7 @@ static PcoInfo pco_info[] = {
     { "rpm:provides",       offsetof(cr_Package, provides) },
     { "rpm:conflicts",      offsetof(cr_Package, conflicts) },
     { "rpm:obsoletes",      offsetof(cr_Package, obsoletes) },
-    { "rpm:requires",       offsetof(cr_Package, requires) },
+    { "rpm:requires",       offsetof(cr_Package, requirements) },
     { "rpm:suggests",       offsetof(cr_Package, suggests) },
     { "rpm:enhances",       offsetof(cr_Package, enhances) },
     { "rpm:recommends",     offsetof(cr_Package, recommends) },

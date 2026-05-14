@@ -46,6 +46,11 @@ class TestCasePackage(unittest.TestCase):
         self.assertEqual(pkg.supplements, [])
         self.assertEqual(pkg.files, [])
         self.assertEqual(pkg.changelogs, [])
+        # empty-0-0.x86_64.rpm is unsigned
+        self.assertEqual(pkg.signatures, [])
+        # signatures is read-only
+        with self.assertRaises(AttributeError):
+            pkg.signatures = []
 
         self.assertEqual(pkg.nvra(), "empty-0-0.x86_64")
         self.assertEqual(pkg.nevra(), "empty-0:0-0.x86_64")
@@ -241,3 +246,34 @@ class TestCasePackage(unittest.TestCase):
             ('dir', '/usr/share/doc/', 'Archer-3.4.5'),
             ('', '/usr/share/doc/Archer-3.4.5/', 'README')
             ])
+
+
+class TestCaseSignatures(unittest.TestCase):
+    def test_signatures_not_loaded_without_flag(self):
+        pkg = cr.package_from_rpm(PKG_EMPTY_SIGNED_RSA_PATH)
+        self.assertTrue(pkg)
+        self.assertEqual(pkg.signatures, [])
+
+    def test_signatures_single_eddsa(self):
+        pkg = cr.package_from_rpm(PKG_EMPTY_SIGNED_EDDSA_PATH,
+                                   header_reading_flags=cr.HDRR_LOADSIGNATURES)
+        self.assertTrue(pkg)
+        self.assertEqual(len(pkg.signatures), 1)
+        self.assertGreater(len(pkg.signatures[0]), 0)
+
+    def test_signatures_single_rsa(self):
+        pkg = cr.package_from_rpm(PKG_EMPTY_SIGNED_RSA_PATH,
+                                   header_reading_flags=cr.HDRR_LOADSIGNATURES)
+        self.assertTrue(pkg)
+        self.assertEqual(len(pkg.signatures), 1)
+        self.assertGreater(len(pkg.signatures[0]), 0)
+
+    # https://github.com/rpm-software-management/createrepo_c/pull/477#discussion_r2920022135
+    @unittest.skip("Skip v6 multiple signature test until all CI platforms recognize RPMTAG_OPENPGP")
+    def test_signatures_v6_multiple(self):
+        pkg = cr.package_from_rpm(PKG_EMPTY_SIGNED_V6_MULTIPLE_PATH,
+                                   header_reading_flags=cr.HDRR_LOADSIGNATURES)
+        self.assertTrue(pkg)
+        self.assertEqual(len(pkg.signatures), 2)
+        for sig in pkg.signatures:
+            self.assertGreater(len(sig), 0)

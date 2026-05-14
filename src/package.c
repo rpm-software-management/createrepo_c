@@ -127,6 +127,10 @@ cr_package_free(cr_Package *package)
         g_slist_free_full(package->changelogs, g_free);
     }
 
+    if (package->signatures) {
+        g_slist_free(package->signatures);
+    }
+
     g_free(package->siggpg);
     g_free(package->sigpgp);
 
@@ -238,5 +242,9 @@ cr_package_copy_into(cr_Package *orig, cr_Package *pkg)
         log->date      = orig_log->date;
         log->changelog = cr_safe_string_chunk_insert(pkg->chunk, orig_log->changelog);
         pkg->changelogs = g_slist_prepend(pkg->changelogs, log);
+    }
+
+    for (GSList *elem = orig->signatures; elem; elem = g_slist_next(elem)) {
+        pkg->signatures = g_slist_prepend(pkg->signatures, cr_safe_string_chunk_insert(pkg->chunk, elem->data));
     }
 }

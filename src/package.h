@@ -128,10 +128,11 @@ typedef struct {
                                      cr_PackageFile structs) */
     GSList *changelogs;         /*!< changelogs (list of cr_ChangelogEntry
                                      structs) */
+    GSList *signatures;         /*!< signatures (list of char*)*/
 
     char *hdrid;
-    cr_BinaryData *siggpg;
-    cr_BinaryData *sigpgp;
+    cr_BinaryData *siggpg;      /*!< DEPRECATED: use pkg->signatures */
+    cr_BinaryData *sigpgp;      /*!< DEPRECATED: use pkg->signatures */
 
     GStringChunk *chunk;        /*!< string chunk for store all package strings
                                      on the single place */

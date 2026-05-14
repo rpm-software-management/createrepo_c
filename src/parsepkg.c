@@ -206,7 +206,7 @@ cr_package_from_rpm(const char *filename,
                                                                  &tmp_err);
     if (tmp_err) {
         g_propagate_prefixed_error(err, tmp_err,
-                                   "Error while determinig header range: ");
+                                   "Error while determining header range: ");
         goto errexit;
     }
 

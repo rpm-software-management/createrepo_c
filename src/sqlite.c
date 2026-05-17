@@ -1078,7 +1078,7 @@ db_package_ids_write(sqlite3 *db,
 
 // Primary.sqlite interface
 
-void
+static void
 cr_db_destroy_primary_statements(cr_DbPrimaryStatements stmts)
 {
     if (!stmts)
@@ -1108,7 +1108,7 @@ cr_db_destroy_primary_statements(cr_DbPrimaryStatements stmts)
 }
 
 
-cr_DbPrimaryStatements
+static cr_DbPrimaryStatements
 cr_db_prepare_primary_statements(sqlite3 *db, GError **err)
 {
     assert(!err || *err == NULL);
@@ -1196,7 +1196,7 @@ error:
 }
 
 
-void
+static void
 cr_db_add_primary_pkg(cr_DbPrimaryStatements stmts,
                       cr_Package *pkg,
                       GError **err)
@@ -1330,7 +1330,7 @@ cr_db_add_primary_pkg(cr_DbPrimaryStatements stmts,
 // filelists.sqlite interface
 
 
-void
+static void
 cr_db_destroy_filelists_statements(cr_DbFilelistsStatements stmts)
 {
     if (!stmts)
@@ -1344,7 +1344,7 @@ cr_db_destroy_filelists_statements(cr_DbFilelistsStatements stmts)
 }
 
 
-cr_DbFilelistsStatements
+static cr_DbFilelistsStatements
 cr_db_prepare_filelists_statements(sqlite3 *db, GError **err)
 {
     GError *tmp_err = NULL;
@@ -1376,7 +1376,7 @@ error:
 }
 
 
-void
+static void
 cr_db_add_filelists_pkg(cr_DbFilelistsStatements stmts,
                         cr_Package *pkg,
                         GError **err)
@@ -1417,7 +1417,7 @@ cr_db_add_filelists_pkg(cr_DbFilelistsStatements stmts,
 // other.sqlite interface
 
 
-void
+static void
 cr_db_destroy_other_statements(cr_DbOtherStatements stmts)
 {
     if (!stmts)
@@ -1431,7 +1431,7 @@ cr_db_destroy_other_statements(cr_DbOtherStatements stmts)
 }
 
 
-cr_DbOtherStatements
+static cr_DbOtherStatements
 cr_db_prepare_other_statements(sqlite3 *db, GError **err)
 {
     GError *tmp_err = NULL;
@@ -1463,7 +1463,7 @@ error:
 }
 
 
-void
+static void
 cr_db_add_other_pkg(cr_DbOtherStatements stmts, cr_Package *pkg, GError **err)
 {
     int rc;

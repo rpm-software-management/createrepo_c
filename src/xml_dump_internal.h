@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-#include "package.h"
+#include "package_internal.h"
 #include <libxml/tree.h>
 
 #define XML_DOC_VERSION "1.0"

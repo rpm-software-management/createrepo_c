@@ -44,6 +44,7 @@
 #include "locate_metadata.h"
 #include "misc.h"
 #include "parsepkg.h"
+#include "package_internal.h"
 #include "repomd.h"
 #include "repomd_internal.h"
 #include "sqlite.h"

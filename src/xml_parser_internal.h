@@ -28,7 +28,7 @@ extern "C" {
 #include <libxml/parser.h>
 #include "xml_parser.h"
 #include "error.h"
-#include "package.h"
+#include "package_internal.h"
 #include "repomd.h"
 #include "updateinfo.h"
 

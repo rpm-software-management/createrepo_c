@@ -240,3 +240,583 @@ cr_package_copy_into(cr_Package *orig, cr_Package *pkg)
         pkg->changelogs = g_slist_prepend(pkg->changelogs, log);
     }
 }
+
+static void
+cr_package_assign_string(cr_Package *pkg, char **field, const char *value)
+{
+    if (!pkg) {
+        return;
+    }
+
+    if (pkg->chunk) {
+        *field = cr_safe_string_chunk_insert(pkg->chunk, value);
+        return;
+    }
+
+    if (*field != value) {
+        g_free(*field);
+        *field = value ? g_strdup(value) : NULL;
+    }
+}
+
+const char *
+cr_package_get_pkg_id(cr_Package *pkg)
+{
+    return pkg ? pkg->pkgId : NULL;
+}
+
+void
+cr_package_set_pkg_id(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->pkgId, value);
+}
+
+const char *
+cr_package_get_name(cr_Package *pkg)
+{
+    return pkg ? pkg->name : NULL;
+}
+
+void
+cr_package_set_name(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->name, value);
+}
+
+const char *
+cr_package_get_arch(cr_Package *pkg)
+{
+    return pkg ? pkg->arch : NULL;
+}
+
+void
+cr_package_set_arch(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->arch, value);
+}
+
+const char *
+cr_package_get_version(cr_Package *pkg)
+{
+    return pkg ? pkg->version : NULL;
+}
+
+void
+cr_package_set_version(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->version, value);
+}
+
+const char *
+cr_package_get_epoch(cr_Package *pkg)
+{
+    return pkg ? pkg->epoch : NULL;
+}
+
+void
+cr_package_set_epoch(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->epoch, value);
+}
+
+const char *
+cr_package_get_release(cr_Package *pkg)
+{
+    return pkg ? pkg->release : NULL;
+}
+
+void
+cr_package_set_release(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->release, value);
+}
+
+const char *
+cr_package_get_summary(cr_Package *pkg)
+{
+    return pkg ? pkg->summary : NULL;
+}
+
+void
+cr_package_set_summary(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->summary, value);
+}
+
+const char *
+cr_package_get_description(cr_Package *pkg)
+{
+    return pkg ? pkg->description : NULL;
+}
+
+void
+cr_package_set_description(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->description, value);
+}
+
+const char *
+cr_package_get_url(cr_Package *pkg)
+{
+    return pkg ? pkg->url : NULL;
+}
+
+void
+cr_package_set_url(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->url, value);
+}
+
+const char *
+cr_package_get_rpm_license(cr_Package *pkg)
+{
+    return pkg ? pkg->rpm_license : NULL;
+}
+
+void
+cr_package_set_rpm_license(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->rpm_license, value);
+}
+
+const char *
+cr_package_get_rpm_vendor(cr_Package *pkg)
+{
+    return pkg ? pkg->rpm_vendor : NULL;
+}
+
+void
+cr_package_set_rpm_vendor(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->rpm_vendor, value);
+}
+
+const char *
+cr_package_get_rpm_group(cr_Package *pkg)
+{
+    return pkg ? pkg->rpm_group : NULL;
+}
+
+void
+cr_package_set_rpm_group(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->rpm_group, value);
+}
+
+const char *
+cr_package_get_rpm_buildhost(cr_Package *pkg)
+{
+    return pkg ? pkg->rpm_buildhost : NULL;
+}
+
+void
+cr_package_set_rpm_buildhost(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->rpm_buildhost, value);
+}
+
+const char *
+cr_package_get_rpm_sourcerpm(cr_Package *pkg)
+{
+    return pkg ? pkg->rpm_sourcerpm : NULL;
+}
+
+void
+cr_package_set_rpm_sourcerpm(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->rpm_sourcerpm, value);
+}
+
+const char *
+cr_package_get_rpm_packager(cr_Package *pkg)
+{
+    return pkg ? pkg->rpm_packager : NULL;
+}
+
+void
+cr_package_set_rpm_packager(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->rpm_packager, value);
+}
+
+const char *
+cr_package_get_location_href(cr_Package *pkg)
+{
+    return pkg ? pkg->location_href : NULL;
+}
+
+void
+cr_package_set_location_href(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->location_href, value);
+}
+
+const char *
+cr_package_get_location_base(cr_Package *pkg)
+{
+    return pkg ? pkg->location_base : NULL;
+}
+
+void
+cr_package_set_location_base(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->location_base, value);
+}
+
+const char *
+cr_package_get_checksum_type(cr_Package *pkg)
+{
+    return pkg ? pkg->checksum_type : NULL;
+}
+
+void
+cr_package_set_checksum_type(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->checksum_type, value);
+}
+
+const char *
+cr_package_get_files_checksum_type(cr_Package *pkg)
+{
+    return pkg ? pkg->files_checksum_type : NULL;
+}
+
+void
+cr_package_set_files_checksum_type(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->files_checksum_type, value);
+}
+
+const char *
+cr_package_get_hdrid(cr_Package *pkg)
+{
+    return pkg ? pkg->hdrid : NULL;
+}
+
+void
+cr_package_set_hdrid(cr_Package *pkg, const char *value)
+{
+    cr_package_assign_string(pkg, &pkg->hdrid, value);
+}
+
+gint64
+cr_package_get_pkg_key(cr_Package *pkg)
+{
+    return pkg ? pkg->pkgKey : 0;
+}
+
+void
+cr_package_set_pkg_key(cr_Package *pkg, gint64 value)
+{
+    if (pkg) {
+        pkg->pkgKey = value;
+    }
+}
+
+gint64
+cr_package_get_time_file(cr_Package *pkg)
+{
+    return pkg ? pkg->time_file : 0;
+}
+
+void
+cr_package_set_time_file(cr_Package *pkg, gint64 value)
+{
+    if (pkg) {
+        pkg->time_file = value;
+    }
+}
+
+gint64
+cr_package_get_time_build(cr_Package *pkg)
+{
+    return pkg ? pkg->time_build : 0;
+}
+
+void
+cr_package_set_time_build(cr_Package *pkg, gint64 value)
+{
+    if (pkg) {
+        pkg->time_build = value;
+    }
+}
+
+gint64
+cr_package_get_rpm_header_start(cr_Package *pkg)
+{
+    return pkg ? pkg->rpm_header_start : 0;
+}
+
+void
+cr_package_set_rpm_header_start(cr_Package *pkg, gint64 value)
+{
+    if (pkg) {
+        pkg->rpm_header_start = value;
+    }
+}
+
+gint64
+cr_package_get_rpm_header_end(cr_Package *pkg)
+{
+    return pkg ? pkg->rpm_header_end : 0;
+}
+
+void
+cr_package_set_rpm_header_end(cr_Package *pkg, gint64 value)
+{
+    if (pkg) {
+        pkg->rpm_header_end = value;
+    }
+}
+
+gint64
+cr_package_get_size_package(cr_Package *pkg)
+{
+    return pkg ? pkg->size_package : 0;
+}
+
+void
+cr_package_set_size_package(cr_Package *pkg, gint64 value)
+{
+    if (pkg) {
+        pkg->size_package = value;
+    }
+}
+
+gint64
+cr_package_get_size_installed(cr_Package *pkg)
+{
+    return pkg ? pkg->size_installed : 0;
+}
+
+void
+cr_package_set_size_installed(cr_Package *pkg, gint64 value)
+{
+    if (pkg) {
+        pkg->size_installed = value;
+    }
+}
+
+gint64
+cr_package_get_size_archive(cr_Package *pkg)
+{
+    return pkg ? pkg->size_archive : 0;
+}
+
+void
+cr_package_set_size_archive(cr_Package *pkg, gint64 value)
+{
+    if (pkg) {
+        pkg->size_archive = value;
+    }
+}
+
+GSList *
+cr_package_get_requires(cr_Package *pkg)
+{
+    return pkg ? pkg->requires : NULL;
+}
+
+void
+cr_package_set_requires(cr_Package *pkg, GSList *value)
+{
+    if (pkg) {
+        pkg->requires = value;
+    }
+}
+
+GSList *
+cr_package_get_provides(cr_Package *pkg)
+{
+    return pkg ? pkg->provides : NULL;
+}
+
+void
+cr_package_set_provides(cr_Package *pkg, GSList *value)
+{
+    if (pkg) {
+        pkg->provides = value;
+    }
+}
+
+GSList *
+cr_package_get_conflicts(cr_Package *pkg)
+{
+    return pkg ? pkg->conflicts : NULL;
+}
+
+void
+cr_package_set_conflicts(cr_Package *pkg, GSList *value)
+{
+    if (pkg) {
+        pkg->conflicts = value;
+    }
+}
+
+GSList *
+cr_package_get_obsoletes(cr_Package *pkg)
+{
+    return pkg ? pkg->obsoletes : NULL;
+}
+
+void
+cr_package_set_obsoletes(cr_Package *pkg, GSList *value)
+{
+    if (pkg) {
+        pkg->obsoletes = value;
+    }
+}
+
+GSList *
+cr_package_get_suggests(cr_Package *pkg)
+{
+    return pkg ? pkg->suggests : NULL;
+}
+
+void
+cr_package_set_suggests(cr_Package *pkg, GSList *value)
+{
+    if (pkg) {
+        pkg->suggests = value;
+    }
+}
+
+GSList *
+cr_package_get_enhances(cr_Package *pkg)
+{
+    return pkg ? pkg->enhances : NULL;
+}
+
+void
+cr_package_set_enhances(cr_Package *pkg, GSList *value)
+{
+    if (pkg) {
+        pkg->enhances = value;
+    }
+}
+
+GSList *
+cr_package_get_recommends(cr_Package *pkg)
+{
+    return pkg ? pkg->recommends : NULL;
+}
+
+void
+cr_package_set_recommends(cr_Package *pkg, GSList *value)
+{
+    if (pkg) {
+        pkg->recommends = value;
+    }
+}
+
+GSList *
+cr_package_get_supplements(cr_Package *pkg)
+{
+    return pkg ? pkg->supplements : NULL;
+}
+
+void
+cr_package_set_supplements(cr_Package *pkg, GSList *value)
+{
+    if (pkg) {
+        pkg->supplements = value;
+    }
+}
+
+GSList *
+cr_package_get_files(cr_Package *pkg)
+{
+    return pkg ? pkg->files : NULL;
+}
+
+void
+cr_package_set_files(cr_Package *pkg, GSList *value)
+{
+    if (pkg) {
+        pkg->files = value;
+    }
+}
+
+GSList *
+cr_package_get_changelogs(cr_Package *pkg)
+{
+    return pkg ? pkg->changelogs : NULL;
+}
+
+void
+cr_package_set_changelogs(cr_Package *pkg, GSList *value)
+{
+    if (pkg) {
+        pkg->changelogs = value;
+    }
+}
+
+cr_PackageLoadingFlags
+cr_package_get_loading_flags(cr_Package *pkg)
+{
+    return pkg ? pkg->loadingflags : 0;
+}
+
+void
+cr_package_set_loading_flags(cr_Package *pkg, cr_PackageLoadingFlags flags)
+{
+    if (pkg) {
+        pkg->loadingflags = flags;
+    }
+}
+
+gboolean
+cr_package_get_skip_dump(cr_Package *pkg)
+{
+    return pkg ? pkg->skip_dump : FALSE;
+}
+
+void
+cr_package_set_skip_dump(cr_Package *pkg, gboolean skip_dump)
+{
+    if (pkg) {
+        pkg->skip_dump = skip_dump;
+    }
+}
+
+cr_BinaryData *
+cr_package_get_siggpg(cr_Package *pkg)
+{
+    return pkg ? pkg->siggpg : NULL;
+}
+
+void
+cr_package_set_siggpg(cr_Package *pkg, cr_BinaryData *data)
+{
+    if (pkg) {
+        pkg->siggpg = data;
+    }
+}
+
+cr_BinaryData *
+cr_package_get_sigpgp(cr_Package *pkg)
+{
+    return pkg ? pkg->sigpgp : NULL;
+}
+
+void
+cr_package_set_sigpgp(cr_Package *pkg, cr_BinaryData *data)
+{
+    if (pkg) {
+        pkg->sigpgp = data;
+    }
+}
+
+GStringChunk *
+cr_package_get_chunk(cr_Package *pkg)
+{
+    return pkg ? pkg->chunk : NULL;
+}
+
+void
+cr_package_set_chunk(cr_Package *pkg, GStringChunk *chunk)
+{
+    if (pkg) {
+        pkg->chunk = chunk;
+    }
+}

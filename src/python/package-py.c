@@ -151,9 +151,11 @@ package_repr(_PackageObject *self)
     cr_Package *pkg = self->package;
     PyObject *repr;
     if (pkg) {
+        const char *pkg_id = cr_package_get_pkg_id(pkg);
+        const char *name = cr_package_get_name(pkg);
         repr = PyUnicode_FromFormat("<createrepo_c.Package object id %s, %s>",
-                                   (pkg->pkgId ? pkg->pkgId : "-"),
-                                   (pkg->name  ? pkg->name  : "-"));
+                                   (pkg_id ? pkg_id : "-"),
+                                   (name ? name : "-"));
     } else {
        repr = PyUnicode_FromFormat("<createrepo_c.Package object id -, ->");
     }
@@ -243,32 +245,48 @@ static struct PyMethodDef package_methods[] = {
     {NULL, NULL, 0, NULL} /* sentinel */
 };
 
+/* Property accessors */
+
+typedef const char *(*PkgStrGetter)(cr_Package *);
+typedef void (*PkgStrSetter)(cr_Package *, const char *);
+typedef gint64 (*PkgNumGetter)(cr_Package *);
+typedef void (*PkgNumSetter)(cr_Package *, gint64);
+typedef GSList *(*PkgListGetter)(cr_Package *);
+typedef void (*PkgListSetter)(cr_Package *, GSList *);
+
+typedef struct {
+    PkgStrGetter get;
+    PkgStrSetter set;
+} StrField;
+
+typedef struct {
+    PkgNumGetter get;
+    PkgNumSetter set;
+} NumField;
+
 /* Getters */
 
 static PyObject *
-get_num(_PackageObject *self, void *member_offset)
+get_num(_PackageObject *self, void *closure)
 {
     if (check_PackageStatus(self))
         return NULL;
     cr_Package *pkg = self->package;
-    gint64 val = (gint64) *((gint64 *) ((size_t)pkg + (size_t) member_offset));
-    return PyLong_FromLongLong((long long) val);
+    return PyLong_FromLongLong((long long) ((NumField *) closure)->get(pkg));
 }
 
 static PyObject *
-get_str(_PackageObject *self, void *member_offset)
+get_str(_PackageObject *self, void *closure)
 {
     if (check_PackageStatus(self))
         return NULL;
     cr_Package *pkg = self->package;
-    char *str = *((char **) ((size_t) pkg + (size_t) member_offset));
+    const char *str = ((StrField *) closure)->get(pkg);
     if (str == NULL)
         Py_RETURN_NONE;
     return PyUnicode_FromString(str);
 }
 
-/** Return offset of a selected member of cr_Package structure. */
-#define OFFSET(member) (void *) offsetof(cr_Package, member)
 
 /** Convert C object to PyObject.
  * @param       C object
@@ -294,55 +312,12 @@ static int CheckPyPackageFile(PyObject *dep);
 static int CheckPyChangelogEntry(PyObject *dep);
 
 typedef struct {
-    size_t offset;          /*!< Ofset of the list in cr_Package */
+    PkgListGetter get;      /*!< Package list getter */
+    PkgListSetter set;      /*!< Package list setter */
     ConversionFromFunc f;   /*!< Conversion func to PyObject from a C object */
     ConversionToCheckFunc t_check; /*!< Check func for a single element of list */
     ConversionToFunc t;     /*!< Conversion func to C object from PyObject */
 } ListConvertor;
-
-/** List of convertors for converting a lists in cr_Package. */
-static ListConvertor list_convertors[] = {
-    { offsetof(cr_Package, requires),
-      (ConversionFromFunc) PyObject_FromDependency,
-      (ConversionToCheckFunc) CheckPyDependency,
-      (ConversionToFunc) PyObject_ToDependency },
-    { offsetof(cr_Package, provides),
-      (ConversionFromFunc) PyObject_FromDependency,
-      (ConversionToCheckFunc) CheckPyDependency,
-      (ConversionToFunc) PyObject_ToDependency },
-    { offsetof(cr_Package, conflicts),
-      (ConversionFromFunc) PyObject_FromDependency,
-      (ConversionToCheckFunc) CheckPyDependency,
-      (ConversionToFunc) PyObject_ToDependency },
-    { offsetof(cr_Package, obsoletes),
-      (ConversionFromFunc) PyObject_FromDependency,
-      (ConversionToCheckFunc) CheckPyDependency,
-      (ConversionToFunc) PyObject_ToDependency },
-    { offsetof(cr_Package, suggests),
-      (ConversionFromFunc) PyObject_FromDependency,
-      (ConversionToCheckFunc) CheckPyDependency,
-      (ConversionToFunc) PyObject_ToDependency },
-    { offsetof(cr_Package, enhances),
-      (ConversionFromFunc) PyObject_FromDependency,
-      (ConversionToCheckFunc) CheckPyDependency,
-      (ConversionToFunc) PyObject_ToDependency },
-    { offsetof(cr_Package, recommends),
-      (ConversionFromFunc) PyObject_FromDependency,
-      (ConversionToCheckFunc) CheckPyDependency,
-      (ConversionToFunc) PyObject_ToDependency },
-    { offsetof(cr_Package, supplements),
-      (ConversionFromFunc) PyObject_FromDependency,
-      (ConversionToCheckFunc) CheckPyDependency,
-      (ConversionToFunc) PyObject_ToDependency },
-    { offsetof(cr_Package, files),
-      (ConversionFromFunc) PyObject_FromPackageFile,
-      (ConversionToCheckFunc) CheckPyPackageFile,
-      (ConversionToFunc) PyObject_ToPackageFile },
-    { offsetof(cr_Package, changelogs),
-      (ConversionFromFunc) PyObject_FromChangelogEntry,
-      (ConversionToCheckFunc) CheckPyChangelogEntry,
-      (ConversionToFunc) PyObject_ToChangelogEntry },
-};
 
 static PyObject *
 get_list(_PackageObject *self, void *conv)
@@ -353,7 +328,7 @@ get_list(_PackageObject *self, void *conv)
     ListConvertor *convertor = conv;
     PyObject *list;
     cr_Package *pkg = self->package;
-    GSList *glist = *((GSList **) ((size_t) pkg + (size_t) convertor->offset));
+    GSList *glist = convertor->get(pkg);
 
     if ((list = PyList_New(0)) == NULL)
         return NULL;
@@ -371,7 +346,7 @@ get_list(_PackageObject *self, void *conv)
 /* Setters */
 
 static int
-set_num(_PackageObject *self, PyObject *value, void *member_offset)
+set_num(_PackageObject *self, PyObject *value, void *closure)
 {
     gint64 val;
     if (check_PackageStatus(self))
@@ -385,12 +360,12 @@ set_num(_PackageObject *self, PyObject *value, void *member_offset)
         return -1;
     }
     cr_Package *pkg = self->package;
-    *((gint64 *) ((size_t) pkg + (size_t) member_offset)) = val;
+    ((NumField *) closure)->set(pkg, val);
     return 0;
 }
 
 static int
-set_str(_PackageObject *self, PyObject *value, void *member_offset)
+set_str(_PackageObject *self, PyObject *value, void *closure)
 {
     if (check_PackageStatus(self))
         return -1;
@@ -399,11 +374,12 @@ set_str(_PackageObject *self, PyObject *value, void *member_offset)
         return -1;
     }
     cr_Package *pkg = self->package;
+    StrField *field = closure;
 
     if (value == Py_None) {
         // If value is None exist right now (avoid possibly
         // creation of a string chunk)
-        *((char **) ((size_t) pkg + (size_t) member_offset)) = NULL;
+        field->set(pkg, NULL);
         return 0;
     }
 
@@ -412,11 +388,16 @@ set_str(_PackageObject *self, PyObject *value, void *member_offset)
     // strings are in a metadata common chunk (cr_Metadata->chunk).
     // In this case, we have to create a chunk for this package before
     // inserting a new string.
-    if (!pkg->chunk)
-        pkg->chunk = g_string_chunk_new(0);
+    if (!cr_package_get_chunk(pkg))
+        cr_package_set_chunk(pkg, g_string_chunk_new(0));
 
-    char *str = PyObject_ToChunkedString(value, pkg->chunk);
-    *((char **) ((size_t) pkg + (size_t) member_offset)) = str;
+    PyObject *pybytes = PyObject_ToPyBytesOrNull(value);
+    if (!pybytes) {
+        return -1;
+    }
+    const char *str = PyBytes_AsString(pybytes);
+    field->set(pkg, str);
+    Py_DECREF(pybytes);
     return 0;
 }
 
@@ -456,12 +437,10 @@ static int
 set_list(_PackageObject *self, PyObject *list, void *conv)
 {
     ListConvertor *convertor = conv;
-    cr_Package *pkg = self->package;
     GSList *glist = NULL;
 
     if (check_PackageStatus(self))
         return -1;
-
     if (!PyList_Check(list)) {
         PyErr_SetString(PyExc_TypeError, "List expected!");
         return -1;
@@ -472,8 +451,11 @@ set_list(_PackageObject *self, PyObject *list, void *conv)
     // strings are in a metadata common chunk (cr_Metadata->chunk).
     // In this case, we have to create a chunk for this package before
     // inserting a new string.
-    if (!pkg->chunk)
-        pkg->chunk = g_string_chunk_new(0);
+    GStringChunk *chunk = cr_package_get_chunk(self->package);
+    if (!chunk) {
+        chunk = g_string_chunk_new(0);
+        cr_package_set_chunk(self->package, chunk);
+    }
 
     Py_ssize_t len = PyList_Size(list);
 
@@ -485,95 +467,142 @@ set_list(_PackageObject *self, PyObject *list, void *conv)
     }
 
     for (Py_ssize_t x = 0; x < len; x++) {
-        glist = g_slist_prepend(glist, convertor->t(PyList_GetItem(list, x), pkg->chunk));
+        glist = g_slist_prepend(glist, convertor->t(PyList_GetItem(list, x), chunk));
     }
 
-    *((GSList **) ((size_t) pkg + (size_t) convertor->offset)) = glist;
+    convertor->set(self->package, glist);
     return 0;
 }
 
 static PyGetSetDef package_getsetters[] = {
     {"pkgId",            (getter)get_str, (setter)set_str,
-      "Checksum of the package file", OFFSET(pkgId)},
+      "Checksum of the package file",
+      &(StrField){ cr_package_get_pkg_id, cr_package_set_pkg_id }},
     {"name",             (getter)get_str, (setter)set_str,
-        "Name of the package", OFFSET(name)},
+        "Name of the package",
+        &(StrField){ cr_package_get_name, cr_package_set_name }},
     {"arch",             (getter)get_str, (setter)set_str,
-        "Architecture for which the package was built", OFFSET(arch)},
+        "Architecture for which the package was built",
+        &(StrField){ cr_package_get_arch, cr_package_set_arch }},
     {"version",          (getter)get_str, (setter)set_str,
-        "Version of the packaged software", OFFSET(version)},
+        "Version of the packaged software",
+        &(StrField){ cr_package_get_version, cr_package_set_version }},
     {"epoch",            (getter)get_str, (setter)set_str,
-        "Epoch", OFFSET(epoch)},
+        "Epoch", &(StrField){ cr_package_get_epoch, cr_package_set_epoch }},
     {"release",          (getter)get_str, (setter)set_str,
-        "Release number of the package", OFFSET(release)},
+        "Release number of the package",
+        &(StrField){ cr_package_get_release, cr_package_set_release }},
     {"summary",          (getter)get_str, (setter)set_str,
-        "Short description of the packaged software", OFFSET(summary)},
+        "Short description of the packaged software",
+        &(StrField){ cr_package_get_summary, cr_package_set_summary }},
     {"description",      (getter)get_str, (setter)set_str,
         "In-depth description of the packaged software",
-        OFFSET(description)},
+        &(StrField){ cr_package_get_description, cr_package_set_description }},
     {"url",              (getter)get_str, (setter)set_str,
-        "URL with more information about packaged software", OFFSET(url)},
+        "URL with more information about packaged software",
+        &(StrField){ cr_package_get_url, cr_package_set_url }},
     {"time_file",        (getter)get_num, (setter)set_num,
-        "mtime of the package file", OFFSET(time_file)},
+        "mtime of the package file",
+        &(NumField){ cr_package_get_time_file, cr_package_set_time_file }},
     {"time_build",       (getter)get_num, (setter)set_num,
-        "Time when package was builded", OFFSET(time_build)},
+        "Time when package was builded",
+        &(NumField){ cr_package_get_time_build, cr_package_set_time_build }},
     {"rpm_license",      (getter)get_str, (setter)set_str,
         "License term applicable to the package software (GPLv2, etc.)",
-        OFFSET(rpm_license)},
+        &(StrField){ cr_package_get_rpm_license, cr_package_set_rpm_license }},
     {"rpm_vendor",       (getter)get_str, (setter)set_str,
         "Name of the organization producing the package",
-        OFFSET(rpm_vendor)},
+        &(StrField){ cr_package_get_rpm_vendor, cr_package_set_rpm_vendor }},
     {"rpm_group",        (getter)get_str, (setter)set_str,
         "RPM group (See: http://fedoraproject.org/wiki/RPMGroups)",
-        OFFSET(rpm_group)},
+        &(StrField){ cr_package_get_rpm_group, cr_package_set_rpm_group }},
     {"rpm_buildhost",    (getter)get_str, (setter)set_str,
         "Hostname of the system that built the package",
-        OFFSET(rpm_buildhost)},
+        &(StrField){ cr_package_get_rpm_buildhost, cr_package_set_rpm_buildhost }},
     {"rpm_sourcerpm",    (getter)get_str, (setter)set_str,
         "Name of the source package from which this binary package was built",
-        OFFSET(rpm_sourcerpm)},
+        &(StrField){ cr_package_get_rpm_sourcerpm, cr_package_set_rpm_sourcerpm }},
     {"rpm_header_start", (getter)get_num, (setter)set_num,
-        "First byte of the header", OFFSET(rpm_header_start)},
+        "First byte of the header",
+        &(NumField){ cr_package_get_rpm_header_start, cr_package_set_rpm_header_start }},
     {"rpm_header_end",   (getter)get_num, (setter)set_num,
-        "Last byte of the header", OFFSET(rpm_header_end)},
+        "Last byte of the header",
+        &(NumField){ cr_package_get_rpm_header_end, cr_package_set_rpm_header_end }},
     {"rpm_packager",     (getter)get_str, (setter)set_str,
         "Person or persons responsible for creating the package",
-        OFFSET(rpm_packager)},
+        &(StrField){ cr_package_get_rpm_packager, cr_package_set_rpm_packager }},
     {"size_package",     (getter)get_num, (setter)set_num,
-        "Size, in bytes, of the package", OFFSET(size_package)},
+        "Size, in bytes, of the package",
+        &(NumField){ cr_package_get_size_package, cr_package_set_size_package }},
     {"size_installed",   (getter)get_num, (setter)set_num,
         "Total size, in bytes, of every file installed by this package",
-        OFFSET(size_installed)},
+        &(NumField){ cr_package_get_size_installed, cr_package_set_size_installed }},
     {"size_archive",     (getter)get_num, (setter)set_num,
         "Size, in bytes, of the archive portion of the original package file",
-        OFFSET(size_archive)},
+        &(NumField){ cr_package_get_size_archive, cr_package_set_size_archive }},
     {"location_href",    (getter)get_str, (setter)set_str,
-        "Relative location of package to the repodata", OFFSET(location_href)},
+        "Relative location of package to the repodata",
+        &(StrField){ cr_package_get_location_href, cr_package_set_location_href }},
     {"location_base",    (getter)get_str, (setter)set_str,
-        "Base location of this package", OFFSET(location_base)},
+        "Base location of this package",
+        &(StrField){ cr_package_get_location_base, cr_package_set_location_base }},
     {"checksum_type",    (getter)get_str, (setter)set_str,
-        "Type of checksum", OFFSET(checksum_type)},
+        "Type of checksum",
+        &(StrField){ cr_package_get_checksum_type, cr_package_set_checksum_type }},
     {"files_checksum_type",    (getter)get_str, (setter)set_str,
-        "Type of checksum for files", OFFSET(files_checksum_type)},
+        "Type of checksum for files",
+        &(StrField){ cr_package_get_files_checksum_type,
+                     cr_package_set_files_checksum_type }},
     {"requires",         (getter)get_list, (setter)set_list,
-        "Capabilities the package requires", &(list_convertors[0])},
+        "Capabilities the package requires",
+        &(ListConvertor){ cr_package_get_requires, cr_package_set_requires,
+            (ConversionFromFunc) PyObject_FromDependency, CheckPyDependency,
+            (ConversionToFunc) PyObject_ToDependency }},
     {"provides",         (getter)get_list, (setter)set_list,
-        "Capabilities the package provides", &(list_convertors[1])},
+        "Capabilities the package provides",
+        &(ListConvertor){ cr_package_get_provides, cr_package_set_provides,
+            (ConversionFromFunc) PyObject_FromDependency, CheckPyDependency,
+            (ConversionToFunc) PyObject_ToDependency }},
     {"conflicts",        (getter)get_list, (setter)set_list,
-        "Capabilities the package conflicts with", &(list_convertors[2])},
+        "Capabilities the package conflicts with",
+        &(ListConvertor){ cr_package_get_conflicts, cr_package_set_conflicts,
+            (ConversionFromFunc) PyObject_FromDependency, CheckPyDependency,
+            (ConversionToFunc) PyObject_ToDependency }},
     {"obsoletes",        (getter)get_list, (setter)set_list,
-        "Capabilities the package obsoletes", &(list_convertors[3])},
+        "Capabilities the package obsoletes",
+        &(ListConvertor){ cr_package_get_obsoletes, cr_package_set_obsoletes,
+            (ConversionFromFunc) PyObject_FromDependency, CheckPyDependency,
+            (ConversionToFunc) PyObject_ToDependency }},
     {"suggests",         (getter)get_list, (setter)set_list,
-        "Capabilities the package suggests", &(list_convertors[4])},
+        "Capabilities the package suggests",
+        &(ListConvertor){ cr_package_get_suggests, cr_package_set_suggests,
+            (ConversionFromFunc) PyObject_FromDependency, CheckPyDependency,
+            (ConversionToFunc) PyObject_ToDependency }},
     {"enhances",         (getter)get_list, (setter)set_list,
-        "Capabilities the package enhances", &(list_convertors[5])},
+        "Capabilities the package enhances",
+        &(ListConvertor){ cr_package_get_enhances, cr_package_set_enhances,
+            (ConversionFromFunc) PyObject_FromDependency, CheckPyDependency,
+            (ConversionToFunc) PyObject_ToDependency }},
     {"recommends",       (getter)get_list, (setter)set_list,
-        "Capabilities the package recommends", &(list_convertors[6])},
+        "Capabilities the package recommends",
+        &(ListConvertor){ cr_package_get_recommends, cr_package_set_recommends,
+            (ConversionFromFunc) PyObject_FromDependency, CheckPyDependency,
+            (ConversionToFunc) PyObject_ToDependency }},
     {"supplements",      (getter)get_list, (setter)set_list,
-        "Capabilities the package supplements", &(list_convertors[7])},
+        "Capabilities the package supplements",
+        &(ListConvertor){ cr_package_get_supplements, cr_package_set_supplements,
+            (ConversionFromFunc) PyObject_FromDependency, CheckPyDependency,
+            (ConversionToFunc) PyObject_ToDependency }},
     {"files",            (getter)get_list, (setter)set_list,
-        "Files that package contains", &(list_convertors[8])},
+        "Files that package contains",
+        &(ListConvertor){ cr_package_get_files, cr_package_set_files,
+            (ConversionFromFunc) PyObject_FromPackageFile, CheckPyPackageFile,
+            (ConversionToFunc) PyObject_ToPackageFile }},
     {"changelogs",       (getter)get_list, (setter)set_list,
-        "Changelogs that package contains", &(list_convertors[9])},
+        "Changelogs that package contains",
+        &(ListConvertor){ cr_package_get_changelogs, cr_package_set_changelogs,
+            (ConversionFromFunc) PyObject_FromChangelogEntry, CheckPyChangelogEntry,
+            (ConversionToFunc) PyObject_ToChangelogEntry }},
     {NULL, NULL, NULL, NULL, NULL} /* sentinel */
 };
 

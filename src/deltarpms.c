@@ -30,7 +30,7 @@
 #ifdef    CR_DELTA_RPM_SUPPORT
 #include <drpm.h>
 #endif
-#include "package.h"
+#include "package_internal.h"
 #include "parsepkg.h"
 #include "misc.h"
 #include "error.h"

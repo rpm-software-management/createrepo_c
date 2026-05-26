@@ -21,6 +21,7 @@
 #include "koji.h"
 #include "error.h"
 #include "load_metadata.h"
+#include "package_internal.h"
 #include "misc.h"
 
 void

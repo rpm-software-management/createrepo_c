@@ -25,7 +25,7 @@
 #include <libxml/xmlwriter.h>
 #include <libxml/xmlsave.h>
 #include "error.h"
-#include "package.h"
+#include "package_internal.h"
 #include "xml_dump.h"
 #include "xml_dump_internal.h"
 

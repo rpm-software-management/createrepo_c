@@ -33,7 +33,7 @@
 #include "createrepo_shared.h"
 #include "locate_metadata.h"
 #include "load_metadata.h"
-#include "package.h"
+#include "package_internal.h"
 #include "repomd.h"
 #include "sqlite.h"
 #include "xml_file.h"

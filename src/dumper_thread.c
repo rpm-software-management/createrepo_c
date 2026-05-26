@@ -33,6 +33,7 @@
 #include "error.h"
 #include "misc.h"
 #include "parsepkg.h"
+#include "package_internal.h"
 #include "xml_dump.h"
 #include <fcntl.h>
 

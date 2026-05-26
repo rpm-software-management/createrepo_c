@@ -32,6 +32,7 @@
 #include "error.h"
 #include "parsehdr.h"
 #include "parsepkg.h"
+#include "package_internal.h"
 #include "misc.h"
 #include "checksum.h"
 

@@ -32,6 +32,7 @@
 #include <libxml/xmlstring.h>
 #include "misc.h"
 #include "sqlite.h"
+#include "package_internal.h"
 #include "error.h"
 #include "xml_dump.h"
 

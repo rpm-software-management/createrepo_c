@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include "fixtures.h"
 #include "createrepo/error.h"
-#include "createrepo/package.h"
+#include "createrepo/package_internal.h"
 #include "createrepo/misc.h"
 #include "createrepo/load_metadata.h"
 #include "createrepo/locate_metadata.h"

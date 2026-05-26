@@ -128,7 +128,7 @@
 #define TEST_UPDATEINFO_02      TEST_UPDATEINFO_FILES_PATH"updateinfo_02.xml.xz"
 #define TEST_UPDATEINFO_03      TEST_UPDATEINFO_FILES_PATH"updateinfo_03.xml"
 
-#include "createrepo/package.h"
+#include "createrepo/package_internal.h"
 
 cr_Package *
 get_package()

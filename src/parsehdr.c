@@ -31,6 +31,7 @@
 #endif
 #include <stdlib.h>
 #include "parsehdr.h"
+#include "package_internal.h"
 #include "xml_dump.h"
 #include "misc.h"
 #include "cleanup.h"

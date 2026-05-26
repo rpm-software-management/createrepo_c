@@ -29,7 +29,7 @@
 #endif /* WITH_LIBMODULEMD */
 
 #include "error.h"
-#include "package.h"
+#include "package_internal.h"
 #include "misc.h"
 #include "load_metadata.h"
 #include "locate_metadata.h"

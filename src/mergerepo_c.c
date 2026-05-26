@@ -36,7 +36,7 @@
 #include "misc.h"
 #include "locate_metadata.h"
 #include "load_metadata.h"
-#include "package.h"
+#include "package_internal.h"
 #include "xml_dump.h"
 #include "repomd.h"
 #include "sqlite.h"

@@ -27,7 +27,7 @@
 #include "deltarpms.h"
 #include "error.h"
 #include "misc.h"
-#include "package.h"
+#include "package_internal.h"
 #include "xml_dump.h"
 #include "xml_dump_internal.h"
 

@@ -38,7 +38,7 @@
 %if %{defined gitrev}
 %define package_version %{?gitrev}
 %else
-%define package_version 1.2.3
+%define package_version 2.0.0
 %endif
 
 Summary:        Creates a common metadata repository

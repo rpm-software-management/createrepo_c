@@ -87,31 +87,37 @@ typedef struct {
 typedef struct _cr_Package cr_Package;
 
 /** Create new (empty) dependency structure.
+ * Ownership: transferred to the caller (free with g_free()).
  * @return              new empty cr_Dependency
  */
 cr_Dependency *cr_dependency_new(void);
 
 /** Create new (empty) package file structure.
+ * Ownership: transferred to the caller (free with g_free()).
  * @return              new emtpy cr_PackageFile
  */
 cr_PackageFile *cr_package_file_new(void);
 
 /** Create new (empty) changelog structure.
+ * Ownership: transferred to the caller (free with g_free()).
  * @return              new empty cr_ChangelogEntry
  */
 cr_ChangelogEntry *cr_changelog_entry_new(void);
 
 /** Create new (empty) structure for binary data
+ * Ownership: transferred to the caller (free with g_free()).
  * @return              new mepty cr_BinaryData
  */
 cr_BinaryData *cr_binary_data_new(void);
 
 /** Create new (empty) package structure.
+ * Ownership: transferred to the caller (free with cr_package_free()).
  * @return              new empty cr_Package
  */
 cr_Package *cr_package_new(void);
 
 /** Create new (empty) package structure without initialized string chunk.
+ * Ownership: transferred to the caller (free with cr_package_free()).
  * @return              new empty cr_Package
  */
 cr_Package *cr_package_new_without_chunk(void);
@@ -122,18 +128,21 @@ cr_Package *cr_package_new_without_chunk(void);
 void cr_package_free(cr_Package *package);
 
 /** Get NVRA package string
+ * Ownership: transferred to the caller (free with g_free()).
  * @param package       cr_Package
  * @return              nvra string
  */
 gchar *cr_package_nvra(cr_Package *package);
 
 /** Get NEVRA package string
+ * Ownership: transferred to the caller (free with g_free()).
  * @param package       cr_Package
  * @return              nevra string
  */
 gchar *cr_package_nevra(cr_Package *package);
 
 /** Create a standalone copy of the package.
+ * Ownership: transferred to the caller (free with cr_package_free()).
  * @param package       cr_Package
  * @return              copy of the package
  */

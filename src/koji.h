@@ -87,7 +87,9 @@ pkgorigins_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
 
 int
 koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
-                   struct CmdOptions *cmd_options,
+                   const char * blocked,
+                   gboolean koji_simple,
+                   const char * tmp_out_repo,
                    GSList *repos);
 
 void

@@ -31,7 +31,6 @@ test_koji_stuff_00(void)
     gchar *template = g_strdup(TMPDIR_TEMPLATE);
     gchar *tmp = g_strconcat(mkdtemp(template), "/", NULL);
     struct KojiMergedReposStuff *koji_stuff = NULL;
-    struct CmdOptions o = {.koji=1, .koji_simple=1, .blocked=NULL, .tmp_out_repo=tmp};
 
     GSList *local_repos = NULL;
     struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) TEST_REPO_00, TRUE, NULL);
@@ -43,7 +42,7 @@ test_koji_stuff_00(void)
     loc = cr_locate_metadata((gchar *) TEST_REPO_KOJI_01, TRUE, NULL);
     local_repos = g_slist_prepend(local_repos, loc);
 
-    int ret = koji_stuff_prepare(&koji_stuff, &o, local_repos);
+    int ret = koji_stuff_prepare(&koji_stuff, NULL, 1, tmp, local_repos);
     g_assert_cmpint(ret, ==, 0);
 
     //we have only 3 uniq srpm names
@@ -79,7 +78,6 @@ test_koji_stuff_01(void)
     fclose(blocked);
 
     struct KojiMergedReposStuff *koji_stuff = NULL;
-    struct CmdOptions o = {.koji=0, .blocked=blocked_files_path, .tmp_out_repo=tmp};
 
     GSList *local_repos = NULL;
     struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) TEST_REPO_00, TRUE, NULL);
@@ -91,7 +89,7 @@ test_koji_stuff_01(void)
     loc = cr_locate_metadata((gchar *) TEST_REPO_KOJI_01, TRUE, NULL);
     local_repos = g_slist_prepend(local_repos, loc);
 
-    int ret = koji_stuff_prepare(&koji_stuff, &o, local_repos);
+    int ret = koji_stuff_prepare(&koji_stuff, blocked_files_path, 0, tmp, local_repos);
     g_assert_cmpint(ret, ==, 0);
 
     //we have only 3 uniq srpm names
@@ -129,13 +127,12 @@ test_koji_stuff_02_get_newest_srpm_from_one_repo(void)
     gchar *tmp = g_strconcat(mkdtemp(template), "/", NULL);
 
     struct KojiMergedReposStuff *koji_stuff = NULL;
-    struct CmdOptions o = {.koji=0, .blocked=NULL, .tmp_out_repo=tmp};
 
     GSList *local_repos = NULL;
     struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) TEST_REPO_KOJI_01, TRUE, NULL);
     local_repos = g_slist_prepend(local_repos, loc);
 
-    int ret = koji_stuff_prepare(&koji_stuff, &o, local_repos);
+    int ret = koji_stuff_prepare(&koji_stuff, NULL, 0, tmp, local_repos);
     g_assert_cmpint(ret, ==, 0);
 
     g_assert_cmpint(g_hash_table_size(koji_stuff->include_srpms), ==, 1);
@@ -157,7 +154,6 @@ test_koji_stuff_03_get_srpm_from_first_repo_even_if_its_older(void)
     gchar *tmp = g_strconcat(mkdtemp(template), "/", NULL);
 
     struct KojiMergedReposStuff *koji_stuff = NULL;
-    struct CmdOptions o = {.koji=0, .blocked=NULL, .tmp_out_repo=tmp};
 
     GSList *local_repos = NULL;
     struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) TEST_REPO_KOJI_01, TRUE, NULL);
@@ -165,7 +161,7 @@ test_koji_stuff_03_get_srpm_from_first_repo_even_if_its_older(void)
     loc = cr_locate_metadata((gchar *) TEST_REPO_KOJI_02, TRUE, NULL);
     local_repos = g_slist_prepend(local_repos, loc);
 
-    int ret = koji_stuff_prepare(&koji_stuff, &o, local_repos);
+    int ret = koji_stuff_prepare(&koji_stuff, NULL, 0, tmp, local_repos);
     g_assert_cmpint(ret, ==, 0);
 
     g_assert_cmpint(g_hash_table_size(koji_stuff->include_srpms), ==, 1);

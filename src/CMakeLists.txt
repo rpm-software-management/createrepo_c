@@ -38,7 +38,6 @@ SET(headers
     checksum.h
     compression_wrapper.h
     constants.h
-    mergerepo_c.h
     createrepo_c.h
     createrepo_shared.h
     deltarpms.h

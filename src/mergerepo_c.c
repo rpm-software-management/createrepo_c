@@ -2119,7 +2119,8 @@ main(int argc, char **argv)
 
     struct KojiMergedReposStuff *koji_stuff = NULL;
     if (cmd_options->koji)
-        koji_stuff_prepare(&koji_stuff, cmd_options, local_repos);
+        koji_stuff_prepare(&koji_stuff, cmd_options->blocked, cmd_options->koji_simple,
+                           cmd_options->tmp_out_repo, local_repos);
     else if (cmd_options->pkgorigins)
         pkgorigins_prepare(&koji_stuff, cmd_options->tmp_out_repo);
 

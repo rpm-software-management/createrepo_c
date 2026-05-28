@@ -97,7 +97,9 @@ pkgorigins_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
 
 int
 koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
-                   struct CmdOptions *cmd_options,
+                   const char * blocked,
+                   gboolean koji_simple,
+                   const char * tmp_out_repo,
                    GSList *repos)
 {
     struct KojiMergedReposStuff *koji_stuff;
@@ -126,13 +128,13 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
 
     // Load list of blocked srpm packages
 
-    if (cmd_options->blocked) {
+    if (blocked) {
         int x = 0;
         char *content = NULL;
         char **names;
         GError *err = NULL;
 
-        if (!g_file_get_contents(cmd_options->blocked, &content, NULL, &err)) {
+        if (!g_file_get_contents(blocked, &content, NULL, &err)) {
             g_critical("Error while reading blocked file: %s", err->message);
             g_error_free(err);
             g_free(content);
@@ -157,10 +159,10 @@ koji_stuff_prepare(struct KojiMergedReposStuff **koji_stuff_ptr,
     }
 
 
-    koji_stuff->simple = cmd_options->koji_simple;
+    koji_stuff->simple = koji_simple;
 
     // Prepare pkgorigin file
-    result = pkgorigins_prepare_file (cmd_options->tmp_out_repo,
+    result = pkgorigins_prepare_file (tmp_out_repo,
                                       &koji_stuff->pkgorigins);
     if (result != 0) {
         return result;

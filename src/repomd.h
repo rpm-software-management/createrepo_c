@@ -262,7 +262,7 @@ void cr_repomd_add_content_tag(cr_Repomd *repomd, const char *tag);
 
 /** Get repomd record from the repomd object.
  * @param repomd                cr_Repomd object
- * @param type                  Type of the record ("primary", "primary_db", ..)
+ * @param type                  Type of the record ("primary", "filelists", ..)
  * @return                      Pointer to a record of desired type or NULL
  */
 cr_RepomdRecord *cr_repomd_get_record(cr_Repomd *repomd, const char *type);
@@ -277,7 +277,7 @@ void cr_repomd_detach_record(cr_Repomd *repomd, cr_RepomdRecord *rec);
 
 /** Remove first record of the specified type
  * @param repomd                cr_Repomd object
- * @param type                  Type of the record ("primary", "primary_db", ..)
+ * @param type                  Type of the record ("primary", "filelists", ..)
  */
 void cr_repomd_remove_record(cr_Repomd *repomd, const char *type);
 

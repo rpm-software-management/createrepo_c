@@ -1114,7 +1114,7 @@ class TestCaseXmlParserRepomd(unittest.TestCase):
         self.assertEqual(repomd.records[0].timestamp, 1334667230)
         self.assertEqual(repomd.records[0].size, 273)
         self.assertEqual(repomd.records[0].size_open, 389)
-        self.assertEqual(repomd.records[0].db_ver, 0)
+
 
         self.assertEqual(repomd.records[1].type, "other")
         self.assertEqual(repomd.records[1].location_real, None)
@@ -1129,7 +1129,7 @@ class TestCaseXmlParserRepomd(unittest.TestCase):
         self.assertEqual(repomd.records[1].timestamp, 1334667230)
         self.assertEqual(repomd.records[1].size, 332)
         self.assertEqual(repomd.records[1].size_open, 530)
-        self.assertEqual(repomd.records[1].db_ver, 0)
+
 
         self.assertEqual(repomd.records[2].type, "primary")
         self.assertEqual(repomd.records[2].location_real, None)
@@ -1144,7 +1144,7 @@ class TestCaseXmlParserRepomd(unittest.TestCase):
         self.assertEqual(repomd.records[2].timestamp, 1334667230)
         self.assertEqual(repomd.records[2].size, 782)
         self.assertEqual(repomd.records[2].size_open, 2085)
-        self.assertEqual(repomd.records[2].db_ver, 0)
+
 
     def test_xml_parser_repomd_repo01_nowarningcb(self):
 

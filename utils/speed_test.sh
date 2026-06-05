@@ -90,7 +90,7 @@ function dirty_run {
 
     # Prepare metadata
     rm -rf "$REPO"/repodata
-    createrepo --quiet --database "$REPO" > /dev/null
+    createrepo --quiet "$REPO" > /dev/null
 
     echo -e "\n\$ createrepo_c $1 $REPO"
     clear_cache
@@ -98,7 +98,7 @@ function dirty_run {
 
     # Prepare metadata
     rm -rf "$REPO"/repodata
-    createrepo --quiet --database "$REPO" > /dev/null
+    createrepo --quiet "$REPO" > /dev/null
 
     echo -e "\n\$ createrepo $1 $REPO"
     clear_cache
@@ -126,21 +126,11 @@ echo "$REPO"
 echo
 echo "Case-1: generating entire metadata from scratch"
 echo "+---------------------------------------------------------------+"
-echo "+ With sqlite DB"
-echo "+----------------------+"
-run "--database"
-echo "+ Without sqlite DB"
-echo "+----------------------+"
-run "--no-database"
+run ""
 
 echo "Case-2: re-generating metadata (with existing repodata in place)"
 echo "+---------------------------------------------------------------+"
-echo "+ With sqlite DB"
-echo "+----------------------+"
-dirty_run "--update --database"
-echo "+ Without sqlite DB"
-echo "+----------------------+"
-dirty_run "--update --no-database"
+dirty_run "--update"
 
 # Final clean up
 

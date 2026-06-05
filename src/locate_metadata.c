@@ -68,9 +68,6 @@ cr_metadatalocation_free(struct cr_MetadataLocation *ml)
     g_free(ml->fil_xml_href);
     g_free(ml->fex_xml_href);
     g_free(ml->oth_xml_href);
-    g_free(ml->pri_sqlite_href);
-    g_free(ml->fil_sqlite_href);
-    g_free(ml->oth_sqlite_href);
     g_free(ml->repomd);
     g_free(ml->original_url);
     g_free(ml->local_path);
@@ -130,8 +127,7 @@ cr_insert_additional_metadatum(const gchar *path,
 
 struct cr_MetadataLocation *
 cr_parse_repomd(const char *repomd_path,
-                const char *repopath,
-                int ignore_sqlite)
+                const char *repopath)
 {
     assert(repomd_path);
 
@@ -163,20 +159,12 @@ cr_parse_repomd(const char *repomd_path,
 
         if (!g_strcmp0(record->type, "primary"))
             mdloc->pri_xml_href = full_location_href;
-        else if (!g_strcmp0(record->type, "primary_db") && !ignore_sqlite)
-            mdloc->pri_sqlite_href = full_location_href;
         else if (!g_strcmp0(record->type, "filelists"))
             mdloc->fil_xml_href = full_location_href;
-        else if (!g_strcmp0(record->type, "filelists_db") && !ignore_sqlite)
-            mdloc->fil_sqlite_href = full_location_href;
         else if (!g_strcmp0(record->type, "filelists-ext"))
             mdloc->fex_xml_href = full_location_href;
-        else if (!g_strcmp0(record->type, "filelists-ext_db") && !ignore_sqlite)
-            mdloc->fex_sqlite_href = full_location_href;
         else if (!g_strcmp0(record->type, "other"))
             mdloc->oth_xml_href = full_location_href;
-        else if (!g_strcmp0(record->type, "other_db") && !ignore_sqlite)
-            mdloc->oth_sqlite_href = full_location_href;
         else if ( !g_str_has_prefix(record->type, "primary_"   ) &&
                   !g_str_has_prefix(record->type, "filelists_" ) && 
                   !g_str_has_prefix(record->type, "filelists-ext_" ) && 
@@ -194,7 +182,7 @@ cr_parse_repomd(const char *repomd_path,
 }
 
 static struct cr_MetadataLocation *
-cr_get_local_metadata(const char *repopath, gboolean ignore_sqlite)
+cr_get_local_metadata(const char *repopath)
 {
     _cleanup_free_ gchar *repomd = NULL;
     struct cr_MetadataLocation *ret = NULL;
@@ -214,14 +202,14 @@ cr_get_local_metadata(const char *repopath, gboolean ignore_sqlite)
         return ret;
     }
 
-    ret = cr_parse_repomd(repomd, repopath, ignore_sqlite);
+    ret = cr_parse_repomd(repomd, repopath);
 
     return ret;
 }
 
 
 static struct cr_MetadataLocation *
-cr_get_remote_metadata(const char *repopath, gboolean ignore_sqlite)
+cr_get_remote_metadata(const char *repopath)
 {
     CURL *handle = NULL;
     _cleanup_free_ gchar *tmp_dir = NULL;
@@ -290,7 +278,7 @@ cr_get_remote_metadata(const char *repopath, gboolean ignore_sqlite)
     }
 
     // Parse downloaded repomd.xml
-    r_location = cr_parse_repomd(tmp_repomd, repopath, ignore_sqlite);
+    r_location = cr_parse_repomd(tmp_repomd, repopath);
     if (!r_location) {
         g_critical("%s: repomd.xml parser failed on %s", __func__, tmp_repomd);
         goto get_remote_metadata_cleanup;
@@ -305,13 +293,6 @@ cr_get_remote_metadata(const char *repopath, gboolean ignore_sqlite)
         cr_download(handle, r_location->fex_xml_href, tmp_repodata, &tmp_err);
     if (!tmp_err && r_location->oth_xml_href)
         cr_download(handle, r_location->oth_xml_href, tmp_repodata, &tmp_err);
-    if (!tmp_err && r_location->pri_sqlite_href)
-        cr_download(handle, r_location->pri_sqlite_href, tmp_repodata, &tmp_err);
-    if (!tmp_err && r_location->fil_sqlite_href)
-        cr_download(handle, r_location->fil_sqlite_href, tmp_repodata, &tmp_err);
-    if (!tmp_err && r_location->oth_sqlite_href)
-        cr_download(handle, r_location->oth_sqlite_href, tmp_repodata, &tmp_err);
-
     if (!tmp_err && r_location->additional_metadata){
         GSList *element = r_location->additional_metadata;
         for (; element; element=g_slist_next(element)) {
@@ -331,7 +312,7 @@ cr_get_remote_metadata(const char *repopath, gboolean ignore_sqlite)
     g_debug("%s: Remote metadata was successfully downloaded", __func__);
 
     // Parse downloaded data
-    ret = cr_get_local_metadata(tmp_dir, ignore_sqlite);
+    ret = cr_get_local_metadata(tmp_dir);
     if (ret)
         ret->tmp = 1;
 
@@ -346,7 +327,7 @@ get_remote_metadata_cleanup:
 
 
 struct cr_MetadataLocation *
-cr_locate_metadata(const char *repopath, gboolean ignore_sqlite, GError **err)
+cr_locate_metadata(const char *repopath, GError **err)
 {
     struct cr_MetadataLocation *ret = NULL;
 
@@ -358,12 +339,12 @@ cr_locate_metadata(const char *repopath, gboolean ignore_sqlite, GError **err)
         g_str_has_prefix(repopath, "https://"))
     {
         // Remote metadata - Download them via curl
-        ret = cr_get_remote_metadata(repopath, ignore_sqlite);
+        ret = cr_get_remote_metadata(repopath);
     } else {
         // Local metadata
         if (g_str_has_prefix(repopath, "file:///"))
             repopath += 7;
-        ret = cr_get_local_metadata(repopath, ignore_sqlite);
+        ret = cr_get_local_metadata(repopath);
     }
 
     if (ret) {

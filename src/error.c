@@ -33,8 +33,6 @@ cr_strerror(cr_Error rc)
             return "Out of memory";
         case CRE_STAT:
             return "stat() system call failed";
-        case CRE_DB:
-            return "Database error";
         case CRE_BADARG:
             return "Bad function argument(s)";
         case CRE_NOFILE:

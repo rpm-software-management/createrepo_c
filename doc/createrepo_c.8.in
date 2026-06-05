@@ -88,12 +88,6 @@ Make sure all xml generated is formatted (default)
 .SS \-p \-\-no\-pretty
 .sp
 Minify the generated xml content. On average this reduces compressed size by 2%.
-.SS \-d \-\-database
-.sp
-DEPRECATED: Generate sqlite databases for use with yum.
-.SS \-\-no\-database
-.sp
-Do not generate sqlite databases in the repository.
 .SS \-\-update
 .sp
 If metadata already exists in the outputdir and an rpm is unchanged (based on file size and mtime) since the metadata was generated, reuse the existing metadata rather than recalculating it. In the case of a large repository with only a few new or modified rpms this can significantly reduce I/O and processing time.
@@ -176,10 +170,10 @@ Generate zchunk files as well as the standard repodata.
 Directory containing compression dictionaries for use by zchunk
 .SS \-\-keep\-all\-metadata
 .sp
-Keep all additional metadata (not primary, filelists and other xml or sqlite files, nor their compressed variants) from source repository during update (default).
+Keep all additional metadata (not primary, filelists and other xml files, nor their compressed variants) from source repository during update (default).
 .SS \-\-discard\-additional\-metadata
 .sp
-Discard all additional metadata (not primary, filelists and other xml or sqlite files, nor their compressed variants) from source repository during update.
+Discard all additional metadata (not primary, filelists and other xml files, nor their compressed variants) from source repository during update.
 .SS \-\-compatibility
 .sp
 Enforce maximal compatibility with classical createrepo (Changes \-\-retain\-old\-md behavior, defaults to Gzip for compression).
@@ -203,9 +197,6 @@ The number of older versions to make deltas against. Defaults to 1.
 .sp
 Max size of an rpm that to run deltarpm against (in bytes).
 .\}
-.SS \-\-local\-sqlite
-.sp
-Gen sqlite DBs locally (into a directory for temporary files). Sometimes, sqlite has a trouble to gen DBs on a NFS mount, use this option in such cases. This option could lead to a higher memory consumption if TMPDIR is set to /tmp or not set at all, because then the /tmp is used and /tmp dir is often a ramdisk.
 .SS \-\-cut\-dirs NUM
 .sp
 Ignore NUM of directory components in location_href during repodata generation

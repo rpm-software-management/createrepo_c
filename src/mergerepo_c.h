@@ -27,7 +27,6 @@ extern "C" {
 
 #include "compression_wrapper.h"
 
-#define DEFAULT_DB_COMPRESSION_TYPE             CR_CW_BZ2_COMPRESSION
 #define DEFAULT_COMPRESSION_TYPE                CR_CW_ZSTD_COMPRESSION
 
 typedef enum {
@@ -49,8 +48,6 @@ struct CmdOptions {
     char *repo_prefix_search;
     char *repo_prefix_replace;
     char *archlist;
-    gboolean database;
-    gboolean no_database;
     gboolean filelists_ext;
     gboolean verbose;
     char *outputdir;
@@ -82,7 +79,6 @@ struct CmdOptions {
     char *tmp_out_repo;
     GSList *repo_list;
     GSList *arch_list;
-    cr_CompressionType db_compression_type;
     cr_CompressionType compression_type;
     MergeMethod merge_method;
 };

@@ -62,7 +62,6 @@ BuildRequires:  libcurl-devel
 BuildRequires:  libxml2-devel
 BuildRequires:  openssl-devel
 BuildRequires:  rpm-devel >= 4.8.0-28
-BuildRequires:  sqlite-devel >= 3.6.18
 BuildRequires:  xz
 BuildRequires:  xz-devel
 BuildRequires:  zlib-devel
@@ -193,12 +192,10 @@ ln -sr %{buildroot}%{_bindir}/modifyrepo_c %{buildroot}%{_bindir}/modifyrepo
 %{_mandir}/man8/createrepo_c.8*
 %{_mandir}/man8/mergerepo_c.8*
 %{_mandir}/man8/modifyrepo_c.8*
-%{_mandir}/man8/sqliterepo_c.8*
 %{bash_completion}
 %{_bindir}/createrepo_c
 %{_bindir}/mergerepo_c
 %{_bindir}/modifyrepo_c
-%{_bindir}/sqliterepo_c
 
 %if 0%{?fedora} || 0%{?rhel} > 7
 %{_bindir}/createrepo

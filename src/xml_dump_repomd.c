@@ -112,14 +112,6 @@ cr_xml_dump_repomd_record(xmlNodePtr root, cr_RepomdRecord *rec)
         xmlNewChild(data, NULL, BAD_CAST "header-size", BAD_CAST str_buffer);
     }
 
-    // Database_version element
-    if (g_str_has_suffix((char *) rec->type, "_db")) {
-        g_snprintf(str_buffer, DATESIZE_STR_MAX_LEN, "%d", rec->db_ver);
-        xmlNewChild(data,
-                    NULL,
-                    BAD_CAST "database_version",
-                    BAD_CAST str_buffer);
-    }
 }
 
 

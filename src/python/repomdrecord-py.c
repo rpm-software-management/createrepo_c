@@ -413,9 +413,6 @@ static PyGetSetDef repomdrecord_getsetters[] = {
         "Size of the archive content", OFFSET(size_open)},
     {"size_header",         (getter)get_num, (setter)set_num,
         "Size of the zchunk header", OFFSET(size_header)},
-    {"db_ver",              (getter)get_int, (setter)set_int,
-        "Database version (used only for sqlite databases like "
-        "primary.sqlite etc.)", OFFSET(db_ver)},
     {NULL, NULL, NULL, NULL, NULL} /* sentinel */
 };
 

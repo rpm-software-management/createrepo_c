@@ -191,7 +191,7 @@ static void test_cr_insert_additional_metadatum(void)
 static void test_cr_parse_repomd(void)
 {
     struct cr_MetadataLocation *ret = NULL;
-    ret = cr_parse_repomd(TEST_REPO_00_REPOMD, TEST_REPO_00, 1);
+    ret = cr_parse_repomd(TEST_REPO_00_REPOMD, TEST_REPO_00);
     g_assert_cmpint(0, ==, g_slist_length(ret->additional_metadata));
     g_assert_cmpstr(TEST_REPO_00_REPOMD, ==, ret->repomd);
     g_assert_cmpstr(TEST_REPO_00, ==, ret->local_path);
@@ -205,7 +205,7 @@ static void test_cr_parse_repomd(void)
 static void test_cr_parse_repomd_with_additional_metadata(void)
 {
     struct cr_MetadataLocation *ret = NULL;
-    ret = cr_parse_repomd(TEST_REPO_WITH_ADDITIONAL_METADATA_REPOMD, TEST_REPO_WITH_ADDITIONAL_METADATA, 0);
+    ret = cr_parse_repomd(TEST_REPO_WITH_ADDITIONAL_METADATA_REPOMD, TEST_REPO_WITH_ADDITIONAL_METADATA);
     g_assert_cmpint(8, ==, g_slist_length(ret->additional_metadata));
     g_assert_cmpstr(TEST_REPO_WITH_ADDITIONAL_METADATA_REPOMD, ==, ret->repomd);
     g_assert_cmpstr(TEST_REPO_WITH_ADDITIONAL_METADATA, ==, ret->local_path);
@@ -214,10 +214,6 @@ static void test_cr_parse_repomd_with_additional_metadata(void)
     g_assert_cmpstr(TEST_REPO_WITH_ADDITIONAL_METADATA_PRIMARY_XML_GZ, ==, ret->pri_xml_href);
     g_assert_cmpstr(TEST_REPO_WITH_ADDITIONAL_METADATA_OTHER_XML_GZ, ==, ret->oth_xml_href);
     g_assert_cmpstr(TEST_REPO_WITH_ADDITIONAL_METADATA_FILELISTS_XML_GZ, ==, ret->fil_xml_href);
-
-    g_assert_cmpstr(TEST_REPO_WITH_ADDITIONAL_METADATA_PRIMARY_SQLITE_BZ2, ==, ret->pri_sqlite_href);
-    g_assert_cmpstr(TEST_REPO_WITH_ADDITIONAL_METADATA_OTHER_SQLITE_BZ2, ==, ret->oth_sqlite_href);
-    g_assert_cmpstr(TEST_REPO_WITH_ADDITIONAL_METADATA_FILELISTS_SQLITE_BZ2, ==, ret->fil_sqlite_href);
 
     cr_Metadatum *metadatum = g_slist_find_custom(ret->additional_metadata, "group", cr_cmp_metadatum_type)->data;
     g_assert(metadatum);

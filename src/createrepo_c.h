@@ -50,7 +50,6 @@ extern "C" {
 #include "parsehdr.h"
 #include "parsepkg.h"
 #include "repomd.h"
-#include "sqlite.h"
 #include "threads.h"
 #include "updateinfo.h"
 #include "version.h"

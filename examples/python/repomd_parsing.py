@@ -28,8 +28,6 @@ def parse_repomd(path):
         print("Timestamp:", rec.timestamp)
         print("Size:", rec.size)
         print("Size open:", rec.size_open)
-        if rec.db_ver:
-            print("Db version:", rec.db_ver)
         print()
 
 if __name__ == "__main__":

@@ -34,72 +34,70 @@ typedef enum {
         (3) Cannot allocate memory */
     CRE_STAT, /*!<
         (4) Stat() call failed */
-    CRE_DB,     /*!<
-        (5) A database error */
     CRE_BADARG, /*!<
-        (6) At least one argument of function is bad or non complete */
+        (5) At least one argument of function is bad or non complete */
     CRE_NOFILE, /*!<
-        (7) File doesn't exist */
+        (6) File doesn't exist */
     CRE_NODIR, /*!<
-        (8) Directory doesn't exist (not a dir or path doesn't exist) */
+        (7) Directory doesn't exist (not a dir or path doesn't exist) */
     CRE_EXISTS, /*!<
-        (9) File/Directory already exists */
+        (8) File/Directory already exists */
     CRE_UNKNOWNCHECKSUMTYPE, /*!<
-        (10) Unknown/Unsupported checksum type */
+        (9) Unknown/Unsupported checksum type */
     CRE_UNKNOWNCOMPRESSION, /*!<
-        (11) Unknown/Unsupported compression type */
+        (10) Unknown/Unsupported compression type */
     CRE_XMLPARSER, /*!<
-        (12) XML parser error (non valid xml, corrupted xml,  ..) */
+        (11) XML parser error (non valid xml, corrupted xml,  ..) */
     CRE_XMLDATA, /*!<
-        (13) Loaded xml metadata are bad */
+        (12) Loaded xml metadata are bad */
     CRE_CBINTERRUPTED, /*!<
-        (14) Interrupted by callback. */
+        (13) Interrupted by callback. */
     CRE_BADXMLPRIMARY, /*!<
-        (15) Bad filelists.xml file */
+        (14) Bad filelists.xml file */
     CRE_BADXMLFILELISTS, /*!<
-        (16) Bad filelists.xml file */
+        (15) Bad filelists.xml file */
     CRE_BADXMLOTHER, /*!<
-        (17) Bad filelists.xml file */
+        (16) Bad filelists.xml file */
     CRE_BADXMLREPOMD, /*!<
-        (18) Bad repomd.xml file */
+        (17) Bad repomd.xml file */
     CRE_MAGIC, /*!<
-        (19) Magic Number Recognition error */
+        (18) Magic Number Recognition error */
     CRE_GZ, /*!<
-        (20) Gzip library related error */
+        (19) Gzip library related error */
     CRE_BZ2, /*!<
-        (21) Bzip2 library related error */
+        (20) Bzip2 library related error */
     CRE_XZ, /*!<
-        (22) Xz (lzma) library related error */
+        (21) Xz (lzma) library related error */
     CRE_OPENSSL, /*!<
-        (23) OpenSSL library related error */
+        (22) OpenSSL library related error */
     CRE_CURL, /*!<
-        (24) Curl library related error */
+        (23) Curl library related error */
     CRE_ASSERT, /*!<
-        (25) Ideally this error should never happened. Nevertheless if
+        (24) Ideally this error should never happened. Nevertheless if
         it happend, probable reason is that some values of createrepo_c
         object was changed (by you - a programmer) in a bad way */
     CRE_BADCMDARG, /*!<
-        (26) Bad command line argument(s) */
+        (25) Bad command line argument(s) */
     CRE_SPAWNERRCODE, /*!<
-        (27) Child process exited with error code != 0 */
+        (26) Child process exited with error code != 0 */
     CRE_SPAWNKILLED, /*!<
-        (28) Child process killed by signal */
+        (27) Child process killed by signal */
     CRE_SPAWNSTOPED, /*!<
-        (29) Child process stopped by signal */
+        (28) Child process stopped by signal */
     CRE_SPAWNABNORMAL, /*!<
-        (30) Child process exited abnormally */
+        (29) Child process exited abnormally */
     CRE_DELTARPM, /*!<
-        (31) Deltarpm related error */
+        (30) Deltarpm related error */
     CRE_BADXMLUPDATEINFO, /*!<
-        (32) Bad updateinfo.xml file */
+        (31) Bad updateinfo.xml file */
     CRE_SIGPROCMASK, /*!<
-        (33) Cannot change blocked signals */
+        (32) Cannot change blocked signals */
     CRE_ZCK, /*!<
-        (34) ZCK library related error */
+        (33) ZCK library related error */
     CRE_MODULEMD, /*!<
-        (35) modulemd related error */
+        (34) modulemd related error */
     CRE_ZSTD, /*!<
-        (36) Zstd library related error */
+        (35) Zstd library related error */
     CRE_SENTINEL, /*!<
         (XX) Sentinel */
 } cr_Error;

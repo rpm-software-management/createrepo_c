@@ -114,7 +114,7 @@ static void test_cr_metadata_locate_and_load_xml(void)
     struct cr_MetadataLocation *ml;
     g_autoptr (GError) err = NULL;
 
-    ml = cr_locate_metadata(TEST_REPO_03, TRUE, &err);
+    ml = cr_locate_metadata(TEST_REPO_03, &err);
     g_assert_error (err, CREATEREPO_C_ERROR, CRE_MODULEMD);
 #endif /* WITH_LIBMODULEMD */
 }

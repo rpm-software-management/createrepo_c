@@ -36,7 +36,6 @@
 #define DEFAULT_WORKERS                 5
 #define DEFAULT_UNIQUE_MD_FILENAMES     TRUE
 #define DEFAULT_IGNORE_LOCK             FALSE
-#define DEFAULT_LOCAL_SQLITE            FALSE
 #define DEFAULT_FORMAT_PRETTY           TRUE
 
 struct CmdOptions _cmd_options = {
@@ -51,7 +50,6 @@ struct CmdOptions _cmd_options = {
         .ignore_lock                = DEFAULT_IGNORE_LOCK,
         .md_max_age                 = G_GINT64_CONSTANT(0),
         .cachedir                   = NULL,
-        .local_sqlite               = DEFAULT_LOCAL_SQLITE,
         .cut_dirs                   = 0,
         .location_prefix            = NULL,
         .repomd_checksum            = NULL,
@@ -121,10 +119,6 @@ static GOptionEntry cmd_entries[] =
       "Make sure all xml generated is formatted (default)", NULL },
     { "no-pretty", 0, G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, &(_cmd_options.pretty),
       "No extra indentation in generated xml", NULL },
-    { "database", 'd', 0, G_OPTION_ARG_NONE, &(_cmd_options.database),
-      "DEPRECATED: Generate sqlite databases for use with yum.", NULL },
-    { "no-database", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.no_database),
-      "Do not generate sqlite databases in the repository (default).", NULL },
     { "filelists-ext", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.filelists_ext),
       "Create filelists-ext metadata with file hashes.", NULL },
     { "update", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.update),
@@ -201,13 +195,13 @@ static GOptionEntry cmd_entries[] =
       "Which compression type to use (even for primary, filelists and other xml). Supported values are: bz2, gz, zstd, xz.", "COMPRESSION_TYPE" },
 #endif
     { "keep-all-metadata", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.keep_all_metadata),
-      "Keep all additional metadata (not primary, filelists and other xml or sqlite files, "
+      "Keep all additional metadata (not primary, filelists and other xml files, "
       "nor their compressed variants) from source repository during update (default).", NULL },
     { "discard-additional-metadata", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.discard_additional_metadata),
-      "Discard all additional metadata (not primary, filelists and other xml or sqlite files, "
+      "Discard all additional metadata (not primary, filelists and other xml files, "
       "nor their compressed variants) from source repository during update.", NULL },
     { "compatibility", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.compatibility),
-      "Enforce maximal compatibility with classical createrepo and yum (Changes --retain-old-md behavior, defaults to Gzip for compression, produces sqlite metadata by default, leaves group metadata uncompressed).", NULL },
+      "Enforce maximal compatibility with classical createrepo and yum (Changes --retain-old-md behavior, defaults to Gzip for compression, leaves group metadata uncompressed).", NULL },
     { "retain-old-md-by-age", 0, 0, G_OPTION_ARG_STRING, &(_cmd_options.retain_old_md_by_age),
       "During --update, remove all files in repodata/ which are older "
       "then the specified period of time. (e.g. '2h', '30d', ...). "
@@ -225,13 +219,6 @@ static GOptionEntry cmd_entries[] =
     { "max-delta-rpm-size", 0, 0, G_OPTION_ARG_INT64, &(_cmd_options.max_delta_rpm_size),
       "Max size of an rpm that to run deltarpm against (in bytes).", "MAX_DELTA_RPM_SIZE" },
 #endif
-    { "local-sqlite", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.local_sqlite),
-      "Gen sqlite DBs locally (into a directory for temporary files). "
-      "Sometimes, sqlite has a trouble to gen DBs on a NFS mount, "
-      "use this option in such cases. "
-      "This option could lead to a higher memory consumption "
-      "if TMPDIR is set to /tmp or not set at all, because then the /tmp is "
-      "used and /tmp dir is often a ramdisk.", NULL },
     { "cut-dirs", 0, 0, G_OPTION_ARG_INT, &(_cmd_options.cut_dirs),
       "Ignore NUM of directory components in location_href during repodata "
       "generation", "NUM" },

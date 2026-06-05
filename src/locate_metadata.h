@@ -39,10 +39,6 @@ struct cr_MetadataLocation {
     char *fil_xml_href;         /*!< path to filelists.xml */
     char *fex_xml_href;         /*!< path to filelists-ext.xml */
     char *oth_xml_href;         /*!< path to other.xml */
-    char *pri_sqlite_href;      /*!< path to primary.sqlite */
-    char *fil_sqlite_href;      /*!< path to filelists.sqlite */
-    char *fex_sqlite_href;      /*!< path to filelists-ext.sqlite */
-    char *oth_sqlite_href;      /*!< path to other.sqlite */
     GSList *additional_metadata; /*!< list of cr_Metadatum: paths 
                                       to additional metadata such 
                                       as updateinfo, modulemd, .. */
@@ -66,7 +62,7 @@ typedef struct {
 } cr_Metadatum;
 
 struct cr_MetadataLocation *
-cr_parse_repomd(const char *repomd_path, const char *repopath, int ignore_sqlite);
+cr_parse_repomd(const char *repomd_path, const char *repopath);
 
 /** Inserts additional metadatum to list of
  *  additional metadata if this type is already
@@ -107,12 +103,10 @@ gint cr_cmp_repomd_record_type(gconstpointer repomd_record, gconstpointer type);
  * into a temporary directory and removed when the cr_metadatalocation_free()
  * is called on the cr_MetadataLocation.
  * @param repopath      path to directory with repodata/ subdirectory
- * @param ignore_sqlite if ignore_sqlite != 0 sqlite dbs are ignored
  * @param err           GError **
  * @return              filled cr_MetadataLocation structure or NULL
  */
 struct cr_MetadataLocation *cr_locate_metadata(const char *repopath,
-                                               gboolean ignore_sqlite,
                                                GError **err);
 
 /** Free cr_MetadataLocation. If repodata were downloaded remove

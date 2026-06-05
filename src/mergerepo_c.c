@@ -39,7 +39,6 @@
 #include "package.h"
 #include "xml_dump.h"
 #include "repomd.h"
-#include "sqlite.h"
 #include "threads.h"
 #include "xml_file.h"
 #include "cleanup.h"
@@ -50,7 +49,6 @@
 #include "mergerepo_c.h"
 
 struct CmdOptions _cmd_options = {
-        .db_compression_type = DEFAULT_DB_COMPRESSION_TYPE,
         .compression_type = DEFAULT_COMPRESSION_TYPE,
         .merge_method = MM_DEFAULT,
         .unique_md_filenames = TRUE,
@@ -75,10 +73,6 @@ static GOptionEntry cmd_entries[] =
       "Repository prefix URL by which the OLD_PREFIX is replaced.", "NEW_PREFIX" },
     { "archlist", 'a', 0, G_OPTION_ARG_STRING, &(_cmd_options.archlist),
       "Defaults to all arches - otherwise specify arches", "ARCHLIST" },
-    { "database", 'd', 0, G_OPTION_ARG_NONE, &(_cmd_options.database),
-      "", NULL },
-    { "no-database", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.no_database),
-      "", NULL },
     { "filelists-ext", 0, 0, G_OPTION_ARG_NONE, &(_cmd_options.filelists_ext),
       "Create filelists-ext metadata with file hashes.", NULL },
     { "verbose", 'v', 0, G_OPTION_ARG_NONE, &(_cmd_options.verbose),
@@ -284,7 +278,6 @@ check_arguments(struct CmdOptions *options)
                        "gz, bz2, xz or zstd", options->compress_type);
             ret = FALSE;
         } else {
-            options->db_compression_type = type;
             options->compression_type = type;
         }
     }
@@ -1243,46 +1236,6 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         cr_xmlfile_set_num_of_pkgs(oth_cr_zck, packages, NULL);
     }
 
-    // Prepare sqlite if needed
-
-    cr_SqliteDb *pri_db = NULL;
-    cr_SqliteDb *fil_db = NULL;
-    cr_SqliteDb *fex_db = NULL;
-    cr_SqliteDb *oth_db = NULL;
-
-    if (cmd_options->database) {
-        gchar *pri_db_filename = NULL;
-        gchar *fil_db_filename = NULL;
-        gchar *fex_db_filename = NULL;
-        gchar *oth_db_filename = NULL;
-
-        pri_db_filename = g_strconcat(cmd_options->tmp_out_repo,
-                                      "/primary.sqlite", NULL);
-        fil_db_filename = g_strconcat(cmd_options->tmp_out_repo,
-                                      "/filelists.sqlite", NULL);
-	if (cmd_options->filelists_ext)
-            fex_db_filename = g_strconcat(cmd_options->tmp_out_repo,
-                                          "/filelists-ext.sqlite", NULL);
-        oth_db_filename = g_strconcat(cmd_options->tmp_out_repo,
-                                      "/other.sqlite", NULL);
-
-        pri_db = cr_db_open_primary(pri_db_filename, NULL);
-        fil_db = cr_db_open_filelists(fil_db_filename, NULL);
-        if (cmd_options->filelists_ext)
-            // TODO(aplanas): For now, the SQListe database for
-            // filenames-ext will be the same that for filenames,
-            // until we decide how will be the schema change.
-            // fex_db = cr_db_open_filelists_ext(fex_db_filename, NULL);
-            fex_db = cr_db_open_filelists(fex_db_filename, NULL);
-        oth_db = cr_db_open_other(oth_db_filename, NULL);
-
-        g_free(pri_db_filename);
-        g_free(fil_db_filename);
-        g_free(fex_db_filename);
-        g_free(oth_db_filename);
-    }
-
-
     // Dump hashtable
 
     GList *keys, *key;
@@ -1335,14 +1288,6 @@ dump_merged_metadata(GHashTable *merged_hashtable,
                 if (cmd_options->filelists_ext)
                     cr_xmlfile_add_chunk(fex_cr_zck, (const char *) res.filelists_ext, NULL);
                 cr_xmlfile_add_chunk(oth_cr_zck, (const char *) res.other, NULL);
-            }
-
-            if (cmd_options->database) {
-                cr_db_add_pkg(pri_db, pkg, NULL);
-                cr_db_add_pkg(fil_db, pkg, NULL);
-                if (cmd_options->filelists_ext)
-                    cr_db_add_pkg(fex_db, pkg, NULL);
-                cr_db_add_pkg(oth_db, pkg, NULL);
             }
 
             free(res.primary);
@@ -1432,10 +1377,6 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     if (cmd_options->filelists_ext)
         fex_xml_rec = cr_repomd_record_new("filelists-ext", fil_xml_filename);
     cr_RepomdRecord *oth_xml_rec = cr_repomd_record_new("other", oth_xml_filename);
-    cr_RepomdRecord *pri_db_rec               = NULL;
-    cr_RepomdRecord *fil_db_rec               = NULL;
-    cr_RepomdRecord *fex_db_rec               = NULL;
-    cr_RepomdRecord *oth_db_rec               = NULL;
     cr_RepomdRecord *pri_zck_rec              = NULL;
     cr_RepomdRecord *fil_zck_rec              = NULL;
     cr_RepomdRecord *fex_zck_rec              = NULL;
@@ -1588,149 +1529,6 @@ dump_merged_metadata(GHashTable *merged_hashtable,
 #endif
 
 
-    // Sqlite db
-
-    if (cmd_options->database) {
-        const char *db_suffix = cr_compression_suffix(cmd_options->db_compression_type);
-
-        // Insert XML checksums into the dbs
-        cr_db_dbinfo_update(pri_db, pri_xml_rec->checksum, NULL);
-        cr_db_dbinfo_update(fil_db, fil_xml_rec->checksum, NULL);
-        if (cmd_options->filelists_ext)
-            cr_db_dbinfo_update(fex_db, fil_xml_rec->checksum, NULL);
-        cr_db_dbinfo_update(oth_db, oth_xml_rec->checksum, NULL);
-
-        cr_db_close(pri_db, NULL);
-        cr_db_close(fil_db, NULL);
-        cr_db_close(fex_db, NULL);
-        cr_db_close(oth_db, NULL);
-
-        // Compress dbs
-        gchar *pri_db_filename = g_strconcat(cmd_options->tmp_out_repo,
-                                             "/primary.sqlite", NULL);
-        gchar *fil_db_filename = g_strconcat(cmd_options->tmp_out_repo,
-                                             "/filelists.sqlite", NULL);
-        gchar *fex_db_filename = NULL;
-        if (cmd_options->filelists_ext)
-            fex_db_filename = g_strconcat(cmd_options->tmp_out_repo,
-                                          "/filelists-ext.sqlite", NULL);
-        gchar *oth_db_filename = g_strconcat(cmd_options->tmp_out_repo,
-                                             "/other.sqlite", NULL);
-
-        gchar *pri_db_c_filename = g_strconcat(pri_db_filename, db_suffix, NULL);
-        gchar *fil_db_c_filename = g_strconcat(fil_db_filename, db_suffix, NULL);
-        gchar *fex_db_c_filename = NULL;
-        if (cmd_options->filelists_ext)
-            fex_db_c_filename = g_strconcat(fex_db_filename, db_suffix, NULL);
-        gchar *oth_db_c_filename = g_strconcat(oth_db_filename, db_suffix, NULL);
-
-        GThreadPool *compress_pool =  g_thread_pool_new(cr_compressing_thread,
-                                                        NULL, 3, FALSE, NULL);
-
-        cr_CompressionTask *pri_db_task = NULL;
-        cr_CompressionTask *fil_db_task = NULL;
-        cr_CompressionTask *fex_db_task = NULL;
-        cr_CompressionTask *oth_db_task = NULL;
-
-        pri_db_task = cr_compressiontask_new(pri_db_filename,
-                                             pri_db_c_filename,
-                                             cmd_options->db_compression_type,
-                                             CR_CHECKSUM_SHA256,
-                                             NULL, FALSE, 1, NULL);
-        g_thread_pool_push(compress_pool, pri_db_task, NULL);
-
-        fil_db_task = cr_compressiontask_new(fil_db_filename,
-                                             fil_db_c_filename,
-                                             cmd_options->db_compression_type,
-                                             CR_CHECKSUM_SHA256,
-                                             NULL, FALSE, 1, NULL);
-        g_thread_pool_push(compress_pool, fil_db_task, NULL);
-
-        if (cmd_options->filelists_ext) {
-            fex_db_task = cr_compressiontask_new(fex_db_filename,
-                                                 fex_db_c_filename,
-                                                 cmd_options->db_compression_type,
-                                                 CR_CHECKSUM_SHA256,
-                                                 NULL, FALSE, 1, NULL);
-            g_thread_pool_push(compress_pool, fex_db_task, NULL);
-        }
-
-        oth_db_task = cr_compressiontask_new(oth_db_filename,
-                                             oth_db_c_filename,
-                                             cmd_options->db_compression_type,
-                                             CR_CHECKSUM_SHA256,
-                                             NULL, FALSE, 1, NULL);
-        g_thread_pool_push(compress_pool, oth_db_task, NULL);
-
-        g_thread_pool_free(compress_pool, FALSE, TRUE);
-
-        // Prepare repomd records
-        pri_db_rec = cr_repomd_record_new("primary_db", pri_db_c_filename);
-        fil_db_rec = cr_repomd_record_new("filelists_db", fil_db_c_filename);
-        if (cmd_options->filelists_ext)
-            fex_db_rec = cr_repomd_record_new("filelists-ext_db", fil_db_c_filename);
-        oth_db_rec = cr_repomd_record_new("other_db", oth_db_c_filename);
-
-        g_free(pri_db_filename);
-        g_free(fil_db_filename);
-        g_free(fex_db_filename);
-        g_free(oth_db_filename);
-
-        g_free(pri_db_c_filename);
-        g_free(fil_db_c_filename);
-        g_free(fex_db_c_filename);
-        g_free(oth_db_c_filename);
-
-        cr_repomd_record_load_contentstat(pri_db_rec, pri_db_task->stat);
-        cr_repomd_record_load_contentstat(fil_db_rec, fil_db_task->stat);
-        if (cmd_options->filelists_ext)
-            cr_repomd_record_load_contentstat(fex_db_rec, fex_db_task->stat);
-        cr_repomd_record_load_contentstat(oth_db_rec, oth_db_task->stat);
-
-        cr_compressiontask_free(pri_db_task, NULL);
-        cr_compressiontask_free(fil_db_task, NULL);
-        cr_compressiontask_free(fex_db_task, NULL);
-        cr_compressiontask_free(oth_db_task, NULL);
-
-        fill_pool = g_thread_pool_new(cr_repomd_record_fill_thread,
-                                      NULL, 3, FALSE, NULL);
-
-        cr_RepomdRecordFillTask *pri_db_fill_task = NULL;
-        cr_RepomdRecordFillTask *fil_db_fill_task = NULL;
-        cr_RepomdRecordFillTask *fex_db_fill_task = NULL;
-        cr_RepomdRecordFillTask *oth_db_fill_task = NULL;
-
-        pri_db_fill_task = cr_repomdrecordfilltask_new(pri_db_rec,
-                                                       CR_CHECKSUM_SHA256,
-                                                       NULL);
-        g_thread_pool_push(fill_pool, pri_db_fill_task, NULL);
-
-        fil_db_fill_task = cr_repomdrecordfilltask_new(fil_db_rec,
-                                                       CR_CHECKSUM_SHA256,
-                                                       NULL);
-        g_thread_pool_push(fill_pool, fil_db_fill_task, NULL);
-
-        if (cmd_options->filelists_ext) {
-            fex_db_fill_task = cr_repomdrecordfilltask_new(fex_db_rec,
-                                                           CR_CHECKSUM_SHA256,
-                                                           NULL);
-            g_thread_pool_push(fill_pool, fex_db_fill_task, NULL);
-        }
-
-        oth_db_fill_task = cr_repomdrecordfilltask_new(oth_db_rec,
-                                                       CR_CHECKSUM_SHA256,
-                                                       NULL);
-        g_thread_pool_push(fill_pool, oth_db_fill_task, NULL);
-
-        g_thread_pool_free(fill_pool, FALSE, TRUE);
-
-        cr_repomdrecordfilltask_free(pri_db_fill_task, NULL);
-        cr_repomdrecordfilltask_free(fil_db_fill_task, NULL);
-        cr_repomdrecordfilltask_free(fex_db_fill_task, NULL);
-        cr_repomdrecordfilltask_free(oth_db_fill_task, NULL);
-
-    }
-
     // Zchunk
     if (cmd_options->zck_compression) {
         // Prepare repomd records
@@ -1801,11 +1599,6 @@ dump_merged_metadata(GHashTable *merged_hashtable,
         if (cmd_options->filelists_ext)
             cr_repomd_record_rename_file(fex_xml_rec, NULL);
         cr_repomd_record_rename_file(oth_xml_rec, NULL);
-        cr_repomd_record_rename_file(pri_db_rec, NULL);
-        cr_repomd_record_rename_file(fil_db_rec, NULL);
-        if (cmd_options->filelists_ext)
-            cr_repomd_record_rename_file(fex_db_rec, NULL);
-        cr_repomd_record_rename_file(oth_db_rec, NULL);
         cr_repomd_record_rename_file(pri_zck_rec, NULL);
         cr_repomd_record_rename_file(fil_zck_rec, NULL);
         if (cmd_options->filelists_ext)
@@ -1833,11 +1626,6 @@ dump_merged_metadata(GHashTable *merged_hashtable,
     if (cmd_options->filelists_ext)
         cr_repomd_set_record(repomd_obj, fex_xml_rec);
     cr_repomd_set_record(repomd_obj, oth_xml_rec);
-    cr_repomd_set_record(repomd_obj, pri_db_rec);
-    cr_repomd_set_record(repomd_obj, fil_db_rec);
-    if (cmd_options->filelists_ext)
-        cr_repomd_set_record(repomd_obj, fex_db_rec);
-    cr_repomd_set_record(repomd_obj, oth_db_rec);
     cr_repomd_set_record(repomd_obj, pri_zck_rec);
     cr_repomd_set_record(repomd_obj, fil_zck_rec);
     if (cmd_options->filelists_ext)
@@ -2022,7 +1810,7 @@ main(int argc, char **argv)
     gboolean cr_download_failed = FALSE;
 
     for (element = cmd_options->repo_list; element; element = g_slist_next(element)) {
-        struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) element->data, TRUE, NULL);
+        struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) element->data, NULL);
         if (!loc) {
             g_warning("Downloading of repodata failed: %s", (gchar *) element->data);
             cr_download_failed = TRUE;
@@ -2074,7 +1862,7 @@ main(int argc, char **argv)
     if (cmd_options->noarch_repo_url) {
         struct cr_MetadataLocation *noarch_ml;
 
-        noarch_ml = cr_locate_metadata(cmd_options->noarch_repo_url, TRUE, NULL);
+        noarch_ml = cr_locate_metadata(cmd_options->noarch_repo_url, NULL);
         if (!noarch_ml) {
             g_critical("Cannot locate noarch repo: %s", cmd_options->noarch_repo_url);
             return 1;

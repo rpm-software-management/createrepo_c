@@ -122,15 +122,6 @@ write_pkg(long id,
         g_clear_error(&tmp_err);
     }
 
-    if (udata->pri_db) {
-        cr_db_add_pkg(udata->pri_db, pkg, &tmp_err);
-        if (tmp_err) {
-            g_critical("Cannot add record of %s (%s) to primary db: %s",
-                       pkg->name, pkg->pkgId, tmp_err->message);
-            udata->had_errors = TRUE;
-            g_clear_error(&tmp_err);
-        }
-    }
     if (udata->pri_zck) {
         if (new_pkg) {
             cr_end_chunk(udata->pri_zck->f, &tmp_err);
@@ -165,15 +156,6 @@ write_pkg(long id,
         g_clear_error(&tmp_err);
     }
 
-    if (udata->fil_db) {
-        cr_db_add_pkg(udata->fil_db, pkg, &tmp_err);
-        if (tmp_err) {
-            g_critical("Cannot add record of %s (%s) to filelists db: %s",
-                       pkg->name, pkg->pkgId, tmp_err->message);
-            udata->had_errors = TRUE;
-            g_clear_error(&tmp_err);
-        }
-    }
     if (udata->fil_zck) {
         if (new_pkg) {
             cr_end_chunk(udata->fil_zck->f, &tmp_err);
@@ -209,15 +191,6 @@ write_pkg(long id,
             g_clear_error(&tmp_err);
         }
 
-        if (udata->fex_db) {
-            cr_db_add_pkg(udata->fex_db, pkg, &tmp_err);
-            if (tmp_err) {
-                g_critical("Cannot add record of %s (%s) to filelists-ext db: %s",
-                           pkg->name, pkg->pkgId, tmp_err->message);
-                udata->had_errors = TRUE;
-                g_clear_error(&tmp_err);
-            }
-        }
         if (udata->fex_zck) {
             if (new_pkg) {
                 cr_end_chunk(udata->fex_zck->f, &tmp_err);
@@ -253,15 +226,6 @@ write_pkg(long id,
         g_clear_error(&tmp_err);
     }
 
-    if (udata->oth_db) {
-        cr_db_add_pkg(udata->oth_db, pkg, NULL);
-        if (tmp_err) {
-            g_critical("Cannot add record of %s (%s) to other db: %s",
-                       pkg->name, pkg->pkgId, tmp_err->message);
-            udata->had_errors = TRUE;
-            g_clear_error(&tmp_err);
-        }
-    }
     if (udata->oth_zck) {
         if (new_pkg) {
             cr_end_chunk(udata->oth_zck->f, &tmp_err);
@@ -762,7 +726,7 @@ cr_dumper_thread(gpointer data, gpointer user_data)
 
     g_mutex_unlock(&(udata->mutex_buffer));
 
-    // Dump XML and SQLite
+    // Dump XML
     write_pkg(task->id, res, pkg, udata);
 
     g_free(res.primary);
@@ -790,7 +754,7 @@ task_cleanup:
         if (buf_task && buf_task->id == udata->id_pri) {
             buf_task = g_queue_pop_head (udata->buffer);
             g_mutex_unlock(&(udata->mutex_buffer));
-            // Dump XML and SQLite
+            // Dump XML
             write_pkg(buf_task->id, buf_task->res, buf_task->pkg, udata);
             // Clean up
             g_free(buf_task->res.primary);

@@ -41,7 +41,7 @@ class TestCaseRepomdRecord(unittest.TestCase):
 
         self.assertEqual(rec.size, 0)
         self.assertEqual(rec.size_open, -1)
-        self.assertEqual(rec.db_ver, 0)
+
 
         rec.fill(cr.SHA256)
 
@@ -102,8 +102,6 @@ class TestCaseRepomdRecord(unittest.TestCase):
         self.assertEqual(zrc.size, 269)
         self.assertEqual(zrc.size_open, 167)
         self.assertEqual(zrc.size_header, 132)
-        self.assertEqual(zrc.db_ver, 0)
-
         zrc.rename_file()
 
         # Filename should contain a (valid) checksum
@@ -132,7 +130,7 @@ class TestCaseRepomdRecord(unittest.TestCase):
         self.assertTrue(rec.timestamp > 0)
         self.assertEqual(rec.size, 134)
         self.assertEqual(rec.size_open, 167)
-        self.assertEqual(rec.db_ver, 0)
+
 
         # Set new values
 
@@ -145,8 +143,6 @@ class TestCaseRepomdRecord(unittest.TestCase):
         rec.timestamp = 123
         rec.size = 456
         rec.size_open = 789
-        rec.db_ver = 11
-
         # Check
 
         self.assertEqual(rec.type, "foo")
@@ -159,7 +155,6 @@ class TestCaseRepomdRecord(unittest.TestCase):
         self.assertEqual(rec.timestamp, 123)
         self.assertEqual(rec.size, 456)
         self.assertEqual(rec.size_open, 789)
-        self.assertEqual(rec.db_ver, 11)
 
     def test_repomdrecord_compress_and_fill(self):
         with open(self.path01, "w") as path01_file:

@@ -684,7 +684,7 @@ compressfile_test_xz_file_gz_output(Copyfiletest *copyfiletest,
 
 
 static void
-compressfile_test_sqlite_file_gz_output(Copyfiletest *copyfiletest,
+compressfile_test_binary_file_gz_output(Copyfiletest *copyfiletest,
                                         G_GNUC_UNUSED gconstpointer test_data)
 {
     int ret;
@@ -693,7 +693,7 @@ compressfile_test_sqlite_file_gz_output(Copyfiletest *copyfiletest,
     char * dst_full_name = g_strconcat(copyfiletest->dst_file, ".gz", NULL);
 
     g_assert(!g_file_test(dst_full_name, G_FILE_TEST_EXISTS));
-    ret = cr_compress_file(TEST_SQLITE_FILE, dst_full_name,
+    ret = cr_compress_file(TEST_BINARY_FILE, dst_full_name,
                                      CR_CW_GZ_COMPRESSION, NULL, FALSE,
                                      &tmp_err);
     g_assert(!tmp_err);
@@ -1352,9 +1352,9 @@ main(int argc, char *argv[])
     g_test_add("/misc/compressfile_test_xz_file_gz_output",
             Copyfiletest, NULL, copyfiletest_setup,
             compressfile_test_xz_file_gz_output, copyfiletest_teardown);
-    g_test_add("/misc/compressfile_test_sqlite_file_gz_output",
+    g_test_add("/misc/compressfile_test_binary_file_gz_output",
             Copyfiletest, NULL, copyfiletest_setup,
-            compressfile_test_sqlite_file_gz_output, copyfiletest_teardown);
+            compressfile_test_binary_file_gz_output, copyfiletest_teardown);
     g_test_add("/misc/decompressfile_with_stat_test_text_file",
             Copyfiletest, NULL, copyfiletest_setup,
             decompressfile_with_stat_test_text_file, copyfiletest_teardown);

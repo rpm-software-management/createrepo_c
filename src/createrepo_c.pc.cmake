@@ -5,7 +5,7 @@ includedir=@CMAKE_INSTALL_PREFIX@/include
 Name: createrepo_c
 Description: Library for manipulation with repodata.
 Version: @VERSION@
-Requires: glib-2.0 rpm libcurl sqlite3
+Requires: glib-2.0 rpm libcurl
 Requires.private: zlib libxml-2.0
 Libs: -L${libdir} -lcreaterepo_c
 Libs.private: -lbz2 -llzma

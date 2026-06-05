@@ -67,10 +67,8 @@ metadatalocation_new(PyTypeObject *type,
 
 PyDoc_STRVAR(metadatalocation_init__doc__,
 "Class representing location of metadata\n\n"
-".. method:: __init__(path, ignore_db)\n\n"
-"    :arg path: String with url/path to the repository\n"
-"    :arg ignore_db: Boolean. If False then in case of remote repository\n"
-"                    databases will not be downloaded)\n");
+".. method:: __init__(path)\n\n"
+"    :arg path: String with url/path to the repository\n");
 
 static int
 metadatalocation_init(_MetadataLocationObject *self,
@@ -78,10 +76,9 @@ metadatalocation_init(_MetadataLocationObject *self,
                       G_GNUC_UNUSED PyObject *kwds)
 {
     char *repopath;
-    PyObject *py_ignore_db = NULL;
     GError *tmp_err = NULL;
 
-    if (!PyArg_ParseTuple(args, "sO|:metadatalocation_init", &repopath, &py_ignore_db))
+    if (!PyArg_ParseTuple(args, "s|:metadatalocation_init", &repopath))
         return -1;
 
     /* Free all previous resources when reinitialization */
@@ -90,7 +87,7 @@ metadatalocation_init(_MetadataLocationObject *self,
     }
 
     /* Init */
-    self->ml = cr_locate_metadata(repopath, PyObject_IsTrue(py_ignore_db), &tmp_err);
+    self->ml = cr_locate_metadata(repopath, &tmp_err);
     if (tmp_err) {
         g_clear_pointer(&(self->ml), cr_metadatalocation_free);
         nice_exception(&tmp_err, NULL);
@@ -156,12 +153,6 @@ getitem(_MetadataLocationObject *self, PyObject *pykey)
         value = self->ml->fil_xml_href;
     } else if (!strcmp(key, "other")) {
         value = self->ml->oth_xml_href;
-    } else if (!strcmp(key, "primary_db")) {
-        value = self->ml->pri_sqlite_href;
-    } else if (!strcmp(key, "filelists_db")) {
-        value = self->ml->fil_sqlite_href;
-    } else if (!strcmp(key, "other_db")) {
-        value = self->ml->oth_sqlite_href;
     } else if (!strcmp(key, "group")) {   //NOTE(amatej): Preserve old API for these specific files (group, group_gz, updateinfo)
         if (self->ml->additional_metadata){
             GSList *m = g_slist_find_custom(self->ml->additional_metadata, "group", cr_cmp_metadatum_type);

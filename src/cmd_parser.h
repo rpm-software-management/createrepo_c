@@ -54,8 +54,6 @@ struct CmdOptions {
     gboolean skip_stat;         /*!< skip stat() call during --update */
     gboolean split;             /*!< generate split media */
     gboolean version;           /*!< print program version */
-    gboolean database;          /*!< create sqlite database metadata */
-    gboolean no_database;       /*!< do not create database */
     gboolean filelists_ext;     /*!< create filelists-ext metadata with file hashes */
     char *checksum;             /*!< type of checksum */
     char *compress_type;        /*!< which compression type to use */
@@ -63,7 +61,7 @@ struct CmdOptions {
                                      primary, filelists and other xml) */
     gboolean skip_symlinks;     /*!< ignore symlinks of packages */
     gint changelog_limit;       /*!< number of changelog messages in
-                                     other.(xml|sqlite) */
+                                     other.xml */
     gboolean unique_md_filenames;       /*!< include the file checksums in
                                              the filenames */
     gboolean simple_md_filenames;       /*!< simple filenames (names without
@@ -110,10 +108,6 @@ struct CmdOptions {
                                      deltarpm against */
 #endif
 
-    gboolean local_sqlite;      /*!< Gen sqlite locally into a directory for
-                                     temporary files.
-                                     For situations when sqlite has a trouble
-                                     to gen DBs on NFS mounts. */
     gint cut_dirs;              /*!< Ignore *num* of directory components
                                      during repodata generation in location
                                      href value. */

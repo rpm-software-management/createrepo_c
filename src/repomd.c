@@ -102,7 +102,6 @@ cr_repomd_record_copy(const cr_RepomdRecord *orig)
     rec->size        = orig->size;
     rec->size_open   = orig->size_open;
     rec->size_header = orig->size_header;
-    rec->db_ver      = orig->db_ver;
     if (orig->checksum_header)
         rec->checksum_header      = cr_safe_string_chunk_insert(rec->chunk,
                                                     orig->checksum_header);
@@ -1084,10 +1083,6 @@ gboolean cr_repomd_compare(cr_Repomd *repomd1, cr_Repomd *repomd2)
             if (record1->size_header != record2->size_header) {
                 continue;
             }
-            if (record1->db_ver != record2->db_ver) {
-                continue;
-            }
-
             found = TRUE;
             break;
         }

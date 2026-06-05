@@ -18,10 +18,6 @@ ADD_EXECUTABLE(test_misc test_misc.c)
 TARGET_LINK_LIBRARIES(test_misc libcreaterepo_c PkgConfig::GLIB2)
 ADD_DEPENDENCIES(tests test_misc)
 
-ADD_EXECUTABLE(test_sqlite test_sqlite.c)
-TARGET_LINK_LIBRARIES(test_sqlite libcreaterepo_c PkgConfig::GLIB2)
-ADD_DEPENDENCIES(tests test_sqlite)
-
 ADD_EXECUTABLE(test_xml_file test_xml_file.c)
 TARGET_LINK_LIBRARIES(test_xml_file libcreaterepo_c PkgConfig::GLIB2)
 ADD_DEPENDENCIES(tests test_xml_file)

@@ -34,7 +34,6 @@
 #include "load_metadata.h"
 #include "package.h"
 #include "repomd.h"
-#include "sqlite.h"
 #include "xml_file.h"
 #include "modifyrepo_shared.h"
 

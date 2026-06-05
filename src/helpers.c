@@ -90,8 +90,7 @@ cr_repodata_excludelist_classic(const char *repodata_path,
      * - Old metadata are kept in the repodata/ but not referenced by
      *   repomd.xml
      * - Thus, old repodata are searched by its filename
-     * - It manipulate only with primary, filelists, other and
-     *   related databases.
+     * - It manipulates only primary, filelists, and other.
      */
 
     /* By default, createrepo_c keeps (copy from the old repo
@@ -103,12 +102,12 @@ cr_repodata_excludelist_classic(const char *repodata_path,
      * new repository).
      */
 
-    GSList *pri_lst = NULL, *pri_db_lst = NULL;
-    GSList *fil_lst = NULL, *fil_db_lst = NULL;
-    GSList *oth_lst = NULL, *oth_db_lst = NULL;
-    GSList **lists[] = { &pri_lst, &pri_db_lst,
-                         &fil_lst, &fil_db_lst,
-                         &oth_lst, &oth_db_lst };
+    GSList *pri_lst = NULL;
+    GSList *fil_lst = NULL;
+    GSList *oth_lst = NULL;
+    GSList **lists[] = { &pri_lst,
+                         &fil_lst,
+                         &oth_lst };
     const int num_of_lists = CR_ARRAYLEN(lists);
 
     GDir *dirp = NULL;
@@ -155,16 +154,10 @@ cr_repodata_excludelist_classic(const char *repodata_path,
         // behaviour of original createrepo
         if (g_str_has_suffix(name_without_suffix, "primary.xml")) {
             cr_stat_and_insert(repodata_path, filename, &pri_lst);
-        } else if (g_str_has_suffix(name_without_suffix, "primary.sqlite")) {
-            cr_stat_and_insert(repodata_path, filename, &pri_db_lst);
         } else if (g_str_has_suffix(name_without_suffix, "filelists.xml")) {
             cr_stat_and_insert(repodata_path, filename, &fil_lst);
-        } else if (g_str_has_suffix(name_without_suffix, "filelists.sqlite")) {
-            cr_stat_and_insert(repodata_path, filename, &fil_db_lst);
         } else if (g_str_has_suffix(name_without_suffix, "other.xml")) {
             cr_stat_and_insert(repodata_path, filename, &oth_lst);
-        } else if (g_str_has_suffix(name_without_suffix, "other.sqlite")) {
-            cr_stat_and_insert(repodata_path, filename, &oth_db_lst);
         }
         g_free(name_without_suffix);
     }

@@ -686,7 +686,7 @@ cr_metadata_locate_and_load_xml(cr_Metadata *md,
     assert(md);
     assert(repopath);
 
-    ml = cr_locate_metadata(repopath, TRUE, &tmp_err);
+    ml = cr_locate_metadata(repopath, &tmp_err);
     if (tmp_err) {
         g_clear_pointer(&ml, cr_metadatalocation_free);
         int code = tmp_err->code;

@@ -65,13 +65,13 @@ _cr_createrepo()
     if [[ $2 == -* ]] ; then
         local cr_opts='--help --version --quiet --verbose
             --excludes --basedir --baseurl --groupfile --checksum
-            --pretty --database --no-database --update --update-md-path
+            --pretty --update --update-md-path
             --skip-stat --pkglist --includepkg --outputdir
             --skip-symlinks --changelog-limit --unique-md-filenames
             --simple-md-filenames --retain-old-md --distro --content --repo
             --revision --read-pkgs-list --workers --xz
             --compress-type --keep-all-metadata --compatibility
-            --retain-old-md-by-age --cachedir --local-sqlite
+            --retain-old-md-by-age --cachedir
             --cut-dirs --location-prefix
             --recycle-pkglist'
         (( _cr_has_drpm )) && cr_opts="$cr_opts
@@ -111,8 +111,8 @@ _cr_mergerepo()
     esac
 
     if [[ $2 == -* ]] ; then
-        COMPREPLY=( $( compgen -W '--version --help --repo --archlist --database
-            --no-database --verbose --outputdir --nogroups --noupdateinfo
+        COMPREPLY=( $( compgen -W '--version --help --repo --archlist
+            --verbose --outputdir --nogroups --noupdateinfo
             --compress-type --method --all --noarch-repo --unique-md-filenames
             --simple-md-filenames --omit-baseurl --koji --groupfile
             --blocked' -- "$2" ) )
@@ -154,34 +154,6 @@ _cr_modifyrepo()
     fi
 } &&
 complete -F _cr_modifyrepo -o filenames modifyrepo_c
-
-_cr_sqliterepo()
-{
-    COMPREPLY=()
-
-    case $3 in
-        -h|--help|-V|--version)
-            return 0
-            ;;
-        --compress-type)
-            _cr_compress_type "" "$2"
-            return 0
-            ;;
-        -s|--checksum)
-            _cr_checksum_type "$1" "$2"
-            return 0
-            ;;
-    esac
-
-    if [[ $2 == -* ]] ; then
-        COMPREPLY=( $( compgen -W '--help --version --quiet --verbose
-            --force --keep-old --xz --compress-type --checksum
-            --local-sqlite ' -- "$2" ) )
-    else
-        COMPREPLY=( $( compgen -f -- "$2" ) )
-    fi
-} &&
-complete -F _cr_sqliterepo -o filenames sqliterepo_c
 
 # Local variables:
 # mode: shell-script

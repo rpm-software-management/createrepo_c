@@ -29,7 +29,6 @@ extern "C" {
 #include "locate_metadata.h"
 #include "misc.h"
 #include "package.h"
-#include "sqlite.h"
 #include "xml_file.h"
 
 /** \defgroup   dumperthread    Implementation of concurent dumping used in createrepo_c
@@ -55,10 +54,6 @@ struct UserData {
     cr_XmlFile *fil_f;              // Opened compressed filelists.xml.*
     cr_XmlFile *fex_f;              // Opened compressed filelists-ext.xml.*
     cr_XmlFile *oth_f;              // Opened compressed other.xml.*
-    cr_SqliteDb *pri_db;            // Primary db
-    cr_SqliteDb *fil_db;            // Filelists db
-    cr_SqliteDb *fex_db;            // Filelists-ext db
-    cr_SqliteDb *oth_db;            // Other db
     cr_XmlFile *pri_zck;            // Opened compressed primary.xml.zck
     cr_XmlFile *fil_zck;            // Opened compressed filelists.xml.zck
     cr_XmlFile *fex_zck;            // Opened compressed filelists-ext.xml.zck

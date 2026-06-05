@@ -74,11 +74,6 @@ HT_KEY_FILENAME = _createrepo_c.HT_KEY_FILENAME #: Package filename as a key
 HT_DUPACT_KEEPFIRST = _createrepo_c.HT_DUPACT_KEEPFIRST #: If an key is duplicated, keep only the first occurrence
 HT_DUPACT_REMOVEALL = _createrepo_c.HT_DUPACT_REMOVEALL #: If an key is duplicated, discard all occurrences
 
-DB_PRIMARY       = _createrepo_c.DB_PRIMARY       #: Primary database
-DB_FILELISTS     = _createrepo_c.DB_FILELISTS     #: Filelists database
-DB_FILELISTS_EXT = _createrepo_c.DB_FILELISTS_EXT #: Filelists_ext database
-DB_OTHER         = _createrepo_c.DB_OTHER         #: Other database
-
 XMLFILE_PRIMARY       = _createrepo_c.XMLFILE_PRIMARY       #: Primary xml file
 XMLFILE_FILELISTS     = _createrepo_c.XMLFILE_FILELISTS     #: Filelists xml file
 XMLFILE_FILELISTS_EXT = _createrepo_c.XMLFILE_FILELISTS_EXT #: Filelists_ext xml file
@@ -210,26 +205,6 @@ class RepomdRecord(_createrepo_c.RepomdRecord):
                                                      hashtype,
                                                      compresstype)
         return rec
-
-
-# Sqlite class
-
-Sqlite = _createrepo_c.Sqlite
-
-class PrimarySqlite(Sqlite):
-    def __init__(self, path):
-        """:arg path: path to the primary.sqlite database"""
-        Sqlite.__init__(self, path, DB_PRIMARY)
-
-class FilelistsSqlite(Sqlite):
-    def __init__(self, path):
-        """:arg path: Path to the filelists.sqlite database"""
-        Sqlite.__init__(self, path, DB_FILELISTS)
-
-class OtherSqlite(Sqlite):
-    def __init__(self, path):
-        """:arg path: Path to the other.sqlite database"""
-        Sqlite.__init__(self, path, DB_OTHER)
 
 
 # UpdateCollection class
@@ -778,7 +753,3 @@ def mergerepo_c():
 
 def modifyrepo_c():
     raise SystemExit(_program('modifyrepo_c', sys.argv[1:]))
-
-
-def sqliterepo_c():
-    raise SystemExit(_program('sqliterepo_c', sys.argv[1:]))

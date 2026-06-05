@@ -14,7 +14,6 @@ SET (createrepo_c_SRCS
      parsehdr.c
      parsepkg.c
      repomd.c
-     sqlite.c
      threads.c
      updateinfo.c
      xml_dump.c
@@ -52,7 +51,6 @@ SET(headers
     parsehdr.h
     parsepkg.h
     repomd.h
-    sqlite.h
     threads.h
     updateinfo.h
     version.h
@@ -100,7 +98,6 @@ TARGET_LINK_LIBRARIES(libcreaterepo_c ${LIBXML2_LIBRARIES})
 TARGET_LINK_LIBRARIES(libcreaterepo_c PkgConfig::LZMA)
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${OPENSSL_LIBRARIES})
 TARGET_LINK_LIBRARIES(libcreaterepo_c PkgConfig::RPM)
-TARGET_LINK_LIBRARIES(libcreaterepo_c PkgConfig::SQLITE3)
 TARGET_LINK_LIBRARIES(libcreaterepo_c ${ZLIB_LIBRARY})
 IF (WITH_ZCHUNK)
     TARGET_LINK_LIBRARIES(libcreaterepo_c PkgConfig::ZCK)
@@ -137,12 +134,6 @@ TARGET_LINK_LIBRARIES(modifyrepo_c
                         PkgConfig::GLIB2
                         PkgConfig::GTHREAD2)
 
-ADD_EXECUTABLE(sqliterepo_c sqliterepo_c.c)
-TARGET_LINK_LIBRARIES(sqliterepo_c
-                        libcreaterepo_c
-                        PkgConfig::GLIB2
-                        PkgConfig::GTHREAD2)
-
 CONFIGURE_FILE("createrepo_c.pc.cmake" "${CMAKE_SOURCE_DIR}/src/createrepo_c.pc" @ONLY)
 CONFIGURE_FILE("version.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/version.h" @ONLY)
 CONFIGURE_FILE("deltarpms.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/deltarpms.h" @ONLY)
@@ -169,7 +160,6 @@ INSTALL(
         createrepo_c
         mergerepo_c
         modifyrepo_c
-        sqliterepo_c
     RUNTIME DESTINATION ${BIN_INSTALL_DIR} COMPONENT Runtime
     )
 

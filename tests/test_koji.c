@@ -34,13 +34,13 @@ test_koji_stuff_00(void)
     struct CmdOptions o = {.koji=1, .koji_simple=1, .blocked=NULL, .tmp_out_repo=tmp};
 
     GSList *local_repos = NULL;
-    struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) TEST_REPO_00, TRUE, NULL);
+    struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) TEST_REPO_00, NULL);
     local_repos = g_slist_prepend(local_repos, loc);
-    loc = cr_locate_metadata((gchar *) TEST_REPO_01, TRUE, NULL);
+    loc = cr_locate_metadata((gchar *) TEST_REPO_01, NULL);
     local_repos = g_slist_prepend(local_repos, loc);
-    loc = cr_locate_metadata((gchar *) TEST_REPO_02, TRUE, NULL);
+    loc = cr_locate_metadata((gchar *) TEST_REPO_02, NULL);
     local_repos = g_slist_prepend(local_repos, loc);
-    loc = cr_locate_metadata((gchar *) TEST_REPO_KOJI_01, TRUE, NULL);
+    loc = cr_locate_metadata((gchar *) TEST_REPO_KOJI_01, NULL);
     local_repos = g_slist_prepend(local_repos, loc);
 
     int ret = koji_stuff_prepare(&koji_stuff, &o, local_repos);
@@ -82,13 +82,13 @@ test_koji_stuff_01(void)
     struct CmdOptions o = {.koji=0, .blocked=blocked_files_path, .tmp_out_repo=tmp};
 
     GSList *local_repos = NULL;
-    struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) TEST_REPO_00, TRUE, NULL);
+    struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) TEST_REPO_00, NULL);
     local_repos = g_slist_prepend(local_repos, loc);
-    loc = cr_locate_metadata((gchar *) TEST_REPO_01, TRUE, NULL);
+    loc = cr_locate_metadata((gchar *) TEST_REPO_01, NULL);
     local_repos = g_slist_prepend(local_repos, loc);
-    loc = cr_locate_metadata((gchar *) TEST_REPO_02, TRUE, NULL);
+    loc = cr_locate_metadata((gchar *) TEST_REPO_02, NULL);
     local_repos = g_slist_prepend(local_repos, loc);
-    loc = cr_locate_metadata((gchar *) TEST_REPO_KOJI_01, TRUE, NULL);
+    loc = cr_locate_metadata((gchar *) TEST_REPO_KOJI_01, NULL);
     local_repos = g_slist_prepend(local_repos, loc);
 
     int ret = koji_stuff_prepare(&koji_stuff, &o, local_repos);
@@ -132,7 +132,7 @@ test_koji_stuff_02_get_newest_srpm_from_one_repo(void)
     struct CmdOptions o = {.koji=0, .blocked=NULL, .tmp_out_repo=tmp};
 
     GSList *local_repos = NULL;
-    struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) TEST_REPO_KOJI_01, TRUE, NULL);
+    struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) TEST_REPO_KOJI_01, NULL);
     local_repos = g_slist_prepend(local_repos, loc);
 
     int ret = koji_stuff_prepare(&koji_stuff, &o, local_repos);
@@ -160,9 +160,9 @@ test_koji_stuff_03_get_srpm_from_first_repo_even_if_its_older(void)
     struct CmdOptions o = {.koji=0, .blocked=NULL, .tmp_out_repo=tmp};
 
     GSList *local_repos = NULL;
-    struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) TEST_REPO_KOJI_01, TRUE, NULL);
+    struct cr_MetadataLocation *loc = cr_locate_metadata((gchar *) TEST_REPO_KOJI_01, NULL);
     local_repos = g_slist_prepend(local_repos, loc);
-    loc = cr_locate_metadata((gchar *) TEST_REPO_KOJI_02, TRUE, NULL);
+    loc = cr_locate_metadata((gchar *) TEST_REPO_KOJI_02, NULL);
     local_repos = g_slist_prepend(local_repos, loc);
 
     int ret = koji_stuff_prepare(&koji_stuff, &o, local_repos);

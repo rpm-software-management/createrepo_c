@@ -31,7 +31,6 @@
 #include "parsepkg-py.h"
 #include "repomd-py.h"
 #include "repomdrecord-py.h"
-#include "sqlite-py.h"
 #include "updatecollection-py.h"
 #include "updatecollectionmodule-py.h"
 #include "updatecollectionpackage-py.h"
@@ -143,9 +142,6 @@ PyInit__createrepo_c(void)
     /* _createrepo_c.RepomdRecord */
     PyModule_AddType(m, &RepomdRecord_Type);
 
-    /* _createrepo_c.Sqlite */
-    PyModule_AddType(m, &Sqlite_Type);
-
     /* _createrepo_c.UpdateCollection */
     PyModule_AddType(m, &UpdateCollection_Type);
 
@@ -227,12 +223,6 @@ PyInit__createrepo_c(void)
     /* Load Metadata key dup action */
     PyModule_AddIntConstant(m, "HT_DUPACT_KEEPFIRST", CR_HT_DUPACT_KEEPFIRST);
     PyModule_AddIntConstant(m, "HT_DUPACT_REMOVEALL", CR_HT_DUPACT_REMOVEALL);
-
-    /* Sqlite DB types */
-    PyModule_AddIntConstant(m, "DB_PRIMARY", CR_DB_PRIMARY);
-    PyModule_AddIntConstant(m, "DB_FILELISTS", CR_DB_FILELISTS);
-    PyModule_AddIntConstant(m, "DB_FILELISTS_EXT", CR_DB_FILELISTS_EXT);
-    PyModule_AddIntConstant(m, "DB_OTHER", CR_DB_OTHER);
 
     /* XmlFile types */
     PyModule_AddIntConstant(m, "XMLFILE_PRIMARY", CR_XMLFILE_PRIMARY);

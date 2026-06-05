@@ -174,7 +174,6 @@ cr_detect_compression(const char *filename, GError **err)
     } else if (g_str_has_suffix(filename, ".xml") ||
                g_str_has_suffix(filename, ".tar") ||
                g_str_has_suffix(filename, ".yaml") ||
-               g_str_has_suffix(filename, ".sqlite") ||
                g_str_has_suffix(filename, ".txt"))
     {
         return CR_CW_NO_COMPRESSION;

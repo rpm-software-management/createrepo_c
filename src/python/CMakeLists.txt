@@ -31,7 +31,6 @@ SET (createrepo_cmodule_SRCS
      parsepkg-py.c
      repomd-py.c
      repomdrecord-py.c
-     sqlite-py.c
      typeconversion.c
      updatecollection-py.c
      updatecollectionmodule-py.c

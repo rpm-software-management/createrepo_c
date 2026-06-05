@@ -36,7 +36,7 @@ extern "C" {
 typedef enum {
     CR_PACKAGE_FROM_HEADER  = (1<<1),   /*!< Metadata parsed from header */
     CR_PACKAGE_FROM_XML     = (1<<2),   /*!< Metadata parsed xml */
-    /* Some values are reserved (for sqlite, solv, etc..) */
+    /* Some values are reserved (for solv, etc..) */
     CR_PACKAGE_LOADED_PRI   = (1<<10),  /*!< Primary metadata was loaded */
     CR_PACKAGE_LOADED_FIL   = (1<<11),  /*!< Filelists[_ext] metadata was loaded */
     CR_PACKAGE_LOADED_OTH   = (1<<12),  /*!< Other metadata was loaded */
@@ -82,7 +82,7 @@ typedef struct {
 /** Package
  */
 typedef struct {
-    gint64 pkgKey;              /*!< used while inserting into sqlite db */
+    gint64 pkgKey;              /*!< package key */
     char *pkgId;                /*!< package hash */
     char *name;                 /*!< name */
     char *arch;                 /*!< architecture */

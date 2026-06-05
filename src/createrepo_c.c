@@ -46,7 +46,6 @@
 #include "parsepkg.h"
 #include "repomd.h"
 #include "repomd_internal.h"
-#include "sqlite.h"
 #include "threads.h"
 #include "version.h"
 #include "xml_dump.h"
@@ -57,7 +56,6 @@
 #endif /* WITH_LIBMODULEMD */
 
 #define OUTDELTADIR "drpms/"
-#define DEFAULT_DATABASE_VERSION    10
 
 /*
  * Starting with glib 2.70.0, g_pattern_spec_match() replaces
@@ -451,7 +449,7 @@ load_old_metadata(cr_Metadata **md,
                   GThreadPool *pool,
                   GError *tmp_err)
 {
-    *md_location = cr_locate_metadata(dir, TRUE, &tmp_err);
+    *md_location = cr_locate_metadata(dir, &tmp_err);
     if (tmp_err) {
         if (tmp_err->domain == CRE_MODULEMD) {
             g_thread_pool_free(pool, FALSE, FALSE);
@@ -825,10 +823,8 @@ main(int argc, char **argv)
 
     // Setup compression types
     const char *xml_compression_suffix = NULL;
-    const char *sqlite_compression_suffix = NULL;
     const char *compression_suffix = NULL;
     cr_CompressionType xml_compression = CR_CW_ZSTD_COMPRESSION;
-    cr_CompressionType sqlite_compression = CR_CW_BZ2_COMPRESSION;
     cr_CompressionType compression = CR_CW_ZSTD_COMPRESSION;
 
     if (cmd_options->compatibility) {
@@ -837,18 +833,15 @@ main(int argc, char **argv)
     }
 
     if (cmd_options->compression_type != CR_CW_UNKNOWN_COMPRESSION) {
-        sqlite_compression = cmd_options->compression_type;
         compression        = cmd_options->compression_type;
     }
 
     if (cmd_options->general_compression_type != CR_CW_UNKNOWN_COMPRESSION) {
         xml_compression    = cmd_options->general_compression_type;
-        sqlite_compression = cmd_options->general_compression_type;
         compression        = cmd_options->general_compression_type;
     }
 
     xml_compression_suffix = cr_compression_suffix(xml_compression);
-    sqlite_compression_suffix = cr_compression_suffix(sqlite_compression);
     compression_suffix = cr_compression_suffix(compression);
 
     // Groupfile specified as argument
@@ -1138,111 +1131,6 @@ main(int argc, char **argv)
         package_count_in_headers = task_count;
     }
 
-    // Open sqlite databases
-    gchar *pri_db_filename = NULL;
-    gchar *fil_db_filename = NULL;
-    gchar *fex_db_filename = NULL;
-    gchar *oth_db_filename = NULL;
-    cr_SqliteDb *pri_db = NULL;
-    cr_SqliteDb *fil_db = NULL;
-    cr_SqliteDb *fex_db = NULL;
-    cr_SqliteDb *oth_db = NULL;
-
-    gboolean should_create_databases = cmd_options->database || (cmd_options->compatibility && !cmd_options->no_database);
-
-    if (should_create_databases) {
-        _cleanup_file_close_ int pri_db_fd = -1;
-        _cleanup_file_close_ int fil_db_fd = -1;
-        _cleanup_file_close_ int fex_db_fd = -1;
-        _cleanup_file_close_ int oth_db_fd = -1;
-
-        g_message("Preparing sqlite DBs");
-        if (!cmd_options->local_sqlite) {
-            g_debug("Creating databases");
-            pri_db_filename = g_strconcat(tmp_out_repo, "/primary.sqlite", NULL);
-            fil_db_filename = g_strconcat(tmp_out_repo, "/filelists.sqlite", NULL);
-	    if (cmd_options->filelists_ext)
-                fex_db_filename = g_strconcat(tmp_out_repo, "/filelists-ext.sqlite", NULL);
-            oth_db_filename = g_strconcat(tmp_out_repo, "/other.sqlite", NULL);
-        } else {
-            g_debug("Creating databases locally");
-            const gchar *tmpdir = g_get_tmp_dir();
-            pri_db_filename = g_build_filename(tmpdir, "primary.XXXXXX.sqlite", NULL);
-            fil_db_filename = g_build_filename(tmpdir, "filelists.XXXXXX.sqlite", NULL);
-	    if (cmd_options->filelists_ext)
-                fex_db_filename = g_build_filename(tmpdir, "filelists-ext.XXXXXX.sqlite", NULL);
-            oth_db_filename = g_build_filename(tmpdir, "other.XXXXXXX.sqlite", NULL);
-            pri_db_fd = g_mkstemp(pri_db_filename);
-            g_debug("%s", pri_db_filename);
-            if (pri_db_fd == -1) {
-                g_critical("Cannot open %s: %s", pri_db_filename, g_strerror(errno));
-                exit(EXIT_FAILURE);
-            }
-            fil_db_fd = g_mkstemp(fil_db_filename);
-            g_debug("%s", fil_db_filename);
-            if (fil_db_fd == -1) {
-                g_critical("Cannot open %s: %s", fil_db_filename, g_strerror(errno));
-                exit(EXIT_FAILURE);
-            }
-            if (cmd_options->filelists_ext) {
-                fex_db_fd = g_mkstemp(fex_db_filename);
-                 g_debug("%s", fex_db_filename);
-                if (fex_db_fd == -1) {
-                    g_critical("Cannot open %s: %s", fex_db_filename, g_strerror(errno));
-                    exit(EXIT_FAILURE);
-                }
-            }
-            oth_db_fd = g_mkstemp(oth_db_filename);
-            g_debug("%s", oth_db_filename);
-            if (oth_db_fd == -1) {
-                g_critical("Cannot open %s: %s", oth_db_filename, g_strerror(errno));
-                exit(EXIT_FAILURE);
-            }
-        }
-
-        pri_db = cr_db_open_primary(pri_db_filename, &tmp_err);
-        assert(pri_db || tmp_err);
-        if (!pri_db) {
-            g_critical("Cannot open %s: %s",
-                       pri_db_filename, tmp_err->message);
-            g_clear_error(&tmp_err);
-            exit(EXIT_FAILURE);
-        }
-
-        fil_db = cr_db_open_filelists(fil_db_filename, &tmp_err);
-        assert(fil_db || tmp_err);
-        if (!fil_db) {
-            g_critical("Cannot open %s: %s",
-                       fil_db_filename, tmp_err->message);
-            g_clear_error(&tmp_err);
-            exit(EXIT_FAILURE);
-        }
-
-        if (cmd_options->filelists_ext) {
-            // TODO(aplanas): For now, the SQListe database for
-            // filenames_ext will be the same that for filenames,
-            // until we decide how will be the schema change.
-            // fex_db = cr_db_open_filelists_ext(fex_db_filename, &tmp_err);
-            fex_db = cr_db_open_filelists(fex_db_filename, &tmp_err);
-            assert(fex_db || tmp_err);
-            if (!fex_db) {
-                g_critical("Cannot open %s: %s",
-                           fex_db_filename, tmp_err->message);
-                g_clear_error(&tmp_err);
-                exit(EXIT_FAILURE);
-            }
-        }
-
-        oth_db = cr_db_open_other(oth_db_filename, &tmp_err);
-        assert(oth_db || tmp_err);
-        if (!oth_db) {
-            g_critical("Cannot open %s: %s",
-                       oth_db_filename, tmp_err->message);
-            g_clear_error(&tmp_err);
-            exit(EXIT_FAILURE);
-        }
-    }
-
     gchar *pri_zck_filename = NULL;
     gchar *fil_zck_filename = NULL;
     gchar *fex_zck_filename = NULL;
@@ -1449,10 +1337,6 @@ main(int argc, char **argv)
     user_data.fil_f             = fil_cr_file;
     user_data.fex_f             = fex_cr_file;
     user_data.oth_f             = oth_cr_file;
-    user_data.pri_db            = pri_db;
-    user_data.fil_db            = fil_db;
-    user_data.fex_db            = fex_db;
-    user_data.oth_db            = oth_db;
     user_data.pri_zck           = pri_cr_zck;
     user_data.fil_zck           = fil_cr_zck;
     user_data.fex_zck           = fex_cr_zck;
@@ -1768,10 +1652,6 @@ main(int argc, char **argv)
     if (cmd_options->filelists_ext)
         fex_xml_rec = cr_repomd_record_new("filelists-ext", fex_xml_filename);
     cr_RepomdRecord *oth_xml_rec = cr_repomd_record_new("other", oth_xml_filename);
-    cr_RepomdRecord *pri_db_rec               = NULL;
-    cr_RepomdRecord *fil_db_rec               = NULL;
-    cr_RepomdRecord *fex_db_rec               = NULL;
-    cr_RepomdRecord *oth_db_rec               = NULL;
     cr_RepomdRecord *pri_zck_rec              = NULL;
     cr_RepomdRecord *fil_zck_rec              = NULL;
     cr_RepomdRecord *fex_zck_rec              = NULL;
@@ -1835,163 +1715,6 @@ main(int argc, char **argv)
     cr_repomdrecordfilltask_free(fil_fill_task, NULL);
     cr_repomdrecordfilltask_free(fex_fill_task, NULL);
     cr_repomdrecordfilltask_free(oth_fill_task, NULL);
-
-    // Sqlite db
-    if (should_create_databases) {
-        gchar *pri_db_name = g_strconcat(tmp_out_repo, "/primary.sqlite",
-                                         sqlite_compression_suffix, NULL);
-        gchar *fil_db_name = g_strconcat(tmp_out_repo, "/filelists.sqlite",
-                                         sqlite_compression_suffix, NULL);
-        gchar *fex_db_name = NULL;
-        if (cmd_options->filelists_ext)
-            fex_db_name = g_strconcat(tmp_out_repo, "/filelists-ext.sqlite",
-                                      sqlite_compression_suffix, NULL);
-        gchar *oth_db_name = g_strconcat(tmp_out_repo, "/other.sqlite",
-                                         sqlite_compression_suffix, NULL);
-
-        cr_db_dbinfo_update(pri_db, pri_xml_rec->checksum, &tmp_err);
-        if (!tmp_err)
-            cr_db_dbinfo_update(fil_db, fil_xml_rec->checksum, &tmp_err);
-        if (!tmp_err && cmd_options->filelists_ext)
-            cr_db_dbinfo_update(fex_db, fex_xml_rec->checksum, &tmp_err);
-        if (!tmp_err)
-            cr_db_dbinfo_update(oth_db, oth_xml_rec->checksum, &tmp_err);
-        if (tmp_err) {
-            g_critical("Error updating dbinfo: %s", tmp_err->message);
-            g_clear_error(&tmp_err);
-            exit(EXIT_FAILURE);
-        }
-
-        cr_db_close(pri_db, &tmp_err);
-        if (!tmp_err)
-            cr_db_close(fil_db, &tmp_err);
-        if (!tmp_err)
-            cr_db_close(fex_db, &tmp_err);
-        if (!tmp_err)
-            cr_db_close(oth_db, &tmp_err);
-        if (tmp_err) {
-            g_critical("Error while closing db: %s", tmp_err->message);
-            g_clear_error(&tmp_err);
-            exit(EXIT_FAILURE);
-        }
-
-
-        // Compress dbs
-        GThreadPool *compress_pool =  g_thread_pool_new(cr_compressing_thread,
-                                                        NULL, 3, FALSE, NULL);
-
-        cr_CompressionTask *pri_db_task = NULL;
-        cr_CompressionTask *fil_db_task = NULL;
-        cr_CompressionTask *fex_db_task = NULL;
-        cr_CompressionTask *oth_db_task = NULL;
-
-        pri_db_task = cr_compressiontask_new(pri_db_filename,
-                                             pri_db_name,
-                                             sqlite_compression,
-                                             cmd_options->repomd_checksum_type,
-                                             NULL, FALSE, 1, NULL);
-        g_thread_pool_push(compress_pool, pri_db_task, NULL);
-
-        fil_db_task = cr_compressiontask_new(fil_db_filename,
-                                             fil_db_name,
-                                             sqlite_compression,
-                                             cmd_options->repomd_checksum_type,
-                                             NULL, FALSE, 1, NULL);
-        g_thread_pool_push(compress_pool, fil_db_task, NULL);
-
-        if (cmd_options->filelists_ext) {
-            fex_db_task = cr_compressiontask_new(fex_db_filename,
-                                                 fex_db_name,
-                                                 sqlite_compression,
-                                                 cmd_options->repomd_checksum_type,
-                                                 NULL, FALSE, 1, NULL);
-            g_thread_pool_push(compress_pool, fex_db_task, NULL);
-        }
-
-        oth_db_task = cr_compressiontask_new(oth_db_filename,
-                                             oth_db_name,
-                                             sqlite_compression,
-                                             cmd_options->repomd_checksum_type,
-                                             NULL, FALSE, 1, NULL);
-        g_thread_pool_push(compress_pool, oth_db_task, NULL);
-
-        g_thread_pool_free(compress_pool, FALSE, TRUE);
-
-        if (!cmd_options->local_sqlite) {
-            cr_rm(pri_db_filename, CR_RM_FORCE, NULL, NULL);
-            cr_rm(fil_db_filename, CR_RM_FORCE, NULL, NULL);
-            if (cmd_options->filelists_ext)
-                cr_rm(fex_db_filename, CR_RM_FORCE, NULL, NULL);
-            cr_rm(oth_db_filename, CR_RM_FORCE, NULL, NULL);
-        }
-
-        // Prepare repomd records
-        pri_db_rec = cr_repomd_record_new("primary_db", pri_db_name);
-        fil_db_rec = cr_repomd_record_new("filelists_db", fil_db_name);
-        if (cmd_options->filelists_ext)
-            fex_db_rec = cr_repomd_record_new("filelists-ext_db", fex_db_name);
-        oth_db_rec = cr_repomd_record_new("other_db", oth_db_name);
-
-        // Set db version
-        pri_db_rec->db_ver = DEFAULT_DATABASE_VERSION;
-        fil_db_rec->db_ver = DEFAULT_DATABASE_VERSION;
-        if (cmd_options->filelists_ext)
-            fex_db_rec->db_ver = DEFAULT_DATABASE_VERSION;
-        oth_db_rec->db_ver = DEFAULT_DATABASE_VERSION;
-
-        g_free(pri_db_name);
-        g_free(fil_db_name);
-        g_free(fex_db_name);
-        g_free(oth_db_name);
-
-        cr_repomd_record_load_contentstat(pri_db_rec, pri_db_task->stat);
-        cr_repomd_record_load_contentstat(fil_db_rec, fil_db_task->stat);
-        if (cmd_options->filelists_ext)
-            cr_repomd_record_load_contentstat(fex_db_rec, fex_db_task->stat);
-        cr_repomd_record_load_contentstat(oth_db_rec, oth_db_task->stat);
-
-        cr_compressiontask_free(pri_db_task, NULL);
-        cr_compressiontask_free(fil_db_task, NULL);
-        cr_compressiontask_free(fex_db_task, NULL);
-        cr_compressiontask_free(oth_db_task, NULL);
-
-        fill_pool = g_thread_pool_new(cr_repomd_record_fill_thread,
-                                      NULL, 3, FALSE, NULL);
-
-        cr_RepomdRecordFillTask *pri_db_fill_task = NULL;
-        cr_RepomdRecordFillTask *fil_db_fill_task = NULL;
-        cr_RepomdRecordFillTask *fex_db_fill_task = NULL;
-        cr_RepomdRecordFillTask *oth_db_fill_task = NULL;
-
-        pri_db_fill_task = cr_repomdrecordfilltask_new(pri_db_rec,
-                                                       cmd_options->repomd_checksum_type,
-                                                       NULL);
-        g_thread_pool_push(fill_pool, pri_db_fill_task, NULL);
-
-        fil_db_fill_task = cr_repomdrecordfilltask_new(fil_db_rec,
-                                                       cmd_options->repomd_checksum_type,
-                                                       NULL);
-        g_thread_pool_push(fill_pool, fil_db_fill_task, NULL);
-
-        if (cmd_options->filelists_ext) {
-            fex_db_fill_task = cr_repomdrecordfilltask_new(fex_db_rec,
-                                                           cmd_options->repomd_checksum_type,
-                                                           NULL);
-            g_thread_pool_push(fill_pool, fex_db_fill_task, NULL);
-        }
-
-        oth_db_fill_task = cr_repomdrecordfilltask_new(oth_db_rec,
-                                                       cmd_options->repomd_checksum_type,
-                                                       NULL);
-        g_thread_pool_push(fill_pool, oth_db_fill_task, NULL);
-
-        g_thread_pool_free(fill_pool, FALSE, TRUE);
-
-        cr_repomdrecordfilltask_free(pri_db_fill_task, NULL);
-        cr_repomdrecordfilltask_free(fil_db_fill_task, NULL);
-        cr_repomdrecordfilltask_free(fex_db_fill_task, NULL);
-        cr_repomdrecordfilltask_free(oth_db_fill_task, NULL);
-    }
 
     // Zchunk
     if (cmd_options->zck_compression) {
@@ -2261,11 +1984,6 @@ deltaerror:
         if (cmd_options->filelists_ext)
             cr_repomd_record_rename_file(fex_xml_rec, NULL);
         cr_repomd_record_rename_file(oth_xml_rec, NULL);
-        cr_repomd_record_rename_file(pri_db_rec, NULL);
-        cr_repomd_record_rename_file(fil_db_rec, NULL);
-        if (cmd_options->filelists_ext)
-            cr_repomd_record_rename_file(fex_db_rec, NULL);
-        cr_repomd_record_rename_file(oth_db_rec, NULL);
         cr_repomd_record_rename_file(pri_zck_rec, NULL);
         cr_repomd_record_rename_file(fil_zck_rec, NULL);
         if (cmd_options->filelists_ext)
@@ -2287,11 +2005,6 @@ deltaerror:
         if (cmd_options->filelists_ext)
             cr_repomd_record_set_timestamp(fex_xml_rec, revision);
         cr_repomd_record_set_timestamp(oth_xml_rec, revision);
-        cr_repomd_record_set_timestamp(pri_db_rec, revision);
-        cr_repomd_record_set_timestamp(fil_db_rec, revision);
-        if (cmd_options->filelists_ext)
-            cr_repomd_record_set_timestamp(fex_db_rec, revision);
-        cr_repomd_record_set_timestamp(oth_db_rec, revision);
         cr_repomd_record_set_timestamp(prestodelta_rec, revision);
         GSList *element = additional_metadata_rec;
         for (; element; element=g_slist_next(element)) {
@@ -2305,11 +2018,6 @@ deltaerror:
     if (cmd_options->filelists_ext)
         cr_repomd_set_record(repomd_obj, fex_xml_rec);
     cr_repomd_set_record(repomd_obj, oth_xml_rec);
-    cr_repomd_set_record(repomd_obj, pri_db_rec);
-    cr_repomd_set_record(repomd_obj, fil_db_rec);
-    if (cmd_options->filelists_ext)
-        cr_repomd_set_record(repomd_obj, fex_db_rec);
-    cr_repomd_set_record(repomd_obj, oth_db_rec);
     cr_repomd_set_record(repomd_obj, pri_zck_rec);
     cr_repomd_set_record(repomd_obj, fil_zck_rec);
     if (cmd_options->filelists_ext)
@@ -2488,10 +2196,6 @@ cleanup:
     g_free(fil_xml_filename);
     g_free(fex_xml_filename);
     g_free(oth_xml_filename);
-    g_free(pri_db_filename);
-    g_free(fil_db_filename);
-    g_free(fex_db_filename);
-    g_free(oth_db_filename);
     g_free(pri_zck_filename);
     g_free(fil_zck_filename);
     g_free(fex_zck_filename);

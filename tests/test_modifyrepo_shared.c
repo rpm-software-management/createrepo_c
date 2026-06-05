@@ -65,8 +65,8 @@ test_cr_remove_compression_suffix(void)
     g_assert_cmpstr(out, ==, "testdata/test_files/text_file");
     g_free(out);
 
-    out = cr_remove_compression_suffix_if_present(TEST_SQLITE_FILE, err);
-    g_assert_cmpstr(out, ==, "testdata/test_files/sqlite_file.sqlite");
+    out = cr_remove_compression_suffix_if_present(TEST_BINARY_FILE, err);
+    g_assert_cmpstr(out, ==, "testdata/test_files/binary_file");
     g_free(out);
 }
 

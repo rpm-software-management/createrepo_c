@@ -7,6 +7,7 @@ name = "createrepo_c"
 description = "C implementation of createrepo"
 readme = "README.md"
 license = "GPL-2.0-or-later"
+license-files = ["LICENSE"]
 dynamic = ["version"]
 authors = [
     {name = "RPM Software Management", email = "rpm-ecosystem@lists.rpm.org"},

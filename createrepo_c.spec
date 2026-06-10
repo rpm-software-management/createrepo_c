@@ -207,7 +207,7 @@ ln -sr %{buildroot}%{_bindir}/modifyrepo_c %{buildroot}%{_bindir}/modifyrepo
 %endif
 
 %files libs
-%license COPYING
+%license LICENSE
 %{_libdir}/lib%{name}.so.*
 
 %files devel

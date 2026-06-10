@@ -1666,6 +1666,58 @@ cr_version_string_with_features(void)
             ")");
 }
 
+/** Return a newly allocated copy of str with forbidden XML control chars
+ * (ASCII values <32 except 9, 10 and 13) removed.
+ * Returns NULL if no control chars were found (no copy needed).
+ */
+static gchar *
+cr_str_strip_control_chars(const char *str)
+{
+    // Quick scan: check if any control chars are present
+    const unsigned char *p = (const unsigned char *)str;
+    while (*p) {
+        if (*p < 32 && (*p != 9 && *p != 10 && *p != 13))
+            break;
+        p++;
+    }
+    if (!*p)
+        return NULL;
+
+    // Control char found: create a cleaned copy
+    gchar *cleaned = g_malloc(strlen(str) + 1);
+    char *dst = cleaned;
+    const unsigned char *src = (const unsigned char *)str;
+    while (*src) {
+        if (*src < 32 && (*src != 9 && *src != 10 && *src != 13)) {
+            src++;
+            continue;
+        }
+        *dst++ = (char)*src++;
+    }
+    *dst = '\0';
+    return cleaned;
+}
+
+gchar *
+cr_safe_string_chunk_insert(GStringChunk *chunk, const char *str)
+{
+    if (!str) return NULL;
+    gchar *cleaned = cr_str_strip_control_chars(str);
+    if (!cleaned)
+        return g_string_chunk_insert(chunk, str);
+    g_warning("Forbidden control character found in string, removing: \"%s\"", str);
+    gchar *result = g_string_chunk_insert(chunk, cleaned);
+    g_free(cleaned);
+    return result;
+}
+
+gchar *
+cr_safe_string_chunk_insert_null(GStringChunk *chunk, const char *str)
+{
+    if (!str || *str == '\0') return NULL;
+    return cr_safe_string_chunk_insert(chunk, str);
+}
+
 gchar *
 cr_get_dict_file(const gchar *dir, const gchar *file)
 {

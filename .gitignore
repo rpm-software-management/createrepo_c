@@ -27,6 +27,7 @@ _skbuild/
 
 # Python distribution stuff
 dist/
+wheelhouse/
 MANIFEST
 *.egg-info/
 

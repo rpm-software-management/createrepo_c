@@ -15,10 +15,13 @@ jobs:
           sudo dnf -y install dnf-plugins-core python3-pip
           sudo dnf -y builddep createrepo_c.spec
           pip install --upgrade pip
-          pip install pytest
+          pip install pytest build
 
       - name: Compile and Install
         run: pip install .
+
+      - name: Compile / build both sdist and bdist  # exercises different build codepaths - more similar to what cibuildwheel executes
+        run: python3 -m build
 
       - name: Test
         run: pytest --verbose --color=yes tests/python/tests/

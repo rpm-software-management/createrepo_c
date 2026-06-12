@@ -23,11 +23,11 @@ _CPack_Packages/
 src/version.h
 src/createrepo_c.pc
 src/deltarpms.h
-src/python/createrepo_c/
 _skbuild/
 
 # Python distribution stuff
 dist/
+wheelhouse/
 MANIFEST
 *.egg-info/
 

@@ -233,6 +233,38 @@ class TestCasePackage(unittest.TestCase):
         self.assertEqual(pkg_d.name, "FooPackage")
         del(pkg_d)
 
+    def test_package_setters_strip_control_chars_name(self):
+        """Control chars in name field are stripped at insert time."""
+        pkg = cr.Package()
+        pkg.name = "foo\x1bbar"
+        self.assertEqual(pkg.name, "foobar")
+
+    def test_package_setters_strip_control_chars_summary(self):
+        """Control chars in summary field are stripped at insert time."""
+        pkg = cr.Package()
+        pkg.summary = "hello\x01world"
+        self.assertEqual(pkg.summary, "helloworld")
+
+    def test_package_setters_strip_control_chars_description(self):
+        """Multiple control chars are stripped from description."""
+        pkg = cr.Package()
+        pkg.description = "\x02start\x03 middle\x04 end\x05"
+        self.assertEqual(pkg.description, "start middle end")
+
+    def test_package_setters_preserve_whitespace(self):
+        """Tab, newline, and carriage return are preserved (not stripped)."""
+        pkg = cr.Package()
+        pkg.description = "line1\nline2\ttabbed\rreturn"
+        self.assertEqual(pkg.description, "line1\nline2\ttabbed\rreturn")
+
+    def test_package_setters_strip_control_chars_changelog(self):
+        """Control chars in changelog entries are stripped."""
+        pkg = cr.Package()
+        pkg.changelogs = [("author\x1b name", 123456, "- fix \x1b" "bug")]
+        author, date, text = pkg.changelogs[0]
+        self.assertEqual(author, "author name")
+        self.assertEqual(text, "- fix bug")
+
     def test_package_without_digests(self):
         pkg = cr.package_from_rpm(PKG_ARCHER_PATH, header_reading_flags=cr.HDRR_NOFILEDIGESTS)
         self.assertTrue(pkg)

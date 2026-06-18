@@ -31,7 +31,7 @@
 #define ERR_DOMAIN      CREATEREPO_C_ERROR
 
 
-void
+static void
 cr_xml_dump_filelists_items(xmlNodePtr root, cr_Package *package, gboolean filelists_ext)
 {
     /***********************************
@@ -77,7 +77,7 @@ cr_xml_dump_filelists_items(xmlNodePtr root, cr_Package *package, gboolean filel
 }
 
 
-char *
+static char *
 cr_xml_dump_filelists_chunk(cr_Package *package, gboolean filelists_ext, GError **err)
 {
     xmlNodePtr root;

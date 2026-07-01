@@ -715,28 +715,28 @@ void cr_package_set_changelogs(cr_Package *package, GSList *list);
  */
 GSList *cr_package_get_signatures(cr_Package *package);
 
-/** Get OpenPGP signature.
+/** DEPRECATED: Get OpenPGP signature. Use cr_package_get_signatures() instead.
  * Ownership: not transferred.
  * @param package       cr_Package
  * @return              OpenPGP signature or NULL
  */
 cr_BinaryData *cr_package_get_siggpg(cr_Package *package);
 
-/** Set OpenPGP signature.
+/** DEPRECATED: Set OpenPGP signature.
  * Ownership: data is transferred to the package.
  * @param package       cr_Package
  * @param data          OpenPGP signature
  */
 void cr_package_set_siggpg(cr_Package *package, cr_BinaryData *data);
 
-/** Get PGP signature.
+/** DEPRECATED: Get PGP signature. Use cr_package_get_signatures() instead.
  * Ownership: not transferred.
  * @param package       cr_Package
  * @return              PGP signature or NULL
  */
 cr_BinaryData *cr_package_get_sigpgp(cr_Package *package);
 
-/** Set PGP signature.
+/**DEPRECATED:  Set PGP signature.
  * Ownership: data is transferred to the package.
  * @param package       cr_Package
  * @param data          PGP signature

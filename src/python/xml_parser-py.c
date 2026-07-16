@@ -76,6 +76,11 @@ c_newpkgcb(cr_Package **pkg,
         if (data->py_pkgcb != Py_None) {
             // Store reference to the python pkg (result) only if we will need it later
             PyObject *keyFromPtr = PyLong_FromVoidPtr(*pkg);
+            if (!keyFromPtr) {
+                Py_DECREF(result);
+                PyErr_ToGError(err);
+                return CR_CB_RET_ERR;
+            }
             PyDict_SetItem(data->py_pkgs, keyFromPtr, result);
             Py_DECREF(keyFromPtr);
         }
@@ -920,6 +925,10 @@ pkg_iterator_next_package(PyObject *PyObject_self)
     }
 
     PyObject *keyFromPtr = PyLong_FromVoidPtr(pkg);
+    if (!keyFromPtr) {
+        cr_package_free(pkg);
+        return NULL;
+    }
     PyObject *py_pkg = PyDict_GetItem(self->cbdata->py_pkgs, keyFromPtr);
     if (py_pkg) {
         // Remove pkg from PyDict but keep one reference so its not freed if the

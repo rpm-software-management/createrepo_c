@@ -625,7 +625,7 @@ typedef struct {
     size_t prefix_len;
 } cr_PrestoDeltaUserData;
 
-void
+static void
 cr_prestodeltatask_free(cr_PrestoDeltaTask *task)
 {
     if (!task)

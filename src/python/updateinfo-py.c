@@ -124,7 +124,7 @@ append(_UpdateInfoObject *self, PyObject *args)
 
     orig = UpdateRecord_FromPyObject(record);
     new = cr_updaterecord_copy(orig);
-    cr_updateinfo_apped_record(self->updateinfo, new);
+    cr_updateinfo_append_record(self->updateinfo, new);
     Py_RETURN_NONE;
 }
 

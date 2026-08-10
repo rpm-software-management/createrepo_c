@@ -183,7 +183,7 @@ cr_start_handler(void *pdata, const xmlChar *element, const xmlChar **attr)
         assert(!pd->updatecollectionpackage);
 
         rec = cr_updaterecord_new();
-        cr_updateinfo_apped_record(pd->updateinfo, rec);
+        cr_updateinfo_append_record(pd->updateinfo, rec);
         pd->updaterecord = rec;
 
         val = cr_find_attr("from", attr);

@@ -194,7 +194,7 @@ void
 cr_updateinfo_free(cr_UpdateInfo *uinfo);
 
 void
-cr_updateinfo_apped_record(cr_UpdateInfo *uinfo, cr_UpdateRecord *record);
+cr_updateinfo_append_record(cr_UpdateInfo *uinfo, cr_UpdateRecord *record);
 
 /** @} */
 

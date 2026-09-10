@@ -226,7 +226,7 @@ int cr_xmlfile_add_pkg(cr_XmlFile *f, cr_Package *pkg, GError **err);
  * cr_xml_file_add_pkg(). In case of _add_pkg() function, creating of
  * string with xml chunk is done in a critical section. In _add_chunk()
  * function, you could just dump XML whenever you want and in the
- * critical section do only writting.
+ * critical section do only writing.
  * @param f             An opened cr_XmlFile
  * @param chunk         String with XML chunk.
  * @param err           **GError

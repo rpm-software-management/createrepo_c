@@ -36,7 +36,7 @@ ModulemdModuleIndex *cr_metadata_modulemd(cr_Metadata *md);
 
 /** Load (compressed) module metadata file into moduleindex,
  * compression is autodetected.
- * @param moduleindex   memory adress where to store the
+ * @param moduleindex   memory address where to store the
  *                      created pointer to ModulemdModuleIndex
  * @param path_to_md    path to module metadata
  * @return              cr_Error code

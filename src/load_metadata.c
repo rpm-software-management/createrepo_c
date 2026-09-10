@@ -597,7 +597,7 @@ cr_metadata_load_xml(cr_Metadata *md,
                 new_key = pkg->name;
                 break;
             default:
-                // Well, this SHOULD never happend!
+                // Well, this SHOULD never happen!
                 // (md->key SHOULD be set only by cr_metadata_new()
                 // and it SHOULD set only valid key values)
                 g_critical("%s: Unknown hash table key selected", __func__);

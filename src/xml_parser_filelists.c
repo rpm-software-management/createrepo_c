@@ -300,7 +300,7 @@ cr_end_handler(void *pdata, G_GNUC_UNUSED const xmlChar *element)
             case FILE_FILE:  pkg_file->type = NULL;    break; // NULL => "file"
             case FILE_DIR:   pkg_file->type = "dir";   break;
             case FILE_GHOST: pkg_file->type = "ghost"; break;
-            default: assert(0);  // Should not happend
+            default: assert(0);  // Should not happen
         }
 
 	pkg_file->digest = cr_safe_string_chunk_insert(pd->pkg->chunk, pd->last_digest);

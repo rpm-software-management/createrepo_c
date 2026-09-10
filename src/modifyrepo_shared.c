@@ -422,7 +422,7 @@ cr_modifyrepo(GSList *modifyrepotasks, gchar *repopath, GError **err)
 
         // Firstly check if the file that should be deleted isn't
         // really used by other record anymore.
-        // It could happend if user add a file, that already exists,
+        // It could happen if user add a file, that already exists,
         // in repodata. Then we don't want to remove this file.
         gboolean remove_this = TRUE;
 

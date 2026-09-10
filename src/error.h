@@ -75,8 +75,8 @@ typedef enum {
     CRE_CURL, /*!<
         (24) Curl library related error */
     CRE_ASSERT, /*!<
-        (25) Ideally this error should never happened. Nevertheless if
-        it happend, probable reason is that some values of createrepo_c
+        (25) Ideally this error should never happen. Nevertheless if
+        it happened, probable reason is that some values of createrepo_c
         object was changed (by you - a programmer) in a bad way */
     CRE_BADCMDARG, /*!<
         (26) Bad command line argument(s) */

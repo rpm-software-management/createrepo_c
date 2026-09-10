@@ -126,7 +126,7 @@ cr_CompressionType cr_compression_type(const char *name);
 #define cr_open(FILENAME, MODE, COMTYPE, ERR) \
                     cr_sopen(FILENAME, MODE, COMTYPE, NULL, ERR)
 
-/** Open/Create the specified file. If opened for writting, you can pass
+/** Open/Create the specified file. If opened for writing, you can pass
  * a cr_ContentStat object and after cr_close() get stats of
  * an open content (stats of uncompressed content).
  * @param filename      filename

@@ -653,7 +653,7 @@ cr_end_handler(void *pdata, G_GNUC_UNUSED const xmlChar *element)
             case FILE_FILE:  pkg_file->type = NULL;    break; // NULL => "file"
             case FILE_DIR:   pkg_file->type = "dir";   break;
             case FILE_GHOST: pkg_file->type = "ghost"; break;
-            default: assert(0);  // Should not happend
+            default: assert(0);  // Should not happen
         }
 
         pd->pkg->files = g_slist_prepend(pd->pkg->files, pkg_file);

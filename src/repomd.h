@@ -50,7 +50,7 @@ extern "C" {
  *
  * // Create record for new metadata file
  * rec = cr_repomd_record_new("primary", "/foo/bar/repodata/primary.xml.xz");
- * // Calculate all needed parameters (uncompresed size, checksum, ...)
+ * // Calculate all needed parameters (uncompressed size, checksum, ...)
  * cr_repomd_record_fill(rec, CR_CHECKSUM_SHA256);
  * // Rename source file - insert checksum into the filename
  * cr_repomd_record_rename_file(rec)
@@ -199,7 +199,7 @@ void cr_repomd_record_load_contentstat(cr_RepomdRecord *record,
 void cr_repomd_record_load_zck_contentstat(cr_RepomdRecord *record,
                                            cr_ContentStat *stats);
 
-/** Create new empty cr_Repomd object wich represents content of repomd.xml.
+/** Create new empty cr_Repomd object which represents content of repomd.xml.
  */
 cr_Repomd *cr_repomd_new();
 

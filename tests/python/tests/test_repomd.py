@@ -129,6 +129,14 @@ class TestCaseRepomd(unittest.TestCase):
 </repomd>
 """)
 
+    def test_distro_tag_access_rejects_non_utf8_bytes(self):
+        """Distro tags raise UnicodeDecodeError instead of creating invalid tuples."""
+        md = cr.Repomd()
+        md.distro_tags = [(b"cpeid\xff", "tag")]
+
+        with self.assertRaises(UnicodeDecodeError):
+            md.distro_tags
+
     def test_repomd_with_path_in_constructor_repo01(self):
 
         repomd = cr.Repomd(REPO_01_REPOMD)

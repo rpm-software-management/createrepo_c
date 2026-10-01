@@ -76,6 +76,23 @@ PyUnicodeOrNone_FromString(const char *str)
     return PyUnicode_FromString(str);
 }
 
+static int
+PyTuple_SetItemFromObject(PyObject *tuple, Py_ssize_t pos, PyObject *item)
+{
+    if (item == NULL)
+        return -1;
+    if (PyTuple_SetItem(tuple, pos, item) == 0)
+        return 0;
+    Py_DECREF(item);
+    return -1;
+}
+
+static int
+PyTuple_SetItemFromString(PyObject *tuple, Py_ssize_t pos, const char *str)
+{
+    return PyTuple_SetItemFromObject(tuple, pos, PyUnicodeOrNone_FromString(str));
+}
+
 PyObject *
 PyObject_ToPyBytesOrNull(PyObject *pyobj)
 {
@@ -129,12 +146,16 @@ PyObject_FromDependency(cr_Dependency *dep)
     if ((tuple = PyTuple_New(6)) == NULL)
         return NULL;
 
-    PyTuple_SetItem(tuple, 0, PyUnicodeOrNone_FromString(dep->name));
-    PyTuple_SetItem(tuple, 1, PyUnicodeOrNone_FromString(dep->flags));
-    PyTuple_SetItem(tuple, 2, PyUnicodeOrNone_FromString(dep->epoch));
-    PyTuple_SetItem(tuple, 3, PyUnicodeOrNone_FromString(dep->version));
-    PyTuple_SetItem(tuple, 4, PyUnicodeOrNone_FromString(dep->release));
-    PyTuple_SetItem(tuple, 5, PyBool_FromLong((long) dep->pre));
+    if (PyTuple_SetItemFromString(tuple, 0, dep->name) ||
+        PyTuple_SetItemFromString(tuple, 1, dep->flags) ||
+        PyTuple_SetItemFromString(tuple, 2, dep->epoch) ||
+        PyTuple_SetItemFromString(tuple, 3, dep->version) ||
+        PyTuple_SetItemFromString(tuple, 4, dep->release) ||
+        PyTuple_SetItemFromObject(tuple, 5, PyBool_FromLong((long) dep->pre)))
+    {
+        Py_DECREF(tuple);
+        return NULL;
+    }
 
     return tuple;
 }
@@ -174,15 +195,22 @@ PyObject_FromPackageFile(cr_PackageFile *file)
     if (file->digest != NULL) {
         if ((tuple = PyTuple_New(4)) == NULL)
             return NULL;
-        PyTuple_SetItem(tuple, 3, PyUnicodeOrNone_FromString(file->digest));
+        if (PyTuple_SetItemFromString(tuple, 3, file->digest)) {
+            Py_DECREF(tuple);
+            return NULL;
+        }
     } else {
         if ((tuple = PyTuple_New(3)) == NULL)
             return NULL;
     }
 
-    PyTuple_SetItem(tuple, 0, PyUnicodeOrNone_FromString(file->type));
-    PyTuple_SetItem(tuple, 1, PyUnicodeOrNone_FromString(file->path));
-    PyTuple_SetItem(tuple, 2, PyUnicodeOrNone_FromString(file->name));
+    if (PyTuple_SetItemFromString(tuple, 0, file->type) ||
+        PyTuple_SetItemFromString(tuple, 1, file->path) ||
+        PyTuple_SetItemFromString(tuple, 2, file->name))
+    {
+        Py_DECREF(tuple);
+        return NULL;
+    }
 
     return tuple;
 }
@@ -219,9 +247,13 @@ PyObject_FromChangelogEntry(cr_ChangelogEntry *log)
     if ((tuple = PyTuple_New(3)) == NULL)
         return NULL;
 
-    PyTuple_SetItem(tuple, 0, PyUnicodeOrNone_FromString(log->author));
-    PyTuple_SetItem(tuple, 1, PyLong_FromLong((long) log->date));
-    PyTuple_SetItem(tuple, 2, PyUnicodeOrNone_FromString(log->changelog));
+    if (PyTuple_SetItemFromString(tuple, 0, log->author) ||
+        PyTuple_SetItemFromObject(tuple, 1, PyLong_FromLong((long) log->date)) ||
+        PyTuple_SetItemFromString(tuple, 2, log->changelog))
+    {
+        Py_DECREF(tuple);
+        return NULL;
+    }
 
     return tuple;
 }
@@ -252,8 +284,12 @@ PyObject_FromDistroTag(cr_DistroTag *tag)
     if ((tuple = PyTuple_New(2)) == NULL)
         return NULL;
 
-    PyTuple_SetItem(tuple, 0, PyUnicodeOrNone_FromString(tag->cpeid));
-    PyTuple_SetItem(tuple, 1, PyUnicodeOrNone_FromString(tag->val));
+    if (PyTuple_SetItemFromString(tuple, 0, tag->cpeid) ||
+        PyTuple_SetItemFromString(tuple, 1, tag->val))
+    {
+        Py_DECREF(tuple);
+        return NULL;
+    }
 
     return tuple;
 }

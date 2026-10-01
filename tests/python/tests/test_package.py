@@ -55,6 +55,21 @@ class TestCasePackage(unittest.TestCase):
         self.assertEqual(pkg.nvra(), "empty-0-0.x86_64")
         self.assertEqual(pkg.nevra(), "empty-0:0-0.x86_64")
 
+    def test_package_list_access_rejects_non_utf8_bytes(self):
+        """List properties raise UnicodeDecodeError instead of creating invalid tuples."""
+        cases = {
+            "requires": [(b"requirement\xff", None, None, None, None, False)],
+            "files": [("", "/usr/bin/", b"filename\xff")],
+            "changelogs": [(b"author\xff", 123456, b"description\xff")],
+        }
+
+        for field, value in cases.items():
+            with self.subTest(field=field):
+                pkg = cr.Package()
+                setattr(pkg, field, value)
+                with self.assertRaises(UnicodeDecodeError):
+                    getattr(pkg, field)
+
     def test_package_archer(self):
         pkg = cr.package_from_rpm(PKG_ARCHER_PATH)
         self.assertTrue(pkg)

@@ -382,8 +382,15 @@ get_list(_RepomdObject *self, void *conv)
 
     for (GSList *elem = glist; elem; elem = g_slist_next(elem)) {
         PyObject *obj = convertor->f(elem->data);
-        if (!obj) continue;
-        PyList_Append(list, obj);
+        if (!obj) {
+            Py_DECREF(list);
+            return NULL;
+        }
+        if (PyList_Append(list, obj)) {
+            Py_DECREF(obj);
+            Py_DECREF(list);
+            return NULL;
+        }
         Py_DECREF(obj);
     }
 

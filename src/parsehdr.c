@@ -45,6 +45,11 @@
 #define RPMSENSE_MISSINGOK (1 << 19)
 #endif
 
+#ifndef RPMTAG_PAYLOADSIZEALT
+// Keep building with older rpm headers; this tag's numeric value is stable.
+#define RPMTAG_PAYLOADSIZEALT 5113
+#endif
+
 typedef enum DepType_e {
     DEP_PROVIDES,
     DEP_CONFLICTS,
@@ -165,7 +170,7 @@ cr_compare_dependency(const char *dep1, const char *dep2)
     if (ver1 > ver1_e) return 2;
     if (ver2 > ver2_e) return 1;
 
-/*  XXX: This piece of code could be removed in future 
+/*  XXX: This piece of code could be removed in future
     // Check if version is really version and not an architecture
     // case: libc.so.6(64bit) = 64 is not a version!
     ret1 = strncmp(ver1, "64bit", 5);
@@ -254,8 +259,11 @@ cr_package_from_header(Header hdr,
     pgpHashAlgo fda = headerGetNumber(hdr, RPMTAG_FILEDIGESTALGO);
     pkg->files_checksum_type = cr_safe_string_chunk_insert(pkg->chunk, cr_hash_algo_str(fda));
     rpmtdFreeData(td);
-    // RPMTAG_LONGARCHIVESIZE is allways present (is emulated for small packages because HEADERGET_EXT flag was used)
-    if (headerGet(hdr, RPMTAG_LONGARCHIVESIZE, td, flags)) {
+    // v6 packages use PAYLOADSIZEALT to store the size of the uncompressed payload archive.
+    // (LONG)ARCHIVESIZE is not present. For v4 packages, LONGARCHIVESIZE should be present or emulated.
+    if (headerGet(hdr, RPMTAG_PAYLOADSIZEALT, td, flags)) {
+        pkg->size_archive = rpmtdGetNumber(td);
+    } else if (headerGet(hdr, RPMTAG_LONGARCHIVESIZE, td, flags)) {
         pkg->size_archive = rpmtdGetNumber(td);
     }
 

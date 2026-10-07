@@ -284,7 +284,7 @@ get_str(_PackageObject *self, void *closure)
     const char *str = ((StrField *) closure)->get(pkg);
     if (str == NULL)
         Py_RETURN_NONE;
-    return PyUnicode_FromString(str);
+    return PyUnicodeOrNone_FromStringLossy(str);
 }
 
 static PyObject *

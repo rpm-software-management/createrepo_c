@@ -56,11 +56,10 @@ class TestCasePackage(unittest.TestCase):
         self.assertEqual(pkg.nevra(), "empty-0:0-0.x86_64")
 
     def test_package_list_access_rejects_non_utf8_bytes(self):
-        """List properties raise UnicodeDecodeError instead of creating invalid tuples."""
+        """Non-text list properties still reject invalid UTF-8 bytes."""
         cases = {
             "requires": [(b"requirement\xff", None, None, None, None, False)],
             "files": [("", "/usr/bin/", b"filename\xff")],
-            "changelogs": [(b"author\xff", 123456, b"description\xff")],
         }
 
         for field, value in cases.items():
@@ -69,6 +68,14 @@ class TestCasePackage(unittest.TestCase):
                 setattr(pkg, field, value)
                 with self.assertRaises(UnicodeDecodeError):
                     getattr(pkg, field)
+
+    def test_package_changelog_replaces_non_utf8_bytes(self):
+        """Parsed changelog fields replace invalid UTF-8 bytes instead of failing."""
+        pkg = cr.package_from_rpm(PKG_BALICEK_ISO88591_PATH)
+        self.assertEqual(len(pkg.changelogs), 1)
+        author, _timestamp, description = pkg.changelogs[0]
+        self.assertIn("\ufffd", author)
+        self.assertIn("\ufffd", description)
 
     def test_package_archer(self):
         pkg = cr.package_from_rpm(PKG_ARCHER_PATH)

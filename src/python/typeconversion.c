@@ -19,6 +19,7 @@
 
 #include <Python.h>
 #include <assert.h>
+#include <string.h>
 #include "typeconversion.h"
 #include "src/createrepo_c.h"
 #include "src/repomd_internal.h"
@@ -74,6 +75,14 @@ PyUnicodeOrNone_FromString(const char *str)
     if (str == NULL)
         Py_RETURN_NONE;
     return PyUnicode_FromString(str);
+}
+
+static PyObject *
+PyUnicodeOrNone_FromStringLossy(const char *str)
+{
+    if (str == NULL)
+        Py_RETURN_NONE;
+    return PyUnicode_DecodeUTF8(str, strlen(str), "replace");
 }
 
 static int
@@ -247,9 +256,9 @@ PyObject_FromChangelogEntry(cr_ChangelogEntry *log)
     if ((tuple = PyTuple_New(3)) == NULL)
         return NULL;
 
-    if (PyTuple_SetItemFromString(tuple, 0, log->author) ||
+    if (PyTuple_SetItemFromObject(tuple, 0, PyUnicodeOrNone_FromStringLossy(log->author)) ||
         PyTuple_SetItemFromObject(tuple, 1, PyLong_FromLong((long) log->date)) ||
-        PyTuple_SetItemFromString(tuple, 2, log->changelog))
+        PyTuple_SetItemFromObject(tuple, 2, PyUnicodeOrNone_FromStringLossy(log->changelog)))
     {
         Py_DECREF(tuple);
         return NULL;

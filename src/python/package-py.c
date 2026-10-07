@@ -264,7 +264,7 @@ get_str(_PackageObject *self, void *member_offset)
     char *str = *((char **) ((size_t) pkg + (size_t) member_offset));
     if (str == NULL)
         Py_RETURN_NONE;
-    return PyUnicode_FromString(str);
+    return PyUnicodeOrNone_FromStringLossy(str);
 }
 
 /** Return offset of a selected member of cr_Package structure. */

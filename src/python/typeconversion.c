@@ -77,7 +77,7 @@ PyUnicodeOrNone_FromString(const char *str)
     return PyUnicode_FromString(str);
 }
 
-static PyObject *
+PyObject *
 PyUnicodeOrNone_FromStringLossy(const char *str)
 {
     if (str == NULL)

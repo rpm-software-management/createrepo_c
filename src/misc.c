@@ -1666,6 +1666,64 @@ cr_version_string_with_features(void)
             ")");
 }
 
+static gboolean
+cr_string_has_forbidden_control_chars(const char *str)
+{
+    if (!str)
+        return FALSE;
+
+    const unsigned char *src = (const unsigned char *) str;
+    while (*src) {
+        // XML permits TAB, LF, and CR among ASCII control characters.
+        if (*src < 32 && *src != 9 && *src != 10 && *src != 13)
+            return TRUE;
+        src++;
+    }
+
+    return FALSE;
+}
+
+gchar *
+cr_replace_control_chars(const char *str, const char *field)
+{
+    if (!str)
+        return NULL;
+    if (!cr_string_has_forbidden_control_chars(str))
+        return g_strdup(str);
+
+    g_warning("Forbidden control character found in %s; replacing with U+FFFD",
+              field ? field : "string");
+
+    GString *cleaned = g_string_sized_new(strlen(str));
+    const unsigned char *src = (const unsigned char *) str;
+    while (*src) {
+        if (*src < 32 && *src != 9 && *src != 10 && *src != 13) {
+            g_string_append(cleaned, "\xEF\xBF\xBD");
+            src++;
+        } else {
+            g_string_append_c(cleaned, (char) *src++);
+        }
+    }
+
+    return g_string_free(cleaned, FALSE);
+}
+
+gchar *
+cr_safe_string_chunk_insert_text(GStringChunk *chunk,
+                                 const char *str,
+                                 const char *field)
+{
+    if (!str)
+        return NULL;
+    if (!cr_string_has_forbidden_control_chars(str))
+        return g_string_chunk_insert(chunk, str);
+
+    gchar *cleaned = cr_replace_control_chars(str, field);
+    gchar *result = g_string_chunk_insert(chunk, cleaned);
+    g_free(cleaned);
+    return result;
+}
+
 gchar *
 cr_get_dict_file(const gchar *dir, const gchar *file)
 {

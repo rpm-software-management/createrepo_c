@@ -195,8 +195,8 @@ cr_package_copy_into(cr_Package *orig, cr_Package *pkg)
     pkg->version          = cr_safe_string_chunk_insert(pkg->chunk, orig->version);
     pkg->epoch            = cr_safe_string_chunk_insert(pkg->chunk, orig->epoch);
     pkg->release          = cr_safe_string_chunk_insert(pkg->chunk, orig->release);
-    pkg->summary          = cr_safe_string_chunk_insert(pkg->chunk, orig->summary);
-    pkg->description      = cr_safe_string_chunk_insert(pkg->chunk, orig->description);
+    pkg->summary          = cr_safe_string_chunk_insert_text(pkg->chunk, orig->summary, "summary");
+    pkg->description      = cr_safe_string_chunk_insert_text(pkg->chunk, orig->description, "description");
     pkg->url              = cr_safe_string_chunk_insert(pkg->chunk, orig->url);
     pkg->time_file        = orig->time_file;
     pkg->time_build       = orig->time_build;
@@ -238,9 +238,13 @@ cr_package_copy_into(cr_Package *orig, cr_Package *pkg)
     for (GSList *elem = orig->changelogs; elem; elem = g_slist_next(elem)) {
         cr_ChangelogEntry *orig_log = elem->data;
         cr_ChangelogEntry *log = cr_changelog_entry_new();
-        log->author    = cr_safe_string_chunk_insert(pkg->chunk, orig_log->author);
+        log->author    = cr_safe_string_chunk_insert_text(pkg->chunk,
+                                                         orig_log->author,
+                                                         "changelog author");
         log->date      = orig_log->date;
-        log->changelog = cr_safe_string_chunk_insert(pkg->chunk, orig_log->changelog);
+        log->changelog = cr_safe_string_chunk_insert_text(pkg->chunk,
+                                                         orig_log->changelog,
+                                                         "changelog entry");
         pkg->changelogs = g_slist_prepend(pkg->changelogs, log);
     }
 
@@ -250,20 +254,27 @@ cr_package_copy_into(cr_Package *orig, cr_Package *pkg)
 }
 
 static void
-cr_package_assign_string(cr_Package *pkg, char **field, const char *value)
+cr_package_assign_string(cr_Package *pkg,
+                         char **field,
+                         const char *value,
+                         const char *field_name)
 {
     if (!pkg) {
         return;
     }
 
     if (pkg->chunk) {
-        *field = cr_safe_string_chunk_insert(pkg->chunk, value);
+        *field = field_name
+            ? cr_safe_string_chunk_insert_text(pkg->chunk, value, field_name)
+            : cr_safe_string_chunk_insert(pkg->chunk, value);
         return;
     }
 
     if (*field != value) {
         g_free(*field);
-        *field = value ? g_strdup(value) : NULL;
+        *field = field_name
+            ? cr_replace_control_chars(value, field_name)
+            : (value ? g_strdup(value) : NULL);
     }
 }
 
@@ -276,7 +287,7 @@ cr_package_get_pkg_id(cr_Package *pkg)
 void
 cr_package_set_pkg_id(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->pkgId, value);
+    cr_package_assign_string(pkg, &pkg->pkgId, value, NULL);
 }
 
 const char *
@@ -288,7 +299,7 @@ cr_package_get_name(cr_Package *pkg)
 void
 cr_package_set_name(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->name, value);
+    cr_package_assign_string(pkg, &pkg->name, value, NULL);
 }
 
 const char *
@@ -300,7 +311,7 @@ cr_package_get_arch(cr_Package *pkg)
 void
 cr_package_set_arch(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->arch, value);
+    cr_package_assign_string(pkg, &pkg->arch, value, NULL);
 }
 
 const char *
@@ -312,7 +323,7 @@ cr_package_get_version(cr_Package *pkg)
 void
 cr_package_set_version(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->version, value);
+    cr_package_assign_string(pkg, &pkg->version, value, NULL);
 }
 
 const char *
@@ -324,7 +335,7 @@ cr_package_get_epoch(cr_Package *pkg)
 void
 cr_package_set_epoch(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->epoch, value);
+    cr_package_assign_string(pkg, &pkg->epoch, value, NULL);
 }
 
 const char *
@@ -336,7 +347,7 @@ cr_package_get_release(cr_Package *pkg)
 void
 cr_package_set_release(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->release, value);
+    cr_package_assign_string(pkg, &pkg->release, value, NULL);
 }
 
 const char *
@@ -348,7 +359,7 @@ cr_package_get_summary(cr_Package *pkg)
 void
 cr_package_set_summary(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->summary, value);
+    cr_package_assign_string(pkg, &pkg->summary, value, "summary");
 }
 
 const char *
@@ -360,7 +371,7 @@ cr_package_get_description(cr_Package *pkg)
 void
 cr_package_set_description(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->description, value);
+    cr_package_assign_string(pkg, &pkg->description, value, "description");
 }
 
 const char *
@@ -372,7 +383,7 @@ cr_package_get_url(cr_Package *pkg)
 void
 cr_package_set_url(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->url, value);
+    cr_package_assign_string(pkg, &pkg->url, value, NULL);
 }
 
 const char *
@@ -384,7 +395,7 @@ cr_package_get_rpm_license(cr_Package *pkg)
 void
 cr_package_set_rpm_license(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->rpm_license, value);
+    cr_package_assign_string(pkg, &pkg->rpm_license, value, NULL);
 }
 
 const char *
@@ -396,7 +407,7 @@ cr_package_get_rpm_vendor(cr_Package *pkg)
 void
 cr_package_set_rpm_vendor(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->rpm_vendor, value);
+    cr_package_assign_string(pkg, &pkg->rpm_vendor, value, NULL);
 }
 
 const char *
@@ -408,7 +419,7 @@ cr_package_get_rpm_group(cr_Package *pkg)
 void
 cr_package_set_rpm_group(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->rpm_group, value);
+    cr_package_assign_string(pkg, &pkg->rpm_group, value, NULL);
 }
 
 const char *
@@ -420,7 +431,7 @@ cr_package_get_rpm_buildhost(cr_Package *pkg)
 void
 cr_package_set_rpm_buildhost(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->rpm_buildhost, value);
+    cr_package_assign_string(pkg, &pkg->rpm_buildhost, value, NULL);
 }
 
 const char *
@@ -432,7 +443,7 @@ cr_package_get_rpm_sourcerpm(cr_Package *pkg)
 void
 cr_package_set_rpm_sourcerpm(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->rpm_sourcerpm, value);
+    cr_package_assign_string(pkg, &pkg->rpm_sourcerpm, value, NULL);
 }
 
 const char *
@@ -444,7 +455,7 @@ cr_package_get_rpm_packager(cr_Package *pkg)
 void
 cr_package_set_rpm_packager(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->rpm_packager, value);
+    cr_package_assign_string(pkg, &pkg->rpm_packager, value, NULL);
 }
 
 const char *
@@ -456,7 +467,7 @@ cr_package_get_location_href(cr_Package *pkg)
 void
 cr_package_set_location_href(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->location_href, value);
+    cr_package_assign_string(pkg, &pkg->location_href, value, NULL);
 }
 
 const char *
@@ -468,7 +479,7 @@ cr_package_get_location_base(cr_Package *pkg)
 void
 cr_package_set_location_base(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->location_base, value);
+    cr_package_assign_string(pkg, &pkg->location_base, value, NULL);
 }
 
 const char *
@@ -480,7 +491,7 @@ cr_package_get_checksum_type(cr_Package *pkg)
 void
 cr_package_set_checksum_type(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->checksum_type, value);
+    cr_package_assign_string(pkg, &pkg->checksum_type, value, NULL);
 }
 
 const char *
@@ -492,7 +503,7 @@ cr_package_get_files_checksum_type(cr_Package *pkg)
 void
 cr_package_set_files_checksum_type(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->files_checksum_type, value);
+    cr_package_assign_string(pkg, &pkg->files_checksum_type, value, NULL);
 }
 
 const char *
@@ -504,7 +515,7 @@ cr_package_get_hdrid(cr_Package *pkg)
 void
 cr_package_set_hdrid(cr_Package *pkg, const char *value)
 {
-    cr_package_assign_string(pkg, &pkg->hdrid, value);
+    cr_package_assign_string(pkg, &pkg->hdrid, value, NULL);
 }
 
 gint64

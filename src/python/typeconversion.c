@@ -274,13 +274,23 @@ PyObject_ToChangelogEntry(PyObject *tuple, GStringChunk *chunk)
     cr_ChangelogEntry *log = cr_changelog_entry_new();
 
     pyobj = PyTuple_GetItem(tuple, 0);
-    log->author = PyObject_ToChunkedString(pyobj, chunk);
+    PyObject *pybytes = PyObject_ToPyBytesOrNull(pyobj);
+    if (pybytes) {
+        log->author = cr_safe_string_chunk_insert_text(chunk,
+                            PyBytes_AsString(pybytes), "changelog author");
+        Py_DECREF(pybytes);
+    }
 
     pyobj = PyTuple_GetItem(tuple, 1);
     log->date = PyObject_ToLongLongOrZero(pyobj);
 
     pyobj = PyTuple_GetItem(tuple, 2);
-    log->changelog = PyObject_ToChunkedString(pyobj, chunk);
+    pybytes = PyObject_ToPyBytesOrNull(pyobj);
+    if (pybytes) {
+        log->changelog = cr_safe_string_chunk_insert_text(chunk,
+                            PyBytes_AsString(pybytes), "changelog entry");
+        Py_DECREF(pybytes);
+    }
 
     return log;
 }

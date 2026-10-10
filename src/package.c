@@ -191,19 +191,19 @@ cr_package_copy_into(cr_Package *orig, cr_Package *pkg)
     pkg->version          = cr_safe_string_chunk_insert(pkg->chunk, orig->version);
     pkg->epoch            = cr_safe_string_chunk_insert(pkg->chunk, orig->epoch);
     pkg->release          = cr_safe_string_chunk_insert(pkg->chunk, orig->release);
-    pkg->summary          = cr_safe_string_chunk_insert(pkg->chunk, orig->summary);
-    pkg->description      = cr_safe_string_chunk_insert(pkg->chunk, orig->description);
-    pkg->url              = cr_safe_string_chunk_insert(pkg->chunk, orig->url);
+    pkg->summary          = cr_safe_string_chunk_insert_text(pkg->chunk, orig->summary, "summary");
+    pkg->description      = cr_safe_string_chunk_insert_text(pkg->chunk, orig->description, "description");
+    pkg->url              = cr_safe_string_chunk_insert_text(pkg->chunk, orig->url, "URL");
     pkg->time_file        = orig->time_file;
     pkg->time_build       = orig->time_build;
-    pkg->rpm_license      = cr_safe_string_chunk_insert(pkg->chunk, orig->rpm_license);
-    pkg->rpm_vendor       = cr_safe_string_chunk_insert(pkg->chunk, orig->rpm_vendor);
-    pkg->rpm_group        = cr_safe_string_chunk_insert(pkg->chunk, orig->rpm_group);
-    pkg->rpm_buildhost    = cr_safe_string_chunk_insert(pkg->chunk, orig->rpm_buildhost);
+    pkg->rpm_license      = cr_safe_string_chunk_insert_text(pkg->chunk, orig->rpm_license, "RPM license");
+    pkg->rpm_vendor       = cr_safe_string_chunk_insert_text(pkg->chunk, orig->rpm_vendor, "RPM vendor");
+    pkg->rpm_group        = cr_safe_string_chunk_insert_text(pkg->chunk, orig->rpm_group, "RPM group");
+    pkg->rpm_buildhost    = cr_safe_string_chunk_insert_text(pkg->chunk, orig->rpm_buildhost, "RPM build host");
     pkg->rpm_sourcerpm    = cr_safe_string_chunk_insert(pkg->chunk, orig->rpm_sourcerpm);
     pkg->rpm_header_start = orig->rpm_header_start;
     pkg->rpm_header_end   = orig->rpm_header_end;
-    pkg->rpm_packager     = cr_safe_string_chunk_insert(pkg->chunk, orig->rpm_packager);
+    pkg->rpm_packager     = cr_safe_string_chunk_insert_text(pkg->chunk, orig->rpm_packager, "RPM packager");
     pkg->size_package     = orig->size_package;
     pkg->size_installed   = orig->size_installed;
     pkg->size_archive     = orig->size_archive;
@@ -234,9 +234,13 @@ cr_package_copy_into(cr_Package *orig, cr_Package *pkg)
     for (GSList *elem = orig->changelogs; elem; elem = g_slist_next(elem)) {
         cr_ChangelogEntry *orig_log = elem->data;
         cr_ChangelogEntry *log = cr_changelog_entry_new();
-        log->author    = cr_safe_string_chunk_insert(pkg->chunk, orig_log->author);
+        log->author    = cr_safe_string_chunk_insert_text(pkg->chunk,
+                                                         orig_log->author,
+                                                         "changelog author");
         log->date      = orig_log->date;
-        log->changelog = cr_safe_string_chunk_insert(pkg->chunk, orig_log->changelog);
+        log->changelog = cr_safe_string_chunk_insert_text(pkg->chunk,
+                                                         orig_log->changelog,
+                                                         "changelog entry");
         pkg->changelogs = g_slist_prepend(pkg->changelogs, log);
     }
 }

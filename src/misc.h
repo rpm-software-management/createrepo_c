@@ -365,6 +365,34 @@ cr_safe_string_chunk_insert(GStringChunk *chunk, const char *str)
     return g_string_chunk_insert(chunk, str);
 }
 
+/** Replace forbidden XML control characters with U+FFFD and insert the string.
+ * A warning is printed when a replacement is made.
+ * @param chunk     a GStringChunk
+ * @param str       string to add or NULL
+ * @param field     name of the field containing the string
+ * @return          pointer to the copy of str or NULL if str is NULL
+ */
+gchar *cr_safe_string_chunk_insert_text(GStringChunk *chunk,
+                                        const char *str,
+                                        const char *field);
+
+static inline gchar *
+cr_safe_string_chunk_insert_text_null(GStringChunk *chunk,
+                                      const char *str,
+                                      const char *field)
+{
+    if (!str || *str == '\0') return NULL;
+    return cr_safe_string_chunk_insert_text(chunk, str, field);
+}
+
+/** Replace forbidden XML control characters with U+FFFD.
+ * A warning is printed when a replacement is made.
+ * @param str       string to clean or NULL
+ * @param field     name of the field containing the string
+ * @return          newly allocated string or NULL if str is NULL
+ */
+gchar *cr_replace_control_chars(const char *str, const char *field);
+
 /** Safe insert into GStringChunk with free the str afterwards.
  * @param chunk     a GStringChunk
  * @param str       string to add or NULL

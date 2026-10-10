@@ -40,6 +40,28 @@
 #define INVALID_URL     "htp://foo.bar"
 
 static void
+test_cr_replace_control_chars(void)
+{
+    g_test_expect_message("C_CREATEREPOLIB", G_LOG_LEVEL_WARNING,
+                          "*summary*replacing with U+FFFD*");
+    gchar *cleaned = cr_replace_control_chars("before\x01" "middle\x1b" "after", "summary");
+    g_test_assert_expected_messages();
+
+    g_assert_cmpstr(cleaned, ==, "before\xEF\xBF\xBD" "middle\xEF\xBF\xBD" "after");
+    g_free(cleaned);
+}
+
+static void
+test_cr_replace_control_chars_preserves_whitespace(void)
+{
+    const char *text = "line one\nline\ttwo\r";
+    gchar *cleaned = cr_replace_control_chars(text, "description");
+
+    g_assert_cmpstr(cleaned, ==, text);
+    g_free(cleaned);
+}
+
+static void
 test_cr_str_to_evr(void)
 {
     cr_EVR *evr;
@@ -1312,6 +1334,10 @@ main(int argc, char *argv[])
 {
     g_test_init(&argc, &argv, NULL);
 
+    g_test_add_func("/misc/test_cr_replace_control_chars",
+            test_cr_replace_control_chars);
+    g_test_add_func("/misc/test_cr_replace_control_chars_preserves_whitespace",
+            test_cr_replace_control_chars_preserves_whitespace);
     g_test_add_func("/misc/test_cr_str_to_evr",
             test_cr_str_to_evr);
     g_test_add_func("/misc/test_cr_str_to_evr_with_chunk",

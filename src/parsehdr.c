@@ -241,8 +241,11 @@ cr_package_from_header(Header hdr,
     pkg->epoch = g_string_chunk_insert_len(pkg->chunk, tmp_epoch, MAX_STR_INT_LEN);
 
     pkg->release = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_RELEASE));
-    pkg->summary = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_SUMMARY));
-    pkg->description = cr_safe_string_chunk_insert_null(pkg->chunk, headerGetString(hdr, RPMTAG_DESCRIPTION));
+    // Descriptive text is normalized here so invalid controls cannot break XML output.
+    pkg->summary = cr_safe_string_chunk_insert_text(pkg->chunk,
+                            headerGetString(hdr, RPMTAG_SUMMARY), "RPMTAG_SUMMARY");
+    pkg->description = cr_safe_string_chunk_insert_text_null(pkg->chunk,
+                            headerGetString(hdr, RPMTAG_DESCRIPTION), "RPMTAG_DESCRIPTION");
     pkg->url = cr_safe_string_chunk_insert(pkg->chunk, headerGetString(hdr, RPMTAG_URL));
     if (headerGet(hdr, RPMTAG_BUILDTIME, td, flags)) {
         pkg->time_build = rpmtdGetNumber(td);
@@ -480,6 +483,7 @@ cr_package_from_header(Header hdr,
 
                 // Create dynamic dependency object
                 cr_Dependency *dependency = cr_dependency_new();
+                // Preserve dependency tokens verbatim; changing them would change package semantics.
                 dependency->name = cr_safe_string_chunk_insert(pkg->chunk, filename);
                 dependency->flags = cr_safe_string_chunk_insert(pkg->chunk, flags);
                 dependency->epoch = evr->epoch;
@@ -630,11 +634,11 @@ cr_package_from_header(Header hdr,
             gint64 time = rpmtdGetNumber(changelogtimes);
 
             cr_ChangelogEntry *changelog = cr_changelog_entry_new();
-            changelog->author    = cr_safe_string_chunk_insert(pkg->chunk,
-                                            rpmtdGetString(changelognames));
+            changelog->author    = cr_safe_string_chunk_insert_text(pkg->chunk,
+                                            rpmtdGetString(changelognames), "RPMTAG_CHANGELOGNAME");
             changelog->date      = time;
-            changelog->changelog = cr_safe_string_chunk_insert(pkg->chunk,
-                                            rpmtdGetString(changelogtexts));
+            changelog->changelog = cr_safe_string_chunk_insert_text(pkg->chunk,
+                                            rpmtdGetString(changelogtexts), "RPMTAG_CHANGELOGTEXT");
 
             // Remove space from end of author name
             if (changelog->author) {

@@ -69,6 +69,31 @@ class TestCasePackage(unittest.TestCase):
                 with self.assertRaises(UnicodeDecodeError):
                     getattr(pkg, field)
 
+    def test_package_user_text_setters_replace_control_chars(self):
+        """User-facing text replaces XML-forbidden controls with U+FFFD."""
+        pkg = cr.Package()
+        pkg.summary = "short\x01 summary"
+        pkg.description = "line one\nline\x1b" "two"
+        pkg.changelogs = [("author\x02" "name", 123456, "fixed\x03" "bug")]
+
+        self.assertEqual(pkg.summary, "short\ufffd summary")
+        self.assertEqual(pkg.description, "line one\nline\ufffdtwo")
+        self.assertEqual(
+            pkg.changelogs,
+            [("author\ufffdname", 123456, "fixed\ufffdbug")],
+        )
+
+        # Structured fields keep their original value so validation can reject it.
+        pkg.requires = [("bad\x1bdependency", None, None, None, None, False)]
+        self.assertIn("\x1b", pkg.requires[0][0])
+
+        import copy
+
+        pkg_copy = copy.deepcopy(pkg)
+        self.assertEqual(pkg_copy.summary, pkg.summary)
+        self.assertEqual(pkg_copy.description, pkg.description)
+        self.assertEqual(pkg_copy.changelogs, pkg.changelogs)
+
     def test_package_changelog_replaces_non_utf8_bytes(self):
         """Parsed changelog fields replace invalid UTF-8 bytes instead of failing."""
         pkg = cr.package_from_rpm(PKG_BALICEK_ISO88591_PATH)

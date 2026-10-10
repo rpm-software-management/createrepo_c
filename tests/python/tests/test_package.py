@@ -77,12 +77,57 @@ class TestCasePackage(unittest.TestCase):
         self.assertEqual(pkg.summary, "summary\ufffd")
         self.assertEqual(pkg.description, "description\ufffd")
 
-        parsed_pkg = cr.package_from_rpm(PKG_BALICEK_ISO88591_PATH)
-        self.assertEqual(len(parsed_pkg.changelogs), 1)
-        author, _timestamp, changelog_description = parsed_pkg.changelogs[0]
+    def test_package_user_text_setters_replace_control_chars(self):
+        """User-facing text replaces XML-forbidden controls with U+FFFD."""
+        pkg = cr.Package()
+        pkg.summary = "short\x01 summary"
+        pkg.description = "line one\nline\x1b" "two"
+        pkg.url = "https://example.test/\x01"
+        pkg.rpm_license = "license\x02"
+        pkg.rpm_vendor = "vendor\x03"
+        pkg.rpm_group = "group\x04"
+        pkg.rpm_buildhost = "host\x05"
+        pkg.rpm_packager = "packager\x06"
+        pkg.changelogs = [("author\x02" "name", 123456, "fixed\x03" "bug")]
+
+        self.assertEqual(pkg.summary, "short\ufffd summary")
+        self.assertEqual(pkg.description, "line one\nline\ufffdtwo")
+        self.assertEqual(pkg.url, "https://example.test/\ufffd")
+        self.assertEqual(pkg.rpm_license, "license\ufffd")
+        self.assertEqual(pkg.rpm_vendor, "vendor\ufffd")
+        self.assertEqual(pkg.rpm_group, "group\ufffd")
+        self.assertEqual(pkg.rpm_buildhost, "host\ufffd")
+        self.assertEqual(pkg.rpm_packager, "packager\ufffd")
+        self.assertEqual(
+            pkg.changelogs,
+            [("author\ufffdname", 123456, "fixed\ufffdbug")],
+        )
+
+        # Structured fields keep their original value so validation can reject it.
+        pkg.requires = [("bad\x1bdependency", None, None, None, None, False)]
+        self.assertIn("\x1b", pkg.requires[0][0])
+
+        import copy
+
+        pkg_copy = copy.deepcopy(pkg)
+        self.assertEqual(pkg_copy.summary, pkg.summary)
+        self.assertEqual(pkg_copy.description, pkg.description)
+        self.assertEqual(pkg_copy.url, pkg.url)
+        self.assertEqual(pkg_copy.rpm_license, pkg.rpm_license)
+        self.assertEqual(pkg_copy.rpm_vendor, pkg.rpm_vendor)
+        self.assertEqual(pkg_copy.rpm_group, pkg.rpm_group)
+        self.assertEqual(pkg_copy.rpm_buildhost, pkg.rpm_buildhost)
+        self.assertEqual(pkg_copy.rpm_packager, pkg.rpm_packager)
+        self.assertEqual(pkg_copy.changelogs, pkg.changelogs)
+
+    def test_package_changelog_replaces_non_utf8_bytes(self):
+        """Parsed changelog fields replace invalid UTF-8 bytes instead of failing."""
+        pkg = cr.package_from_rpm(PKG_BALICEK_ISO88591_PATH)
+        self.assertEqual(len(pkg.changelogs), 1)
+        author, _timestamp, description = pkg.changelogs[0]
         self.assertIn("\ufffd", author)
-        self.assertIn("\ufffd", changelog_description)
-        self.assertIn("\ufffd", parsed_pkg.description)
+        self.assertIn("\ufffd", description)
+        self.assertIn("\ufffd", pkg.description)
 
     def test_package_archer(self):
         pkg = cr.package_from_rpm(PKG_ARCHER_PATH)

@@ -55,7 +55,7 @@ jobs:
         python-version: '3.x'
 
     - name: Build wheels for CPython
-      uses: pypa/cibuildwheel@v3.4.1
+      uses: pypa/cibuildwheel@v4.3.1
 
     - uses: actions/upload-artifact@v6
       with:

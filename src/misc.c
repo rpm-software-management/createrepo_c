@@ -1675,8 +1675,8 @@ cr_is_forbidden_xml_control_char(unsigned char c)
     return c < 32 && c != 9 && c != 10 && c != 13;
 }
 
-static gboolean
-cr_string_has_forbidden_control_chars(const char *str)
+gboolean
+cr_has_forbidden_control_chars(const char *str)
 {
     if (!str)
         return FALSE;
@@ -1696,7 +1696,7 @@ cr_replace_control_chars(const char *str, const char *field)
 {
     if (!str)
         return NULL;
-    if (!cr_string_has_forbidden_control_chars(str))
+    if (!cr_has_forbidden_control_chars(str))
         return g_strdup(str);
 
     g_warning("Forbidden control character found in %s; replacing with U+FFFD",
@@ -1723,7 +1723,7 @@ cr_safe_string_chunk_insert_text(GStringChunk *chunk,
 {
     if (!str)
         return NULL;
-    if (!cr_string_has_forbidden_control_chars(str))
+    if (!cr_has_forbidden_control_chars(str))
         return g_string_chunk_insert(chunk, str);
 
     gchar *cleaned = cr_replace_control_chars(str, field);

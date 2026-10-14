@@ -766,6 +766,17 @@ void
 cr_package_set_changelogs(cr_Package *pkg, GSList *value)
 {
     if (pkg) {
+        for (GSList *element = value; element; element = g_slist_next(element)) {
+            cr_ChangelogEntry *entry = element->data;
+            if (cr_has_forbidden_control_chars(entry->author)) {
+                entry->author = cr_safe_string_chunk_insert_text(
+                    pkg->chunk, entry->author, "changelog author");
+            }
+            if (cr_has_forbidden_control_chars(entry->changelog)) {
+                entry->changelog = cr_safe_string_chunk_insert_text(
+                    pkg->chunk, entry->changelog, "changelog entry");
+            }
+        }
         pkg->changelogs = value;
     }
 }

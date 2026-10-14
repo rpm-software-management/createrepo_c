@@ -31,6 +31,7 @@
 #endif
 #include <stdlib.h>
 #include "parsehdr.h"
+#include "error.h"
 #include "package_internal.h"
 #include "xml_dump.h"
 #include "misc.h"
@@ -769,6 +770,15 @@ cr_package_from_header(Header hdr,
             rpmtdFreeData(bintd);
             rpmtdFree(bintd);
         }
+    }
+
+    if (cr_Package_contains_forbidden_control_chars(pkg)) {
+        if (err) {
+            g_set_error(err, CREATEREPO_C_ERROR, CRE_XMLDATA,
+                        "RPM header contains forbidden control characters in package identifiers or paths.");
+        }
+        cr_package_free(pkg);
+        return NULL;
     }
 
     return pkg;

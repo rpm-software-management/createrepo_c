@@ -33,7 +33,7 @@ static void
 test_parsepkg_header_replaces_control_chars_in_user_text(void)
 {
     Header hdr = headerNew();
-    const char *require_names[] = {"bad\x1b" "dependency"};
+    const char *require_names[] = {"valid-dependency"};
     const char *require_versions[] = {"0:1-1"};
     uint32_t require_flags[] = {0};
     uint32_t changelog_times[] = {123};
@@ -88,18 +88,8 @@ test_parsepkg_header_replaces_control_chars_in_user_text(void)
     g_assert_cmpstr(changelog->author, ==, "author\xEF\xBF\xBD" "name");
     g_assert_cmpstr(changelog->changelog, ==, "fixed\xEF\xBF\xBD" "bug");
 
-    cr_Dependency *require = pkg->requires->data;
-    g_assert_cmpstr(require->name, ==, "bad\x1b" "dependency");
-    g_assert_true(cr_hascontrollchars((const unsigned char *) require->name));
-
     cr_xml_dump_init();
     struct cr_XmlStruct xml = cr_xml_dump(pkg, &err);
-    g_assert_null(xml.primary);
-    g_assert_error(err, CREATEREPO_C_ERROR, CRE_XMLDATA);
-    g_clear_error(&err);
-
-    require->name = "valid-dependency";
-    xml = cr_xml_dump(pkg, &err);
     g_assert_no_error(err);
     g_assert_nonnull(xml.primary);
     g_assert_nonnull(xml.other);
@@ -112,6 +102,30 @@ test_parsepkg_header_replaces_control_chars_in_user_text(void)
     cr_xml_dump_cleanup();
 
     cr_package_free(pkg);
+    headerFree(hdr);
+}
+
+static void
+test_parsepkg_header_rejects_control_chars_in_dependencies(void)
+{
+    Header hdr = headerNew();
+    const char *require_names[] = {"bad\x1b" "dependency"};
+    const char *require_versions[] = {"0:1-1"};
+    uint32_t require_flags[] = {0};
+
+    g_assert_true(headerPutString(hdr, RPMTAG_NAME, "test-package"));
+    g_assert_true(headerPutString(hdr, RPMTAG_VERSION, "1"));
+    g_assert_true(headerPutString(hdr, RPMTAG_RELEASE, "1"));
+    g_assert_true(headerPutString(hdr, RPMTAG_ARCH, "noarch"));
+    g_assert_true(headerPutStringArray(hdr, RPMTAG_REQUIRENAME, require_names, 1));
+    g_assert_true(headerPutUint32(hdr, RPMTAG_REQUIREFLAGS, require_flags, 1));
+    g_assert_true(headerPutStringArray(hdr, RPMTAG_REQUIREVERSION, require_versions, 1));
+
+    GError *err = NULL;
+    cr_Package *pkg = cr_package_from_header(hdr, -1, CR_HDRR_NONE, &err);
+    g_assert_null(pkg);
+    g_assert_error(err, CREATEREPO_C_ERROR, CRE_XMLDATA);
+    g_clear_error(&err);
     headerFree(hdr);
 }
 
@@ -208,6 +222,8 @@ main(int argc, char *argv[])
 
     g_test_add_func("/parsepkg/header_replaces_control_chars_in_user_text",
                     test_parsepkg_header_replaces_control_chars_in_user_text);
+    g_test_add_func("/parsepkg/header_rejects_control_chars_in_dependencies",
+                    test_parsepkg_header_rejects_control_chars_in_dependencies);
     g_test_add_func("/parsepkg/signatures_not_loaded_without_flag",
                     test_parsepkg_signatures_not_loaded_without_flag);
     g_test_add_func("/parsepkg/signatures_empty_for_unsigned_package",

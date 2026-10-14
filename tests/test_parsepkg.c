@@ -129,6 +129,35 @@ test_parsepkg_header_rejects_control_chars_in_dependencies(void)
     headerFree(hdr);
 }
 
+typedef struct {
+    rpmTagVal tag;
+    const char *name;
+} HeaderStringField;
+
+static void
+test_parsepkg_header_rejects_control_chars_in_structured_fields(gconstpointer data)
+{
+    const HeaderStringField *field = data;
+    Header hdr = headerNew();
+
+    if (field->tag != RPMTAG_NAME)
+        g_assert_true(headerPutString(hdr, RPMTAG_NAME, "test-package"));
+    if (field->tag != RPMTAG_VERSION)
+        g_assert_true(headerPutString(hdr, RPMTAG_VERSION, "1"));
+    if (field->tag != RPMTAG_RELEASE)
+        g_assert_true(headerPutString(hdr, RPMTAG_RELEASE, "1"));
+    if (field->tag != RPMTAG_ARCH)
+        g_assert_true(headerPutString(hdr, RPMTAG_ARCH, "noarch"));
+    g_assert_true(headerPutString(hdr, field->tag, "bad\x1b" "value"));
+
+    GError *err = NULL;
+    cr_Package *pkg = cr_package_from_header(hdr, -1, CR_HDRR_NONE, &err);
+    g_assert_null(pkg);
+    g_assert_error(err, CREATEREPO_C_ERROR, CRE_XMLDATA);
+    g_clear_error(&err);
+    headerFree(hdr);
+}
+
 
 int
 main(int argc, char *argv[])
@@ -141,6 +170,20 @@ main(int argc, char *argv[])
                     test_parsepkg_header_replaces_control_chars_in_user_text);
     g_test_add_func("/parsepkg/header_rejects_control_chars_in_dependencies",
                     test_parsepkg_header_rejects_control_chars_in_dependencies);
+    static const HeaderStringField fields[] = {
+        {RPMTAG_NAME, "name"},
+        {RPMTAG_VERSION, "version"},
+        {RPMTAG_RELEASE, "release"},
+        {RPMTAG_ARCH, "architecture"},
+        {RPMTAG_SOURCERPM, "source-rpm"},
+    };
+    for (size_t i = 0; i < G_N_ELEMENTS(fields); i++) {
+        gchar *path = g_strdup_printf("/parsepkg/header_rejects_control_chars_in_%s",
+                                      fields[i].name);
+        g_test_add_data_func(path, &fields[i],
+                             test_parsepkg_header_rejects_control_chars_in_structured_fields);
+        g_free(path);
+    }
     int ret = g_test_run();
     cr_package_parser_cleanup();
     return ret;

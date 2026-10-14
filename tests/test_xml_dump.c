@@ -79,6 +79,33 @@ test_cr_Package_contains_forbidden_control_chars_05(void)
 }
 
 static void
+test_cr_Package_contains_forbidden_control_chars_in_other_structured_fields(void)
+{
+    cr_Package *p = get_package();
+    p->pkgId = "bad\x01" "checksum";
+    p->location_href = "bad\x01" "href";
+    p->location_base = "bad\x01" "base";
+    p->checksum_type = "bad\x01" "checksum-type";
+    p->files_checksum_type = "bad\x01" "file-checksum-type";
+
+    cr_Dependency *dep = p->requires->data;
+    dep->flags = "bad\x01" "flags";
+
+    cr_PackageFile *file = p->files->data;
+    file->type = "bad\x01" "type";
+    file->digest = "bad\x01" "digest";
+
+    g_assert(cr_Package_contains_forbidden_control_chars(p));
+
+    GError *err = NULL;
+    struct cr_XmlStruct xml = cr_xml_dump(p, &err);
+    g_assert_null(xml.primary);
+    g_assert_error(err, CREATEREPO_C_ERROR, CRE_XMLDATA);
+    g_clear_error(&err);
+    cr_package_free(p);
+}
+
+static void
 test_cr_GSList_of_cr_Dependency_contains_forbidden_control_chars_01(void)
 {
     cr_Package *p = get_package();
@@ -120,6 +147,8 @@ main(int argc, char *argv[])
                     test_cr_Package_contains_forbidden_control_chars_04);
     g_test_add_func("/xml_dump/test_cr_Package_contains_forbidden_control_chars_05",
                     test_cr_Package_contains_forbidden_control_chars_05);
+    g_test_add_func("/xml_dump/test_cr_Package_contains_forbidden_control_chars_in_other_structured_fields",
+                    test_cr_Package_contains_forbidden_control_chars_in_other_structured_fields);
     g_test_add_func("/xml_dump/test_cr_GSList_of_cr_Dependency_contains_forbidden_control_chars_01",
                     test_cr_GSList_of_cr_Dependency_contains_forbidden_control_chars_01);
     g_test_add_func("/xml_dump/test_cr_GSList_of_cr_Dependency_contains_forbidden_control_chars_02",

@@ -45,6 +45,8 @@
 
 #define ERR_DOMAIN      CREATEREPO_C_ERROR
 #define BUFFER_SIZE     4096
+// UTF-8 encoding of U+FFFD, the Unicode replacement character.
+#define CR_UTF8_REPLACEMENT_CHARACTER "\xEF\xBF\xBD"
 
 #define xstr(s) str(s)
 #define str(s) #s
@@ -1664,6 +1666,70 @@ cr_version_string_with_features(void)
             "ThreadedXzEncoder "
 #endif
             ")");
+}
+
+static gboolean
+cr_is_forbidden_xml_control_char(unsigned char c)
+{
+    // XML permits TAB, LF, and CR among ASCII control characters.
+    return c < 32 && c != 9 && c != 10 && c != 13;
+}
+
+gboolean
+cr_has_forbidden_control_chars(const char *str)
+{
+    if (!str)
+        return FALSE;
+
+    const unsigned char *src = (const unsigned char *) str;
+    while (*src) {
+        if (cr_is_forbidden_xml_control_char(*src))
+            return TRUE;
+        src++;
+    }
+
+    return FALSE;
+}
+
+gchar *
+cr_replace_control_chars(const char *str, const char *field)
+{
+    if (!str)
+        return NULL;
+    if (!cr_has_forbidden_control_chars(str))
+        return g_strdup(str);
+
+    g_warning("Forbidden control character found in %s; replacing with U+FFFD",
+              field ? field : "string");
+
+    GString *cleaned = g_string_sized_new(strlen(str));
+    const unsigned char *src = (const unsigned char *) str;
+    while (*src) {
+        if (cr_is_forbidden_xml_control_char(*src)) {
+            g_string_append(cleaned, CR_UTF8_REPLACEMENT_CHARACTER);
+            src++;
+        } else {
+            g_string_append_c(cleaned, (char) *src++);
+        }
+    }
+
+    return g_string_free(cleaned, FALSE);
+}
+
+gchar *
+cr_safe_string_chunk_insert_text(GStringChunk *chunk,
+                                 const char *str,
+                                 const char *field)
+{
+    if (!str)
+        return NULL;
+    if (!cr_has_forbidden_control_chars(str))
+        return g_string_chunk_insert(chunk, str);
+
+    gchar *cleaned = cr_replace_control_chars(str, field);
+    gchar *result = g_string_chunk_insert(chunk, cleaned);
+    g_free(cleaned);
+    return result;
 }
 
 gchar *

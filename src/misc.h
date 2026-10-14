@@ -393,6 +393,12 @@ cr_safe_string_chunk_insert_text_null(GStringChunk *chunk,
  */
 gchar *cr_replace_control_chars(const char *str, const char *field);
 
+/** Return whether a string contains a control character forbidden by XML 1.0.
+ * @param str string to inspect or NULL
+ * @return TRUE when a forbidden control character is present
+ */
+gboolean cr_has_forbidden_control_chars(const char *str);
+
 /** Safe insert into GStringChunk with free the str afterwards.
  * @param chunk     a GStringChunk
  * @param str       string to add or NULL

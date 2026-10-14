@@ -33,9 +33,6 @@ static void
 test_parsepkg_header_replaces_control_chars_in_user_text(void)
 {
     Header hdr = headerNew();
-    const char *require_names[] = {"valid-dependency"};
-    const char *require_versions[] = {"0:1-1"};
-    uint32_t require_flags[] = {0};
     uint32_t changelog_times[] = {123};
     const char *changelog_names[] = {"author\x02" "name"};
     const char *changelog_texts[] = {"fixed\x03" "bug"};
@@ -52,9 +49,6 @@ test_parsepkg_header_replaces_control_chars_in_user_text(void)
     g_assert_true(headerPutString(hdr, RPMTAG_GROUP, "group\x04"));
     g_assert_true(headerPutString(hdr, RPMTAG_BUILDHOST, "host\x05"));
     g_assert_true(headerPutString(hdr, RPMTAG_PACKAGER, "packager\x06"));
-    g_assert_true(headerPutStringArray(hdr, RPMTAG_REQUIRENAME, require_names, 1));
-    g_assert_true(headerPutUint32(hdr, RPMTAG_REQUIREFLAGS, require_flags, 1));
-    g_assert_true(headerPutStringArray(hdr, RPMTAG_REQUIREVERSION, require_versions, 1));
     g_assert_true(headerPutUint32(hdr, RPMTAG_CHANGELOGTIME, changelog_times, 1));
     g_assert_true(headerPutStringArray(hdr, RPMTAG_CHANGELOGNAME, changelog_names, 1));
     g_assert_true(headerPutStringArray(hdr, RPMTAG_CHANGELOGTEXT, changelog_texts, 1));
@@ -120,6 +114,35 @@ test_parsepkg_header_rejects_control_chars_in_dependencies(void)
     g_assert_true(headerPutStringArray(hdr, RPMTAG_REQUIRENAME, require_names, 1));
     g_assert_true(headerPutUint32(hdr, RPMTAG_REQUIREFLAGS, require_flags, 1));
     g_assert_true(headerPutStringArray(hdr, RPMTAG_REQUIREVERSION, require_versions, 1));
+
+    GError *err = NULL;
+    cr_Package *pkg = cr_package_from_header(hdr, -1, CR_HDRR_NONE, &err);
+    g_assert_null(pkg);
+    g_assert_error(err, CREATEREPO_C_ERROR, CRE_XMLDATA);
+    g_clear_error(&err);
+    headerFree(hdr);
+}
+
+typedef struct {
+    rpmTagVal tag;
+    const char *name;
+} HeaderStringField;
+
+static void
+test_parsepkg_header_rejects_control_chars_in_structured_fields(gconstpointer data)
+{
+    const HeaderStringField *field = data;
+    Header hdr = headerNew();
+
+    if (field->tag != RPMTAG_NAME)
+        g_assert_true(headerPutString(hdr, RPMTAG_NAME, "test-package"));
+    if (field->tag != RPMTAG_VERSION)
+        g_assert_true(headerPutString(hdr, RPMTAG_VERSION, "1"));
+    if (field->tag != RPMTAG_RELEASE)
+        g_assert_true(headerPutString(hdr, RPMTAG_RELEASE, "1"));
+    if (field->tag != RPMTAG_ARCH)
+        g_assert_true(headerPutString(hdr, RPMTAG_ARCH, "noarch"));
+    g_assert_true(headerPutString(hdr, field->tag, "bad\x1b" "value"));
 
     GError *err = NULL;
     cr_Package *pkg = cr_package_from_header(hdr, -1, CR_HDRR_NONE, &err);
@@ -224,6 +247,20 @@ main(int argc, char *argv[])
                     test_parsepkg_header_replaces_control_chars_in_user_text);
     g_test_add_func("/parsepkg/header_rejects_control_chars_in_dependencies",
                     test_parsepkg_header_rejects_control_chars_in_dependencies);
+    static const HeaderStringField fields[] = {
+        {RPMTAG_NAME, "name"},
+        {RPMTAG_VERSION, "version"},
+        {RPMTAG_RELEASE, "release"},
+        {RPMTAG_ARCH, "architecture"},
+        {RPMTAG_SOURCERPM, "source-rpm"},
+    };
+    for (size_t i = 0; i < G_N_ELEMENTS(fields); i++) {
+        gchar *path = g_strdup_printf("/parsepkg/header_rejects_control_chars_in_%s",
+                                      fields[i].name);
+        g_test_add_data_func(path, &fields[i],
+                             test_parsepkg_header_rejects_control_chars_in_structured_fields);
+        g_free(path);
+    }
     g_test_add_func("/parsepkg/signatures_not_loaded_without_flag",
                     test_parsepkg_signatures_not_loaded_without_flag);
     g_test_add_func("/parsepkg/signatures_empty_for_unsigned_package",

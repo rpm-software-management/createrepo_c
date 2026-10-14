@@ -242,6 +242,10 @@ cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(GSList *dep)
             g_printerr("name %s have forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", d->name);
             ret = TRUE;
         }
+        if (d->flags   && cr_hascontrollchars((unsigned char *) d->flags)) {
+            g_printerr("flags %s have forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", d->flags);
+            ret = TRUE;
+        }
         if (d->epoch   && cr_hascontrollchars((unsigned char *) d->epoch)) {
             g_printerr("epoch %s have forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", d->epoch);
             ret = TRUE;
@@ -263,6 +267,10 @@ cr_Package_contains_forbidden_control_chars(cr_Package *pkg)
 {
     gboolean ret = FALSE;
 
+    if (pkg->pkgId && cr_hascontrollchars((unsigned char *) pkg->pkgId)) {
+        g_printerr("Package checksum %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->pkgId);
+        ret = TRUE;
+    }
     if (pkg->name && cr_hascontrollchars((unsigned char *) pkg->name)) {
         g_printerr("Package name %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->name);
         ret = TRUE;
@@ -327,6 +335,14 @@ cr_Package_contains_forbidden_control_chars(cr_Package *pkg)
         g_printerr("Package location base %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->location_base);
         ret = TRUE;
     }
+    if (pkg->checksum_type && cr_hascontrollchars((unsigned char *) pkg->checksum_type)) {
+        g_printerr("Package checksum type %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->checksum_type);
+        ret = TRUE;
+    }
+    if (pkg->files_checksum_type && cr_hascontrollchars((unsigned char *) pkg->files_checksum_type)) {
+        g_printerr("Package file checksum type %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", pkg->files_checksum_type);
+        ret = TRUE;
+    }
 
 
     if (cr_GSList_of_cr_Dependency_contains_forbidden_control_chars(pkg->requires)) {
@@ -380,6 +396,14 @@ cr_Package_contains_forbidden_control_chars(cr_Package *pkg)
         }
         if (f->path && cr_hascontrollchars((unsigned char *) f->path)) {
             g_printerr("File path %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", f->path);
+            ret = TRUE;
+        }
+        if (f->type && cr_hascontrollchars((unsigned char *) f->type)) {
+            g_printerr("File type %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", f->type);
+            ret = TRUE;
+        }
+        if (f->digest && cr_hascontrollchars((unsigned char *) f->digest)) {
+            g_printerr("File digest %s contains forbidden control chars (ASCII values <32 except 9, 10 and 13).\n", f->digest);
             ret = TRUE;
         }
     }

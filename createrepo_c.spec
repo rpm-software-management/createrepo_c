@@ -129,7 +129,6 @@ These development files are for easy manipulation with a repodata.
 Summary:        Python 3 bindings for the createrepo_c library
 %{?python_provide:%python_provide python3-%{name}}
 BuildRequires:  python3-devel
-BuildRequires:  python3-sphinx
 Requires:       %{name}-libs = %{epoch_dep}%{version}-%{release}
 
 %description -n python3-%{name}
@@ -151,8 +150,10 @@ pushd build-py3
       -DENABLE_DRPM=%{?with_drpm:ON}%{!?with_drpm:OFF} \
       -DWITH_SANITIZERS=%{?with_sanitizers:ON}%{!?with_sanitizers:OFF}
   %cmake_build
+%if %{with doc_c}
   # Build documentation
-  %cmake_build -t doc
+  %cmake_build -t doc-c
+%endif
 popd
 
 %check
@@ -211,7 +212,9 @@ ln -sr %{buildroot}%{_bindir}/modifyrepo_c %{buildroot}%{_bindir}/modifyrepo
 %{_libdir}/lib%{name}.so.*
 
 %files devel
+%if %{with doc_c}
 %doc build-py3/doc/html
+%endif
 %{_libdir}/lib%{name}.so
 %{_libdir}/pkgconfig/%{name}.pc
 %{_includedir}/%{name}/

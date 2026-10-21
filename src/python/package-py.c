@@ -23,6 +23,7 @@
 
 #include "package-py.h"
 #include "exception-py.h"
+#include "../misc.h"
 #include "typeconversion.h"
 
 typedef struct {
@@ -422,7 +423,36 @@ set_str(_PackageObject *self, PyObject *value, void *member_offset)
     if (!pkg->chunk)
         pkg->chunk = g_string_chunk_new(0);
 
-    char *str = PyObject_ToChunkedString(value, pkg->chunk);
+    const char *field_name = NULL;
+    if ((size_t) member_offset == offsetof(cr_Package, summary))
+        field_name = "summary";
+    else if ((size_t) member_offset == offsetof(cr_Package, description))
+        field_name = "description";
+    else if ((size_t) member_offset == offsetof(cr_Package, url))
+        field_name = "URL";
+    else if ((size_t) member_offset == offsetof(cr_Package, rpm_license))
+        field_name = "RPM license";
+    else if ((size_t) member_offset == offsetof(cr_Package, rpm_vendor))
+        field_name = "RPM vendor";
+    else if ((size_t) member_offset == offsetof(cr_Package, rpm_group))
+        field_name = "RPM group";
+    else if ((size_t) member_offset == offsetof(cr_Package, rpm_buildhost))
+        field_name = "RPM build host";
+    else if ((size_t) member_offset == offsetof(cr_Package, rpm_packager))
+        field_name = "RPM packager";
+
+    char *str;
+    if (field_name) {
+        PyObject *pybytes = PyObject_ToPyBytesOrNull(value);
+        if (!pybytes)
+            return -1;
+        str = cr_safe_string_chunk_insert_text(pkg->chunk,
+                                               PyBytes_AsString(pybytes),
+                                               field_name);
+        Py_DECREF(pybytes);
+    } else {
+        str = PyObject_ToChunkedString(value, pkg->chunk);
+    }
     *((char **) ((size_t) pkg + (size_t) member_offset)) = str;
     return 0;
 }

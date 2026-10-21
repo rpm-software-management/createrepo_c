@@ -284,7 +284,7 @@ cr_end_handler(void *pdata, G_GNUC_UNUSED const xmlChar *element)
     }
 }
 
-cr_ParserData *
+__attribute__ ((visibility("hidden"))) cr_ParserData *
 other_parser_data_new(cr_XmlParserNewPkgCb newpkgcb,
                       void *newpkgcb_data,
                       cr_XmlParserPkgCb pkgcb,
@@ -325,7 +325,7 @@ other_parser_data_new(cr_XmlParserNewPkgCb newpkgcb,
     return pd;
 }
 
-int
+static int
 cr_xml_parse_other_internal(const char *target,
                             cr_XmlParserNewPkgCb newpkgcb,
                             void *newpkgcb_data,

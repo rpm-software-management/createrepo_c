@@ -34,7 +34,7 @@
 #define ERR_DOMAIN      CREATEREPO_C_ERROR
 #define INDENT          4
 
-void
+static void
 cr_xml_dump_delta(xmlNodePtr root, cr_DeltaPackage *package)
 {
     /***********************************

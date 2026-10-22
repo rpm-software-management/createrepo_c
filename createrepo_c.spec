@@ -128,7 +128,7 @@ These development files are for easy manipulation with a repodata.
 %package -n python3-%{name}
 Summary:        Python 3 bindings for the createrepo_c library
 %{?python_provide:%python_provide python3-%{name}}
-BuildRequires:  python3-devel
+BuildRequires:  python3-devel >= 3.10
 Requires:       %{name}-libs = %{epoch_dep}%{version}-%{release}
 
 %description -n python3-%{name}

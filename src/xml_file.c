@@ -225,6 +225,12 @@ cr_xmlfile_add_pkg(cr_XmlFile *f, cr_Package *pkg, GError **err)
     assert(!err || *err == NULL);
     assert(f->footer == 0);
 
+    if (cr_Package_contains_forbidden_control_chars(pkg)) {
+        g_set_error(err, CREATEREPO_C_ERROR, CRE_XMLDATA,
+                    "Forbidden control chars found (ASCII values <32 except 9, 10 and 13).");
+        return CRE_XMLDATA;
+    }
+
     switch (f->type) {
     case CR_XMLFILE_PRIMARY:
         xml = cr_xml_dump_primary(pkg, &tmp_err);

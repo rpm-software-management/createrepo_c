@@ -299,6 +299,35 @@ class TestCaseXmlFile(unittest.TestCase):
 </package>
 </otherdata>""")
 
+    def test_xmlfile_add_pkg_rejects_forbidden_chars(self):
+        """Certain fields are not sanitizable, forbidden characters there ought to be rejected outright"""
+        for field in ("location_href", "location_base"):
+            with self.subTest(field=field):
+                pkg = cr.Package()
+                setattr(pkg, field, "packages/\x08legacy-metadata.rpm")
+                path = os.path.join(self.tmpdir, "primary-" + field + ".xml")
+                f = cr.PrimaryXmlFile(path, cr.NO_COMPRESSION)
+                try:
+                    with self.assertRaisesRegex(
+                        cr.CreaterepoCError, "Forbidden control chars"
+                    ):
+                        f.add_pkg(pkg)
+                finally:
+                    f.close()
+
+    def test_xmlfile_add_pkg_keeps_sanitized_user_text(self):
+        pkg = cr.Package()
+        pkg.summary = "summary\x01text"
+        self.assertEqual(pkg.summary, "summary\ufffdtext")
+
+        path = os.path.join(self.tmpdir, "primary-sanitized.xml")
+        f = cr.PrimaryXmlFile(path, cr.NO_COMPRESSION)
+        f.add_pkg(pkg)
+        f.close()
+
+        with open(path) as primary:
+            self.assertIn("summary\ufffdtext", primary.read())
+
     def test_xmlfile_add_chunk(self):
         chunk = "  <chunk>Some XML chunk</chunk>\n"
 

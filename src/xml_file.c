@@ -119,7 +119,7 @@ cr_xmlfile_set_num_of_pkgs(cr_XmlFile *f, long num, GError **err)
     return CRE_OK;
 }
 
-int
+static int
 cr_xmlfile_write_xml_header(cr_XmlFile *f, GError **err)
 {
     const char *xml_header;
@@ -166,7 +166,7 @@ cr_xmlfile_write_xml_header(cr_XmlFile *f, GError **err)
     return cr_end_chunk(f->f, err);
 }
 
-int
+static int
 cr_xmlfile_write_xml_footer(cr_XmlFile *f, GError **err)
 {
     const char *xml_footer;

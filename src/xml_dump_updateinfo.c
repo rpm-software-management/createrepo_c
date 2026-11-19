@@ -32,7 +32,7 @@
 #define ERR_DOMAIN      CREATEREPO_C_ERROR
 #define INDENT          2
 
-void
+static void
 cr_xml_dump_updatecollectionpackages(xmlNodePtr collection, GSList *packages)
 {
     for (GSList *elem = packages; elem; elem = g_slist_next(elem)) {
@@ -69,7 +69,7 @@ cr_xml_dump_updatecollectionpackages(xmlNodePtr collection, GSList *packages)
     }
 }
 
-void
+static void
 cr_xml_dump_updatecollectionmodule(xmlNodePtr collection, cr_UpdateCollectionModule *module)
 {
     if (!module)
@@ -87,7 +87,7 @@ cr_xml_dump_updatecollectionmodule(xmlNodePtr collection, cr_UpdateCollectionMod
     cr_xmlNewProp_c(xml_module, BAD_CAST "arch", BAD_CAST module->arch);
 }
 
-void
+static void
 cr_xml_dump_updateinforecord_pkglist(xmlNodePtr update, GSList *collections)
 {
     xmlNodePtr pkglist;
@@ -111,7 +111,7 @@ cr_xml_dump_updateinforecord_pkglist(xmlNodePtr update, GSList *collections)
     }
 }
 
-void
+static void
 cr_xml_dump_updateinforecord_references(xmlNodePtr update, GSList *refs)
 {
     xmlNodePtr references;
@@ -129,7 +129,7 @@ cr_xml_dump_updateinforecord_references(xmlNodePtr update, GSList *refs)
     }
 }
 
-xmlNodePtr
+static xmlNodePtr
 cr_xml_dump_updateinforecord_internal(xmlNodePtr root, cr_UpdateRecord *rec)
 {
     xmlNodePtr update, node;
@@ -182,7 +182,7 @@ cr_xml_dump_updateinforecord_internal(xmlNodePtr root, cr_UpdateRecord *rec)
 }
 
 
-void
+static void
 cr_xml_dump_updateinfo_body(xmlNodePtr root, cr_UpdateInfo *ui)
 {
     GSList *element;

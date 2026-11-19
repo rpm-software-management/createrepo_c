@@ -32,7 +32,7 @@
 #define ERR_DOMAIN      CREATEREPO_C_ERROR
 
 
-void
+static void
 cr_xml_dump_other_changelog(xmlNodePtr root, cr_Package *package)
 {
     if (!package->changelogs) {
@@ -70,7 +70,7 @@ cr_xml_dump_other_changelog(xmlNodePtr root, cr_Package *package)
 }
 
 
-void
+static void
 cr_xml_dump_other_items(xmlNodePtr root, cr_Package *package)
 {
     /***********************************

@@ -672,9 +672,10 @@ class RepositoryWriter:
         assert self._has_set_num_pkgs, "Must set the number of packages before adding packages"
         assert not self._finished, self._FINISHED_ERR_MSG
 
-        self.working_metadata_files["primary"].writer.add_pkg(pkg)
-        self.working_metadata_files["filelists"].writer.add_pkg(pkg)
-        self.working_metadata_files["other"].writer.add_pkg(pkg)
+        primary, filelists, other = xml_dump(pkg)
+        self.working_metadata_files["primary"].writer.add_chunk(primary)
+        self.working_metadata_files["filelists"].writer.add_chunk(filelists)
+        self.working_metadata_files["other"].writer.add_chunk(other)
 
     def add_repomd_metadata(self, name, path, use_compression=True):
         """Add an additional metadata file to the final repomd."""

@@ -23,8 +23,10 @@
 #include <glib/gstdio.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <unistd.h>
 #include "fixtures.h"
+#include "createrepo/error.h"
 #include "createrepo/misc.h"
 #include "createrepo/xml_file.h"
 #include "createrepo/compression_wrapper.h"
@@ -94,6 +96,31 @@ test_no_packages(TestFixtures *fixtures,
 }
 
 static void
+test_writer_rejects_forbidden_chars(TestFixtures *fixtures,
+                                    G_GNUC_UNUSED gconstpointer test_data)
+{
+    gchar *path = g_build_filename(fixtures->tmpdir, "primary.xml", NULL);
+    GError *err = NULL;
+    cr_XmlFile *f = cr_xmlfile_open_primary(path, CR_CW_NO_COMPRESSION, &err);
+    g_assert_no_error(err);
+    g_assert_nonnull(f);
+
+    cr_Package *pkg = get_package();
+    pkg->location_href = "packages/\x08legacy-metadata.rpm";
+
+    int ret = cr_xmlfile_add_pkg(f, pkg, &err);
+    g_assert_cmpint(ret, ==, CRE_XMLDATA);
+    g_assert_error(err, CREATEREPO_C_ERROR, CRE_XMLDATA);
+    g_assert_nonnull(strstr(err->message, "Forbidden control chars"));
+    g_clear_error(&err);
+
+    cr_xmlfile_close(f, &err);
+    g_assert_no_error(err);
+    cr_package_free(pkg);
+    g_free(path);
+}
+
+static void
 test_rewrite_header_pacakge_count(TestFixtures *fixtures,
                            G_GNUC_UNUSED gconstpointer test_data)
 {
@@ -145,6 +172,9 @@ main(int argc, char *argv[])
     g_test_init(&argc, &argv, NULL);
 
     g_test_add("/xml_file/test_no_packages", TestFixtures, NULL, fixtures_setup, test_no_packages, fixtures_teardown);
+    g_test_add("/xml_file/test_writer_rejects_forbidden_chars",
+               TestFixtures, NULL, fixtures_setup,
+               test_writer_rejects_forbidden_chars, fixtures_teardown);
     g_test_add("/xml_file/test_write_modified_header", TestFixtures, NULL,
             fixtures_setup, test_rewrite_header_pacakge_count, fixtures_teardown);
 
